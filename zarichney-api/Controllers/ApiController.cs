@@ -19,25 +19,78 @@ public class ApiController(
 {
   private readonly ILogger _log = Log.ForContext<ApiController>();
 
+  public class CompletionRequest
+  {
+    public string? TextPrompt { get; set; }
+    public IFormFile? AudioPrompt { get; set; }
+  }
+
   [HttpPost("completion")]
   [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(BadRequestObjectResult), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  public async Task<IActionResult> GetCompletion([FromBody] string prompt)
+  public async Task<IActionResult> GetCompletion([FromForm] CompletionRequest request)
   {
     try
     {
-      if (string.IsNullOrWhiteSpace(prompt))
+      string prompt;
+
+      // Handle audio input
+      if (request.AudioPrompt != null)
       {
-        _log.Warning("{Method}: 'prompt' is empty or null", nameof(GetCompletion));
-        return BadRequest("'prompt' is required.");
+        _log.Information(
+          "Received audio prompt. ContentType: {ContentType}, FileName: {FileName}, Length: {Length}",
+          request.AudioPrompt.ContentType,
+          request.AudioPrompt.FileName,
+          request.AudioPrompt.Length);
+
+        if (request.AudioPrompt.Length == 0)
+        {
+          _log.Warning("{Method}: Empty audio file received", nameof(GetCompletion));
+          return BadRequest("Audio file must not be empty");
+        }
+
+        if (!request.AudioPrompt.ContentType.StartsWith("audio/"))
+        {
+          _log.Warning("{Method}: Invalid content type: {ContentType}",
+            nameof(GetCompletion), request.AudioPrompt.ContentType);
+          return BadRequest($"Invalid content type: {request.AudioPrompt.ContentType}. Expected audio/*");
+        }
+
+        // Transcribe audio to text
+        using var ms = new MemoryStream();
+        await request.AudioPrompt.CopyToAsync(ms);
+        ms.Position = 0;
+
+        try
+        {
+          prompt = await transcribeService.TranscribeAudioAsync(ms);
+          _log.Information("{Method}: Successfully transcribed audio prompt", nameof(GetCompletion));
+        }
+        catch (Exception ex)
+        {
+          _log.Error(ex, "{Method}: Failed to transcribe audio prompt", nameof(GetCompletion));
+          return BadRequest("Failed to transcribe audio prompt");
+        }
+      }
+      // Handle text input
+      else if (!string.IsNullOrWhiteSpace(request.TextPrompt))
+      {
+        prompt = request.TextPrompt;
+      }
+      else
+      {
+        _log.Warning("{Method}: No valid prompt provided", nameof(GetCompletion));
+        return BadRequest("Either 'textPrompt' or 'audioPrompt' must be provided");
       }
 
       var response = await llmService.GetCompletionContent(prompt);
 
       return Ok(new
       {
-        response
+        response,
+        sourceType = request.AudioPrompt != null ? "audio" : "text",
+        transcribedPrompt = request.AudioPrompt != null ? prompt : null
       });
     }
     catch (Exception ex)

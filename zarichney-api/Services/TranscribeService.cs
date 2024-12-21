@@ -14,7 +14,7 @@ public class TranscribeConfig : IConfig
 
 public interface ITranscribeService
 {
-  Task<string> TranscribeAudioAsync(Stream audioStream);
+  Task<string> TranscribeAudioAsync(Stream audioStream, AudioTranscriptionOptions? options = null);
 }
 
 public class TranscribeService : ITranscribeService
@@ -41,7 +41,7 @@ public class TranscribeService : ITranscribeService
       );
   }
 
-  public async Task<string> TranscribeAudioAsync(Stream audioStream)
+  public async Task<string> TranscribeAudioAsync(Stream audioStream, AudioTranscriptionOptions? options = null)
   {
     try
     {
@@ -55,53 +55,9 @@ public class TranscribeService : ITranscribeService
 
           try
           {
-            var transcriptionResult = await _client.TranscribeAudioAsync(tempFile);
-            var transcription = transcriptionResult.Value;
-            Log.Information("Audio transcription completed successfully");
-            return transcription.Text;
-          }
-          finally
-          {
-            // Clean up temp file
-            if (File.Exists(tempFile))
-            {
-              File.Delete(tempFile);
-            }
-          }
-        }
-        catch (Exception e)
-        {
-          Log.Error(e, "Error occurred during audio transcription");
-          throw;
-        }
-      });
-    }
-    catch (Exception e)
-    {
-      Log.Error(e, "Failed to transcribe audio after all retry attempts");
-      throw;
-    }
-  }
-
-  public async Task<AudioTranscription> TranscribeAudioVerboseAsync(Stream audioStream,
-    AudioTranscriptionOptions? options = null)
-  {
-    try
-    {
-      Log.Information("Starting verbose audio transcription");
-
-      return await _retryPolicy.ExecuteAsync(async () =>
-      {
-        try
-        {
-          var tempFile = await SaveStreamToTempFile(audioStream);
-
-          try
-          {
             options ??= new AudioTranscriptionOptions
             {
-              ResponseFormat = AudioTranscriptionFormat.Verbose,
-              TimestampGranularities = AudioTimestampGranularities.Word | AudioTimestampGranularities.Segment
+              ResponseFormat = AudioTranscriptionFormat.Text
             };
 
             var transcriptionResult = await _client.TranscribeAudioAsync(tempFile, options);
@@ -113,7 +69,7 @@ public class TranscribeService : ITranscribeService
               transcription.Segments?.Count ?? 0,
               transcription.Words?.Count ?? 0);
 
-            return transcription;
+            return transcription.Text;
           }
           finally
           {
