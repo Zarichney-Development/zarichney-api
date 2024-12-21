@@ -418,7 +418,8 @@ public class ApiController(
         message = "Audio file processed and transcript stored successfully",
         audioFile = audioFileName,
         transcriptFile = transcriptFileName,
-        timestamp = DateTimeOffset.UtcNow
+        timestamp,
+        transcript
       });
     }
     catch (Exception ex)
