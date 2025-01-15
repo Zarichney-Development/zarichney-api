@@ -455,7 +455,7 @@ public class LlmService(
     // Get completion from LLM
     var completion = await GetCompletion(allMessages, options, retryCount);
 
-    var prompt = messages.Last(m => m is UserChatMessage).Content.ToString()!;
+    var prompt = messages.Last(m => m is UserChatMessage).Content[0].Text;
     var response = completion.Content[0].Text;
 
     // Store the message in the session
@@ -489,7 +489,7 @@ public class LlmService(
     foreach (var msg in conversation.Messages)
     {
       allMessages.Add(new UserChatMessage(msg.Request));
-      allMessages.Add(new SystemChatMessage(msg.Response));
+      allMessages.Add(new SystemChatMessage(JsonSerializer.Serialize(msg.Response)));
     }
 
     return allMessages;

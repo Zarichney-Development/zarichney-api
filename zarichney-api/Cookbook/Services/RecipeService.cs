@@ -192,6 +192,16 @@ public class RecipeService(
       logger.LogInformation("Retrieved {count} cached recipes for query '{query}'.", recipes.Count, query);
     }
 
+    var cachedRecipes = recipes
+      .Where(r => r.Relevancy.TryGetValue(query, out var value) && value.Score >= acceptableScore)
+      .Take(config.RecipesToReturnPerRetrieval)
+      .ToList();
+
+    if (cachedRecipes.Count >= config.RecipesToReturnPerRetrieval)
+    {
+      return cachedRecipes.ToList();
+    }
+
     await RankUnrankedRecipesAsync(recipes, query, acceptableScore.Value, requestedRecipeName);
 
     // Check if additional recipes should be web-scraped

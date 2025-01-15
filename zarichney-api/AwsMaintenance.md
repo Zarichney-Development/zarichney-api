@@ -352,6 +352,12 @@ Ensure `/etc/systemd/system/cookbook-api.service` is properly configured.
 
 ### **Reload and Restart Service**
 
+- **Ensure Execute Permissions is set:**
+
+  ```bash
+  chmod +x /etc/systemd/system/cookbook-api.service
+  ```
+
 - **Reload systemd daemon:**
 
   ```bash

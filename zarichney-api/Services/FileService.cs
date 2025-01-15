@@ -97,6 +97,7 @@ public class FileService : IFileService
   /// <param name="extension">The file extension to use (default is "json").</param>
   public async Task WriteToFile(string directory, string filename, object data, string extension = "json")
   {
+    _logger.LogInformation("Writing file: {Filename}", filename);
     object content;
     switch (extension.ToLower())
     {
@@ -143,6 +144,7 @@ public class FileService : IFileService
   /// <param name="extension">The file extension to use (default is "json").</param>
   public void WriteToFileAsync(string directory, string filename, object data, string extension = "json")
   {
+    _logger.LogInformation("Writing file: {Filename}", filename);
     object content;
     switch (extension.ToLower())
     {
@@ -403,8 +405,6 @@ public class FileService : IFileService
       var fileNamePath = Path.Combine(operation.Directory,
         $"{SanitizeFileName(operation.Filename)}.{operation.Extension}");
 
-      _logger.LogInformation("Writing file: {Filename}", fileNamePath);
-
       // If it's PDF data, write as bytes; otherwise, write as text
       if (operation.Data is byte[] pdfData)
       {
@@ -417,8 +417,6 @@ public class FileService : IFileService
         await using var streamWriter = new StreamWriter(fileStream, Encoding.UTF8);
         await streamWriter.WriteAsync(operation.Data.ToString());
       }
-
-      _logger.LogInformation("Successfully wrote file: {Filename}", fileNamePath);
     }
     catch (Exception ex)
     {

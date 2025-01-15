@@ -64,7 +64,6 @@ public class RecipeFileRepository(
       logger.LogInformation("Found {count} recipe files.", recipeFiles.Length);
 
       var loadTasks = recipeFiles
-        .Where(fileName => fileName == "Data/Recipes\\Banana_Bread.json")
         .Select(async file =>
         {
           var fileName = Path.GetFileNameWithoutExtension(file);
@@ -165,6 +164,8 @@ public class RecipeFileRepository(
           }
         }
       }
+      
+      // TODO: Search by relevancy score
 
       var recipes = results.Values
         .OrderByDescending(r => CalculateRelevanceScore(r, query))
@@ -256,6 +257,7 @@ public class RecipeFileRepository(
           existingRecipe.Title = newRecipe.Title;
           existingRecipe.Description = newRecipe.Description;
           existingRecipe.Ingredients = newRecipe.Ingredients;
+          existingRecipe.Directions = newRecipe.Directions;
           existingRecipe.Servings = newRecipe.Servings;
           existingRecipe.CookTime = newRecipe.CookTime;
           existingRecipe.PrepTime = newRecipe.PrepTime;
@@ -367,7 +369,7 @@ public class RecipeFileRepository(
     try
     {
       var llmService = scope.GetService<ILlmService>();
-      var cleanedRecipe = await llmService.CallFunction<CleanedRecipe>(
+      var newRecipe = await llmService.CallFunction<CleanedRecipe>(
         cleanRecipePrompt.SystemPrompt,
         cleanRecipePrompt.GetUserPrompt(recipe),
         cleanRecipePrompt.GetFunction(),
@@ -375,18 +377,18 @@ public class RecipeFileRepository(
         1 // Don't retry
       );
 
-      logger.LogInformation("Cleaned recipe data: {@CleanedRecipe}", cleanedRecipe);
+      logger.LogInformation("Cleaned recipe data: {@CleanedRecipe}", newRecipe);
 
       // Create a new Recipe instance
-      var newRecipe = mapper.Map<Recipe>(cleanedRecipe);
+      var cleanedData = mapper.Map<Recipe>(newRecipe);
 
       // Copy over properties not part of CleanedRecipe
-      mapper.Map(recipe, newRecipe);
+      mapper.Map(cleanedData, recipe);
 
       // Ensure Cleaned flag is set
-      newRecipe.Cleaned = true;
+      recipe.Cleaned = true;
 
-      return newRecipe;
+      return recipe;
     }
     catch (OpenAiContentFilterException ex)
     {

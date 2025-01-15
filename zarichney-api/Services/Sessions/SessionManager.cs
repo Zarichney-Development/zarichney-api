@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Text.Json;
 using OpenAI.Chat;
 using Zarichney.Cookbook.Models;
 using Zarichney.Cookbook.Repositories;
@@ -296,9 +295,7 @@ public class SessionManager(
       throw new KeyNotFoundException($"Conversation {conversationId} not found in Session {session.Id}");
     }
 
-    var response = toolResponse != null
-      ? JsonSerializer.Serialize(toolResponse)
-      : completion.Content[0].Text;
+    var response = toolResponse ?? completion.Content[0].Text;
 
     var message = new LlmMessage
     {
