@@ -14,8 +14,7 @@ Environment=APP_DATA_PATH=/var/lib/cookbook-api/data/
 
 # Adjusted resource limits for t3.small
 CPUQuota=90%
-MemoryHigh=1.5G
-MemoryMax=1.8G
+MemoryHigh=2.0G
 TasksMax=200
 LimitNPROC=200
 LimitNOFILE=8192
