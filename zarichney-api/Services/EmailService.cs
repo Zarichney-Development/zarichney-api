@@ -5,9 +5,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using RestSharp;
-using Serilog;
 using Zarichney.Config;
-using ILogger = Serilog.ILogger;
 using SendMailPostRequestBody = Microsoft.Graph.Users.Item.SendMail.SendMailPostRequestBody;
 
 namespace Zarichney.Services;
@@ -34,11 +32,11 @@ public class EmailService(
   GraphServiceClient graphClient,
   EmailConfig config,
   ITemplateService templateService,
-  IMemoryCache cache)
+  IMemoryCache cache,
+  ILogger<EmailService> logger
+)
   : IEmailService
 {
-  private readonly ILogger _log = Log.ForContext<EmailService>();
-
   public async Task SendEmail(string recipient, string subject, string templateName,
     Dictionary<string, object> templateData, FileAttachment? attachment = null)
   {
@@ -54,7 +52,8 @@ public class EmailService(
     }
     catch (Exception e)
     {
-      _log.Error(e, "Error applying email template: {TemplateName} for recipient {Recipient}", templateName, recipient);
+      logger.LogError(e, "Error applying email template: {TemplateName} for recipient {Recipient}", templateName,
+        recipient);
       throw;
     }
 
@@ -99,7 +98,7 @@ public class EmailService(
 
     try
     {
-      _log.Information("Attempting to send email with configuration: {@EmailDetails}", new
+      logger.LogInformation("Attempting to send email with configuration: {@EmailDetails}", new
       {
         config.FromEmail,
         ToEmail = recipient,
@@ -116,7 +115,7 @@ public class EmailService(
     }
     catch (Exception e)
     {
-      _log.Error(e, "Error sending email. Request details: {@RequestDetails}", new
+      logger.LogError(e, "Error sending email. Request details: {@RequestDetails}", new
       {
         config.FromEmail,
         ToEmail = recipient,
@@ -140,7 +139,7 @@ public class EmailService(
       return ValidateWithCachedResult(email, cachedResult!);
     }
 
-    _log.Information("Validating email {Email}", email);
+    logger.LogInformation("Validating email {Email}", email);
 
     var client = new RestClient("https://mailcheck.p.rapidapi.com");
     var request = new RestRequest($"/?domain={domain}");
@@ -150,7 +149,7 @@ public class EmailService(
 
     if (response.StatusCode != System.Net.HttpStatusCode.OK)
     {
-      _log.Error("Email validation service returned non-success status code: {StatusCode}", response.StatusCode);
+      logger.LogError("Email validation service returned non-success status code: {StatusCode}", response.StatusCode);
       throw new InvalidOperationException("Email validation service error");
     }
 
@@ -158,7 +157,7 @@ public class EmailService(
 
     if (result == null)
     {
-      _log.Error("Failed to deserialize email validation response");
+      logger.LogError("Failed to deserialize email validation response");
       throw new InvalidOperationException("Email validation response deserialization error");
     }
 
@@ -195,7 +194,7 @@ public class EmailService(
     }
     catch (Exception e)
     {
-      _log.Error(e, "Invalid email detected: {@Result}", result);
+      logger.LogError(e, "Invalid email detected: {@Result}", result);
       throw;
     }
 
@@ -204,7 +203,7 @@ public class EmailService(
 
   private void ThrowInvalidEmailException(string message, string email, InvalidEmailReason reason)
   {
-    _log.Warning("{Message}: {Email} ({Reason})", message, email, reason);
+    logger.LogWarning("{Message}: {Email} ({Reason})", message, email, reason);
     throw new InvalidEmailException(message, email, reason);
   }
 

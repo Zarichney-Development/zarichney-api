@@ -75,6 +75,8 @@ public class SynthesizedRecipe
   public int? QualityScore { get; set; }
   public string? Analysis { get; set; }
   public string? Suggestions { get; set; }
+  public int AttemptCount { get; set; }
+  public List<SynthesizedRecipe>? Revisions { get; set; }
 
   public bool IsAnalyzed =>
     QualityScore.HasValue && !string.IsNullOrEmpty(Analysis) && !string.IsNullOrEmpty(Suggestions);

@@ -96,7 +96,7 @@ public class TranscribeService : ITranscribeService
 
   private static async Task<string> SaveStreamToTempFile(Stream stream)
   {
-    var tempFile = Path.Combine(Path.GetTempPath(), $"audio_{Guid.NewGuid()}.webm");
+    var tempFile = Path.Combine(Path.GetTempPath(), $"audio_{Utils.GenerateId()}.webm");
 
     try
     {

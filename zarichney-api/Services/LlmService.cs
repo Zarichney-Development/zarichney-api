@@ -6,6 +6,7 @@ using OpenAI.Chat;
 using Polly;
 using Polly.Retry;
 using Zarichney.Config;
+using Zarichney.Services.Sessions;
 using ILogger = Serilog.ILogger;
 
 namespace Zarichney.Services;
@@ -20,6 +21,9 @@ public class LlmConfig : IConfig
 public static class LlmModels
 {
   public const string Gpt4Omini = "gpt-4o-mini";
+  public const string Gpt4O = "gpt-4o";
+  public const string O1Mini = "gpt-o1-mini";
+  public const string O1 = "gpt-o1";
 }
 
 public interface ILlmService
@@ -27,13 +31,13 @@ public interface ILlmService
   Task<string> CreateAssistant(PromptBase prompt);
   Task<string> CreateThread();
   Task CreateMessage(string threadId, string content, MessageRole role = MessageRole.User);
-
   Task<string> CreateRun(string threadId, string assistantId, bool requiresToolConstraint = true);
 
-  Task<string> GetCompletionContent(string userPrompt, ChatCompletionOptions? options = null, int? retryCount = null);
+  Task<string> GetCompletionContent(string userPrompt, string? conversationId = null,
+    ChatCompletionOptions? options = null, int? retryCount = null);
 
-  Task<string> GetCompletionContent(List<ChatMessage> messages, ChatCompletionOptions? options = null,
-    int? retryCount = null);
+  Task<string> GetCompletionContent(List<ChatMessage> messages, string? conversationId = null,
+    ChatCompletionOptions? options = null, int? retryCount = null);
 
   Task<(bool isComplete, RunStatus status)> GetRun(string threadId, string runId);
   Task<string> CancelRun(string threadId, string runId);
@@ -42,12 +46,18 @@ public interface ILlmService
   Task DeleteThread(string threadId);
 
   Task<T> CallFunction<T>(string systemPrompt, string userPrompt, FunctionDefinition function,
-    int? retryCount = null);
+    string? conversationId = null, int? retryCount = null);
 
   Task<(string, T)> GetRunAction<T>(string threadId, string runId, string functionName);
 }
 
-public class LlmService(OpenAIClient client, IMapper mapper, LlmConfig config) : ILlmService
+public class LlmService(
+  OpenAIClient client,
+  IMapper mapper,
+  LlmConfig config,
+  ISessionManager sessionManager,
+  IScopeContainer scope
+) : ILlmService
 {
   private static readonly ILogger Log = Serilog.Log.ForContext<LlmService>();
   private readonly Dictionary<string, List<(string toolCallId, string output)>> _runToolOutputs = new();
@@ -82,7 +92,7 @@ public class LlmService(OpenAIClient client, IMapper mapper, LlmConfig config) :
 
     return await policy.ExecuteAsync(action);
   }
-
+  
   public async Task<string> CreateAssistant(PromptBase prompt)
   {
     try
@@ -293,8 +303,13 @@ public class LlmService(OpenAIClient client, IMapper mapper, LlmConfig config) :
     }
   }
 
-  public async Task<T> CallFunction<T>(string systemPrompt, string userPrompt, FunctionDefinition function,
-    int? retryCount = null)
+  public async Task<T> CallFunction<T>(
+    string systemPrompt,
+    string userPrompt,
+    FunctionDefinition function,
+    string? conversationId = null,
+    int? retryCount = null
+  )
   {
     Log.Information(
       "Getting response from model. System prompt: {systemPrompt}, User prompt: {userPrompt}, Function: {@function}",
@@ -306,28 +321,51 @@ public class LlmService(OpenAIClient client, IMapper mapper, LlmConfig config) :
       new UserChatMessage(userPrompt)
     };
 
-    var result = await CallFunction<T>(function, messages, retryCount);
+    var result = await CallFunction<T>(function, messages, conversationId, retryCount);
 
     return result;
   }
 
 
-  private async Task<T> CallFunction<T>(FunctionDefinition function, List<ChatMessage> messages,
-    int? retryCount = null)
+  private async Task<T> CallFunction<T>(
+    FunctionDefinition function,
+    List<ChatMessage> messages,
+    string? conversationId = null,
+    int? retryCount = null
+  )
   {
     var functionToolDefinition = mapper.Map<FunctionToolDefinition>(function);
     functionToolDefinition.StrictParameterSchemaEnabled = true;
 
-    return await CallFunction<T>(messages, ChatTool.CreateFunctionTool(
-      functionName: function.Name,
-      functionDescription: function.Description,
-      functionParameters: functionToolDefinition.Parameters,
-      true
-    ), retryCount);
+    return await CallFunction<T>(
+      messages,
+      ChatTool.CreateFunctionTool(
+        functionName: function.Name,
+        functionDescription: function.Description,
+        functionParameters: functionToolDefinition.Parameters,
+        true
+      ),
+      conversationId,
+      retryCount
+    );
   }
 
-  private async Task<T> CallFunction<T>(List<ChatMessage> messages, ChatTool functionTool, int? retryCount = null)
+  private async Task<T> CallFunction<T>(
+    List<ChatMessage> messages,
+    ChatTool functionTool,
+    string? conversationId = null,
+    int? retryCount = null
+  )
   {
+    var scopeId = scope.Id;
+    // If no conversation ID is provided, create a new conversation
+    conversationId ??= await sessionManager.InitializeConversation(scopeId, messages, functionTool);
+
+    var allMessages = await GetConversation(conversationId);
+
+    // Add new messages
+    allMessages.AddRange(messages);
+
     var chatCompletion = await GetCompletion(messages, new ChatCompletionOptions
     {
       Tools = { functionTool },
@@ -368,12 +406,14 @@ public class LlmService(OpenAIClient client, IMapper mapper, LlmConfig config) :
         using var argumentsJson = JsonDocument.Parse(toolCall.FunctionArguments);
 
         Log.Debug("Deserializing tool call arguments to type {type}", typeof(T).Name);
-        var result = Utils.Deserialize<T>(argumentsJson);
+        var result = Utils.Deserialize<T>(argumentsJson)
+          ?? throw new Exception("Failed to deserialize tool call arguments");
 
-        if (result != null)
-        {
-          return result;
-        }
+        var prompt = messages.Last(m => m is UserChatMessage).Content[0].Text;
+        // Store the message in the session
+        await sessionManager.AddMessage(scope.Id, conversationId, prompt, chatCompletion, result);
+
+        return result;
       }
       catch (Exception e)
       {
@@ -387,19 +427,76 @@ public class LlmService(OpenAIClient client, IMapper mapper, LlmConfig config) :
     throw new Exception("Failed to get a valid response from the model.");
   }
 
-  public async Task<string> GetCompletionContent(string userPrompt, ChatCompletionOptions? options = null,
-    int? retryCount = null)
-    => await GetCompletionContent([new UserChatMessage(userPrompt)], options, retryCount);
-
-  public async Task<string> GetCompletionContent(List<ChatMessage> messages, ChatCompletionOptions? options = null,
+  public async Task<string> GetCompletionContent(
+    string userPrompt,
+    string? conversationId = null,
+    ChatCompletionOptions? options = null,
     int? retryCount = null)
   {
-    var completion = await GetCompletion(messages, options, retryCount);
-    return completion.Content[0].Text;
+    var messages = new List<ChatMessage> { new UserChatMessage(userPrompt) };
+    return await GetCompletionContent(messages, conversationId, options, retryCount);
   }
 
-  private async Task<ChatCompletion> GetCompletion(List<ChatMessage> messages,
-    ChatCompletionOptions? options = null, int? retryCount = null)
+  public async Task<string> GetCompletionContent(
+    List<ChatMessage> messages,
+    string? conversationId = null,
+    ChatCompletionOptions? options = null,
+    int? retryCount = null
+  )
+  {
+    // If no conversation ID is provided, create a new conversation
+    conversationId ??= await sessionManager.InitializeConversation(scope.Id, messages);
+
+    var allMessages = await GetConversation(conversationId);
+
+    // Add new messages
+    allMessages.AddRange(messages);
+
+    // Get completion from LLM
+    var completion = await GetCompletion(allMessages, options, retryCount);
+
+    var prompt = messages.Last(m => m is UserChatMessage).Content.ToString()!;
+    var response = completion.Content[0].Text;
+
+    // Store the message in the session
+    await sessionManager.AddMessage(scope.Id, conversationId, prompt, completion);
+
+    return response;
+  }
+
+  private async Task<List<ChatMessage>> GetConversation(string conversationId)
+  {
+    // Get existing conversation messages if any
+    var conversation = await sessionManager.GetConversation(scope.Id, conversationId);
+
+    // Prepend existing messages if there are any
+    var allMessages = GetChatMessages(conversation);
+
+    return allMessages;
+  }
+
+  private static List<ChatMessage> GetChatMessages(LlmConversation conversation)
+  {
+    var allMessages = new List<ChatMessage>();
+
+    // Add system message if it exists
+    if (!string.IsNullOrEmpty(conversation.SystemPrompt))
+    {
+      allMessages.Add(new SystemChatMessage(conversation.SystemPrompt));
+    }
+
+    // Add existing conversation messages
+    foreach (var msg in conversation.Messages)
+    {
+      allMessages.Add(new UserChatMessage(msg.Request));
+      allMessages.Add(new SystemChatMessage(msg.Response));
+    }
+
+    return allMessages;
+  }
+
+  private async Task<ChatCompletion> GetCompletion(List<ChatMessage> messages, ChatCompletionOptions? options = null,
+    int? retryCount = null)
   {
     return await ExecuteWithRetry(retryCount, async () =>
     {

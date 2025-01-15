@@ -1,9 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
-using Serilog;
 using Zarichney.Middleware;
 using Zarichney.Services;
-using ILogger = Serilog.ILogger;
 
 namespace Zarichney.Controllers;
 
@@ -14,11 +12,10 @@ public class ApiController(
   ITranscribeService transcribeService,
   IGitHubService githubService,
   EmailConfig emailConfig,
-  ILlmService llmService
+  ILlmService llmService,
+  ILogger<ApiController> logger
 ) : ControllerBase
 {
-  private readonly ILogger _log = Log.ForContext<ApiController>();
-
   public class CompletionRequest
   {
     public string? TextPrompt { get; set; }
@@ -38,7 +35,7 @@ public class ApiController(
       // Handle audio input
       if (request.AudioPrompt != null)
       {
-        _log.Information(
+        logger.LogInformation(
           "Received audio prompt. ContentType: {ContentType}, FileName: {FileName}, Length: {Length}",
           request.AudioPrompt.ContentType,
           request.AudioPrompt.FileName,
@@ -46,13 +43,13 @@ public class ApiController(
 
         if (request.AudioPrompt.Length == 0)
         {
-          _log.Warning("{Method}: Empty audio file received", nameof(GetCompletion));
+          logger.LogWarning("{Method}: Empty audio file received", nameof(GetCompletion));
           return BadRequest("Audio file must not be empty");
         }
 
         if (!request.AudioPrompt.ContentType.StartsWith("audio/"))
         {
-          _log.Warning("{Method}: Invalid content type: {ContentType}",
+          logger.LogWarning("{Method}: Invalid content type: {ContentType}",
             nameof(GetCompletion), request.AudioPrompt.ContentType);
           return BadRequest($"Invalid content type: {request.AudioPrompt.ContentType}. Expected audio/*");
         }
@@ -65,11 +62,11 @@ public class ApiController(
         try
         {
           prompt = await transcribeService.TranscribeAudioAsync(ms);
-          _log.Information("{Method}: Successfully transcribed audio prompt", nameof(GetCompletion));
+          logger.LogInformation("{Method}: Successfully transcribed audio prompt", nameof(GetCompletion));
         }
         catch (Exception ex)
         {
-          _log.Error(ex, "{Method}: Failed to transcribe audio prompt", nameof(GetCompletion));
+          logger.LogError(ex, "{Method}: Failed to transcribe audio prompt", nameof(GetCompletion));
           return BadRequest("Failed to transcribe audio prompt");
         }
       }
@@ -80,7 +77,7 @@ public class ApiController(
       }
       else
       {
-        _log.Warning("{Method}: No valid prompt provided", nameof(GetCompletion));
+        logger.LogWarning("{Method}: No valid prompt provided", nameof(GetCompletion));
         return BadRequest("Either 'textPrompt' or 'audioPrompt' must be provided");
       }
 
@@ -95,7 +92,7 @@ public class ApiController(
     }
     catch (Exception ex)
     {
-      _log.Error(ex, "{Method}: Failed to get LLM completion", nameof(GetCompletion));
+      logger.LogError(ex, "{Method}: Failed to get LLM completion", nameof(GetCompletion));
       return new ApiErrorResult(ex, $"{nameof(GetCompletion)}: Failed to get LLM completion");
     }
   }
@@ -106,9 +103,16 @@ public class ApiController(
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
   public async Task<IActionResult> TranscribeAudio([FromForm] IFormFile? audioFile)
   {
+    // return Ok(new
+    // {
+    //   message = "Audio file processed and transcript stored successfully",
+    //   // audioFile = audioFileName,
+    //   // transcriptFile = transcriptFileName,
+    //   transcript = "test"
+    // });
     try
     {
-      _log.Information(
+      logger.LogInformation(
         "Received transcribe request. ContentType: {ContentType}, FileName: {FileName}, Length: {Length}, FormFile null: {IsNull}",
         audioFile?.ContentType,
         audioFile?.FileName,
@@ -117,20 +121,20 @@ public class ApiController(
 
       if (Request.Form.Files.Count == 0)
       {
-        _log.Warning("No files found in form data. Form count: {Count}", Request.Form.Count);
+        logger.LogWarning("No files found in form data. Form count: {Count}", Request.Form.Count);
         return BadRequest("No files found in request");
       }
 
       if (audioFile == null || audioFile.Length == 0)
       {
-        _log.Warning("{Method}: No audio file received or empty file", nameof(TranscribeAudio));
+        logger.LogWarning("{Method}: No audio file received or empty file", nameof(TranscribeAudio));
         return BadRequest("Audio file is required and must not be empty");
       }
 
       // Log the content type we received
       if (!audioFile.ContentType.StartsWith("audio/"))
       {
-        _log.Warning("{Method}: Invalid content type: {ContentType}",
+        logger.LogWarning("{Method}: Invalid content type: {ContentType}",
           nameof(TranscribeAudio), audioFile.ContentType);
         return BadRequest($"Invalid content type: {audioFile.ContentType}. Expected audio/*");
       }
@@ -148,7 +152,7 @@ public class ApiController(
       try
       {
         // First, commit the audio file
-        await githubService.CommitFileAsync(
+        await githubService.EnqueueCommitAsync(
           audioFileName,
           audioData,
           "recordings",
@@ -177,7 +181,7 @@ public class ApiController(
       try
       {
         // Commit the transcript
-        await githubService.CommitFileAsync(
+        await githubService.EnqueueCommitAsync(
           transcriptFileName,
           Encoding.UTF8.GetBytes(transcript),
           "transcripts",
@@ -201,7 +205,7 @@ public class ApiController(
     }
     catch (Exception ex)
     {
-      _log.Error(ex, "{Method}: Failed to process audio file", nameof(TranscribeAudio));
+      logger.LogError(ex, "{Method}: Failed to process audio file", nameof(TranscribeAudio));
       return new ApiErrorResult(ex, "Failed to process audio file");
     }
   }
@@ -216,7 +220,7 @@ public class ApiController(
     {
       if (string.IsNullOrWhiteSpace(email))
       {
-        _log.Warning("{Method}: Empty email received", nameof(ValidateEmail));
+        logger.LogWarning("{Method}: Empty email received", nameof(ValidateEmail));
         return BadRequest("Email parameter is required");
       }
 
@@ -225,7 +229,7 @@ public class ApiController(
     }
     catch (InvalidEmailException ex)
     {
-      _log.Warning(ex, "{Method}: Invalid email validation for {Email}",
+      logger.LogWarning(ex, "{Method}: Invalid email validation for {Email}",
         nameof(ValidateEmail), email);
       return BadRequest(new
       {
@@ -236,7 +240,7 @@ public class ApiController(
     }
     catch (Exception ex)
     {
-      _log.Error(ex, "{Method}: Failed to validate email: {Email}",
+      logger.LogError(ex, "{Method}: Failed to validate email: {Email}",
         nameof(ValidateEmail), email);
       return new ApiErrorResult(ex, $"{nameof(ValidateEmail)}: Failed to validate email");
     }

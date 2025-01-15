@@ -1,7 +1,5 @@
 using Microsoft.Playwright;
-using Serilog;
 using Zarichney.Cookbook.Services;
-using ILogger = Serilog.ILogger;
 
 namespace Zarichney.Services;
 
@@ -12,7 +10,6 @@ public interface IBrowserService
 
 public class BrowserService : IBrowserService, IAsyncDisposable
 {
-  private readonly ILogger _log = Log.ForContext<BrowserService>();
   private readonly SemaphoreSlim _semaphore;
   private readonly WebscraperConfig _config;
   private readonly IBrowser? _browser;
@@ -60,8 +57,11 @@ public class BrowserService : IBrowserService, IAsyncDisposable
     ]
   };
 
-  public BrowserService(WebscraperConfig config, IWebHostEnvironment env)
+  private readonly ILogger<BrowserService> _logger;
+
+  public BrowserService(WebscraperConfig config, IWebHostEnvironment env,    ILogger<BrowserService> logger)
   {
+    _logger = logger;
     _config = config;
     _semaphore = new SemaphoreSlim(config.MaxParallelPages, config.MaxParallelPages);
 
@@ -92,7 +92,7 @@ public class BrowserService : IBrowserService, IAsyncDisposable
       page.Console += Page_Console;
       page.PageError += Page_PageError;
 
-      _log.Debug("Navigating to URL: {url}", url);
+      _logger.LogDebug("Navigating to URL: {url}", url);
 
       var response = await page.GotoAsync(url, new PageGotoOptions
       {
@@ -102,7 +102,7 @@ public class BrowserService : IBrowserService, IAsyncDisposable
 
       if (!(response?.Ok ?? false))
       {
-        _log.Warning("Failed to load page. Status: {status}", response?.Status);
+        _logger.LogWarning("Failed to load page. Status: {status}", response?.Status);
         return [];
       }
 
@@ -116,24 +116,24 @@ public class BrowserService : IBrowserService, IAsyncDisposable
         if (consentButton != null)
         {
           await consentButton.ClickAsync();
-          _log.Information("Accepted cookie consent.");
+          _logger.LogInformation("Accepted cookie consent.");
         }
       }
       catch (Exception ex)
       {
-        _log.Debug(ex, "No cookie consent banner found or failed to click.");
+        _logger.LogDebug(ex, "No cookie consent banner found or failed to click.");
       }
 
       // Simulate mouse movement to the center of the page
       var centerX = (page.ViewportSize?.Width ?? 1280) / 2;
       var centerY = (page.ViewportSize?.Height ?? 720) / 2;
       await page.Mouse.MoveAsync(centerX, centerY);
-      _log.Information("Simulated mouse movement to position ({x}, {y})", centerX, centerY);
+      _logger.LogInformation("Simulated mouse movement to position ({x}, {y})", centerX, centerY);
 
       // Wait for the selector to appear
       try
       {
-        _log.Debug("Waiting for selector: {selector}", selector);
+        _logger.LogDebug("Waiting for selector: {selector}", selector);
 
         await page.WaitForSelectorAsync(selector, new PageWaitForSelectorOptions
         {
@@ -142,7 +142,7 @@ public class BrowserService : IBrowserService, IAsyncDisposable
       }
       catch (TimeoutException)
       {
-        _log.Warning("Selector '{selector}' not found within timeout.", selector);
+        _logger.LogWarning("Selector '{selector}' not found within timeout.", selector);
         return [];
       }
 
@@ -159,13 +159,13 @@ public class BrowserService : IBrowserService, IAsyncDisposable
         }
       }
 
-      _log.Debug("Retrieved {count} items from URL: {url}", content.Count, url);
+      _logger.LogDebug("Retrieved {count} items from URL: {url}", content.Count, url);
 
       return content.Distinct().ToList();
     }
     catch (Exception ex)
     {
-      _log.Error(ex, "Error occurred while getting content from URL: {url}", url);
+      _logger.LogError(ex, "Error occurred while getting content from URL: {url}", url);
       return new List<string>();
     }
     finally
@@ -180,7 +180,7 @@ public class BrowserService : IBrowserService, IAsyncDisposable
         }
         catch (Exception ex)
         {
-          _log.Error(ex, "Error occurred while closing the page.");
+          _logger.LogError(ex, "Error occurred while closing the page.");
         }
       }
 
@@ -192,7 +192,7 @@ public class BrowserService : IBrowserService, IAsyncDisposable
         }
         catch (Exception ex)
         {
-          _log.Error(ex, "Error occurred while closing the browser context.");
+          _logger.LogError(ex, "Error occurred while closing the browser context.");
         }
       }
 
@@ -202,17 +202,17 @@ public class BrowserService : IBrowserService, IAsyncDisposable
 
   private void Page_PageError(object? sender, object e)
   {
-    _log.Warning("Page error: {@error}", e);
+    _logger.LogWarning("Page error: {@error}", e);
   }
 
   private void Page_Console(object? sender, IConsoleMessage msg)
   {
-    _log.Debug("Console message: {type} - {text}", msg.Type, msg.Text);
+    _logger.LogDebug("Console message: {type} - {text}", msg.Type, msg.Text);
   }
 
   private void Browser_Disconnect(object? sender, IBrowser e)
   {
-    _log.Error("Browser disconnected. Sender: {sender}", sender);
+    _logger.LogError("Browser disconnected. Sender: {sender}", sender);
   }
 
   public async ValueTask DisposeAsync()

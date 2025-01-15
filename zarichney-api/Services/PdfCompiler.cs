@@ -6,12 +6,10 @@ using Markdig.Syntax.Inlines;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
-using Serilog;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using Zarichney.Config;
 using Zarichney.Cookbook.Models;
-using ILogger = Serilog.ILogger;
 using Image = SixLabors.ImageSharp.Image;
 using Size = SixLabors.ImageSharp.Size;
 
@@ -24,10 +22,8 @@ public class PdfCompilerConfig : IConfig
   public string ImageDirectory { get; init; } = "temp";
 }
 
-public class PdfCompiler(PdfCompilerConfig config, IFileService fileService)
+public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILogger<PdfCompiler> logger)
 {
-  private readonly ILogger _log = Log.ForContext<PdfCompiler>();
-
   private readonly MarkdownPipeline _markdownPipeline = new MarkdownPipelineBuilder()
     .UseAdvancedExtensions()
     .UseAutoIdentifiers()
@@ -72,20 +68,20 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService)
   private async Task<string?> ProcessFirstValidImage(IEnumerable<string> imageUrls, string recipeTitle)
   {
     var urlList = imageUrls.ToList();
-    _log.Information("Attempting to process {Count} image URLs for recipe: {RecipeTitle}",
+    logger.LogInformation("Attempting to process {Count} image URLs for recipe: {RecipeTitle}",
       urlList.Count, recipeTitle);
 
     for (var i = 0; i < urlList.Count; i++)
     {
       var url = urlList[i];
-      _log.Information("Trying image URL {Index}/{Total} for {RecipeTitle}: {Url}",
+      logger.LogInformation("Trying image URL {Index}/{Total} for {RecipeTitle}: {Url}",
         i + 1, urlList.Count, recipeTitle, url);
 
       try
       {
         if (!IsValidImageUrl(url))
         {
-          _log.Warning("Invalid image URL format at index {Index} for {RecipeTitle}: {Url}",
+          logger.LogWarning("Invalid image URL format at index {Index} for {RecipeTitle}: {Url}",
             i, recipeTitle, url);
           continue;
         }
@@ -93,19 +89,19 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService)
         var imagePath = await ProcessImage(url, recipeTitle);
         if (!string.IsNullOrEmpty(imagePath))
         {
-          _log.Information("Successfully processed image {Index}/{Total} for {RecipeTitle}",
+          logger.LogInformation("Successfully processed image {Index}/{Total} for {RecipeTitle}",
             i + 1, urlList.Count, recipeTitle);
           return imagePath;
         }
       }
       catch (Exception ex)
       {
-        _log.Warning(ex, "Failed to process image URL {Index}/{Total} for {RecipeTitle}: {Url}",
+        logger.LogWarning(ex, "Failed to process image URL {Index}/{Total} for {RecipeTitle}: {Url}",
           i + 1, urlList.Count, recipeTitle, url);
       }
     }
 
-    _log.Warning("No valid images found for recipe: {RecipeTitle} after trying {Count} URLs",
+    logger.LogWarning("No valid images found for recipe: {RecipeTitle} after trying {Count} URLs",
       recipeTitle, urlList.Count);
     return null;
   }
@@ -127,7 +123,7 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService)
       }
       catch (Exception ex)
       {
-        _log.Warning(ex, "Invalid data URL format");
+        logger.LogWarning(ex, "Invalid data URL format");
         return false;
       }
     }
@@ -144,19 +140,19 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService)
 
       if (url.StartsWith("data:image/"))
       {
-        _log.Information("Processing data URL image for {FileName}", fileName);
+        logger.LogInformation("Processing data URL image for {FileName}", fileName);
         var base64Data = url.Split(',')[1];
         imageBytes = Convert.FromBase64String(base64Data);
       }
       else if (url.StartsWith("http://") || url.StartsWith("https://"))
       {
-        _log.Information("Downloading image from URL for {FileName}", fileName);
+        logger.LogInformation("Downloading image from URL for {FileName}", fileName);
         using var httpClient = new HttpClient();
         imageBytes = await httpClient.GetByteArrayAsync(url);
       }
       else
       {
-        _log.Error("Unsupported image URL scheme for {FileName}: {Url}", fileName, url);
+        logger.LogError("Unsupported image URL scheme for {FileName}: {Url}", fileName, url);
         return string.Empty;
       }
 
@@ -167,7 +163,7 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService)
 
       var outputPath = Path.Combine(
         config.ImageDirectory,
-        $"{FileService.SanitizeFileName(fileName)}_{Guid.NewGuid():N}.jpg"
+        $"{FileService.SanitizeFileName(fileName)}_{Utils.GenerateId()}.jpg"
       );
 
       using (var image = Image.Load(imageBytes))
@@ -192,12 +188,12 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService)
         await fileService.CreateFile(outputPath, image, "image/jpeg");
       }
 
-      _log.Information("Image processed successfully: {FileName}", outputPath);
+      logger.LogInformation("Image processed successfully: {FileName}", outputPath);
       return outputPath;
     }
     catch (Exception ex)
     {
-      _log.Error(ex, "Failed to process image for recipe: {FileName}. URL: {Url}", fileName, url);
+      logger.LogError(ex, "Failed to process image for recipe: {FileName}. URL: {Url}", fileName, url);
       return string.Empty;
     }
   }
@@ -217,7 +213,7 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService)
       }
       catch (Exception ex)
       {
-        _log.Warning(ex, "Error cleaning up image: {FileName}", fileName);
+        logger.LogWarning(ex, "Error cleaning up image: {FileName}", fileName);
       }
     }
 

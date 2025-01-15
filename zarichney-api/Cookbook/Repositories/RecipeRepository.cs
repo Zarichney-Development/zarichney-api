@@ -1,32 +1,33 @@
 using System.Collections.Concurrent;
 using AutoMapper;
-using Serilog;
 using Zarichney.Cookbook.Models;
 using Zarichney.Cookbook.Prompts;
+using Zarichney.Cookbook.Services;
 using Zarichney.Services;
-using ILogger = Serilog.ILogger;
+using Zarichney.Services.Sessions;
 
-namespace Zarichney.Cookbook.Services;
+namespace Zarichney.Cookbook.Repositories;
 
 public interface IRecipeRepository
 {
   Task InitializeAsync();
   Task<List<Recipe>> SearchRecipes(string? query);
-  Task AddUpdateRecipes(List<Recipe> recipes);
+  void AddUpdateRecipesAsync(List<Recipe> recipes);
   bool ContainsRecipe(string recipeId);
 }
 
-public class RecipeRepository(
-  IServiceProvider serviceProvider,
+public class RecipeFileRepository(
   RecipeConfig config,
   IFileService fileService,
   IMapper mapper,
   CleanRecipePrompt cleanRecipePrompt,
-  RecipeNamerPrompt recipeNamerPrompt)
+  RecipeNamerPrompt recipeNamerPrompt,
+  IBackgroundWorker worker,
+  ISessionManager sessionManager,
+  ILogger<RecipeFileRepository> logger
+)
   : IRecipeRepository
 {
-  private readonly ILogger _log = Log.ForContext<RecipeRepository>();
-
   private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Recipe>> _recipes =
     new(StringComparer.OrdinalIgnoreCase);
 
@@ -44,10 +45,10 @@ public class RecipeRepository(
     {
       if (_isInitialized) return;
 
-      _log.Information("Initializing RecipeRepository...");
+      logger.LogInformation("Initializing RecipeRepository...");
       await LoadRecipesAsync();
       _isInitialized = true;
-      _log.Information("RecipeRepository initialized successfully.");
+      logger.LogInformation("RecipeRepository initialized successfully.");
     }
     finally
     {
@@ -60,30 +61,32 @@ public class RecipeRepository(
     try
     {
       var recipeFiles = fileService.GetFiles(config.OutputDirectory);
-      _log.Information("Found {count} recipe files.", recipeFiles.Length);
+      logger.LogInformation("Found {count} recipe files.", recipeFiles.Length);
 
-      var loadTasks = recipeFiles.Select(async file =>
-      {
-        var fileName = Path.GetFileNameWithoutExtension(file);
-        try
+      var loadTasks = recipeFiles
+        .Where(fileName => fileName == "Data/Recipes\\Banana_Bread.json")
+        .Select(async file =>
         {
-          var recipes = await fileService.ReadFromFile<List<Recipe>>(config.OutputDirectory, fileName);
-          foreach (var recipe in recipes)
+          var fileName = Path.GetFileNameWithoutExtension(file);
+          try
           {
-            AddRecipeToRepository(recipe);
+            var recipes = await fileService.ReadFromFile<List<Recipe>>(config.OutputDirectory, fileName);
+            foreach (var recipe in recipes)
+            {
+              AddRecipeToRepository(recipe);
+            }
           }
-        }
-        catch (Exception ex)
-        {
-          _log.Error(ex, "Error loading recipes from file: {FileName}", fileName);
-        }
-      });
+          catch (Exception ex)
+          {
+            logger.LogError(ex, "Error loading recipes from file: {FileName}", fileName);
+          }
+        });
 
       await Task.WhenAll(loadTasks);
     }
     catch (Exception ex)
     {
-      _log.Error(ex, "Error loading recipes");
+      logger.LogError(ex, "Error loading recipes");
       throw;
     }
   }
@@ -99,7 +102,7 @@ public class RecipeRepository(
     {
       if (string.IsNullOrEmpty(recipe.RecipeUrl))
       {
-        _log.Warning("Recipe with missing ID and URL cannot be added.");
+        logger.LogWarning("Recipe with missing ID and URL cannot be added.");
         return;
       }
 
@@ -126,7 +129,7 @@ public class RecipeRepository(
   {
     if (!_isInitialized)
     {
-      _log.Warning("Attempting to search before initialization. Initializing now.");
+      logger.LogWarning("Attempting to search before initialization. Initializing now.");
       await InitializeAsync();
     }
 
@@ -135,7 +138,7 @@ public class RecipeRepository(
       throw new ArgumentException("Search query cannot be empty", nameof(query));
     }
 
-    _log.Information("Looking up repository for recipes matching query: {Query}", query);
+    logger.LogInformation("Looking up repository for recipes matching query: {Query}", query);
 
     return await Task.Run(() =>
     {
@@ -167,66 +170,67 @@ public class RecipeRepository(
         .OrderByDescending(r => CalculateRelevanceScore(r, query))
         .ToList();
 
-      _log.Information("Found {count} recipes matching query: {query}", recipes.Count, query);
+      logger.LogInformation("Found {count} recipes matching query: {query}", recipes.Count, query);
 
       return recipes;
     });
   }
 
-  public async Task AddUpdateRecipes(List<Recipe> recipes)
+  public void AddUpdateRecipesAsync(List<Recipe> recipes)
   {
-    await CleanUncleanedRecipesAsync(recipes);
-
-    // Process recipes and organize them into new files
-    var filesToWrite = new ConcurrentDictionary<string, ConcurrentBag<Recipe>>();
-
-    await Parallel.ForEachAsync(recipes, new ParallelOptions
+    // Process in the background, creating a new scope for this work
+    worker.QueueBackgroundWorkAsync(async (_, cancellationToken) =>
     {
-      MaxDegreeOfParallelism = config.MaxParallelTasks
-    }, async (recipe, _) =>
-    {
-      try
-      {
-        await IndexAndRenameRecipeAsync(recipe);
+      await CleanUncleanedRecipesAsync(recipes);
 
-        // Add to filesToWrite
-        var recipeBag = filesToWrite.GetOrAdd(recipe.IndexTitle!, _ => []);
-        recipeBag.Add(recipe);
-      }
-      catch (Exception ex)
+      // Process recipes and organize them into new files
+      var filesToWrite = new ConcurrentDictionary<string, ConcurrentBag<Recipe>>();
+
+      await sessionManager.ParallelForEachAsync(recipes, async (scope, recipe, _) =>
       {
-        _log.Error(ex, "Error processing recipe '{RecipeId}'", recipe.Id);
+        try
+        {
+          await IndexAndRenameRecipeAsync(scope, recipe);
+
+          // Add to filesToWrite
+          var recipeBag = filesToWrite.GetOrAdd(recipe.IndexTitle!, _ => []);
+          recipeBag.Add(recipe);
+        }
+        catch (Exception ex)
+        {
+          logger.LogError(ex, "Error processing recipe '{RecipeId}'", recipe.Id);
+        }
+      }, config.MaxParallelTasks, cancellationToken);
+
+      foreach (var (title, recipeBag) in filesToWrite)
+      {
+        var recipeList = recipeBag.ToList();
+
+        try
+        {
+          foreach (var recipe in recipeList)
+          {
+            AddRecipeToRepository(recipe);
+          }
+
+          var existingRecipes =
+            await fileService.ReadFromFile<List<Recipe>?>(config.OutputDirectory, title) ?? [];
+
+          var combinedRecipes = UpdateExistingRecipes(existingRecipes, recipeList);
+
+          fileService.WriteToFileAsync(config.OutputDirectory, title, combinedRecipes);
+        }
+        catch (Exception ex)
+        {
+          logger.LogError(ex, "Error writing recipes to file: {Title}", title);
+        }
       }
     });
-
-    foreach (var (title, recipeBag) in filesToWrite)
-    {
-      var recipeList = recipeBag.ToList();
-
-      try
-      {
-        foreach (var recipe in recipeList)
-        {
-          AddRecipeToRepository(recipe);
-        }
-
-        var existingRecipes =
-          await fileService.ReadFromFile<List<Recipe>?>(config.OutputDirectory, title) ?? [];
-
-        var combinedRecipes = UpdateExistingRecipes(existingRecipes, recipeList);
-
-        fileService.WriteToFileAsync(config.OutputDirectory, title, combinedRecipes);
-      }
-      catch (Exception ex)
-      {
-        _log.Error(ex, "Error writing recipes to file: {Title}", title);
-      }
-    }
   }
 
   private List<Recipe> UpdateExistingRecipes(List<Recipe> existingRecipes, List<Recipe> newRecipes)
   {
-    // Create a dictionary for existing recipes by Id
+    // Create a dictionary for existing recipes by ID
     var existingRecipesDict = existingRecipes.ToDictionary(r => r.Id!);
 
     foreach (var newRecipe in newRecipes)
@@ -234,9 +238,31 @@ public class RecipeRepository(
       var recipeId = newRecipe.Id!;
       if (existingRecipesDict.TryGetValue(recipeId, out var existingRecipe))
       {
-        // Update existing recipe with new data
-        existingRecipe.Relevancy = newRecipe.Relevancy;
-        existingRecipe.Cleaned = newRecipe.Cleaned || existingRecipe.Cleaned;
+        if (newRecipe.Relevancy.Count == 1)
+        {
+          // Scenario: newly scraped being added
+          // Merge the new entry into the existing dictionary
+          existingRecipe.Relevancy[newRecipe.Relevancy.Keys.First()] = newRecipe.Relevancy.Values.First();
+        }
+        else
+        {
+          // Scenario: The new one was pulled from storage, and a new ranking has been added
+          // Replace the existing entry with the new one
+          existingRecipe.Relevancy = newRecipe.Relevancy;
+        }
+
+        if (!existingRecipe.Cleaned && newRecipe.Cleaned)
+        {
+          existingRecipe.Title = newRecipe.Title;
+          existingRecipe.Description = newRecipe.Description;
+          existingRecipe.Ingredients = newRecipe.Ingredients;
+          existingRecipe.Servings = newRecipe.Servings;
+          existingRecipe.CookTime = newRecipe.CookTime;
+          existingRecipe.PrepTime = newRecipe.PrepTime;
+          existingRecipe.TotalTime = newRecipe.TotalTime;
+          existingRecipe.Notes = newRecipe.Notes;
+          existingRecipe.Cleaned = true;
+        }
       }
       else
       {
@@ -249,20 +275,20 @@ public class RecipeRepository(
     return existingRecipesDict.Values.ToList();
   }
 
-  private async Task IndexAndRenameRecipeAsync(Recipe recipe)
+  private async Task IndexAndRenameRecipeAsync(IScopeContainer scope, Recipe recipe)
   {
     if (string.IsNullOrEmpty(recipe.IndexTitle))
     {
       try
       {
-        var llmService = serviceProvider.GetRequiredService<ILlmService>();
+        var llmService = scope.GetService<ILlmService>();
         var result = await llmService.CallFunction<RenamerResult>(
           recipeNamerPrompt.SystemPrompt,
           recipeNamerPrompt.GetUserPrompt(recipe),
           recipeNamerPrompt.GetFunction()
         );
 
-        _log.Information("Received response from model for recipe {RecipeTitle}: {@Result}", recipe.Title,
+        logger.LogInformation("Received response from model for recipe {RecipeTitle}: {@Result}", recipe.Title,
           result);
 
         recipe.Aliases = result.Aliases.Select(a => a.Replace("Print Pin It", "").Trim()).ToList();
@@ -271,7 +297,7 @@ public class RecipeRepository(
       }
       catch (Exception ex)
       {
-        _log.Error(ex, "Error processing recipe '{RecipeId}'", recipe.Id);
+        logger.LogError(ex, "Error processing recipe '{RecipeId}'", recipe.Id);
       }
     }
   }
@@ -285,9 +311,9 @@ public class RecipeRepository(
       return 0.8;
     if (recipe.Aliases.Any(a => a.Equals(query, StringComparison.OrdinalIgnoreCase)))
       return 0.6;
-    if (recipe.Aliases.Any(a => a.Contains(query, StringComparison.OrdinalIgnoreCase)))
-      return 0.4;
-    return 0.2; // Fallback score for partial matches
+    return recipe.Aliases.Any(a => a.Contains(query, StringComparison.OrdinalIgnoreCase))
+      ? 0.4
+      : 0.2; // Fallback score for partial matches
   }
 
   private async Task CleanUncleanedRecipesAsync(List<Recipe> recipes)
@@ -314,26 +340,24 @@ public class RecipeRepository(
 
     var cleanedRecipes = new ConcurrentBag<Recipe>();
 
-    await Parallel.ForEachAsync(
-      recipes,
-      new ParallelOptions { MaxDegreeOfParallelism = config.MaxParallelTasks },
-      async (recipe, _) =>
+    await sessionManager.ParallelForEachAsync(recipes, async (scope, recipe, _) =>
       {
         try
         {
-          var cleanedRecipe = await CleanRecipeData(recipe);
+          var cleanedRecipe = await CleanRecipeData(scope, recipe);
           cleanedRecipes.Add(cleanedRecipe);
         }
         catch (Exception ex)
         {
-          _log.Error(ex, "Error cleaning recipe with Id: {RecipeId}", recipe.Id);
+          logger.LogError(ex, "Error cleaning recipe with Id: {RecipeId}", recipe.Id);
         }
-      });
+      },
+      config.MaxParallelTasks);
 
     return cleanedRecipes.ToList();
   }
 
-  private async Task<Recipe> CleanRecipeData(Recipe recipe)
+  private async Task<Recipe> CleanRecipeData(IScopeContainer scope, Recipe recipe)
   {
     if (recipe.Cleaned)
     {
@@ -342,15 +366,16 @@ public class RecipeRepository(
 
     try
     {
-      var llmService = serviceProvider.GetRequiredService<ILlmService>();
+      var llmService = scope.GetService<ILlmService>();
       var cleanedRecipe = await llmService.CallFunction<CleanedRecipe>(
         cleanRecipePrompt.SystemPrompt,
         cleanRecipePrompt.GetUserPrompt(recipe),
         cleanRecipePrompt.GetFunction(),
+        null,
         1 // Don't retry
       );
 
-      _log.Information("Cleaned recipe data: {@CleanedRecipe}", cleanedRecipe);
+      logger.LogInformation("Cleaned recipe data: {@CleanedRecipe}", cleanedRecipe);
 
       // Create a new Recipe instance
       var newRecipe = mapper.Map<Recipe>(cleanedRecipe);
@@ -365,11 +390,11 @@ public class RecipeRepository(
     }
     catch (OpenAiContentFilterException ex)
     {
-      _log.Warning(ex, "Unable to clean recipe data due to getting flagged by content filtering");
+      logger.LogWarning(ex, "Unable to clean recipe data due to getting flagged by content filtering");
     }
     catch (Exception ex)
     {
-      _log.Error(ex, "Error cleaning recipe data: {Message}", ex.Message);
+      logger.LogError(ex, "Error cleaning recipe data: {Message}", ex.Message);
     }
 
     // Return the original recipe

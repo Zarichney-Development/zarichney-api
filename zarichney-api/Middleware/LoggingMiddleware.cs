@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using Serilog;
+using Zarichney.Services.Sessions;
 using ILogger = Serilog.ILogger;
 
 namespace Zarichney.Middleware;
@@ -26,10 +27,13 @@ public class RequestResponseLoggerMiddleware(RequestDelegate next, IOptions<Requ
       return;
     }
 
-    var requestId = Guid.NewGuid().ToString("N").Substring(0, 5);
+    var scopeContainer = context.Features.Get<IScopeContainer>();
+    var scopeId = scopeContainer?.Id;
+    var sessionId = scopeContainer?.SessionId;
 
     // Replace the current logger in the logging context
-    using (Serilog.Context.LogContext.PushProperty("RequestId", requestId))
+    using (Serilog.Context.LogContext.PushProperty("ScopeId", scopeId))
+    using (Serilog.Context.LogContext.PushProperty("SessionId", sessionId))
     {
       if (_options.LogRequests)
       {

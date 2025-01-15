@@ -12,20 +12,11 @@ public class ApiKeyAuthMiddleware(
 {
   private const string ApiKeyHeader = "X-Api-Key";
 
-  // Paths that don't require authentication
-  private static readonly HashSet<string> BypassPaths = new(StringComparer.OrdinalIgnoreCase)
-  {
-    "/api/health",
-    "/api/key/validate"
-  };
-
   public async Task InvokeAsync(HttpContext context)
   {
     var path = context.Request.Path.Value ?? string.Empty;
 
-    // Check if the path should bypass authentication
-    if (BypassPaths.Any(bypassPath => path.Equals(bypassPath, StringComparison.OrdinalIgnoreCase) ||
-                                      path.StartsWith("/api/swagger", StringComparison.OrdinalIgnoreCase)))
+    if (MiddlewareConfiguration.Routes.ShouldBypass(path))
     {
       await next(context);
       return;

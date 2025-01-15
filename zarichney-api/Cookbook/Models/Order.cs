@@ -32,16 +32,13 @@ public class CookbookOrder : CookbookOrderSubmission
 
   public CookbookOrder(CookbookOrderSubmission submission, List<string> recipeList)
   {
-    OrderId = GenerateOrderId();
+    OrderId = Utils.GenerateId();
     Email = submission.Email;
     CookbookContent = submission.CookbookContent;
     CookbookDetails = submission.CookbookDetails;
     UserDetails = submission.UserDetails;
     RecipeList = recipeList;
   }
-
-  private string GenerateOrderId()
-    => Guid.NewGuid().ToString()[..8];
 
   public string OrderId { get; set; } = null!;
   public List<string> RecipeList { get; set; } = null!;

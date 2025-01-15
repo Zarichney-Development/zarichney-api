@@ -1,26 +1,27 @@
 using Microsoft.AspNetCore.Mvc;
-using Serilog;
 using Zarichney.Cookbook.Models;
+using Zarichney.Cookbook.Repositories;
 using Zarichney.Cookbook.Services;
 using Zarichney.Middleware;
 using Zarichney.Services;
-using ILogger = Serilog.ILogger;
+using Zarichney.Services.Sessions;
 
 namespace Zarichney.Controllers;
 
 [ApiController]
 [Route("api")]
 public class CookbookController(
-  RecipeService recipeService,
-  OrderService orderService,
+  IRecipeService recipeService,
+  IOrderService orderService,
   IEmailService emailService,
-  IBackgroundTaskQueue taskQueue,
+  IBackgroundWorker worker,
   IRecipeRepository recipeRepository,
-  WebScraperService scraperService
+  WebScraperService scraperService,
+  IScopeContainer scope,
+  ISessionManager sessionManager,
+  ILogger<CookbookController> logger
 ) : ControllerBase
 {
-  private readonly ILogger _log = Log.ForContext<ApiController>();
-
   [HttpPost("cookbook")]
   [ProducesResponseType(typeof(CookbookOrder), StatusCodes.Status201Created)]
   [ProducesResponseType(typeof(BadRequestObjectResult), StatusCodes.Status400BadRequest)]
@@ -32,40 +33,32 @@ public class CookbookController(
       // reject if no email
       if (string.IsNullOrWhiteSpace(submission.Email))
       {
-        _log.Warning("{Method}: No email provided in order", nameof(CreateCookbook));
+        logger.LogWarning("{Method}: No email provided in order", nameof(CreateCookbook));
         return BadRequest("Email is required");
       }
 
       await emailService.ValidateEmail(submission.Email);
-      var order = await orderService.ProcessOrderSubmission(submission);
+      var order = await orderService.ProcessSubmission(submission);
+      var orderId = order.OrderId;
 
       // Queue the cookbook generation task
-      _ = taskQueue.QueueBackgroundWorkItemAsync(async _ =>
+      worker.QueueBackgroundWorkAsync(async (newScope, _) =>
       {
-        try
-        {
-          await orderService.GenerateCookbookAsync(order, true);
-          await orderService.CompilePdf(order);
-          await orderService.EmailCookbook(order.OrderId);
-        }
-        catch (Exception ex)
-        {
-          _log.Error(ex, "{Method}: Background processing failed for order {OrderId}",
-            nameof(CreateCookbook), order.OrderId);
-        }
+        var backgroundOrderService = newScope.GetService<IOrderService>();
+        await backgroundOrderService.ProcessOrder(orderId);
       });
 
       return Created($"/api/cookbook/order/{order.OrderId}", order);
     }
     catch (InvalidEmailException ex)
     {
-      _log.Warning(ex, "{Method}: Invalid email validation for {Email}",
+      logger.LogWarning(ex, "{Method}: Invalid email validation for {Email}",
         nameof(CreateCookbook), submission.Email);
       return BadRequest(new { error = ex.Message, email = ex.Email, reason = ex.Reason.ToString() });
     }
     catch (Exception ex)
     {
-      _log.Error(ex, "{Method}: Failed to create cookbook", nameof(CreateCookbook));
+      logger.LogError(ex, "{Method}: Failed to create cookbook", nameof(CreateCookbook));
       return new ApiErrorResult(ex, $"{nameof(CreateCookbook)}: Failed to create cookbook");
     }
   }
@@ -78,17 +71,21 @@ public class CookbookController(
   {
     try
     {
+      var session = await sessionManager.GetSessionByOrder(orderId, scope.Id);
+      session.Duration = TimeSpan.FromSeconds(30);
+      session.ExpiresImmediately = false;
+      
       var order = await orderService.GetOrder(orderId);
       return Ok(order);
     }
     catch (KeyNotFoundException ex)
     {
-      _log.Warning(ex, "{Method}: Order not found: {OrderId}", nameof(GetOrder), orderId);
+      logger.LogWarning(ex, "{Method}: Order not found: {OrderId}", nameof(GetOrder), orderId);
       return NotFound($"Order not found: {orderId}");
     }
     catch (Exception ex)
     {
-      _log.Error(ex, "{Method}: Failed to retrieve order {OrderId}", nameof(GetOrder), orderId);
+      logger.LogError(ex, "{Method}: Failed to retrieve order {OrderId}", nameof(GetOrder), orderId);
       return new ApiErrorResult(ex, $"{nameof(GetOrder)}: Failed to retrieve order");
     }
   }
@@ -97,31 +94,30 @@ public class CookbookController(
   [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(NotFoundResult), StatusCodes.Status404NotFound)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  public async Task<IActionResult> ReprocessOrder([FromRoute] string orderId)
+  public IActionResult ReprocessOrder([FromRoute] string orderId)
   {
     try
     {
-      var order = await orderService.GetOrder(orderId);
-
+      // TODO: add order Id validation and throw KeyNotFoundException if not found
+      
       // Queue the cookbook generation task
-      _ = taskQueue.QueueBackgroundWorkItemAsync(async _ =>
+      worker.QueueBackgroundWorkAsync(async (newScope, _) =>
       {
-        await orderService.GenerateCookbookAsync(order, true);
-        await orderService.CompilePdf(order);
-        await orderService.EmailCookbook(order.OrderId);
+        var backgroundOrderService = newScope.GetService<IOrderService>();
+        await backgroundOrderService.ProcessOrder(orderId);
       });
 
       return Ok("Reprocessing order");
     }
     catch (KeyNotFoundException ex)
     {
-      _log.Warning(ex, "{Method}: Order not found for reprocessing: {OrderId}",
+      logger.LogWarning(ex, "{Method}: Order not found for reprocessing: {OrderId}",
         nameof(ReprocessOrder), orderId);
       return NotFound($"Order not found: {orderId}");
     }
     catch (Exception ex)
     {
-      _log.Error(ex, "{Method}: Failed to reprocess order {OrderId}",
+      logger.LogError(ex, "{Method}: Failed to reprocess order {OrderId}",
         nameof(ReprocessOrder), orderId);
       return new ApiErrorResult(ex, $"{nameof(ReprocessOrder)}: Failed to reprocess order");
     }
@@ -140,7 +136,7 @@ public class CookbookController(
     {
       if (string.IsNullOrWhiteSpace(orderId))
       {
-        _log.Warning("{Method}: Empty orderId received", nameof(RebuildPdf));
+        logger.LogWarning("{Method}: Empty orderId received", nameof(RebuildPdf));
         return BadRequest("OrderId parameter is required");
       }
 
@@ -158,13 +154,13 @@ public class CookbookController(
     }
     catch (KeyNotFoundException ex)
     {
-      _log.Warning(ex, "{Method}: Order not found for PDF rebuild: {OrderId}",
+      logger.LogWarning(ex, "{Method}: Order not found for PDF rebuild: {OrderId}",
         nameof(RebuildPdf), orderId);
       return NotFound($"Order not found: {orderId}");
     }
     catch (Exception ex)
     {
-      _log.Error(ex, "{Method}: Failed to rebuild PDF for order {OrderId}",
+      logger.LogError(ex, "{Method}: Failed to rebuild PDF for order {OrderId}",
         nameof(RebuildPdf), orderId);
       return new ApiErrorResult(ex, $"{nameof(RebuildPdf)}: Failed to rebuild PDF");
     }
@@ -183,13 +179,13 @@ public class CookbookController(
     }
     catch (KeyNotFoundException ex)
     {
-      _log.Warning(ex, "{Method}: Order not found for email resend: {OrderId}",
+      logger.LogWarning(ex, "{Method}: Order not found for email resend: {OrderId}",
         nameof(ResendCookbook), orderId);
       return NotFound($"Order not found: {orderId}");
     }
     catch (Exception ex)
     {
-      _log.Error(ex, "{Method}: Failed to resend email for order {OrderId}",
+      logger.LogError(ex, "{Method}: Failed to resend email for order {OrderId}",
         nameof(ResendCookbook), orderId);
       return new ApiErrorResult(ex, $"{nameof(ResendCookbook)}: Failed to resend cookbook email");
     }
@@ -206,7 +202,7 @@ public class CookbookController(
     {
       if (string.IsNullOrWhiteSpace(query))
       {
-        _log.Warning("{Method}: Empty query received", nameof(GetRecipes));
+        logger.LogWarning("{Method}: Empty query received", nameof(GetRecipes));
         return BadRequest("Query parameter is required");
       }
 
@@ -227,7 +223,7 @@ public class CookbookController(
     }
     catch (Exception ex)
     {
-      _log.Error(ex, "{Method}: Failed to get recipes for query: {Query}",
+      logger.LogError(ex, "{Method}: Failed to get recipes for query: {Query}",
         nameof(GetRecipes), query);
       return new ApiErrorResult(ex, $"{nameof(GetRecipes)}: Failed to retrieve recipes");
     }
@@ -247,11 +243,11 @@ public class CookbookController(
     {
       if (string.IsNullOrWhiteSpace(query))
       {
-        _log.Warning("{Method}: Empty query received", nameof(ScrapeRecipes));
+        logger.LogWarning("{Method}: Empty query received", nameof(ScrapeRecipes));
         return BadRequest("Query parameter is required");
       }
 
-      var recipes = await scraperService.ScrapeForRecipesAsync(query, site);
+      var recipes = await scraperService.ScrapeForRecipesAsync(query, null, site);
 
       if (recipes.ToList().Count == 0)
       {
@@ -270,13 +266,13 @@ public class CookbookController(
           recipes.Where(r => !recipeRepository.ContainsRecipe(r.Id!)), query);
 
       // Process in the background
-      _ = recipeRepository.AddUpdateRecipes(newRecipes);
+      recipeRepository.AddUpdateRecipesAsync(newRecipes);
 
       return Ok(newRecipes);
     }
     catch (Exception ex)
     {
-      _log.Error(ex, "{Method}: Failed to scrape recipes for query: {Query}",
+      logger.LogError(ex, "{Method}: Failed to scrape recipes for query: {Query}",
         nameof(ScrapeRecipes), query);
       return new ApiErrorResult(ex, $"{nameof(ScrapeRecipes)}: Failed to scrape recipes");
     }

@@ -4,18 +4,17 @@ using System.Security.Cryptography;
 using System.Text;
 using AngleSharp;
 using AngleSharp.Dom;
-using Serilog;
 using Zarichney.Config;
 using Zarichney.Cookbook.Models;
 using Zarichney.Cookbook.Prompts;
 using Zarichney.Services;
-using ILogger = Serilog.ILogger;
+using Zarichney.Services.Sessions;
 
 namespace Zarichney.Cookbook.Services;
 
 public class WebscraperConfig : IConfig
 {
-  public int MaxNumRecipesPerSite { get; init; } = 3;
+  public int MaxNumResultsPerQuery { get; init; } = 3;
   public int MaxParallelTasks { get; init; } = 5;
   public int MaxParallelSites { get; init; } = 5;
   public int MaxWaitTimeMs { get; init; } = 10000;
@@ -24,123 +23,136 @@ public class WebscraperConfig : IConfig
 
 public class WebScraperService(
   WebscraperConfig config,
+  RecipeConfig recipeConfig,
   ChooseRecipesPrompt chooseRecipesPrompt,
   ILlmService llmService,
   IFileService fileService,
-  IBrowserService browserService
+  IBrowserService browserService,
+  ISessionManager sessionManager,
+  ILogger<WebScraperService> logger
 )
 {
-  private readonly ILogger _log = Log.ForContext<WebScraperService>();
-
   private static Dictionary<string, Dictionary<string, string>>? _siteSelectors;
   private static Dictionary<string, Dictionary<string, string>>? _siteTemplates;
 
-  internal async Task<List<ScrapedRecipe>> ScrapeForRecipesAsync(string query, string? targetSite = null)
+  internal async Task<List<ScrapedRecipe>> ScrapeForRecipesAsync(string query, int? acceptableScore = null,
+    string? targetSite = null)
   {
-    // Pulls the list of sites from config with their selectors
     await LoadSiteSelectors();
 
-    var sitesToProcess = _siteSelectors!
-      .Where(site => string.IsNullOrEmpty(targetSite) || site.Key == targetSite);
+    var sitesToProcess = GetSitesToProcess(targetSite);
+    var urlsBySite = await CollectUrlsFromAllSitesAsync(sitesToProcess, query);
 
-    var allSiteRecipes = new ConcurrentBag<KeyValuePair<string, List<ScrapedRecipe>>>();
+    if (urlsBySite.Count == 0)
+    {
+      logger.LogInformation("No recipe URLs found for query: {query}", query);
+      return [];
+    }
 
-    await Parallel.ForEachAsync(sitesToProcess,
-      new ParallelOptions { MaxDegreeOfParallelism = config.MaxParallelSites },
-      async (site, _) =>
+    var rankedUrls = await RankUrlsByRelevanceAsync(urlsBySite, query, acceptableScore);
+    var recipes = await ScrapeRecipesInParallelAsync(rankedUrls, query);
+    logger.LogInformation("Web scraped a total of {count} recipes for {query}", recipes.Count, query);
+
+    return recipes;
+  }
+
+  /// <summary>
+  /// Gets the sites to process based on the optional target site
+  /// </summary>
+  private IEnumerable<KeyValuePair<string, Dictionary<string, string>>> GetSitesToProcess(string? targetSite)
+  {
+    return _siteSelectors!.Where(site =>
+      string.IsNullOrEmpty(targetSite) || site.Key == targetSite);
+  }
+
+  /// <summary>
+  /// Collects recipe URLs from all sites in parallel
+  /// </summary>
+  private async Task<Dictionary<string, List<string>>> CollectUrlsFromAllSitesAsync(
+    IEnumerable<KeyValuePair<string, Dictionary<string, string>>> sitesToProcess,
+    string query)
+  {
+    var urlsBySite = new ConcurrentDictionary<string, List<string>>();
+
+    await sessionManager.ParallelForEachAsync(sitesToProcess, async (_, site, _) =>
       {
         try
         {
-          // Use the search page of each site to collect urls for recipe pages
-          var recipeUrls = await SearchSiteForRecipeUrls(site.Key, query);
-
-          if (recipeUrls.Count > 0)
+          var urls = await SearchSiteForRecipeUrls(site.Key, query);
+          if (urls.Count > 0)
           {
-            // Rank and filter down search results using LLM to return the most relevant URLs in respect to max per site
-            var relevantUrls = await SelectMostRelevantUrls(site.Key, recipeUrls, query);
-
-            if (relevantUrls.Count > 0)
-            {
-              // Use the site's selectors to extract the text from the html and return the data
-              var scrapedRecipes = await ScrapeSiteForRecipesAsync(site.Key, relevantUrls, query);
-
-              allSiteRecipes.Add(new KeyValuePair<string, List<ScrapedRecipe>>(site.Key, scrapedRecipes));
-            }
-          }
-          else
-          {
-            _log.Debug("No recipes found for {query} on site {site}", query, site.Key);
+            urlsBySite.TryAdd(site.Key, urls);
           }
         }
         catch (Exception ex)
         {
-          _log.Error(ex, $"Error scraping recipes from site: {site.Key}");
+          logger.LogError(ex, "Error collecting URLs from site: {site}", site.Key);
         }
-      });
+      },
+      config.MaxParallelSites);
 
-    // Sort all recipes by the top choice from each site before going through the next best choice
-    var allRecipes = InterleaveRecipes(allSiteRecipes);
-
-    _log.Information("Web scraped a total of {count} recipes for {query}", allRecipes.Count, query);
-
-    return allRecipes;
+    return new Dictionary<string, List<string>>(urlsBySite);
   }
 
   /// <summary>
-  /// Flattens the results from each site into ranked single list
+  /// Filters all collected URLs for relevance in a single batch
   /// </summary>
-  /// <param name="allSiteRecipes">The collection of scraped recipe</param>
-  /// <returns>A single list, ordered by each site's top choices</returns>
-  private static List<ScrapedRecipe> InterleaveRecipes(
-    ConcurrentBag<KeyValuePair<string, List<ScrapedRecipe>>> allSiteRecipes)
+  private async Task<List<(string SiteKey, string Url)>> RankUrlsByRelevanceAsync(
+    Dictionary<string, List<string>> urlsBySite, string query, int? acceptableScore)
   {
-    // Pre-calculate the total capacity needed to avoid resizing
-    var totalCapacity = allSiteRecipes.Sum(kvp => kvp.Value.Count);
-    var recipeLists = new List<ScrapedRecipe>(totalCapacity);
+    // Combine all URLs while maintaining site information
+    var allUrlsWithSites = urlsBySite
+      .SelectMany(kvp => kvp.Value.Select(url => (SiteKey: kvp.Key, Url: url)))
+      .ToList();
 
-    // Convert ConcurrentBag to array once for better performance
-    var allRecipes = allSiteRecipes.Select(kvp => kvp.Value).ToArray();
+    var relevantUrls =
+      await SelectMostRelevantUrls(allUrlsWithSites.Select(x => x.Url).ToList(), query, acceptableScore);
 
-    if (allRecipes.Length == 0)
-      return recipeLists;
-
-    // Use Span<T> for better performance when accessing arrays
-    var currentIndices = allRecipes.Length <= 1000
-      ? stackalloc int[allRecipes.Length]
-      : new int[allRecipes.Length];
-
-    // Track remaining items for early termination
-    var remainingItems = totalCapacity;
-
-    while (remainingItems > 0)
-    {
-      var addedInRound = false;
-
-      for (var siteIndex = 0; siteIndex < allRecipes.Length; siteIndex++)
-      {
-        var currentIndex = currentIndices[siteIndex];
-        var recipeList = allRecipes[siteIndex];
-
-        if (currentIndex < recipeList.Count)
-        {
-          recipeLists.Add(recipeList[currentIndex]);
-          currentIndices[siteIndex]++;
-          remainingItems--;
-          addedInRound = true;
-        }
-      }
-
-      // If no items were added in this round, we're done
-      if (!addedInRound)
-        break;
-    }
-
-    return recipeLists;
+    // Regroup relevant URLs by site
+    return relevantUrls
+      .Select(url => allUrlsWithSites.First(x => x.Url == url))
+      .ToList();
   }
 
-  private async Task<List<string>> SelectMostRelevantUrls(string site, List<string> recipeUrls, string? query)
+  /// <summary>
+  /// Scrapes recipes from the filtered relevant URLs
+  /// </summary>
+  private async Task<List<ScrapedRecipe>> ScrapeRecipesInParallelAsync(
+    List<(string SiteKey, string Url)> rankedUrls,
+    string query)
   {
-    if (recipeUrls.Count <= config.MaxNumRecipesPerSite)
+    var recipes = new ConcurrentDictionary<int, ScrapedRecipe>();
+
+    await sessionManager.ParallelForEachAsync(rankedUrls.Select((url, index) => (url.SiteKey, url.Url, Index: index)),
+      async (_, item, _) =>
+      {
+        try
+        {
+          // Scrape single URL
+          var scrapedRecipes = await ScrapeSiteForRecipesAsync(item.SiteKey, [item.Url], query);
+
+          if (scrapedRecipes.Count > 0)
+          {
+            recipes.TryAdd(item.Index, scrapedRecipes[0]);
+          }
+        }
+        catch (Exception ex)
+        {
+          logger.LogError(ex, "Error scraping recipe from {site}: {url}", item.SiteKey, item.Url);
+        }
+      },
+      config.MaxParallelSites);
+
+    // Return recipes in original relevancy order
+    return recipes
+      .OrderBy(kvp => kvp.Key)
+      .Select(kvp => kvp.Value)
+      .ToList();
+  }
+
+  private async Task<List<string>> SelectMostRelevantUrls(List<string> recipeUrls, string? query, int? acceptableScore)
+  {
+    if (recipeUrls.Count <= config.MaxNumResultsPerQuery)
     {
       return recipeUrls;
     }
@@ -149,7 +161,12 @@ public class WebScraperService(
     {
       var result = await llmService.CallFunction<SearchResult>(
         chooseRecipesPrompt.SystemPrompt,
-        chooseRecipesPrompt.GetUserPrompt(query, recipeUrls, config.MaxNumRecipesPerSite),
+        chooseRecipesPrompt.GetUserPrompt(
+          query,
+          recipeUrls,
+          config.MaxNumResultsPerQuery,
+          acceptableScore ?? recipeConfig.AcceptableScoreThreshold
+        ),
         chooseRecipesPrompt.GetFunction()
       );
 
@@ -161,7 +178,7 @@ public class WebScraperService(
       }
 
       var selectedUrls = recipeUrls.Where((_, index) => indices.Contains(index + 1)).ToList();
-      _log.Information("Selected {count} URLs for {query} on {site}", selectedUrls.Count, query, site);
+      logger.LogInformation("Selected {count} URLs for {query}", selectedUrls.Count, query);
 
       if (selectedUrls.Count == 0)
       {
@@ -172,7 +189,7 @@ public class WebScraperService(
     }
     catch (Exception ex)
     {
-      _log.Error(ex, "Error selecting URLs for {query} on {site}. Urls: {@Urls}", query, site, recipeUrls);
+      logger.LogError(ex, "Error selecting URLs for {query}. Urls: {@Urls}", query, recipeUrls);
     }
 
     return recipeUrls;
@@ -205,11 +222,11 @@ public class WebScraperService(
 
     if (recipeUrls.Count == 0)
     {
-      _log.Information("No search results found for '{query}' on site {site}", query, site);
+      logger.LogInformation("No search results found for '{query}' on site {site}", query, site);
       return [];
     }
 
-    _log.Information("Returned {count} search results for recipe '{query}' on site: {site}", recipeUrls.Count,
+    logger.LogInformation("Returned {count} search results for recipe '{query}' on site: {site}", recipeUrls.Count,
       query, site);
     return recipeUrls;
   }
@@ -221,7 +238,7 @@ public class WebScraperService(
 
     if (string.IsNullOrEmpty(html))
     {
-      _log.Warning("Failed to retrieve HTML content for URL: {url}", url);
+      logger.LogWarning("Failed to retrieve HTML content for URL: {url}", url);
       return [];
     }
 
@@ -241,16 +258,12 @@ public class WebScraperService(
     string? query)
   {
     var scrapedRecipes = new ConcurrentBag<ScrapedRecipe>();
-    var amountToScrape = Math.Min(recipeUrls.Count, config.MaxNumRecipesPerSite);
 
-    _log.Information("Scraping {count} recipes from site '{site}' for recipe '{recipe}'",
-      amountToScrape, site, query);
+    logger.LogInformation("Scraping {count} recipes from site '{site}' for recipe '{recipe}'",
+      recipeUrls.Count, site, query);
 
-    var urlsToProcess = recipeUrls.Take(amountToScrape);
-
-    await Parallel.ForEachAsync(urlsToProcess,
-      new ParallelOptions { MaxDegreeOfParallelism = config.MaxParallelTasks },
-      async (url, _) =>
+    await sessionManager.ParallelForEachAsync(recipeUrls,
+      async (_, url, _) =>
       {
         try
         {
@@ -263,20 +276,22 @@ public class WebScraperService(
 
           try
           {
-            _log.Information("Scraping {recipe} recipe from {url}", query, url);
+            logger.LogInformation("Scraping {recipe} recipe from {url}", query, url);
             var recipe = await ParseRecipeFromSite(fullUrl, _siteSelectors![site]);
             scrapedRecipes.Add(recipe);
           }
           catch (Exception ex)
           {
-            _log.Warning(ex, $"Error parsing recipe from URL: {fullUrl}");
+            logger.LogWarning(ex, $"Error parsing recipe from URL: {fullUrl}");
           }
         }
         catch (Exception ex)
         {
-          _log.Error(ex, $"Error in scraping URL: {url}");
+          logger.LogError(ex, $"Error in scraping URL: {url}");
         }
-      });
+      },
+      config.MaxParallelTasks
+    );
 
     return scrapedRecipes.ToList();
   }
@@ -301,7 +316,7 @@ public class WebScraperService(
     }
     catch (Exception)
     {
-      _log.Debug("No image found for {url}", url);
+      logger.LogDebug("No image found for {url}", url);
     }
 
     return new ScrapedRecipe
@@ -352,7 +367,7 @@ public class WebScraperService(
     }
     catch (Exception e)
     {
-      _log.Error(e, $"Error occurred with selector {selector} during extract_text");
+      logger.LogError(e, $"Error occurred with selector {selector} during extract_text");
     }
 
     return null;
@@ -362,7 +377,7 @@ public class WebScraperService(
   {
     try
     {
-      _log.Information("Running GET request for URL: {url}", url);
+      logger.LogInformation("Running GET request for URL: {url}", url);
 
       // Create an HttpClientHandler with automatic decompression
       var handler = new HttpClientHandler
@@ -389,15 +404,15 @@ public class WebScraperService(
     }
     catch (HttpRequestException e)
     {
-      _log.Warning(e, "HTTP error occurred for url {urL}", url);
+      logger.LogWarning(e, "HTTP error occurred for url {urL}", url);
     }
     catch (TaskCanceledException e)
     {
-      _log.Warning(e, "Timeout occurred for url {urL}", url);
+      logger.LogWarning(e, "Timeout occurred for url {urL}", url);
     }
     catch (Exception e)
     {
-      _log.Warning(e, "Error occurred during GetHtmlAsync for url {urL}", url);
+      logger.LogWarning(e, "Error occurred during GetHtmlAsync for url {urL}", url);
     }
 
     return null!;

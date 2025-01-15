@@ -27,9 +27,9 @@ public class RankRecipePrompt : PromptBase
 
   public override string Model => LlmModels.Gpt4Omini;
 
-  public string GetUserPrompt(Recipe recipe, string? query) =>
+  public string GetUserPrompt(Recipe recipe, string query, string? query2) =>
     $"""
-     Query: '{query}'
+     Query: '{query}' {(string.IsNullOrEmpty(query2) ? "" : $"or '{query2}'")}
 
      Recipe data:
      ```json

@@ -19,14 +19,25 @@ public class ChooseRecipesPrompt : PromptBase
     4. If URLs do not contain meaningful context (e.g., only recipe IDs), select the first n URLs as specified in the user prompt.
     5. The number of URLs to select will be specified in the user prompt.
     6. Return only the indices of the selected URLs, up to the requested amount.
-    Your response should be a list of indices corresponding to the selected URLs.
+    
+    Use the follow guidelines to define your criteria for relevancy using a score from 0 to 100, where:
+       - 0: The recipe url is for something else.
+       - 1-29: The recipe url is not relevant.
+       - 30-49: Somewhat relevant to the query.
+       - 50-69: This recipe is similar enough.
+       - 70-79: Relevant.
+       - 80-99: This recipe is expected to be a top search results.
+       - 100: Perfect match, exactly the same.
+       
+    Respond with a ranked list of indices corresponding to the selected URLs.
     """;
 
-  public string GetUserPrompt(string? query, List<string> urls, int count)
+  public string GetUserPrompt(string? query, List<string> urls, int count, int acceptableScore)
   {
     var urlList = string.Join("\n", urls.Select((url, index) => $"{index + 1}. {url}"));
     return $"""
             Query: '{query}'
+            Acceptable Score: '{acceptableScore}'
 
             URLs:
             {urlList}

@@ -8,7 +8,7 @@ using Zarichney.Config;
 using Zarichney.Cookbook.Models;
 using Zarichney.Cookbook.Prompts;
 using Zarichney.Services;
-using ILogger = Serilog.ILogger;
+using Zarichney.Services.Sessions;
 
 namespace Zarichney.Cookbook.Services;
 
@@ -19,20 +19,31 @@ public class OrderConfig : IConfig
   public string OutputDirectory { get; init; } = "Orders";
 }
 
+public interface IOrderService
+{
+  Task<CookbookOrder> ProcessSubmission(CookbookOrderSubmission submission);
+  Task<CookbookOrder> GetOrder(string orderId);
+  Task<CookbookOrder> GenerateCookbookAsync(CookbookOrder order, bool isSample = false);
+  Task CompilePdf(CookbookOrder order, bool waitForWrite = false);
+  Task EmailCookbook(string orderId);
+  Task ProcessOrder(string orderId);
+}
+
 public class OrderService(
   OrderConfig config,
   ILlmService llmService,
   IFileService fileService,
-  RecipeService recipeService,
+  IRecipeService recipeService,
   ProcessOrderPrompt processOrderPrompt,
   PdfCompiler pdfCompiler,
   IEmailService emailService,
   EmailConfig emailConfig,
-  LlmConfig llmConfig
-)
+  LlmConfig llmConfig,
+  ISessionManager sessionManager,
+  IScopeContainer scope,
+  ILogger<RecipeService> logger
+) : IOrderService
 {
-  private readonly ILogger _log = Log.ForContext<OrderService>();
-
   private readonly AsyncRetryPolicy _retryPolicy = Policy
     .Handle<Exception>()
     .WaitAndRetryAsync(
@@ -46,7 +57,7 @@ public class OrderService(
       }
     );
 
-  public async Task<CookbookOrder> ProcessOrderSubmission(CookbookOrderSubmission submission)
+  public async Task<CookbookOrder> ProcessSubmission(CookbookOrderSubmission submission)
   {
     var result = await llmService.CallFunction<RecipeProposalResult>(
       processOrderPrompt.SystemPrompt,
@@ -62,20 +73,21 @@ public class OrderService(
       UserDetails = submission.UserDetails
     };
 
-    _log.Information("Order intake: {@Order}", order);
+    await sessionManager.AddOrder(scope.Id, order);
 
-    CreateOrderDirectory(order);
+    logger.LogInformation("Order intake: {@Order}", order);
 
     return order;
   }
 
   public async Task<CookbookOrder> GetOrder(string orderId)
   {
-    var order = await fileService.ReadFromFile<CookbookOrder>(Path.Combine(config.OutputDirectory, orderId),
-      "Order");
+    var session = await sessionManager.GetSessionByOrder(orderId, scope.Id);
+    var order = session.Order;
 
     if (order == null)
     {
+      await sessionManager.EndSession(orderId);
       throw new KeyNotFoundException($"No order found using ID: {orderId}");
     }
 
@@ -84,14 +96,12 @@ public class OrderService(
 
   public async Task<CookbookOrder> GenerateCookbookAsync(CookbookOrder order, bool isSample = false)
   {
-    order.SynthesizedRecipes = await ProcessRecipes(order, isSample);
-
-    UpdateOrderFile(order);
-
+    await ProcessRecipesAsync(order, isSample);
+    
     return order;
   }
 
-  private async Task<List<SynthesizedRecipe>> ProcessRecipes(CookbookOrder order, bool isSample)
+  private async Task ProcessRecipesAsync(CookbookOrder order, bool isSample)
   {
     var completedRecipes = new ConcurrentBag<SynthesizedRecipe>();
 
@@ -106,12 +116,7 @@ public class OrderService(
 
     try
     {
-      await Parallel.ForEachAsync(order.RecipeList, new ParallelOptions
-        {
-          MaxDegreeOfParallelism = maxParallelTasks,
-          CancellationToken = cts.Token
-        },
-        async (recipeName, ct) =>
+      await sessionManager.ParallelForEachAsync(order.RecipeList, async (_, recipeName, ct) =>
         {
           try
           {
@@ -119,8 +124,8 @@ public class OrderService(
             if (isSample && Interlocked.CompareExchange(ref completedCount, 0, 0) >=
                 config.MaxSampleRecipes)
             {
-              _log.Information("Sample size reached, stopping processing");
-              cts.Cancel();
+              logger.LogInformation("Sample size reached, stopping processing");
+              await cts.CancelAsync();
               return;
             }
 
@@ -129,19 +134,21 @@ public class OrderService(
             // Increment the completed count after successful processing
             if (isSample && Interlocked.Increment(ref completedCount) >= config.MaxSampleRecipes)
             {
-              _log.Information("Sample size reached, stopping processing");
-              cts.Cancel();
+              logger.LogInformation("Sample size reached, stopping processing");
+              await cts.CancelAsync();
             }
           }
           catch (OperationCanceledException)
           {
-            _log.Information("Processing of {RecipeName} was canceled.", recipeName);
+            logger.LogInformation("Processing of {RecipeName} was canceled.", recipeName);
           }
           catch (Exception ex)
           {
-            _log.Error(ex, "Unhandled exception in ProcessRecipe for {RecipeName}", recipeName);
+            logger.LogError(ex, "Unhandled exception in ProcessRecipe for {RecipeName}", recipeName);
           }
-        });
+        },
+        maxParallelTasks,
+        cts.Token);
     }
     catch (OperationCanceledException)
     {
@@ -149,10 +156,12 @@ public class OrderService(
     }
     catch (Exception ex)
     {
-      _log.Error(ex, "Unhandled exception during processing.");
+      logger.LogError(ex, "Unhandled exception during processing.");
     }
 
-    return completedRecipes.ToList();
+    order.SynthesizedRecipes = completedRecipes.ToList();
+
+    return;
 
     async Task ProcessRecipe(string recipeName, CancellationToken ct)
     {
@@ -178,24 +187,18 @@ public class OrderService(
               { "previousAttempts", e.PreviousAttempts }
             }
           );
-          _log.Error(
+          logger.LogError(
             "Cannot include in cookbook. No recipe found for {RecipeName}. Previous attempts: {PreviousAttempts}",
             recipeName, e.PreviousAttempts);
           return;
         }
         catch (Exception ex)
         {
-          _log.Error(ex, "Recipe {RecipeName} aborted in error. Cannot include in cookbook.", recipeName);
+          logger.LogError(ex, "Recipe {RecipeName} aborted in error. Cannot include in cookbook.", recipeName);
           return;
         }
 
-        var (result, rejects) = await recipeService.SynthesizeRecipe(recipes, order, recipeName);
-
-        var count = 0;
-        foreach (var recipe in rejects)
-        {
-          WriteRejectToOrderDir(order.OrderId, $"{++count}. {recipeName}", recipe);
-        }
+        var result = await recipeService.SynthesizeRecipe(recipes, order, recipeName);
 
         // Add image to recipe
         result.ImageUrls = GetImageUrls(result, recipes);
@@ -203,16 +206,15 @@ public class OrderService(
           .Where(r => !(result.InspiredBy?.Count > 0) || result.InspiredBy.Contains(r.RecipeUrl!))
           .ToList();
 
-        WriteRecipeToOrderDir(order.OrderId, recipeName, result);
         completedRecipes.Add(result);
       }
       catch (OperationCanceledException)
       {
-        _log.Information("Processing of {RecipeName} was canceled.", recipeName);
+        logger.LogInformation("Processing of {RecipeName} was canceled.", recipeName);
       }
       catch (Exception ex)
       {
-        _log.Error(ex, "Unhandled exception in ProcessRecipe for {RecipeName}", recipeName);
+        logger.LogError(ex, "Unhandled exception in ProcessRecipe for {RecipeName}", recipeName);
       }
     }
   }
@@ -232,30 +234,6 @@ public class OrderService(
       .Select(r => r.ImageUrl!)
       .ToList();
   }
-
-  private void CreateOrderDirectory(CookbookOrder order)
-    => UpdateOrderFile(order);
-
-  private void UpdateOrderFile(CookbookOrder order)
-    => fileService.WriteToFileAsync(
-      Path.Combine(config.OutputDirectory, order.OrderId),
-      "Order",
-      order
-    );
-
-  private void WriteRejectToOrderDir(string orderId, string recipeName, SynthesizedRecipe recipe)
-    => fileService.WriteToFileAsync(
-      Path.Combine(config.OutputDirectory, orderId, "recipes", "rejects"),
-      recipeName,
-      recipe
-    );
-
-  private void WriteRecipeToOrderDir(string orderId, string recipeName, SynthesizedRecipe recipe)
-    => fileService.WriteToFileAsync(
-      Path.Combine(config.OutputDirectory, orderId, "recipes"),
-      recipeName,
-      recipe
-    );
 
   public async Task CompilePdf(CookbookOrder order, bool waitForWrite = false)
   {
@@ -287,7 +265,7 @@ public class OrderService(
 
     var pdf = await pdfCompiler.CompileCookbook(order);
 
-    _log.Information("Cookbook compiled for order {OrderId}. Writing to disk", order.OrderId);
+    logger.LogInformation("Cookbook compiled for order {OrderId}. Writing to disk", order.OrderId);
 
     if (waitForWrite)
     {
@@ -312,6 +290,14 @@ public class OrderService(
 
   public async Task EmailCookbook(string orderId)
   {
+    var order = await GetOrder(orderId);
+    await EmailCookbook(order);
+  }
+
+  private async Task EmailCookbook(CookbookOrder order)
+  {
+    var orderId = order.OrderId;
+
     var emailTitle = "Your Cookbook is Ready!";
     var templateData = new Dictionary<string, object>
     {
@@ -321,9 +307,7 @@ public class OrderService(
       { "unsubscribe_link", "https://zarichney.com/unsubscribe" },
     };
 
-    var order = await GetOrder(orderId);
-
-    _log.Information("Retrieved order {OrderId} for email", orderId);
+    logger.LogInformation("Retrieved order {OrderId} for email", orderId);
 
     await _retryPolicy.ExecuteAsync(async () =>
     {
@@ -338,7 +322,7 @@ public class OrderService(
         throw new Exception($"Cookbook PDF not found for order {orderId}");
       }
 
-      _log.Information("Sending cookbook email to {Email}", order.Email);
+      logger.LogInformation("Sending cookbook email to {Email}", order.Email);
 
       await emailService.SendEmail(
         order.Email,
@@ -354,7 +338,27 @@ public class OrderService(
         }
       );
 
-      _log.Information("Cookbook emailed to {Email}", order.Email);
+      logger.LogInformation("Cookbook emailed to {Email}", order.Email);
     });
+  }
+
+  public async Task ProcessOrder(string orderId)
+  {
+    try
+    {
+      var order = await GetOrder(orderId);
+      await GenerateCookbookAsync(order, true);
+      await CompilePdf(order);
+      await EmailCookbook(order);
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "{Method}: Failed to process order {OrderId}",
+        nameof(ProcessOrder), orderId);
+    }
+    finally
+    {
+      await sessionManager.EndSession(orderId);
+    }
   }
 }

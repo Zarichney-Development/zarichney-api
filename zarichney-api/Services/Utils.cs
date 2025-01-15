@@ -7,6 +7,9 @@ namespace Zarichney.Services;
 
 public static class Utils
 {
+  public static string GenerateId()
+    => Guid.NewGuid().ToString()[..8];
+  
   public static T Deserialize<T>(string content)
     => JsonSerializer.Deserialize<T>(content,
          new JsonSerializerOptions
