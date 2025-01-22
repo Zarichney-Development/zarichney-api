@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Zarichney.Cookbook.Models;
-using Zarichney.Cookbook.Repositories;
-using Zarichney.Cookbook.Services;
+using Zarichney.Cookbook.Orders;
+using Zarichney.Cookbook.Recipes;
 using Zarichney.Middleware;
 using Zarichney.Services;
 using Zarichney.Services.Sessions;
@@ -196,7 +195,12 @@ public class CookbookController(
   [ProducesResponseType(typeof(BadRequestObjectResult), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(NotFoundResult), StatusCodes.Status404NotFound)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  public async Task<IActionResult> GetRecipes([FromQuery] string query, [FromQuery] bool scrape = false)
+  public async Task<IActionResult> GetRecipes(
+    [FromQuery] string query, 
+    [FromQuery] bool scrape = false,
+    [FromQuery] int? acceptableScore = null,
+    [FromQuery] int? requiredCount = null
+    )
   {
     try
     {
@@ -206,9 +210,7 @@ public class CookbookController(
         return BadRequest("Query parameter is required");
       }
 
-      var recipes = scrape
-        ? await recipeService.GetRecipes(query) // include the feature of replacement name when scraping
-        : await recipeService.GetRecipes(query, false);
+      var recipes = await recipeService.GetRecipes(query, scrape, acceptableScore, requiredCount);
 
       if (recipes.ToList().Count == 0)
       {
@@ -237,6 +239,8 @@ public class CookbookController(
   public async Task<IActionResult> ScrapeRecipes(
     [FromQuery] string query,
     [FromQuery] string? site = null,
+    [FromQuery] int? acceptableScore = null,
+    [FromQuery] int? recipesNeeded = null,
     [FromQuery] bool? store = false)
   {
     try
@@ -247,7 +251,7 @@ public class CookbookController(
         return BadRequest("Query parameter is required");
       }
 
-      var recipes = await scraperService.ScrapeForRecipesAsync(query, null, site);
+      var recipes = await scraperService.ScrapeForRecipesAsync(query, acceptableScore, recipesNeeded, site);
 
       if (recipes.ToList().Count == 0)
       {

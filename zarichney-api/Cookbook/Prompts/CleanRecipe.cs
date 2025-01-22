@@ -1,7 +1,7 @@
 using System.Text.Json;
 using AutoMapper;
 using Zarichney.Config;
-using Zarichney.Cookbook.Models;
+using Zarichney.Cookbook.Recipes;
 using Zarichney.Services;
 
 namespace Zarichney.Cookbook.Prompts;
@@ -20,10 +20,10 @@ public class CleanRecipePrompt(IMapper mapper) : PromptBase
     2. Format ingredients and directions as string arrays with no prefix. If ingredients/steps are merged into a single entry, break them out into separate lines.
     3. Remove irrelevant content (e.g., "Print Pin It") or bad encoding chars (e.g. '[]').
     4. Remove redundant whitespace, tabs and newlines (e.g '\n', '      ', or '\t\t\t...')
-    5. Do NOT add or alter recipe details.
-    6. Keep empty fields; replace nulls with empty strings.
-    7. Ensure consistent formatting.
-    8. Exclude field names within field values (e.g., {'servings': '4'} and not {'servings': 'Servings 4'}).
+    5. Exclude field names within field values (e.g., {'servings': '4'} and not {'servings': 'Servings 4'}).
+    6. Ensure consistent formatting; replace nulls with empty strings.
+    7. Infer empty titles, but leave other empty fields as is.
+    8. Do NOT add or alter recipe details.
     """;
 
   public string GetUserPrompt(Recipe recipe)

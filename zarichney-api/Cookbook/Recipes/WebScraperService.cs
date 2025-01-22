@@ -5,12 +5,10 @@ using System.Text;
 using AngleSharp;
 using AngleSharp.Dom;
 using Zarichney.Config;
-using Zarichney.Cookbook.Models;
 using Zarichney.Cookbook.Prompts;
 using Zarichney.Services;
-using Zarichney.Services.Sessions;
 
-namespace Zarichney.Cookbook.Services;
+namespace Zarichney.Cookbook.Recipes;
 
 public class WebscraperConfig : IConfig
 {
@@ -19,6 +17,7 @@ public class WebscraperConfig : IConfig
   public int MaxParallelSites { get; init; } = 5;
   public int MaxWaitTimeMs { get; init; } = 10000;
   public int MaxParallelPages { get; init; } = 2;
+  public int ErrorBuffer { get; init; } = 5; // in case of scraping errors, can fallback up to this amount
 }
 
 public class WebScraperService(
@@ -28,20 +27,21 @@ public class WebScraperService(
   ILlmService llmService,
   IFileService fileService,
   IBrowserService browserService,
-  ISessionManager sessionManager,
-  ILogger<WebScraperService> logger
+  ILogger<WebScraperService> logger,
+  IRecipeRepository recipeRepository
 )
 {
   private static Dictionary<string, Dictionary<string, string>>? _siteSelectors;
   private static Dictionary<string, Dictionary<string, string>>? _siteTemplates;
 
   internal async Task<List<ScrapedRecipe>> ScrapeForRecipesAsync(string query, int? acceptableScore = null,
+    int? recipesNeeded = null,
     string? targetSite = null)
   {
     await LoadSiteSelectors();
 
     var sitesToProcess = GetSitesToProcess(targetSite);
-    var urlsBySite = await CollectUrlsFromAllSitesAsync(sitesToProcess, query);
+    var urlsBySite = await CollectUrlsFromAllSitesAsync(sitesToProcess, query); // Dic<site_key, List<url>>
 
     if (urlsBySite.Count == 0)
     {
@@ -49,8 +49,13 @@ public class WebScraperService(
       return [];
     }
 
-    var rankedUrls = await RankUrlsByRelevanceAsync(urlsBySite, query, acceptableScore);
-    var recipes = await ScrapeRecipesInParallelAsync(rankedUrls, query);
+    // Filter down list for all those that already exist in the repository
+    urlsBySite = urlsBySite
+      .ToDictionary(r => r.Key, r => r.Value
+        .Where(s => !recipeRepository.ContainsRecipeUrl(s)).ToList());
+
+    var rankedUrls = await RankUrlsByRelevanceAsync(urlsBySite, query, acceptableScore, recipesNeeded);
+    var recipes = await ScrapeRecipesInParallelAsync(rankedUrls, query, recipesNeeded);
     logger.LogInformation("Web scraped a total of {count} recipes for {query}", recipes.Count, query);
 
     return recipes;
@@ -70,15 +75,20 @@ public class WebScraperService(
   /// </summary>
   private async Task<Dictionary<string, List<string>>> CollectUrlsFromAllSitesAsync(
     IEnumerable<KeyValuePair<string, Dictionary<string, string>>> sitesToProcess,
-    string query)
+    string query, CancellationToken cancellationToken = default)
   {
     var urlsBySite = new ConcurrentDictionary<string, List<string>>();
 
-    await sessionManager.ParallelForEachAsync(sitesToProcess, async (_, site, _) =>
+    await Parallel.ForEachAsync(sitesToProcess,
+      new ParallelOptions
+      {
+        MaxDegreeOfParallelism = config.MaxParallelSites,
+        CancellationToken = cancellationToken
+      }, async (site, ct) =>
       {
         try
         {
-          var urls = await SearchSiteForRecipeUrls(site.Key, query);
+          var urls = await SearchSiteForRecipeUrls(site.Key, query, ct);
           if (urls.Count > 0)
           {
             urlsBySite.TryAdd(site.Key, urls);
@@ -88,8 +98,7 @@ public class WebScraperService(
         {
           logger.LogError(ex, "Error collecting URLs from site: {site}", site.Key);
         }
-      },
-      config.MaxParallelSites);
+      });
 
     return new Dictionary<string, List<string>>(urlsBySite);
   }
@@ -98,7 +107,7 @@ public class WebScraperService(
   /// Filters all collected URLs for relevance in a single batch
   /// </summary>
   private async Task<List<(string SiteKey, string Url)>> RankUrlsByRelevanceAsync(
-    Dictionary<string, List<string>> urlsBySite, string query, int? acceptableScore)
+    Dictionary<string, List<string>> urlsBySite, string query, int? acceptableScore, int? recipesNeeded = null)
   {
     // Combine all URLs while maintaining site information
     var allUrlsWithSites = urlsBySite
@@ -106,7 +115,7 @@ public class WebScraperService(
       .ToList();
 
     var relevantUrls =
-      await SelectMostRelevantUrls(allUrlsWithSites.Select(x => x.Url).ToList(), query, acceptableScore);
+      await SelectMostRelevantUrls(allUrlsWithSites.Select(x => x.Url).ToList(), query, acceptableScore, recipesNeeded);
 
     // Regroup relevant URLs by site
     return relevantUrls
@@ -119,29 +128,65 @@ public class WebScraperService(
   /// </summary>
   private async Task<List<ScrapedRecipe>> ScrapeRecipesInParallelAsync(
     List<(string SiteKey, string Url)> rankedUrls,
-    string query)
+    string query,
+    int? recipesNeeded = null,
+    CancellationToken externalCancellation = default)
   {
     var recipes = new ConcurrentDictionary<int, ScrapedRecipe>();
+    recipesNeeded ??= rankedUrls.Count; // Default to all URLs
 
-    await sessionManager.ParallelForEachAsync(rankedUrls.Select((url, index) => (url.SiteKey, url.Url, Index: index)),
-      async (_, item, _) =>
-      {
-        try
+    // Create a linked cancellation source that respects external cancellation
+    using var cts = CancellationTokenSource.CreateLinkedTokenSource(externalCancellation);
+
+    try
+    {
+      await Parallel.ForEachAsync(rankedUrls.Select((url, index) => (url.SiteKey, url.Url, Index: index)),
+        new ParallelOptions
         {
-          // Scrape single URL
-          var scrapedRecipes = await ScrapeSiteForRecipesAsync(item.SiteKey, [item.Url], query);
-
-          if (scrapedRecipes.Count > 0)
+          MaxDegreeOfParallelism = config.MaxParallelSites,
+          CancellationToken = cts.Token
+        },
+        async (item, ct) =>
+        {
+          // Check cancellation first
+          if (ct.IsCancellationRequested)
           {
-            recipes.TryAdd(item.Index, scrapedRecipes[0]);
+            return;
           }
-        }
-        catch (Exception ex)
-        {
-          logger.LogError(ex, "Error scraping recipe from {site}: {url}", item.SiteKey, item.Url);
-        }
-      },
-      config.MaxParallelSites);
+
+          try
+          {
+            // Scrape single URL
+            var scrapedRecipes = await ScrapeSiteForRecipesAsync(item.SiteKey, [item.Url], query, ct);
+
+            if (scrapedRecipes.Count > 0)
+            {
+              if (recipes.TryAdd(item.Index, scrapedRecipes[0]))
+              {
+                // Cancel remaining operations if we have enough recipes
+                if (recipes.Count >= recipesNeeded)
+                {
+                  await cts.CancelAsync();
+                }
+              }
+            }
+          }
+          catch (OperationCanceledException)
+          {
+            // Expected when we cancel after getting enough recipes
+          }
+          catch (Exception ex)
+          {
+            logger.LogError(ex, "Error scraping recipe from {site}: {url}", item.SiteKey, item.Url);
+            throw; // Rethrow to allow handling by calling code
+          }
+        });
+    }
+    catch (OperationCanceledException)
+    {
+      // Operation was cancelled either externally or because we found enough recipes
+      logger.LogInformation("Recipe scraping operation cancelled after collecting {count} recipes", recipes.Count);
+    }
 
     // Return recipes in original relevancy order
     return recipes
@@ -150,9 +195,11 @@ public class WebScraperService(
       .ToList();
   }
 
-  private async Task<List<string>> SelectMostRelevantUrls(List<string> recipeUrls, string? query, int? acceptableScore)
+  private async Task<List<string>> SelectMostRelevantUrls(List<string> recipeUrls, string? query, int? acceptableScore,
+    int? recipesNeeded = null)
   {
-    if (recipeUrls.Count <= config.MaxNumResultsPerQuery)
+    var maxResults = recipesNeeded ?? config.MaxNumResultsPerQuery;
+    if (recipeUrls.Count <= maxResults)
     {
       return recipeUrls;
     }
@@ -164,7 +211,7 @@ public class WebScraperService(
         chooseRecipesPrompt.GetUserPrompt(
           query,
           recipeUrls,
-          config.MaxNumResultsPerQuery,
+          maxResults + config.ErrorBuffer,
           acceptableScore ?? recipeConfig.AcceptableScoreThreshold
         ),
         chooseRecipesPrompt.GetFunction()
@@ -177,7 +224,10 @@ public class WebScraperService(
         throw new Exception("No indices selected");
       }
 
-      var selectedUrls = recipeUrls.Where((_, index) => indices.Contains(index + 1)).ToList();
+      var selectedUrls = recipeUrls
+        .Where((_, index) => indices.Contains(index + 1))
+        .Take(maxResults)
+        .ToList();
       logger.LogInformation("Selected {count} URLs for {query}", selectedUrls.Count, query);
 
       if (selectedUrls.Count == 0)
@@ -195,7 +245,8 @@ public class WebScraperService(
     return recipeUrls;
   }
 
-  private async Task<List<string>> SearchSiteForRecipeUrls(string site, string query)
+  private async Task<List<string>> SearchSiteForRecipeUrls(string site, string query,
+    CancellationToken cancellationToken = default)
   {
     var selectors = _siteSelectors![site];
     var siteUrl = selectors.GetValueOrDefault("base_url", $"https://{site}.com");
@@ -217,7 +268,7 @@ public class WebScraperService(
                          streamSearchValue == "true";
 
     var recipeUrls = isStreamSearch
-      ? await browserService.GetContentAsync(searchUrl, selectors["search_results"])
+      ? await browserService.GetContentAsync(searchUrl, selectors["search_results"], cancellationToken)
       : await ExtractRecipeUrls(searchUrl, selectors);
 
     if (recipeUrls.Count == 0)
@@ -255,15 +306,19 @@ public class WebScraperService(
   }
 
   private async Task<List<ScrapedRecipe>> ScrapeSiteForRecipesAsync(string site, List<string> recipeUrls,
-    string? query)
+    string? query, CancellationToken cancellationToken = default)
   {
     var scrapedRecipes = new ConcurrentBag<ScrapedRecipe>();
 
     logger.LogInformation("Scraping {count} recipes from site '{site}' for recipe '{recipe}'",
       recipeUrls.Count, site, query);
 
-    await sessionManager.ParallelForEachAsync(recipeUrls,
-      async (_, url, _) =>
+    await Parallel.ForEachAsync(recipeUrls, new ParallelOptions
+      {
+        MaxDegreeOfParallelism = config.MaxParallelTasks,
+        CancellationToken = cancellationToken
+      },
+      async (url, ct) =>
       {
         try
         {
@@ -277,7 +332,7 @@ public class WebScraperService(
           try
           {
             logger.LogInformation("Scraping {recipe} recipe from {url}", query, url);
-            var recipe = await ParseRecipeFromSite(fullUrl, _siteSelectors![site]);
+            var recipe = await ParseRecipeFromSite(fullUrl, _siteSelectors![site], ct);
             scrapedRecipes.Add(recipe);
           }
           catch (Exception ex)
@@ -289,23 +344,22 @@ public class WebScraperService(
         {
           logger.LogError(ex, $"Error in scraping URL: {url}");
         }
-      },
-      config.MaxParallelTasks
-    );
+      });
 
     return scrapedRecipes.ToList();
   }
 
-  private async Task<ScrapedRecipe> ParseRecipeFromSite(string url, Dictionary<string, string> selectors)
+  private async Task<ScrapedRecipe> ParseRecipeFromSite(string url, Dictionary<string, string> selectors,
+    CancellationToken ct = default)
   {
-    var html = await SendGetRequestForHtml(url);
+    var html = await SendGetRequestForHtml(url, ct);
     if (string.IsNullOrEmpty(html))
     {
       throw new Exception("Failed to retrieve HTML content");
     }
 
     var browserContext = BrowsingContext.New(Configuration.Default);
-    var htmlDoc = await browserContext.OpenAsync(req => req.Content(html));
+    var htmlDoc = await browserContext.OpenAsync(req => req.Content(html), cancel: ct);
 
     string? imageUrl = null;
     try

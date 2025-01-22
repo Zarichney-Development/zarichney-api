@@ -1,10 +1,6 @@
-using Serilog;
-using Zarichney.Cookbook.Models;
-using Zarichney.Cookbook.Services;
 using Zarichney.Services;
-using ILogger = Serilog.ILogger;
 
-namespace Zarichney.Cookbook.Repositories;
+namespace Zarichney.Cookbook.Orders;
 
 public interface IOrderRepository
 {
@@ -16,8 +12,6 @@ public class OrderFileRepository(
   OrderConfig config,
   IFileService fileService) : IOrderRepository
 {
-  private readonly ILogger _log = Log.ForContext<OrderFileRepository>();
-
   public async Task<CookbookOrder?> GetOrder(string orderId)
   {
     var path = Path.Combine(config.OutputDirectory, orderId);

@@ -9,7 +9,7 @@ using QuestPDF.Infrastructure;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using Zarichney.Config;
-using Zarichney.Cookbook.Models;
+using Zarichney.Cookbook.Orders;
 using Image = SixLabors.ImageSharp.Image;
 using Size = SixLabors.ImageSharp.Size;
 

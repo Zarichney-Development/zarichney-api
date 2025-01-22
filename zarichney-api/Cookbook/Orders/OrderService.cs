@@ -5,12 +5,12 @@ using Polly;
 using Polly.Retry;
 using Serilog;
 using Zarichney.Config;
-using Zarichney.Cookbook.Models;
 using Zarichney.Cookbook.Prompts;
+using Zarichney.Cookbook.Recipes;
 using Zarichney.Services;
 using Zarichney.Services.Sessions;
 
-namespace Zarichney.Cookbook.Services;
+namespace Zarichney.Cookbook.Orders;
 
 public class OrderConfig : IConfig
 {
@@ -23,7 +23,6 @@ public interface IOrderService
 {
   Task<CookbookOrder> ProcessSubmission(CookbookOrderSubmission submission);
   Task<CookbookOrder> GetOrder(string orderId);
-  Task<CookbookOrder> GenerateCookbookAsync(CookbookOrder order, bool isSample = false);
   Task CompilePdf(CookbookOrder order, bool waitForWrite = false);
   Task EmailCookbook(string orderId);
   Task ProcessOrder(string orderId);
@@ -94,13 +93,6 @@ public class OrderService(
     return order;
   }
 
-  public async Task<CookbookOrder> GenerateCookbookAsync(CookbookOrder order, bool isSample = false)
-  {
-    await ProcessRecipesAsync(order, isSample);
-    
-    return order;
-  }
-
   private async Task ProcessRecipesAsync(CookbookOrder order, bool isSample)
   {
     var completedRecipes = new ConcurrentBag<SynthesizedRecipe>();
@@ -116,7 +108,9 @@ public class OrderService(
 
     try
     {
-      await sessionManager.ParallelForEachAsync(order.RecipeList, async (_, recipeName, ct) =>
+      await sessionManager.ParallelForEachAsync(scope,
+        order.RecipeList,
+        async (_, recipeName, ct) =>
         {
           try
           {
@@ -146,9 +140,7 @@ public class OrderService(
           {
             logger.LogError(ex, "Unhandled exception in ProcessRecipe for {RecipeName}", recipeName);
           }
-        },
-        maxParallelTasks,
-        cts.Token);
+        }, maxParallelTasks, cts.Token);
     }
     catch (OperationCanceledException)
     {
@@ -170,43 +162,17 @@ public class OrderService(
         // Check for cancellation
         ct.ThrowIfCancellationRequested();
 
-        List<Recipe> recipes;
-        try
-        {
-          recipes = await recipeService.GetRecipes(recipeName, order);
-        }
-        catch (NoRecipeException e)
-        {
-          await emailService.SendEmail(
-            emailConfig.FromEmail,
-            $"Cookbook Factory - No Recipe Found - {recipeName}",
-            "no-recipe",
-            new Dictionary<string, object>
-            {
-              { "recipeName", recipeName },
-              { "previousAttempts", e.PreviousAttempts }
-            }
-          );
-          logger.LogError(
-            "Cannot include in cookbook. No recipe found for {RecipeName}. Previous attempts: {PreviousAttempts}",
-            recipeName, e.PreviousAttempts);
-          return;
-        }
-        catch (Exception ex)
-        {
-          logger.LogError(ex, "Recipe {RecipeName} aborted in error. Cannot include in cookbook.", recipeName);
-          return;
-        }
+        var sourceRecipes = await GetRecipes(recipeName, order, ct: ct);
 
-        var result = await recipeService.SynthesizeRecipe(recipes, order, recipeName);
+        var newRecipe = await recipeService.SynthesizeRecipe(sourceRecipes, order, recipeName);
 
         // Add image to recipe
-        result.ImageUrls = GetImageUrls(result, recipes);
-        result.SourceRecipes = recipes
-          .Where(r => !(result.InspiredBy?.Count > 0) || result.InspiredBy.Contains(r.RecipeUrl!))
+        newRecipe.ImageUrls = GetImageUrls(newRecipe, sourceRecipes);
+        newRecipe.SourceRecipes = sourceRecipes
+          .Where(r => !(newRecipe.InspiredBy?.Count > 0) || newRecipe.InspiredBy.Contains(r.RecipeUrl!))
           .ToList();
 
-        completedRecipes.Add(result);
+        completedRecipes.Add(newRecipe);
       }
       catch (OperationCanceledException)
       {
@@ -216,6 +182,36 @@ public class OrderService(
       {
         logger.LogError(ex, "Unhandled exception in ProcessRecipe for {RecipeName}", recipeName);
       }
+    }
+  }
+
+  private async Task<List<Recipe>> GetRecipes(string recipeName, CookbookOrder order, CancellationToken ct)
+  {
+    try
+    {
+      return await recipeService.GetRecipes(recipeName, order, ct: ct);
+    }
+    catch (NoRecipeException e)
+    {
+      await emailService.SendEmail(
+        emailConfig.FromEmail,
+        $"Cookbook Factory - No Recipe Found - {recipeName}",
+        "no-recipe",
+        new Dictionary<string, object>
+        {
+          { "recipeName", recipeName },
+          { "previousAttempts", e.PreviousAttempts }
+        }
+      );
+      logger.LogError(
+        "Cannot include in cookbook. No recipe found for {RecipeName}. Previous attempts: {PreviousAttempts}",
+        recipeName, e.PreviousAttempts);
+      throw;
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Recipe {RecipeName} aborted in error. Cannot include in cookbook.", recipeName);
+      throw;
     }
   }
 
@@ -344,10 +340,11 @@ public class OrderService(
 
   public async Task ProcessOrder(string orderId)
   {
+    const bool isSample = true;
     try
     {
       var order = await GetOrder(orderId);
-      await GenerateCookbookAsync(order, true);
+      await ProcessRecipesAsync(order, isSample);
       await CompilePdf(order);
       await EmailCookbook(order);
     }

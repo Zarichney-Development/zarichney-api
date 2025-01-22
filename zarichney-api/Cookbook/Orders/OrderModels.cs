@@ -1,7 +1,8 @@
 using System.Text.Json.Serialization;
+using Zarichney.Cookbook.Recipes;
 using Zarichney.Services;
 
-namespace Zarichney.Cookbook.Models;
+namespace Zarichney.Cookbook.Orders;
 
 public class CookbookOrderSubmission
 {

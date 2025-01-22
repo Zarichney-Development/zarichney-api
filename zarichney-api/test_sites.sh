@@ -4,7 +4,7 @@ config_file="Config/site_selectors.json"
 
 # Hardcoded sites list (populate with specific sites to test)
 hardcoded_sites=(
-    "beefitswhatsfordinner"
+    "hellolittlehome"
 )
 use_hardcoded=false
 
@@ -25,7 +25,7 @@ fi
 max_parallel=5
 
 # API endpoint
-endpoint="http://localhost:5000/api/factory/recipe/scrape"
+endpoint="http://localhost:5000/api/recipe/scrape"
 
 # Output directory
 output_dir="./test_results"

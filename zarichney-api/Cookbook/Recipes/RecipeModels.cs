@@ -1,10 +1,21 @@
 using System.Text;
 using AutoMapper;
+using Zarichney.Config;
 using Zarichney.Cookbook.Prompts;
 using Zarichney.Services;
 
-namespace Zarichney.Cookbook.Models;
+namespace Zarichney.Cookbook.Recipes;
 
+public class RecipeConfig : IConfig
+{
+  public int MaxSearchResults { get; init; } = 8;
+  public int RecipesToReturnPerRetrieval { get; init; } = 3;
+  public int AcceptableScoreThreshold { get; init; } = 70;
+  public int SynthesisQualityThreshold { get; init; } = 80;
+  public int MaxNewRecipeNameAttempts { get; init; } = 6;
+  public int MaxParallelTasks { get; init; } = 5;
+  public string OutputDirectory { get; init; } = "Recipes";
+}
 public class Recipe
 {
   public string? Id { get; set; }
@@ -53,6 +64,12 @@ public class CleanedRecipe
   public required List<string> Ingredients { get; set; }
   public required List<string> Directions { get; set; }
   public required string Notes { get; set; }
+}
+public record RepositorySearchResult
+{
+  public required Recipe Recipe { get; init; }
+  public required double Score { get; init; }  // Match score for sorting
+  public required double RelevancyScore { get; init; }  // Relevancy score for filtering
 }
 
 public class SynthesizedRecipe

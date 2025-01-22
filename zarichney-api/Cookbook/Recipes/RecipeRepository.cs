@@ -1,19 +1,21 @@
 using System.Collections.Concurrent;
 using AutoMapper;
-using Zarichney.Cookbook.Models;
 using Zarichney.Cookbook.Prompts;
-using Zarichney.Cookbook.Services;
 using Zarichney.Services;
 using Zarichney.Services.Sessions;
 
-namespace Zarichney.Cookbook.Repositories;
+namespace Zarichney.Cookbook.Recipes;
 
 public interface IRecipeRepository
 {
   Task InitializeAsync();
-  Task<List<Recipe>> SearchRecipes(string? query);
+
+  Task<List<Recipe>> SearchRecipes(string? query, int? minimumScore = null, int? requiredCount = null,
+    CancellationToken ct = default);
+
   void AddUpdateRecipesAsync(List<Recipe> recipes);
   bool ContainsRecipe(string recipeId);
+  bool ContainsRecipeUrl(string url);
 }
 
 public class RecipeFileRepository(
@@ -24,15 +26,12 @@ public class RecipeFileRepository(
   RecipeNamerPrompt recipeNamerPrompt,
   IBackgroundWorker worker,
   ISessionManager sessionManager,
-  ILogger<RecipeFileRepository> logger
+  ILogger<RecipeFileRepository> logger,
+  IRecipeSearcher searcher,
+  IRecipeIndexer recipeIndexer
 )
   : IRecipeRepository
 {
-  private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Recipe>> _recipes =
-    new(StringComparer.OrdinalIgnoreCase);
-
-  private readonly ConcurrentDictionary<string, byte> _recipeIds = new();
-
   private readonly SemaphoreSlim _initializationLock = new(1, 1);
   private bool _isInitialized;
 
@@ -90,9 +89,16 @@ public class RecipeFileRepository(
     }
   }
 
+  public bool ContainsRecipeUrl(string url)
+  {
+    var id = WebScraperService.GenerateUrlFingerprint(url);
+    return ContainsRecipe(id);
+  }
+
   public bool ContainsRecipe(string recipeId)
   {
-    return _recipeIds.ContainsKey(recipeId);
+    return recipeIndexer.GetAllRecipes()
+      .Any(kvp => kvp.Value.ContainsKey(recipeId));
   }
 
   private void AddRecipeToRepository(Recipe recipe)
@@ -108,23 +114,15 @@ public class RecipeFileRepository(
       recipe.Id = WebScraperService.GenerateUrlFingerprint(recipe.RecipeUrl);
     }
 
-    _recipeIds.TryAdd(recipe.Id, 0);
-
-    // For each title & alias, map this recipe to the dictionary for fast access
-    AddToDictionary(recipe.Title!, recipe);
-    foreach (var alias in recipe.Aliases)
-    {
-      AddToDictionary(alias, recipe);
-    }
+    recipeIndexer.AddRecipe(recipe);
   }
 
-  private void AddToDictionary(string key, Recipe recipe)
-  {
-    var recipeDict = _recipes.GetOrAdd(key, _ => new ConcurrentDictionary<string, Recipe>());
-    recipeDict.AddOrUpdate(recipe.Id!, recipe, (_, _) => recipe);
-  }
-
-  public async Task<List<Recipe>> SearchRecipes(string? query)
+  public async Task<List<Recipe>> SearchRecipes(
+    string? query,
+    int? minimumScore = null,
+    int? requiredCount = null,
+    CancellationToken ct = default
+  )
   {
     if (!_isInitialized)
     {
@@ -132,62 +130,20 @@ public class RecipeFileRepository(
       await InitializeAsync();
     }
 
-    if (string.IsNullOrWhiteSpace(query))
-    {
-      throw new ArgumentException("Search query cannot be empty", nameof(query));
-    }
-
-    logger.LogInformation("Looking up repository for recipes matching query: {Query}", query);
-
-    return await Task.Run(() =>
-    {
-      var results = new ConcurrentDictionary<string, Recipe>();
-
-      // Exact matches
-      if (_recipes.TryGetValue(query, out var exactMatches))
-      {
-        foreach (var recipe in exactMatches.Values)
-        {
-          results.TryAdd(recipe.Id!, recipe);
-        }
-      }
-
-      // Fuzzy matches
-      foreach (var (key, value) in _recipes)
-      {
-        if (key.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-            query.Contains(key, StringComparison.OrdinalIgnoreCase))
-        {
-          foreach (var recipe in value.Values)
-          {
-            results.TryAdd(recipe.Id!, recipe);
-          }
-        }
-      }
-      
-      // TODO: Search by relevancy score
-
-      var recipes = results.Values
-        .OrderByDescending(r => CalculateRelevanceScore(r, query))
-        .ToList();
-
-      logger.LogInformation("Found {count} recipes matching query: {query}", recipes.Count, query);
-
-      return recipes;
-    });
+    return await searcher.SearchRecipes(query!, minimumScore, requiredCount, ct);
   }
 
   public void AddUpdateRecipesAsync(List<Recipe> recipes)
   {
     // Process in the background, creating a new scope for this work
-    worker.QueueBackgroundWorkAsync(async (_, cancellationToken) =>
+    worker.QueueBackgroundWorkAsync(async (parentScope, ct) =>
     {
-      await CleanUncleanedRecipesAsync(recipes);
+      await CleanUncleanedRecipesAsync(parentScope, recipes);
 
       // Process recipes and organize them into new files
       var filesToWrite = new ConcurrentDictionary<string, ConcurrentBag<Recipe>>();
 
-      await sessionManager.ParallelForEachAsync(recipes, async (scope, recipe, _) =>
+      await sessionManager.ParallelForEachAsync(parentScope, recipes, async (scope, recipe, _) =>
       {
         try
         {
@@ -201,7 +157,7 @@ public class RecipeFileRepository(
         {
           logger.LogError(ex, "Error processing recipe '{RecipeId}'", recipe.Id);
         }
-      }, config.MaxParallelTasks, cancellationToken);
+      }, config.MaxParallelTasks, ct);
 
       foreach (var (title, recipeBag) in filesToWrite)
       {
@@ -293,9 +249,9 @@ public class RecipeFileRepository(
         logger.LogInformation("Received response from model for recipe {RecipeTitle}: {@Result}", recipe.Title,
           result);
 
-        recipe.Aliases = result.Aliases.Select(a => a.Replace("Print Pin It", "").Trim()).ToList();
+        recipe.Aliases = result.Aliases.ToList();
         recipe.IndexTitle = result.IndexTitle;
-        recipe.Title = recipe.Title?.Replace("Print Pin It", "").Trim();
+        recipe.Title = recipe.Title?.Trim();
       }
       catch (Exception ex)
       {
@@ -304,26 +260,12 @@ public class RecipeFileRepository(
     }
   }
 
-  private static double CalculateRelevanceScore(Recipe recipe, string query)
-  {
-    // Simple relevance scoring based on title match
-    if (recipe.Title!.Equals(query, StringComparison.OrdinalIgnoreCase))
-      return 1.0;
-    if (recipe.Title!.Contains(query, StringComparison.OrdinalIgnoreCase))
-      return 0.8;
-    if (recipe.Aliases.Any(a => a.Equals(query, StringComparison.OrdinalIgnoreCase)))
-      return 0.6;
-    return recipe.Aliases.Any(a => a.Contains(query, StringComparison.OrdinalIgnoreCase))
-      ? 0.4
-      : 0.2; // Fallback score for partial matches
-  }
-
-  private async Task CleanUncleanedRecipesAsync(List<Recipe> recipes)
+  private async Task CleanUncleanedRecipesAsync(IScopeContainer scope, List<Recipe> recipes)
   {
     var uncleanedRecipes = recipes.Where(r => !r.Cleaned).ToList();
     if (uncleanedRecipes.Count != 0)
     {
-      var cleanedRecipes = await CleanRecipesAsync(uncleanedRecipes);
+      var cleanedRecipes = await CleanRecipesAsync(scope, uncleanedRecipes);
 
       // Remove uncleaned recipes from the list
       recipes.RemoveAll(r => !r.Cleaned);
@@ -333,7 +275,7 @@ public class RecipeFileRepository(
     }
   }
 
-  private async Task<List<Recipe>> CleanRecipesAsync(List<Recipe> recipes)
+  private async Task<List<Recipe>> CleanRecipesAsync(IScopeContainer parentScope, List<Recipe> recipes)
   {
     if (recipes.Count == 0)
     {
@@ -342,19 +284,18 @@ public class RecipeFileRepository(
 
     var cleanedRecipes = new ConcurrentBag<Recipe>();
 
-    await sessionManager.ParallelForEachAsync(recipes, async (scope, recipe, _) =>
+    await sessionManager.ParallelForEachAsync(parentScope, recipes, async (scope, recipe, _) =>
+    {
+      try
       {
-        try
-        {
-          var cleanedRecipe = await CleanRecipeData(scope, recipe);
-          cleanedRecipes.Add(cleanedRecipe);
-        }
-        catch (Exception ex)
-        {
-          logger.LogError(ex, "Error cleaning recipe with Id: {RecipeId}", recipe.Id);
-        }
-      },
-      config.MaxParallelTasks);
+        var cleanedRecipe = await CleanRecipeData(scope, recipe);
+        cleanedRecipes.Add(cleanedRecipe);
+      }
+      catch (Exception ex)
+      {
+        logger.LogError(ex, "Error cleaning recipe with Id: {RecipeId}", recipe.Id);
+      }
+    }, config.MaxParallelTasks);
 
     return cleanedRecipes.ToList();
   }

@@ -200,6 +200,11 @@
       "use_template": "wprm_plugin",
       "test_query": "rice"
     },
+    "hellolittlehome": {
+        "base_url": "https://hellolittlehome.com",
+        "use_template": "wprm_plugin",
+        "test_query": "green pizza"
+    },
     "southernliving": {
       "base_url": "https://www.southernliving.com",
       "search_page": "/search?q=",
@@ -308,22 +313,6 @@
       "notes": ".nutritionPreview",
       "test_query": "burger"
     },
-    "bigoven": {
-      "base_url": "https://www.bigoven.com",
-      "search_page": "/recipes/search?any_kw=",
-      "search_results": ".recipe-tile-full .panel-body > a[href*=\"/recipe/\"]",
-      "title": ".recipe-container h1",
-      "description": ".about-recipe .summary",
-      "image": "img.recipe-hero-photo",
-      "servings": ".yield",
-      "prep_time": "",
-      "cook_time": "",
-      "total_time": ".ready-in",
-      "ingredients": "ul.ingredients-list li",
-      "directions": ".recipe-instructions .instructions p",
-      "notes": ".overview-notes",
-      "test_query": "burger"
-    },
     "themodernproper": {
       "base_url": "https://www.themodernproper.com",
       "search_page": "/search?q=",
@@ -351,7 +340,7 @@
       "prep_time": "",
       "cook_time": "",
       "total_time": "",
-      "ingredients": ".c-recipe-ingredients__list li",
+      "ingredients": ".c-recipe-ingredients__list li, .c-recipe-ingredients li",
       "directions": ".c-recipe-instructions li",
       "notes": "",
       "test_query": "oats"

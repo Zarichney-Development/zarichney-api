@@ -3,32 +3,30 @@ using System.Text.Json;
 using AutoMapper;
 using OpenAI.Assistants;
 using OpenAI.Chat;
-using Zarichney.Config;
-using Zarichney.Cookbook.Models;
+using Zarichney.Cookbook.Orders;
 using Zarichney.Cookbook.Prompts;
-using Zarichney.Cookbook.Repositories;
 using Zarichney.Services;
 using Zarichney.Services.Sessions;
 
-namespace Zarichney.Cookbook.Services;
-
-public class RecipeConfig : IConfig
-{
-  public int RecipesToReturnPerRetrieval { get; init; } = 5;
-  public int AcceptableScoreThreshold { get; init; } = 80;
-  public int QualityScoreThreshold { get; init; } = 80;
-  public int MaxNewRecipeNameAttempts { get; init; } = 6;
-  public int MaxParallelTasks { get; init; } = 5;
-  public string OutputDirectory { get; init; } = "Recipes";
-}
+namespace Zarichney.Cookbook.Recipes;
 
 public interface IRecipeService
 {
-  Task<List<Recipe>> GetRecipes(string requestedRecipeName, CookbookOrder? cookbookOrder = null,
-    int? acceptableScore = null);
+  Task<List<Recipe>> GetRecipes(
+    string requestedRecipeName,
+    CookbookOrder? cookbookOrder = null,
+    int? acceptableScore = null,
+    CancellationToken ct = default
+  );
 
-  Task<List<Recipe>> GetRecipes(string query, bool scrape, int? acceptableScore = null,
-    string? requestedRecipeName = null);
+  Task<List<Recipe>> GetRecipes(
+    string query,
+    bool scrape = true,
+    int? acceptableScore = null,
+    int? requiredCount = null,
+    string? requestedRecipeName = null,
+    CancellationToken ct = default
+  );
 
   Task<List<Recipe>> RankUnrankedRecipesAsync(IEnumerable<ScrapedRecipe> recipes, string query);
   Task<SynthesizedRecipe> SynthesizeRecipe(List<Recipe> recipes, CookbookOrder order, string recipeName);
@@ -45,18 +43,29 @@ public class RecipeService(
   AnalyzeRecipePrompt analyzeRecipePrompt,
   ProcessOrderPrompt processOrderPrompt,
   ISessionManager sessionManager,
-  ILogger<RecipeService> logger
+  ILogger<RecipeService> logger,
+  IScopeContainer scope
 ) : IRecipeService
 {
-  public async Task<List<Recipe>> GetRecipes(string requestedRecipeName, CookbookOrder? cookbookOrder = null,
-    int? acceptableScore = null)
+  public async Task<List<Recipe>> GetRecipes(
+    string requestedRecipeName,
+    CookbookOrder? cookbookOrder = null,
+    int? acceptableScore = null,
+    CancellationToken ct = default
+  )
   {
+    var searchQuery = requestedRecipeName.Trim().ToLowerInvariant();
     acceptableScore ??= config.AcceptableScoreThreshold;
 
-    var recipes = await GetRecipes(requestedRecipeName, true, acceptableScore);
+    var recipes = await GetRecipes(
+      query: searchQuery,
+      scrape: true,
+      acceptableScore: acceptableScore,
+      requestedRecipeName: requestedRecipeName,
+      ct: ct
+    );
 
     var previousAttempts = new List<string>();
-    var searchQuery = requestedRecipeName;
 
     while (recipes.Count == 0)
     {
@@ -76,7 +85,14 @@ public class RecipeService(
       acceptableScore -= 5;
 
       // With a lower bar, first attempt to check local sources before performing a new web scrape
-      recipes = await GetRecipes(searchQuery, false, acceptableScore, requestedRecipeName);
+      recipes = await GetRecipes(
+        query: searchQuery,
+        scrape: false,
+        acceptableScore: acceptableScore,
+        requestedRecipeName: requestedRecipeName,
+        ct: ct
+      );
+
       if (recipes.Count > 0)
       {
         break;
@@ -84,12 +100,18 @@ public class RecipeService(
 
       // Request for new query to scrap with
       searchQuery = await GetSearchQueryForRecipe(requestedRecipeName, previousAttempts, cookbookOrder);
+      searchQuery = searchQuery.Trim().ToLowerInvariant();
 
       logger.LogInformation(
         "[{RecipeName}] - Attempting an alternative search query: '{NewRecipeName}'. Acceptable score of {AcceptableScore}.",
         requestedRecipeName, searchQuery, acceptableScore);
 
-      recipes = await GetRecipes(searchQuery, true, acceptableScore, requestedRecipeName);
+      recipes = await GetRecipes(
+        query: searchQuery,
+        scrape: true,
+        acceptableScore: acceptableScore,
+        requestedRecipeName: requestedRecipeName,
+        ct: ct);
     }
 
     return recipes;
@@ -179,14 +201,22 @@ public class RecipeService(
     return result.Trim('"').Trim();
   }
 
-  public async Task<List<Recipe>> GetRecipes(string query, bool scrape, int? acceptableScore = null,
-    string? requestedRecipeName = null)
+  public async Task<List<Recipe>> GetRecipes(
+    string query,
+    bool scrape = true,
+    int? acceptableScore = null,
+    int? requiredCount = null,
+    string? requestedRecipeName = null,
+    CancellationToken ct = default
+  )
   {
+    query = query.Trim().ToLowerInvariant();
     acceptableScore ??= config.AcceptableScoreThreshold;
-    var recipesNeeded = config.RecipesToReturnPerRetrieval;
+    var recipesNeeded = requiredCount ?? config.RecipesToReturnPerRetrieval;
+    var amountToRetrieveFromRepository = Math.Max(recipesNeeded, config.MaxSearchResults);
 
     // First, attempt to retrieve via local source of JSON files
-    var recipes = await recipeRepository.SearchRecipes(query);
+    var recipes = await recipeRepository.SearchRecipes(query, acceptableScore, amountToRetrieveFromRepository, ct);
     if (recipes.Count != 0)
     {
       logger.LogInformation("Retrieved {count} cached recipes for query '{query}'.", recipes.Count, query);
@@ -194,10 +224,10 @@ public class RecipeService(
 
     var cachedRecipes = recipes
       .Where(r => r.Relevancy.TryGetValue(query, out var value) && value.Score >= acceptableScore)
-      .Take(config.RecipesToReturnPerRetrieval)
+      .Take(recipesNeeded)
       .ToList();
 
-    if (cachedRecipes.Count >= config.RecipesToReturnPerRetrieval)
+    if (cachedRecipes.Count >= recipesNeeded)
     {
       return cachedRecipes.ToList();
     }
@@ -205,11 +235,11 @@ public class RecipeService(
     await RankUnrankedRecipesAsync(recipes, query, acceptableScore.Value, requestedRecipeName);
 
     // Check if additional recipes should be web-scraped
-    if (scrape && recipes.Count(r =>
-          (r.Relevancy.TryGetValue(query, out var value) ? value.Score : 0) >= acceptableScore) < recipesNeeded)
+    if (scrape && recipes.Count(r => r.Relevancy.TryGetValue(query, out var v) && v.Score >= acceptableScore)
+        < recipesNeeded)
     {
       // Proceed with web scraping
-      var scrapedRecipes = await webscraper.ScrapeForRecipesAsync(query, acceptableScore);
+      var scrapedRecipes = await webscraper.ScrapeForRecipesAsync(query, acceptableScore, recipesNeeded);
 
       // Exclude any recipes already in the repository
       var newRecipes = scrapedRecipes.Where(r => !recipeRepository.ContainsRecipe(r.Id!));
@@ -230,7 +260,7 @@ public class RecipeService(
     // Return the top recipes
     return recipes
       .Where(r => r.Relevancy.TryGetValue(query, out var value) && value.Score >= acceptableScore)
-      .Take(config.RecipesToReturnPerRetrieval)
+      .Take(recipesNeeded)
       .ToList();
   }
 
@@ -240,6 +270,7 @@ public class RecipeService(
   private async Task<List<Recipe>> RankUnrankedRecipesAsync(List<Recipe> recipes, string query, int acceptableScore,
     string? requestedRecipeName = null)
   {
+    query = query.Trim().ToLowerInvariant();
     var unrankedRecipes = recipes.Where(r => !r.Relevancy.ContainsKey(query)).ToList();
     if (unrankedRecipes.Count != 0)
     {
@@ -252,8 +283,8 @@ public class RecipeService(
     // Now sort the recipes list based on the updated relevancy scores.
     recipes.Sort((r1, r2) =>
     {
-      var score1 = r1.Relevancy.TryGetValue(query, out var value) ? value.Score : 0;
-      var score2 = r2.Relevancy.TryGetValue(query, out var value1) ? value1.Score : 0;
+      var score1 = r1.Relevancy.TryGetValue(query, out var v1) ? v1.Score : 0;
+      var score2 = r2.Relevancy.TryGetValue(query, out var v2) ? v2.Score : 0;
       return score2.CompareTo(score1);
     });
 
@@ -263,6 +294,7 @@ public class RecipeService(
   private async Task RankRecipesAsync(List<Recipe> recipes, string query, int? acceptableScore = null,
     string? requestedRecipeName = null)
   {
+    query = query.Trim().ToLowerInvariant();
     acceptableScore ??= config.AcceptableScoreThreshold;
 
     var rankedRecipes = new ConcurrentBag<Recipe>();
@@ -270,7 +302,7 @@ public class RecipeService(
 
     try
     {
-      await sessionManager.ParallelForEachAsync(recipes, async (_, recipe, ct) =>
+      await sessionManager.ParallelForEachAsync(scope, recipes, async (_, recipe, ct) =>
         {
           // Check if cancellation has been requested
           if (ct.IsCancellationRequested)
@@ -278,14 +310,15 @@ public class RecipeService(
 
           try
           {
-            if (!recipe.Relevancy.TryGetValue(query, out var value) || value.Score < acceptableScore)
+            // If we haven't ranked this recipe or if previous score < acceptableScore, re-rank it
+            if (!recipe.Relevancy.TryGetValue(query, out var existingVal) || existingVal.Score < acceptableScore)
             {
               // Evaluate relevancy if not already
-              value = await RankRecipe(recipe, query, requestedRecipeName);
-              recipe.Relevancy[query] = value;
+              var newVal = await RankRecipe(recipe, query, requestedRecipeName);
+              recipe.Relevancy[query] = newVal;
             }
 
-            if (value.Score >= acceptableScore)
+            if (recipe.Relevancy[query].Score >= acceptableScore)
             {
               rankedRecipes.Add(recipe);
 
@@ -306,7 +339,9 @@ public class RecipeService(
             throw;
           }
         },
-        config.MaxParallelTasks, cts.Token);
+        config.MaxParallelTasks,
+        cts.Token
+      );
     }
     catch (OperationCanceledException)
     {
@@ -363,14 +398,13 @@ public class RecipeService(
           await ProcessSynthesisRun(synthesizingThreadId, synthesizeRunId);
 
         synthesizedRecipe.AttemptCount = count;
+        synthesizedRecipe.Revisions ??= [];
 
         logger.LogInformation("[{Recipe} - Run {count}] Synthesized recipe: {@SynthesizedRecipe}", recipeName, count,
           synthesizedRecipe);
 
         if (count == 1)
         {
-          synthesizedRecipe.Revisions = [];
-
           var analysisPrompt = analyzeRecipePrompt.GetUserPrompt(synthesizedRecipe, order, recipeName);
           await llmService.CreateMessage(analyzeThreadId, analysisPrompt);
 
@@ -388,7 +422,7 @@ public class RecipeService(
 
         synthesizedRecipe.AddAnalysisResult(analysisResult);
 
-        if (analysisResult.QualityScore >= config.QualityScoreThreshold)
+        if (analysisResult.QualityScore >= config.SynthesisQualityThreshold)
         {
           break;
         }
@@ -405,7 +439,7 @@ public class RecipeService(
           analysisResult.Analysis = "The recipe is not suitable enough for the cookbook order.";
         }
 
-        synthesizedRecipe.Revisions!.Add(synthesizedRecipe);
+        synthesizedRecipe.Revisions.Add(synthesizedRecipe);
 
         await ProvideAnalysisFeedback(synthesizingThreadId, synthesizeRunId, synthesizeToolCallId,
           analysisResult);

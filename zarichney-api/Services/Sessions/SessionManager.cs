@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using OpenAI.Chat;
-using Zarichney.Cookbook.Models;
-using Zarichney.Cookbook.Repositories;
+using Zarichney.Cookbook.Orders;
 
 namespace Zarichney.Services.Sessions;
 
@@ -29,10 +28,13 @@ public interface ISessionManager
   Task<string> InitializeConversation(Guid scopeId, List<ChatMessage> messages, ChatTool? functionTool = null);
   Task<LlmConversation> GetConversation(Guid scopeId, string conversationId);
 
-  Task ParallelForEachAsync<T>(IEnumerable<T> dataList,
+  Task ParallelForEachAsync<T>(
+    IScopeContainer parentScope,
+    IEnumerable<T> dataList,
     Func<IScopeContainer, T, CancellationToken, Task> operation,
     int? maxDegreeOfParallelism = null,
-    CancellationToken cancellationToken = default);
+    CancellationToken cancellationToken = default
+    );
 }
 
 /// <summary>
@@ -369,7 +371,9 @@ public class SessionManager(
     session.ExpiresAt = session.LastAccessedAt + duration;
   }
 
-  public async Task ParallelForEachAsync<T>(IEnumerable<T> dataList,
+  public async Task ParallelForEachAsync<T>(
+    IScopeContainer parentScope,
+    IEnumerable<T> dataList,
     Func<IScopeContainer, T, CancellationToken, Task> operation,
     int? maxDegreeOfParallelism = null,
     CancellationToken cancellationToken = default)
@@ -385,7 +389,7 @@ public class SessionManager(
         },
         async (item, ct) =>
         {
-          var scope = scopeFactory.CreateScope();
+          var scope = scopeFactory.CreateScope(parentScope);
 
           await operation(scope, item, ct);
         });

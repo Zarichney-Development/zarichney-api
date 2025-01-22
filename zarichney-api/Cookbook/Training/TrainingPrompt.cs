@@ -1,7 +1,6 @@
 using System.Text.Json;
 using Zarichney.Config;
-using Zarichney.Cookbook.Models;
-using Zarichney.Cookbook.Prompts;
+using Zarichney.Cookbook.Recipes;
 using Zarichney.Services;
 
 namespace Zarichney.Cookbook.Training;

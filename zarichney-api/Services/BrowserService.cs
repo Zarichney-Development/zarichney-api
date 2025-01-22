@@ -1,5 +1,5 @@
 using Microsoft.Playwright;
-using Zarichney.Cookbook.Services;
+using Zarichney.Cookbook.Recipes;
 
 namespace Zarichney.Services;
 

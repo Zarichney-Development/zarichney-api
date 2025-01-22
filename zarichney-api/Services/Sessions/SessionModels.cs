@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using Zarichney.Config;
-using Zarichney.Cookbook.Models;
+using Zarichney.Cookbook.Orders;
 
 namespace Zarichney.Services.Sessions;
 
@@ -113,18 +113,15 @@ public interface IScopeContainer
 /// Container for managing scoped services and session data.
 /// Registered with scoped lifetime to persist the same Id across a scope.
 /// </summary>
-public class ScopeContainer : IScopeContainer
+public class ScopeContainer(
+  IServiceProvider serviceProvider,
+  IScopeContainer? parentScope = null
+)
+  : IScopeContainer
 {
-  public IServiceProvider ServiceProvider { get; }
-  public Guid Id { get; set; }
-  public Guid? SessionId { get; set; }
-
-  public ScopeContainer(IServiceProvider serviceProvider, IScopeContainer? parentScope = null)
-  {
-    ServiceProvider = serviceProvider;
-    Id = parentScope?.Id ?? Guid.NewGuid();
-    SessionId = parentScope?.SessionId;
-  }
+  public IServiceProvider ServiceProvider { get; } = serviceProvider;
+  public Guid Id { get; set; } = parentScope?.Id ?? Guid.NewGuid();
+  public Guid? SessionId { get; set; } = parentScope?.SessionId;
 
   public T GetService<T>() where T : notnull
   {

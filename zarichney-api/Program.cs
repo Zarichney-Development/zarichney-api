@@ -7,8 +7,8 @@ using OpenAI;
 using OpenAI.Audio;
 using Serilog;
 using Zarichney.Config;
-using Zarichney.Cookbook.Repositories;
-using Zarichney.Cookbook.Services;
+using Zarichney.Cookbook.Orders;
+using Zarichney.Cookbook.Recipes;
 using Zarichney.Middleware;
 using Zarichney.Services;
 using Zarichney.Services.Sessions;
@@ -188,6 +188,8 @@ void ConfigureApplicationServices(IServiceCollection services)
   // Repositories
   services.AddSingleton<ILlmRepository, LlmRepository>();
   services.AddSingleton<IRecipeRepository, RecipeFileRepository>();
+  services.AddSingleton<IRecipeIndexer, RecipeIndexer>();
+  services.AddSingleton<IRecipeSearcher, RecipeSearcher>();
   services.AddSingleton<IOrderRepository, OrderFileRepository>();
   services.AddSingleton<GitHubService>();
   services.AddSingleton<IGitHubService>(sp => sp.GetRequiredService<GitHubService>());
