@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Zarichney.Cookbook.Customers;
 using Zarichney.Cookbook.Recipes;
 using Zarichney.Services;
 
@@ -9,7 +10,9 @@ public enum OrderStatus
   Submitted,
   InProgress,
   Completed,
-  Paid
+  Paid,
+  Failed,
+  AwaitingPayment
 }
 
 public class CookbookOrderSubmission
@@ -25,7 +28,7 @@ public class CookbookOrderSubmission
         {CookbookDetails}
         {UserDetails}
         """.Trim();
-  
+
   [JsonConstructor]
   public CookbookOrderSubmission()
   {
@@ -36,19 +39,23 @@ public class CookbookOrder : CookbookOrderSubmission
 {
   public string OrderId { get; init; } = null!;
   public List<string> RecipeList { get; init; } = null!;
-  public List<SynthesizedRecipe> SynthesizedRecipes { get; set; } = [];
+  public List<SynthesizedRecipe> SynthesizedRecipes { get; init; } = [];
   public OrderStatus Status { get; set; } = OrderStatus.Submitted;
+  public bool RequiresPayment { get; set; }
+  public Customer Customer { get; set; } = null!;
 
-  public CookbookOrder(CookbookOrderSubmission submission, List<string> recipeList)
+  public CookbookOrder(Customer customer, CookbookOrderSubmission submission, List<string> recipeList)
   {
+    Customer = customer;
     OrderId = Utils.GenerateId();
     Email = submission.Email;
     CookbookContent = submission.CookbookContent;
     CookbookDetails = submission.CookbookDetails;
     UserDetails = submission.UserDetails;
     RecipeList = recipeList;
+    RequiresPayment = recipeList.Count > customer.AvailableRecipes;
   }
-  
+
   [JsonConstructor]
   public CookbookOrder()
   {

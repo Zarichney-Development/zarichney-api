@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using OpenAI.Chat;
+using Zarichney.Cookbook.Customers;
 using Zarichney.Cookbook.Orders;
 
 namespace Zarichney.Services.Sessions;
@@ -46,7 +47,8 @@ public class SessionManager(
   ILlmRepository llmRepository,
   SessionConfig config,
   IScopeFactory scopeFactory,
-  ILogger<SessionManager> logger
+  ILogger<SessionManager> logger,
+  ICustomerRepository customerRepository
 ) : ISessionManager
 {
   private readonly SessionConfig _config = config ?? throw new ArgumentNullException(nameof(config));
@@ -140,6 +142,7 @@ public class SessionManager(
       {
         // No wait because file service queues background work
         orderRepository.AddUpdateOrderAsync(orderToWrite);
+        customerRepository.SaveCustomer(orderToWrite.Customer);
       }
 
       // Write conversations in parallel
@@ -188,9 +191,15 @@ public class SessionManager(
 
     var order = await orderRepository.GetOrder(orderId)
                 ?? throw new KeyNotFoundException($"Order {orderId} not found");
+    
+    var customer = await customerRepository.GetCustomerByEmail(order.Email)
+                   ?? throw new KeyNotFoundException($"Customer {order.Email} not found");
+    
+    order.Customer = customer;
 
     var newSession = await CreateSession(scopeId);
     newSession.Order = order;
+    
     return newSession;
   }
 

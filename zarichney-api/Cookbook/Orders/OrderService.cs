@@ -4,6 +4,7 @@ using Microsoft.Graph.Models;
 using Polly;
 using Polly.Retry;
 using Zarichney.Config;
+using Zarichney.Cookbook.Customers;
 using Zarichney.Cookbook.Prompts;
 using Zarichney.Cookbook.Recipes;
 using Zarichney.Services;
@@ -15,8 +16,7 @@ namespace Zarichney.Cookbook.Orders;
 public class OrderConfig : IConfig
 {
   public int MaxParallelTasks { get; init; } = 5;
-  public int MaxSampleRecipes { get; init; } = 5;
-  public string OutputDirectory { get; init; } = "Orders";
+  public string OutputDirectory { get; init; } = "Data\\Orders";
 }
 
 public interface IOrderService
@@ -41,7 +41,8 @@ public class OrderService(
   ProcessOrderPrompt processOrderPrompt,
   IRecipeService recipeService,
   IScopeContainer scope,
-  ISessionManager sessionManager
+  ISessionManager sessionManager,
+  ICustomerService customerService
 ) : IOrderService
 {
   private readonly AsyncRetryPolicy _retryPolicy = Policy
@@ -75,10 +76,16 @@ public class OrderService(
   {
     try
     {
+      // Load or create the customer by email
+      var customer = await customerService.GetOrCreateCustomer(submission.Email);
+
+      // Generate the requested recipes from LLM
       var cookbookRecipeList = await GetOrderRecipes(submission);
 
-      var order = new CookbookOrder(submission, cookbookRecipeList);
+      // Create the order
+      var order = new CookbookOrder(customer, submission, cookbookRecipeList);
 
+      // Save to session
       await sessionManager.AddOrder(scope.Id, order);
 
       logger.LogInformation("Order intake: {@Order}", order);
@@ -106,27 +113,71 @@ public class OrderService(
 
   public async Task ProcessOrder(string orderId)
   {
-    const bool isSample = true; // temp until properly implemented
+    // Retrieve the order from session
+    var session = await sessionManager.GetSessionByOrder(orderId, scope.Id);
+    var order = session.Order
+                ?? throw new KeyNotFoundException($"No order found using ID: {orderId}");
+
+    if (!await VerifyCredits(order))
+    {
+      logger.LogInformation(
+        "Order {OrderId} not processed due to insufficient credits for {Email}. Email sent.",
+        order.OrderId,
+        order.Email
+      );
+      return;
+    }
 
     try
     {
-      var order = await GetOrder(orderId);
-
       order.Status = OrderStatus.InProgress;
 
-      await ProcessRecipesAsync(order, isSample);
+      await ProcessRecipesAsync(order);
 
       await CreatePdf(order);
 
       await EmailCookbook(order);
 
-      order.Status = OrderStatus.Completed;
+      order.Status = order.RecipeList.Count == order.SynthesizedRecipes.Count
+        ? OrderStatus.Completed
+        : OrderStatus.AwaitingPayment;
     }
     catch (Exception ex)
     {
       logger.LogError(ex, "{Method}: Failed to process order {OrderId}",
         nameof(ProcessOrder), orderId);
+      order.Status = OrderStatus.Failed;
     }
+  }
+
+  private async Task<bool> VerifyCredits(CookbookOrder order)
+  {
+    // Check if customer has enough credits
+    var customer = order.Customer;
+
+    if (customer.AvailableRecipes > 0)
+    {
+      return true;
+    }
+
+    // They have no credits => send an email informing them that they need to purchase more credits
+    await SendOrderPendingEmail(order);
+
+    return false;
+  }
+
+  private async Task SendOrderPendingEmail(CookbookOrder order)
+  {
+    await emailService.SendEmail(
+      order.Email,
+      "Cookbook Factory - Order Pending",
+      "credits-needed",
+      new Dictionary<string, object>
+      {
+        { "orderId", order.OrderId },
+        { "recipes", order.RecipeList }
+      }
+    );
   }
 
   public async Task CompilePdf(CookbookOrder order, bool waitForWrite = false)
@@ -174,97 +225,109 @@ public class OrderService(
     return result.Recipes;
   }
 
-  private async Task ProcessRecipesAsync(CookbookOrder order, bool isSample)
+  private async Task ProcessRecipesAsync(CookbookOrder order, bool force = false)
   {
-    var completedRecipes = new ConcurrentBag<SynthesizedRecipe>();
+    // 1) Gather the list of recipes that have NOT been synthesized yet.
+    var alreadySynthesizedTitles = order.SynthesizedRecipes
+      .Select(r => r.Title ?? "")
+      .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-    var maxParallelTasks = config.MaxParallelTasks;
-    if (isSample)
+    var pendingRecipes = order.RecipeList
+      .Where(recipeName => force || !alreadySynthesizedTitles.Contains(recipeName))
+      .ToList();
+
+    if (pendingRecipes.Count == 0)
     {
-      maxParallelTasks = Math.Min(maxParallelTasks, config.MaxSampleRecipes);
+      logger.LogInformation("No new recipes to process for order {OrderId}", order.OrderId);
+      return;
     }
 
-    var cts = new CancellationTokenSource();
+    // Check how many credits the user has right now
+    var customer = order.Customer;
+    var available = customer.AvailableRecipes;
+    if (available <= 0)
+    {
+      logger.LogInformation("Customer {Email} has 0 available recipes left, skipping processing", customer.Email);
+      return;
+    }
+
+    // Decide how many recipes we will process this pass
+    var toProcessCount = Math.Min(available, pendingRecipes.Count);
+
+    var newRecipesBag = new ConcurrentBag<SynthesizedRecipe>();
     var completedCount = 0;
+    var maxParallelTasks = Math.Min(config.MaxParallelTasks, toProcessCount);
+    var cts = new CancellationTokenSource();
 
     try
     {
-      await sessionManager.ParallelForEachAsync(scope,
-        order.RecipeList,
+      await sessionManager.ParallelForEachAsync(scope, pendingRecipes,
         async (_, recipeName, ct) =>
         {
-          try
+          // If we've already processed enough, cancel
+          if (Interlocked.CompareExchange(ref completedCount, 0, 0) >= toProcessCount)
           {
-            // Check if sample size is reached
-            if (isSample && Interlocked.CompareExchange(ref completedCount, 0, 0) >=
-                config.MaxSampleRecipes)
-            {
-              logger.LogInformation("Sample size reached, stopping processing");
-              await cts.CancelAsync();
-              return;
-            }
+            await cts.CancelAsync();
+            return;
+          }
 
-            await ProcessRecipe(recipeName, ct);
+          var sourceRecipes = await GetRecipes(recipeName, order, ct: ct);
+          var newRecipe = await recipeService.SynthesizeRecipe(sourceRecipes, order, recipeName);
 
-            // Increment the completed count after successful processing
-            if (isSample && Interlocked.Increment(ref completedCount) >= config.MaxSampleRecipes)
-            {
-              logger.LogInformation("Sample size reached, stopping processing");
-              await cts.CancelAsync();
-            }
-          }
-          catch (OperationCanceledException)
+          newRecipe.ImageUrls = GetImageUrls(newRecipe, sourceRecipes);
+          newRecipe.SourceRecipes = sourceRecipes
+            .Where(r => !(newRecipe.InspiredBy?.Count > 0)
+                        || newRecipe.InspiredBy.Contains(r.RecipeUrl!))
+            .ToList();
+          newRecipe.Title ??= recipeName; // fallback
+
+          newRecipesBag.Add(newRecipe);
+
+          // Check if we've hit the limit
+          var after = Interlocked.Increment(ref completedCount);
+          if (after >= toProcessCount)
           {
-            logger.LogInformation("Processing of {RecipeName} was canceled.", recipeName);
+            await cts.CancelAsync();
           }
-          catch (Exception ex)
-          {
-            logger.LogError(ex, "Unhandled exception in ProcessRecipe for {RecipeName}", recipeName);
-          }
-        }, maxParallelTasks, cts.Token);
+        },
+        maxParallelTasks,
+        cts.Token
+      );
     }
     catch (OperationCanceledException)
     {
-      // Expected when cancellation is requested
+      // Normal partial-cancel scenario
     }
     catch (Exception ex)
     {
-      logger.LogError(ex, "Unhandled exception during processing.");
+      logger.LogError(ex,
+        "Unhandled exception during recipe processing for order {OrderId}",
+        order.OrderId);
     }
 
-    order.SynthesizedRecipes = completedRecipes.ToList();
-
-    return;
-
-    async Task ProcessRecipe(string recipeName, CancellationToken ct)
+    // 4) We have new recipes in `newRecipesBag`; add them to the order
+    var newlyProcessedCount = newRecipesBag.Count;
+    if (newlyProcessedCount > 0)
     {
-      try
-      {
-        // Check for cancellation
-        ct.ThrowIfCancellationRequested();
+      var newRecipesList = newRecipesBag.ToList();
+      order.SynthesizedRecipes.AddRange(newRecipesList);
 
-        var sourceRecipes = await GetRecipes(recipeName, order, ct: ct);
-
-        var newRecipe = await recipeService.SynthesizeRecipe(sourceRecipes, order, recipeName);
-
-        // Add image to recipe
-        newRecipe.ImageUrls = GetImageUrls(newRecipe, sourceRecipes);
-        newRecipe.SourceRecipes = sourceRecipes
-          .Where(r => !(newRecipe.InspiredBy?.Count > 0) || newRecipe.InspiredBy.Contains(r.RecipeUrl!))
-          .ToList();
-
-        completedRecipes.Add(newRecipe);
-      }
-      catch (OperationCanceledException)
-      {
-        logger.LogInformation("Processing of {RecipeName} was canceled.", recipeName);
-      }
-      catch (Exception ex)
-      {
-        logger.LogError(ex, "Unhandled exception in ProcessRecipe for {RecipeName}", recipeName);
-      }
+      // 5) Decrement the user's credits by however many were actually processed
+      customerService.DecrementRecipes(customer, newlyProcessedCount);
     }
+
+    // 6) If we haven't processed all recipes, set RequiresPayment to indicate there's more to do in a future re-run
+    order.RequiresPayment = order.SynthesizedRecipes.Count < order.RecipeList.Count;
+
+    logger.LogInformation(
+      "Order {OrderId} processing complete. Synthesized {NewCount} new recipes. Total now: {TotalCount}. Still requires payment? {Pay}",
+      order.OrderId,
+      newlyProcessedCount,
+      order.SynthesizedRecipes.Count,
+      order.RequiresPayment
+    );
   }
+
 
   /// <summary>
   /// Get recipes from the recipe service
@@ -390,11 +453,19 @@ public class OrderService(
     await _retryPolicy.ExecuteAsync(async () =>
     {
       var pdf = await orderRepository.GetCookbook(order.OrderId);
-
       if (pdf == null || pdf.Length == 0)
       {
         throw new Exception($"Cookbook PDF not found for order {order.OrderId}");
       }
+
+      var templateData = new Dictionary<string, object>
+      {
+        { "title", "Your Cookbook is Ready!" },
+        { "isPartial", order.RequiresPayment }, // true if not all recipes are processed
+        { "processedRecipes", order.SynthesizedRecipes.Count },
+        { "totalRecipes", order.RecipeList.Count },
+        { "orderId", order.OrderId }
+      };
 
       logger.LogInformation("Sending cookbook email to {Email}", order.Email);
 
@@ -402,7 +473,7 @@ public class OrderService(
         order.Email,
         "Your Cookbook is Ready!",
         "cookbook-ready",
-        null,
+        templateData,
         new FileAttachment
         {
           Name = "Cookbook.pdf",

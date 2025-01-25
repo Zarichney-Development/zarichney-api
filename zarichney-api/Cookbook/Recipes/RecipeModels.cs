@@ -14,7 +14,7 @@ public class RecipeConfig : IConfig
   public int SynthesisQualityThreshold { get; init; } = 80;
   public int MaxNewRecipeNameAttempts { get; init; } = 6;
   public int MaxParallelTasks { get; init; } = 5;
-  public string OutputDirectory { get; init; } = "Recipes";
+  public string OutputDirectory { get; init; } = "Data\\Recipes";
 }
 public class Recipe
 {

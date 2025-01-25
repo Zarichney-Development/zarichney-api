@@ -35,7 +35,7 @@ public class CookbookController(
       {
         RecipeSpecificationType = "specific",
         SpecificRecipes = ["Bacon Cheese burger"],
-        ExpectedRecipeCount = 1
+        ExpectedRecipeCount = 3
       }
     };
     

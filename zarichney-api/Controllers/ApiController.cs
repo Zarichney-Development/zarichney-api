@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Zarichney.Middleware;
 using Zarichney.Services;
 using Zarichney.Services.Emails;
+using Zarichney.Services.Sessions;
 
 namespace Zarichney.Controllers;
 
@@ -14,7 +15,9 @@ public class ApiController(
   IGitHubService githubService,
   EmailConfig emailConfig,
   ILlmService llmService,
-  ILogger<ApiController> logger
+  ILogger<ApiController> logger,
+  ISessionManager sessionManager,
+  IScopeContainer scope
 ) : ControllerBase
 {
   public class CompletionRequest
@@ -24,6 +27,7 @@ public class ApiController(
   }
 
   [HttpPost("completion")]
+  [AcceptsSession]
   [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(BadRequestObjectResult), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
@@ -84,6 +88,9 @@ public class ApiController(
 
       var response = await llmService.GetCompletionContent(prompt);
 
+      var session = await sessionManager.GetSessionByScope(scope.Id);
+      Response.Headers["X-Session-Id"] = session.Id.ToString();
+      
       return Ok(new
       {
         response,

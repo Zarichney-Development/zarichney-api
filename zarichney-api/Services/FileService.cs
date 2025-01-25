@@ -15,9 +15,9 @@ namespace Zarichney.Services;
 /// </summary>
 public interface IFileService : IDisposable
 {
-  Task WriteToFile(string directory, string filename, object data, string extension = "json");
-  void WriteToFileAsync(string directory, string filename, object data, string extension = "json");
-  Task<T> ReadFromFile<T>(string directory, string filename, string extension = "json");
+  Task WriteToFile(string directory, string filename, object data, string? extension = "json");
+  void WriteToFileAsync(string directory, string filename, object data, string? extension = "json");
+  Task<T> ReadFromFile<T>(string directory, string filename, string? extension = "json");
   string[] GetFiles(string directoryPath);
   string GetFile(string filePath);
   Task<string> GetFileAsync(string filePath);
@@ -95,8 +95,9 @@ public class FileService : IFileService
   /// <param name="filename">The file name without extension.</param>
   /// <param name="data">The data to write.</param>
   /// <param name="extension">The file extension to use (default is "json").</param>
-  public async Task WriteToFile(string directory, string filename, object data, string extension = "json")
+  public async Task WriteToFile(string directory, string filename, object data, string? extension = null)
   {
+    extension ??= "json";
     _logger.LogInformation("Writing file: {Filename}", filename);
     object content;
     switch (extension.ToLower())
@@ -142,8 +143,9 @@ public class FileService : IFileService
   /// <param name="filename">The file name without extension.</param>
   /// <param name="data">The data to write.</param>
   /// <param name="extension">The file extension to use (default is "json").</param>
-  public void WriteToFileAsync(string directory, string filename, object data, string extension = "json")
+  public void WriteToFileAsync(string directory, string filename, object data, string? extension = null)
   {
+    extension ??= "json";
     _logger.LogInformation("Writing file: {Filename}", filename);
     object content;
     switch (extension.ToLower())
@@ -187,8 +189,9 @@ public class FileService : IFileService
   /// <param name="filename">The file name without extension.</param>
   /// <param name="extension">The file extension (default is "json").</param>
   /// <returns>An instance of T containing the deserialized data.</returns>
-  public async Task<T> ReadFromFile<T>(string directory, string filename, string extension = "json")
+  public async Task<T> ReadFromFile<T>(string directory, string filename, string? extension = null)
   {
+    extension ??= "json";
     var filePath = GetFullPath(directory, filename, extension);
 
     // If there's write-in progress for this file, wait for it
@@ -431,8 +434,9 @@ public class FileService : IFileService
   /// <param name="filename">The file name without extension.</param>
   /// <param name="extension">The file extension.</param>
   /// <returns>An <see cref="object"/> representing the file contents.</returns>
-  private async Task<object?> LoadExistingData(string directory, string filename, string extension = "json")
+  private async Task<object?> LoadExistingData(string directory, string filename, string? extension = null)
   {
+    extension ??= "json";
     var filePath = Path.Combine(directory, $"{SanitizeFileName(filename)}.{extension}");
 
     _logger.LogInformation("Loading existing data from '{FilePath}'", filePath);
@@ -486,7 +490,7 @@ public class FileService : IFileService
   /// <summary>
   /// Builds a valid file path by combining directory, filename, and extension into a single path.
   /// </summary>
-  private static string GetFullPath(string directory, string filename, string extension)
+  private static string GetFullPath(string directory, string filename, string? extension)
     => Path.Combine(directory, $"{SanitizeFileName(filename)}.{extension}");
 
   /// <summary>
@@ -505,10 +509,10 @@ public class FileService : IFileService
 /// <summary>
 /// Represents a pending write operation with directory, filename, and data.
 /// </summary>
-public class WriteOperation(string directory, string filename, object data, string extension)
+public class WriteOperation(string directory, string filename, object data, string? extension)
 {
   public string Directory { get; } = directory;
   public string Filename { get; } = filename;
   public object Data { get; } = data;
-  public string Extension { get; } = extension;
+  public string? Extension { get; } = extension;
 }

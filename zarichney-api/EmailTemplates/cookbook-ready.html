@@ -1,4 +1,16 @@
 <h2>{{title}}</h2>
-<p>Your personalized cookbook is now ready.</p>
+
+{{#if isPartial}}
+<p>
+    We’ve processed {{processedRecipes}} out of {{totalRecipes}} requested recipes so far.
+    To get the remaining recipes, please visit
+    <a href="https://zarichney.com/cookbook/order/{{orderId}}">https://zarichney.com/cookbook</a>
+    to complete your purchase.
+</p>
+<p>We hope you enjoy these recipes in the meantime!</p>
+{{else}}
+<p>Your personalized cookbook is now ready!</p>
 <p>We hope you enjoy your custom recipes and culinary adventures.</p>
+{{/if}}
+
 <p>Happy cooking!</p>

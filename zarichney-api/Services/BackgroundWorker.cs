@@ -104,6 +104,10 @@ public class BackgroundTaskService(
           }
         }
       }
+      catch (OperationCanceledException)
+      {
+        _logger.LogInformation("Background task was cancelled");
+      }
       catch (Exception ex)
       {
         _logger.LogError(ex, "Error occurred executing background task");

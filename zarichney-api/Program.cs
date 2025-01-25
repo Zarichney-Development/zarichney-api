@@ -7,6 +7,7 @@ using OpenAI;
 using OpenAI.Audio;
 using Serilog;
 using Zarichney.Config;
+using Zarichney.Cookbook.Customers;
 using Zarichney.Cookbook.Orders;
 using Zarichney.Cookbook.Recipes;
 using Zarichney.Middleware;
@@ -192,6 +193,7 @@ void ConfigureApplicationServices(IServiceCollection services)
   services.AddSingleton<IRecipeIndexer, RecipeIndexer>();
   services.AddSingleton<IRecipeSearcher, RecipeSearcher>();
   services.AddSingleton<IOrderRepository, OrderFileRepository>();
+  services.AddSingleton<ICustomerRepository, CustomerFileRepository>();
   services.AddSingleton<GitHubService>();
   services.AddSingleton<IGitHubService>(sp => sp.GetRequiredService<GitHubService>());
   services.AddHostedService(sp => sp.GetRequiredService<GitHubService>());
@@ -200,6 +202,7 @@ void ConfigureApplicationServices(IServiceCollection services)
   services.AddScoped<ILlmService, LlmService>();
   services.AddTransient<IRecipeService, RecipeService>();
   services.AddTransient<IOrderService, OrderService>();
+  services.AddTransient<ICustomerService, CustomerService>();
   services.AddTransient<WebScraperService>();
   services.AddTransient<PdfCompiler>();
   services.AddTransient<ITranscribeService, TranscribeService>();
