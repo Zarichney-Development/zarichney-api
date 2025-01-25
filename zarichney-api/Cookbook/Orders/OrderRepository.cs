@@ -14,19 +14,20 @@ public class OrderFileRepository(
 {
   public async Task<CookbookOrder?> GetOrder(string orderId)
   {
-    var path = Path.Combine(config.OutputDirectory, orderId);
-    
-    // TODO: enhance to wait in case this file is in the pipeline to be written
-    // problem at the moment is that the call to file service doesnt signal when the file has exited the queue and completed
-    
-    var order = await fileService.ReadFromFile<CookbookOrder?>(path, "Order");
+    var order = await fileService.ReadFromFile<CookbookOrder?>(
+      Path.Combine(config.OutputDirectory, orderId),
+      "Order"
+    );
 
     return order;
   }
 
   public void AddUpdateOrderAsync(CookbookOrder order)
   {
-    var path = Path.Combine(config.OutputDirectory, order.OrderId);
-    fileService.WriteToFileAsync(path, "Order", order);
+    fileService.WriteToFileAsync(
+      Path.Combine(config.OutputDirectory, order.OrderId),
+      "Order",
+      order
+    );
   }
 }

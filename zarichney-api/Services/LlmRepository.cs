@@ -94,7 +94,7 @@ public class LlmRepository(IGitHubService githubService) : ILlmRepository
       }
       catch
       {
-        return JsonValue.Create(strResponse)!;
+        return JsonValue.Create(strResponse);
       }
     }
 
@@ -102,15 +102,8 @@ public class LlmRepository(IGitHubService githubService) : ILlmRepository
     return JsonNode.Parse(responseJson)!;
   }
 
-  private class MultilineStringConverter : JsonConverter<string>
+  private class MultilineStringConverter(int indentLevel = 2) : JsonConverter<string>
   {
-    private readonly int _indentLevel;
-
-    public MultilineStringConverter(int indentLevel = 2)
-    {
-      _indentLevel = indentLevel;
-    }
-
     public override string? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
       return reader.GetString();
@@ -120,7 +113,7 @@ public class LlmRepository(IGitHubService githubService) : ILlmRepository
     {
       if (value.Contains('\n'))
       {
-        var formattedValue = IndentAllLines(value, _indentLevel);
+        var formattedValue = IndentAllLines(value, indentLevel);
         writer.WriteStringValue("\n" + formattedValue);
       }
       else
@@ -139,9 +132,9 @@ public class LlmRepository(IGitHubService githubService) : ILlmRepository
       ["options"] = message.Options != null
         ? JsonNode.Parse(JsonSerializer.Serialize(message.Options, IndentedOptions))
         : null,
-      ["request"] = JsonValue.Create(formattedRequest)!,
+      ["request"] = JsonValue.Create(formattedRequest),
       ["response"] = SerializeResponse(message.Response),
-      ["timestamp"] = JsonValue.Create(message.Timestamp.ToString("o"))!,
+      ["timestamp"] = JsonValue.Create(message.Timestamp.ToString("o")),
       ["chatCompletion"] = JsonNode.Parse(JsonSerializer.Serialize(
         message.ChatCompletion,
         IndentedOptions

@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Zarichney.Middleware;
 using Zarichney.Services;
+using Zarichney.Services.Emails;
 
 namespace Zarichney.Controllers;
 
@@ -258,27 +259,16 @@ public class ApiController(
 
   private async Task SendErrorNotification(string stage, Exception ex, string fileName)
   {
+    var templateData = TemplateService.GetErrorTemplateData(ex);
+    templateData["stage"] = stage;
+    templateData["serviceName"] = "Transcription";
+    ((Dictionary<string, string>)templateData["additionalContext"])["fileName"] = fileName;
+
     await emailService.SendEmail(
       emailConfig.FromEmail,
       $"Transcription Service Error - {stage}",
       "error-log",
-      new Dictionary<string, object>
-      {
-        { "timestamp", DateTime.UtcNow.ToString("O") },
-        { "fileName", fileName },
-        { "errorType", ex.GetType().Name },
-        { "errorMessage", ex.Message },
-        { "stage", stage },
-        { "stackTrace", ex.StackTrace ?? "No stack trace available" },
-        {
-          "additionalContext", new Dictionary<string, string>
-          {
-            { "ProcessStage", stage },
-            { "MachineName", Environment.MachineName },
-            { "OsVersion", Environment.OSVersion.ToString() }
-          }
-        }
-      }
+      templateData
     );
   }
 }

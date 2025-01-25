@@ -1,29 +1,15 @@
-using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
-using HandlebarsDotNet;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using RestSharp;
-using Zarichney.Config;
 using SendMailPostRequestBody = Microsoft.Graph.Users.Item.SendMail.SendMailPostRequestBody;
 
-namespace Zarichney.Services;
-
-public class EmailConfig : IConfig
-{
-  [Required] public required string AzureTenantId { get; init; }
-  [Required] public required string AzureAppId { get; init; }
-  [Required] public required string AzureAppSecret { get; init; }
-  [Required] public required string FromEmail { get; init; }
-  public string TemplateDirectory { get; init; } = "EmailTemplates";
-  [Required] public required string MailCheckApiKey { get; init; }
-}
+namespace Zarichney.Services.Emails;
 
 public interface IEmailService
 {
   Task SendEmail(string recipient, string subject, string templateName,
-    Dictionary<string, object> templateData, FileAttachment? attachment = null);
+    Dictionary<string, object>? templateData = null, FileAttachment? attachment = null);
 
   Task<bool> ValidateEmail(string email);
 }
@@ -38,12 +24,16 @@ public class EmailService(
   : IEmailService
 {
   public async Task SendEmail(string recipient, string subject, string templateName,
-    Dictionary<string, object> templateData, FileAttachment? attachment = null)
+    Dictionary<string, object>? templateData = null, FileAttachment? attachment = null)
   {
     string bodyContent;
     try
     {
-      bodyContent = await templateService.ApplyTemplate(templateName, templateData);
+      bodyContent = await templateService.ApplyTemplate(
+        templateName,
+        templateData ?? new Dictionary<string, object>(),
+        subject
+      );
 
       if (string.IsNullOrEmpty(bodyContent))
       {
@@ -60,28 +50,9 @@ public class EmailService(
     var message = new Message
     {
       Subject = subject,
-      From = new Recipient
-      {
-        EmailAddress = new EmailAddress
-        {
-          Address = config.FromEmail
-        }
-      },
-      Body = new ItemBody
-      {
-        ContentType = BodyType.Html,
-        Content = bodyContent
-      },
-      ToRecipients =
-      [
-        new Recipient
-        {
-          EmailAddress = new EmailAddress
-          {
-            Address = recipient
-          }
-        }
-      ],
+      From = new Recipient { EmailAddress = new EmailAddress { Address = config.FromEmail } },
+      Body = new ItemBody { ContentType = BodyType.Html, Content = bodyContent },
+      ToRecipients = [new Recipient { EmailAddress = new EmailAddress { Address = recipient } }],
       Attachments = []
     };
 
@@ -93,6 +64,7 @@ public class EmailService(
     var requestBody = new SendMailPostRequestBody
     {
       Message = message,
+      // Only save in sent folder for non-self-sent emails (the ones as notification for debugging purposes)
       SaveToSentItems = message.ToRecipients.Any(r => r.EmailAddress!.Address != config.FromEmail)
     };
 
@@ -112,6 +84,14 @@ public class EmailService(
       var emailAccount = graphClient.Users[config.FromEmail];
 
       await emailAccount.SendMail.PostAsync(requestBody);
+
+      logger.LogInformation("Email sent successfully. Request details: {@RequestDetails}", new
+      {
+        config.FromEmail,
+        ToEmail = recipient,
+        Subject = subject,
+        MessageId = message.Id
+      });
     }
     catch (Exception e)
     {
@@ -129,6 +109,12 @@ public class EmailService(
     }
   }
 
+  /// <summary>
+  /// Uses the MailCheck API to validate an email address and cache the result.
+  /// </summary>
+  /// <param name="email"></param>
+  /// <returns></returns>
+  /// <exception cref="InvalidOperationException"></exception>
   public async Task<bool> ValidateEmail(string email)
   {
     var domain = email.Split('@').Last();
@@ -207,103 +193,12 @@ public class EmailService(
     throw new InvalidEmailException(message, email, reason);
   }
 
-  private InvalidEmailReason DetermineInvalidReason(EmailValidationResponse result)
-  {
-    if (result.Reason.Contains("syntax", StringComparison.OrdinalIgnoreCase))
+  private static InvalidEmailReason DetermineInvalidReason(EmailValidationResponse result)
+    => result.Reason.ToLower() switch
     {
-      return InvalidEmailReason.InvalidSyntax;
-    }
-
-    if (result.PossibleTypo.Length > 0)
-    {
-      return InvalidEmailReason.PossibleTypo;
-    }
-
-    if (result.Reason.Contains("domain", StringComparison.OrdinalIgnoreCase))
-    {
-      return InvalidEmailReason.InvalidDomain;
-    }
-
-    // Default to InvalidDomain if we can't determine a more specific reason
-    return InvalidEmailReason.InvalidDomain;
-  }
-}
-
-public class EmailValidationResponse
-{
-  [JsonPropertyName("valid")] public bool Valid { get; set; }
-  [JsonPropertyName("block")] public bool Block { get; set; }
-  [JsonPropertyName("disposable")] public bool Disposable { get; set; }
-  [JsonPropertyName("email_forwarder")] public bool EmailForwarder { get; set; }
-  [JsonPropertyName("domain")] public required string Domain { get; set; }
-  [JsonPropertyName("text")] public required string Text { get; set; }
-  [JsonPropertyName("reason")] public required string Reason { get; set; }
-  [JsonPropertyName("risk")] public int Risk { get; set; }
-  [JsonPropertyName("mx_host")] public required string MxHost { get; set; }
-  [JsonPropertyName("possible_typo")] public required string[] PossibleTypo { get; set; }
-  [JsonPropertyName("mx_ip")] public required string MxIp { get; set; }
-  [JsonPropertyName("mx_info")] public required string MxInfo { get; set; }
-  [JsonPropertyName("last_changed_at")] public DateTime LastChangedAt { get; set; }
-}
-
-public enum InvalidEmailReason
-{
-  InvalidSyntax,
-  PossibleTypo,
-  InvalidDomain,
-  DisposableEmail
-}
-
-public class InvalidEmailException(string message, string email, InvalidEmailReason reason) : Exception(message)
-{
-  public string Email { get; } = email;
-  public InvalidEmailReason Reason { get; } = reason;
-}
-
-public interface ITemplateService
-{
-  Task<string> ApplyTemplate(string templateName, Dictionary<string, object> templateData);
-}
-
-public class TemplateService : ITemplateService
-{
-  private readonly string _templateDirectory;
-  private readonly Dictionary<string, HandlebarsTemplate<object, object>> _compiledTemplates;
-  private readonly IFileService _fileService;
-
-  public TemplateService(EmailConfig config, IFileService fileService)
-  {
-    _fileService = fileService;
-    _templateDirectory = config.TemplateDirectory;
-    _compiledTemplates = new Dictionary<string, HandlebarsTemplate<object, object>>();
-    CompileBaseTemplate();
-  }
-
-  private void CompileBaseTemplate()
-  {
-    var baseTemplatePath = Path.Combine(_templateDirectory, "base.html");
-    var baseTemplateContent = _fileService.GetFile(baseTemplatePath);
-    _compiledTemplates["base"] = Handlebars.Compile(baseTemplateContent);
-  }
-
-  public async Task<string> ApplyTemplate(string templateName, Dictionary<string, object> templateData)
-  {
-    if (!_compiledTemplates.TryGetValue(templateName, out var template))
-    {
-      var templatePath = Path.Combine(_templateDirectory, $"{templateName}.html");
-      var templateContent = await _fileService.GetFileAsync(templatePath);
-      template = Handlebars.Compile(templateContent);
-      _compiledTemplates[templateName] = template;
-    }
-
-    var content = template(templateData);
-    templateData["content"] = content;
-
-    return _compiledTemplates["base"](templateData);
-  }
-}
-
-public class TemplateConfig
-{
-  public required string TemplateDirectory { get; set; }
+      { } reason when reason.Contains("syntax") => InvalidEmailReason.InvalidSyntax,
+      not null when result.PossibleTypo.Length > 0 => InvalidEmailReason.PossibleTypo,
+      { } reason when reason.Contains("domain") => InvalidEmailReason.InvalidDomain,
+      _ => InvalidEmailReason.InvalidDomain
+    };
 }

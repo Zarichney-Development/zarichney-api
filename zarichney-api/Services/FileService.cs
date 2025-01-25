@@ -191,7 +191,7 @@ public class FileService : IFileService
   {
     var filePath = GetFullPath(directory, filename, extension);
 
-    // If there's a write in progress for this file, wait for it
+    // If there's write-in progress for this file, wait for it
     if (_pendingWrites.TryGetValue(filePath, out var pendingWrite))
     {
       _logger.LogInformation("Waiting for pending write operation to complete for file: {FilePath}", filePath);

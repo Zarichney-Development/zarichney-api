@@ -4,17 +4,20 @@ using Zarichney.Services;
 
 namespace Zarichney.Cookbook.Orders;
 
+public enum OrderStatus
+{
+  Submitted,
+  InProgress,
+  Completed,
+  Paid
+}
+
 public class CookbookOrderSubmission
 {
-  [JsonConstructor]
-  public CookbookOrderSubmission()
-  {
-  }
-
-  public required string Email { get; init; }
-  public required CookbookContent CookbookContent { get; init; }
-  public required CookbookDetails CookbookDetails { get; init; }
-  public required UserDetails UserDetails { get; init; }
+  public string Email { get; init; } = null!;
+  public CookbookContent CookbookContent { get; init; } = null!;
+  public CookbookDetails? CookbookDetails { get; protected init; }
+  public UserDetails? UserDetails { get; protected init; }
 
   public string ToMarkdown()
     => $"""
@@ -22,14 +25,19 @@ public class CookbookOrderSubmission
         {CookbookDetails}
         {UserDetails}
         """.Trim();
+  
+  [JsonConstructor]
+  public CookbookOrderSubmission()
+  {
+  }
 }
 
 public class CookbookOrder : CookbookOrderSubmission
 {
-  [JsonConstructor]
-  public CookbookOrder()
-  {
-  }
+  public string OrderId { get; init; } = null!;
+  public List<string> RecipeList { get; init; } = null!;
+  public List<SynthesizedRecipe> SynthesizedRecipes { get; set; } = [];
+  public OrderStatus Status { get; set; } = OrderStatus.Submitted;
 
   public CookbookOrder(CookbookOrderSubmission submission, List<string> recipeList)
   {
@@ -40,19 +48,11 @@ public class CookbookOrder : CookbookOrderSubmission
     UserDetails = submission.UserDetails;
     RecipeList = recipeList;
   }
-
-  public string OrderId { get; set; } = null!;
-  public List<string> RecipeList { get; set; } = null!;
-  public List<SynthesizedRecipe> SynthesizedRecipes { get; set; } = [];
-  public OrderStatus Status { get; set; } = OrderStatus.Submitted;
-}
-
-public enum OrderStatus
-{
-  Submitted,
-  InProgress,
-  Completed,
-  Paid
+  
+  [JsonConstructor]
+  public CookbookOrder()
+  {
+  }
 }
 
 public class CookbookContent

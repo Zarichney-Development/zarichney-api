@@ -11,6 +11,7 @@ using Zarichney.Cookbook.Orders;
 using Zarichney.Cookbook.Recipes;
 using Zarichney.Middleware;
 using Zarichney.Services;
+using Zarichney.Services.Emails;
 using Zarichney.Services.Sessions;
 
 var builder = WebApplication.CreateBuilder(args);

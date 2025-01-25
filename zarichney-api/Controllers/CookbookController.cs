@@ -3,6 +3,7 @@ using Zarichney.Cookbook.Orders;
 using Zarichney.Cookbook.Recipes;
 using Zarichney.Middleware;
 using Zarichney.Services;
+using Zarichney.Services.Emails;
 using Zarichney.Services.Sessions;
 
 namespace Zarichney.Controllers;
@@ -21,11 +22,32 @@ public class CookbookController(
   ILogger<CookbookController> logger
 ) : ControllerBase
 {
+  [HttpPost("cookbook/sample")]
+  [ProducesResponseType<CookbookOrderSubmission>(StatusCodes.Status200OK)]
+  [ProducesResponseType(typeof(BadRequestObjectResult), StatusCodes.Status400BadRequest)]
+  public IActionResult CreateSampleSubmission()
+  {
+    
+    var submission = new CookbookOrderSubmission
+    {
+      Email = "zarichney@gmail.com",
+      CookbookContent = new CookbookContent
+      {
+        RecipeSpecificationType = "specific",
+        SpecificRecipes = ["Bacon Cheese burger"],
+        ExpectedRecipeCount = 1
+      }
+    };
+    
+    return Ok(submission);
+  }
+
   [HttpPost("cookbook")]
   [ProducesResponseType(typeof(CookbookOrder), StatusCodes.Status201Created)]
   [ProducesResponseType(typeof(BadRequestObjectResult), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  public async Task<IActionResult> CreateCookbook([FromBody] CookbookOrderSubmission submission)
+  public async Task<IActionResult> CreateCookbook([FromBody] CookbookOrderSubmission submission,
+    [FromQuery] bool processOrder = true)
   {
     try
     {
@@ -37,15 +59,7 @@ public class CookbookController(
       }
 
       await emailService.ValidateEmail(submission.Email);
-      var order = await orderService.ProcessSubmission(submission);
-      var orderId = order.OrderId;
-
-      // Queue the cookbook generation task
-      worker.QueueBackgroundWorkAsync(async (newScope, _) =>
-      {
-        var backgroundOrderService = newScope.GetService<IOrderService>();
-        await backgroundOrderService.ProcessOrder(orderId);
-      });
+      var order = await orderService.ProcessSubmission(submission, processOrder);
 
       return Created($"/api/cookbook/order/{order.OrderId}", order);
     }
@@ -71,9 +85,9 @@ public class CookbookController(
     try
     {
       var session = await sessionManager.GetSessionByOrder(orderId, scope.Id);
-      session.Duration = TimeSpan.FromSeconds(30);
+      session.Duration ??= TimeSpan.FromMinutes(5);
       session.ExpiresImmediately = false;
-      
+
       var order = await orderService.GetOrder(orderId);
       return Ok(order);
     }
@@ -98,7 +112,7 @@ public class CookbookController(
     try
     {
       // TODO: add order Id validation and throw KeyNotFoundException if not found
-      
+
       // Queue the cookbook generation task
       worker.QueueBackgroundWorkAsync(async (newScope, _) =>
       {
@@ -189,18 +203,18 @@ public class CookbookController(
       return new ApiErrorResult(ex, $"{nameof(ResendCookbook)}: Failed to resend cookbook email");
     }
   }
-  
+
   [HttpGet("recipe")]
   [ProducesResponseType(typeof(IEnumerable<Recipe>), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(BadRequestObjectResult), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(NotFoundResult), StatusCodes.Status404NotFound)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
   public async Task<IActionResult> GetRecipes(
-    [FromQuery] string query, 
+    [FromQuery] string query,
     [FromQuery] bool scrape = false,
     [FromQuery] int? acceptableScore = null,
     [FromQuery] int? requiredCount = null
-    )
+  )
   {
     try
     {
