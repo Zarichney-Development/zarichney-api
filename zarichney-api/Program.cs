@@ -265,6 +265,7 @@ void ConfigureSwagger(WebApplicationBuilder webBuilder)
     });
 
     c.OperationFilter<SwaggerSecuritySchemeFilter>();
+    c.OperationFilter<AcceptsSessionAttribute>();
   });
 }
 

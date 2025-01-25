@@ -135,15 +135,17 @@ public class SessionManager(
     // Persist data
     try
     {
-      var tasks = new List<Task>();
 
       if (orderToWrite != null)
       {
+        // No wait because file service queues background work
         orderRepository.AddUpdateOrderAsync(orderToWrite);
       }
 
+      // Write conversations in parallel
+      var tasks = new List<Task>();
       tasks.AddRange(conversationsToWrite.Select(conversation => llmRepository.WriteConversationAsync(conversation, session)));
-
+      // Wait for GitHub service to complete
       await Task.WhenAll(tasks);
     }
     catch (Exception ex)

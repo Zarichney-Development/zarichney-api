@@ -127,10 +127,6 @@ public class OrderService(
       logger.LogError(ex, "{Method}: Failed to process order {OrderId}",
         nameof(ProcessOrder), orderId);
     }
-    finally
-    {
-      await sessionManager.EndSession(orderId);
-    }
   }
 
   public async Task CompilePdf(CookbookOrder order, bool waitForWrite = false)
@@ -391,26 +387,20 @@ public class OrderService(
 
   private async Task EmailCookbook(CookbookOrder order)
   {
-    var orderId = order.OrderId;
-
-    const string emailTitle = "Your Cookbook is Ready!";
-
-    logger.LogInformation("Retrieved order {OrderId} for email", orderId);
-
     await _retryPolicy.ExecuteAsync(async () =>
     {
-      var pdf = await orderRepository.GetCookbook(orderId);
+      var pdf = await orderRepository.GetCookbook(order.OrderId);
 
       if (pdf == null || pdf.Length == 0)
       {
-        throw new Exception($"Cookbook PDF not found for order {orderId}");
+        throw new Exception($"Cookbook PDF not found for order {order.OrderId}");
       }
 
       logger.LogInformation("Sending cookbook email to {Email}", order.Email);
 
       await emailService.SendEmail(
         order.Email,
-        emailTitle,
+        "Your Cookbook is Ready!",
         "cookbook-ready",
         null,
         new FileAttachment

@@ -77,6 +77,7 @@ public class CookbookController(
   }
 
   [HttpGet("cookbook/order/{orderId}")]
+  [AcceptsSession]
   [ProducesResponseType(typeof(CookbookOrder), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(NotFoundResult), StatusCodes.Status404NotFound)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
@@ -87,8 +88,10 @@ public class CookbookController(
       var session = await sessionManager.GetSessionByOrder(orderId, scope.Id);
       session.Duration ??= TimeSpan.FromMinutes(5);
       session.ExpiresImmediately = false;
+      Response.Headers["X-Session-Id"] = session.Id.ToString();
 
       var order = await orderService.GetOrder(orderId);
+      
       return Ok(order);
     }
     catch (KeyNotFoundException ex)
