@@ -32,11 +32,11 @@ public class OrderService(
   IBackgroundWorker backgroundService,
   EmailConfig emailConfig,
   IEmailService emailService,
-  IFileService fileService,
   ILogger<RecipeService> logger,
   ILlmService llmService,
   LlmConfig llmConfig,
   OrderConfig config,
+  IOrderRepository orderRepository,
   PdfCompiler pdfCompiler,
   ProcessOrderPrompt processOrderPrompt,
   IRecipeService recipeService,
@@ -364,12 +364,7 @@ public class OrderService(
       if (waitForWrite)
       {
         // Mainly for testing purposes
-        fileService.WriteToFileAsync(
-          Path.Combine(config.OutputDirectory, order.OrderId, "recipes"),
-          recipe.Title!,
-          recipeMarkdown,
-          "md"
-        );
+        orderRepository.SaveRecipe(order.OrderId, recipe.Title!, recipeMarkdown);
       }
 
       cookbookMarkdown.AppendLine(recipeMarkdown);
@@ -377,12 +372,7 @@ public class OrderService(
 
     if (waitForWrite)
     {
-      fileService.WriteToFileAsync(
-        Path.Combine(config.OutputDirectory, order.OrderId),
-        "Cookbook",
-        cookbookMarkdown.ToString(),
-        "md"
-      );
+      orderRepository.SaveCookbook(order.OrderId, cookbookMarkdown.ToString());
     }
 
     var pdf = await pdfCompiler.CompileCookbook(order);
@@ -391,22 +381,11 @@ public class OrderService(
 
     if (waitForWrite)
     {
-      await fileService.WriteToFile(
-        Path.Combine(config.OutputDirectory, order.OrderId),
-        "Cookbook",
-        pdf,
-        "pdf"
-      );
+      await orderRepository.SaveCookbook(order.OrderId, pdf);
     }
     else
     {
-      // Send to background queue
-      fileService.WriteToFileAsync(
-        Path.Combine(config.OutputDirectory, order.OrderId),
-        "Cookbook",
-        pdf,
-        "pdf"
-      );
+      orderRepository.SaveCookbookAsync(order.OrderId, pdf);
     }
   }
 
@@ -420,11 +399,7 @@ public class OrderService(
 
     await _retryPolicy.ExecuteAsync(async () =>
     {
-      var pdf = await fileService.ReadFromFile<byte[]>(
-        Path.Combine(config.OutputDirectory, orderId),
-        "Cookbook",
-        "pdf"
-      );
+      var pdf = await orderRepository.GetCookbook(orderId);
 
       if (pdf == null || pdf.Length == 0)
       {
