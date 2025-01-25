@@ -81,14 +81,11 @@ void ConfigureLogging(WebApplicationBuilder webBuilder)
   var logger = new LoggerConfiguration()
     .WriteTo.Console(
       outputTemplate:
-      "[{Timestamp:HH:mm:ss} {Level:u3}] {RequestId} {ScopeId} {SessionId} {Message:lj}{NewLine}{Exception}"
+      "[{Timestamp:HH:mm:ss} {Level:u3}] {SessionId} {ScopeId} {Message:lj}{NewLine}{Exception}"
     )
     .Enrich.FromLogContext()
-    .Filter.ByIncludingOnly(logEvent =>
-      logEvent.Properties.ContainsKey("SourceContext") &&
-      logEvent.Properties["SourceContext"].ToString().StartsWith("\"Zarichney"))
-    .Enrich.WithProperty("ScopeId", null)
-    .Enrich.WithProperty("SessionId", null);
+    .Enrich.WithProperty("SessionId", null)
+    .Enrich.WithProperty("ScopeId", null);
 
   var seqUrl = webBuilder.Configuration["LoggingConfig:SeqUrl"];
   if (!string.IsNullOrEmpty(seqUrl) && Uri.IsWellFormedUriString(seqUrl, UriKind.Absolute))
@@ -222,7 +219,7 @@ void ConfigureApiKey(IServiceCollection services, IConfiguration configuration)
       AllowedKeys = configuration["ApiKeyConfig:AllowedKeys"] ?? string.Empty
     };
 
-    if (!config.ValidApiKeys.Any())
+    if (config.ValidApiKeys.IsEmpty)
     {
       throw new InvalidOperationException("No valid API keys configured");
     }

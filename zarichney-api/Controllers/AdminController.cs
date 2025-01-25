@@ -25,7 +25,7 @@ public class AdminController(
     [HttpPost("migrate-customers")]
     public async Task<IActionResult> MigrateCustomersFromOrders()
     {
-        var ordersDirectory = _orderConfig.OutputDirectory; // e.g. "Data\\Orders" from appsettings
+        var ordersDirectory = _orderConfig.OutputDirectory; // e.g. "Data/Orders" from appsettings
 
         if (!Directory.Exists(ordersDirectory))
         {

@@ -16,7 +16,7 @@ namespace Zarichney.Cookbook.Orders;
 public class OrderConfig : IConfig
 {
   public int MaxParallelTasks { get; init; } = 5;
-  public string OutputDirectory { get; init; } = "Data\\Orders";
+  public string OutputDirectory { get; init; } = "Data/Orders";
 }
 
 public interface IOrderService

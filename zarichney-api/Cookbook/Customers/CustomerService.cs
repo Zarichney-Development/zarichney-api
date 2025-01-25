@@ -33,7 +33,7 @@ public class CustomerConfig : IConfig
   /// (e.g. "20 free recipes" or "5 free recipes").
   /// </summary>
   public int InitialFreeRecipes { get; set; } = 20;
-  public string OutputDirectory { get; init; } = "Data\\Customers";
+  public string OutputDirectory { get; init; } = "Data/Customers";
 }
 
 public class CustomerService(
