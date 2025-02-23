@@ -26,6 +26,7 @@ public interface IOrderService
   Task ProcessOrder(string orderId);
   Task CompilePdf(CookbookOrder order, bool waitForWrite = false);
   Task EmailCookbook(string orderId);
+  Task<byte[]> GetPdf(string orderId);
 }
 
 public class OrderService(
@@ -163,6 +164,8 @@ public class OrderService(
     // They have no credits => send an email informing them that they need to purchase more credits
     await SendOrderPendingEmail(order);
 
+    order.Status = OrderStatus.AwaitingPayment;
+
     return false;
   }
 
@@ -206,6 +209,17 @@ public class OrderService(
       logger.LogError(ex, "Failed to email cookbook for order {OrderId}", orderId);
       throw;
     }
+  }
+
+  public async Task<byte[]> GetPdf(string orderId)
+  {
+    var pdf = await orderRepository.GetCookbook(orderId);
+    if (pdf == null || pdf.Length == 0)
+    {
+      throw new Exception($"Cookbook PDF not found for order {orderId}");
+    }
+
+    return pdf;
   }
 
   /// <summary>

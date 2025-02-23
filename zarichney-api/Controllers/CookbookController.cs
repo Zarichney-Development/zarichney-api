@@ -27,7 +27,6 @@ public class CookbookController(
   [ProducesResponseType(typeof(BadRequestObjectResult), StatusCodes.Status400BadRequest)]
   public IActionResult CreateSampleSubmission()
   {
-    
     var submission = new CookbookOrderSubmission
     {
       Email = "zarichney@gmail.com",
@@ -38,7 +37,7 @@ public class CookbookController(
         ExpectedRecipeCount = 3
       }
     };
-    
+
     return Ok(submission);
   }
 
@@ -91,7 +90,7 @@ public class CookbookController(
       Response.Headers["X-Session-Id"] = session.Id.ToString();
 
       var order = await orderService.GetOrder(orderId);
-      
+
       return Ok(order);
     }
     catch (KeyNotFoundException ex)
@@ -107,14 +106,14 @@ public class CookbookController(
   }
 
   [HttpPost("cookbook/order/{orderId}")]
-  [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+  [ProducesResponseType(typeof(CookbookOrder), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(NotFoundResult), StatusCodes.Status404NotFound)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  public IActionResult ReprocessOrder([FromRoute] string orderId)
+  public async Task<IActionResult> ReprocessOrder([FromRoute] string orderId)
   {
     try
     {
-      // TODO: add order Id validation and throw KeyNotFoundException if not found
+      var order = await orderService.GetOrder(orderId);
 
       // Queue the cookbook generation task
       worker.QueueBackgroundWorkAsync(async (newScope, _) =>
@@ -123,7 +122,10 @@ public class CookbookController(
         await backgroundOrderService.ProcessOrder(orderId);
       });
 
-      return Ok("Reprocessing order");
+      // Wait briefly for background processing to start
+      await Task.Delay(500);
+
+      return Ok(order);
     }
     catch (KeyNotFoundException ex)
     {
@@ -139,46 +141,51 @@ public class CookbookController(
     }
   }
 
-  [HttpPost("cookbook/order/{orderId}/pdf")]
-  [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+  [HttpGet("cookbook/order/{orderId}/pdf")]
+  [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(BadRequestObjectResult), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(NotFoundResult), StatusCodes.Status404NotFound)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  public async Task<IActionResult> RebuildPdf(
+  public async Task<IActionResult> GetCookbookPdf(
     [FromRoute] string orderId,
+    [FromQuery] bool rebuild = false,
     [FromQuery] bool email = false)
   {
     try
     {
       if (string.IsNullOrWhiteSpace(orderId))
       {
-        logger.LogWarning("{Method}: Empty orderId received", nameof(RebuildPdf));
+        logger.LogWarning("{Method}: Empty orderId received", nameof(GetCookbookPdf));
         return BadRequest("OrderId parameter is required");
       }
 
       var order = await orderService.GetOrder(orderId);
 
-      await orderService.CompilePdf(order, email);
+      if (rebuild)
+      {
+        await orderService.CompilePdf(order, true);
+      }
+
+      var pdfBytes = await orderService.GetPdf(orderId);
 
       if (email)
       {
         await orderService.EmailCookbook(order.OrderId);
-        return Ok("PDF rebuilt and email sent");
       }
 
-      return Ok("PDF rebuilt");
+      return File(pdfBytes, "application/pdf", $"cookbook-{orderId}.pdf");
     }
     catch (KeyNotFoundException ex)
     {
       logger.LogWarning(ex, "{Method}: Order not found for PDF rebuild: {OrderId}",
-        nameof(RebuildPdf), orderId);
+        nameof(GetCookbookPdf), orderId);
       return NotFound($"Order not found: {orderId}");
     }
     catch (Exception ex)
     {
       logger.LogError(ex, "{Method}: Failed to rebuild PDF for order {OrderId}",
-        nameof(RebuildPdf), orderId);
-      return new ApiErrorResult(ex, $"{nameof(RebuildPdf)}: Failed to rebuild PDF");
+        nameof(GetCookbookPdf), orderId);
+      return new ApiErrorResult(ex, $"{nameof(GetCookbookPdf)}: Failed to rebuild PDF");
     }
   }
 

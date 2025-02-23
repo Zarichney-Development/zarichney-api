@@ -185,7 +185,6 @@ public class SessionManager(
     if (existingSession != null)
     {
       AddScopeToSession(existingSession, scopeId);
-      RefreshSession(existingSession);
       return existingSession;
     }
 
@@ -196,6 +195,14 @@ public class SessionManager(
                    ?? throw new KeyNotFoundException($"Customer {order.Email} not found");
     
     order.Customer = customer;
+    
+    existingSession = Sessions.Values.FirstOrDefault(s=>s.Scopes.ContainsKey(scopeId));
+    if (existingSession != null)
+    {
+      AddScopeToSession(existingSession, scopeId);
+      existingSession.Order = order;
+      return existingSession;
+    }
 
     var newSession = await CreateSession(scopeId);
     newSession.Order = order;
@@ -233,6 +240,8 @@ public class SessionManager(
     {
       logger.LogInformation("Scope {ScopeId} added to Session {SessionId}", scopeId, session.Id);
     }
+    
+    RefreshSession(session);
   }
 
   public void RemoveScopeFromSession(Guid scopeId)
