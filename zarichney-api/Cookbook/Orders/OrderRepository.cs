@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Zarichney.Services;
 
 namespace Zarichney.Cookbook.Orders;
@@ -54,11 +55,18 @@ public interface IOrderRepository
   /// <param name="pdf">The file content</param>
   void SaveCookbookAsync(string orderId, byte[] pdf);
   
+  /// <summary>
+  /// Gets all pending orders for a customer that are awaiting payment
+  /// </summary>
+  /// <param name="email">The customer's email</param>
+  /// <returns>A list of pending orders</returns>
+  Task<List<CookbookOrder>> GetPendingOrdersForCustomer(string email);
 }
 
 public class OrderFileRepository(
   OrderConfig config,
-  IFileService fileService
+  IFileService fileService,
+  ILogger<OrderFileRepository> logger
 ) : IOrderRepository
 {
   public async Task<CookbookOrder?> GetOrder(string orderId)
@@ -129,5 +137,57 @@ public class OrderFileRepository(
       pdf,
       "pdf"
     );
+  }
+  
+  public async Task<List<CookbookOrder>> GetPendingOrdersForCustomer(string email)
+  {
+    var pendingOrders = new List<CookbookOrder>();
+    
+    try
+    {
+      // Get all subdirectories in the orders directory (each is an order)
+      var baseDir = Path.Combine(config.OutputDirectory);
+      var orderDirs = Directory.GetDirectories(baseDir);
+      
+      logger.LogInformation("Found {Count} order directories to check for customer {Email}", 
+        orderDirs.Length, email);
+      
+      foreach (var orderDir in orderDirs)
+      {
+        var orderFilePath = Path.Combine(orderDir, "Order.json");
+        
+        if (File.Exists(orderFilePath))
+        {
+          try
+          {
+            // Read the order file directly to check if it matches our criteria
+            var orderJson = await File.ReadAllTextAsync(orderFilePath);
+            var order = JsonSerializer.Deserialize<CookbookOrder>(orderJson);
+            
+            if (order != null && 
+                string.Equals(order.Email, email, StringComparison.OrdinalIgnoreCase) &&
+                (order.Status == OrderStatus.AwaitingPayment || order.RequiresPayment))
+            {
+              pendingOrders.Add(order);
+            }
+          }
+          catch (Exception ex)
+          {
+            logger.LogWarning(ex, "Error reading order file {FilePath}", orderFilePath);
+          }
+        }
+      }
+      
+      logger.LogInformation("Found {Count} pending orders for customer {Email}", 
+        pendingOrders.Count, email);
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Error getting pending orders for customer {Email}", email);
+    }
+    
+    return pendingOrders
+      .OrderByDescending(o => o.SynthesizedRecipes.Count) // Orders with more progress first
+      .ToList();
   }
 }

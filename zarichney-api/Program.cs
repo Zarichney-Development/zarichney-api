@@ -13,6 +13,7 @@ using Zarichney.Cookbook.Recipes;
 using Zarichney.Middleware;
 using Zarichney.Services;
 using Zarichney.Services.Emails;
+using Zarichney.Services.Payment;
 using Zarichney.Services.Sessions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -203,6 +204,8 @@ void ConfigureApplicationServices(IServiceCollection services)
   services.AddTransient<WebScraperService>();
   services.AddTransient<PdfCompiler>();
   services.AddTransient<ITranscribeService, TranscribeService>();
+  services.AddTransient<IStripeService, StripeService>();
+  services.AddTransient<IPaymentService, PaymentService>();
 }
 
 void ConfigureApiKey(IServiceCollection services, IConfiguration configuration)

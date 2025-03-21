@@ -16,9 +16,14 @@ public class Customer
   /// How many recipes the user can still generate without paying (e.g. free allotment or purchased credits).
   /// </summary>
   public int AvailableRecipes { get; set; }
-    
+
   /// <summary>
   /// Total number of recipes that have been synthesized for this user across all orders (historical).
   /// </summary>
   public int LifetimeRecipesUsed { get; set; }
+
+  /// <summary>
+  /// Total number of recipes that have been purchased by this user (historical).
+  /// </summary>
+  public int LifetimePurchasedRecipes { get; set; }
 }

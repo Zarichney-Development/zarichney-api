@@ -15,6 +15,11 @@ public interface ICustomerService
   /// (e.g., if they processed N recipes from an order).
   /// </summary>
   void DecrementRecipes(Customer customer, int numberOfRecipes);
+  
+  /// <summary>
+  /// Add recipe credits to a customer's account after purchase
+  /// </summary>
+  Task AddRecipes(Customer customer, int numberOfRecipes);
 
   /// <summary>
   /// Manual save in case you do partial updates or manually add credits, etc.
@@ -89,6 +94,30 @@ public class CustomerService(
       "Customer {Email} used {UsedCount} recipes. OldVal={OldVal}, NewVal={NewVal}. Lifetime={Lifetime}",
       customer.Email, numberOfRecipes, oldVal, customer.AvailableRecipes, customer.LifetimeRecipesUsed
     );
+  }
+  
+  public Task AddRecipes(Customer customer, int numberOfRecipes)
+  {
+    ArgumentNullException.ThrowIfNull(customer);
+    
+    if (numberOfRecipes <= 0)
+    {
+      return Task.CompletedTask;
+    }
+    
+    var oldVal = customer.AvailableRecipes;
+    customer.AvailableRecipes += numberOfRecipes;
+    customer.LifetimePurchasedRecipes += numberOfRecipes;
+    
+    logger.LogInformation(
+      "Customer {Email} purchased {PurchasedCount} recipes. OldVal={OldVal}, NewVal={NewVal}. LifetimePurchased={LifetimePurchased}",
+      customer.Email, numberOfRecipes, oldVal, customer.AvailableRecipes, customer.LifetimePurchasedRecipes
+    );
+    
+    // Save the updated customer
+    SaveCustomer(customer);
+    
+    return Task.CompletedTask;
   }
 
   public void SaveCustomer(Customer customer)
