@@ -19,6 +19,7 @@ public interface ISessionManager
   Task<Session> GetSession(Guid sessionId);
   Task<Session> GetSessionByOrder(string orderId, Guid scopeId);
   Task<Session> GetSessionByScope(Guid scopeId);
+  Task<Session?> GetSessionByUserId(string userId);
   void AddScopeToSession(Session session, Guid scopeId);
   void RemoveScopeFromSession(Guid scopeId);
   Task AddOrder(Guid scopeId, CookbookOrder order);
@@ -218,6 +219,23 @@ public class SessionManager(
     }
 
     var existingSession = Sessions.Values.FirstOrDefault(s => s.Scopes.ContainsKey(scopeId));
+    if (existingSession != null)
+    {
+      RefreshSession(existingSession);
+      return existingSession;
+    }
+
+    return await CreateSession(scopeId);
+  }
+  
+  public Task<Session> GetSessionByUserId(string userId)
+  {
+    if (string.IsNullOrEmpty(userId))
+    {
+      throw new ArgumentException("UserId cannot be null or empty", nameof(userId));
+    }
+
+    var existingSession = Sessions.Values.FirstOrDefault(s => s.UserId == userId);
     if (existingSession != null)
     {
       RefreshSession(existingSession);

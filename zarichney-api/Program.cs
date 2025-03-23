@@ -173,6 +173,7 @@ void ConfigureApplicationServices(IServiceCollection services)
 {
   // Background Services
   services.AddHostedService<BackgroundTaskService>();
+  services.AddHostedService<RefreshTokenCleanupService>();
   services.AddSingleton<IBackgroundWorker>(_ => new BackgroundWorker(100));
 
   // Prompts and Core Services
@@ -195,6 +196,7 @@ void ConfigureApplicationServices(IServiceCollection services)
 
   // Scoped and Transient Services
   services.AddScoped<ILlmService, LlmService>();
+  services.AddScoped<IAuthService, AuthService>();
   services.AddTransient<IRecipeService, RecipeService>();
   services.AddTransient<IOrderService, OrderService>();
   services.AddTransient<ICustomerService, CustomerService>();
