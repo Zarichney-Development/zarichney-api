@@ -54,12 +54,20 @@
 
     <ItemGroup>
         <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
-        <Content Include="Config/site_selectors.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="EmailTemplates/**" CopyToOutputDirectory="PreserveNewest" />
-        <Content Include="cleanup-playwright.sh" CopyToOutputDirectory="PreserveNewest" />
-        <Content Include="start-server.sh" CopyToOutputDirectory="PreserveNewest" />
-        <Content Include="cookbook-api.service" CopyToOutputDirectory="PreserveNewest" />
-        <None Update="AwsMaintenance.md" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="Scripts/cleanup-playwright.sh" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="Scripts/start-server.sh" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="Scripts/cookbook-api.service" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="Docs\AwsMaintenance.md">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Server\" />
     </ItemGroup>
     
 </Project>

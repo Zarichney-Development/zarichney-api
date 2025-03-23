@@ -8,6 +8,5 @@ obj
 Data
 appsettings.Development.json
 !appsettings.json
-Scripts
 backup*
 test_results

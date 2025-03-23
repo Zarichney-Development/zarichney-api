@@ -6,16 +6,16 @@ using Microsoft.OpenApi.Models;
 using OpenAI;
 using OpenAI.Audio;
 using Serilog;
-using Zarichney.Auth;
-using Zarichney.Config;
-using Zarichney.Cookbook.Customers;
-using Zarichney.Cookbook.Orders;
-using Zarichney.Cookbook.Recipes;
-using Zarichney.Middleware;
-using Zarichney.Services;
-using Zarichney.Services.Emails;
-using Zarichney.Services.Payment;
-using Zarichney.Services.Sessions;
+using Zarichney.Server.Auth;
+using Zarichney.Server.Config;
+using Zarichney.Server.Cookbook.Customers;
+using Zarichney.Server.Cookbook.Orders;
+using Zarichney.Server.Cookbook.Recipes;
+using Zarichney.Server.Middleware;
+using Zarichney.Server.Services;
+using Zarichney.Server.Services.Emails;
+using Zarichney.Server.Services.Payment;
+using Zarichney.Server.Services.Sessions;
 
 var builder = WebApplication.CreateBuilder(args);
 
