@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Zarichney.Cookbook.Customers;
 using Zarichney.Cookbook.Orders;
@@ -8,6 +9,7 @@ namespace Zarichney.Controllers;
 
 [ApiController]
 [Route("api/payment")]
+[Authorize]
 public class PaymentController(
   ILogger<PaymentController> logger,
   IPaymentService paymentService,

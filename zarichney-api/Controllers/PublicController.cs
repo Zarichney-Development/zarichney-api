@@ -1,11 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using Zarichney.Config;
+using Zarichney.Auth;
 using Zarichney.Middleware;
 using ILogger = Serilog.ILogger;
 
 namespace Zarichney.Controllers;
-
-public record KeyValidationRequest(string Key);
 
 [ApiController]
 [Route("api")]
@@ -36,24 +34,24 @@ public class PublicController(
     {
       if (string.IsNullOrWhiteSpace(request.Key))
       {
-        logger.Warning("{Method}: Empty password received", nameof(ValidateKey));
+        logger.Warning("{Method}: Empty api key received", nameof(ValidateKey));
         return BadRequest("Password is required");
       }
 
       // Check if the password matches any valid API key
       if (!apiKeyConfig.ValidApiKeys.Contains(request.Key))
       {
-        logger.Warning("{Method}: Invalid password attempt", nameof(ValidateKey));
+        logger.Warning("{Method}: Invalid api key attempt", nameof(ValidateKey));
         return Unauthorized(new
         {
-          error = "Invalid password",
+          error = "Invalid api key",
           timestamp = DateTimeOffset.UtcNow
         });
       }
 
       return Ok(new
       {
-        message = "Valid password",
+        message = "Valid api key",
         timestamp = DateTimeOffset.UtcNow
       });
     }

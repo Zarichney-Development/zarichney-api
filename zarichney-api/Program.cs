@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using OpenAI;
 using OpenAI.Audio;
 using Serilog;
+using Zarichney.Auth;
 using Zarichney.Config;
 using Zarichney.Cookbook.Customers;
 using Zarichney.Cookbook.Orders;
@@ -18,13 +19,7 @@ using Zarichney.Services.Sessions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-ConfigureEncoding();
-ConfigureKestrel(builder);
-ConfigureConfiguration(builder);
-ConfigureLogging(builder);
-ConfigureServices(builder);
-ConfigureSwagger(builder);
-ConfigureCors(builder);
+ConfigureBuilder(builder);
 
 var app = builder.Build();
 
@@ -44,6 +39,18 @@ finally
 }
 
 return;
+
+void ConfigureBuilder(WebApplicationBuilder webBuilder)
+{
+  ConfigureEncoding();
+  ConfigureKestrel(webBuilder);
+  ConfigureConfiguration(webBuilder);
+  ConfigureLogging(webBuilder);
+  ConfigureServices(webBuilder);
+  ConfigureIdentity(webBuilder);
+  ConfigureSwagger(webBuilder);
+  ConfigureCors(webBuilder);
+}
 
 // Configuration Methods
 void ConfigureEncoding()
@@ -115,28 +122,23 @@ void ConfigureServices(WebApplicationBuilder webBuilder)
 
   services.RegisterConfigurationServices(webBuilder.Configuration);
   services.AddSingleton(Log.Logger);
-  services.AddHttpContextAccessor();
 
-  // Controllers and AutoMapper
+  services.AddHttpContextAccessor();
   services.AddControllers()
     .AddJsonOptions(options => { options.JsonSerializerOptions.Converters.Add(new TypeConverter()); });
   services.AddAutoMapper(typeof(Program));
   services.AddMemoryCache();
-
-  // Configure Email and Graph Client
-  ConfigureEmailServices(services);
-
-  // Configure OpenAI Services
-  ConfigureOpenAiServices(services);
-
-  // Session Management
   services.AddSessionManagement();
 
-  // Application Services
+  ConfigureEmailServices(services);
+  ConfigureOpenAiServices(services);
   ConfigureApplicationServices(services);
-
-  // API Key Configuration
   ConfigureApiKey(services, webBuilder.Configuration);
+}
+
+void ConfigureIdentity(WebApplicationBuilder webBuilder)
+{
+  webBuilder.Services.AddIdentityServices(webBuilder.Configuration);
 }
 
 void ConfigureEmailServices(IServiceCollection services)
@@ -164,12 +166,7 @@ void ConfigureOpenAiServices(IServiceCollection services)
                throw new InvalidConfigurationException("Missing required configuration for OpenAI API key.");
 
   services.AddSingleton(new OpenAIClient(apiKey));
-  services.AddSingleton(sp =>
-    new AudioClient(
-      sp.GetRequiredService<TranscribeConfig>().ModelName,
-      apiKey
-    )
-  );
+  services.AddSingleton(sp => new AudioClient(sp.GetRequiredService<TranscribeConfig>().ModelName, apiKey));
 }
 
 void ConfigureApplicationServices(IServiceCollection services)
@@ -252,6 +249,15 @@ void ConfigureSwagger(WebApplicationBuilder webBuilder)
       Description = "API key authentication. Enter your API key here.",
     });
 
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+      Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer {token}'",
+      Name = "Authorization",
+      In = ParameterLocation.Header,
+      Type = SecuritySchemeType.ApiKey,
+      Scheme = "Bearer"
+    });
+
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
       {
@@ -264,10 +270,20 @@ void ConfigureSwagger(WebApplicationBuilder webBuilder)
           }
         },
         Array.Empty<string>()
+      },
+      {
+        new OpenApiSecurityScheme
+        {
+          Reference = new OpenApiReference
+          {
+            Type = ReferenceType.SecurityScheme,
+            Id = "Bearer"
+          }
+        },
+        Array.Empty<string>()
       }
     });
 
-    c.OperationFilter<SwaggerSecuritySchemeFilter>();
     c.OperationFilter<AcceptsSessionAttribute>();
   });
 }
@@ -296,24 +312,15 @@ void ConfigureCors(WebApplicationBuilder webBuilder)
     options.LogRequests = true;
     options.LogResponses = true;
     options.SensitiveHeaders = ["Authorization", "Cookie", "X-API-Key"];
-    options.RequestFilter = context =>
-      !context.Request.Path.StartsWithSegments("/api/swagger");
-    options.LogDirectory = Path.Combine(
-      webBuilder.Environment.ContentRootPath,
-      "Logs"
-    );
+    options.RequestFilter = context => !context.Request.Path.StartsWithSegments("/api/swagger");
+    options.LogDirectory = Path.Combine(webBuilder.Environment.ContentRootPath, "Logs");
   });
 }
 
 async Task ConfigureApplication(WebApplication application)
 {
-  var recipeRepository = application.Services.GetRequiredService<IRecipeRepository>();
-  await recipeRepository.InitializeAsync();
-
   application.UseMiddleware<RequestResponseLoggerMiddleware>();
   application.UseMiddleware<ErrorHandlingMiddleware>();
-  application.UseSessionManagement();
-  application.UseCors("AllowSpecificOrigin");
 
   application
     .UseSwagger(c =>
@@ -328,13 +335,17 @@ async Task ConfigureApplication(WebApplication application)
       c.RoutePrefix = "api/swagger";
     });
 
+  application.UseSessionManagement();
+  application.UseCors("AllowSpecificOrigin");
   application.UseHttpsRedirection();
+  application.UseAuthentication();
   application.UseAuthorization();
+  application.UseApiKeyAuth();
+
+  application.MapControllers();
 
   if (application.Environment.IsProduction())
   {
-    application.UseApiKeyAuth();
+    await application.Services.GetRequiredService<IRecipeRepository>().InitializeAsync();
   }
-
-  application.MapControllers();
 }

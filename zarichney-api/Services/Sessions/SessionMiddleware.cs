@@ -1,4 +1,4 @@
-using Zarichney.Middleware;
+using Zarichney.Auth;
 using ILogger = Serilog.ILogger;
 
 namespace Zarichney.Services.Sessions;
@@ -15,13 +15,8 @@ public class SessionMiddleware(
 {
   private readonly RequestDelegate _next = next ?? throw new ArgumentNullException(nameof(next));
 
-  private readonly ISessionManager _sessionManager =
-    sessionManager ?? throw new ArgumentNullException(nameof(sessionManager));
-
   private readonly ILogger _logger = logger.ForContext<SessionMiddleware>()
                                      ?? throw new ArgumentNullException(nameof(logger));
-
-  private readonly IScopeFactory _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
 
   public async Task InvokeAsync(HttpContext context)
   {
@@ -33,14 +28,14 @@ public class SessionMiddleware(
       return;
     }
 
-    var scope = _scopeFactory.CreateScope();
+    var scope = scopeFactory.CreateScope();
 
     var session = context.Request.Headers.TryGetValue("X-Session-Id", out var sessionIdHeader)
                   && Guid.TryParse(sessionIdHeader, out var sessionId)
-      ? await _sessionManager.GetSession(sessionId)
-      : await _sessionManager.CreateSession(scope.Id);
+      ? await sessionManager.GetSession(sessionId)
+      : await sessionManager.CreateSession(scope.Id);
 
-    _sessionManager.AddScopeToSession(session, scope.Id);
+    sessionManager.AddScopeToSession(session, scope.Id);
 
     scope.SessionId = session.Id;
 
@@ -56,14 +51,14 @@ public class SessionMiddleware(
     }
     finally
     {
-      _sessionManager.RemoveScopeFromSession(scope.Id);
+      sessionManager.RemoveScopeFromSession(scope.Id);
 
       if (session is { ExpiresImmediately: true, Scopes.IsEmpty: true }
           || session.ExpiresAt < DateTime.UtcNow)
       {
         try
         {
-          await _sessionManager.EndSession(session);
+          await sessionManager.EndSession(session);
         }
         catch (Exception ex)
         {

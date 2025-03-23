@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Zarichney.Cookbook.Orders;
 using Zarichney.Cookbook.Recipes;
@@ -10,6 +11,7 @@ namespace Zarichney.Controllers;
 
 [ApiController]
 [Route("api")]
+[Authorize]
 public class CookbookController(
   IRecipeService recipeService,
   IOrderService orderService,

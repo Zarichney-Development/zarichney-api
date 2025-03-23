@@ -15,8 +15,7 @@ public static class OrderServiceExtensions
         }
         
         // Get the background worker through DI
-        var scopeProvider = orderService as IBackgroundWorkerProvider;
-        if (scopeProvider == null)
+        if (orderService is not IBackgroundWorkerProvider scopeProvider)
         {
             throw new InvalidOperationException("OrderService must implement IBackgroundWorkerProvider");
         }
