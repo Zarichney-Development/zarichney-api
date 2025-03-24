@@ -195,6 +195,7 @@ void ConfigureApplicationServices(IServiceCollection services)
   services.AddHostedService(sp => sp.GetRequiredService<GitHubService>());
 
   // Scoped and Transient Services
+  services.AddScoped<ICookieAuthManager, CookieAuthManager>();
   services.AddScoped<ILlmService, LlmService>();
   services.AddScoped<IAuthService, AuthService>();
   services.AddTransient<IRecipeService, RecipeService>();
@@ -205,6 +206,9 @@ void ConfigureApplicationServices(IServiceCollection services)
   services.AddTransient<ITranscribeService, TranscribeService>();
   services.AddTransient<IStripeService, StripeService>();
   services.AddTransient<IPaymentService, PaymentService>();
+
+  // Misc Utilities
+  services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 }
 
 void ConfigureApiKey(IServiceCollection services, IConfiguration configuration)

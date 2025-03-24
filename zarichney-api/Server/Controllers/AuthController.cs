@@ -1,6 +1,9 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Zarichney.Server.Auth;
+using Zarichney.Server.Auth.Commands;
+using Zarichney.Server.Auth.Common;
 using Zarichney.Server.Middleware;
 
 namespace Zarichney.Server.Controllers;
@@ -8,9 +11,10 @@ namespace Zarichney.Server.Controllers;
 [ApiController]
 [Route("api/auth")]
 public class AuthController(
-    IAuthService authService,
-    ILogger<AuthController> logger)
-    : ControllerBase
+    IMediator mediator,
+    ILogger<AuthController> logger,
+    ICookieAuthManager cookieManager
+    ) : ControllerBase
 {
     public class RegisterRequest
     {
@@ -28,8 +32,6 @@ public class AuthController(
     {
         public bool Success { get; init; }
         public string? Message { get; init; }
-        public string? Token { get; init; }
-        public string? RefreshToken { get; init; }
         public string? Email { get; init; }
     }
 
@@ -41,19 +43,16 @@ public class AuthController(
     {
         try
         {
-            var (success, message, user, confirmationToken) =
-                await authService.RegisterUserAsync(request.Email, request.Password);
+            var result = await mediator.Send(new RegisterCommand(request.Email, request.Password));
 
-            if (!success)
-                return BadRequestResponse(message);
+            if (!result.Success)
+                return BadRequestResponse(result.Message ?? "Registration failed");
 
-            // Return confirmation token for development purposes
             return Ok(new AuthResponse
             {
                 Success = true,
-                Message = message,
-                Email = user?.Email,
-                Token = confirmationToken // This would be removed in production
+                Message = result.Message,
+                Email = result.Email
             });
         }
         catch (Exception ex)
@@ -71,19 +70,23 @@ public class AuthController(
     {
         try
         {
-            var (success, message, user, token, refreshToken) =
-                await authService.LoginUserAsync(request.Email, request.Password);
+            var result = await mediator.Send(new LoginCommand(request.Email, request.Password));
 
-            if (!success)
-                return BadRequestResponse(message);
+            if (!result.Success)
+                return BadRequestResponse(result.Message ?? "Login failed");
 
+            // Set HTTP-only cookies for access and refresh tokens
+            if (result.AccessToken != null && result.RefreshToken != null)
+            {
+                cookieManager.SetAuthCookies(HttpContext, result.AccessToken, result.RefreshToken);
+            }
+
+            // Only return success and message in the response body, not the tokens
             return Ok(new AuthResponse
             {
                 Success = true,
-                Message = message,
-                Token = token,
-                RefreshToken = refreshToken,
-                Email = user?.Email
+                Message = result.Message,
+                Email = result.Email
             });
         }
         catch (Exception ex)
@@ -97,32 +100,50 @@ public class AuthController(
     private BadRequestObjectResult BadRequestResponse(string message) =>
         BadRequest(new AuthResponse { Success = false, Message = message });
 
-    public class RefreshTokenRequest
-    {
-        public string RefreshToken { get; set; } = string.Empty;
-    }
-
     [HttpPost("refresh")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+    public async Task<IActionResult> RefreshToken()
     {
         try
         {
-            var (success, message, user, token, refreshToken) =
-                await authService.RefreshTokenAsync(request.RefreshToken);
+            // Get refresh token from cookie instead of request body
+            var refreshToken = cookieManager.GetRefreshTokenFromCookie(HttpContext);
 
-            if (!success)
-                return BadRequestResponse(message);
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                return Unauthorized(new AuthResponse
+                {
+                    Success = false,
+                    Message = "Refresh token is missing"
+                });
+            }
+
+            var result = await mediator.Send(new RefreshTokenCommand(refreshToken));
+
+            if (!result.Success)
+            {
+                // Clear cookies on error
+                cookieManager.ClearAuthCookies(HttpContext);
+                return Unauthorized(new AuthResponse
+                {
+                    Success = false,
+                    Message = result.Message
+                });
+            }
+
+            // Set new HTTP-only cookies for updated tokens
+            if (result.AccessToken != null && result.RefreshToken != null)
+            {
+                cookieManager.SetAuthCookies(HttpContext, result.AccessToken, result.RefreshToken);
+            }
 
             return Ok(new AuthResponse
             {
                 Success = true,
-                Message = message,
-                Token = token,
-                RefreshToken = refreshToken,
-                Email = user?.Email
+                Message = result.Message,
+                Email = result.Email
             });
         }
         catch (Exception ex)
@@ -137,19 +158,30 @@ public class AuthController(
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> RevokeRefreshToken([FromBody] RefreshTokenRequest request)
+    public async Task<IActionResult> RevokeRefreshToken()
     {
         try
         {
-            var (success, message) = await authService.RevokeRefreshTokenAsync(request.RefreshToken);
+            // Get refresh token from cookie instead of request body
+            var refreshToken = cookieManager.GetRefreshTokenFromCookie(HttpContext);
 
-            if (!success)
-                return BadRequestResponse(message);
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                return BadRequestResponse("Refresh token is missing");
+            }
+
+            var result = await mediator.Send(new RevokeTokenCommand(refreshToken));
+
+            if (!result.Success)
+                return BadRequestResponse(result.Message ?? "Revocation failed");
+
+            // Clear cookies after successful revocation
+            cookieManager.ClearAuthCookies(HttpContext);
 
             return Ok(new AuthResponse
             {
                 Success = true,
-                Message = message
+                Message = result.Message
             });
         }
         catch (Exception ex)
@@ -179,17 +211,15 @@ public class AuthController(
     {
         try
         {
-            var (success, message, resetToken) = await authService.EmailForgetPassword(request.Email);
+            var result = await mediator.Send(new ForgotPasswordCommand(request.Email));
 
-            if (!success)
-                return BadRequestResponse(message);
+            if (!result.Success)
+                return BadRequestResponse(result.Message ?? "Request failed");
 
-            // For development, return the token directly in the response
             return Ok(new AuthResponse
             {
                 Success = true,
-                Message = message,
-                Token = resetToken
+                Message = result.Message
             });
         }
         catch (Exception ex)
@@ -207,16 +237,16 @@ public class AuthController(
     {
         try
         {
-            var (success, message) = await authService.ResetPasswordAsync(
-                request.Email, request.Token, request.NewPassword);
+            var result = await mediator.Send(new ResetPasswordCommand(
+                request.Email, request.Token, request.NewPassword));
 
-            if (!success)
-                return BadRequestResponse(message);
+            if (!result.Success)
+                return BadRequestResponse(result.Message ?? "Reset failed");
 
             return Ok(new AuthResponse
             {
                 Success = true,
-                Message = message
+                Message = result.Message
             });
         }
         catch (Exception ex)
@@ -241,23 +271,28 @@ public class AuthController(
     {
         try
         {
-            var (success, message, redirectUrl) = await authService.ConfirmEmailAsync(
-                request.UserId, request.Token);
+            var result = await mediator.Send(new ConfirmEmailCommand(request.UserId, request.Token));
 
-            if (!success)
-                return BadRequestResponse(message);
+            if (!result.Success)
+                return BadRequestResponse(result.Message ?? "Email confirmation failed");
+
+            // Set cookies after successful email confirmation
+            if (result.AccessToken != null && result.RefreshToken != null)
+            {
+                cookieManager.SetAuthCookies(HttpContext, result.AccessToken, result.RefreshToken);
+            }
 
             // If we have a redirect URL, perform a redirect
-            if (!string.IsNullOrEmpty(redirectUrl))
+            if (!string.IsNullOrEmpty(result.RedirectUrl))
             {
-                return Redirect(redirectUrl);
+                return Redirect(result.RedirectUrl);
             }
 
             // Fallback to returning a JSON response if no redirect URL
             return Ok(new AuthResponse
             {
                 Success = true,
-                Message = message
+                Message = result.Message
             });
         }
         catch (Exception ex)
@@ -280,18 +315,15 @@ public class AuthController(
     {
         try
         {
-            var (success, message, confirmationToken) =
-                await authService.ResendEmailConfirmationAsync(request.Email);
+            var result = await mediator.Send(new ResendConfirmationCommand(request.Email));
 
-            if (!success)
-                return BadRequestResponse(message);
+            if (!result.Success)
+                return BadRequestResponse(result.Message ?? "Resend confirmation failed");
 
-            // For development, return the token directly in the response
             return Ok(new AuthResponse
             {
                 Success = true,
-                Message = message,
-                Token = confirmationToken
+                Message = result.Message
             });
         }
         catch (Exception ex)
@@ -299,5 +331,20 @@ public class AuthController(
             logger.LogError(ex, "Error during confirmation email resend");
             return new ApiErrorResult(ex, "Failed to resend confirmation email");
         }
+    }
+
+    [Authorize]
+    [HttpPost("logout")]
+    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
+    public IActionResult Logout()
+    {
+        // Clear the auth cookies
+        cookieManager.ClearAuthCookies(HttpContext);
+
+        return Ok(new AuthResponse
+        {
+            Success = true,
+            Message = "Logged out successfully"
+        });
     }
 }

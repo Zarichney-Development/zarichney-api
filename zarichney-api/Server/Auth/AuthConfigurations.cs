@@ -115,6 +115,17 @@ public static class AuthStartupExtensions
           IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
           ClockSkew = TimeSpan.Zero
         };
+        
+        // Configure to get token from the cookie
+        options.Events = new JwtBearerEvents
+        {
+          OnMessageReceived = context =>
+          {
+            // Try to get the token from the cookie
+            context.Token = context.Request.Cookies["AuthAccessToken"];
+            return Task.CompletedTask;
+          }
+        };
       });
   }
 
