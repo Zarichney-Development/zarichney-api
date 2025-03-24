@@ -29,7 +29,6 @@ public class AiController(
   }
 
   [HttpPost("completion")]
-  [AcceptsSession]
   [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(BadRequestObjectResult), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]

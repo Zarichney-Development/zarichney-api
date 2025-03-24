@@ -48,7 +48,7 @@ public class SessionMiddleware(
     if (isAuthenticated && !string.IsNullOrEmpty(userId))
     {
       // Find session by user ID or create new one
-      var existingSession = await sessionManager.GetSessionByUserId(userId);
+      var existingSession = await sessionManager.GetSessionByUserId(userId, scope.Id);
       if (existingSession != null)
       {
         session = existingSession;

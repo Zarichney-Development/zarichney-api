@@ -17,9 +17,9 @@ public interface ISessionManager
   Task EndSession(Guid scopeId);
   Task EndSession(Session session);
   Task<Session> GetSession(Guid sessionId);
-  Task<Session> GetSessionByOrder(string orderId, Guid scopeId);
   Task<Session> GetSessionByScope(Guid scopeId);
-  Task<Session?> GetSessionByUserId(string userId);
+  Task<Session> GetSessionByOrder(string orderId, Guid scopeId);
+  Task<Session> GetSessionByUserId(string userId, Guid scopeId);
   void AddScopeToSession(Session session, Guid scopeId);
   void RemoveScopeFromSession(Guid scopeId);
   Task AddOrder(Guid scopeId, CookbookOrder order);
@@ -228,7 +228,7 @@ public class SessionManager(
     return await CreateSession(scopeId);
   }
   
-  public Task<Session> GetSessionByUserId(string userId)
+  public async Task<Session> GetSessionByUserId(string userId, Guid scopeId)
   {
     if (string.IsNullOrEmpty(userId))
     {

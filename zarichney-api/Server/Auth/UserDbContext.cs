@@ -27,19 +27,33 @@ public class ApplicationUser : IdentityUser
   public virtual ICollection<RefreshToken>? RefreshTokens { get; set; }
 }
 
-public class UserDbContext : IdentityDbContext<ApplicationUser>
+public class UserDbContext(DbContextOptions<UserDbContext> options) : IdentityDbContext<ApplicationUser>(options)
 {
-    public UserDbContext(DbContextOptions<UserDbContext> options) : base(options)
-    {
-    }
-    
-    public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+  /* Tables inherited from IdentityDbContext - Command to list all tables in the database:
+      ```
+      zarichney_identity-# \dt
+                       List of relations
+       Schema |         Name          | Type  |  Owner
+      --------+-----------------------+-------+----------
+       public | AspNetRoleClaims      | table | postgres
+       public | AspNetRoles           | table | postgres
+       public | AspNetUserClaims      | table | postgres
+       public | AspNetUserLogins      | table | postgres
+       public | AspNetUserRoles       | table | postgres
+       public | AspNetUserTokens      | table | postgres
+       public | AspNetUsers           | table | postgres
+       public | __EFMigrationsHistory | table | postgres
+      ```
+   */
+  
+  // Table for refresh tokens
+  public DbSet<RefreshToken> RefreshTokens { get; init; } = null!;
     
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
         
-        // Additional configuration for the RefreshToken entity if needed
+        // Configure refresh token table
         builder.Entity<RefreshToken>()
             .HasOne(r => r.User)
             .WithMany(u => u.RefreshTokens)

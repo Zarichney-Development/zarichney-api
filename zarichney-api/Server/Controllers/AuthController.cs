@@ -41,7 +41,7 @@ public class AuthController(
     {
         try
         {
-            var (success, message, user, confirmationToken) = 
+            var (success, message, user, confirmationToken) =
                 await authService.RegisterUserAsync(request.Email, request.Password);
 
             if (!success)
@@ -71,7 +71,7 @@ public class AuthController(
     {
         try
         {
-            var (success, message, user, token, refreshToken) = 
+            var (success, message, user, token, refreshToken) =
                 await authService.LoginUserAsync(request.Email, request.Password);
 
             if (!success)
@@ -110,7 +110,7 @@ public class AuthController(
     {
         try
         {
-            var (success, message, user, token, refreshToken) = 
+            var (success, message, user, token, refreshToken) =
                 await authService.RefreshTokenAsync(request.RefreshToken);
 
             if (!success)
@@ -158,28 +158,28 @@ public class AuthController(
             return new ApiErrorResult(ex, "Failed to revoke token");
         }
     }
-    
+
     public class ForgotPasswordRequest
     {
         public string Email { get; set; } = string.Empty;
     }
-    
+
     public class ResetPasswordRequest
     {
         public string Email { get; set; } = string.Empty;
         public string Token { get; set; } = string.Empty;
         public string NewPassword { get; set; } = string.Empty;
     }
-    
-    [HttpPost("forgot-password")]
+
+    [HttpPost("email-forgot-password")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    public async Task<IActionResult> EmailForgetPassword([FromBody] ForgotPasswordRequest request)
     {
         try
         {
-            var (success, message, resetToken) = await authService.ForgotPasswordAsync(request.Email);
+            var (success, message, resetToken) = await authService.EmailForgetPassword(request.Email);
 
             if (!success)
                 return BadRequestResponse(message);
@@ -198,7 +198,7 @@ public class AuthController(
             return new ApiErrorResult(ex, "Failed to process forgot password request");
         }
     }
-    
+
     [HttpPost("reset-password")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)]
@@ -225,27 +225,35 @@ public class AuthController(
             return new ApiErrorResult(ex, "Failed to reset password");
         }
     }
-    
+
     public class ConfirmEmailRequest
     {
         public string UserId { get; set; } = string.Empty;
         public string Token { get; set; } = string.Empty;
     }
-    
-    [HttpPost("confirm-email")]
+
+    [HttpGet("confirm-email")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailRequest request)
+    [ProducesResponseType(StatusCodes.Status302Found)]
+    public async Task<IActionResult> ConfirmEmail([FromQuery] ConfirmEmailRequest request)
     {
         try
         {
-            var (success, message) = await authService.ConfirmEmailAsync(
+            var (success, message, redirectUrl) = await authService.ConfirmEmailAsync(
                 request.UserId, request.Token);
 
             if (!success)
                 return BadRequestResponse(message);
 
+            // If we have a redirect URL, perform a redirect
+            if (!string.IsNullOrEmpty(redirectUrl))
+            {
+                return Redirect(redirectUrl);
+            }
+
+            // Fallback to returning a JSON response if no redirect URL
             return Ok(new AuthResponse
             {
                 Success = true,
@@ -258,21 +266,21 @@ public class AuthController(
             return new ApiErrorResult(ex, "Failed to confirm email");
         }
     }
-    
+
     public class ResendConfirmationRequest
     {
         public string Email { get; set; } = string.Empty;
     }
-    
-    [HttpPost("resend-confirmation")]
+
+    [HttpGet("resend-confirmation")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> ResendConfirmation([FromBody] ResendConfirmationRequest request)
+    public async Task<IActionResult> ResendConfirmation([FromQuery] ResendConfirmationRequest request)
     {
         try
         {
-            var (success, message, confirmationToken) = 
+            var (success, message, confirmationToken) =
                 await authService.ResendEmailConfirmationAsync(request.Email);
 
             if (!success)

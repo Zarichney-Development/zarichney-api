@@ -285,8 +285,6 @@ void ConfigureSwagger(WebApplicationBuilder webBuilder)
         Array.Empty<string>()
       }
     });
-
-    c.OperationFilter<AcceptsSessionAttribute>();
   });
 }
 

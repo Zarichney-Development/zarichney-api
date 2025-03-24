@@ -22,6 +22,7 @@
         <PackageReference Include="Azure.Identity" Version="1.12.0" />
         <PackageReference Include="Handlebars.Net" Version="2.1.6" />
         <PackageReference Include="Markdig" Version="0.37.0" />
+        <PackageReference Include="MediatR" Version="12.4.1" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.14" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.14" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.10" />

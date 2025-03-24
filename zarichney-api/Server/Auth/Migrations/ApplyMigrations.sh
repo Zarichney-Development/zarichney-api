@@ -15,13 +15,19 @@
 # chmod +x ApplyMigrations.sh
 # ./ApplyMigrations.sh
 
-# Change to the script directory
+# Get the script directory
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-cd "$SCRIPT_DIR"
+# Navigate to project root (assuming it's 3 levels up from the Migrations directory)
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
 # Display current info
 echo -e "\e[36mApplying migrations for ASP.NET Identity in PostgreSQL...\e[0m"
-echo -e "\e[37mCurrent directory: $SCRIPT_DIR\e[0m"
+echo -e "\e[37mScript directory: $SCRIPT_DIR\e[0m"
+echo -e "\e[37mProject directory: $PROJECT_DIR\e[0m"
+
+# Change to the project directory
+cd "$PROJECT_DIR"
+echo -e "\e[37mCurrent working directory: $(pwd)\e[0m"
 
 # First, ensure the project is properly built
 echo -e "\e[33mBuilding project...\e[0m"
@@ -30,6 +36,12 @@ if [ $? -ne 0 ]; then
     echo -e "\e[31mBuild failed!\e[0m"
     exit 1
 fi
+
+# Check available migrations
+echo -e "\e[33mChecking available migrations...\e[0m"
+MIGRATIONS=$(dotnet ef migrations list --context UserDbContext)
+echo -e "\e[90mAvailable migrations:\e[0m"
+echo "$MIGRATIONS"
 
 # Verify if the EF Migrations History table exists and has any entries
 echo -e "\e[33mChecking migration history...\e[0m"
@@ -40,18 +52,40 @@ if [[ $MIGRATION_CHECK == *"ERROR"* ]]; then
     # Create the migration history table first if needed
     psql -h localhost -U postgres -d zarichney_identity -c 'CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" ("MigrationId" character varying(150) NOT NULL, "ProductVersion" character varying(32) NOT NULL, CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId"))'
     
+    # Extract the initial migration name without any (Pending) suffix
+    INITIAL_MIGRATION=$(echo "$MIGRATIONS" | grep -o "[0-9]*_AddIdentitySchema" | head -1)
+    if [ -z "$INITIAL_MIGRATION" ]; then
+        INITIAL_MIGRATION="20250322000001_AddIdentitySchema"
+    fi
+    
     # Force the migration through EF Core
-    echo -e "\e[33mRunning: dotnet ef database update 20250322000001_AddIdentitySchema --context UserDbContext --project . --verbose\e[0m"
-    dotnet ef database update 20250322000001_AddIdentitySchema --context UserDbContext --project . --verbose
+    echo -e "\e[33mRunning: dotnet ef database update $INITIAL_MIGRATION --context UserDbContext --verbose\e[0m"
+    MIGRATION_OUTPUT=$(dotnet ef database update $INITIAL_MIGRATION --context UserDbContext --verbose 2>&1)
+    MIGRATION_STATUS=$?
 else
     # Regular update if history table exists
-    echo -e "\e[33mRunning: dotnet ef database update --context UserDbContext --project .\e[0m"
-    dotnet ef database update --context UserDbContext --project .
+    echo -e "\e[33mRunning: dotnet ef database update --context UserDbContext --verbose\e[0m"
+    MIGRATION_OUTPUT=$(dotnet ef database update --context UserDbContext --verbose 2>&1)
+    MIGRATION_STATUS=$?
 fi
 
+# Display the output for debugging
+echo -e "\e[90mMigration command output:\e[0m"
+echo "$MIGRATION_OUTPUT"
+
 # Check if the migration was successful
-if [ $? -ne 0 ]; then
-    echo -e "\e[31mMigration failed!\e[0m"
+if [ $MIGRATION_STATUS -ne 0 ]; then
+    echo -e "\e[31mMigration failed with status code $MIGRATION_STATUS\e[0m"
+    
+    # Analyze the output for common issues
+    if [[ $MIGRATION_OUTPUT == *"connection"* ]]; then
+        echo -e "\e[31mDatabase connection issue detected.\e[0m"
+        echo -e "\e[33mCheck your connection string in appsettings.json and ensure PostgreSQL is running.\e[0m"
+    elif [[ $MIGRATION_OUTPUT == *"table"* ]]; then
+        echo -e "\e[31mTable-related issue detected.\e[0m"
+        echo -e "\e[33mThere might be conflicts with existing tables or schema issues.\e[0m"
+    fi
+    
     echo -e "\e[33mCheck that:\e[0m"
     echo -e "\e[33m1. PostgreSQL is running\e[0m"
     echo -e "\e[33m2. Connection string in appsettings.json is correct\e[0m"
@@ -66,10 +100,10 @@ if [ $? -ne 0 ]; then
     read -p "Would you like to run the SQL script now? (y/n) " RUN_SQL_FILE
     if [ "$RUN_SQL_FILE" = "y" ]; then
         echo -e "\e[33mRunning SQL script to create tables...\e[0m"
-        psql -h localhost -U postgres -d zarichney_identity -f ApplyMigration.sql
+        psql -h localhost -U postgres -d zarichney_identity -f "$SCRIPT_DIR/ApplyMigration.sql"
         
         # Check if SQL script was successful
-        TABLES=$(psql -h localhost -U postgres -d zarichney_identity -c '\dt' -t)
+        TABLES=$(psql -h localhost -U postgres -d zarichney_identity -c '\dt' -t 2>&1)
         if [[ $TABLES == *"AspNetUsers"* ]]; then
             echo -e "\e[32mSQL script successfully created ASP.NET Identity tables!\e[0m"
         else
@@ -83,10 +117,18 @@ else
     
     # Verify tables were created
     echo -e "\e[33mVerifying tables were created...\e[0m"
-    TABLES=$(psql -h localhost -U postgres -d zarichney_identity -c '\dt' -t)
+    TABLES=$(psql -h localhost -U postgres -d zarichney_identity -c '\dt' -t 2>&1)
     
     if [[ $TABLES == *"AspNetUsers"* ]]; then
         echo -e "\e[32mASP.NET Identity tables were successfully created!\e[0m"
+        
+        # Check for RefreshTokens table if it exists in migrations
+        if [[ $MIGRATIONS == *"AddRefreshTokenSchema"* ]] && [[ $TABLES == *"refreshtokens"* ]]; then
+            echo -e "\e[32mRefreshTokens table was also successfully created!\e[0m"
+        elif [[ $MIGRATIONS == *"AddRefreshTokenSchema"* ]]; then
+            echo -e "\e[33mRefreshTokens table was not found, but the migration exists.\e[0m"
+            echo -e "\e[33mYou may need to run the refresh token migration separately.\e[0m"
+        fi
     else
         echo -e "\e[33mASP.NET Identity tables may not have been created correctly.\e[0m"
         echo -e "\e[33mPlease check the database manually.\e[0m"
@@ -95,7 +137,7 @@ else
         read -p "Would you like to run the SQL script to ensure tables are created? (y/n) " RUN_SQL_FILE
         if [ "$RUN_SQL_FILE" = "y" ]; then
             echo -e "\e[33mRunning SQL script to create tables...\e[0m"
-            psql -h localhost -U postgres -d zarichney_identity -f ApplyMigration.sql
+            psql -h localhost -U postgres -d zarichney_identity -f "$SCRIPT_DIR/ApplyMigration.sql"
         fi
     fi
 fi

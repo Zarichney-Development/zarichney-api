@@ -78,7 +78,6 @@ public class CookbookController(
   }
 
   [HttpGet("cookbook/order/{orderId}")]
-  [AcceptsSession]
   [ProducesResponseType(typeof(CookbookOrder), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(NotFoundResult), StatusCodes.Status404NotFound)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
