@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Zarichney.Server.Auth;
+namespace Zarichney.Server.Auth.Models;
 
 public class RefreshToken
 {

@@ -1,5 +1,6 @@
 using System.Text;
 using Azure.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Graph;
 using Microsoft.IdentityModel.Protocols.Configuration;
 using Microsoft.OpenApi.Models;
@@ -11,8 +12,8 @@ using Zarichney.Server.Config;
 using Zarichney.Server.Cookbook.Customers;
 using Zarichney.Server.Cookbook.Orders;
 using Zarichney.Server.Cookbook.Recipes;
-using Zarichney.Server.Middleware;
 using Zarichney.Server.Services;
+using Zarichney.Server.Services.AI;
 using Zarichney.Server.Services.Emails;
 using Zarichney.Server.Services.Payment;
 using Zarichney.Server.Services.Sessions;
@@ -125,7 +126,7 @@ void ConfigureServices(WebApplicationBuilder webBuilder)
 
   services.AddHttpContextAccessor();
   services.AddControllers()
-    .AddJsonOptions(options => { options.JsonSerializerOptions.Converters.Add(new TypeConverter()); });
+    .AddJsonOptions(options => { options.JsonSerializerOptions.Converters.Add(new JsonTypeConverter()); });
   services.AddAutoMapper(typeof(Program));
   services.AddMemoryCache();
   services.AddSessionManagement();
@@ -133,7 +134,6 @@ void ConfigureServices(WebApplicationBuilder webBuilder)
   ConfigureEmailServices(services);
   ConfigureOpenAiServices(services);
   ConfigureApplicationServices(services);
-  ConfigureApiKey(services, webBuilder.Configuration);
 }
 
 void ConfigureIdentity(WebApplicationBuilder webBuilder)
@@ -144,7 +144,7 @@ void ConfigureIdentity(WebApplicationBuilder webBuilder)
   webBuilder.Services.AddScoped<IRoleManager, RoleManager>();
   
   // Register RoleManager<IdentityRole> if not already registered by AddIdentity
-  webBuilder.Services.AddScoped<Microsoft.AspNetCore.Identity.RoleManager<IdentityRole>>();
+  webBuilder.Services.AddScoped<RoleManager<IdentityRole>>();
 }
 
 void ConfigureEmailServices(IServiceCollection services)
@@ -205,6 +205,7 @@ void ConfigureApplicationServices(IServiceCollection services)
   services.AddScoped<ICookieAuthManager, CookieAuthManager>();
   services.AddScoped<ILlmService, LlmService>();
   services.AddScoped<IAuthService, AuthService>();
+  services.AddScoped<IApiKeyService, ApiKeyService>();
   services.AddTransient<IRecipeService, RecipeService>();
   services.AddTransient<IOrderService, OrderService>();
   services.AddTransient<ICustomerService, CustomerService>();
@@ -216,28 +217,6 @@ void ConfigureApplicationServices(IServiceCollection services)
 
   // Misc Utilities
   services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
-}
-
-void ConfigureApiKey(IServiceCollection services, IConfiguration configuration)
-{
-  // For backward compatibility: Configure the old static API keys from config
-  services.Configure<ApiKeyConfig>(config =>
-  {
-    config.AllowedKeys = configuration["ApiKeyConfig:AllowedKeys"] ?? string.Empty;
-  });
-
-  services.AddSingleton(_ =>
-  {
-    var config = new ApiKeyConfig
-    {
-      AllowedKeys = configuration["ApiKeyConfig:AllowedKeys"] ?? string.Empty
-    };
-
-    return config;
-  });
-  
-  // Register the new API key service
-  services.AddScoped<IApiKeyService, ApiKeyService>();
 }
 
 void ConfigureSwagger(WebApplicationBuilder webBuilder)

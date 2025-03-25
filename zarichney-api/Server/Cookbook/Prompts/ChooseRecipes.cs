@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Zarichney.Server.Config;
 using Zarichney.Server.Services;
+using Zarichney.Server.Services.AI;
 
 namespace Zarichney.Server.Cookbook.Prompts;
 

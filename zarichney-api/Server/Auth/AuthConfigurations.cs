@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -6,23 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Zarichney.Server.Auth;
-
-public class ApiKeyConfig
-{
-  public string AllowedKeys { get; set; } = string.Empty;
-
-  private ImmutableHashSet<string>? _validApiKeys;
-
-  public ImmutableHashSet<string> ValidApiKeys
-  {
-    get
-    {
-      return _validApiKeys ??= AllowedKeys
-        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-        .ToImmutableHashSet();
-    }
-  }
-}
 
 public class JwtSettings
 {

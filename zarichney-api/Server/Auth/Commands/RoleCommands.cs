@@ -1,4 +1,5 @@
 using MediatR;
+using Zarichney.Server.Auth.Models;
 
 namespace Zarichney.Server.Auth.Commands;
 
@@ -10,24 +11,15 @@ public record GetUserRolesQuery(string UserId) : IRequest<RoleCommandResult>;
 
 public record GetUsersInRoleQuery(string RoleName) : IRequest<List<UserRoleInfo>>;
 
-public class UserRoleInfo
-{
-  public string UserId { get; set; } = string.Empty;
-  public string UserName { get; set; } = string.Empty;
-  public string Email { get; set; } = string.Empty;
-}
-
 public class RoleCommandResult
 {
-  public bool Success { get; set; }
-  public string Message { get; set; } = string.Empty;
-  public List<string> Roles { get; set; } = new();
+  public bool Success { get; init; }
+  public string Message { get; init; } = string.Empty;
+  public List<string> Roles { get; init; } = [];
 }
 
 public class AddUserToRoleCommandHandler(IRoleManager roleManager) : IRequestHandler<AddUserToRoleCommand, RoleCommandResult>
 {
-  private readonly IRoleManager roleManager = roleManager ?? throw new ArgumentNullException(nameof(roleManager));
-
   public async Task<RoleCommandResult> Handle(AddUserToRoleCommand request, CancellationToken cancellationToken)
   {
     var result = await roleManager.AddUserToRoleAsync(request.UserId, request.RoleName);

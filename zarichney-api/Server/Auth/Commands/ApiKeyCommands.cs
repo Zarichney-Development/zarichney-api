@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
+using Zarichney.Server.Auth.Models;
 
 namespace Zarichney.Server.Auth.Commands;
 
@@ -24,13 +25,13 @@ public record GetApiKeyByIdQuery(int ApiKeyId) : IRequest<ApiKeyResponse?>;
 
 public class ApiKeyResponse
 {
-  public int Id { get; set; }
-  public string KeyValue { get; set; } = string.Empty;
-  public string Name { get; set; } = string.Empty;
-  public DateTime CreatedAt { get; set; }
-  public DateTime? ExpiresAt { get; set; }
-  public bool IsActive { get; set; }
-  public string? Description { get; set; }
+  public int Id { get; init; }
+  public string KeyValue { get; init; } = string.Empty;
+  public string Name { get; init; } = string.Empty;
+  public DateTime CreatedAt { get; init; }
+  public DateTime? ExpiresAt { get; init; }
+  public bool IsActive { get; init; }
+  public string? Description { get; init; }
 
   public static ApiKeyResponse FromApiKey(ApiKey apiKey)
   {
@@ -52,10 +53,6 @@ public class CreateApiKeyCommandHandler(
     UserManager<ApplicationUser> userManager,
     IHttpContextAccessor httpContextAccessor) : IRequestHandler<CreateApiKeyCommand, ApiKeyResponse>
 {
-  private readonly IApiKeyService apiKeyService = apiKeyService ?? throw new ArgumentNullException(nameof(apiKeyService));
-  private readonly UserManager<ApplicationUser> userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
-  private readonly IHttpContextAccessor httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
-
   public async Task<ApiKeyResponse> Handle(CreateApiKeyCommand request, CancellationToken cancellationToken)
   {
     // Get the current user ID from authenticated user
@@ -65,7 +62,7 @@ public class CreateApiKeyCommandHandler(
       throw new UnauthorizedAccessException("User is not authenticated");
     }
 
-    var apiKey = await apiKeyService.CreateApiKeyAsync(
+    var apiKey = await apiKeyService.CreateApiKey(
         userId,
         request.Name,
         request.Description,
@@ -92,13 +89,13 @@ public class RevokeApiKeyCommandHandler(
     }
 
     // First check that the API key belongs to the current user
-    var apiKey = await apiKeyService.GetApiKeyByIdAsync(request.ApiKeyId);
+    var apiKey = await apiKeyService.GetApiKey(request.ApiKeyId);
     if (apiKey == null || apiKey.UserId != userId)
     {
       return false;
     }
 
-    return await apiKeyService.RevokeApiKeyAsync(request.ApiKeyId);
+    return await apiKeyService.RevokeApiKey(request.ApiKeyId);
   }
 }
 
@@ -118,7 +115,7 @@ public class GetApiKeysQueryHandler(
       throw new UnauthorizedAccessException("User is not authenticated");
     }
 
-    var apiKeys = await apiKeyService.GetApiKeysByUserIdAsync(userId);
+    var apiKeys = await apiKeyService.GetApiKeysByUserId(userId);
     return apiKeys.Select(ApiKeyResponse.FromApiKey).ToList();
   }
 }
@@ -137,7 +134,7 @@ public class GetApiKeyByIdQueryHandler(
       throw new UnauthorizedAccessException("User is not authenticated");
     }
 
-    var apiKey = await apiKeyService.GetApiKeyByIdAsync(request.ApiKeyId);
+    var apiKey = await apiKeyService.GetApiKey(request.ApiKeyId);
 
     // Only return the API key if it belongs to the current user
     if (apiKey == null || apiKey.UserId != userId)

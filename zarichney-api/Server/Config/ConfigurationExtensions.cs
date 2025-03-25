@@ -7,7 +7,7 @@ namespace Zarichney.Server.Config;
 
 public interface IConfig;
 
-public static class ServiceCollectionExtensions
+public static partial class ServiceCollectionExtensions
 {
   public static void AddPrompts(this IServiceCollection services, params Assembly[] assemblies)
   {

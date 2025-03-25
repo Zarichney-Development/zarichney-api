@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text.Json;
 
-namespace Zarichney.Server.Middleware;
+namespace Zarichney.Server.Config;
 
 public class ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandlingMiddleware> logger)
 {

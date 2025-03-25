@@ -2,7 +2,7 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Zarichney.Server.Middleware;
+namespace Zarichney.Server.Controllers;
 
 public class ApiErrorResult(
   Exception exception,

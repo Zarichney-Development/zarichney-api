@@ -1,8 +1,8 @@
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Zarichney.Server.Middleware;
 using Zarichney.Server.Services;
+using Zarichney.Server.Services.AI;
 using Zarichney.Server.Services.Emails;
 using Zarichney.Server.Services.Sessions;
 

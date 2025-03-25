@@ -6,9 +6,8 @@ namespace Zarichney.Server.Auth;
 
 public class ApiKeyAuthMiddleware(
     RequestDelegate next,
-    ILogger logger,
-    IApiKeyService apiKeyService)
-{
+    ILogger logger
+    ) {
   private const string ApiKeyHeader = "X-Api-Key";
 
   public async Task InvokeAsync(HttpContext context)
@@ -45,7 +44,8 @@ public class ApiKeyAuthMiddleware(
     }
 
     // Validate the API key and get associated user ID
-    var (isValid, userId) = await apiKeyService.ValidateApiKeyAsync(extractedApiKey.ToString());
+    var apiKeyService = context.RequestServices.GetRequiredService<IApiKeyService>();
+    var (isValid, userId) = await apiKeyService.ValidateApiKey(extractedApiKey.ToString());
 
     if (!isValid || string.IsNullOrEmpty(userId))
     {
@@ -70,7 +70,7 @@ public class ApiKeyAuthMiddleware(
 
     // Create a new ClaimsPrincipal with both identities (if original had any)
     var identities = new List<ClaimsIdentity> { identity };
-    if (originalPrincipal?.Identity != null)
+    if (originalPrincipal.Identity != null)
     {
       identities.AddRange(originalPrincipal.Identities);
     }

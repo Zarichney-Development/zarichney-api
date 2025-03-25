@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Zarichney.Server.Cookbook.Customers;
 using Zarichney.Server.Cookbook.Orders;
-using Zarichney.Server.Middleware;
 using Zarichney.Server.Services.Payment;
 
 namespace Zarichney.Server.Controllers;

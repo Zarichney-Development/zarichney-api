@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using OpenAI.Chat;
 using Zarichney.Server.Cookbook.Customers;
 using Zarichney.Server.Cookbook.Orders;
+using Zarichney.Server.Services.AI;
 
 namespace Zarichney.Server.Services.Sessions;
 

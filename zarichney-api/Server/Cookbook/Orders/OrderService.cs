@@ -8,6 +8,7 @@ using Zarichney.Server.Cookbook.Customers;
 using Zarichney.Server.Cookbook.Prompts;
 using Zarichney.Server.Cookbook.Recipes;
 using Zarichney.Server.Services;
+using Zarichney.Server.Services.AI;
 using Zarichney.Server.Services.Emails;
 using Zarichney.Server.Services.Sessions;
 

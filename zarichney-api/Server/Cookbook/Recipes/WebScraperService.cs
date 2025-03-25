@@ -7,6 +7,7 @@ using AngleSharp.Dom;
 using Zarichney.Server.Config;
 using Zarichney.Server.Cookbook.Prompts;
 using Zarichney.Server.Services;
+using Zarichney.Server.Services.AI;
 
 namespace Zarichney.Server.Cookbook.Recipes;
 

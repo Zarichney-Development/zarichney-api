@@ -4,7 +4,7 @@ using Polly.Retry;
 using Zarichney.Server.Config;
 using ILogger = Serilog.ILogger;
 
-namespace Zarichney.Server.Services;
+namespace Zarichney.Server.Services.AI;
 
 public class TranscribeConfig : IConfig
 {

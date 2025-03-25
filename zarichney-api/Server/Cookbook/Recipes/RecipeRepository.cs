@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using AutoMapper;
 using Zarichney.Server.Cookbook.Prompts;
 using Zarichney.Server.Services;
+using Zarichney.Server.Services.AI;
 using Zarichney.Server.Services.Sessions;
 
 namespace Zarichney.Server.Cookbook.Recipes;

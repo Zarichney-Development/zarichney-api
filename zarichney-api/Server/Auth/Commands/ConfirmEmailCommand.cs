@@ -1,6 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Zarichney.Server.Auth.Common;
+using Zarichney.Server.Auth.Models;
 using Zarichney.Server.Config;
 
 namespace Zarichney.Server.Auth.Commands;
@@ -8,60 +8,60 @@ namespace Zarichney.Server.Auth.Commands;
 public record ConfirmEmailCommand(string UserId, string Token) : IRequest<AuthResult>;
 
 public class ConfirmEmailCommandHandler(
-    UserManager<ApplicationUser> userManager,
-    ILogger<ConfirmEmailCommandHandler> logger,
-    ClientConfig clientConfig,
-    IAuthService authService) : IRequestHandler<ConfirmEmailCommand, AuthResult>
+  UserManager<ApplicationUser> userManager,
+  ILogger<ConfirmEmailCommandHandler> logger,
+  ClientConfig clientConfig,
+  IAuthService authService) : IRequestHandler<ConfirmEmailCommand, AuthResult>
 {
-    public async Task<AuthResult> Handle(ConfirmEmailCommand request, CancellationToken cancellationToken)
+  public async Task<AuthResult> Handle(ConfirmEmailCommand request, CancellationToken cancellationToken)
+  {
+    try
     {
-        try
-        {
-            // Validate request
-            if (string.IsNullOrEmpty(request.UserId))
-                return AuthResult.Fail("User ID is required");
+      // Validate request
+      if (string.IsNullOrEmpty(request.UserId))
+        return AuthResult.Fail("User ID is required");
 
-            if (string.IsNullOrEmpty(request.Token))
-                return AuthResult.Fail("Confirmation token is required");
+      if (string.IsNullOrEmpty(request.Token))
+        return AuthResult.Fail("Confirmation token is required");
 
-            var user = await userManager.FindByIdAsync(request.UserId);
-            if (user == null)
-                return AuthResult.Fail("Invalid user ID");
+      var user = await userManager.FindByIdAsync(request.UserId);
+      if (user == null)
+        return AuthResult.Fail("Invalid user ID");
 
-            IdentityResult result = null!;
-            if (!user.EmailConfirmed)
-                result = await userManager.ConfirmEmailAsync(user, request.Token);
+      IdentityResult result = null!;
+      if (!user.EmailConfirmed)
+        result = await userManager.ConfirmEmailAsync(user, request.Token);
 
-            if (user.EmailConfirmed || result.Succeeded)
-            {
-                var email = user.Email!;
-                logger.LogInformation("Email confirmed successfully for user {Email}", user.Email);
+      if (user.EmailConfirmed || result.Succeeded)
+      {
+        var email = user.Email!;
+        logger.LogInformation("Email confirmed successfully for user {Email}", user.Email);
 
-                // Create the redirect URL with the client base URL - No JWT in URL, we'll use cookies
-                var redirectUrl = $"{clientConfig.BaseUrl}/auth?mode=email-confirmed&email={Uri.EscapeDataString(email)}";
+        // Create the redirect URL with the client base URL - No JWT in URL, we'll use cookies
+        var redirectUrl = $"{clientConfig.BaseUrl}/auth?mode=email-confirmed&email={Uri.EscapeDataString(email)}";
 
-                // Instead, we'll generate JWT and refresh tokens, but return them through cookies
-                var accessToken = authService.GenerateJwtToken(user);
-                var refreshToken = authService.GenerateRefreshToken();
-                await authService.SaveRefreshTokenAsync(user, refreshToken, "Email Confirmation");
+        // Instead, we'll generate JWT and refresh tokens, but return them through cookies
+        var accessToken = authService.GenerateJwtToken(user);
+        var refreshToken = authService.GenerateRefreshToken();
+        await authService.SaveRefreshTokenAsync(user, refreshToken, "Email Confirmation");
 
-                return AuthResult.Ok(
-                    "Email has been confirmed",
-                    email,
-                    accessToken,
-                    refreshToken,
-                    redirectUrl);
-            }
+        return AuthResult.Ok(
+          "Email has been confirmed",
+          email,
+          accessToken,
+          refreshToken,
+          redirectUrl);
+      }
 
-            // If we get here, something went wrong
-            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            logger.LogWarning("Failed to confirm email for user {UserId}: {Errors}", request.UserId, errors);
-            return AuthResult.Fail("Invalid or expired confirmation token");
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error during email confirmation");
-            return AuthResult.Fail("Failed to confirm email");
-        }
+      // If we get here, something went wrong
+      var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+      logger.LogWarning("Failed to confirm email for user {UserId}: {Errors}", request.UserId, errors);
+      return AuthResult.Fail("Invalid or expired confirmation token");
     }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Error during email confirmation");
+      return AuthResult.Fail("Failed to confirm email");
+    }
+  }
 }

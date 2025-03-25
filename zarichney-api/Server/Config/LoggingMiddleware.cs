@@ -3,7 +3,7 @@ using Serilog;
 using Zarichney.Server.Services.Sessions;
 using ILogger = Serilog.ILogger;
 
-namespace Zarichney.Server.Middleware;
+namespace Zarichney.Server.Config;
 
 public class RequestResponseLoggerOptions
 {
@@ -103,7 +103,7 @@ public class RequestResponseLoggerMiddleware(RequestDelegate next, IOptions<Requ
   }
 }
 
-public static class ServiceCollectionExtensions
+public static partial class ServiceCollectionExtensions
 {
   public static void AddRequestResponseLogger(this IServiceCollection services,
     Action<RequestResponseLoggerOptions>? configureOptions = null)

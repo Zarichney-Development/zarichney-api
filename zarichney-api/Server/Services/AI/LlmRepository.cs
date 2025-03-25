@@ -1,12 +1,12 @@
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Encodings.Web;
 using System.Text.Json.Serialization;
 using OpenAI.Chat;
 using Zarichney.Server.Services.Sessions;
 
-namespace Zarichney.Server.Services;
+namespace Zarichney.Server.Services.AI;
 
 public class LlmConversation
 {

@@ -1,6 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Zarichney.Server.Auth.Common;
+using Zarichney.Server.Auth.Models;
 using Zarichney.Server.Config;
 using Zarichney.Server.Services.Emails;
 

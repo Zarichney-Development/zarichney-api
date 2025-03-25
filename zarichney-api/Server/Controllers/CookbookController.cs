@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Zarichney.Server.Cookbook.Orders;
 using Zarichney.Server.Cookbook.Recipes;
-using Zarichney.Server.Middleware;
 using Zarichney.Server.Services;
 using Zarichney.Server.Services.Emails;
 using Zarichney.Server.Services.Sessions;

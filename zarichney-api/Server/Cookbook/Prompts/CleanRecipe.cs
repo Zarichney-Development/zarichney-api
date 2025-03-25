@@ -3,6 +3,7 @@ using AutoMapper;
 using Zarichney.Server.Config;
 using Zarichney.Server.Cookbook.Recipes;
 using Zarichney.Server.Services;
+using Zarichney.Server.Services.AI;
 
 namespace Zarichney.Server.Cookbook.Prompts;
 

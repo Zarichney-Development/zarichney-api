@@ -1,9 +1,9 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Zarichney.Server.Middleware;
+namespace Zarichney.Server.Config;
 
-public class TypeConverter : JsonConverter<Type>
+public class JsonTypeConverter : JsonConverter<Type>
 {
   public override Type Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
   {

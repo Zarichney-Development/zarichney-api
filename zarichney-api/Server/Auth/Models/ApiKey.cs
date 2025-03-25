@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Zarichney.Server.Auth;
+namespace Zarichney.Server.Auth.Models;
 
-public class ApiKey
+public sealed class ApiKey
 {
   [Key]
   public int Id { get; set; }
@@ -29,5 +29,5 @@ public class ApiKey
   [ForeignKey("User")]
   public string UserId { get; set; } = string.Empty;
 
-  public virtual ApplicationUser? User { get; set; }
+  public ApplicationUser? User { get; set; }
 }

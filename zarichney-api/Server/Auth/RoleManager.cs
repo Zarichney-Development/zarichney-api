@@ -17,7 +17,7 @@ public class RoleManager(
     UserManager<ApplicationUser> userManager,
     ILogger<RoleManager> logger) : IRoleManager
 {
-  private readonly static string[] DefaultRoles = { "admin" };
+  private static readonly string[] DefaultRoles = ["admin"];
 
   public async Task EnsureRolesCreatedAsync()
   {

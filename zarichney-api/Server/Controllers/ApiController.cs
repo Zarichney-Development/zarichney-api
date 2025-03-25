@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Zarichney.Server.Middleware;
 using Zarichney.Server.Services.Emails;
 
 namespace Zarichney.Server.Controllers;

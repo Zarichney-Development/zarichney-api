@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Zarichney.Server.Config;
 using Zarichney.Server.Cookbook.Orders;
+using Zarichney.Server.Services.AI;
 
 namespace Zarichney.Server.Services.Sessions;
 
