@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Zarichney.Server.Auth;
 using Zarichney.Server.Auth.Commands;
-using Zarichney.Server.Auth.Common;
 using Zarichney.Server.Middleware;
 
 namespace Zarichney.Server.Controllers;

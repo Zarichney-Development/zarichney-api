@@ -30,36 +30,27 @@ public class SessionMiddleware(
     }
 
     var scope = scopeFactory.CreateScope();
-    
+
     // Get authenticated user ID if present
     var isAuthenticated = context.User.Identity?.IsAuthenticated == true;
     string? userId = null;
-    
+
     if (isAuthenticated)
     {
       // Get user ID from ClaimTypes.NameIdentifier claim
       userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
       _logger.Information("Request authenticated with user ID: {UserId}", userId);
     }
-    
+
     // Find existing session for user or create a new one
     Session session;
-    
+
     if (isAuthenticated && !string.IsNullOrEmpty(userId))
     {
       // Find session by user ID or create new one
       var existingSession = await sessionManager.GetSessionByUserId(userId, scope.Id);
-      if (existingSession != null)
-      {
-        session = existingSession;
-        _logger.Information("Using existing session {SessionId} for user {UserId}", session.Id, userId);
-      }
-      else
-      {
-        session = await sessionManager.CreateSession(scope.Id);
-        session.UserId = userId;
-        _logger.Information("Created new authenticated session {SessionId} for user {UserId}", session.Id, userId);
-      }
+      session = existingSession;
+      _logger.Information("Using existing session {SessionId} for user {UserId}", session.Id, userId);
     }
     else
     {
