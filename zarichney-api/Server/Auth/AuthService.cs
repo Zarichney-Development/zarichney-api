@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -11,7 +12,7 @@ namespace Zarichney.Server.Auth;
 
 public interface IAuthService
 {
-  string GenerateJwtToken(ApplicationUser user);
+  Task<string> GenerateJwtTokenAsync(ApplicationUser user);
   string GenerateRefreshToken();
 
   Task<RefreshToken> SaveRefreshTokenAsync(ApplicationUser user, string refreshToken, string? deviceName = null,
@@ -28,12 +29,13 @@ public interface IAuthService
 public class AuthService(
   IOptions<JwtSettings> jwtSettings,
   UserDbContext dbContext,
-  IHttpContextAccessor httpContextAccessor) : IAuthService
+  IHttpContextAccessor httpContextAccessor,
+  UserManager<ApplicationUser> userManager) : IAuthService
 {
   /// <summary>
-  /// Generates a JWT token for the specified user
+  /// Generates a JWT token for the specified user, including their roles
   /// </summary>
-  public string GenerateJwtToken(ApplicationUser user)
+  public async Task<string> GenerateJwtTokenAsync(ApplicationUser user)
   {
     var config = jwtSettings.Value;
 
@@ -52,6 +54,13 @@ public class AuthService(
       new(JwtRegisteredClaimNames.Email, user.Email!),
       new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
     };
+    
+    // Get user roles and add them as claims
+    var userRoles = await userManager.GetRolesAsync(user);
+    foreach (var role in userRoles)
+    {
+      claims.Add(new Claim(ClaimTypes.Role, role));
+    }
 
     // Calculate expiration time
     var expires = DateTime.UtcNow.AddMinutes(config.ExpiryMinutes);

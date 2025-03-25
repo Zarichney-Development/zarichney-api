@@ -630,4 +630,31 @@ public class AuthController(
       return new ApiErrorResult(ex, "Failed to refresh user claims");
     }
   }
+  
+  [Authorize]
+  [HttpGet("check-admin")]
+  [ProducesResponseType(typeof(Dictionary<string, object>), StatusCodes.Status200OK)]
+  public IActionResult CheckAdminRole()
+  {
+      // Get user ID from claims
+      var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+      
+      // Check if user is in admin role
+      var isAdmin = User.IsInRole("admin");
+      
+      // Get all roles from claims
+      var roles = User.Claims
+          .Where(c => c.Type == ClaimTypes.Role)
+          .Select(c => c.Value)
+          .ToList();
+      
+      return Ok(new Dictionary<string, object>
+      {
+          ["userId"] = userId ?? "unknown",
+          ["isAdmin"] = isAdmin,
+          ["roles"] = roles,
+          ["authenticationType"] = User.Identity?.AuthenticationType ?? "unknown",
+          ["isAuthenticated"] = User.Identity?.IsAuthenticated ?? false
+      });
+  }
 }

@@ -32,8 +32,8 @@ public class RefreshUserClaimsCommandHandler(
       if (!string.Equals(user.Email, request.Email, StringComparison.OrdinalIgnoreCase))
         return AuthResult.Fail("User email mismatch");
 
-      // Generate new JWT token with updated claims
-      var newAccessToken = authService.GenerateJwtToken(user);
+      // Generate new JWT token with updated claims including roles
+      var newAccessToken = await authService.GenerateJwtTokenAsync(user);
 
       // Generate new refresh token
       var newRefreshToken = authService.GenerateRefreshToken();

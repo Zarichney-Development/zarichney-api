@@ -38,8 +38,8 @@ public class RefreshTokenCommandHandler(
       if (user == null)
         return AuthResult.Fail("User not found");
 
-      // Generate new JWT token
-      var newAccessToken = authService.GenerateJwtToken(user);
+      // Generate new JWT token with role claims
+      var newAccessToken = await authService.GenerateJwtTokenAsync(user);
 
       // Generate new refresh token
       var newRefreshToken = authService.GenerateRefreshToken();

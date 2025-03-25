@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -95,9 +96,11 @@ public static class AuthStartupExtensions
           ValidIssuer = jwtSettings.Issuer,
           ValidAudience = jwtSettings.Audience,
           IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
-          ClockSkew = TimeSpan.Zero
+          ClockSkew = TimeSpan.Zero,
+          // Explicitly specify that ClaimTypes.Role should be used for role claims
+          RoleClaimType = ClaimTypes.Role
         };
-        
+
         // Configure to get token from the cookie
         options.Events = new JwtBearerEvents
         {

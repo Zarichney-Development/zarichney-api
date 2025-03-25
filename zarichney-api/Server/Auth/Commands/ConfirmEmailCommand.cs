@@ -41,7 +41,7 @@ public class ConfirmEmailCommandHandler(
         var redirectUrl = $"{clientConfig.BaseUrl}/auth?mode=email-confirmed&email={Uri.EscapeDataString(email)}";
 
         // Instead, we'll generate JWT and refresh tokens, but return them through cookies
-        var accessToken = authService.GenerateJwtToken(user);
+        var accessToken = await authService.GenerateJwtTokenAsync(user);
         var refreshToken = authService.GenerateRefreshToken();
         await authService.SaveRefreshTokenAsync(user, refreshToken, "Email Confirmation");
 

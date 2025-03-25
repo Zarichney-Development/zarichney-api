@@ -36,8 +36,8 @@ public class LoginCommandHandler(
       if (!user.EmailConfirmed)
         return AuthResult.Fail("Please verify your email address before logging in");
 
-      // Generate JWT token
-      var accessToken = authService.GenerateJwtToken(user);
+      // Generate JWT token with role claims
+      var accessToken = await authService.GenerateJwtTokenAsync(user);
 
       // Generate and save refresh token
       var refreshToken = authService.GenerateRefreshToken();
