@@ -139,10 +139,10 @@ void ConfigureServices(WebApplicationBuilder webBuilder)
 void ConfigureIdentity(WebApplicationBuilder webBuilder)
 {
   webBuilder.Services.AddIdentityServices(webBuilder.Configuration);
-  
+
   // Add role manager
   webBuilder.Services.AddScoped<IRoleManager, RoleManager>();
-  
+
   // Register RoleManager<IdentityRole> if not already registered by AddIdentity
   webBuilder.Services.AddScoped<RoleManager<IdentityRole>>();
 }
@@ -328,9 +328,8 @@ async Task ConfigureApplication(WebApplication application)
   application.UseCors("AllowSpecificOrigin");
   application.UseHttpsRedirection();
   application.UseAuthentication();
-  application.UseAuthorization();
   application.UseApiKeyAuth();
-
+  application.UseAuthorization();
   application.MapControllers();
 
   if (application.Environment.IsProduction())
