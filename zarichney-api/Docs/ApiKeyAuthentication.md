@@ -157,6 +157,62 @@ X-Api-Key: api-key-value
 
 In this case, the JWT token takes precedence.
 
+## Troubleshooting API Key Authentication
+
+If you encounter authentication issues when using API keys, check the following:
+
+### Common Errors
+
+1. **"Authorization failed. These requirements were not met: DenyAnonymousAuthorizationRequirement: Requires an authenticated user"**
+   - This error indicates that the API key authentication was not properly processed.
+   - Ensure you're using a valid API key in the `X-Api-Key` header.
+   - Verify that the API key belongs to a valid user in the database.
+   - Check that the user associated with the API key has not been deleted or disabled.
+
+2. **"Invalid API key" or "API key or JWT authentication is required"**
+   - The API key provided is not found in the database.
+   - The API key has been revoked (`IsActive` = false).
+   - The API key has expired (if an expiration date was set).
+   
+3. **JWT Authentication works but API Key doesn't**
+   - Verify that the API key authentication middleware is registered properly in Program.cs.
+   - Ensure that the API key header name is correct (`X-Api-Key`).
+   
+### Testing API Key Authentication
+
+To test API key authentication:
+
+1. Create an API key using the authenticated admin endpoint:
+   ```http
+   POST /api/auth/api-keys
+   Content-Type: application/json
+   Authorization: Bearer <jwt_token>
+   
+   {
+     "name": "Test API Key",
+     "description": "For testing authentication"
+   }
+   ```
+
+2. Use the API key to access a protected endpoint:
+   ```http
+   GET /api/auth/check-authentication
+   X-Api-Key: your-api-key-value
+   ```
+
+3. Verify the response includes authentication details like user ID and roles.
+
+### Implementation Details
+
+The API key authentication system:
+1. Verifies that the key exists and is valid
+2. Fetches the associated user and their roles
+3. Creates an authenticated ClaimsPrincipal with the user's identity
+4. Sets the identity with the appropriate authentication type
+5. Adds necessary claims (user ID, email, roles)
+
+This ensures that endpoints with `[Authorize]` attribute recognize API key authentication as valid, similar to JWT authentication.
+
 ## Role-Based Authorization
 
 The API implements role-based authorization using ASP.NET Identity roles. Currently, the system has one predefined role:

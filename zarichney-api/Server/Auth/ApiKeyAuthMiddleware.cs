@@ -60,10 +60,43 @@ public class ApiKeyAuthMiddleware(
       return;
     }
 
+    // Fetch the user from the database to get roles and other info
+    var userManager = context.RequestServices.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<ApplicationUser>>();
+    var user = await userManager.FindByIdAsync(userId);
+    
+    if (user == null)
+    {
+      logger.Warning("User {UserId} associated with API key not found for path: {Path}", userId, path);
+      context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+      await context.Response.WriteAsJsonAsync(new
+      {
+        error = "User associated with API key not found",
+        path,
+        timestamp = DateTimeOffset.UtcNow
+      });
+      return;
+    }
+
+    // Get user roles
+    var roles = await userManager.GetRolesAsync(user);
+
     // If we reach here, the API key is valid and we have a user ID
     // Create and associate a ClaimsIdentity with the current User
-    var identity = new ClaimsIdentity("ApiKey");
+    // IMPORTANT: Pass "true" as the second parameter to mark the identity as authenticated
+    var identity = new ClaimsIdentity("ApiKey", ClaimTypes.NameIdentifier);
     identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId));
+    
+    // Add email claim if available
+    if (!string.IsNullOrEmpty(user.Email))
+    {
+      identity.AddClaim(new Claim(ClaimTypes.Email, user.Email));
+    }
+    
+    // Add role claims
+    foreach (var role in roles)
+    {
+      identity.AddClaim(new Claim(ClaimTypes.Role, role));
+    }
 
     // Store the original principal if it exists
     var originalPrincipal = context.User;

@@ -632,9 +632,9 @@ public class AuthController(
   }
   
   [Authorize]
-  [HttpGet("check-admin")]
+  [HttpGet("check-authentication")]
   [ProducesResponseType(typeof(Dictionary<string, object>), StatusCodes.Status200OK)]
-  public IActionResult CheckAdminRole()
+  public IActionResult CheckAuthentication()
   {
       // Get user ID from claims
       var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
