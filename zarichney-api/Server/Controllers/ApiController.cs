@@ -60,4 +60,31 @@ public class ApiController(
       User = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value ?? "Unknown"
     });
   }
+  
+  [HttpGet("test-auth")]
+  public IActionResult TestAuth()
+  {
+    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "Unknown";
+    var authType = User.Identity?.AuthenticationType ?? "None";
+    var isAdmin = User.IsInRole("admin");
+    var allRoles = User.Claims
+        .Where(c => c.Type == ClaimTypes.Role)
+        .Select(c => c.Value)
+        .ToList();
+        
+    var isApiKeyAuth = HttpContext.Items.ContainsKey("ApiKey");
+    var apiKey = isApiKeyAuth ? HttpContext.Items["ApiKey"]?.ToString() : null;
+        
+    return Ok(new 
+    {
+        userId,
+        authType,
+        isAuthenticated = User.Identity?.IsAuthenticated ?? false,
+        isAdmin,
+        roles = allRoles,
+        isApiKeyAuth,
+        apiKeyInfo = isApiKeyAuth ? new { keyId = apiKey } : null,
+        message = "Authentication successful!"
+    });
+  }
 }

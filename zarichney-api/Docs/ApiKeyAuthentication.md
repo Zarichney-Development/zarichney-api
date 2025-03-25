@@ -168,6 +168,39 @@ If you encounter authentication issues when using API keys, check the following:
    - Ensure you're using a valid API key in the `X-Api-Key` header.
    - Verify that the API key belongs to a valid user in the database.
    - Check that the user associated with the API key has not been deleted or disabled.
+   - The ClaimsIdentity might not be properly authenticated - the authentication type must be non-null.
+
+### Testing API Key Authentication Status
+
+Use the `/api/test-auth` endpoint to check your API key authentication status:
+
+```http
+GET /api/test-auth
+X-Api-Key: your-api-key-value
+```
+
+This will return detailed information about the authentication status:
+
+```json
+{
+  "userId": "the-user-id",
+  "authType": "ApiKey",
+  "isAuthenticated": true,
+  "isAdmin": false,
+  "roles": ["role1", "role2"],
+  "isApiKeyAuth": true,
+  "apiKeyInfo": {
+    "keyId": "your-api-key-value"
+  },
+  "message": "Authentication successful!"
+}
+```
+
+Check the following fields to debug authentication issues:
+- `isAuthenticated`: Should be `true` if the API key is valid
+- `authType`: Should be `"ApiKey"` when using API key authentication
+- `roles`: Shows all roles assigned to the user, should include "admin" for admin users
+- `isApiKeyAuth`: Should be `true` when using an API key
 
 2. **"Invalid API key" or "API key or JWT authentication is required"**
    - The API key provided is not found in the database.
