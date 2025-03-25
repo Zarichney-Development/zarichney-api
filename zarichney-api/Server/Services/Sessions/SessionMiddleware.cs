@@ -9,15 +9,11 @@ namespace Zarichney.Server.Services.Sessions;
 /// Handles session creation, lookup, and cleanup based on authenticated user or creates anonymous sessions.
 /// </summary>
 public class SessionMiddleware(
-  RequestDelegate next,
-  ISessionManager sessionManager,
-  ILogger logger,
-  IScopeFactory scopeFactory)
+    RequestDelegate next,
+    ISessionManager sessionManager,
+    ILogger<SessionMiddleware> logger,
+    IScopeFactory scopeFactory)
 {
-  private readonly RequestDelegate _next = next ?? throw new ArgumentNullException(nameof(next));
-
-  private readonly ILogger _logger = logger.ForContext<SessionMiddleware>()
-                                     ?? throw new ArgumentNullException(nameof(logger));
 
   public async Task InvokeAsync(HttpContext context)
   {
@@ -25,13 +21,13 @@ public class SessionMiddleware(
 
     if (MiddlewareConfiguration.Routes.ShouldBypass(path))
     {
-      await _next(context);
+      await next(context);
       return;
     }
 
     var scope = scopeFactory.CreateScope();
 
-    // Get authenticated user ID if present
+    // Get authenticated user ID if present (from JWT or API Key)
     var isAuthenticated = context.User.Identity?.IsAuthenticated == true;
     string? userId = null;
 
@@ -39,7 +35,14 @@ public class SessionMiddleware(
     {
       // Get user ID from ClaimTypes.NameIdentifier claim
       userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-      _logger.Information("Request authenticated with user ID: {UserId}", userId);
+      logger.LogInformation("Request authenticated with user ID: {UserId}", userId);
+    }
+    // Check for API key authentication in HttpContext.Items
+    else if (context.Items.TryGetValue("ApiKeyUserId", out var apiKeyUserId) && apiKeyUserId is string apiKeyUserIdStr)
+    {
+      isAuthenticated = true;
+      userId = apiKeyUserIdStr;
+      logger.LogInformation("Request authenticated with API key for user ID: {UserId}", userId);
     }
 
     // Find existing session for user or create a new one
@@ -48,15 +51,27 @@ public class SessionMiddleware(
     if (isAuthenticated && !string.IsNullOrEmpty(userId))
     {
       // Find session by user ID or create new one
-      var existingSession = await sessionManager.GetSessionByUserId(userId, scope.Id);
-      session = existingSession;
-      _logger.Information("Using existing session {SessionId} for user {UserId}", session.Id, userId);
+      session = await sessionManager.GetSessionByUserId(userId, scope.Id);
+
+      // Set the UserId property on the session to ensure it's preserved
+      if (session.UserId == null)
+      {
+        session.UserId = userId;
+      }
+
+      logger.LogInformation("Using session {SessionId} for user {UserId}", session.Id, userId);
     }
     else
     {
       // Create an anonymous session
       session = await sessionManager.CreateSession(scope.Id);
-      _logger.Information("Created new anonymous session {SessionId}", session.Id);
+      logger.LogInformation("Created new anonymous session {SessionId}", session.Id);
+    }
+
+    // Add API key to session if present
+    if (context.Items.TryGetValue("ApiKey", out var apiKey) && apiKey is string apiKeyStr)
+    {
+      session.ApiKeyValue = apiKeyStr;
     }
 
     sessionManager.AddScopeToSession(session, scope.Id);
@@ -71,7 +86,7 @@ public class SessionMiddleware(
       using (Serilog.Context.LogContext.PushProperty("SessionId", session.Id))
       using (Serilog.Context.LogContext.PushProperty("UserId", userId))
       {
-        await _next(context);
+        await next(context);
       }
     }
     finally
@@ -87,7 +102,7 @@ public class SessionMiddleware(
         }
         catch (Exception ex)
         {
-          _logger.Error(ex, "Error ending session {SessionId}", session.Id);
+          logger.LogError(ex, "Error ending session {SessionId}", session.Id);
         }
       }
     }

@@ -20,6 +20,7 @@ public interface ISessionManager
   Task<Session> GetSessionByScope(Guid scopeId);
   Task<Session> GetSessionByOrder(string orderId, Guid scopeId);
   Task<Session> GetSessionByUserId(string userId, Guid scopeId);
+  Task<Session> GetSessionByApiKey(string apiKey, Guid scopeId);
   void AddScopeToSession(Session session, Guid scopeId);
   void RemoveScopeFromSession(Guid scopeId);
   Task AddOrder(Guid scopeId, CookbookOrder order);
@@ -242,7 +243,28 @@ public class SessionManager(
       return existingSession;
     }
 
-    return await CreateSession(scopeId);
+    var newSession = await CreateSession(scopeId);
+    newSession.UserId = userId;
+    return newSession;
+  }
+  
+  public async Task<Session> GetSessionByApiKey(string apiKey, Guid scopeId)
+  {
+    if (string.IsNullOrEmpty(apiKey))
+    {
+      throw new ArgumentException("ApiKey cannot be null or empty", nameof(apiKey));
+    }
+    
+    var existingSession = Sessions.Values.FirstOrDefault(s => s.ApiKeyValue == apiKey);
+    if (existingSession != null)
+    {
+      RefreshSession(existingSession);
+      return existingSession;
+    }
+    
+    var newSession = await CreateSession(scopeId);
+    newSession.ApiKeyValue = apiKey;
+    return newSession;
   }
 
   public void AddScopeToSession(Session session, Guid scopeId)

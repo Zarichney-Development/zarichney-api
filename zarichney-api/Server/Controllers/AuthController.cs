@@ -346,4 +346,244 @@ public class AuthController(
             Message = "Logged out successfully"
         });
     }
+
+    [Authorize(Roles = "admin")]
+    [HttpPost("api-keys")]
+    [ProducesResponseType(typeof(ApiKeyResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> CreateApiKey([FromBody] CreateApiKeyCommand request)
+    {
+        try
+        {
+            var result = await mediator.Send(request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error creating API key");
+            return new ApiErrorResult(ex, "Failed to create API key");
+        }
+    }
+
+    [Authorize(Roles = "admin")]
+    [HttpGet("api-keys")]
+    [ProducesResponseType(typeof(List<ApiKeyResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetApiKeys()
+    {
+        try
+        {
+            var result = await mediator.Send(new GetApiKeysQuery());
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving API keys");
+            return new ApiErrorResult(ex, "Failed to retrieve API keys");
+        }
+    }
+
+    [Authorize(Roles = "admin")]
+    [HttpGet("api-keys/{id:int}")]
+    [ProducesResponseType(typeof(ApiKeyResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetApiKeyById(int id)
+    {
+        try
+        {
+            var result = await mediator.Send(new GetApiKeyByIdQuery(id));
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving API key by ID");
+            return new ApiErrorResult(ex, "Failed to retrieve API key");
+        }
+    }
+
+    [Authorize]
+    [HttpDelete("api-keys/{id:int}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> RevokeApiKey(int id)
+    {
+        try
+        {
+            var result = await mediator.Send(new RevokeApiKeyCommand(id));
+            if (!result)
+            {
+                return NotFound();
+            }
+            return Ok(new { success = true, message = "API key revoked successfully" });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error revoking API key");
+            return new ApiErrorResult(ex, "Failed to revoke API key");
+        }
+    }
+
+    // Role management endpoints - Admin only
+
+    public class RoleRequest
+    {
+        public string UserId { get; set; } = string.Empty;
+        public string RoleName { get; set; } = string.Empty;
+    }
+
+    [Authorize(Roles = "admin")]
+    [HttpPost("roles/add")]
+    [ProducesResponseType(typeof(RoleCommandResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> AddUserToRole([FromBody] RoleRequest request)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(request.UserId) || string.IsNullOrEmpty(request.RoleName))
+            {
+                return BadRequest(new { success = false, message = "UserId and RoleName are required" });
+            }
+
+            var result = await mediator.Send(new AddUserToRoleCommand(request.UserId, request.RoleName));
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error adding user to role");
+            return new ApiErrorResult(ex, "Failed to add user to role");
+        }
+    }
+
+    [Authorize(Roles = "admin")]
+    [HttpPost("roles/remove")]
+    [ProducesResponseType(typeof(RoleCommandResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> RemoveUserFromRole([FromBody] RoleRequest request)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(request.UserId) || string.IsNullOrEmpty(request.RoleName))
+            {
+                return BadRequest(new { success = false, message = "UserId and RoleName are required" });
+            }
+
+            var result = await mediator.Send(new RemoveUserFromRoleCommand(request.UserId, request.RoleName));
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error removing user from role");
+            return new ApiErrorResult(ex, "Failed to remove user from role");
+        }
+    }
+
+    [Authorize(Roles = "admin")]
+    [HttpGet("roles/user/{userId}")]
+    [ProducesResponseType(typeof(RoleCommandResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetUserRoles(string userId)
+    {
+        try
+        {
+            var result = await mediator.Send(new GetUserRolesQuery(userId));
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting user roles");
+            return new ApiErrorResult(ex, "Failed to get user roles");
+        }
+    }
+
+    [Authorize(Roles = "admin")]
+    [HttpGet("roles/{roleName}/users")]
+    [ProducesResponseType(typeof(List<UserRoleInfo>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetUsersInRole(string roleName)
+    {
+        try
+        {
+            var result = await mediator.Send(new GetUsersInRoleQuery(roleName));
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting users in role");
+            return new ApiErrorResult(ex, "Failed to get users in role");
+        }
+    }
+
+    // This endpoint is primarily for initial setup and should be secured or removed in production
+    [HttpPost("setup-admin")]
+    [ProducesResponseType(typeof(RoleCommandResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> SetupAdminUser([FromBody] RoleRequest request)
+    {
+        // In production, this should be protected by a special setup key or environment check
+        if (!IsDevelopmentEnvironment())
+        {
+            return BadRequest(new { success = false, message = "This endpoint is only available in development environment" });
+        }
+
+        try
+        {
+            if (string.IsNullOrEmpty(request.UserId))
+            {
+                return BadRequest(new { success = false, message = "UserId is required" });
+            }
+
+            var result = await mediator.Send(new AddUserToRoleCommand(request.UserId, "admin"));
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error setting up admin user");
+            return new ApiErrorResult(ex, "Failed to set up admin user");
+        }
+    }
+
+    private bool IsDevelopmentEnvironment()
+    {
+        var env = HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
+        return env.IsDevelopment();
+    }
 }

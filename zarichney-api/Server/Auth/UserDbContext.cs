@@ -25,6 +25,9 @@ public class ApplicationUser : IdentityUser
   
   // Navigation property for refresh tokens
   public virtual ICollection<RefreshToken>? RefreshTokens { get; set; }
+  
+  // Navigation property for API keys
+  public virtual ICollection<ApiKey>? ApiKeys { get; set; }
 }
 
 public class UserDbContext(DbContextOptions<UserDbContext> options) : IdentityDbContext<ApplicationUser>(options)
@@ -48,6 +51,9 @@ public class UserDbContext(DbContextOptions<UserDbContext> options) : IdentityDb
   
   // Table for refresh tokens
   public DbSet<RefreshToken> RefreshTokens { get; init; } = null!;
+  
+  // Table for API keys
+  public DbSet<ApiKey> ApiKeys { get; init; } = null!;
     
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -59,5 +65,17 @@ public class UserDbContext(DbContextOptions<UserDbContext> options) : IdentityDb
             .WithMany(u => u.RefreshTokens)
             .HasForeignKey(r => r.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+            
+        // Configure API key table
+        builder.Entity<ApiKey>()
+            .HasOne(k => k.User)
+            .WithMany(u => u.ApiKeys)
+            .HasForeignKey(k => k.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+            
+        // Create a unique index on the KeyValue field
+        builder.Entity<ApiKey>()
+            .HasIndex(k => k.KeyValue)
+            .IsUnique();
     }
 }

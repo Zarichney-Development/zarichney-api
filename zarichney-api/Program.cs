@@ -139,6 +139,12 @@ void ConfigureServices(WebApplicationBuilder webBuilder)
 void ConfigureIdentity(WebApplicationBuilder webBuilder)
 {
   webBuilder.Services.AddIdentityServices(webBuilder.Configuration);
+  
+  // Add role manager
+  webBuilder.Services.AddScoped<IRoleManager, RoleManager>();
+  
+  // Register RoleManager<IdentityRole> if not already registered by AddIdentity
+  webBuilder.Services.AddScoped<Microsoft.AspNetCore.Identity.RoleManager<IdentityRole>>();
 }
 
 void ConfigureEmailServices(IServiceCollection services)
@@ -174,6 +180,7 @@ void ConfigureApplicationServices(IServiceCollection services)
   // Background Services
   services.AddHostedService<BackgroundTaskService>();
   services.AddHostedService<RefreshTokenCleanupService>();
+  services.AddHostedService<RoleInitializer>();
   services.AddSingleton<IBackgroundWorker>(_ => new BackgroundWorker(100));
 
   // Prompts and Core Services
@@ -213,6 +220,7 @@ void ConfigureApplicationServices(IServiceCollection services)
 
 void ConfigureApiKey(IServiceCollection services, IConfiguration configuration)
 {
+  // For backward compatibility: Configure the old static API keys from config
   services.Configure<ApiKeyConfig>(config =>
   {
     config.AllowedKeys = configuration["ApiKeyConfig:AllowedKeys"] ?? string.Empty;
@@ -225,13 +233,11 @@ void ConfigureApiKey(IServiceCollection services, IConfiguration configuration)
       AllowedKeys = configuration["ApiKeyConfig:AllowedKeys"] ?? string.Empty
     };
 
-    if (config.ValidApiKeys.IsEmpty)
-    {
-      throw new InvalidOperationException("No valid API keys configured");
-    }
-
     return config;
   });
+  
+  // Register the new API key service
+  services.AddScoped<IApiKeyService, ApiKeyService>();
 }
 
 void ConfigureSwagger(WebApplicationBuilder webBuilder)
