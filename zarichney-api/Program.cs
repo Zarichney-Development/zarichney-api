@@ -231,6 +231,12 @@ void ConfigureSwagger(WebApplicationBuilder webBuilder)
       Description = "API for the Cookbook application and Transcription Service. " +
                     "Authenticate using the 'Authorize' button and provide your API key."
     });
+    
+    c.OperationFilter<FormFileOperationFilter>();  
+    c.EnableAnnotations();
+    
+    var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
 
     c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
     {
@@ -316,7 +322,6 @@ async Task ConfigureApplication(WebApplication application)
     {
       Log.Information("Configuring Swagger JSON at: api/swagger/swagger.json");
       c.RouteTemplate = "api/swagger/{documentName}.json";
-      c.SerializeAsV2 = false;
     })
     .UseSwaggerUI(c =>
     {

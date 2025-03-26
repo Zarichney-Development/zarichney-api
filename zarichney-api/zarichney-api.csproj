@@ -11,6 +11,9 @@
         <NoWarn>OPENAI001</NoWarn>
         <EnableDefaultContentItems>false</EnableDefaultContentItems>
         <AssemblyName>Zarichney</AssemblyName>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <!-- To ignore warning: CS1591: Missing XML comment for publicly visible type or member -->
+        <NoWarn>1591;OPENAI001</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
@@ -46,6 +49,7 @@
         <PackageReference Include="SixLabors.ImageSharp" Version="3.1.7" />
         <PackageReference Include="Stripe.net" Version="47.4.0" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="8.0.0" />
         <PackageReference Include="System.Drawing.Common" Version="8.0.7" />
         <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
         <PackageReference Include="SkiaSharp" Version="2.88.8" />
