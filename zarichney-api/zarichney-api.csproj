@@ -73,7 +73,9 @@
 
     <ItemGroup>
       <Folder Include="Server/" />
-      <Folder Include="Server/Auth/Migrations/**" CopyToOutputDirectory="PreserveNewest" />
+      <Folder Include="Server/Auth/" />
+      <Folder Include="Server/Auth/Migrations"/>
+      <Content Include="Server/Auth/Migrations/**" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
 </Project>
