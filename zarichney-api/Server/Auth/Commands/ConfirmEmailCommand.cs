@@ -37,8 +37,8 @@ public class ConfirmEmailCommandHandler(
         var email = user.Email!;
         logger.LogInformation("Email confirmed successfully for user {Email}", user.Email);
 
-        // Create the redirect URL with the client base URL - No JWT in URL, we'll use cookies
-        var redirectUrl = $"{clientConfig.BaseUrl}/auth?mode=email-confirmed&email={Uri.EscapeDataString(email)}";
+        // Create the redirect URL with the client base URL
+        var redirectUrl = $"{clientConfig.BaseUrl}/auth/email-confirmation";
 
         // Instead, we'll generate JWT and refresh tokens, but return them through cookies
         var accessToken = await authService.GenerateJwtTokenAsync(user);

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Zarichney.Server.Controllers;
 
 public class ApiErrorResult(
-  Exception exception,
+  Exception? exception = null,
   string userMessage = "An unexpected error occurred",
   HttpStatusCode statusCode = HttpStatusCode.InternalServerError)
   : IActionResult
@@ -17,10 +17,10 @@ public class ApiErrorResult(
       Error = new
       {
         Message = userMessage,
-        Type = exception.GetType().Name,
-        Details = exception.Message,
-        exception.Source,
-        StackTrace = exception.StackTrace?.Split(Environment.NewLine)
+        Type = exception?.GetType().Name,
+        Details = exception?.Message,
+        Source = exception?.Source,
+        StackTrace = exception?.StackTrace?.Split(Environment.NewLine)
           .Select(line => line.TrimStart())
           .ToList(),
       },
@@ -31,7 +31,7 @@ public class ApiErrorResult(
         Controller = context.ActionDescriptor.DisplayName
       },
       TraceId = context.HttpContext.TraceIdentifier,
-      InnerException = exception.InnerException == null
+      InnerException = exception?.InnerException == null
         ? null
         : new
         {

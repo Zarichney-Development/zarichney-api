@@ -305,8 +305,8 @@ void ConfigureCors(WebApplicationBuilder webBuilder)
 
   webBuilder.Services.AddRequestResponseLogger(options =>
   {
-    options.LogRequests = true;
-    options.LogResponses = true;
+    options.LogRequests = webBuilder.Environment.IsEnvironment("Development");
+    options.LogResponses = webBuilder.Environment.IsEnvironment("Development");
     options.SensitiveHeaders = ["Authorization", "Cookie", "X-API-Key"];
     options.RequestFilter = context => !context.Request.Path.StartsWithSegments("/api/swagger");
     options.LogDirectory = Path.Combine(webBuilder.Environment.ContentRootPath, "Logs");
@@ -330,12 +330,12 @@ async Task ConfigureApplication(WebApplication application)
       c.RoutePrefix = "api/swagger";
     });
 
-  application.UseSessionManagement();
   application.UseCors("AllowSpecificOrigin");
   application.UseHttpsRedirection();
   application.UseAuthentication();
   application.UseApiKeyAuth();
   application.UseAuthorization();
+  application.UseSessionManagement(); // Session's user detection requires authentication, must be after
   application.MapControllers();
 
   if (application.Environment.IsProduction())

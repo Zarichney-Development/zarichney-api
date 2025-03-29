@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using OpenAI.Chat;
+using Zarichney.Server.Config;
 using Zarichney.Server.Cookbook.Customers;
 using Zarichney.Server.Cookbook.Orders;
 using Zarichney.Server.Services.AI;
@@ -183,10 +184,24 @@ public class SessionManager(
     {
       throw new ArgumentException("ScopeId cannot be empty", nameof(scopeId));
     }
+    
+    var currentSession = Sessions.Values.FirstOrDefault(s => s.Scopes.ContainsKey(scopeId))
+      ?? throw new NotExpectedException($"Session not found for scope {scopeId}");
 
     var existingSession = Sessions.Values.FirstOrDefault(s => s.Order?.OrderId == orderId);
     if (existingSession != null)
     {
+      if (existingSession.UserId == null)
+      {
+        throw new NotExpectedException($"Session {existingSession.Id} for order {orderId} does not have a user ID");
+      }
+      
+      // Auth check
+      if (currentSession.UserId != existingSession.UserId)
+      {
+        throw new KeyNotFoundException($"User attempted to access session {existingSession.Id} with order {orderId} but is not authorized");
+      }
+      
       AddScopeToSession(existingSession, scopeId);
       return existingSession;
     }

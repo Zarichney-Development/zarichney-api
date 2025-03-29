@@ -6,6 +6,7 @@ using Zarichney.Server.Cookbook.Recipes;
 using Zarichney.Server.Services;
 using Zarichney.Server.Services.Emails;
 using Zarichney.Server.Services.Sessions;
+using System.Net;
 
 namespace Zarichney.Server.Controllers;
 
@@ -164,7 +165,7 @@ public class CookbookController(
     catch (KeyNotFoundException ex) // Specific exception for order not found
     {
       logger.LogWarning(ex, "{Method}: Order not found: {OrderId}", nameof(GetOrder), orderId);
-      return NotFound($"Order not found: {orderId}"); // Consistent message
+      return new ApiErrorResult(null, $"Order not found: {orderId}", HttpStatusCode.NotFound);
     }
     catch (Exception ex)
     {
@@ -221,7 +222,7 @@ public class CookbookController(
     catch (KeyNotFoundException ex) // Catch specific exception for order not found
     {
       logger.LogWarning(ex, "{Method}: Order not found for reprocessing: {OrderId}", nameof(ReprocessOrder), orderId);
-      return NotFound($"Order not found: {orderId}"); // Consistent message
+      return new ApiErrorResult(null, $"Order not found: {orderId}", HttpStatusCode.NotFound);
     }
     catch (Exception ex)
     {
@@ -291,8 +292,7 @@ public class CookbookController(
     catch (KeyNotFoundException ex) // Catch order or PDF not found
     {
       logger.LogWarning(ex, "{Method}: Order or PDF not found for order: {OrderId}", nameof(GetCookbookPdf), orderId);
-      // Provide a more specific message depending on whether it was the order or the PDF, if possible
-      return NotFound($"Order or associated PDF not found: {orderId}");
+      return new ApiErrorResult(null, $"Order or associated PDF not found: {orderId}", HttpStatusCode.NotFound);
     }
     // Catch specific exceptions from CompilePdf or GetPdf if they are defined and informative
     // catch (PdfGenerationException ex) { ... }
@@ -335,7 +335,7 @@ public class CookbookController(
     catch (KeyNotFoundException ex) // Handles order or potentially PDF not found within EmailCookbook
     {
       logger.LogWarning(ex, "{Method}: Order not found for email resend: {OrderId}", nameof(ResendCookbook), orderId);
-      return NotFound($"Order not found: {orderId}"); // Consistent message
+      return new ApiErrorResult(null, $"Order not found: {orderId}", HttpStatusCode.NotFound);
     }
     // Catch specific email sending exceptions if IEmailService defines them
     // catch (EmailSendingFailedException ex) { ... return Problem(...) }
@@ -392,8 +392,7 @@ public class CookbookController(
       // Check if the result list is empty *after* the service call (which might include scraping)
       if (recipes.Count == 0)
       {
-        // Use NotFound Result for consistency
-        return NotFound($"No recipes found matching the criteria for '{query}'");
+        return new ApiErrorResult(null, $"No recipes found matching the criteria for '{query}'", HttpStatusCode.NotFound);
       }
 
       return Ok(recipes);
@@ -401,7 +400,7 @@ public class CookbookController(
     catch (NoRecipeException e) // Specific exception from the service layer
     {
       logger.LogWarning(e, "{Method}: No recipes found exception for query: {Query}", nameof(GetRecipes), query);
-      return NotFound(e.Message); // Return the exception message from the service
+      return new ApiErrorResult(null, e.Message, HttpStatusCode.NotFound);
     }
     catch (Exception ex)
     {
@@ -458,7 +457,7 @@ public class CookbookController(
       // Check if scraping returned any recipes
       if (recipes.Count == 0)
       {
-        return NotFound($"No recipes found via scraping for '{query}'" + (site != null ? $" on site '{site}'" : ""));
+        return new ApiErrorResult(null, $"No recipes found via scraping for '{query}'" + (site != null ? $" on site '{site}'" : ""), HttpStatusCode.NotFound);
       }
 
       // If not storing, return the raw scraped recipes

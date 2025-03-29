@@ -1,5 +1,4 @@
 using Zarichney.Server.Auth;
-using ILogger = Serilog.ILogger;
 using System.Security.Claims;
 
 namespace Zarichney.Server.Services.Sessions;
@@ -26,6 +25,8 @@ public class SessionMiddleware(
     }
 
     var scope = scopeFactory.CreateScope();
+    
+    // TODO: restore X-Session-Id functionality. I believe it's still required for the ai service (completion endpoint)
 
     // Get authenticated user ID if present (from JWT or API Key)
     var isAuthenticated = context.User.Identity?.IsAuthenticated == true;
@@ -54,10 +55,7 @@ public class SessionMiddleware(
       session = await sessionManager.GetSessionByUserId(userId, scope.Id);
 
       // Set the UserId property on the session to ensure it's preserved
-      if (session.UserId == null)
-      {
-        session.UserId = userId;
-      }
+      session.UserId ??= userId;
 
       logger.LogInformation("Using session {SessionId} for user {UserId}", session.Id, userId);
     }
@@ -65,6 +63,16 @@ public class SessionMiddleware(
     {
       // Create an anonymous session
       session = await sessionManager.CreateSession(scope.Id);
+      
+      if (!string.IsNullOrEmpty(userId))
+      {
+        if (session.UserId != null && session.UserId != userId)
+        {
+          logger.LogWarning("Session {SessionId} already has a different user ID {ExistingUserId}, ignoring new user ID {NewUserId}", session.Id, session.UserId, userId);
+        }
+        
+        session.UserId ??= userId;
+      }
       logger.LogInformation("Created new anonymous session {SessionId}", session.Id);
     }
 

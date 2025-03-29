@@ -35,7 +35,7 @@ public class ForgotPasswordCommandHandler(
       {
         // Create front end reset URL
         var resetUrl =
-          $"{clientConfig.BaseUrl}/auth?reset-password&email={Uri.EscapeDataString(request.Email)}&token={Uri.EscapeDataString(resetToken)}";
+          $"{clientConfig.BaseUrl}/auth/reset-password?email={Uri.EscapeDataString(request.Email)}&token={Uri.EscapeDataString(resetToken)}";
 
         var templateData = new Dictionary<string, object>
         {
