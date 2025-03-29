@@ -13,17 +13,16 @@ public class PaymentController(
   ILogger<PaymentController> logger,
   IPaymentService paymentService,
   IOrderService orderService,
-  ICustomerService customerService,
-  PaymentConfig config)
+  ICustomerService customerService)
   : ControllerBase
 {
   /// <summary>
   /// Creates a Stripe checkout session for the specified order
   /// </summary>
   /// <param name="orderId">Order identifier</param>
-  /// <returns>The Stripe checkout session ID</returns>
+  /// <returns>The Stripe checkout URL</returns>
   [HttpPost("create-checkout-session/{orderId}")]
-  [ProducesResponseType(typeof(SessionResponse), StatusCodes.Status200OK)]
+  [ProducesResponseType(typeof(CheckoutUrlResponse), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status404NotFound)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
@@ -39,10 +38,10 @@ public class PaymentController(
       }
 
       // Create Stripe checkout session
-      var sessionId = await paymentService.CreateCheckoutSession(order);
+      var session = await paymentService.GetCheckoutSessionWithUrl(order);
 
-      // Return the session ID to the client
-      return Ok(new SessionResponse { SessionId = sessionId, PublicKey = config.StripePublishableKey });
+      // Return the checkout URL to the client
+      return Ok(new CheckoutUrlResponse { CheckoutUrl = session.Url });
     }
     catch (KeyNotFoundException ex)
     {
@@ -65,9 +64,9 @@ public class PaymentController(
   /// <summary>
   /// Creates a Stripe checkout session for purchasing recipe credits
   /// </summary>
-  /// <returns>The Stripe checkout session ID</returns>
+  /// <returns>The Stripe checkout URL</returns>
   [HttpPost("create-credit-session")]
-  [ProducesResponseType(typeof(SessionResponse), StatusCodes.Status200OK)]
+  [ProducesResponseType(typeof(CheckoutUrlResponse), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
   public async Task<IActionResult> CreateCreditSession([FromBody] RecipeCreditRequest request)
@@ -88,10 +87,10 @@ public class PaymentController(
       var customer = await customerService.GetOrCreateCustomer(request.Email);
 
       // Create Stripe checkout session
-      var sessionId = await paymentService.CreateCheckoutSession(customer, request.RecipeCount);
+      var session = await paymentService.GetCreditCheckoutSessionWithUrl(customer, request.RecipeCount);
 
-      // Return the session ID to the client
-      return Ok(new SessionResponse { SessionId = sessionId, PublicKey = config.StripePublishableKey });
+      // Return the checkout URL to the client
+      return Ok(new CheckoutUrlResponse { CheckoutUrl = session.Url });
     }
     catch (ArgumentException ex)
     {
@@ -190,6 +189,12 @@ public class PaymentController(
   }
 }
 
+public class CheckoutUrlResponse
+{
+  public string CheckoutUrl { get; init; } = string.Empty;
+}
+
+// Kept for backward compatibility if needed
 public class SessionResponse
 {
   public string SessionId { get; init; } = string.Empty;

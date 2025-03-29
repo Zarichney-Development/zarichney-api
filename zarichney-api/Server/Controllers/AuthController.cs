@@ -752,10 +752,11 @@ public class AuthController(
   public class RoleRequest
   {
     /// <summary>
-    /// The unique identifier of the target user.
+    /// The unique identifier of the target user (user ID or email address).
     /// </summary>
     /// <example>xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</example>
-    public string UserId { get; set; } = string.Empty;
+    /// <remarks>This can be either a GUID user ID or an email address.</remarks>
+    public string Identifier { get; set; } = string.Empty;
 
     /// <summary>
     /// The name of the role to add or remove (e.g., "admin", "editor"). Case sensitivity depends on the underlying store.
@@ -788,16 +789,16 @@ public class AuthController(
     // Note: Basic validation moved inside try-catch for consistent error handling
     try
     {
-      if (string.IsNullOrWhiteSpace(request.UserId) || string.IsNullOrWhiteSpace(request.RoleName))
+      if (string.IsNullOrWhiteSpace(request.Identifier) || string.IsNullOrWhiteSpace(request.RoleName))
       {
         return BadRequest(new RoleCommandResult
         {
           Success = false,
-          Message = "UserId and RoleName are required."
+          Message = "User identifier and RoleName are required."
         });
       }
 
-      var result = await mediator.Send(new AddUserToRoleCommand(request.UserId, request.RoleName));
+      var result = await mediator.Send(new AddUserToRoleCommand(request.Identifier, request.RoleName));
       if (!result.Success)
       {
         // Use BadRequest for logical failures (user not found, role not found, etc.)
@@ -808,7 +809,7 @@ public class AuthController(
     }
     catch (Exception ex)
     {
-      logger.LogError(ex, "Error adding user {UserId} to role {RoleName}", request.UserId, request.RoleName);
+      logger.LogError(ex, "Error adding user {Identifier} to role {RoleName}", request.Identifier, request.RoleName);
       return new ApiErrorResult(ex, "Failed to add user to role");
     }
   }
@@ -835,16 +836,16 @@ public class AuthController(
   {
     try
     {
-      if (string.IsNullOrWhiteSpace(request.UserId) || string.IsNullOrWhiteSpace(request.RoleName))
+      if (string.IsNullOrWhiteSpace(request.Identifier) || string.IsNullOrWhiteSpace(request.RoleName))
       {
         return BadRequest(new RoleCommandResult
         {
           Success = false,
-          Message = "UserId and RoleName are required."
+          Message = "User identifier and RoleName are required."
         });
       }
 
-      var result = await mediator.Send(new RemoveUserFromRoleCommand(request.UserId, request.RoleName));
+      var result = await mediator.Send(new RemoveUserFromRoleCommand(request.Identifier, request.RoleName));
       if (!result.Success)
       {
         return BadRequest(result);
@@ -854,7 +855,7 @@ public class AuthController(
     }
     catch (Exception ex)
     {
-      logger.LogError(ex, "Error removing user {UserId} from role {RoleName}", request.UserId, request.RoleName);
+      logger.LogError(ex, "Error removing user {Identifier} from role {RoleName}", request.Identifier, request.RoleName);
       return new ApiErrorResult(ex, "Failed to remove user from role");
     }
   }
@@ -864,34 +865,35 @@ public class AuthController(
   /// </summary>
   /// <remarks>
   /// Requires the user performing this action to have the 'admin' role.
+  /// The user can be identified either by their ID or email address.
   /// </remarks>
-  /// <param name="userId">The unique identifier of the user.</param>
+  /// <param name="identifier">The unique identifier of the user (can be user ID or email address).</param>
   /// <returns>A RoleCommandResult containing the list of roles for the user.</returns>
   [Authorize(Roles = "admin")]
-  [HttpGet("roles/user/{userId}")]
+  [HttpGet("roles/user/{identifier}")]
   [SwaggerOperation(Summary = "Gets roles for a specific user (Admin only).",
-    Description = "Retrieves a list of roles assigned to the given user ID. Requires 'admin' role.")]
+    Description = "Retrieves a list of roles assigned to the given user ID or email. Requires 'admin' role.")]
   [ProducesResponseType(typeof(RoleCommandResult),
     StatusCodes.Status200OK)] // Assumes RoleCommandResult contains the list
-  [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status400BadRequest)] // If user ID format is invalid
+  [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status400BadRequest)] // If identifier format is invalid
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status404NotFound)] // If user not found
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  public async Task<IActionResult> GetUserRoles(string userId)
+  public async Task<IActionResult> GetUserRoles(string identifier)
   {
     try
     {
-      if (string.IsNullOrWhiteSpace(userId))
+      if (string.IsNullOrWhiteSpace(identifier))
       {
         return BadRequest(new RoleCommandResult
         {
           Success = false,
-          Message = "UserId is required."
+          Message = "User identifier (ID or email) is required."
         });
       }
 
-      var result = await mediator.Send(new GetUserRolesQuery(userId));
+      var result = await mediator.Send(new GetUserRolesQuery(identifier));
       if (!result.Success)
       {
         // Distinguish between "user not found" (404) and other errors if possible
@@ -902,7 +904,7 @@ public class AuthController(
     }
     catch (Exception ex)
     {
-      logger.LogError(ex, "Error getting roles for user {UserId}", userId);
+      logger.LogError(ex, "Error getting roles for user with identifier {Identifier}", identifier);
       return new ApiErrorResult(ex, "Failed to get user roles");
     }
   }
@@ -972,28 +974,28 @@ public class AuthController(
 
     try
     {
-      if (string.IsNullOrWhiteSpace(request.UserId))
+      if (string.IsNullOrWhiteSpace(request.Identifier))
       {
         return BadRequest(new RoleCommandResult
         {
           Success = false,
-          Message = "UserId id required."
+          Message = "User identifier is required."
         });
       }
 
       // Ensure we are adding the 'admin' role. Could ignore request.RoleName or validate it.
-      var result = await mediator.Send(new AddUserToRoleCommand(request.UserId, adminRoleName));
+      var result = await mediator.Send(new AddUserToRoleCommand(request.Identifier, adminRoleName));
       if (!result.Success)
       {
         return BadRequest(result);
       }
 
-      logger.LogWarning("Admin privileges granted to user {UserId} via setup endpoint.", request.UserId);
+      logger.LogWarning("Admin privileges granted to user {Identifier} via setup endpoint.", request.Identifier);
       return Ok(result);
     }
     catch (Exception ex)
     {
-      logger.LogError(ex, "Error setting up admin user {UserId}", request.UserId);
+      logger.LogError(ex, "Error setting up admin user {Identifier}", request.Identifier);
       return new ApiErrorResult(ex, "Failed to set up admin user");
     }
   }
@@ -1062,8 +1064,8 @@ public class AuthController(
         // This case implies the command succeeded but didn't return tokens, which is unexpected.
         logger.LogError("RefreshUserClaimsCommand for user {UserId} reported success but did not return tokens.",
           userId);
-        return new ApiErrorResult(null,
-          "Failed to refresh user claims due to an internal state issue."); // Return 500
+        return new ApiErrorResult(new Exception(
+          "Failed to refresh user claims due to an internal state issue.")); // Return 500
       }
 
       return Ok(new AuthResponse

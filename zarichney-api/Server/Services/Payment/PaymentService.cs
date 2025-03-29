@@ -16,9 +16,19 @@ public interface IPaymentService
   Task<string> CreateCheckoutSession(CookbookOrder order);
 
   /// <summary>
+  /// Creates a checkout session for completing a specific order and returns the full session with URL.
+  /// </summary>
+  Task<Stripe.Checkout.Session> GetCheckoutSessionWithUrl(CookbookOrder order);
+
+  /// <summary>
   /// Creates a checkout session for purchasing recipe credits.
   /// </summary>
   Task<string> CreateCheckoutSession(Customer customer, int recipeCount);
+
+  /// <summary>
+  /// Creates a checkout session for purchasing recipe credits and returns the full session with URL.
+  /// </summary>
+  Task<Stripe.Checkout.Session> GetCreditCheckoutSessionWithUrl(Customer customer, int recipeCount);
 
   /// <summary>
   /// Gets information about a checkout session.
@@ -92,6 +102,48 @@ public class PaymentService(
     logger.LogInformation("Created Stripe checkout session {SessionId} for order {OrderId}", sessionId, order.OrderId);
     return sessionId;
   }
+  
+  /// <summary>
+  /// Creates a checkout session for completing a specific order and returns the full session with URL.
+  /// </summary>
+  public async Task<Stripe.Checkout.Session> GetCheckoutSessionWithUrl(CookbookOrder order)
+  {
+    ArgumentNullException.ThrowIfNull(order);
+
+    // Calculate how many more recipes the user needs to pay for.
+    var recipesToPay = order.RecipeList.Count - order.SynthesizedRecipes.Count;
+
+    if (recipesToPay <= 0)
+    {
+      throw new InvalidOperationException("This order doesn't require any payment.");
+    }
+
+    var metadata = new Dictionary<string, string>
+    {
+      { "payment_type", PaymentType.OrderCompletion.ToString() },
+      { "order_id", order.OrderId },
+      { "customer_email", order.Email }
+    };
+
+    var successUrl = $"{clientConfig.BaseUrl}{string.Format(config.SuccessUrl, order.OrderId)}";
+    var cancelUrl = $"{clientConfig.BaseUrl}{string.Format(config.CancelUrl, order.OrderId)}";
+
+    const string productName = "Cookbook Recipe";
+    var productDescription = $"Additional recipes for your cookbook (needed: {recipesToPay})";
+
+    var session = await stripeService.CreateCheckoutSessionWithUrl(
+      order.Email,
+      recipesToPay,
+      metadata,
+      successUrl,
+      cancelUrl,
+      productName,
+      productDescription,
+      order.OrderId);
+
+    logger.LogInformation("Created Stripe checkout session {SessionId} with URL for order {OrderId}", session.Id, order.OrderId);
+    return session;
+  }
 
   /// <summary>
   /// Creates a checkout session for purchasing recipe credits for a customer (no order associated).
@@ -137,6 +189,52 @@ public class PaymentService(
     logger.LogInformation("Created Stripe checkout session {SessionId} for customer {Email} to purchase {RecipeCount} credits",
       sessionId, customer.Email, recipeCount);
     return sessionId;
+  }
+  
+  /// <summary>
+  /// Creates a checkout session for purchasing recipe credits and returns the full session with URL.
+  /// </summary>
+  public async Task<Stripe.Checkout.Session> GetCreditCheckoutSessionWithUrl(Customer customer, int recipeCount)
+  {
+    ArgumentNullException.ThrowIfNull(customer);
+
+    if (recipeCount <= 0)
+    {
+      throw new ArgumentException("Recipe count must be greater than zero", nameof(recipeCount));
+    }
+
+    // Validate the recipe count is one of the allowed package sizes.
+    if (!config.RecipePackageSizes.Contains(recipeCount))
+    {
+      recipeCount = config.RecipePackageSizes.OrderBy(size => Math.Abs(size - recipeCount)).First();
+      logger.LogInformation("Adjusted recipe count to nearest package size: {RecipeCount}", recipeCount);
+    }
+
+    var metadata = new Dictionary<string, string>
+    {
+      { "payment_type", PaymentType.RecipeCredit.ToString() },
+      { "customer_email", customer.Email },
+      { "recipe_count", recipeCount.ToString() }
+    };
+
+    var successUrl = $"{clientConfig.BaseUrl}/account?success=true";
+    var cancelUrl = $"{clientConfig.BaseUrl}/account?cancelled=true";
+
+    var productName = "Recipe Credit";
+    var productDescription = $"{recipeCount} recipe credits for your cookbook account";
+
+    var session = await stripeService.CreateCheckoutSessionWithUrl(
+      customer.Email,
+      recipeCount,
+      metadata,
+      successUrl,
+      cancelUrl,
+      productName,
+      productDescription);
+
+    logger.LogInformation("Created Stripe checkout session {SessionId} with URL for customer {Email} to purchase {RecipeCount} credits",
+      session.Id, customer.Email, recipeCount);
+    return session;
   }
 
   /// <summary>

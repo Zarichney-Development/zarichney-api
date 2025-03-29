@@ -298,7 +298,8 @@ void ConfigureCors(WebApplicationBuilder webBuilder)
             "https://zarichney.com"
           )
           .AllowAnyHeader()
-          .AllowAnyMethod();
+          .AllowAnyMethod()
+          .AllowCredentials();
       });
   });
 

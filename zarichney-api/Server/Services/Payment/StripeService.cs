@@ -9,9 +9,22 @@ namespace Zarichney.Server.Services.Payment;
 public interface IStripeService
 {
   /// <summary>
-  /// Creates a Stripe checkout session
+  /// Creates a Stripe checkout session and returns the session ID
   /// </summary>
   Task<string> CreateCheckoutSession(
+    string customerEmail,
+    int quantity,
+    Dictionary<string, string> metadata,
+    string successUrl,
+    string cancelUrl,
+    string productName,
+    string productDescription,
+    string? clientReferenceId = null);
+    
+  /// <summary>
+  /// Creates a Stripe checkout session and returns the full session including the checkout URL
+  /// </summary>
+  Task<Session> CreateCheckoutSessionWithUrl(
     string customerEmail,
     int quantity,
     Dictionary<string, string> metadata,
@@ -71,9 +84,59 @@ public class StripeService : IStripeService
   }
 
   /// <summary>
-  /// Creates a Stripe checkout session with the specified parameters
+  /// Creates a Stripe checkout session with the specified parameters and returns session ID
   /// </summary>
   public async Task<string> CreateCheckoutSession(
+    string customerEmail,
+    int quantity,
+    Dictionary<string, string> metadata,
+    string successUrl,
+    string cancelUrl,
+    string productName,
+    string productDescription,
+    string? clientReferenceId = null)
+  {
+    var session = await CreateCheckoutSessionInternal(
+      customerEmail,
+      quantity,
+      metadata,
+      successUrl,
+      cancelUrl,
+      productName,
+      productDescription,
+      clientReferenceId);
+
+    return session.Id;
+  }
+  
+  /// <summary>
+  /// Creates a Stripe checkout session with the specified parameters and returns the full session including URL
+  /// </summary>
+  public async Task<Session> CreateCheckoutSessionWithUrl(
+    string customerEmail,
+    int quantity,
+    Dictionary<string, string> metadata,
+    string successUrl,
+    string cancelUrl,
+    string productName,
+    string productDescription,
+    string? clientReferenceId = null)
+  {
+    return await CreateCheckoutSessionInternal(
+      customerEmail,
+      quantity,
+      metadata,
+      successUrl,
+      cancelUrl,
+      productName,
+      productDescription,
+      clientReferenceId);
+  }
+  
+  /// <summary>
+  /// Internal helper method to create a checkout session
+  /// </summary>
+  private async Task<Session> CreateCheckoutSessionInternal(
     string customerEmail,
     int quantity,
     Dictionary<string, string> metadata,
@@ -119,7 +182,7 @@ public class StripeService : IStripeService
     var service = new SessionService();
     var session = await service.CreateAsync(options);
 
-    return session.Id;
+    return session;
   }
 
   /// <summary>

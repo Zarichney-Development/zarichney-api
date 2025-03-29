@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Identity;
 using Zarichney.Server.Auth.Models;
 
 namespace Zarichney.Server.Auth.Commands;
@@ -7,7 +8,7 @@ public record AddUserToRoleCommand(string UserId, string RoleName) : IRequest<Ro
 
 public record RemoveUserFromRoleCommand(string UserId, string RoleName) : IRequest<RoleCommandResult>;
 
-public record GetUserRolesQuery(string UserId) : IRequest<RoleCommandResult>;
+public record GetUserRolesQuery(string Identifier) : IRequest<RoleCommandResult>;
 
 public record GetUsersInRoleQuery(string RoleName) : IRequest<List<UserRoleInfo>>;
 
@@ -66,11 +67,43 @@ public class RemoveUserFromRoleCommandHandler(IRoleManager roleManager) : IReque
   }
 }
 
-public class GetUserRolesQueryHandler(IRoleManager roleManager) : IRequestHandler<GetUserRolesQuery, RoleCommandResult>
+public class GetUserRolesQueryHandler(
+  IRoleManager roleManager,
+  UserManager<ApplicationUser> userManager) : IRequestHandler<GetUserRolesQuery, RoleCommandResult>
 {
   public async Task<RoleCommandResult> Handle(GetUserRolesQuery request, CancellationToken cancellationToken)
   {
-    var roles = await roleManager.GetUserRolesAsync(request.UserId);
+    ApplicationUser? user;
+    
+    if (request.Identifier.Contains("@"))
+    {
+      // Looks like an email address
+      user = await userManager.FindByEmailAsync(request.Identifier);
+      if (user == null)
+      {
+        return new RoleCommandResult
+        {
+          Success = false,
+          Message = "User not found with the provided email."
+        };
+      }
+    }
+    else
+    {
+      // Assume it's a user ID
+      user = await userManager.FindByIdAsync(request.Identifier);
+      if (user == null)
+      {
+        return new RoleCommandResult
+        {
+          Success = false,
+          Message = "User not found with the provided ID."
+        };
+      }
+    }
+    
+    // User found - get their roles
+    var roles = await userManager.GetRolesAsync(user);
     return new RoleCommandResult
     {
       Success = true,
