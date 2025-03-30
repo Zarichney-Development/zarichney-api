@@ -347,15 +347,15 @@ async Task ConfigureApplication(WebApplication application)
       c.RoutePrefix = "api/swagger";
     });
 
-  if (application.Environment.IsProduction())
-  {
-    application.UseHttpsRedirection();
-    Log.Information("HTTPS redirection middleware added for Production (will respect X-Forwarded-Proto).");
-  }
-  else
-  {
-    Log.Information("HTTPS redirection middleware disabled for {EnvironmentName} environment.", application.Environment.EnvironmentName);
-  }
+  // if (application.Environment.IsProduction())
+  // {
+  //   application.UseHttpsRedirection();
+  //   Log.Information("HTTPS redirection middleware added for Production (will respect X-Forwarded-Proto).");
+  // }
+  // else
+  // {
+  //   Log.Information("HTTPS redirection middleware disabled for {EnvironmentName} environment.", application.Environment.EnvironmentName);
+  // }
 
   application.UseCors("AllowSpecificOrigin");
   application.UseAuthentication();
