@@ -125,6 +125,12 @@ void ConfigureServices(WebApplicationBuilder webBuilder)
 
   services.RegisterConfigurationServices(webBuilder.Configuration);
   services.AddSingleton(Log.Logger);
+  
+  services.AddHttpsRedirection(options =>
+  {
+    options.RedirectStatusCode = StatusCodes.Status307TemporaryRedirect;
+    options.HttpsPort = 443;
+  });
 
   services.AddHttpContextAccessor();
   services.AddControllers()
