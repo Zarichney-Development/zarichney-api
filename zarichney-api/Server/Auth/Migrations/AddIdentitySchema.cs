@@ -10,7 +10,7 @@ namespace Zarichney.Server.Auth.Migrations
     /// Migration to create the ASP.NET Identity schema in PostgreSQL
     /// </summary>
     [DbContext(typeof(UserDbContext))]
-    [Migration("20250322000001_AddIdentitySchema")]
+    [Migration("AddIdentitySchema")]
     public class AddIdentitySchema : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)

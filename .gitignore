@@ -10,3 +10,5 @@ appsettings.Development.json
 !appsettings.json
 backup*
 test_results
+**/Migrations/*.sql
+

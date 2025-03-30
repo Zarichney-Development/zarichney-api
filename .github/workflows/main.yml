@@ -7,6 +7,16 @@ on:
 
 env:
   AWS_REGION: us-east-2
+  # Define path where the generated script will be saved in the runner
+  MIGRATION_SCRIPT_PATH: ./publish/migrations/ApplyAllMigrations.sql
+  # Define path where the generated script will reside on EC2 relative to the publish root
+  EC2_GENERATED_MIGRATION_DIR_RELATIVE: migrations
+  # Define path on EC2 where the .sh migration scripts reside
+  EC2_MIGRATION_SH_DIR: /opt/cookbook-api/Server/Auth/Migrations
+  # Define secret name/ID and region
+  SECRET_ID: cookbook-factory-secrets
+  # Define the key within the secret that holds the DB password
+  SECRET_DB_PASSWORD_KEY: DbPassword
 
 permissions:
   id-token: write
@@ -15,9 +25,38 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Clean Project
+        run: dotnet clean zarichney-api/zarichney-api.csproj -c Release
+
+      - name: Install/Update EF Core Tools
+        run: dotnet tool update --global dotnet-ef
+
+      - name: Generate EF Migrations Script
+        run: |
+          # Create output directory within publish structure
+          mkdir -p ./publish/${{ env.EC2_GENERATED_MIGRATION_DIR_RELATIVE }}
+          # Generate the script
+          dotnet ef migrations script --context UserDbContext --project zarichney-api/zarichney-api.csproj -o ${{ env.MIGRATION_SCRIPT_PATH }} --idempotent --no-build
+
+      - name: Publish Application
+        run: dotnet publish zarichney-api/zarichney-api.csproj -c Release -o ./publish
+
+      - name: Verify Migrations Files in Publish Output
+        run: |
+          echo "Checking contents of ./publish/Server/Auth/Migrations/ (should contain .sh scripts):"
+          ls -al ./publish/Server/Auth/Migrations/ || echo "Directory ./publish/Server/Auth/Migrations/ not found or empty."
+          echo "Checking contents of ./publish/${{ env.EC2_GENERATED_MIGRATION_DIR_RELATIVE }}/ (for generated script):"
+          ls -al ./publish/${{ env.EC2_GENERATED_MIGRATION_DIR_RELATIVE }}/ || echo "Directory ./publish/${{ env.EC2_GENERATED_MIGRATION_DIR_RELATIVE }}/ not found or empty."
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -27,25 +66,52 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           mask-aws-account-id: true
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
-          
-      - name: Publish
-        run: dotnet publish zarichney-api/zarichney-api.csproj -c Release -o ./publish
-
-      - name: Deploy to EC2
+      - name: Deploy to EC2 and Apply Migrations
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USERNAME: ec2-user
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
           echo "$EC2_SSH_KEY" > private_key && chmod 600 private_key
+          # Copy ALL published files (including generated SQL script)
           scp -r -o StrictHostKeyChecking=no -i private_key ./publish/* ${EC2_USERNAME}@${EC2_HOST}:/opt/cookbook-api/
-          ssh -o StrictHostKeyChecking=no -i private_key ${EC2_USERNAME}@${EC2_HOST} '
+
+          # === SSH Commands on EC2 ===
+          ssh -o StrictHostKeyChecking=no -i private_key ${EC2_USERNAME}@${EC2_HOST} 'bash -s' <<EOF
+            # Set PGPASSWORD securely using the confirmed command
+            echo "Attempting to retrieve DB password from Secrets Manager..."
+            DB_PASSWORD=\$(aws secretsmanager get-secret-value --secret-id "${{ env.SECRET_ID }}" --region "${{ env.AWS_REGION }}" --query SecretString --output text | jq -r '.${{ env.SECRET_DB_PASSWORD_KEY }}')
+
+            if [ -z "\$DB_PASSWORD" ] || [ "\$DB_PASSWORD" == "null" ] ; then
+              echo "ERROR: Failed to retrieve database password from Secrets Manager or key '${{ env.SECRET_DB_PASSWORD_KEY }}' not found."
+              exit 1 # Exit SSH session if password retrieval fails
+            fi
+            export PGPASSWORD="\$DB_PASSWORD"
+            echo "Database password retrieved and exported."
+
+            # Navigate to the directory containing the migration shell script(s)
+            cd "${EC2_MIGRATION_SH_DIR}"
+            if [ \$? -ne 0 ]; then echo "ERROR: Failed to cd into ${EC2_MIGRATION_SH_DIR}"; exit 1; fi
+            echo "Current directory on EC2: \$(pwd)" ; ls -al # Verify files
+
+            # Ensure the main script is executable
+            chmod +x ./ApplyMigrations.sh
+
+            # === Execute ONLY the main migration script ===
+            # This script should internally call psql -f /opt/cookbook-api/migrations/ApplyAllMigrations.sql
+            echo "Running ApplyMigrations.sh (which executes the idempotent SQL script)..."
+            ./ApplyMigrations.sh
+            if [ \$? -ne 0 ]; then echo "ERROR: ApplyMigrations.sh failed."; unset PGPASSWORD; exit 1; fi
+
+            # Unset password when done
+            unset PGPASSWORD
+            echo "Migrations applied successfully. PGPASSWORD unset."
+
+            # Restart application service
+            echo "Restarting cookbook-api service..."
             sudo systemctl restart cookbook-api || sudo systemctl start cookbook-api
-          '
+            echo "Service restart command issued."
+          EOF
 
       - name: Invalidate CloudFront cache
         run: |
