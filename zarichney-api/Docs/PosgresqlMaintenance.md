@@ -38,7 +38,7 @@ dotnet ef database update --context UserDbContext
 If you modify the `ApplicationUser` class or need to make other schema changes:
 
 ```bash
-dotnet ef migrations add MigrationName --context UserDbContext --output-dir Migrations
+dotnet ef migrations add MigrationName --context UserDbContext --output-dir ./zarichney-api/Server/Auth/Migrations
 ```
 
 ## Managing Users via Entity Framework
