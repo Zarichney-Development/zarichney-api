@@ -56,10 +56,19 @@
         <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.8" />
         <PackageReference Include="QuestPDF" Version="2024.10.3" />
     </ItemGroup>
+    
+    <ItemGroup>
+        <Content Include="appsettings*.json" Exclude="appsettings.Development.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="appsettings.Development.json" CopyToOutputDirectory="PreserveNewest" Condition=" '$(Configuration)' == 'Debug' " />
+        <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+        <Content Include="appsettings.*.json" CopyToOutputDirectory="PreserveNewest" DependentUpon="appsettings.json" />
+    </ItemGroup>
 
     <ItemGroup>
-        <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="EmailTemplates/**" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+    <ItemGroup>
         <Content Include="Scripts/cleanup-playwright.sh" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="Scripts/start-server.sh" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="Scripts/cookbook-api.service" CopyToOutputDirectory="PreserveNewest" />
