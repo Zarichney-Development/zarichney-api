@@ -1,5 +1,7 @@
 # Cookbook API AWS Maintenance Guide
 
+This guide covers maintenance tasks for the Zarichney API application hosted on AWS EC2, including infrastructure, application management, data, and monitoring.
+
 ## Initial Setup
 
 ### Workstation Configuration
@@ -19,6 +21,15 @@ Host cookbook-api
 Copy-Item aws-ec2-zarichney-api.pem ~/.ssh/
 icacls ~/.ssh/aws-ec2-zarichney-api.pem /inheritance:r /grant:r "$($env:USERNAME):(R)"
 ```
+
+### AWS Configuration Overview
+* **Region:** us-east-2
+* **EC2 Instance:** Tag `Name=cookbook-api`. Role `cookbook-api-role`.
+* **Security Group:** Attached to EC2 instance (example ID `sg-00b18fae24f53e666`). Ensure ports 22 (SSH, restricted IPs recommended) and 443 (HTTPS) are open inbound.
+* **CloudFront:** Used for caching and potentially routing traffic to the EC2 instance (example distribution ID needed).
+* **Secrets Manager:** Used to store sensitive data like the database password (Secret ID: `cookbook-factory-secrets`, Key: `DbPassword`).
+* **SSM Parameter Store:** May be used for other configuration (e.g., API keys, JWT secrets). Parameters prefixed with `/cookbook-api/`.
+* **PostgreSQL:** Running on the EC2 instance (or potentially RDS - adjust connection details if using RDS). Database `zarichney_identity`, user `zarichney_user`.
 
 ### AWS Session Variables
 ```powershell
@@ -99,6 +110,17 @@ aws cloudfront update-distribution --id $cfDistId --distribution-config file://c
 
 ## Application Management
 
+### Deployment Process (via GitHub Actions)
+* Code is checked out.
+* EF Core idempotent migration script (`ApplyAllMigrations.sql`) is generated.
+* Application is published (includes migration script and `.sh` runner).
+* Files are copied to `/opt/cookbook-api/` on EC2 via `scp`.
+* SSH command executes on EC2:
+    * Retrieves DB password from **AWS Secrets Manager**.
+    * Runs `/opt/cookbook-api/Server/Auth/Migrations/ApplyMigrations.sh` (which executes the SQL script via `psql`).
+    * Restarts the `cookbook-api` service (`sudo systemctl restart cookbook-api`).
+* CloudFront cache is invalidated.
+
 ### Service Control
 ```bash
 # SSH into instance
@@ -121,7 +143,7 @@ free -h
 top -b -n 1
 df -h
 
-# Process monitoring
+### Process monitoring
 ps aux | grep -E 'chrome|node|dotnet'
 
 # Memory usage by component
@@ -178,51 +200,55 @@ echo 3 > /proc/sys/vm/drop_caches
 
 ## Data Management
 
-### Backup and Restore
+### Backup and Restore (Database)
+Refer to the `PostgreSQL Database Maintenance Guide` for `pg_dump` and `pg_restore` commands. Ensure backups are stored securely (e.g., S3).
+
+### Backup and Restore (Application Data)
+This applies if your application stores other data directly on the EC2 filesystem (e.g., under `/var/lib/cookbook-api/data/`).
 ```powershell
-# Backup data
+# Run from a machine with SSH access
+# Backup data directory
 $timestamp = Get-Date -Format "yyyy-MM-dd-HHmm"
-mkdir -Force "./backup-${timestamp}"
-scp -r zarichney-api:/var/lib/cookbook-api/data/* "./backup-${timestamp}/"
+mkdir -Force "./app-data-backup-${timestamp}"
+scp -r cookbook-api:/var/lib/cookbook-api/data/* "./app-data-backup-${timestamp}/" # Assumes SSH alias 'cookbook-api' is set up
 
-# Restore data
-scp -r backup-latest/* zarichney-api:/var/lib/cookbook-api/data/
+# Restore data directory (use with caution!)
+# scp -r ./path/to/app-data-backup/* cookbook-api:/var/lib/cookbook-api/data/
 ```
 
-### Configuration Management
-```powershell
-# View secrets
-aws ssm get-parameter --name "/cookbook-api/api-key" --with-decryption
+### Configuration Management (Secrets & Parameters)
 
-# Update secrets
-aws ssm put-parameter `
-    --name "/cookbook-api/api-key" `
-    --value "new-value" `
-    --type SecureString `
-    --overwrite
+**Database Password (AWS Secrets Manager):**
+```bash
+# View DB Password (Value is JSON string, needs parsing)
+aws secretsmanager get-secret-value --secret-id cookbook-factory-secrets --region us-east-2
 
-# View JWT configuration
-aws ssm get-parameter --name "/cookbook-api/jwt-secret-key" --with-decryption
+# To get JUST the password using AWS CLI v2 and jq:
+aws secretsmanager get-secret-value --secret-id cookbook-factory-secrets --region us-east-2 --query SecretString --output text | jq -r .DbPassword
 
-# Update JWT secret key
-aws ssm put-parameter `
-    --name "/cookbook-api/jwt-secret-key" `
-    --value "your_new_strong_secret_key_at_least_32_characters_long" `
-    --type SecureString `
-    --overwrite
-
-# View database connection string
-aws ssm get-parameter --name "/cookbook-api/identity-connection" --with-decryption
-
-# Update database connection string
-aws ssm put-parameter `
-    --name "/cookbook-api/identity-connection" `
-    --value "Host=localhost;Database=zarichney_identity;Username=zarichney_user;Password=new_password" `
-    --type SecureString `
-    --overwrite
+# Update DB Password in Secrets Manager (update the secret value via Console or CLI update-secret)
+# Example: aws secretsmanager update-secret --secret-id cookbook-factory-secrets --secret-string "{\"DbPassword\":\"new_secure_password\",\"OtherKey\":\"value\"}"
 ```
 
-### Refresh Token Management
+**Other Parameters (AWS Systems Manager Parameter Store):**
+*(Examples assume parameters are still in SSM - adjust if moved to Secrets Manager)*
+```bash
+# View non-sensitive parameter (replace name)
+aws ssm get-parameter --name "/cookbook-api/some-parameter" --region us-east-2
+
+# View sensitive parameter (replace name)
+aws ssm get-parameter --name "/cookbook-api/jwt-secret-key" --with-decryption --region us-east-2
+
+# Update sensitive parameter (replace name and value)
+aws ssm put-parameter \
+    --name "/cookbook-api/jwt-secret-key" \
+    --value "new_very_strong_secret_key_32_chars_plus" \
+    --type SecureString \
+    --overwrite \
+    --region us-east-2
+```
+
+### Refresh Token Management (Direct SQL)
 ```powershell
 # Connect to PostgreSQL on the EC2 instance
 ssh zarichney-api "sudo -i -u postgres psql -d zarichney_identity"
@@ -340,7 +366,19 @@ aws cloudwatch get-metric-statistics `
 
 ### Common Issues and Solutions
 
-1. **Service Won't Start**
+1.  **Deployment Fails during Migration Step:**
+    * **Access Denied (Secrets Manager):** Check EC2 instance role (`cookbook-api-role`) IAM policy. Needs `secretsmanager:GetSecretValue` permission for the `cookbook-factory-secrets` ARN. [cite: image_a458a3.png]
+    * **Ident/Password Authentication Failed (psql):** Check PostgreSQL `pg_hba.conf` on EC2. Ensure connections from `localhost` (127.0.0.1) for `zarichney_user` use `scram-sha-256` or `md5`, not `ident` or `peer`. Reload PostgreSQL service after changes.
+    * **Permission Denied for Schema Public (psql):** Connect to `zarichney_identity` DB as superuser (e.g., `postgres`) and grant privileges: `GRANT USAGE, CREATE ON SCHEMA public TO zarichney_user;`
+    * **Migration SQL Script Not Found:** Verify the GitHub Action generated `ApplyAllMigrations.sql` and the `scp` command copied it to the expected location (e.g., `/opt/cookbook-api/migrations/`). Check paths in `ApplyMigrations.sh`.
+    * **SQL Error during Script Execution:** Examine the `psql` output in the pipeline logs. The error likely indicates an issue in the generated SQL or an unexpected database state.
+
+2.  **Service Won't Start (Post-Deployment):**
+    * Check service status and logs: `sudo systemctl status cookbook-api`, `sudo journalctl -u cookbook-api -n 100 -f`.
+    * Verify permissions on `/opt/cookbook-api/` (`sudo chown -R ec2-user:ec2-user /opt/cookbook-api/`).
+    * Check `appsettings.Production.json` for syntax errors.
+    * Ensure connection strings/secrets are correctly configured and accessible (test `aws secretsmanager get-secret-value` manually from EC2).
+
 ```bash
 # Check logs
 sudo journalctl -u cookbook-api -n 50
@@ -350,7 +388,11 @@ ls -la /opt/cookbook-api/
 ls -la /var/lib/cookbook-api/data/
 ```
 
-2. **Authentication Issues**
+3.  **Authentication Issues (Runtime):**
+    * Check application logs filtered for auth keywords (`sudo journalctl -u cookbook-api | grep -i "auth\|token\|login\|jwt\|identity"`).
+    * Verify database connectivity from the application.
+    * Check JWT settings in configuration (SSM/Secrets Manager) match application expectations.
+    * Check clock skew between EC2 instance and token issuer if validating lifetime.
 ```bash
 # Check authentication-related logs
 sudo journalctl -u cookbook-api | grep -i "auth\|token\|login\|jwt"
@@ -368,7 +410,7 @@ sudo -i -u postgres psql -d zarichney_identity -c "SELECT COUNT(*) FROM \"Refres
 cat /opt/cookbook-api/appsettings.Production.json | grep -A 10 "JwtSettings"
 ```
 
-2. **Playwright Resource Exhaustion**
+4.  **Playwright Resource Exhaustion:**
 ```bash
 # Check for hung processes
 ps aux | grep -E 'chrome|node'
@@ -382,7 +424,11 @@ sudo /opt/cookbook-api/cleanup-playwright.sh
 sudo systemctl restart cookbook-api
 ```
 
-3. **CloudFront 504 Errors**
+5.  **CloudFront Errors (5xx):**
+    * Check application logs on EC2 for errors corresponding to the request time.
+    * Verify the application service `cookbook-api` is running (`sudo systemctl status cookbook-api`).
+    * Ensure the EC2 instance's security group allows traffic from CloudFront IPs on port 443 (or 80 if using HTTP).
+    * Verify CloudFront Origin settings point to the correct EC2 DNS/IP and port. Check health checks if configured.
 ```powershell
 # Verify EC2 DNS matches CloudFront origin
 $distributionConfig = aws cloudfront get-distribution-config --id $cfDistId | ConvertFrom-Json
@@ -414,15 +460,15 @@ top -b -n 1
 sudo /opt/cookbook-api/cleanup-playwright.sh
 ```
 
-### Important Paths
-- Application: `/opt/cookbook-api/`
-- Data: `/var/lib/cookbook-api/data/`
-- Logs: `/var/log/cookbook-api/`
-- Service File: `/etc/systemd/system/cookbook-api.service`
-- Cleanup Scripts: `/opt/cookbook-api/cleanup-playwright.sh`, `/opt/cookbook-api/monitor.sh`
-- CloudWatch Logs: `/aws/cookbook-api`
-- Database Migration Scripts: `/opt/cookbook-api/Server/Auth/Migrations/`
-- Refresh Token Cleanup Service: Included in main application service
+### Important Paths (on EC2)
+* Application Root: `/opt/cookbook-api/`
+* Published App Files: `/opt/cookbook-api/*` (DLLs, configs, etc.)
+* Migration Runner Script: `/opt/cookbook-api/Server/Auth/Migrations/ApplyMigrations.sh`
+* Generated Migration SQL: `/opt/cookbook-api/migrations/ApplyAllMigrations.sql` (Check `ApplyMigrations.sh` for exact path used)
+* Other App Data (if any): `/var/lib/cookbook-api/data/`
+* Service Logs: `sudo journalctl -u cookbook-api`
+* Service File: `/etc/systemd/system/cookbook-api.service`
+* Cleanup Scripts: `/opt/cookbook-api/cleanup-playwright.sh`, `/opt/cookbook-api/monitor.sh`
 
 ### Service Configuration
 The service configuration at `/etc/systemd/system/cookbook-api.service`:

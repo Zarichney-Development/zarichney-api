@@ -1,24 +1,30 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-// Remove IConfiguration and System.IO if only using hardcoded string
 
-namespace Zarichney.Server.Auth; // Use the correct namespace
+namespace Zarichney.Server.Auth;
 
 public class UserDbContextFactory : IDesignTimeDbContextFactory<UserDbContext>
 {
     public UserDbContext CreateDbContext(string[] args)
     {
-        // Use a hardcoded, syntactically valid connection string for design-time operations.
-        // The database doesn't need to exist or be reachable for script generation.
-        // IMPORTANT: Replace password if you have security policies against any hardcoded credentials,
-        // even dummy ones, though this isn't used for actual connections here.
-        var designTimeString = "Host=localhost;Database=zarichney_design_time;Username=postgres;Password=dummy_password";
+         // Build configuration manually - assumes running from project root or similar
+        // Adjust base path as necessary if running 'dotnet ef' from a different directory
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory()) // Assumes 'dotnet ef' runs from project root
+            .AddJsonFile("appsettings.json", optional: true)
+            .AddUserSecrets<UserDbContextFactory>() // Reads user secrets for this assembly
+            .AddEnvironmentVariables()
+            .Build();
+
+        var connectionString = configuration.GetConnectionString("IdentityConnection");
+
+        if (string.IsNullOrEmpty(connectionString))
+        {
+            throw new InvalidOperationException("Could not find 'IdentityConnection' connection string.");
+        }
 
         var optionsBuilder = new DbContextOptionsBuilder<UserDbContext>();
-
-        optionsBuilder.UseNpgsql(designTimeString, options =>
-            // Crucial: Point to the assembly containing your Migrations folder.
-            // Your runtime code uses "Zarichney", so we match that.
+        optionsBuilder.UseNpgsql(connectionString, options =>
             options.MigrationsAssembly("Zarichney")
         );
 

@@ -9,6 +9,17 @@ using Zarichney.Server.Services.Sessions;
 
 namespace Zarichney.Server.Controllers;
 
+public class TranscribeAudioRequest
+{
+  /// <summary>
+  /// The audio file (e.g., WAV, MP3, WEBM) to transcribe.
+  /// The parameter name in the form data must be 'AudioFile'.
+  /// </summary>
+  [FromForm(Name =
+    "audioFile")] // Explicitly match the expected form field name if needed, otherwise name matching works
+  public IFormFile? AudioFile { get; set; }
+}
+
 /// <summary>
 /// Controller for handling AI-related operations like text completion and audio transcription.
 /// </summary>
@@ -146,29 +157,32 @@ public class AiController(
   /// </summary>
   /// <remarks>
   /// This endpoint accepts a `multipart/form-data` request containing a single audio file.
+  /// The form field containing the file *must* be named 'audioFile'.
   /// It transcribes the audio, saves the original audio and the resulting transcript (e.g., to GitHub via `IGitHubService`), and returns the transcript along with file metadata.
   /// Requires authentication.
   /// </remarks>
-  /// <param name="audioFile">The audio file (e.g., WAV, MP3, WEBM) to transcribe. The parameter name in the form data must be 'audioFile'.</param>
+  /// <param name="request">The request object containing the audio file.</param> // Add parameter docs for the new request object
   /// <returns>A JSON object containing the transcript, filenames, timestamp, and a success message.</returns>
   [HttpPost("transcribe")]
   [Consumes("multipart/form-data")] // Crucial hint for Swagger
   [SwaggerOperation(Summary = "Transcribes an audio file.",
     Description =
       "Accepts an audio file via multipart/form-data (parameter name 'audioFile'), transcribes it, and optionally saves files.")]
-  [ProducesResponseType(typeof(object), StatusCodes.Status200OK)] // Define a specific response class if possible
+  [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(BadRequestObjectResult), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  // Note: [FromForm] specifies the *source* of the parameter, the name 'audioFile' specifies the *key* in the form data.
-  public async Task<IActionResult> TranscribeAudio(IFormFile? audioFile)
+  public async Task<IActionResult> TranscribeAudio([FromForm] TranscribeAudioRequest request)
   {
     try
     {
+      // Access the file via the request object
+      var audioFile = request.AudioFile;
+
       // Enhanced logging to debug potential binding issues
       logger.LogInformation(
-        "Received transcribe request. FormFile Param ('audioFile') null: {IsParamNull}, Request.Form.Files.Count: {FileCount}",
-        audioFile == null,
-        Request.Form.Files.Count);
+        "Received transcribe request. Request.Form.Files.Count: {FileCount}, Request DTO File null: {IsParamNull}",
+        Request.Form.Files.Count,
+        audioFile == null);
 
       if (audioFile == null) // Primary check on the bound parameter
       {
@@ -181,13 +195,11 @@ public class AiController(
             fileNames);
           return BadRequest("Audio file is required. Ensure the form field name is 'audioFile'.");
         }
-        else
-        {
-          logger.LogWarning(
-            "{Method}: No audio file received. Parameter 'audioFile' was null and Request.Form.Files was empty.",
-            nameof(TranscribeAudio));
-          return BadRequest("Audio file is required.");
-        }
+
+        logger.LogWarning(
+          "{Method}: No audio file received. Parameter 'audioFile' was null and Request.Form.Files was empty.",
+          nameof(TranscribeAudio));
+        return BadRequest("Audio file is required.");
       }
 
       if (audioFile.Length == 0)
