@@ -328,6 +328,12 @@ async Task ConfigureApplication(WebApplication application)
 {
   application.UseMiddleware<RequestResponseLoggerMiddleware>();
   application.UseMiddleware<ErrorHandlingMiddleware>();
+  
+  app.UseForwardedHeaders(new ForwardedHeadersOptions
+  {
+    // This tells the app to trust proxy headers (like X-Forwarded-Proto set by CloudFront/ALB) indicating the original request was HTTPS
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+  });
 
   application
     .UseSwagger(c =>
@@ -343,12 +349,12 @@ async Task ConfigureApplication(WebApplication application)
 
   if (application.Environment.IsProduction())
   {
-    app.UseForwardedHeaders(new ForwardedHeadersOptions
-    {
-      // This tells the app to trust proxy headers (like X-Forwarded-Proto set by CloudFront/ALB) indicating the original request was HTTPS
-      ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-    });
     application.UseHttpsRedirection();
+    Log.Information("HTTPS redirection middleware added for Production (will respect X-Forwarded-Proto).");
+  }
+  else
+  {
+    Log.Information("HTTPS redirection middleware disabled for {EnvironmentName} environment.", application.Environment.EnvironmentName);
   }
 
   application.UseCors("AllowSpecificOrigin");
