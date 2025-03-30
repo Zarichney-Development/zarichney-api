@@ -1,5 +1,6 @@
 using System.Text;
 using Azure.Identity;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Graph;
 using Microsoft.IdentityModel.Protocols.Configuration;
@@ -77,7 +78,7 @@ void ConfigureConfiguration(WebApplicationBuilder webBuilder)
 {
   webBuilder.Configuration
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-    .AddJsonFile($"appsettings.{webBuilder.Environment.EnvironmentName}.json", optional: true, reloadOnChange:true)
+    .AddJsonFile($"appsettings.{webBuilder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddUserSecrets<Program>()
     .AddEnvironmentVariables()
     .AddSystemsManager("/cookbook-api", new Amazon.Extensions.NETCore.Setup.AWSOptions
@@ -232,10 +233,10 @@ void ConfigureSwagger(WebApplicationBuilder webBuilder)
       Description = "API for the Cookbook application and Transcription Service. " +
                     "Authenticate using the 'Authorize' button and provide your API key."
     });
-    
-    c.OperationFilter<FormFileOperationFilter>();  
+
+    c.OperationFilter<FormFileOperationFilter>();
     c.EnableAnnotations();
-    
+
     var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
 
@@ -331,6 +332,11 @@ async Task ConfigureApplication(WebApplication application)
       c.RoutePrefix = "api/swagger";
     });
 
+  app.UseForwardedHeaders(new ForwardedHeadersOptions
+  {
+    // This tells the app to trust proxy headers (like X-Forwarded-Proto set by CloudFront/ALB) indicating the original request was HTTPS
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+  });
   application.UseCors("AllowSpecificOrigin");
   application.UseHttpsRedirection();
   application.UseAuthentication();
