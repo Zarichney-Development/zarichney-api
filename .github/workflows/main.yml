@@ -46,7 +46,7 @@ jobs:
           # Create output directory within publish structure
           mkdir -p ./publish/${{ env.EC2_GENERATED_MIGRATION_DIR_RELATIVE }}
           # Generate the script
-          dotnet ef migrations script --context UserDbContext --project zarichney-api/zarichney-api.csproj -o ${{ env.MIGRATION_SCRIPT_PATH }} --idempotent --no-build
+          dotnet ef migrations script --context UserDbContext --project zarichney-api/zarichney-api.csproj -o ${{ env.MIGRATION_SCRIPT_PATH }} --idempotent
 
       - name: Publish Application
         run: dotnet publish zarichney-api/zarichney-api.csproj -c Release -o ./publish
