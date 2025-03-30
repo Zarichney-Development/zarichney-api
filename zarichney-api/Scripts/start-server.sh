@@ -8,4 +8,4 @@ if [ ! -x "$PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH" ]; then
   exit 1
 fi
 
-dotnet /opt/cookbook-api/zarichney-api.dll
+dotnet /opt/cookbook-api/zarichney.dll
