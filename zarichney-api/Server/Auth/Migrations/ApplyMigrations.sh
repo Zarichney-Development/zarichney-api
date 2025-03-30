@@ -1,143 +1,159 @@
 #!/bin/bash
 #
-# This script applies Entity Framework Core migrations for ASP.NET Identity with PostgreSQL
-# 
-# Prerequisites:
-# 1. Ensure PostgreSQL 17 is installed and running
-# 2. Ensure the database specified in appsettings.json exists
-#    You can create it manually using pgAdmin or psql:
-#    psql -U postgres -c "CREATE DATABASE zarichney_identity;"
-# 3. Ensure Npgsql.EntityFrameworkCore.PostgreSQL package is installed
-# 4. Ensure the EF Core CLI tools are installed globally:
-#    dotnet tool install --global dotnet-ef
-#
-# Usage:
-# chmod +x ApplyMigrations.sh
-# ./ApplyMigrations.sh
+# ApplyMigrations.sh
+# This script applies all pending Entity Framework Core migrations for the UserDbContext.
 
-# Get the script directory
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-# Navigate to project root (assuming it's 3 levels up from the Migrations directory)
-PROJECT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+# --- Configuration ---
+# Database connection parameters (used for psql checks/fallbacks)
+DB_HOST=${DB_HOST:-"localhost"}
+DB_PORT=${DB_PORT:-"5432"}
+DB_NAME=${DB_NAME:-"zarichney_identity"}
+DB_USER=${DB_USER:-"zarichney_user"}
+# PGPASSWORD must be set externally for security.
+# The `dotnet ef database update` command primarily uses the connection
+# string from appsettings.Production.json or environment variables like
+# ConnectionStrings__DefaultConnection or IDENTITY_CONNECTION_STRING.
+# Ensure the connection details used by `dotnet ef` match the DB_* vars above if using psql fallbacks.
+# Example using AWS Secrets Manager:
+#   export PGPASSWORD=$(aws secretsmanager get-secret-value --secret-id your-secret-arn --query SecretString --output text)
+# Example using AWS SSM Parameter Store (SecureString):
+#   export PGPASSWORD=$(aws ssm get-parameter --name /your/db/password --with-decryption --query Parameter.Value --output text)
 
-# Display current info
-echo -e "\e[36mApplying migrations for ASP.NET Identity in PostgreSQL...\e[0m"
-echo -e "\e[37mScript directory: $SCRIPT_DIR\e[0m"
-echo -e "\e[37mProject directory: $PROJECT_DIR\e[0m"
+# Determine directories relative to the script location
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Adjust this relative path if your project structure is different
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)" # Assumes Migrations is in Server/Auth/Migrations
+SQL_FALLBACK_SCRIPT="${SCRIPT_DIR}/ApplyMigration.sql" # Fallback SQL relative to script
 
+# EF Core Context Name
+DB_CONTEXT="UserDbContext"
+
+# --- Helper Functions ---
+execute_psql() {
+    # Use -d postgres for checks that don't require the target DB yet
+    local db_to_use=${1:-$DB_NAME}
+    shift
+    PGPASSWORD=$PGPASSWORD psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$db_to_use" "$@"
+}
+
+# --- Pre-checks ---
+echo -e "\e[36mApplying EF Core migrations for context '$DB_CONTEXT'...\e[0m"
+echo -e "\e[90mProject directory: $PROJECT_DIR\e[0m"
+echo -e "\e[90mUsing DB (for checks/fallback): $DB_NAME on $DB_HOST:$DB_PORT as user $DB_USER\e[0m"
+
+# Check if PGPASSWORD is set (needed for psql checks/fallback)
+if [ -z "$PGPASSWORD" ]; then
+    echo -e "\e[31mWarning: PGPASSWORD environment variable is not set.\e[0m"
+    echo -e "\e[33mVerification steps and SQL fallback using psql might fail without it.\e[0m"
+    # Allow script to continue as `dotnet ef` might use connection string from elsewhere.
+fi
+
+# Check if project directory exists
+if [ ! -d "$PROJECT_DIR" ]; then
+    echo -e "\e[31mError: Project directory not found at '$PROJECT_DIR'. Adjust PROJECT_DIR variable if needed.\e[0m"
+    exit 1
+fi
+
+# Check if dotnet is available
+if ! command -v dotnet &> /dev/null; then
+    echo -e "\e[31mError: dotnet command not found. Please install the .NET SDK.\e[0m"
+    exit 1
+fi
+
+# Check if psql is available (for checks/fallback)
+if ! command -v psql &> /dev/null; then
+    echo -e "\e[31mWarning: psql command not found. Verification steps and SQL fallback cannot be performed.\e[0m"
+fi
+
+# --- Main Logic ---
 # Change to the project directory
 cd "$PROJECT_DIR"
-echo -e "\e[37mCurrent working directory: $(pwd)\e[0m"
+echo -e "\e[90mCurrent working directory: $(pwd)\e[0m"
 
-# First, ensure the project is properly built
+# Build the project first
 echo -e "\e[33mBuilding project...\e[0m"
-dotnet build
+dotnet build --nologo -v q
 if [ $? -ne 0 ]; then
     echo -e "\e[31mBuild failed!\e[0m"
     exit 1
 fi
+echo -e "\e[32mBuild successful.\e[0m"
 
 # Check available migrations
-echo -e "\e[33mChecking available migrations...\e[0m"
-MIGRATIONS=$(dotnet ef migrations list --context UserDbContext)
-echo -e "\e[90mAvailable migrations:\e[0m"
-echo "$MIGRATIONS"
-
-# Verify if the EF Migrations History table exists and has any entries
-echo -e "\e[33mChecking migration history...\e[0m"
-MIGRATION_CHECK=$(psql -h localhost -U postgres -d zarichney_identity -c 'SELECT * FROM "__EFMigrationsHistory"' -t 2>&1)
-if [[ $MIGRATION_CHECK == *"ERROR"* ]]; then
-    echo -e "\e[33mMigration history table not found or is empty. Forcing initial migration...\e[0m"
-    
-    # Create the migration history table first if needed
-    psql -h localhost -U postgres -d zarichney_identity -c 'CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" ("MigrationId" character varying(150) NOT NULL, "ProductVersion" character varying(32) NOT NULL, CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId"))'
-    
-    # Extract the initial migration name without any (Pending) suffix
-    INITIAL_MIGRATION=$(echo "$MIGRATIONS" | grep -o "[0-9]*_AddIdentitySchema" | head -1)
-    if [ -z "$INITIAL_MIGRATION" ]; then
-        INITIAL_MIGRATION="20250322000001_AddIdentitySchema"
-    fi
-    
-    # Force the migration through EF Core
-    echo -e "\e[33mRunning: dotnet ef database update $INITIAL_MIGRATION --context UserDbContext --verbose\e[0m"
-    MIGRATION_OUTPUT=$(dotnet ef database update $INITIAL_MIGRATION --context UserDbContext --verbose 2>&1)
-    MIGRATION_STATUS=$?
-else
-    # Regular update if history table exists
-    echo -e "\e[33mRunning: dotnet ef database update --context UserDbContext --verbose\e[0m"
-    MIGRATION_OUTPUT=$(dotnet ef database update --context UserDbContext --verbose 2>&1)
-    MIGRATION_STATUS=$?
+echo -e "\e[33mChecking available migrations for context '$DB_CONTEXT'...\e[0m"
+MIGRATIONS_LIST=$(dotnet ef migrations list --context $DB_CONTEXT --prefix-output --no-build)
+if [ $? -ne 0 ]; then
+    echo -e "\e[31mError checking migrations. Ensure EF Core tools are installed ('dotnet tool install --global dotnet-ef') and context '$DB_CONTEXT' is correct.\e[0m"
+    exit 1
 fi
+echo -e "\e[90mAvailable migrations:\n$MIGRATIONS_LIST\e[0m"
+
+# Apply migrations using dotnet ef
+echo -e "\e[33mRunning: dotnet ef database update --context $DB_CONTEXT --verbose\e[0m"
+MIGRATION_OUTPUT=$(dotnet ef database update --context $DB_CONTEXT --verbose --no-build 2>&1)
+MIGRATION_STATUS=$?
 
 # Display the output for debugging
-echo -e "\e[90mMigration command output:\e[0m"
-echo "$MIGRATION_OUTPUT"
+echo -e "\e[90mMigration command output:\n$MIGRATION_OUTPUT\e[0m"
 
-# Check if the migration was successful
+# Check migration status
 if [ $MIGRATION_STATUS -ne 0 ]; then
     echo -e "\e[31mMigration failed with status code $MIGRATION_STATUS\e[0m"
-    
-    # Analyze the output for common issues
-    if [[ $MIGRATION_OUTPUT == *"connection"* ]]; then
-        echo -e "\e[31mDatabase connection issue detected.\e[0m"
-        echo -e "\e[33mCheck your connection string in appsettings.json and ensure PostgreSQL is running.\e[0m"
-    elif [[ $MIGRATION_OUTPUT == *"table"* ]]; then
-        echo -e "\e[31mTable-related issue detected.\e[0m"
-        echo -e "\e[33mThere might be conflicts with existing tables or schema issues.\e[0m"
-    fi
-    
-    echo -e "\e[33mCheck that:\e[0m"
-    echo -e "\e[33m1. PostgreSQL is running\e[0m"
-    echo -e "\e[33m2. Connection string in appsettings.json is correct\e[0m"
-    echo -e "\e[33m3. Database exists (create it manually if needed)\e[0m"
-    echo -e "\e[33m4. EF Core tools are installed (run: dotnet tool install --global dotnet-ef)\e[0m"
-    
-    # Manual fallback using SQL script
-    echo -e "\e[33mAttempting a manual fallback using the SQL script...\e[0m"
-    echo -e "\e[33mYou can try running the provided SQL script directly:\e[0m"
-    echo -e "\e[37mpsql -h localhost -U postgres -d zarichney_identity -f ApplyMigration.sql\e[0m"
-    
-    read -p "Would you like to run the SQL script now? (y/n) " RUN_SQL_FILE
-    if [ "$RUN_SQL_FILE" = "y" ]; then
-        echo -e "\e[33mRunning SQL script to create tables...\e[0m"
-        psql -h localhost -U postgres -d zarichney_identity -f "$SCRIPT_DIR/ApplyMigration.sql"
-        
-        # Check if SQL script was successful
-        TABLES=$(psql -h localhost -U postgres -d zarichney_identity -c '\dt' -t 2>&1)
-        if [[ $TABLES == *"AspNetUsers"* ]]; then
-            echo -e "\e[32mSQL script successfully created ASP.NET Identity tables!\e[0m"
-        else
-            echo -e "\e[31mSQL script execution failed or didn't create the expected tables.\e[0m"
-        fi
-    fi
-    
-    exit 1
-else
-    echo -e "\e[32mMigrations successfully applied.\e[0m"
-    
-    # Verify tables were created
-    echo -e "\e[33mVerifying tables were created...\e[0m"
-    TABLES=$(psql -h localhost -U postgres -d zarichney_identity -c '\dt' -t 2>&1)
-    
-    if [[ $TABLES == *"AspNetUsers"* ]]; then
-        echo -e "\e[32mASP.NET Identity tables were successfully created!\e[0m"
-        
-        # Check for RefreshTokens table if it exists in migrations
-        if [[ $MIGRATIONS == *"AddRefreshTokenSchema"* ]] && [[ $TABLES == *"refreshtokens"* ]]; then
-            echo -e "\e[32mRefreshTokens table was also successfully created!\e[0m"
-        elif [[ $MIGRATIONS == *"AddRefreshTokenSchema"* ]]; then
-            echo -e "\e[33mRefreshTokens table was not found, but the migration exists.\e[0m"
-            echo -e "\e[33mYou may need to run the refresh token migration separately.\e[0m"
-        fi
-    else
-        echo -e "\e[33mASP.NET Identity tables may not have been created correctly.\e[0m"
-        echo -e "\e[33mPlease check the database manually.\e[0m"
-        
-        # Offer to run the SQL script if the tables weren't found
-        read -p "Would you like to run the SQL script to ensure tables are created? (y/n) " RUN_SQL_FILE
+    echo -e "\e[33mReview the output above for errors.\e[0m"
+
+    # Offer SQL script fallback only if psql is available and password was set
+    if command -v psql &> /dev/null && [ -n "$PGPASSWORD" ] && [ -f "$SQL_FALLBACK_SCRIPT" ]; then
+        echo -e "\e[33mAttempting a manual fallback using the SQL script...\e[0m"
+        read -p "Would you like to run the fallback SQL script '$SQL_FALLBACK_SCRIPT'? (y/n) " RUN_SQL_FILE
         if [ "$RUN_SQL_FILE" = "y" ]; then
             echo -e "\e[33mRunning SQL script to create tables...\e[0m"
-            psql -h localhost -U postgres -d zarichney_identity -f "$SCRIPT_DIR/ApplyMigration.sql"
+            if execute_psql -v ON_ERROR_STOP=1 -f "$SQL_FALLBACK_SCRIPT"; then
+                echo -e "\e[32mSQL fallback script executed successfully.\e[0m"
+                # Re-run verification after fallback
+            else
+                echo -e "\e[31mSQL fallback script execution failed.\e[0m"
+                exit 1 # Exit after failed fallback
+            fi
+        else
+             echo -e "\e[33mSkipping SQL fallback.\e[0m"
+             exit 1 # Exit if migration failed and fallback skipped
         fi
+    elif [ ! -f "$SQL_FALLBACK_SCRIPT" ]; then
+         echo -e "\e[33mSQL fallback script '$SQL_FALLBACK_SCRIPT' not found. Cannot attempt fallback.\e[0m"
+         exit 1
+    else
+         echo -e "\e[33mSQL fallback not possible (psql missing or PGPASSWORD not set).\e[0m"
+         exit 1
     fi
 fi
+
+echo -e "\e[32mMigrations applied or no pending migrations found.\e[0m"
+
+# --- Verification (only if psql available and password was set) ---
+if command -v psql &> /dev/null && [ -n "$PGPASSWORD" ]; then
+    echo -e "\e[33mVerifying essential ASP.NET Identity tables exist...\e[0m"
+    TABLES_OK=true
+    for table in "AspNetUsers" "AspNetRoles" "__EFMigrationsHistory"; do
+        TABLE_CHECK=$(execute_psql -tAc "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = '$table');")
+        if [ "$TABLE_CHECK" != "t" ]; then
+            echo -e "\e[31mVerification failed: Essential table '$table' does not exist.\e[0m"
+            TABLES_OK=false
+        else
+             echo -e "\e[90mVerified table: $table\e[0m"
+        fi
+    done
+
+    if $TABLES_OK; then
+        echo -e "\e[32mVerification successful: Essential tables found.\e[0m"
+    else
+        echo -e "\e[31mVerification failed: One or more essential tables missing.\e[0m"
+        # Decide if this should be a fatal error
+        # exit 1
+    fi
+else
+    echo -e "\e[33mSkipping table verification (psql missing or PGPASSWORD not set).\e[0m"
+fi
+
+
+echo -e "\e[36mEF Core migration process completed.\e[0m"
+exit 0 # Exit successfully even if verification failed, unless specified otherwise
