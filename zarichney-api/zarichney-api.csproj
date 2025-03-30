@@ -58,8 +58,6 @@
     </ItemGroup>
     
     <ItemGroup>
-        <Content Include="appsettings*.json" Exclude="appsettings.Development.json" CopyToOutputDirectory="PreserveNewest" />
-        <Content Include="appsettings.Development.json" CopyToOutputDirectory="PreserveNewest" Condition=" '$(Configuration)' == 'Debug' " />
         <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="appsettings.*.json" CopyToOutputDirectory="PreserveNewest" DependentUpon="appsettings.json" />
     </ItemGroup>

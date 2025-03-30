@@ -76,7 +76,8 @@ void ConfigureKestrel(WebApplicationBuilder webBuilder)
 void ConfigureConfiguration(WebApplicationBuilder webBuilder)
 {
   webBuilder.Configuration
-    .AddJsonFile("appsettings.json")
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{webBuilder.Environment.EnvironmentName}.json", optional: true, reloadOnChange:true)
     .AddUserSecrets<Program>()
     .AddEnvironmentVariables()
     .AddSystemsManager("/cookbook-api", new Amazon.Extensions.NETCore.Setup.AWSOptions
