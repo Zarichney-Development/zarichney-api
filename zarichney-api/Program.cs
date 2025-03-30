@@ -125,12 +125,15 @@ void ConfigureServices(WebApplicationBuilder webBuilder)
 
   services.RegisterConfigurationServices(webBuilder.Configuration);
   services.AddSingleton(Log.Logger);
-  
-  services.AddHttpsRedirection(options =>
+
+  if (webBuilder.Environment.IsProduction())
   {
-    options.RedirectStatusCode = StatusCodes.Status307TemporaryRedirect;
-    options.HttpsPort = 443;
-  });
+    services.AddHttpsRedirection(options =>
+    {
+      options.RedirectStatusCode = StatusCodes.Status302Found;
+      options.HttpsPort = 443;
+    });
+  }
 
   services.AddHttpContextAccessor();
   services.AddControllers()
@@ -338,13 +341,17 @@ async Task ConfigureApplication(WebApplication application)
       c.RoutePrefix = "api/swagger";
     });
 
-  app.UseForwardedHeaders(new ForwardedHeadersOptions
+  if (application.Environment.IsProduction())
   {
-    // This tells the app to trust proxy headers (like X-Forwarded-Proto set by CloudFront/ALB) indicating the original request was HTTPS
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-  });
+    app.UseForwardedHeaders(new ForwardedHeadersOptions
+    {
+      // This tells the app to trust proxy headers (like X-Forwarded-Proto set by CloudFront/ALB) indicating the original request was HTTPS
+      ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+    });
+    application.UseHttpsRedirection();
+  }
+
   application.UseCors("AllowSpecificOrigin");
-  application.UseHttpsRedirection();
   application.UseAuthentication();
   application.UseApiKeyAuth();
   application.UseAuthorization();
