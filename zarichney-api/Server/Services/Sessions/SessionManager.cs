@@ -39,7 +39,7 @@ public interface ISessionManager
     Func<IScopeContainer, T, CancellationToken, Task> operation,
     int? maxDegreeOfParallelism = null,
     CancellationToken cancellationToken = default
-    );
+  );
 }
 
 /// <summary>
@@ -141,7 +141,6 @@ public class SessionManager(
     // Persist data
     try
     {
-
       if (orderToWrite != null)
       {
         // No wait because file service queues background work
@@ -151,7 +150,8 @@ public class SessionManager(
 
       // Write conversations in parallel
       var tasks = new List<Task>();
-      tasks.AddRange(conversationsToWrite.Select(conversation => llmRepository.WriteConversationAsync(conversation, session)));
+      tasks.AddRange(conversationsToWrite.Select(conversation =>
+        llmRepository.WriteConversationAsync(conversation, session)));
       // Wait for GitHub service to complete
       await Task.WhenAll(tasks);
     }
@@ -184,37 +184,35 @@ public class SessionManager(
     {
       throw new ArgumentException("ScopeId cannot be empty", nameof(scopeId));
     }
-    
+
     var currentSession = Sessions.Values.FirstOrDefault(s => s.Scopes.ContainsKey(scopeId))
-      ?? throw new NotExpectedException($"Session not found for scope {scopeId}");
+                         ?? throw new NotExpectedException($"Session not found for scope {scopeId}");
 
     var existingSession = Sessions.Values.FirstOrDefault(s => s.Order?.OrderId == orderId);
     if (existingSession != null)
     {
-      if (existingSession.UserId == null)
-      {
-        throw new NotExpectedException($"Session {existingSession.Id} for order {orderId} does not have a user ID");
-      }
-      
       // Auth check
-      if (currentSession.UserId != existingSession.UserId)
+      if (currentSession.UserId != null && 
+          existingSession.UserId != null &&
+          currentSession.UserId != existingSession.UserId)
       {
-        throw new KeyNotFoundException($"User attempted to access session {existingSession.Id} with order {orderId} but is not authorized");
+        throw new KeyNotFoundException(
+          $"User attempted to access session {existingSession.Id} with order {orderId} but is not authorized");
       }
-      
+
       AddScopeToSession(existingSession, scopeId);
       return existingSession;
     }
 
     var order = await orderRepository.GetOrder(orderId)
                 ?? throw new KeyNotFoundException($"Order {orderId} not found");
-    
+
     var customer = await customerRepository.GetCustomerByEmail(order.Email)
                    ?? throw new KeyNotFoundException($"Customer {order.Email} not found");
-    
+
     order.Customer = customer;
-    
-    existingSession = Sessions.Values.FirstOrDefault(s=>s.Scopes.ContainsKey(scopeId));
+
+    existingSession = Sessions.Values.FirstOrDefault(s => s.Scopes.ContainsKey(scopeId));
     if (existingSession != null)
     {
       AddScopeToSession(existingSession, scopeId);
@@ -224,7 +222,7 @@ public class SessionManager(
 
     var newSession = await CreateSession(scopeId);
     newSession.Order = order;
-    
+
     return newSession;
   }
 
@@ -244,7 +242,7 @@ public class SessionManager(
 
     return await CreateSession(scopeId);
   }
-  
+
   public async Task<Session> GetSessionByUserId(string userId, Guid scopeId)
   {
     if (string.IsNullOrEmpty(userId))
@@ -263,21 +261,21 @@ public class SessionManager(
     newSession.UserId = userId;
     return newSession;
   }
-  
+
   public async Task<Session> GetSessionByApiKey(string apiKey, Guid scopeId)
   {
     if (string.IsNullOrEmpty(apiKey))
     {
       throw new ArgumentException("ApiKey cannot be null or empty", nameof(apiKey));
     }
-    
+
     var existingSession = Sessions.Values.FirstOrDefault(s => s.ApiKeyValue == apiKey);
     if (existingSession != null)
     {
       RefreshSession(existingSession);
       return existingSession;
     }
-    
+
     var newSession = await CreateSession(scopeId);
     newSession.ApiKeyValue = apiKey;
     return newSession;
@@ -296,7 +294,7 @@ public class SessionManager(
     {
       logger.LogInformation("Scope {ScopeId} added to Session {SessionId}", scopeId, session.Id);
     }
-    
+
     RefreshSession(session);
   }
 
@@ -387,7 +385,8 @@ public class SessionManager(
     return Task.CompletedTask;
   }
 
-  public async Task<string> InitializeConversation(Guid scopeId, List<ChatMessage> messages, ChatTool? functionTool = null)
+  public async Task<string> InitializeConversation(Guid scopeId, List<ChatMessage> messages,
+    ChatTool? functionTool = null)
   {
     if (scopeId == Guid.Empty)
     {

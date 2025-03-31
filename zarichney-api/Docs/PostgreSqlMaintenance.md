@@ -103,7 +103,7 @@ public async Task<IdentityResult> ResetUserPassword(UserManager<ApplicationUser>
 
 ## Managing Database via PostgreSQL Directly (Use with Caution)
 
-Connect using `psql` (e.g., `sudo -i -u postgres psql -d zarichney_identity` or `psql -h <host> -U <user> -d zarichney_identity -W`).
+Connect using `psql` (e.g., `sudo -i -u postgres psql -d zarichney_identity -U zarichney_user` or `psql -h <host> -U <user> -d zarichney_identity -W`).
 
 ### View Users
 

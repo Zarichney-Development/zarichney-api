@@ -484,7 +484,7 @@ public class WebScraperService(
     if (_siteSelectors != null && _siteTemplates != null)
       return;
 
-    var selectorsData = await fileService.ReadFromFile<SiteSelectors>("Config", "site_selectors");
+    var selectorsData = await fileService.ReadFromFile<SiteSelectors>("Server/Config", "site_selectors");
     _siteTemplates = selectorsData.Templates;
     _siteSelectors = new Dictionary<string, Dictionary<string, string>>();
 
