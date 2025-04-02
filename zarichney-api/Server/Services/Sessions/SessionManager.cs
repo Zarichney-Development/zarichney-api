@@ -191,14 +191,14 @@ public class SessionManager(
     var existingSession = Sessions.Values.FirstOrDefault(s => s.Order?.OrderId == orderId);
     if (existingSession != null)
     {
-      // Auth check
-      if (currentSession.UserId != null && 
-          existingSession.UserId != null &&
-          currentSession.UserId != existingSession.UserId)
-      {
-        throw new KeyNotFoundException(
-          $"User attempted to access session {existingSession.Id} with order {orderId} but is not authorized");
-      }
+      // TODO: Auth check
+      // if (currentSession.UserId != null && 
+      //     existingSession.UserId != null &&
+      //     currentSession.UserId != existingSession.UserId)
+      // {
+      //   throw new KeyNotFoundException(
+      //     $"User attempted to access session {existingSession.Id} with order {orderId} but is not authorized");
+      // }
 
       AddScopeToSession(existingSession, scopeId);
       return existingSession;

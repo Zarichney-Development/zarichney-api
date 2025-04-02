@@ -65,6 +65,10 @@
     <ItemGroup>
         <Content Include="EmailTemplates/**" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
+    
+    <ItemGroup>
+        <Content Include="Server/Config/site_selectors.json" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
 
     <ItemGroup>
         <Content Include="Scripts/cleanup-playwright.sh" CopyToOutputDirectory="PreserveNewest" />
@@ -79,7 +83,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Server/" />
       <Folder Include="Server/Auth/" />
       <Folder Include="Server/Auth/Migrations"/>
       <Content Include="Server/Auth/Migrations/**" CopyToOutputDirectory="PreserveNewest" />
