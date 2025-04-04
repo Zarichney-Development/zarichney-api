@@ -28,7 +28,7 @@ Database schema changes are managed using Entity Framework Core migrations.
 * Migrations are **applied automatically** during the deployment pipeline (GitHub Actions).
 * The pipeline generates a single, idempotent SQL script (`ApplyAllMigrations.sql`) containing all necessary schema changes.
 * This script is copied to the EC2 instance (`/opt/cookbook-api/migrations/`).
-* The deployment process executes the `/opt/cookbook-api/Server/Auth/Migrations/ApplyMigrations.sh` script on the EC2 instance.
+* The deployment process executes the `/opt/cookbook-api/Server/Services/Auth/Migrations/ApplyMigrations.sh` script on the EC2 instance.
 * `ApplyMigrations.sh` uses `psql` to run the `ApplyAllMigrations.sql` script against the production database (`zarichney_identity`). The script ensures only pending migrations are applied.
 
 ### Local Development: Applying Migrations
@@ -48,9 +48,9 @@ When you change your C# entities or `DbContext`:
 2.  Add a new migration:
     ```bash
     # From the directory containing the .csproj file
-    dotnet ef migrations add YourMigrationName --context UserDbContext --output-dir Server/Auth/Migrations
+    dotnet ef migrations add YourMigrationName --context UserDbContext --output-dir Server/Services/Auth/Migrations
     ```
-3.  This creates a new `.cs` file in `Server/Auth/Migrations` and updates `UserDbContextModelSnapshot.cs`. **Commit both files** to source control.
+3.  This creates a new `.cs` file in `Server/Services/Auth/Migrations` and updates `UserDbContextModelSnapshot.cs`. **Commit both files** to source control.
 
 ## Managing Users via Entity Framework (Recommended)
 

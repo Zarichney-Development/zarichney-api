@@ -117,7 +117,7 @@ aws cloudfront update-distribution --id $cfDistId --distribution-config file://c
 * Files are copied to `/opt/cookbook-api/` on EC2 via `scp`.
 * SSH command executes on EC2:
     * Retrieves DB password from **AWS Secrets Manager**.
-    * Runs `/opt/cookbook-api/Server/Auth/Migrations/ApplyMigrations.sh` (which executes the SQL script via `psql`).
+    * Runs `/opt/cookbook-api/Server/Services/Auth/Migrations/ApplyMigrations.sh` (which executes the SQL script via `psql`).
     * Restarts the `cookbook-api` service (`sudo systemctl restart cookbook-api`).
 * CloudFront cache is invalidated.
 
@@ -463,7 +463,7 @@ sudo /opt/cookbook-api/cleanup-playwright.sh
 ### Important Paths (on EC2)
 * Application Root: `/opt/cookbook-api/`
 * Published App Files: `/opt/cookbook-api/*` (DLLs, configs, etc.)
-* Migration Runner Script: `/opt/cookbook-api/Server/Auth/Migrations/ApplyMigrations.sh`
+* Migration Runner Script: `/opt/cookbook-api/Server/Services/Auth/Migrations/ApplyMigrations.sh`
 * Generated Migration SQL: `/opt/cookbook-api/migrations/ApplyAllMigrations.sql` (Check `ApplyMigrations.sh` for exact path used)
 * Other App Data (if any): `/var/lib/cookbook-api/data/`
 * Service Logs: `sudo journalctl -u cookbook-api`

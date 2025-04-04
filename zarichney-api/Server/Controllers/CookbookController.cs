@@ -7,6 +7,7 @@ using Zarichney.Server.Services;
 using Zarichney.Server.Services.Emails;
 using Zarichney.Server.Services.Sessions;
 using System.Net;
+using Zarichney.Server.Services.BackgroundTasks;
 
 namespace Zarichney.Server.Controllers;
 

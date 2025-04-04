@@ -5,6 +5,7 @@ using Swashbuckle.AspNetCore.Annotations; // Import for Swagger annotations
 using Zarichney.Server.Services;
 using Zarichney.Server.Services.AI;
 using Zarichney.Server.Services.Emails;
+using Zarichney.Server.Services.GitHub;
 using Zarichney.Server.Services.Sessions;
 
 namespace Zarichney.Server.Controllers;

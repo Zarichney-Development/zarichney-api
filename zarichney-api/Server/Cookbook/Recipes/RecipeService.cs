@@ -5,7 +5,6 @@ using OpenAI.Assistants;
 using OpenAI.Chat;
 using Zarichney.Server.Cookbook.Orders;
 using Zarichney.Server.Cookbook.Prompts;
-using Zarichney.Server.Services;
 using Zarichney.Server.Services.AI;
 using Zarichney.Server.Services.Sessions;
 
@@ -128,6 +127,7 @@ public class RecipeService(
     // For the first half of the attempts, request for alternatives
     if (primaryApproach)
     {
+      // todo: change how this works. Use the session manager to retrieve the conversation instead of rebuilding it here
       messages.Add(new SystemChatMessage(processOrderPrompt.SystemPrompt));
 
       if (cookbookOrder != null)
@@ -158,6 +158,7 @@ public class RecipeService(
     else
     {
       // For the second half of attempts, aggressively generalize the search query
+      // todo: move this to the prompt folder
       messages.AddRange([
         new SystemChatMessage(
           """

@@ -1,4 +1,5 @@
 using HandlebarsDotNet;
+using Zarichney.Server.Services.FileSystem;
 
 namespace Zarichney.Server.Services.Emails;
 

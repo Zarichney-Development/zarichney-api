@@ -9,7 +9,9 @@ using Zarichney.Server.Cookbook.Prompts;
 using Zarichney.Server.Cookbook.Recipes;
 using Zarichney.Server.Services;
 using Zarichney.Server.Services.AI;
+using Zarichney.Server.Services.BackgroundTasks;
 using Zarichney.Server.Services.Emails;
+using Zarichney.Server.Services.PdfGeneration;
 using Zarichney.Server.Services.Sessions;
 
 namespace Zarichney.Server.Cookbook.Orders;
@@ -88,7 +90,7 @@ public class OrderService(
       var order = new CookbookOrder(customer, submission, cookbookRecipeList);
 
       // Save to session
-      await sessionManager.AddOrder(scope.Id, order);
+      await sessionManager.AddOrder(scope, order);
 
       logger.LogInformation("Order intake: {@Order}", order);
 
@@ -100,6 +102,7 @@ public class OrderService(
         backgroundService.QueueBackgroundWorkAsync(async (newScope, _) =>
         {
           var backgroundOrderService = newScope.GetService<IOrderService>();
+          // todo: test to ensure that this will attach itself to the previous session, leaving the newly created session to be auto cleaned up
           await backgroundOrderService.ProcessOrder(orderId);
         });
       }

@@ -24,8 +24,8 @@ public interface ISessionManager
   Task<Session> GetSessionByUserId(string userId, Guid scopeId);
   Task<Session> GetSessionByApiKey(string apiKey, Guid scopeId);
   void AddScopeToSession(Session session, Guid scopeId);
-  void RemoveScopeFromSession(Guid scopeId);
-  Task AddOrder(Guid scopeId, CookbookOrder order);
+  void RemoveScopeFromSession(Guid scopeId, Session? session = null);
+  Task AddOrder(IScopeContainer scope, CookbookOrder order);
 
   Task AddMessage(Guid scopeId, string conversationId, string prompt, ChatCompletion completion,
     object? toolResponse = null);
@@ -191,6 +191,7 @@ public class SessionManager(
     var existingSession = Sessions.Values.FirstOrDefault(s => s.Order?.OrderId == orderId);
     if (existingSession != null)
     {
+      // TODO: Need proper attachment of the user during session management
       // TODO: Auth check
       // if (currentSession.UserId != null && 
       //     existingSession.UserId != null &&
@@ -201,6 +202,7 @@ public class SessionManager(
       // }
 
       AddScopeToSession(existingSession, scopeId);
+      RemoveScopeFromSession(scopeId, currentSession);
       return existingSession;
     }
 
@@ -298,14 +300,14 @@ public class SessionManager(
     RefreshSession(session);
   }
 
-  public void RemoveScopeFromSession(Guid scopeId)
+  public void RemoveScopeFromSession(Guid scopeId, Session? session = null)
   {
     if (scopeId == Guid.Empty)
     {
       throw new ArgumentException("ScopeId cannot be empty", nameof(scopeId));
     }
 
-    var session = Sessions.Values.FirstOrDefault(s => s.Scopes.ContainsKey(scopeId));
+    session ??= Sessions.Values.FirstOrDefault(s => s.Scopes.ContainsKey(scopeId));
     if (session == null)
     {
       logger.LogWarning("Attempted to remove ScopeId {ScopeId} from a non-existent session", scopeId);
@@ -323,9 +325,29 @@ public class SessionManager(
     }
   }
 
-  public Task AddOrder(Guid scopeId, CookbookOrder order)
+  public Task AddOrder(IScopeContainer scope, CookbookOrder order)
   {
     ArgumentNullException.ThrowIfNull(order);
+    ArgumentNullException.ThrowIfNull(scope);
+    
+    var sessionId = scope.SessionId;
+    
+    if (sessionId != null && sessionId != Guid.Empty)
+    {
+      if (Sessions.TryGetValue(sessionId.Value, out var existingSession))
+      {
+        if (existingSession.Order != null)
+        {
+          logger.LogWarning("Not Expected: Session {SessionId} already has an order associated with it", sessionId);
+        }
+        
+        existingSession.Order = order;
+        return Task.CompletedTask;
+      }
+    }
+    
+    var scopeId = scope.Id;
+    
     if (scopeId == Guid.Empty)
     {
       throw new ArgumentException("ScopeId cannot be empty", nameof(scopeId));

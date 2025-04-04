@@ -60,6 +60,18 @@
     <ItemGroup>
         <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
         <Content Include="appsettings.*.json" CopyToOutputDirectory="PreserveNewest" DependentUpon="appsettings.json" />
+        <Content Include="Server\Services\Auth\Migrations\20250330163155_InitialCreate.Designer.cs">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Update="Server\Services\Auth\Migrations\ApplyMigrations.ps1">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Update="Server\Services\Auth\Migrations\ApplyMigrations.sh">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Update="Server\Services\Auth\Migrations\README.md">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
 
     <ItemGroup>
@@ -83,9 +95,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Server/Auth/" />
-      <Folder Include="Server/Auth/Migrations"/>
-      <Content Include="Server/Auth/Migrations/**" CopyToOutputDirectory="PreserveNewest" />
+      <Content Include="Server/Services/Auth/Migrations/**" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
 </Project>

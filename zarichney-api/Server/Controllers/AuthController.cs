@@ -3,9 +3,9 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using Zarichney.Server.Auth;
-using Zarichney.Server.Auth.Commands;
-using Zarichney.Server.Auth.Models;
+using Zarichney.Server.Services.Auth;
+using Zarichney.Server.Services.Auth.Models;
+using Zarichney.Server.Services.Auth.Commands;
 
 namespace Zarichney.Server.Controllers;
 
@@ -945,58 +945,6 @@ public class AuthController(
     {
       logger.LogError(ex, "Error getting users in role {RoleName}", roleName);
       return new ApiErrorResult(ex, "Failed to get users in role");
-    }
-  }
-
-  /// <summary>
-  /// Special endpoint to grant a user the 'admin' role. Potentially unsecured.
-  /// </summary>
-  /// <remarks>
-  /// **Security Warning:** This endpoint, as implemented without the `[Authorize(Roles = "admin")]` attribute, could allow *any* caller (potentially unauthenticated) to grant admin privileges to any user ID if they know it.
-  /// It should ideally be protected (e.g., require an initial setup key, be enabled only during initial deployment, or require existing admin privileges).
-  /// The intended use case is likely for initial application setup to create the first admin user.
-  /// Consider removing or securing this endpoint after initial setup.
-  /// </remarks>
-  /// <param name="request">Request containing the UserId to be made an admin. RoleName might be ignored or validated to be 'admin'.</param>
-  /// <returns>RoleCommandResult indicating success or failure.</returns>
-  [HttpPost("setup-admin")]
-  // [Authorize(Roles = "admin")] // Intentionally commented out per original code, but highly recommended to secure this.
-  [SwaggerOperation(Summary = "Grants admin privileges to a user (Potentially Unsecured).",
-    Description = "Assigns the 'admin' role to the specified user. SECURITY WARNING: Endpoint might be unsecured.")]
-  [ProducesResponseType(typeof(RoleCommandResult), StatusCodes.Status200OK)]
-  [ProducesResponseType(typeof(RoleCommandResult), StatusCodes.Status400BadRequest)]
-  [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  // Add 401/403 if authorization is added later
-  public async Task<IActionResult> SetupAdminUser([FromBody] RoleRequest request)
-  {
-    // Explicitly setting RoleName to Admin for setup endpoint
-    const string adminRoleName = "admin";
-
-    try
-    {
-      if (string.IsNullOrWhiteSpace(request.Identifier))
-      {
-        return BadRequest(new RoleCommandResult
-        {
-          Success = false,
-          Message = "User identifier is required."
-        });
-      }
-
-      // Ensure we are adding the 'admin' role. Could ignore request.RoleName or validate it.
-      var result = await mediator.Send(new AddUserToRoleCommand(request.Identifier, adminRoleName));
-      if (!result.Success)
-      {
-        return BadRequest(result);
-      }
-
-      logger.LogWarning("Admin privileges granted to user {Identifier} via setup endpoint.", request.Identifier);
-      return Ok(result);
-    }
-    catch (Exception ex)
-    {
-      logger.LogError(ex, "Error setting up admin user {Identifier}", request.Identifier);
-      return new ApiErrorResult(ex, "Failed to set up admin user");
     }
   }
 

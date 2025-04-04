@@ -1,4 +1,4 @@
-using Zarichney.Server.Auth;
+using Zarichney.Server.Services.Auth;
 using System.Security.Claims;
 
 namespace Zarichney.Server.Services.Sessions;
