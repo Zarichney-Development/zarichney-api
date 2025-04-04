@@ -3,8 +3,11 @@ using System.Text.Json.Nodes;
 using AutoMapper;
 using OpenAI.Assistants;
 
-namespace Zarichney.Server.Config;
+namespace Zarichney.Server.Services.AI;
 
+/// <summary>
+/// Base class for all AI prompt definitions in the application
+/// </summary>
 public abstract class PromptBase
 {
   public abstract string Name { get; }
@@ -14,6 +17,9 @@ public abstract class PromptBase
   public abstract FunctionDefinition GetFunction();
 }
 
+/// <summary>
+/// Defines a function that can be called by an AI model
+/// </summary>
 public class FunctionDefinition
 {
   public required string Name { get; set; }
@@ -22,6 +28,9 @@ public class FunctionDefinition
   public required bool Strict = true;
 }
 
+/// <summary>
+/// AutoMapper profile for mapping between FunctionDefinition and OpenAI's FunctionToolDefinition
+/// </summary>
 public class FunctionDefinitionMappingProfile : Profile
 {
   public FunctionDefinitionMappingProfile()

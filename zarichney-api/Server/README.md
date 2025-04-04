@@ -12,14 +12,16 @@
   * Managing recipe data: searching, scraping, cleaning, indexing, and AI-driven synthesis ([`Cookbook/Recipes`](./Cookbook/Recipes/README.md)).
   * Interacting with external services: OpenAI, Stripe, GitHub, Microsoft Graph (Email), Playwright (`Services`).
   * Managing application configuration ([`Config`](./Config/README.md)).
+  * Centralizing application startup logic ([`Startup`](./Startup/README.md)).
   * Executing background tasks (`Services/BackgroundWorker`).
 * **Why it exists:** To provide the core backend logic and API interface for the Zarichney application, separating concerns into distinct modules powering the `zarichney.com` website and integrated AI features.
 * **Submodules:**
   * [`Auth`](./Auth/README.md) - Handles user identity, authentication (JWT/Cookie/API Key), authorization, and user database interactions.
-  * [`Config`](./Config/README.md) - Defines configuration models and loading mechanisms.
+  * [`Config`](./Config/README.md) - Defines configuration models and shared utilities.
   * [`Controllers`](./Controllers/README.md) - Defines the external API endpoints exposed by the server.
   * [`Cookbook`](./Cookbook/README.md) - Contains the core domain logic for customers, orders, recipes, and AI prompts related to cookbook generation.
   * [`Services`](./Services/README.md) - Implements cross-cutting concerns, background tasks, session management, and integrations with external systems (AI, Stripe, GitHub, Filesystem, Email, Browser).
+  * [`Startup`](./Startup/README.md) - Centralizes application startup configuration, service registration, and middleware setup logic.
 
 ## 2. Architecture & Key Concepts
 
@@ -58,8 +60,8 @@
 
 ## 4. Local Conventions & Constraints (Beyond Global Standards)
 
-* **Configuration:** Driven by `appsettings.json`, environment variables, and user secrets, loaded via [`Config/ConfigurationExtensions.cs`](./Config/ConfigurationExtensions.cs). Specific configuration classes (e.g., `RecipeConfig`, `JwtSettings`) are injected via DI. External `site_selectors.json` defines scraping targets.
-* **Directory Structure:** Modules organized by feature area (`Auth`, `Cookbook`, `Controllers`, `Services`, `Config`). Data persistence targets `Data/` subfolders by default.
+* **Configuration:** Driven by `appsettings.json`, environment variables, and user secrets, loaded via [`Startup/StartupExtensions.cs`](./Startup/StartupExtensions.cs). Specific configuration classes (e.g., `RecipeConfig`, `JwtSettings`) are injected via DI. External `site_selectors.json` defines scraping targets.
+* **Directory Structure:** Modules organized by feature area (`Auth`, `Cookbook`, `Controllers`, `Services`, `Config`, `Startup`). Data persistence targets `Data/` subfolders by default.
 * **Technology Choices:** ASP.NET Core 8, EF Core/PostgreSQL (Identity), Serilog, MediatR, Polly, Playwright, QuestPDF, Octokit, OpenAI SDK, Stripe SDK, Handlebars.Net, AngleSharp.
 * **Performance/Resource Notes:** Web scraping (`BrowserService`) and LLM interactions (`LlmService`) are key areas for performance monitoring and potential bottlenecks. Background tasks and session cleanup frequency impact resource usage.
 * **Security Notes:** Authentication handled via JWT Cookies & API Keys. Secure management of secrets is paramount. CSRF protection depends on client interaction patterns (likely needed for web apps).
@@ -72,6 +74,7 @@
   * [Controllers](./Controllers/README.md)
   * [Cookbook](./Cookbook/README.md)
   * [Services](./Services/README.md)
+  * [Startup](./Startup/README.md)
 * **External Library Dependencies:** `Microsoft.AspNetCore.*`, `Microsoft.EntityFrameworkCore.*` (Npgsql), `Serilog.*`, `MediatR`, `Polly`, `OpenAI`, `Stripe.net`, `Microsoft.Playwright`, `AngleSharp`, `QuestPDF`, `Handlebars.Net`, `Octokit`, `Swashbuckle.AspNetCore`. (Specific versions managed via project files).
 * **Dependents (Impact of Changes):**
   * **Primary:** `zarichney.com` (Angular SSR web application) - Consumes the `/api/*` endpoints. Changes to API contracts in `Controllers` require corresponding updates in the frontend.
@@ -86,6 +89,7 @@
   * **File System / GitHub:** Chosen for storing cookbook orders, recipes, customer data (outside identity), and LLM logs. This was likely selected for simplicity, cost-effectiveness (compared to scaling database storage), ease of backup/versioning (via Git), and potentially for easier inspection/manual editing during development or for specific debugging/logging needs. This choice implies trade-offs regarding transactional integrity, complex querying, and potential performance bottlenecks compared to a full database solution for this data.
 * **Background Tasks:** Essential for decoupling long-running operations (order processing, scraping, PDF generation, email sending) from the initial web request, improving responsiveness.
 * **Custom Session Management:** Implemented to manage state across multiple requests, particularly relevant for the multi-step cookbook generation process which involves user interaction, background tasks, and potentially long delays.
+* **Startup Refactoring:** The application startup logic was recently centralized in the `Startup` module to improve organization and maintainability by separating it from the main program entry point.
 
 ## 8. Known Issues & TODOs
 
@@ -95,4 +99,3 @@
 * Session management complexity requires careful testing, especially around cleanup and concurrency.
 * Currently lacks automated tests; adding unit, integration, and potentially end-to-end tests is a future goal.
 * PDF generation performance might need optimization for very large cookbooks.
-
