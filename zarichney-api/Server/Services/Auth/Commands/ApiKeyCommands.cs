@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Zarichney.Server.Services.Auth;
 using Zarichney.Server.Services.Auth.Models;
 
 namespace Zarichney.Server.Services.Auth.Commands;

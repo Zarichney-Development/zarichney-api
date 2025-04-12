@@ -58,8 +58,8 @@
 ## 6. Dependencies
 
 * **Internal Code Dependencies:**
-    * [`Server/Startup/Configuration`](../Startup/Configuration/) - For registration of configuration.
-    * [`Server/Startup/App`](../Startup/App/) - For registration of middleware.
+    * [`Server/Startup/ConfigurationStartup.cs`](../Startup/ConfigurationStartup.cs) - For registration of configuration.
+    * [`Server/Startup/AppplicationStartup.cs`](../Startup/ApplicationStartup.cs) - For registration of middleware.
 * **External Library Dependencies:**
     * `Microsoft.Extensions.Configuration.Abstractions`, `.Binder`, `.Json`: Core .NET configuration handling.
     * `Microsoft.Extensions.Options`: Used for the options pattern with configuration.

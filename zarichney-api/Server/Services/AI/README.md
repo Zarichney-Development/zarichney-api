@@ -66,7 +66,7 @@
     * [`Server/Config`](../../Config/README.md): Consumes `LlmConfig`, `TranscribeConfig`.
     * [`Server/Services/GitHub`](../GitHub/README.md): Consumed by `LlmRepository`.
     * [`Server/Services/Sessions`](../Sessions/README.md): Consumed by `LlmService` and `LlmRepository`.
-    * [`Server/Startup/Configuration`](../../Startup/Configuration/): For registration of prompts via DI.
+    * [`Server/Startup/Configuration`](../../Startup/ConfigurationStartup.cs): For registration of prompts via DI.
 * **External Library Dependencies:**
     * `OpenAI`: The official .NET SDK for interacting with OpenAI APIs.
     * `Polly`: Used for implementing retry logic.

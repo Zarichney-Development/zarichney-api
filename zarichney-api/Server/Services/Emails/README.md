@@ -69,7 +69,7 @@
     * `Microsoft.Extensions.Caching.Memory`: For caching email validation results.
     * `Azure.Identity`: Used for authenticating `GraphServiceClient`. [cite: zarichney-api/Program.cs]
 * **Dependents (Impact of Changes):**
-    * [`Server/Auth`](../../Auth/README.md): Various command handlers (Register, ForgotPassword, ResetPassword, ResendConfirmation) consume `IEmailService`.
+    * [`Server/Auth`](../Auth/README.md): Various command handlers (Register, ForgotPassword, ResetPassword, ResendConfirmation) consume `IEmailService`.
     * [`Server/Cookbook/Orders`](../../Cookbook/Orders/README.md): `OrderService` consumes `IEmailService` to send notifications and the final cookbook.
     * [`Server/Controllers/ApiController.cs`](../../Controllers/ApiController.cs): Consumes `IEmailService` for the `email/validate` endpoint.
     * `Program.cs`: Registers `EmailService`, `TemplateService`, `GraphServiceClient`.

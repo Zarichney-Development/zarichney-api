@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using Zarichney.Server.Services.Auth.Models;
 
 namespace Zarichney.Server.Services.Auth;
 

@@ -1,8 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations; // Import for Swagger annotations
-using Zarichney.Server.Services;
+using Swashbuckle.AspNetCore.Annotations;
 using Zarichney.Server.Services.AI;
 using Zarichney.Server.Services.Emails;
 using Zarichney.Server.Services.GitHub;

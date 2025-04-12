@@ -6,7 +6,6 @@ using AngleSharp;
 using AngleSharp.Dom;
 using Zarichney.Server.Config;
 using Zarichney.Server.Cookbook.Prompts;
-using Zarichney.Server.Services;
 using Zarichney.Server.Services.AI;
 using Zarichney.Server.Services.FileSystem;
 using Zarichney.Server.Services.Web;

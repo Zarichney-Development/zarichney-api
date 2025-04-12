@@ -95,8 +95,8 @@
 ## 6. Dependencies
 
 * **Internal Code Dependencies:**
-    * [`Server/Config`](../Config/README.md) - Consumes `JwtSettings`, `ClientConfig`, `ServerConfig`.
-    * [`Server/Services/Emails`](../Services/Emails/README.md) - Used by commands for sending confirmation/password reset emails.
+    * [`Server/Config`](../../Config/README.md) - Consumes `JwtSettings`, `ClientConfig`, `ServerConfig`.
+    * [`Server/Services/Emails`](../Emails/README.md) - Used by commands for sending confirmation/password reset emails.
 * **External Library Dependencies:**
     * `Microsoft.AspNetCore.Identity.EntityFrameworkCore`: Core Identity framework.
     * `Microsoft.AspNetCore.Authentication.JwtBearer`: JWT validation middleware.

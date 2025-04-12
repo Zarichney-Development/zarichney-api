@@ -39,6 +39,7 @@
     * `CompilePdf(order, waitForWrite)`: Generates/regenerates the PDF. Assumes order and synthesized recipes exist. Postcondition: PDF file saved via repository.
     * `EmailCookbook(orderId)`: Sends the existing PDF via email. Assumes order and PDF exist. Postcondition: Email sent via `IEmailService`.
     * `GetPdf(orderId)`: Retrieves PDF bytes. Assumes PDF exists.
+    * `QueueOrderProcessing(orderId)`: Queues an order for background processing. Assumes order exists. Postcondition: Background task queued via `IBackgroundWorker` that will resolve `IOrderService` from a new scope and call `ProcessOrder(orderId)`.
 * **Assumptions:**
     * **Dependency Functionality:** Assumes all injected services (`ICustomerService`, `IRecipeService`, `IEmailService`, `IOrderRepository`, `PdfCompiler`, `IBackgroundWorker`, `ISessionManager`, `ILlmService`) are correctly implemented and functional.
     * **Configuration:** Assumes `OrderConfig` and configurations for dependent services are correctly provided.

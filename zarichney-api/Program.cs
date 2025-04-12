@@ -1,8 +1,5 @@
 using Serilog;
-using Zarichney.Server.Startup.App;
-using Zarichney.Server.Startup.Authentication;
-using Zarichney.Server.Startup.Configuration;
-using Zarichney.Server.Startup.Services;
+using Zarichney.Server.Startup;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,32 +11,32 @@ await ConfigureApplication(app);
 
 try
 {
-    app.Run();
+  app.Run();
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "Application terminated unexpectedly");
+  Log.Fatal(ex, "Application terminated unexpectedly");
 }
 finally
 {
-    Log.CloseAndFlush();
+  Log.CloseAndFlush();
 }
 
 return;
 
 void ConfigureBuilder(WebApplicationBuilder webBuilder)
 {
-    ApplicationStartup.ConfigureEncoding();
-    ApplicationStartup.ConfigureKestrel(webBuilder);
-    ConfigurationStartup.ConfigureConfiguration(webBuilder);
-    ConfigurationStartup.ConfigureLogging(webBuilder);
-    ServiceStartup.ConfigureServices(webBuilder);
-    AuthenticationStartup.ConfigureIdentity(webBuilder);
-    ServiceStartup.ConfigureSwagger(webBuilder);
-    ApplicationStartup.ConfigureCors(webBuilder);
+  ApplicationStartup.ConfigureEncoding();
+  ApplicationStartup.ConfigureKestrel(webBuilder);
+  ConfigurationStartup.ConfigureConfiguration(webBuilder);
+  ConfigurationStartup.ConfigureLogging(webBuilder);
+  ServiceStartup.ConfigureServices(webBuilder);
+  AuthenticationStartup.ConfigureIdentity(webBuilder);
+  ServiceStartup.ConfigureSwagger(webBuilder);
+  ApplicationStartup.ConfigureCors(webBuilder);
 }
 
 async Task ConfigureApplication(WebApplication application)
 {
-    await ApplicationStartup.ConfigureApplication(application);
+  await ApplicationStartup.ConfigureApplication(application);
 }

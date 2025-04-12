@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Zarichney.Server.Services.Auth;
 
 namespace Zarichney.Server.Services.Auth.Models;
 

@@ -52,7 +52,7 @@
     * [`Server/Services/Auth/Commands/*`](../Commands/README.md) - Consume and produce instances of these models (e.g., `AuthResult`, `ApiKeyResponse`).
     * [`Server/Services/Auth/UserDbContext.cs`](../UserDbContext.cs) - References entity types (`ApiKey`, `RefreshToken`) for `DbSet` properties and configuration.
     * [`Server/Services/Auth/Migrations/*`](../Migrations/README.md) - Migrations are generated based on changes to the entity models defined here. Modifying entities necessitates new migrations.
-    * [`Server/Controllers/AuthController.cs`](../../Controllers/AuthController.cs) - Uses result types (`AuthResult`, `ApiKeyResponse`, `RoleCommandResult`) for API responses.
+    * [`Server/Controllers/AuthController.cs`](../../../Controllers/AuthController.cs) - Uses result types (`AuthResult`, `ApiKeyResponse`, `RoleCommandResult`) for API responses.
     * Any service interacting directly with `UserDbContext` relies on the entity structures.
 
 ## 7. Rationale & Key Historical Context

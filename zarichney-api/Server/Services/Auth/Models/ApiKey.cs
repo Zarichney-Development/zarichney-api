@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Zarichney.Server.Services.Auth;
 
 namespace Zarichney.Server.Services.Auth.Models;
 
@@ -28,6 +27,7 @@ public sealed class ApiKey
 
   [Required]
   [ForeignKey("User")]
+  [MaxLength(255)]
   public string UserId { get; set; } = string.Empty;
 
   public ApplicationUser? User { get; set; }

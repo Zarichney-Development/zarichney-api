@@ -19,7 +19,7 @@ public class ApiErrorResult(
         Message = userMessage,
         Type = exception?.GetType().Name,
         Details = exception?.Message,
-        Source = exception?.Source,
+        exception?.Source,
         StackTrace = exception?.StackTrace?.Split(Environment.NewLine)
           .Select(line => line.TrimStart())
           .ToList(),

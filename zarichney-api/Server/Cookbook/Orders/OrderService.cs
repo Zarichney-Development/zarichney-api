@@ -7,7 +7,6 @@ using Zarichney.Server.Config;
 using Zarichney.Server.Cookbook.Customers;
 using Zarichney.Server.Cookbook.Prompts;
 using Zarichney.Server.Cookbook.Recipes;
-using Zarichney.Server.Services;
 using Zarichney.Server.Services.AI;
 using Zarichney.Server.Services.BackgroundTasks;
 using Zarichney.Server.Services.Emails;
@@ -30,6 +29,7 @@ public interface IOrderService
   Task CompilePdf(CookbookOrder order, bool waitForWrite = false);
   Task EmailCookbook(string orderId);
   Task<byte[]> GetPdf(string orderId);
+  void QueueOrderProcessing(string orderId);
 }
 
 public class OrderService(
@@ -224,6 +224,23 @@ public class OrderService(
     }
 
     return pdf;
+  }
+
+  /// <summary>
+  /// Queue an order for processing in the background
+  /// </summary>
+  public void QueueOrderProcessing(string orderId)
+  {
+    if (string.IsNullOrEmpty(orderId))
+    {
+      throw new ArgumentException("OrderId cannot be empty", nameof(orderId));
+    }
+
+    backgroundService.QueueBackgroundWorkAsync(async (newScope, _) =>
+    {
+      var backgroundOrderService = newScope.GetService<IOrderService>();
+      await backgroundOrderService.ProcessOrder(orderId);
+    });
   }
 
   /// <summary>

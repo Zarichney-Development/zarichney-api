@@ -7,7 +7,7 @@
 * **What it is:** This directory contains the backend API server for the Zarichney application, providing API endpoints and core logic for features including personalized cookbook generation, AI interactions, user authentication, and payment processing.
 * **Key Responsibilities:**
   * Exposing RESTful API endpoints for client interaction ([`Controllers`](./Controllers/README.md)).
-  * Managing user authentication, authorization, sessions, and API keys ([`Auth`](./Auth/README.md), [`Services/Sessions`](./Services/Sessions/README.md)).
+  * Managing user authentication, authorization, sessions, and API keys ([`Auth`](./Services/Auth/README.md), [`Services/Sessions`](./Services/Sessions/README.md)).
   * Handling cookbook order submission and coordinating processing ([`Cookbook/Orders`](./Cookbook/Orders/README.md)).
   * Managing recipe data: searching, scraping, cleaning, indexing, and AI-driven synthesis ([`Cookbook/Recipes`](./Cookbook/Recipes/README.md)).
   * Interacting with external services: OpenAI, Stripe, GitHub, Microsoft Graph (Email), Playwright (`Services`).
@@ -16,7 +16,7 @@
   * Executing background tasks (`Services/BackgroundWorker`).
 * **Why it exists:** To provide the core backend logic and API interface for the Zarichney application, separating concerns into distinct modules powering the `zarichney.com` website and integrated AI features.
 * **Submodules:**
-  * [`Auth`](./Auth/README.md) - Handles user identity, authentication (JWT/Cookie/API Key), authorization, and user database interactions.
+  * [`Auth`](./Services/Auth/README.md) - Handles user identity, authentication (JWT/Cookie/API Key), authorization, and user database interactions.
   * [`Config`](./Config/README.md) - Defines configuration models and shared utilities.
   * [`Controllers`](./Controllers/README.md) - Defines the external API endpoints exposed by the server.
   * [`Cookbook`](./Cookbook/README.md) - Contains the core domain logic for customers, orders, recipes, and AI prompts related to cookbook generation.
@@ -25,7 +25,7 @@
 
 ## 2. Architecture & Key Concepts
 
-* **High-Level Design:** ASP.NET Core Web API application. Exposes API endpoints via [`Controllers`](./Controllers/README.md) which orchestrate calls to various [`Services`](./Services/README.md) and domain-specific logic within [`Cookbook`](./Cookbook/README.md) and [`Auth`](./Auth/README.md). Employs Dependency Injection and standard ASP.NET Core middleware patterns.
+* **High-Level Design:** ASP.NET Core Web API application. Exposes API endpoints via [`Controllers`](./Controllers/README.md) which orchestrate calls to various [`Services`](./Services/README.md) and domain-specific logic within [`Cookbook`](./Cookbook/README.md) and [`Auth`](./Services/Auth/README.md). Employs Dependency Injection and standard ASP.NET Core middleware patterns.
 * **Core Logic Flow (Example: API Request):**
   1.  Request received by ASP.NET Core.
   2.  Middleware executes (Logging, Error Handling, Auth, Session).
@@ -33,12 +33,12 @@
   4.  Controller action validates input and calls relevant `Service`(s) (e.g., `IOrderService`, `IRecipeService`, `IAuthService`).
   5.  Services perform business logic, potentially interacting with repositories (`IOrderRepository`, `IRecipeRepository`, `ICustomerRepository`), external APIs (`LlmService`, `PaymentService`, `EmailService`, `GitHubService`), or queuing background tasks (`IBackgroundWorker`).
   6.  Results are returned to the Controller, which forms the HTTP response.
-* **Key Data Structures:** `CookbookOrder`, `Recipe`, `Customer` ([`Cookbook`](./Cookbook/README.md)), `ApplicationUser`, `ApiKey`, `RefreshToken` ([`Auth`](./Auth/README.md)), `Session`, `ScopeContainer` ([`Services/Sessions`](./Services/Sessions/README.md)). Various configuration models ([`Config`](./Config/README.md)).
+* **Key Data Structures:** `CookbookOrder`, `Recipe`, `Customer` ([`Cookbook`](./Cookbook/README.md)), `ApplicationUser`, `ApiKey`, `RefreshToken` ([`Auth`](./Services/Auth/README.md)), `Session`, `ScopeContainer` ([`Services/Sessions`](./Services/Sessions/README.md)). Various configuration models ([`Config`](./Config/README.md)).
 * **State Management:**
-  * User authentication state managed via JWT cookies and validated by ASP.NET Core Identity + JWT Bearer middleware ([`Auth`](./Auth/README.md)). API Key authentication is also supported ([`Auth/ApiKeyAuthMiddleware.cs`](./Auth/ApiKeyAuthMiddleware.cs)).
-  * User identity data stored in PostgreSQL via EF Core ([`Auth/UserDbContext.cs`](./Auth/UserDbContext.cs)).
+  * User authentication state managed via JWT cookies and validated by ASP.NET Core Identity + JWT Bearer middleware ([`Auth`](./Services/Auth/README.md)). API Key authentication is also supported ([`Auth/ApiKeyAuthMiddleware.cs`](./Services/Auth/ApiKeyAuthMiddleware.cs)).
+  * User identity data stored in PostgreSQL via EF Core ([`Auth/UserDbContext.cs`](./Services/Auth/UserDbContext.cs)).
   * Request/operation state managed via custom `SessionManager` using in-memory dictionaries, tied to scopes ([`Services/Sessions`](./Services/Sessions/README.md)).
-  * Cookbook orders, customer data, and recipe data persisted primarily via `FileService` (to the filesystem) and `GitHubService` (to a GitHub repository) ([`Services/FileService.cs`](./Services/FileService.cs), [`Services/GitHubService.cs`](./Services/GitHubService.cs), [`Cookbook/Orders/OrderRepository.cs`](./Cookbook/Orders/OrderRepository.cs), [`Cookbook/Recipes/RecipeRepository.cs`](./Cookbook/Recipes/RecipeRepository.cs), [`Cookbook/Customers/CustomerRepository.cs`](./Cookbook/Customers/CustomerRepository.cs)).
+  * Cookbook orders, customer data, and recipe data persisted primarily via `FileService` (to the filesystem) and `GitHubService` (to a GitHub repository) ([`Services/FileService.cs`](./Services/FileSystem/FileService.cs), [`Services/GitHubService.cs`](./Services/GitHub/GitHubService.cs), [`Cookbook/Orders/OrderRepository.cs`](./Cookbook/Orders/OrderRepository.cs), [`Cookbook/Recipes/RecipeRepository.cs`](./Cookbook/Recipes/RecipeRepository.cs), [`Cookbook/Customers/CustomerRepository.cs`](./Cookbook/Customers/CustomerRepository.cs)).
   * LLM conversation logs persisted via `LlmRepository` to GitHub ([`Services/AI/LlmRepository.cs`](./Services/AI/LlmRepository.cs)).
 
 ## 3. Interface Contract & Assumptions
@@ -48,12 +48,12 @@
   * **External Systems Availability & Configuration:** Relies on the availability and correct configuration (API keys, secrets, URLs, connection strings) of:
     * OpenAI API ([`Services/AI`](./Services/AI/README.md))
     * Stripe API ([`Services/Payment`](./Services/Payment/README.md))
-    * GitHub API ([`Services/GitHubService.cs`](./Services/GitHubService.cs))
+    * GitHub API ([`Services/GitHubService.cs`](./Services/GitHub/GitHubService.cs))
     * Microsoft Graph API (for email) ([`Services/Emails`](./Services/Emails/README.md))
     * MailCheck API (for email validation) ([`Services/Emails`](./Services/Emails/README.md))
-    * Target websites for scraping ([`Services/BrowserService.cs`](./Services/BrowserService.cs), [`Config/site_selectors.json`](./Config/site_selectors.json))
-    * PostgreSQL Database ([`Auth/UserDbContext.cs`](./Auth/UserDbContext.cs))
-  * **Playwright Dependencies:** Assumes the necessary Playwright browser executables are installed in the runtime environment ([`Services/BrowserService.cs`](./Services/BrowserService.cs)).
+    * Target websites for scraping ([`Services/BrowserService.cs`](./Services/Web/BrowserService.cs), [`Config/site_selectors.json`](./Config/site_selectors.json))
+    * PostgreSQL Database ([`Auth/UserDbContext.cs`](./Services/Auth/UserDbContext.cs))
+  * **Playwright Dependencies:** Assumes the necessary Playwright browser executables are installed in the runtime environment ([`Services/BrowserService.cs`](./Services/Web/BrowserService.cs)).
   * **Data Persistence:** Assumes the file system paths specified in configuration are writable. Assumes the GitHub repository used by `GitHubService` is accessible and configured.
   * **Background Processing:** Relies on the ASP.NET Core hosting environment to keep background services (`BackgroundTaskService`, `SessionCleanupService`, `RefreshTokenCleanupService`, `GitHubService`) running reliably.
   * **Session Management:** Assumes client interactions (especially long-running ones like cookbook generation) can span multiple requests and relies on the `SessionManager` to maintain state. Session expiration and cleanup are critical.
@@ -69,7 +69,7 @@
 ## 5. Dependencies
 
 * **Internal Code Dependencies:** Components are designed to be relatively modular, but rely on shared services and configuration:
-  * [Auth](./Auth/README.md)
+  * [Auth](./Services/Auth/README.md)
   * [Config](./Config/README.md)
   * [Controllers](./Controllers/README.md)
   * [Cookbook](./Cookbook/README.md)

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Identity;
-using Zarichney.Server.Services.Auth;
 
-namespace Zarichney.Server.Auth;
+namespace Zarichney.Server.Services.Auth;
 
 public interface IRoleManager
 {

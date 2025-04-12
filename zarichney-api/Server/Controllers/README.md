@@ -52,7 +52,7 @@
 ## 6. Dependencies
 
 * **Internal Code Dependencies:**
-    * [`Server/Auth`](../Auth/README.md) - Consumed by `AuthController` via MediatR and `[Authorize]` attributes.
+    * [`Server/Auth`](../Services/Auth/README.md) - Consumed by `AuthController` via MediatR and `[Authorize]` attributes.
     * [`Server/Cookbook`](../Cookbook/README.md) - Consumed by `CookbookController` via service interfaces.
     * [`Server/Services`](../Services/README.md) - Various services consumed by different controllers (e.g., `ILlmService`, `IPaymentService`, `IEmailService`).
     * [`Server/Config`](../Config/README.md) - Uses `ApiErrorResult`, influenced by middleware configured here.

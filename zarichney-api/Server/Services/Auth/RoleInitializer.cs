@@ -1,5 +1,3 @@
-using Zarichney.Server.Auth;
-
 namespace Zarichney.Server.Services.Auth;
 
 public class RoleInitializer(

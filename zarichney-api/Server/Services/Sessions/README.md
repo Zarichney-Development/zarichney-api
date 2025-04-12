@@ -63,7 +63,7 @@
 
 * **Internal Code Dependencies:**
     * [`Server/Config`](../../Config/README.md): Consumes `SessionConfig`.
-    * [`Server/Auth`](../../Auth/README.md): `SessionMiddleware` interacts with `HttpContext.User` populated by Auth middleware.
+    * [`Server/Auth`](../Auth/README.md): `SessionMiddleware` interacts with `HttpContext.User` populated by Auth middleware.
     * [`Server/Cookbook/Orders`](../../Cookbook/Orders/README.md): Uses `CookbookOrder` model, `IOrderRepository`.
     * [`Server/Cookbook/Customers`](../../Cookbook/Customers/README.md): Uses `ICustomerRepository`.
     * [`Server/Services/AI`](../AI/README.md): Uses `LlmConversation` model, `ILlmRepository`.
