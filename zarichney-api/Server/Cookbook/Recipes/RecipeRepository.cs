@@ -242,11 +242,14 @@ public class RecipeFileRepository(
       try
       {
         var llmService = scope.GetService<ILlmService>();
-        var result = await llmService.CallFunction<RenamerResult>(
+        var llmResult = await llmService.CallFunction<RenamerResult>(
           recipeNamerPrompt.SystemPrompt,
           recipeNamerPrompt.GetUserPrompt(recipe),
           recipeNamerPrompt.GetFunction()
         );
+
+        // Extract the RenamerResult data from the LlmResult
+        var result = llmResult.Data;
 
         logger.LogInformation("Received response from model for recipe {RecipeTitle}: {@Result}", recipe.Title,
           result);
@@ -312,13 +315,15 @@ public class RecipeFileRepository(
     try
     {
       var llmService = scope.GetService<ILlmService>();
-      var newRecipe = await llmService.CallFunction<CleanedRecipe>(
+      var llmResult = await llmService.CallFunction<CleanedRecipe>(
         cleanRecipePrompt.SystemPrompt,
         cleanRecipePrompt.GetUserPrompt(recipe),
         cleanRecipePrompt.GetFunction(),
         null,
         1 // Don't retry
       );
+
+      var newRecipe = llmResult.Data;
 
       logger.LogInformation("Cleaned recipe data: {@CleanedRecipe}", newRecipe);
 

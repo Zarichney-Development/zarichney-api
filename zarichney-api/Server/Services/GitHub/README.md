@@ -1,6 +1,6 @@
 # Module/Directory: Server/Services/GitHub
 
-**Last Updated:** 2025-04-03
+**Last Updated:** 2025-04-13
 
 > **Parent:** [`Server/Services`](../README.md)
 
@@ -24,7 +24,9 @@
 * **Commit Operation Task Completion:** `EnqueueCommitAsync` returns a `Task` derived from a `TaskCompletionSource` within the `GitHubOperation`. This task only completes (or throws an exception) after the background service has finished processing that specific commit attempt, allowing callers to `await` the actual completion of the GitHub operation. [cite: zarichney-api/Server/Services/GitHubService.cs]
 * **GitHub API Client:** Uses the `Octokit` .NET library to interact with the GitHub REST API. A `GitHubClient` instance is initialized with credentials from `GitHubConfig`. [cite: zarichney-api/Server/Services/GitHubService.cs]
 * **Git Workflow via API:** The `ProcessGitHubOperationAsync` method implements the necessary steps to commit a file: get the latest commit/tree -> create a blob for the file content -> create a new tree including the new blob -> create a commit pointing to the new tree and the previous commit -> update the branch reference (e.g., `heads/main`) to point to the new commit. [cite: zarichney-api/Server/Services/GitHubService.cs]
-* **Retry Logic:** Employs a Polly `AsyncRetryPolicy` to handle specific exceptions like `RateLimitExceededException` with exponential backoff. [cite: zarichney-api/Server/Services/GitHubService.cs]
+* **Retry Logic:** Employs a Polly `AsyncRetryPolicy` to handle specific exceptions with exponential backoff: [cite: zarichney-api/Server/Services/GitHubService.cs]
+    * `RateLimitExceededException`: When GitHub API rate limits are reached.
+    * `ApiValidationException` with message containing "Update is not a fast forward": Handles race conditions that occur during concurrent branch updates by automatically retrying the entire commit operation.
 * **Configuration:** Requires `GitHubConfig` (registered via `IConfig`) providing repository owner, name, branch, and the essential Personal Access Token (PAT). [cite: zarichney-api/Server/Services/GitHubService.cs, zarichney-api/appsettings.json]
 
 ## 3. Interface Contract & Assumptions

@@ -1,6 +1,6 @@
 # Module/Directory: Server/Services/Sessions
 
-**Last Updated:** 2025-04-03
+**Last Updated:** 2025-04-13
 
 > **Parent:** [`Server/Services`](../README.md)
 
@@ -26,17 +26,20 @@
     * `IScopeContainer` holds the unique `Id` for the current scope and the associated `SessionId`. It's registered with a scoped lifetime in DI.
     * `ScopeHolder` uses `AsyncLocal<IScopeContainer>` to make the current scope available implicitly, which is essential for background tasks that don't have direct access to the `HttpContext`. [cite: zarichney-api/Server/Services/Sessions/SessionModels.cs]
 * **Session Lifecycle:** Sessions are created by `SessionMiddleware` or `SessionManager.CreateSession`. They are refreshed on access (`RefreshSession` method). `SessionManager.EndSession` removes the session from memory and triggers persistence logic (e.g., saving associated `CookbookOrder` via `IOrderRepository` and `LlmConversation` via `ILlmRepository`). `SessionCleanupService` periodically removes sessions that have passed their `ExpiresAt` time. [cite: zarichney-api/Server/Services/Sessions/SessionManager.cs, zarichney-api/Server/Services/Sessions/SessionCleanup.cs]
+* **Reusable Anonymous Sessions:** Provides a mechanism (`FindReusableAnonymousSession`) to find existing anonymous sessions (those without a `UserId` or `ApiKeyValue`) that are not set to expire immediately. This enables background tasks to reuse existing sessions rather than always creating new ones, which is particularly useful for maintaining context across related tasks and ensuring related LLM conversations are logged under the same session structure. [cite: zarichney-api/Server/Services/Sessions/SessionManager.cs]
 * **Configuration:** Uses `SessionConfig` for settings like default session duration, cleanup interval, and maximum concurrent cleanup tasks. [cite: zarichney-api/Server/Services/Sessions/SessionModels.cs, zarichney-api/appsettings.json]
 
 ## 3. Interface Contract & Assumptions
 
 * **Key Public Interfaces:** `ISessionManager`, `IScopeContainer`, `IScopeFactory`.
+  * **New Method:** `FindReusableAnonymousSession()` returns an existing anonymous session (with no `UserId` or `ApiKeyValue`) that is not set to expire immediately, or `null` if none is found. This allows background tasks to reuse existing sessions rather than always creating new ones.
 * **Assumptions:**
     * **Middleware Order:** Assumes `SessionMiddleware` (`UseSessionManagement`) is registered *after* Authentication middleware (`UseAuthentication`, `UseAuthorization`, `UseApiKeyAuth`) in `Program.cs` so that user identity is available when the session middleware runs. [cite: zarichney-api/Program.cs]
     * **DI Registration:** Assumes all services (`ISessionManager`, `IScopeFactory`, `SessionCleanupService`, etc.) are correctly registered with appropriate lifetimes in `Program.cs` via `AddSessionManagement`. [cite: zarichney-api/Server/Services/Sessions/SessionExtensions.cs]
     * **Configuration:** Assumes `SessionConfig` is correctly configured.
     * **Persistence on EndSession:** Assumes that the `EndSession` logic in `SessionManager` correctly identifies and persists necessary related data (like Orders, Conversations) via injected repositories (`IOrderRepository`, `ILlmRepository`). The session data *itself* (besides the persisted related data) is lost. [cite: zarichney-api/Server/Services/Sessions/SessionManager.cs]
     * **Scope Usage:** Assumes consumers (especially background tasks) correctly use the provided `IScopeContainer` to resolve scoped dependencies.
+    * **Reusable Sessions:** When reusing an anonymous session, assumes callers are aware that any existing state in that session (such as conversation history) will be accessible to the new task.
 
 ## 4. Local Conventions & Constraints (Beyond Global Standards)
 
@@ -52,12 +55,18 @@
     3. Inject `ISessionManager`.
     4. Call `await sessionManager.GetSession(sessionId.Value)` (handle potential null `SessionId`).
     5. Access/modify properties on the returned `Session` object.
+* **Finding Reusable Anonymous Sessions:** For background tasks that can work within an existing anonymous session:
+    1. Inject `ISessionManager`.
+    2. Call `sessionManager.FindReusableAnonymousSession()` to locate an existing anonymous session.
+    3. If a session is found, use `sessionManager.AddScopeToSession(scopeId, session.Id)` to add the current scope to it.
+    4. If no session is found, fall back to creating a new session with `await sessionManager.CreateSession(scopeId)`.
+    5. This approach is particularly useful for background tasks that process related data and should share conversation context or GitHub logging paths.
 * **Adding Session State:** Add new properties to the `Session` class in `SessionModels.cs`. Implement logic in `SessionManager.EndSession` if this new state needs to be persisted when the session ends.
 * **Testing:**
     * Mock `ISessionManager`, `IScopeContainer`, `IScopeFactory`.
     * Test `SessionMiddleware` requires mocking `HttpContext`, `RequestDelegate`, and related services.
     * Test `SessionCleanupService` by mocking `ISessionManager` and verifying cleanup logic.
-* **Common Pitfalls / Gotchas:** Accessing `IScopeContainer` from a Singleton service (will likely get an empty/incorrect scope). Forgetting to handle null `SessionId`. Background tasks failing if `ScopeHolder` context isn't properly set up by the task runner (like `BackgroundTaskService`). Assuming session state persists across application restarts. Memory consumption if a very large number of sessions remain active.
+* **Common Pitfalls / Gotchas:** Accessing `IScopeContainer` from a Singleton service (will likely get an empty/incorrect scope). Forgetting to handle null `SessionId`. Background tasks failing if `ScopeHolder` context isn't properly set up by the task runner (like `BackgroundTaskService`). Assuming session state persists across application restarts. Memory consumption if a very large number of sessions remain active. When reusing anonymous sessions, be aware that existing conversation history will be shared across tasks.
 
 ## 6. Dependencies
 

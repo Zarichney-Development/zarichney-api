@@ -43,6 +43,7 @@ public class CookbookOrder : CookbookOrderSubmission
   public OrderStatus Status { get; set; } = OrderStatus.Submitted;
   public bool RequiresPayment { get; set; }
   public Customer Customer { get; set; } = null!;
+  public string? LlmConversationId { get; set; }
 
   public CookbookOrder(Customer customer, CookbookOrderSubmission submission, List<string> recipeList)
   {

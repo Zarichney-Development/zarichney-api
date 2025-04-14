@@ -11,6 +11,23 @@ using ILogger = Serilog.ILogger;
 
 namespace Zarichney.Server.Services.AI;
 
+/// <summary>
+/// A generic result class that contains both the primary data and the conversation ID.
+/// </summary>
+/// <typeparam name="T">The type of the data being returned.</typeparam>
+public class LlmResult<T>
+{
+  /// <summary>
+  /// The primary data returned from the LLM interaction.
+  /// </summary>
+  public required T Data { get; init; }
+  
+  /// <summary>
+  /// The ID of the conversation associated with this interaction.
+  /// </summary>
+  public required string ConversationId { get; init; }
+}
+
 public class LlmConfig : IConfig
 {
   public string ModelName { get; init; } = LlmModels.Gpt4Omini;
@@ -36,7 +53,7 @@ public interface ILlmService
   Task<string> GetCompletionContent(string userPrompt, string? conversationId = null,
     ChatCompletionOptions? options = null, int? retryCount = null);
 
-  Task<string> GetCompletionContent(List<ChatMessage> messages, string? conversationId = null,
+  Task<LlmResult<string>> GetCompletionContent(List<ChatMessage> messages, string? conversationId = null,
     ChatCompletionOptions? options = null, int? retryCount = null);
 
   Task<(bool isComplete, RunStatus status)> GetRun(string threadId, string runId);
@@ -45,7 +62,7 @@ public interface ILlmService
   Task DeleteAssistant(string assistantId);
   Task DeleteThread(string threadId);
 
-  Task<T> CallFunction<T>(string systemPrompt, string userPrompt, FunctionDefinition function,
+  Task<LlmResult<T>> CallFunction<T>(string systemPrompt, string userPrompt, FunctionDefinition function,
     string? conversationId = null, int? retryCount = null);
 
   Task<(string, T)> GetRunAction<T>(string threadId, string runId, string functionName);
@@ -303,7 +320,7 @@ public class LlmService(
     }
   }
 
-  public async Task<T> CallFunction<T>(
+  public async Task<LlmResult<T>> CallFunction<T>(
     string systemPrompt,
     string userPrompt,
     FunctionDefinition function,
@@ -327,7 +344,7 @@ public class LlmService(
   }
 
 
-  private async Task<T> CallFunction<T>(
+  private async Task<LlmResult<T>> CallFunction<T>(
     FunctionDefinition function,
     List<ChatMessage> messages,
     string? conversationId = null,
@@ -350,7 +367,7 @@ public class LlmService(
     );
   }
 
-  private async Task<T> CallFunction<T>(
+  private async Task<LlmResult<T>> CallFunction<T>(
     List<ChatMessage> messages,
     ChatTool functionTool,
     string? conversationId = null,
@@ -413,7 +430,11 @@ public class LlmService(
         // Store the message in the session
         await sessionManager.AddMessage(scope.Id, conversationId, prompt, chatCompletion, result);
 
-        return result;
+        return new LlmResult<T>
+        {
+          Data = result,
+          ConversationId = conversationId
+        };
       }
       catch (Exception e)
       {
@@ -434,10 +455,11 @@ public class LlmService(
     int? retryCount = null)
   {
     var messages = new List<ChatMessage> { new UserChatMessage(userPrompt) };
-    return await GetCompletionContent(messages, conversationId, options, retryCount);
+    var result = await GetCompletionContent(messages, conversationId, options, retryCount);
+    return result.Data;
   }
 
-  public async Task<string> GetCompletionContent(
+  public async Task<LlmResult<string>> GetCompletionContent(
     List<ChatMessage> messages,
     string? conversationId = null,
     ChatCompletionOptions? options = null,
@@ -461,7 +483,11 @@ public class LlmService(
     // Store the message in the session
     await sessionManager.AddMessage(scope.Id, conversationId, prompt, completion);
 
-    return response;
+    return new LlmResult<string>
+    {
+      Data = response,
+      ConversationId = conversationId
+    };
   }
 
   private async Task<List<ChatMessage>> GetConversation(string conversationId)

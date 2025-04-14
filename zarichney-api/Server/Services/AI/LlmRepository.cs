@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using OpenAI.Chat;
+using Zarichney.Server.Services.Emails;
 using Zarichney.Server.Services.GitHub;
 using Zarichney.Server.Services.Sessions;
 
@@ -145,7 +146,19 @@ public class LlmRepository(IGitHubService githubService) : ILlmRepository
 
   public async Task WriteConversationAsync(LlmConversation conversation, Session session)
   {
-    var baseDir = $"prompts/session_{session.CreatedAt:yyyyMMdd-HHmmss}_{session.Id.ToString()[..8]}";
+    var baseDir = $"prompts/session_{session.CreatedAt:yyyyMMdd-HHmmss}_";
+
+    var userEmail = session.Order?.Customer.Email;
+
+    if (!string.IsNullOrEmpty(userEmail))
+    {
+      baseDir += $"{EmailService.MakeSafeFileName(userEmail)}";
+    }
+    else
+    {
+      baseDir += $"{session.Id.ToString()[..8]}";
+    }
+
     if (!string.IsNullOrEmpty(conversation.PromptCatalogName))
     {
       baseDir += $"/{conversation.PromptCatalogName}";
@@ -173,7 +186,7 @@ public class LlmRepository(IGitHubService githubService) : ILlmRepository
       );
     }
 
-    const string convMetaFilename = "conversation.json";
+    const string convMetaFilename = "conversation.metadata.json";
     var convMetaJson = JsonSerializer.Serialize(
       new
       {

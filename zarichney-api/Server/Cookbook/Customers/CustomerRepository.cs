@@ -1,3 +1,4 @@
+using Zarichney.Server.Services.Emails;
 using Zarichney.Server.Services.FileSystem;
 
 namespace Zarichney.Server.Cookbook.Customers;
@@ -15,7 +16,7 @@ public class CustomerFileRepository(
 {
   public async Task<Customer?> GetCustomerByEmail(string email)
   {
-    var safeFileName = MakeSafeFileName(email);
+    var safeFileName = EmailService.MakeSafeFileName(email);
 
     var customer = await fileService.ReadFromFile<Customer?>(
       Path.Combine(config.OutputDirectory),
@@ -27,7 +28,7 @@ public class CustomerFileRepository(
 
   public void SaveCustomer(Customer customer)
   {
-    var safeFileName = MakeSafeFileName(customer.Email);
+    var safeFileName = EmailService.MakeSafeFileName(customer.Email);
     
     fileService.WriteToFileAsync(
       Path.Combine(config.OutputDirectory),
@@ -36,9 +37,4 @@ public class CustomerFileRepository(
     );
   }
 
-  private static string MakeSafeFileName(string email)
-  {
-    // convert "somebody@gmail.com" => "somebody_gmail_com"
-    return email.Replace("@", "_at_").Replace(".", "_dot_");
-  }
 }

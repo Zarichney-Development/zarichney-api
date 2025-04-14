@@ -1,6 +1,6 @@
 # Module/Directory: Server/Services/AI
 
-**Last Updated:** 2025-04-03
+**Last Updated:** 2025-04-12
 
 > **Parent:** [`Server/Services`](../README.md)
 
@@ -31,6 +31,9 @@
 ## 3. Interface Contract & Assumptions
 
 * **Key Public Interfaces:** `ILlmService`, `ITranscribeService`, `ILlmRepository`, `PromptBase`.
+* **Return Types:**
+    * `CallFunction<T>` and `GetCompletionContent(List<ChatMessage>...)` now return an `LlmResult<T>` object containing both the primary `Data` and the `ConversationId`. This facilitates multi-turn conversations managed by the caller without requiring manual history reconstruction.
+    * The single-prompt overload `GetCompletionContent(string userPrompt...)` continues to return just the completion string for backward compatibility.
 * **Assumptions:**
     * **API Keys:** Valid and correctly configured OpenAI API keys are essential (`LlmConfig.ApiKey`). [cite: zarichney-api/Server/Services/AI/LlmService.cs]
     * **Network:** Reliable network connectivity to OpenAI API endpoints is required.

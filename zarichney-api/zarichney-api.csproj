@@ -89,13 +89,13 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="Docs/AwsMaintenance.md">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
+      <Content Include="Server/Services/Auth/Migrations/**" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="Server/Services/Auth/Migrations/**" CopyToOutputDirectory="PreserveNewest" />
+      <None Update="Docs\Maintenance\AmazonWebServices.md">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

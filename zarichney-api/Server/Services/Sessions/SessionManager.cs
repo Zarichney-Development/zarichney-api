@@ -23,6 +23,7 @@ public interface ISessionManager
   Task<Session> GetSessionByOrder(string orderId, Guid scopeId);
   Task<Session> GetSessionByUserId(string userId, Guid scopeId);
   Task<Session> GetSessionByApiKey(string apiKey, Guid scopeId);
+  Session? FindReusableAnonymousSession();
   void AddScopeToSession(Session session, Guid scopeId);
   void RemoveScopeFromSession(Guid scopeId, Session? session = null);
   Task AddOrder(IScopeContainer scope, CookbookOrder order);
@@ -300,6 +301,27 @@ public class SessionManager(
     RefreshSession(session);
   }
 
+  public async Task<Session> AddScopeToSession(Guid scopeId, Guid sessionId)
+  {
+    if (scopeId == Guid.Empty)
+    {
+      throw new ArgumentException("ScopeId cannot be empty", nameof(scopeId));
+    }
+
+    if (sessionId == Guid.Empty)
+    {
+      throw new ArgumentException("SessionId cannot be empty", nameof(sessionId));
+    }
+
+    if (!Sessions.TryGetValue(sessionId, out var session))
+    {
+      throw new KeyNotFoundException($"Session {sessionId} not found");
+    }
+
+    AddScopeToSession(session, scopeId);
+    return await Task.FromResult(session);
+  }
+
   public void RemoveScopeFromSession(Guid scopeId, Session? session = null)
   {
     if (scopeId == Guid.Empty)
@@ -457,6 +479,26 @@ public class SessionManager(
     }
 
     return conversation;
+  }
+
+  public Session? FindReusableAnonymousSession()
+  {
+    logger.LogDebug("Attempting to find a reusable anonymous session...");
+    
+    var reusableSession = Sessions.Values.FirstOrDefault(s =>
+        s.UserId == null &&
+        s.ApiKeyValue == null &&
+        s.ExpiresImmediately == false);
+
+    if (reusableSession != null)
+    {
+      logger.LogInformation("Found reusable anonymous session {SessionId}", reusableSession.Id);
+      RefreshSession(reusableSession);
+      return reusableSession;
+    }
+    
+    logger.LogInformation("No reusable anonymous session found.");
+    return null;
   }
 
   private void RefreshSession(Session session)

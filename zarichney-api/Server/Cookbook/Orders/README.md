@@ -1,6 +1,6 @@
 # Module/Directory: Server/Cookbook/Orders
 
-**Last Updated:** 2025-04-03
+**Last Updated:** 2025-04-12
 
 > **Parent:** [`Server/Cookbook`](../README.md)
 
@@ -25,6 +25,7 @@
 
 * **Core Component:** `OrderService` implements `IOrderService` and contains the primary business logic for order processing. [cite: zarichney-api/Server/Cookbook/Orders/OrderService.cs]
 * **Orchestration Flow:** `OrderService.ProcessSubmission` typically initiates the process. It may queue the main processing logic (`OrderService.ProcessOrder`) via `IBackgroundWorker`. `ProcessOrder` then coordinates calls to `ICustomerService` (credits), `IRecipeService` (get/synthesize recipes), `PdfCompiler` (generate PDF), and `IEmailService` (send notifications/cookbook).
+* **AI Interaction:** `OrderService.GetOrderRecipes` calls `ILlmService.CallFunction` to generate recipe lists and now captures the `conversationId` from the returned `LlmResult<T>`. This ID is stored in `CookbookOrder.LlmConversationId` to enable subsequent AI interactions to leverage existing conversation history. [cite: zarichney-api/Server/Cookbook/Orders/OrderService.cs]
 * **Data Persistence:** `OrderFileRepository` implements `IOrderRepository` using `IFileService` to store order details (`Order.json`), individual synthesized recipe markdown files (`recipes/*.md`), the combined cookbook markdown (`Cookbook.md`), and the final PDF (`Cookbook.pdf`) within a directory named after the `OrderId` under `Data/Orders/`. [cite: zarichney-api/Server/Cookbook/Orders/OrderRepository.cs]
 * **State Management:** Order state is tracked via the `OrderStatus` enum within the `CookbookOrder` object and persisted to `Order.json`. Session management (`ISessionManager`) is used to associate processing tasks with specific order contexts, especially during background execution. [cite: zarichney-api/Server/Cookbook/Orders/OrderModels.cs, zarichney-api/Server/Cookbook/Orders/OrderService.cs, zarichney-api/Server/Services/Sessions/SessionManager.cs]
 * **Background Processing:** Long-running tasks like recipe synthesis and PDF compilation are typically offloaded to background tasks via `IBackgroundWorker` to keep API responses fast. [cite: zarichney-api/Server/Cookbook/Orders/OrderService.cs, zarichney-api/Server/Services/BackgroundWorker.cs]
@@ -40,6 +41,8 @@
     * `EmailCookbook(orderId)`: Sends the existing PDF via email. Assumes order and PDF exist. Postcondition: Email sent via `IEmailService`.
     * `GetPdf(orderId)`: Retrieves PDF bytes. Assumes PDF exists.
     * `QueueOrderProcessing(orderId)`: Queues an order for background processing. Assumes order exists. Postcondition: Background task queued via `IBackgroundWorker` that will resolve `IOrderService` from a new scope and call `ProcessOrder(orderId)`.
+* **Data Models:**
+    * `CookbookOrder` now includes a `LlmConversationId` property that stores the conversation ID associated with the initial recipe list generation. This enables multi-turn AI interactions that leverage existing conversation history. [cite: zarichney-api/Server/Cookbook/Orders/OrderModels.cs]
 * **Assumptions:**
     * **Dependency Functionality:** Assumes all injected services (`ICustomerService`, `IRecipeService`, `IEmailService`, `IOrderRepository`, `PdfCompiler`, `IBackgroundWorker`, `ISessionManager`, `ILlmService`) are correctly implemented and functional.
     * **Configuration:** Assumes `OrderConfig` and configurations for dependent services are correctly provided.

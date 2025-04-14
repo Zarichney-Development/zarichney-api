@@ -1,6 +1,6 @@
 # Module/Directory: Server/Services/BackgroundTasks
 
-**Last Updated:** 2025-04-03
+**Last Updated:** 2025-04-13
 
 > **Parent:** [`Server/Services`](../README.md)
 
@@ -16,22 +16,25 @@
 
 ## 2. Architecture & Key Concepts
 
-* **Queue Implementation:** Uses `System.Threading.Channels.Channel<Func<IScopeContainer, CancellationToken, Task>>` within the `BackgroundWorker` class as a thread-safe, bounded in-memory queue. The capacity and behavior when full (currently `BoundedChannelFullMode.Wait`) are set during instantiation. [cite: zarichney-api/Server/Services/BackgroundWorker.cs]
-* **Work Item Definition:** Background tasks are represented as delegates: `Func<IScopeContainer, CancellationToken, Task>`. This signature requires the task logic to accept an `IScopeContainer` (for resolving scoped services) and a `CancellationToken`.
+* **Queue Implementation:** Uses `System.Threading.Channels.Channel<BackgroundWorkItem>` within the `BackgroundWorker` class as a thread-safe, bounded in-memory queue. The `BackgroundWorkItem` record combines the work delegate with an optional parent `Session`. The capacity and behavior when full (currently `BoundedChannelFullMode.Wait`) are set during instantiation. [cite: zarichney-api/Server/Services/BackgroundWorker.cs]
+* **Work Item Definition:** Background tasks are represented as delegates: `Func<IScopeContainer, CancellationToken, Task>`, optionally associated with a parent `Session`. This signature requires the task logic to accept an `IScopeContainer` (for resolving scoped services) and a `CancellationToken`.
 * **Hosted Service Runner:** `BackgroundTaskService` inherits from `BackgroundService` and runs continuously for the application's lifetime. Its `ExecuteAsync` method waits for items from the `IBackgroundWorker`'s channel. [cite: zarichney-api/Server/Services/BackgroundWorker.cs]
 * **Scope & Session Management:** Before executing a dequeued work item, `BackgroundTaskService` performs these steps: [cite: zarichney-api/Server/Services/BackgroundWorker.cs]
     1. Creates a new DI scope using `IScopeFactory`.
     2. Sets this scope in an `AsyncLocal` variable (`ScopeHolder.CurrentScope`) so it's available implicitly to services within the task's execution context.
-    3. Creates a new `Session` using `ISessionManager`, associating it with the scope ID.
+    3. If a parent session was provided with the work item, adds the new scope to that existing session. Otherwise, creates a new `Session` using `ISessionManager`.
     4. Executes the work item delegate, passing the `IScopeContainer` and `CancellationToken`.
     5. Ensures the session is ended (`ISessionManager.EndSession`) and the `AsyncLocal` scope is cleared in a `finally` block.
 
 ## 3. Interface Contract & Assumptions
 
 * **Key Public Interfaces:** `IBackgroundWorker` with its `QueueBackgroundWorkAsync` method is the primary interface for producers wanting to queue tasks.
+    * `QueueBackgroundWorkAsync(Func<IScopeContainer, CancellationToken, Task> workItem, Session? parentSession = null)`: Queues a work item with an optional parent session. If provided, the background task will execute within the context of this session.
+    * `DequeueAsync(CancellationToken cancellationToken)`: Returns the next work item and its associated parent session (if any).
 * **Assumptions:**
     * **Registration:** Assumes `IBackgroundWorker` (usually `BackgroundWorker` as singleton) and `BackgroundTaskService` (`AddHostedService`) are correctly registered in `Program.cs`. Assumes `IScopeFactory` and `ISessionManager` are also registered (typically as singletons). [cite: zarichney-api/Program.cs, zarichney-api/Server/Services/Sessions/SessionExtensions.cs]
     * **Work Item Implementation:** Assumes the `Func` delegate provided to `QueueBackgroundWorkAsync` correctly uses the passed `IScopeContainer` to resolve any required *scoped* services (like DbContexts or services depending on `IScopeContainer`). Failure to do so can lead to incorrect service lifetimes or errors.
+    * **Parent Session:** When a parent session is provided, assumes the session is still valid when the work item is processed. If the session has been ended or expired, the task will fallback to creating a new session.
     * **Channel Capacity:** Assumes the configured channel capacity is adequate. If the queue becomes full and `BoundedChannelFullMode.Wait` is used, producer threads calling `QueueBackgroundWorkAsync` will block until space is available.
     * **Application Lifetime:** Assumes the application runs long enough for queued tasks to be processed. Tasks in the queue are lost if the application shuts down unexpectedly.
 
@@ -47,11 +50,21 @@
     1. Inject `IBackgroundWorker` into the service that needs to offload work.
     2. Define the work to be done as an `async` lambda or method matching the `Func` signature.
     3. Inside the lambda/method, use the provided `IScopeContainer` parameter (e.g., `scope.GetService<IMyScopedService>()`) to resolve necessary scoped services.
-    4. Call `_worker.QueueBackgroundWorkAsync(async (scope, ct) => { /* your logic using scope */ });`. [cite: zarichney-api/Server/Cookbook/Recipes/RecipeRepository.cs]
+    4. Call `_worker.QueueBackgroundWorkAsync(async (scope, ct) => { /* your logic using scope */ });` for a new independent session. [cite: zarichney-api/Server/Cookbook/Recipes/RecipeRepository.cs]
+    5. Alternatively, to run the task within an existing session context, pass the current session: `_worker.QueueBackgroundWorkAsync(async (scope, ct) => { /* your logic using scope */ }, existingSession);`
+* **Use Cases for Parent Session:**
+    * **Maintaining Context:** When background work should have access to the same conversation histories, order data, or other session-specific context as the request that initiated it.
+    * **GitHub Log Continuity:** Ensures related LLM interactions are logged under the same session directory structure in GitHub.
+    * **Session-Scoped Resource Sharing:** Allows background tasks to share resources (like cached data) that are scoped to the parent session.
 * **Testing:**
     * **`BackgroundTaskService`:** Can be tested by mocking `IBackgroundWorker`, `IScopeFactory`, and `ISessionManager` to verify that it dequeues items, creates scopes/sessions, executes the delegate, and cleans up correctly.
-    * **Consumers (Producers):** Test services that *queue* work by mocking `IBackgroundWorker` and verifying that `QueueBackgroundWorkAsync` is called with the expected delegate.
-* **Common Pitfalls / Gotchas:** Forgetting to use the `IScopeContainer` parameter inside the background task delegate to resolve scoped services. Infinite waits if the channel capacity is too small and the producer blocks. Unhandled exceptions within the work delegate (logged by `BackgroundTaskService` but won't automatically retry). Losing queued tasks on application shutdown.
+    * **Consumers (Producers):** Test services that *queue* work by mocking `IBackgroundWorker` and verifying that `QueueBackgroundWorkAsync` is called with the expected delegate and parent session (when applicable).
+* **Common Pitfalls / Gotchas:** 
+    * Forgetting to use the `IScopeContainer` parameter inside the background task delegate to resolve scoped services. 
+    * Passing an invalid or expired session as the parent session.
+    * Infinite waits if the channel capacity is too small and the producer blocks. 
+    * Unhandled exceptions within the work delegate (logged by `BackgroundTaskService` but won't automatically retry). 
+    * Losing queued tasks on application shutdown.
 
 ## 6. Dependencies
 

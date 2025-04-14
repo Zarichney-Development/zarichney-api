@@ -1,6 +1,6 @@
 # Module/Directory: Server/Cookbook/Prompts
 
-**Last Updated:** 2025-04-03
+**Last Updated:** 2025-04-13
 
 > **Parent:** [`Server/Cookbook`](../README.md)
 
@@ -8,7 +8,7 @@
 
 * **What it is:** This directory contains specific prompt definitions used to interact with the AI Language Models (LLMs) for tasks related to the Cookbook module. Each class encapsulates the instructions, input formatting, and expected output structure for a distinct AI operation.
 * **Key Responsibilities:**
-    * Defining system prompts (instructions) for various AI tasks like cleaning recipe data (`CleanRecipePrompt`), ranking recipe relevance (`RankRecipePrompt`), choosing relevant URLs (`ChooseRecipesPrompt`), generating recipe index titles/aliases (`RecipeNamerPrompt`), synthesizing new recipes (`SynthesizeRecipePrompt`), analyzing synthesized recipes (`AnalyzeRecipePrompt`), and generating initial recipe lists for orders (`ProcessOrderPrompt`). [cite: zarichney-api/Server/Cookbook/Prompts/CleanRecipe.cs, zarichney-api/Server/Cookbook/Prompts/RankRecipe.cs, zarichney-api/Server/Cookbook/Prompts/ChooseRecipes.cs, zarichney-api/Server/Cookbook/Prompts/RecipeNamer.cs, zarichney-api/Server/Cookbook/Prompts/SynthesizeRecipe.cs, zarichney-api/Server/Cookbook/Prompts/AnalyzeRecipe.cs, zarichney-api/Server/Cookbook/Prompts/ProcessOrder.cs]
+    * Defining system prompts (instructions) for various AI tasks like cleaning recipe data (`CleanRecipePrompt`), ranking recipe relevance (`RankRecipePrompt`), choosing relevant URLs (`ChooseRecipesPrompt`), generating recipe index titles/aliases (`RecipeNamerPrompt`), synthesizing new recipes (`SynthesizeRecipePrompt`), analyzing synthesized recipes (`AnalyzeRecipePrompt`), generating alternative search queries (`GetAlternativeQueryPrompt` - which returns a structured `AlternativeQueryResult` with a `NewQuery` property), and generating initial recipe lists for orders (`ProcessOrderPrompt`). [cite: zarichney-api/Server/Cookbook/Prompts/CleanRecipe.cs, zarichney-api/Server/Cookbook/Prompts/RankRecipe.cs, zarichney-api/Server/Cookbook/Prompts/ChooseRecipes.cs, zarichney-api/Server/Cookbook/Prompts/RecipeNamer.cs, zarichney-api/Server/Cookbook/Prompts/SynthesizeRecipe.cs, zarichney-api/Server/Cookbook/Prompts/AnalyzeRecipe.cs, zarichney-api/Server/Cookbook/Prompts/GetAlternativeQuery.cs, zarichney-api/Server/Cookbook/Prompts/ProcessOrder.cs]
     * Providing methods (`GetUserPrompt`) to format application data (like `Recipe` or `CookbookOrder` objects) into the text input expected by the AI model for a specific task.
     * Defining the expected JSON output structure using function definitions (`GetFunction`) for tasks requiring structured responses from the AI (leveraging OpenAI's function calling feature). [cite: zarichney-api/Server/Config/PromptBase.cs]
 * **Why it exists:** To centralize and manage the complex prompts required for AI interactions, separating them from the core service logic. This makes prompts easier to read, modify, test, and maintain, especially as AI interactions become more sophisticated.

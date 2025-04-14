@@ -14,8 +14,8 @@ public interface IRecipeService
 {
   Task<List<Recipe>> GetRecipes(
     string requestedRecipeName,
-    CookbookOrder? cookbookOrder = null,
     int? acceptableScore = null,
+    string? conversationId = null,
     CancellationToken ct = default
   );
 
@@ -41,7 +41,7 @@ public class RecipeService(
   RankRecipePrompt rankRecipePrompt,
   SynthesizeRecipePrompt synthesizeRecipePrompt,
   AnalyzeRecipePrompt analyzeRecipePrompt,
-  ProcessOrderPrompt processOrderPrompt,
+  GetAlternativeQueryPrompt getAlternativeQueryPrompt,
   ISessionManager sessionManager,
   ILogger<RecipeService> logger,
   IScopeContainer scope
@@ -49,8 +49,8 @@ public class RecipeService(
 {
   public async Task<List<Recipe>> GetRecipes(
     string requestedRecipeName,
-    CookbookOrder? cookbookOrder = null,
     int? acceptableScore = null,
+    string? conversationId = null,
     CancellationToken ct = default
   )
   {
@@ -99,7 +99,7 @@ public class RecipeService(
       }
 
       // Request for new query to scrap with
-      searchQuery = await GetSearchQueryForRecipe(requestedRecipeName, previousAttempts, cookbookOrder);
+      searchQuery = await GetSearchQueryForRecipe(requestedRecipeName, previousAttempts, conversationId);
       searchQuery = searchQuery.Trim().ToLowerInvariant();
 
       logger.LogInformation(
@@ -118,89 +118,28 @@ public class RecipeService(
   }
 
   private async Task<string> GetSearchQueryForRecipe(string recipeName, List<string> previousAttempts,
-    CookbookOrder? cookbookOrder = null)
+    string? conversationId = null)
   {
-    var primaryApproach = previousAttempts.Count < Math.Ceiling(config.MaxNewRecipeNameAttempts / 2.0);
-
-    var messages = new List<ChatMessage>();
-
-    // For the first half of the attempts, request for alternatives
-    if (primaryApproach)
+    if (string.IsNullOrEmpty(conversationId))
     {
-      // todo: change how this works. Use the session manager to retrieve the conversation instead of rebuilding it here
-      messages.Add(new SystemChatMessage(processOrderPrompt.SystemPrompt));
-
-      if (cookbookOrder != null)
-      {
-        messages.AddRange([
-            new UserChatMessage(processOrderPrompt.GetUserPrompt(cookbookOrder)),
-            new SystemChatMessage(string.Join(", ", cookbookOrder.RecipeList))
-          ]
-        );
-      }
-
-      messages.Add(new UserChatMessage(
-        $"""
-         Thank you. The recipe name "{recipeName}" didn't yield any search results, likely due to its uniqueness or obscurity.
-         Please provide a more generic search query to retrieve similar recipes. With each failed attempt, generalize the search query.
-         Only respond with a new recipe name.
-         """));
-
-      foreach (var previousAttempt in previousAttempts.Where(previousAttempt => previousAttempt != recipeName))
-      {
-        messages.AddRange([
-          new SystemChatMessage(previousAttempt),
-          new UserChatMessage(
-            $"Sorry, that search also returned no matches. Suggest a query that is more ideal for finding relevant results but is still is relevant to '{recipeName}'.")
-        ]);
-      }
-    }
-    else
-    {
-      // For the second half of attempts, aggressively generalize the search query
-      // todo: move this to the prompt folder
-      messages.AddRange([
-        new SystemChatMessage(
-          """
-          <SystemPrompt>
-              <Context>Online Recipe Searching</Context>
-              <Goal>Your task is to provide an ideal search query that aims to returns search results yielding recipes that forms the basis of the user's requested recipe.</Goal>
-              <Input>A unique recipe name that does not return search results.</Input>
-              <Output>Respond with only the new search query and nothing else.</Output>
-              <Examples>
-                  <Example>
-                      <Input>Pan-Seared Partridge with Herb Infusion</Input>
-                      <Output>Partridge</Output>
-                  </Example>
-                  <Example>
-                      <Input>Luigi’s Veggie Power-Up Pizza</Input>
-                      <Output>Vegetable Pizza</Output>
-                  </Example>
-                  <Example>
-                      <Input>Herb-Crusted Venison with Seasonal Vegetables</Input>
-                      <Output>Venison</Output>
-                  </Example>
-              </Examples>
-              <Rules>
-                  <Rule>Omit Previous Attempts, dont respond with something already tried.</Rule>
-                  <Rule>The more attempts made, the more generalized the search query should be</Rule>
-                  <Rule>As part of your search query response suggestion, do not append 'Recipe' or 'Recipes'.</Rule>
-              </Rules>
-          </SystemPrompt>
-          """
-        ),
-        new UserChatMessage(
-          $"""
-           Recipe: {recipeName}
-           Previous Attempts: {string.Join(", ", previousAttempts)}
-           """
-        )
-      ]);
+      logger.LogWarning("[{RecipeName}] - Cannot continue conversation without a conversationId", recipeName);
+      // Fallback to the original recipe name if no conversation ID is provided
+      return recipeName;
     }
 
-    var result = await llmService.GetCompletionContent(messages);
+    // Create the user prompt string using the injected prompt
+    var userPrompt = getAlternativeQueryPrompt.GetUserPrompt(recipeName, previousAttempts);
 
-    return result.Trim('"').Trim();
+    // Call the LLM service with function calling, passing the conversationId
+    var llmResult = await llmService.CallFunction<AlternativeQueryResult>(
+      getAlternativeQueryPrompt.SystemPrompt,
+      userPrompt,
+      getAlternativeQueryPrompt.GetFunction(),
+      conversationId
+    );
+
+    // Extract the result from the structured response
+    return llmResult.Data.NewQuery.Trim();
   }
 
   public async Task<List<Recipe>> GetRecipes(
@@ -353,11 +292,14 @@ public class RecipeService(
 
   private async Task<RelevancyResult> RankRecipe(Recipe recipe, string query, string? requestedRecipeName)
   {
-    var result = await llmService.CallFunction<RelevancyResult>(
+    var llmResult = await llmService.CallFunction<RelevancyResult>(
       rankRecipePrompt.SystemPrompt,
       rankRecipePrompt.GetUserPrompt(recipe, query, requestedRecipeName),
       rankRecipePrompt.GetFunction()
     );
+
+    // Extract the RelevancyResult data from the LlmResult
+    var result = llmResult.Data;
 
     result.Query = query;
 

@@ -84,10 +84,13 @@ public class OrderService(
       var customer = await customerService.GetOrCreateCustomer(submission.Email);
 
       // Generate the requested recipes from LLM
-      var cookbookRecipeList = await GetOrderRecipes(submission);
+      var (cookbookRecipeList, conversationId) = await GetOrderRecipes(submission);
 
       // Create the order
-      var order = new CookbookOrder(customer, submission, cookbookRecipeList);
+      var order = new CookbookOrder(customer, submission, cookbookRecipeList)
+      {
+        LlmConversationId = conversationId
+      };
 
       // Save to session
       await sessionManager.AddOrder(scope, order);
@@ -248,16 +251,16 @@ public class OrderService(
   /// Should be using the provided request, and/or generates the list based on the user's input.
   /// </summary>
   /// <param name="submission"></param>
-  /// <returns></returns>
-  private async Task<List<string>> GetOrderRecipes(CookbookOrderSubmission submission)
+  /// <returns>A list of recipe names and the LLM conversation ID in a tuple</returns>
+  private async Task<(List<string> recipeList, string conversationId)> GetOrderRecipes(CookbookOrderSubmission submission)
   {
-    var result = await llmService.CallFunction<RecipeProposalResult>(
+    var llmResult = await llmService.CallFunction<RecipeProposalResult>(
       processOrderPrompt.SystemPrompt,
       processOrderPrompt.GetUserPrompt(submission),
       processOrderPrompt.GetFunction()
     );
 
-    return result.Recipes;
+    return (llmResult.Data.Recipes, llmResult.ConversationId);
   }
 
   private async Task ProcessRecipesAsync(CookbookOrder order, bool force = false)
@@ -376,7 +379,11 @@ public class OrderService(
   {
     try
     {
-      return await recipeService.GetRecipes(recipeName, order, ct: ct);
+      // Retrieve the conversation ID from the order
+      var conversationId = order.LlmConversationId;
+      
+      // Pass the conversation ID to the recipe service
+      return await recipeService.GetRecipes(recipeName, acceptableScore: null, conversationId: conversationId, ct: ct);
     }
     catch (NoRecipeException e)
     {

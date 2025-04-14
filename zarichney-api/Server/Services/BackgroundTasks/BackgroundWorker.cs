@@ -4,12 +4,17 @@ using Zarichney.Server.Services.Sessions;
 namespace Zarichney.Server.Services.BackgroundTasks;
 
 /// <summary>
+/// Internal record to hold both the work item delegate and the optional parent session
+/// </summary>
+public record BackgroundWorkItem(Func<IScopeContainer, CancellationToken, Task> WorkItem, Session? ParentSession);
+
+/// <summary>
 /// Interface for queuing and managing background work items
 /// </summary>
 public interface IBackgroundWorker
 {
-  void QueueBackgroundWorkAsync(Func<IScopeContainer, CancellationToken, Task> workItem);
-  Task<Func<IScopeContainer, CancellationToken, Task>> DequeueAsync(CancellationToken cancellationToken);
+  void QueueBackgroundWorkAsync(Func<IScopeContainer, CancellationToken, Task> workItem, Session? parentSession = null);
+  Task<BackgroundWorkItem> DequeueAsync(CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -17,7 +22,7 @@ public interface IBackgroundWorker
 /// </summary>
 public class BackgroundWorker : IBackgroundWorker
 {
-  private readonly Channel<Func<IScopeContainer, CancellationToken, Task>> _queue;
+  private readonly Channel<BackgroundWorkItem> _queue;
 
   public BackgroundWorker(int capacity)
   {
@@ -25,21 +30,23 @@ public class BackgroundWorker : IBackgroundWorker
     {
       FullMode = BoundedChannelFullMode.Wait
     };
-    _queue = Channel.CreateBounded<Func<IScopeContainer, CancellationToken, Task>>(options);
+    _queue = Channel.CreateBounded<BackgroundWorkItem>(options);
   }
 
-  public void QueueBackgroundWorkAsync(Func<IScopeContainer, CancellationToken, Task> workItem)
+  public void QueueBackgroundWorkAsync(Func<IScopeContainer, CancellationToken, Task> workItem,
+    Session? parentSession = null)
   {
     ArgumentNullException.ThrowIfNull(workItem);
 
-    var valueTask = _queue.Writer.WriteAsync(workItem);
+    var itemToQueue = new BackgroundWorkItem(workItem, parentSession);
+    var valueTask = _queue.Writer.WriteAsync(itemToQueue);
     if (valueTask.IsCompleted)
     {
       valueTask.GetAwaiter().GetResult();
     }
   }
 
-  public async Task<Func<IScopeContainer, CancellationToken, Task>> DequeueAsync(
+  public async Task<BackgroundWorkItem> DequeueAsync(
     CancellationToken cancellationToken)
   {
     return await _queue.Reader.ReadAsync(cancellationToken);
@@ -69,7 +76,7 @@ public class BackgroundTaskService(
     {
       try
       {
-        var workItem = await _worker.DequeueAsync(stoppingToken);
+        var backgroundWorkItem = await _worker.DequeueAsync(stoppingToken);
 
         var scope = _scopeFactory.CreateScope();
         var scopeId = scope.Id;
@@ -77,13 +84,21 @@ public class BackgroundTaskService(
         // Set the current scope in the AsyncLocal context
         ScopeHolder.CurrentScope = scope;
 
-        // Create session for this background work
-        var session = await _sessionManager.CreateSession(scopeId);
-        scope.SessionId = session.Id;
+        // Use the parent session if provided, otherwise create a new session
+        if (backgroundWorkItem.ParentSession != null)
+        {
+          _sessionManager.AddScopeToSession(backgroundWorkItem.ParentSession, scopeId);
+          scope.SessionId = backgroundWorkItem.ParentSession.Id;
+        }
+        else
+        {
+          var session = await _sessionManager.CreateSession(scopeId);
+          scope.SessionId = session.Id;
+        }
 
         try
         {
-          await workItem(scope, stoppingToken);
+          await backgroundWorkItem.WorkItem(scope, stoppingToken);
         }
         finally
         {

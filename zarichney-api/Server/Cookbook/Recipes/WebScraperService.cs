@@ -19,7 +19,7 @@ public class WebscraperConfig : IConfig
   public int MaxParallelSites { get; init; } = 5;
   public int MaxWaitTimeMs { get; init; } = 10000;
   public int MaxParallelPages { get; init; } = 2;
-  public int ErrorBuffer { get; init; } = 5; // in case of scraping errors, can fallback up to this amount
+  public int ErrorBuffer { get; init; } = 5; // in case of scraping errors, can fall back up to this amount
 }
 
 public class WebScraperService(
@@ -208,7 +208,7 @@ public class WebScraperService(
 
     try
     {
-      var result = await llmService.CallFunction<SearchResult>(
+      var llmResult = await llmService.CallFunction<SearchResult>(
         chooseRecipesPrompt.SystemPrompt,
         chooseRecipesPrompt.GetUserPrompt(
           query,
@@ -218,6 +218,9 @@ public class WebScraperService(
         ),
         chooseRecipesPrompt.GetFunction()
       );
+
+      // Extract the SearchResult data from the LlmResult
+      var result = llmResult.Data;
 
       var indices = result.SelectedIndices;
 

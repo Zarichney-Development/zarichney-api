@@ -201,4 +201,12 @@ public class EmailService(
       { } reason when reason.Contains("domain") => InvalidEmailReason.InvalidDomain,
       _ => InvalidEmailReason.InvalidDomain
     };
+
+  public static string MakeSafeFileName(string email)
+    => email
+      .Replace("@", "_at_")
+      .Replace(".", "_dot_")
+      .Replace(" ", "_")
+      .Replace(":", "_")
+      .Replace(";", "_");
 }

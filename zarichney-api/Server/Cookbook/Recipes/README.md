@@ -1,6 +1,6 @@
 # Module/Directory: Server/Cookbook/Recipes
 
-**Last Updated:** 2025-04-03
+**Last Updated:** 2025-04-13
 
 > **Parent:** [`Server/Cookbook`](../README.md)
 
@@ -26,6 +26,7 @@
 
 * **Orchestration:** `RecipeService` acts as the primary entry point and orchestrator for recipe retrieval (`GetRecipes`) and synthesis (`SynthesizeRecipe`). [cite: zarichney-api/Server/Cookbook/Recipes/RecipeService.cs]
 * **Repository Pattern:** `RecipeRepository` (`RecipeFileRepository` implementation) abstracts data persistence (file system via `IFileService`) and manages the asynchronous background processing (via `IBackgroundWorker`) of cleaning and naming tasks. It interacts with `RecipeIndexer` and `RecipeSearcher`. [cite: zarichney-api/Server/Cookbook/Recipes/RecipeRepository.cs]
+* **Alternative Query Generation:** `RecipeService.GetSearchQueryForRecipe` uses structured function calling with `GetAlternativeQueryPrompt` to generate more generic search terms when specific recipe names fail to yield results. It leverages conversation history through a provided `conversationId` and returns a structured `AlternativeQueryResult` containing the new query. This eliminates the need for manual conversation state management by utilizing the session-based context tracking in `ILlmService`. [cite: zarichney-api/Server/Cookbook/Recipes/RecipeService.cs, zarichney-api/Server/Cookbook/Prompts/GetAlternativeQuery.cs]
 * **Web Scraping:** `WebScraperService` handles finding and extracting recipe data from external websites using Playwright (`IBrowserService`) and CSS selectors defined in `site_selectors.json`. It uses `LlmService` (`ChooseRecipesPrompt`) to rank URL relevance. [cite: zarichney-api/Server/Cookbook/Recipes/WebScraperService.cs, zarichney-api/Server/Config/site_selectors.json, zarichney-api/Server/Cookbook/Prompts/ChooseRecipes.cs]
 * **Indexing & Search:** `RecipeIndexer` maintains an efficient in-memory `ConcurrentDictionary` mapping titles/aliases to recipes. `RecipeSearcher` implements the logic to query this index and apply scoring. [cite: zarichney-api/Server/Cookbook/Recipes/RecipeIndexer.cs, zarichney-api/Server/Cookbook/Recipes/RecipeSearcher.cs]
 * **AI Integration:** Extensive use of `ILlmService` with specific prompts from [`Server/Cookbook/Prompts`](../Prompts/README.md) for data cleaning, relevance ranking, alias generation, recipe synthesis, and quality analysis.
@@ -36,7 +37,7 @@
 ## 3. Interface Contract & Assumptions
 
 * **Key Public Interfaces:**
-    * `IRecipeService`: Primary interface for external consumers (`OrderService`). Methods include `GetRecipes` (retrieval/scraping) and `SynthesizeRecipe`. [cite: zarichney-api/Server/Cookbook/Recipes/RecipeService.cs]
+    * `IRecipeService`: Primary interface for external consumers (`OrderService`). Methods include `GetRecipes` (retrieval/scraping with optional `conversationId` for AI conversation history) and `SynthesizeRecipe`. [cite: zarichney-api/Server/Cookbook/Recipes/RecipeService.cs]
     * `IRecipeRepository`: Interface for managing recipe persistence and triggering background processing. Includes `InitializeAsync`, `SearchRecipes`, `AddUpdateRecipesAsync`. [cite: zarichney-api/Server/Cookbook/Recipes/RecipeRepository.cs]
     * `IRecipeIndexer`, `IRecipeSearcher`: Interfaces for indexing and searching operations. [cite: zarichney-api/Server/Cookbook/Recipes/RecipeIndexer.cs, zarichney-api/Server/Cookbook/Recipes/RecipeSearcher.cs]
 * **Assumptions:**

@@ -56,15 +56,17 @@ public class GitHubService : BackgroundService, IGitHubService
 
     _retryPolicy = Policy
       .Handle<RateLimitExceededException>()
+      .Or<ApiValidationException>(ex => ex.ApiError?.Message?.Contains("Update is not a fast forward") ?? ex.Message.Contains("Update is not a fast forward"))
       .WaitAndRetryAsync(
         retryCount: config.RetryAttempts,
         sleepDurationProvider: retryAttempt =>
           TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), // Exponential backoff
         onRetry: (exception, timeSpan, retryCount, _) =>
         {
+          var reason = exception is RateLimitExceededException ? "Rate Limit" : "Non-Fast-Forward";
           _logger.LogWarning(exception,
-            "GitHub operation attempt {RetryCount}: Retrying after {Delay}s. Error: {Message}",
-            retryCount, timeSpan.TotalSeconds, exception.Message);
+            "GitHub operation attempt {RetryCount}: Retrying due to {Reason} after {Delay}s. Error: {Message}",
+            retryCount, reason, timeSpan.TotalSeconds, exception.Message);
         }
       );
   }
