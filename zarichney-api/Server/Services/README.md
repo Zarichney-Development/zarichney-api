@@ -1,6 +1,6 @@
 # Module/Directory: Server/Services
 
-**Last Updated:** 2025-04-03
+**Last Updated:** 2025-04-14
 
 > **Parent:** [`Server`](../README.md)
 
@@ -19,6 +19,7 @@
     * [`Payment`](./Payment/README.md) - Encapsulates interactions with the payment provider (Stripe).
     * [`PdfGeneration`](./PdfGeneration/README.md) - Responsible for compiling data (e.g., Markdown) into PDF documents. [cite: zarichney-api/Server/Services/PdfCompiler.cs]
     * [`Sessions`](./Sessions/README.md) - Manages user/request sessions and associated scoped data/state.
+    * [`Status`](./Status/README.md) - Provides runtime status/health reporting for configuration and other system checks.
 * **Utilities:**
     * `Utils.cs`: Contains miscellaneous static helper methods (ID generation, deserialization, string manipulation, Markdown generation, HTML stripping). [cite: zarichney-api/Server/Services/Utils.cs]
 
@@ -40,4 +41,4 @@
 
 * **Structure:** Strong emphasis on organizing services into dedicated subdirectories with their own README files for detailed context.
 * **Interfaces:** Consistent use of the `IXService` / `XService` pattern for dependency injection.
-* **Configuration:** Services often rely on specific `XConfig` objects injected via DI, following the pattern established in [`Server/Config`](
+* **Configuration:** Services often rely on specific `XConfig` objects injected via DI, following the pattern established in [`Server/Config`]

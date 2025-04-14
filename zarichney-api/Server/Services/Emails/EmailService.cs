@@ -2,6 +2,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using RestSharp;
+using Zarichney.Server.Config;
 using SendMailPostRequestBody = Microsoft.Graph.Users.Item.SendMail.SendMailPostRequestBody;
 
 namespace Zarichney.Server.Services.Emails;
@@ -19,13 +20,17 @@ public class EmailService(
   EmailConfig config,
   ITemplateService templateService,
   IMemoryCache cache,
-  ILogger<EmailService> logger
-)
+  ILogger<EmailService> logger)
   : IEmailService
 {
   public async Task SendEmail(string recipient, string subject, string templateName,
     Dictionary<string, object>? templateData = null, FileAttachment? attachment = null)
   {
+    if (graphClient == null)
+    {
+      throw new ConfigurationMissingException(nameof(EmailConfig), "Azure Tenant ID, App ID, Secret, or FromEmail is missing or invalid");
+    }
+
     string bodyContent;
     try
     {
@@ -115,8 +120,15 @@ public class EmailService(
   /// <param name="email"></param>
   /// <returns></returns>
   /// <exception cref="InvalidOperationException"></exception>
+  /// <exception cref="ConfigurationMissingException">Thrown when the MailCheck API key is missing or invalid.</exception>
   public async Task<bool> ValidateEmail(string email)
   {
+    if (string.IsNullOrEmpty(config.MailCheckApiKey) || 
+        config.MailCheckApiKey == "recommended to set in app secrets")
+    {
+      throw new ConfigurationMissingException(nameof(EmailConfig), nameof(config.MailCheckApiKey));
+    }
+
     var domain = email.Split('@').Last();
 
     // Check cache first

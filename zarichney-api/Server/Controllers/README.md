@@ -1,6 +1,6 @@
 # Module/Directory: Server/Controllers
 
-**Last Updated:** 2025-04-03
+**Last Updated:** 2025-04-14
 
 > **Parent:** [`Server`](../README.md)
 
@@ -24,6 +24,8 @@
 * **Request/Response Handling:** Uses standard ASP.NET Core mechanisms for model binding (`[FromBody]`, `[FromQuery]`, etc.) and returning results (`IActionResult` implementations like `OkObjectResult`, `BadRequestObjectResult`, `NotFoundResult`, `FileContentResult`).
 * **Error Handling:** Leverages a combination of specific `IActionResult` return types for expected errors (e.g., `BadRequest` for validation, `NotFound`) and relies on the global `ErrorHandlingMiddleware` for catching unhandled exceptions, often returning a standardized `ApiErrorResult`. [cite: zarichney-api/Server/Controllers/ApiErrorResult.cs, zarichney-api/Server/Config/ErrorHandlingMiddleware.cs]
 * **API Documentation:** Uses Swagger/OpenAPI annotations (`[SwaggerOperation]`, `[ProducesResponseType]`, XML comments) to generate API documentation. [cite: zarichney-api/Server/Controllers/AuthController.cs, zarichney-api/Server/Controllers/CookbookController.cs, zarichney-api/Program.cs] Includes a custom filter (`FormFileOperationFilter`) for handling file uploads correctly in Swagger UI. [cite: zarichney-api/Server/Config/FormFileOperationFilter.cs]
+* **PublicController:**
+    * Exposes `/api/status/config` (GET) — Returns a list of configuration item statuses for critical settings (API keys, secrets, connection strings). Useful for health checks and automation. Response: `List<ConfigurationItemStatus>` with `Name`, `Status`, and optional `Details` (never the secret value).
 
 ## 3. Interface Contract & Assumptions
 
@@ -32,6 +34,10 @@
     * **Middleware Pipeline:** Assumes the necessary middleware components (Routing, Authentication, Authorization, Session Management, Error Handling, Logging) are configured correctly and execute in the appropriate order in `Program.cs`. [cite: zarichney-api/Program.cs]
     * **Service Availability:** Assumes that the services injected into the controllers are correctly registered in the DI container and are functional.
     * **Client Behavior:** Assumes clients send requests matching the expected content types (`application/json`, `multipart/form-data`) and structures. Assumes clients handle standard HTTP status codes appropriately (e.g., retrying on 5xx, handling 4xx client errors). Assumes clients handle authentication (e.g., sending cookies automatically).
+* **GET /api/status/config**
+    * **Purpose:** Returns the status of critical configuration values (API keys, secrets, connection strings) for health checks and diagnostics.
+    * **Response:** `200 OK` with `List<ConfigurationItemStatus>`. Each item has `Name`, `Status` ("Configured" or "Missing/Invalid"), and optional `Details`.
+    * **Auth:** `[AllowAnonymous]` — no authentication required.
 
 ## 4. Local Conventions & Constraints (Beyond Global Standards)
 

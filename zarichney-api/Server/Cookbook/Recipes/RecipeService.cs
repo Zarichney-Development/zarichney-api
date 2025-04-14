@@ -2,7 +2,6 @@ using System.Collections.Concurrent;
 using System.Text.Json;
 using AutoMapper;
 using OpenAI.Assistants;
-using OpenAI.Chat;
 using Zarichney.Server.Cookbook.Orders;
 using Zarichney.Server.Cookbook.Prompts;
 using Zarichney.Server.Services.AI;

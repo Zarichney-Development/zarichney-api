@@ -1,6 +1,6 @@
 # Module/Directory: Server
 
-**Last Updated:** 2025-04-03
+**Last Updated:** 2025-04-14
 
 ## 1. Purpose & Responsibility
 
@@ -57,6 +57,7 @@
   * **Data Persistence:** Assumes the file system paths specified in configuration are writable. Assumes the GitHub repository used by `GitHubService` is accessible and configured.
   * **Background Processing:** Relies on the ASP.NET Core hosting environment to keep background services (`BackgroundTaskService`, `SessionCleanupService`, `RefreshTokenCleanupService`, `GitHubService`) running reliably.
   * **Session Management:** Assumes client interactions (especially long-running ones like cookbook generation) can span multiple requests and relies on the `SessionManager` to maintain state. Session expiration and cleanup are critical.
+  * For configuration/health status endpoint details, see [`Server/Services/Status/README.md`](./Services/Status/README.md).
 
 ## 4. Local Conventions & Constraints (Beyond Global Standards)
 
@@ -90,6 +91,9 @@
 * **Background Tasks:** Essential for decoupling long-running operations (order processing, scraping, PDF generation, email sending) from the initial web request, improving responsiveness.
 * **Custom Session Management:** Implemented to manage state across multiple requests, particularly relevant for the multi-step cookbook generation process which involves user interaction, background tasks, and potentially long delays.
 * **Startup Refactoring:** The application startup logic was recently centralized in the `Startup` module to improve organization and maintainability by separating it from the main program entry point.
+* **Runtime Configuration Resilience:**
+    * The server now defers external service configuration checks (Email, OpenAI, GitHub, Stripe, etc.) to runtime. This allows the application to start even if some configuration is missing or invalid, improving operational resilience and flexibility.
+    * If a required configuration is missing when a service is used, a `ConfigurationMissingException` is thrown. The global error handling middleware catches this and returns a 503 Service Unavailable response with a user-friendly message, surfacing configuration issues to clients at runtime without crashing the server.
 
 ## 8. Known Issues & TODOs
 

@@ -3,7 +3,6 @@ using Octokit;
 using Polly;
 using Polly.Retry;
 using Zarichney.Server.Config;
-using Zarichney.Server.Services.BackgroundTasks;
 using FileMode = Octokit.FileMode;
 
 namespace Zarichney.Server.Services.GitHub;
@@ -35,11 +34,10 @@ public class GitHubService : BackgroundService, IGitHubService
 {
   private readonly ILogger _logger;
   private readonly Channel<GitHubOperation> _operationChannel;
-  private readonly GitHubClient _client;
   private readonly AsyncRetryPolicy _retryPolicy;
   private readonly GitHubConfig _config;
 
-  public GitHubService(GitHubConfig config, ILogger<BackgroundTaskService> logger)
+  public GitHubService(GitHubConfig config, ILogger<GitHubService> logger)
   {
     _logger = logger;
     _config = config;
@@ -48,11 +46,6 @@ public class GitHubService : BackgroundService, IGitHubService
       SingleReader = true,
       SingleWriter = false
     });
-
-    _client = new GitHubClient(new ProductHeaderValue(config.RepositoryName))
-    {
-      Credentials = new Credentials(config.AccessToken)
-    };
 
     _retryPolicy = Policy
       .Handle<RateLimitExceededException>()
@@ -69,6 +62,8 @@ public class GitHubService : BackgroundService, IGitHubService
             retryCount, reason, timeSpan.TotalSeconds, exception.Message);
         }
       );
+
+    _logger.LogInformation("GitHub service initialized");
   }
 
   public async Task EnqueueCommitAsync(string filePath, byte[] content, string directory, string commitMessage)
@@ -118,28 +113,53 @@ public class GitHubService : BackgroundService, IGitHubService
 
   private async Task ProcessGitHubOperationAsync(GitHubOperation operation)
   {
+    // Validate configuration before attempting any GitHub operations
+    if (string.IsNullOrEmpty(_config.AccessToken) || _config.AccessToken == "recommended to set in app secrets")
+    {
+      _logger.LogError("GitHub access token is missing or invalid");
+      throw new ConfigurationMissingException(nameof(GitHubConfig), nameof(_config.AccessToken));
+    }
+
+    if (string.IsNullOrEmpty(_config.RepositoryOwner))
+    {
+      _logger.LogError("GitHub repository owner is missing");
+      throw new ConfigurationMissingException(nameof(GitHubConfig), nameof(_config.RepositoryOwner));
+    }
+
+    if (string.IsNullOrEmpty(_config.RepositoryName))
+    {
+      _logger.LogError("GitHub repository name is missing");
+      throw new ConfigurationMissingException(nameof(GitHubConfig), nameof(_config.RepositoryName));
+    }
+
     _logger.LogInformation("Processing GitHub commit for file {FilePath} in directory {Directory}",
       operation.FilePath, operation.Directory);
+
+    // Create client instance on demand with validated configuration
+    var client = new GitHubClient(new ProductHeaderValue(_config.RepositoryName))
+    {
+      Credentials = new Credentials(_config.AccessToken)
+    };
 
     await _retryPolicy.ExecuteAsync(async () =>
     {
       try
       {
         // Get the current reference
-        var reference = await _client.Git.Reference.Get(
+        var reference = await client.Git.Reference.Get(
           _config.RepositoryOwner,
           _config.RepositoryName,
           $"heads/{_config.BranchName}"
         );
 
-        var latestCommit = await _client.Git.Commit.Get(
+        var latestCommit = await client.Git.Commit.Get(
           _config.RepositoryOwner,
           _config.RepositoryName,
           reference.Object.Sha
         );
 
         // Create blob
-        var blob = await _client.Git.Blob.Create(
+        var blob = await client.Git.Blob.Create(
           _config.RepositoryOwner,
           _config.RepositoryName,
           new NewBlob
@@ -163,21 +183,21 @@ public class GitHubService : BackgroundService, IGitHubService
           Sha = blob.Sha,
         });
 
-        var tree = await _client.Git.Tree.Create(
+        var tree = await client.Git.Tree.Create(
           _config.RepositoryOwner,
           _config.RepositoryName,
           newTree
         );
 
         // Create commit
-        var commit = await _client.Git.Commit.Create(
+        var commit = await client.Git.Commit.Create(
           _config.RepositoryOwner,
           _config.RepositoryName,
           new NewCommit(operation.CommitMessage, tree.Sha, reference.Object.Sha)
         );
 
         // Update reference
-        await _client.Git.Reference.Update(
+        await client.Git.Reference.Update(
           _config.RepositoryOwner,
           _config.RepositoryName,
           $"heads/{_config.BranchName}",
@@ -191,7 +211,7 @@ public class GitHubService : BackgroundService, IGitHubService
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Error occurred during GitHub commit operation");
+        _logger.LogError(ex, "Error occurred during GitHub operation for file {FilePath}", operation.FilePath);
         throw;
       }
     });

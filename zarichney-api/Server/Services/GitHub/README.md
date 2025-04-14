@@ -1,6 +1,6 @@
 # Module/Directory: Server/Services/GitHub
 
-**Last Updated:** 2025-04-13
+**Last Updated:** 2025-04-14
 
 > **Parent:** [`Server/Services`](../README.md)
 
@@ -32,7 +32,11 @@
 ## 3. Interface Contract & Assumptions
 
 * **Key Public Interfaces:** `IGitHubService` with the method:
-    * `EnqueueCommitAsync(filePath, content, directory, commitMessage)`: Queues a file commit operation. The returned `Task` completes when the background service finishes processing this specific commit. [cite: zarichney-api/Server/Services/GitHubService.cs]
+    * `EnqueueCommitAsync(filePath, content, directory, commitMessage)`: Queues a file commit operation. The returned `Task` completes when the background service finishes processing this specific commit, or throws a `ConfigurationMissingException` if required configuration is missing. [cite: zarichney-api/Server/Services/GitHubService.cs]
+* **Runtime Configuration Validation:**
+    * The service will start even if `GitHubConfig` values (`AccessToken`, `RepositoryOwner`, `RepositoryName`) are missing, allowing the application to start with partial functionality.
+    * Configuration is validated at runtime within `ProcessGitHubOperationAsync` when a commit operation is attempted.
+    * If any required configuration is missing, a `ConfigurationMissingException` will be thrown and propagated through the `Task` returned by `EnqueueCommitAsync`.
 * **Assumptions:**
     * **Configuration:** Assumes `GitHubConfig` contains valid values, especially a correct and active Personal Access Token (`AccessToken`) with sufficient permissions (`repo` scope) for the target repository (`RepositoryOwner`/`RepositoryName`, `BranchName`).
     * **Repository State:** Assumes the target repository and branch specified in the configuration exist.
@@ -50,8 +54,8 @@
 
 ## 5. How to Work With This Code
 
-* **Consumption:** Inject `IGitHubService` into services needing to commit files to the configured GitHub repository. Call `await EnqueueCommitAsync(...)`.
-* **Configuration:** Ensure `GitHubConfig` section in application configuration (user secrets recommended for `AccessToken`) is populated correctly. The PAT needs `repo` scope permissions.
+* **Consumption:** Inject `IGitHubService` into services needing to commit files to the configured GitHub repository. Call `await EnqueueCommitAsync(...)`. Services consuming `IGitHubService` should be prepared to handle `ConfigurationMissingException` if GitHubConfig values are missing at runtime.
+* **Configuration:** Ensure `GitHubConfig` section in application configuration (user secrets recommended for `AccessToken`) is populated correctly. The PAT needs `repo` scope permissions. Missing configuration will not prevent application startup but will cause operations to fail with `ConfigurationMissingException` at runtime.
 * **Testing:**
     * Mocking `IGitHubService` is standard for unit testing consumers.
     * Testing `GitHubService` itself requires mocking `GitHubClient` and its various sub-clients (`Git`, `Repository`, `Blob`, `Tree`, `Commit`, `Reference`) or performing integration tests against a dedicated test repository (exercise caution with PATs).

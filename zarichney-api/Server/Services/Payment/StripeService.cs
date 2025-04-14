@@ -1,5 +1,6 @@
 using Stripe;
 using Stripe.Checkout;
+using Zarichney.Server.Config;
 
 namespace Zarichney.Server.Services.Payment;
 
@@ -74,13 +75,43 @@ public interface IStripeService
 public class StripeService : IStripeService
 {
   private readonly PaymentConfig _config;
+  private readonly ILogger<StripeService> _logger;
 
-  public StripeService(PaymentConfig config)
+  public StripeService(PaymentConfig config, ILogger<StripeService> logger)
   {
     _config = config;
+    _logger = logger;
 
-    // Initialize Stripe API
+    // Log a warning if the key is missing at startup, but don't set it globally here.
+    if (string.IsNullOrEmpty(_config.StripeSecretKey))
+    {
+      _logger.LogWarning("Stripe Secret Key is missing in configuration. Stripe functionality will be unavailable until configured.");
+    }
+  }
+
+  /// <summary>
+  /// Ensures the Stripe Secret Key is configured.
+  /// </summary>
+  private void EnsureStripeKeyConfigured()
+  {
+    if (string.IsNullOrEmpty(_config.StripeSecretKey))
+    {
+      _logger.LogError("Stripe operation failed: Stripe Secret Key is missing");
+      throw new ConfigurationMissingException(nameof(PaymentConfig), nameof(PaymentConfig.StripeSecretKey));
+    }
     StripeConfiguration.ApiKey = _config.StripeSecretKey;
+  }
+
+  /// <summary>
+  /// Ensures the Stripe Webhook Secret is configured.
+  /// </summary>
+  private void EnsureWebhookSecretConfigured()
+  {
+    if (string.IsNullOrEmpty(_config.StripeWebhookSecret))
+    {
+      _logger.LogError("Stripe operation failed: Stripe Webhook Secret is missing");
+      throw new ConfigurationMissingException(nameof(PaymentConfig), nameof(PaymentConfig.StripeWebhookSecret));
+    }
   }
 
   /// <summary>
@@ -96,6 +127,7 @@ public class StripeService : IStripeService
     string productDescription,
     string? clientReferenceId = null)
   {
+    EnsureStripeKeyConfigured();
     var session = await CreateCheckoutSessionInternal(
       customerEmail,
       quantity,
@@ -122,6 +154,7 @@ public class StripeService : IStripeService
     string productDescription,
     string? clientReferenceId = null)
   {
+    EnsureStripeKeyConfigured();
     return await CreateCheckoutSessionInternal(
       customerEmail,
       quantity,
@@ -146,17 +179,18 @@ public class StripeService : IStripeService
     string productDescription,
     string? clientReferenceId = null)
   {
-    var options = new SessionCreateOptions
+    var sessionService = new SessionService();
+    var session = await sessionService.CreateAsync(new SessionCreateOptions
     {
+      CustomerEmail = customerEmail,
       PaymentMethodTypes = ["card"],
-      LineItems =
-      [
+      LineItems = [
         new SessionLineItemOptions
         {
           PriceData = new SessionLineItemPriceDataOptions
           {
-            UnitAmount = (long)(Math.Round(_config.RecipePrice * 100)), // Stripe uses cents
             Currency = _config.Currency,
+            UnitAmount = (long)(_config.RecipePrice * 100), // Convert to cents
             ProductData = new SessionLineItemPriceDataProductDataOptions
             {
               Name = productName,
@@ -169,18 +203,13 @@ public class StripeService : IStripeService
       Mode = "payment",
       SuccessUrl = successUrl,
       CancelUrl = cancelUrl,
-      CustomerEmail = customerEmail,
-      Metadata = metadata
-    };
+      Metadata = metadata,
+      ClientReferenceId = clientReferenceId
+    });
 
-    // Only set ClientReferenceId if provided (needed for orders, not for credit purchases)
-    if (!string.IsNullOrEmpty(clientReferenceId))
-    {
-      options.ClientReferenceId = clientReferenceId;
-    }
-
-    var service = new SessionService();
-    var session = await service.CreateAsync(options);
+    _logger.LogInformation(
+      "Created Stripe checkout session {SessionId} for customer {Email} with quantity {Quantity}",
+      session.Id, customerEmail, quantity);
 
     return session;
   }
@@ -190,6 +219,7 @@ public class StripeService : IStripeService
   /// </summary>
   public async Task<Session> GetSession(string sessionId)
   {
+    EnsureStripeKeyConfigured();
     var service = new SessionService();
     return await service.GetAsync(sessionId);
   }
@@ -199,6 +229,7 @@ public class StripeService : IStripeService
   /// </summary>
   public async Task<Session> GetSessionWithLineItems(string sessionId)
   {
+    EnsureStripeKeyConfigured();
     var service = new SessionService();
     return await service.GetAsync(sessionId, new SessionGetOptions
     {
@@ -211,6 +242,7 @@ public class StripeService : IStripeService
   /// </summary>
   public Event ConstructEvent(string requestBody, string signature, string webhookSecret)
   {
+    EnsureWebhookSecretConfigured();
     return EventUtility.ConstructEvent(requestBody, signature, webhookSecret);
   }
 
@@ -219,6 +251,7 @@ public class StripeService : IStripeService
   /// </summary>
   public async Task<List<Session>> FindSessionsByPaymentIntent(string paymentIntentId)
   {
+    EnsureStripeKeyConfigured();
     var sessionService = new SessionService();
     var sessions = await sessionService.ListAsync(new SessionListOptions
     {
@@ -234,6 +267,7 @@ public class StripeService : IStripeService
   /// </summary>
   public async Task<PaymentIntent> GetPaymentIntent(string paymentIntentId)
   {
+    EnsureStripeKeyConfigured();
     var paymentIntentService = new PaymentIntentService();
     return await paymentIntentService.GetAsync(paymentIntentId);
   }
@@ -300,36 +334,5 @@ public class StripeService : IStripeService
       purchasedQuantity = session.LineItems.Data.Aggregate(purchasedQuantity, (current, item) => (int)(current + item.Quantity.GetValueOrDefault()));
     }
     return purchasedQuantity;
-  } 
-  
-  /// <summary>
-  /// Maps a Stripe Session to a CheckoutSessionInfo domain model.
-  /// </summary>
-  public CheckoutSessionInfo MapToCheckoutSessionInfo(Session session)
-  {
-    return new CheckoutSessionInfo
-    {
-      Id = session.Id,
-      Status = session.Status,
-      CustomerEmail = session.CustomerEmail,
-      AmountTotal = session.AmountTotal / 100m,
-      Currency = session.Currency,
-      PaymentStatus = session.PaymentStatus
-    };
-  }
-
-  /// <summary>
-  /// Creates a mock Stripe session for order completion.
-  /// </summary>
-  public Session CreateMockSessionForOrder(string orderId)
-  {
-    // This assumes you want a simple Session-like object. Note: 
-    // Stripe.Session is normally provided by the Stripe API,
-    // so this is a simplified example for internal use.
-    return new Session
-    {
-      Id = "mock_" + Guid.NewGuid(),
-      ClientReferenceId = orderId
-    };
   }
 }

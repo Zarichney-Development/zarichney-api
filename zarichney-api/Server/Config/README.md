@@ -1,6 +1,6 @@
 # Module/Directory: Server/Config
 
-**Last Updated:** 2025-04-03
+**Last Updated:** 2025-04-14
 
 > **Parent:** [`Server`](../README.md)
 
@@ -10,7 +10,7 @@
 * **Key Responsibilities:**
     * Defining shared configuration models (e.g., `ServerConfig`, `ClientConfig`) identified by the `IConfig` interface. [cite: zarichney-api/Server/Config/ConfigModels.cs]
     * Providing core middleware for request/response logging and global error handling. [cite: zarichney-api/Server/Config/LoggingMiddleware.cs, zarichney-api/Server/Config/ErrorHandlingMiddleware.cs]
-    * Providing custom utilities like JSON converters and exception types. [cite: zarichney-api/Server/Config/JsonConverter.cs, zarichney-api/Server/Config/NotExpectedException.cs]
+    * Providing custom utilities like JSON converters and exception types. [cite: zarichney-api/Server/Config/JsonConverter.cs, zarichney-api/Server/Config/NotExpectedException.cs, zarichney-api/Server/Config/ConfigurationMissingException.cs]
     * Supplying filters for external integrations like Swagger (`FormFileOperationFilter`). [cite: zarichney-api/Server/Config/FormFileOperationFilter.cs]
     * Hosting static configuration files like `site_selectors.json`. [cite: zarichney-api/Server/Config/site_selectors.json]
 * **Why it exists:** To define shared configuration models, provide reusable cross-cutting concerns via middleware, and centralize utilities needed by multiple modules.
@@ -20,12 +20,18 @@
 * **Configuration Loading:** The actual loading and registration of configuration is now handled by the `Server/Startup/Configuration` module. This module focuses on defining the configuration models and the `IConfig` interface. [cite: zarichney-api/Server/Startup/Configuration/ConfigurationStartup.cs]
 * **Strongly-Typed Configuration:** Configuration is accessed via injected, strongly-typed `XConfig` objects (e.g., `LlmConfig`, `RecipeConfig`). [cite: zarichney-api/Server/Cookbook/Recipes/RecipeService.cs, zarichney-api/Server/Services/AI/LlmService.cs]
 * **Middleware:** Standard ASP.NET Core middleware pattern is used for logging (`LoggingMiddleware`) and error handling (`ErrorHandlingMiddleware`). Their order of registration in the application pipeline is important. [cite: zarichney-api/Server/Startup/App/ApplicationStartup.cs, zarichney-api/Server/Config/LoggingMiddleware.cs, zarichney-api/Server/Config/ErrorHandlingMiddleware.cs]
+* **ErrorHandlingMiddleware:**
+    * Global exception handler for all HTTP requests. Catches unhandled exceptions and returns a structured JSON error response.
+    * **Now specifically catches `ConfigurationMissingException` and returns a 503 Service Unavailable response** with a user-friendly message if a required configuration is missing at runtime (see Section 5 for details).
+    * Logs all exceptions using the injected logger, including request method and path for traceability.
+    * For all other exceptions, returns a 500 Internal Server Error with a generic error message and trace ID.
 * **Static Configuration Files:** Files like `site_selectors.json` contain data loaded and used by specific services (`WebScraperService`), although the file itself resides within this config directory for organization. [cite: zarichney-api/Server/Config/site_selectors.json, zarichney-api/Server/Cookbook/Recipes/WebScraperService.cs]
 
 ## 3. Interface Contract & Assumptions
 
 * **Key Public Interfaces (for external callers):**
     * `IConfig`: Marker interface for configuration classes automatically registered by the system.
+    * `ConfigurationMissingException`: Exception type that services should throw when they detect missing required configuration at runtime. Has properties to identify the affected configuration section and specific key details.
     * Middleware (`ErrorHandlingMiddleware`, `LoggingMiddleware`): Consumed implicitly via registration in the application pipeline. They alter the request pipeline behavior.
 * **Assumptions:**
     * **Configuration Registration:** Assumes configuration is registered via the `RegisterConfigurationServices` method in `Server/Startup/Configuration/ConfigurationStartup.cs`.
@@ -35,7 +41,7 @@
 ## 4. Local Conventions & Constraints (Beyond Global Standards)
 
 * **Configuration Class Naming:** Classes holding configuration sections must implement `IConfig` and typically end with the suffix `Config` (e.g., `RecipeConfig`). [cite: zarichney-api/Server/Config/ConfigModels.cs]
-* **Required Configuration:** Properties marked with `[Required]` attribute in `IConfig` classes will cause startup failure if missing or left as placeholder values. [cite: zarichney-api/Server/Startup/Configuration/ConfigurationStartup.cs]
+* **Required Configuration:** Properties marked with `[Required]` attribute in `IConfig` classes will generate warning logs at startup if missing or left as placeholder values, but will not prevent application startup. Services should check for null/placeholder values at runtime and throw `ConfigurationMissingException` when attempting to use missing configuration. [cite: zarichney-api/Server/Startup/ConfigurationStartup.cs, zarichney-api/Server/Config/ConfigurationMissingException.cs]
 * **Middleware Order:** The order in which `LoggingMiddleware` and `ErrorHandlingMiddleware` are added in the application pipeline affects their behavior (e.g., whether errors are logged before the error handler formats the response). [cite: zarichney-api/Server/Startup/App/ApplicationStartup.cs]
 * **Static JSON Files:** Format and schema of `site_selectors.json` are specific to the needs of the `WebScraperService`.
 
@@ -50,6 +56,9 @@
 * **Adding New Middleware:**
     1.  Create a new middleware class following the ASP.NET Core pattern (constructor with `RequestDelegate`, `InvokeAsync` method).
     2.  Register the middleware using `app.UseMiddleware<MyNewMiddleware>()` in `Server/Startup/App/ApplicationStartup.cs` at the appropriate stage in the request pipeline.
+* **ErrorHandlingMiddleware:**
+    * No special setup required; registered globally in the middleware pipeline.
+    * If a `ConfigurationMissingException` is thrown by any downstream service (e.g., Email, OpenAI, GitHub, Stripe), the middleware will catch it and return a 503 Service Unavailable response with a clear message and trace ID. This allows the application to start even with missing configuration, but surfaces configuration issues to clients at runtime in a user-friendly way.
 * **Testing:**
     * **Configuration:** Testing services that consume config usually involves creating mock `IOptions<T>` or directly instantiating config objects with test values.
     * **Middleware:** Often requires integration tests using `WebApplicationFactory` or specialized middleware testing harnesses to mock `HttpContext` and `RequestDelegate`.
@@ -82,6 +91,7 @@
 
 ## 8. Known Issues & TODOs
 
+* Services consuming configuration need to be updated to check for missing or placeholder values and throw `ConfigurationMissingException` when attempting to use a required configuration that is missing.
 * The validation in `ConfigurationStartup.ValidateAndReplaceProperties` currently only checks for `null` or a specific placeholder string for `[Required]` properties; more sophisticated validation (e.g., range checks, regex) could be added if needed.
 * `site_selectors.json` parsing within `WebScraperService` could benefit from more robust error handling or schema validation upon loading.
 * Error Handling middleware provides a generic error response; could be enhanced to provide slightly more specific (but still safe) error details based on exception types in non-production environments.

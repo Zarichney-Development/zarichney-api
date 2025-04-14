@@ -41,8 +41,20 @@ public class TranscribeService : ITranscribeService
       );
   }
 
+  /// <summary>
+  /// Transcribes audio content from the provided stream using the OpenAI Whisper model.
+  /// </summary>
+  /// <param name="audioStream">The audio stream to transcribe.</param>
+  /// <param name="options">Optional transcription options.</param>
+  /// <returns>The transcribed text.</returns>
+  /// <exception cref="ConfigurationMissingException">Thrown when the OpenAI API key is missing or invalid.</exception>
   public async Task<string> TranscribeAudioAsync(Stream audioStream, AudioTranscriptionOptions? options = null)
   {
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), "ApiKey (required for AudioClient)");
+    }
+
     try
     {
       Log.Information("Starting audio transcription");

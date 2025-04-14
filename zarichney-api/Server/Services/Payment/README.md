@@ -1,6 +1,6 @@
 # Module/Directory: Server/Services/Payment
 
-**Last Updated:** 2025-04-03
+**Last Updated:** 2025-04-14
 
 > **Parent:** [`Server/Services`](../README.md)
 
@@ -13,7 +13,7 @@
     * Abstracting direct interactions with the Stripe API via `IStripeService`. [cite: zarichney-api/Server/Services/Payment/StripeService.cs]
     * Handling incoming webhook events from Stripe to process payment confirmations (e.g., `checkout.session.completed`) or failures. [cite: zarichney-api/Server/Services/Payment/PaymentService.cs]
     * Updating application state (e.g., customer credits via `ICustomerService`, order status via `IOrderService`) based on webhook event outcomes. [cite: zarichney-api/Server/Services/Payment/PaymentService.cs]
-* **Why it exists:** To centralize all payment-related logic, isolate interactions with the specific payment provider (Stripe), and decouple payment processing from core domain logic like order fulfillment or user management.
+* **Why it exists:** To centralize payment-related logic, isolate interactions with the specific payment provider (Stripe), and decouple payment processing from core domain logic like order fulfillment or user management.
 
 ## 2. Architecture & Key Concepts
 
@@ -31,6 +31,12 @@
     * `IPaymentService.CreateCheckoutSession(customer, count)` / `IPaymentService.GetCreditCheckoutSessionWithUrl(customer, count)`: Creates Stripe session for credit purchase. Assumes customer exists.
     * `IPaymentService.HandleWebhookEvent(body, signature)`: Processes incoming webhook. Assumes valid Stripe signature and JSON body. Assumes webhook endpoint is correctly configured in Stripe.
     * `IPaymentService.GetSessionInfo(sessionId)`: Retrieves session details from Stripe.
+* **Runtime Configuration Validation:**
+    * The service will start even if `PaymentConfig` values (`StripeSecretKey`, `StripeWebhookSecret`) are missing, allowing the application to start with partial functionality.
+    * Each method in `IStripeService` validates required configuration at runtime before making API calls:
+        * Methods requiring API access (CreateCheckoutSession, GetSession, etc.) will throw `ConfigurationMissingException` if `StripeSecretKey` is missing.
+        * `ConstructEvent` will throw `ConfigurationMissingException` if `StripeWebhookSecret` is missing.
+    * These exceptions are thrown when the methods are called, rather than at startup, allowing the application to start even with missing configuration.
 * **Assumptions:**
     * **Stripe Configuration:** Assumes valid Stripe API keys (`PaymentConfig.StripeSecretKey`, `PaymentConfig.StripePublishableKey`) and webhook secret (`PaymentConfig.StripeWebhookSecret`) are configured securely.
     * **Webhook Setup:** Assumes the `/api/payment/webhook` endpoint is publicly accessible and configured correctly in the Stripe dashboard to receive necessary events (e.g., `checkout.session.completed`, `payment_intent.succeeded`).

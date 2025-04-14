@@ -1,6 +1,6 @@
 # Module/Directory: Server/Services/AI
 
-**Last Updated:** 2025-04-12
+**Last Updated:** 2025-04-14
 
 > **Parent:** [`Server/Services`](../README.md)
 
@@ -34,8 +34,13 @@
 * **Return Types:**
     * `CallFunction<T>` and `GetCompletionContent(List<ChatMessage>...)` now return an `LlmResult<T>` object containing both the primary `Data` and the `ConversationId`. This facilitates multi-turn conversations managed by the caller without requiring manual history reconstruction.
     * The single-prompt overload `GetCompletionContent(string userPrompt...)` continues to return just the completion string for backward compatibility.
+* **Runtime Configuration Exceptions:**
+    * All methods in `LlmService` will throw `ConfigurationMissingException` if the required API key is missing or invalid, resulting in the `OpenAIClient` being null.
+    * Similarly, `TranscribeService.TranscribeAudioAsync()` will throw `ConfigurationMissingException` if the `AudioClient` is null due to missing API key configuration.
+    * These exceptions are thrown at runtime when the methods are called, rather than at startup, allowing the application to start with partial functionality even when some configuration is missing.
 * **Assumptions:**
     * **API Keys:** Valid and correctly configured OpenAI API keys are essential (`LlmConfig.ApiKey`). [cite: zarichney-api/Server/Services/AI/LlmService.cs]
+    * **OpenAI Client Availability:** The injected `OpenAIClient` and `AudioClient` instances might be `null` if the required API key configuration is missing or invalid. The `LlmService` and `TranscribeService` implementations will need to handle this possibility appropriately by checking for null before using these clients. [cite: zarichney-api/Server/Startup/ServiceStartup.cs]
     * **Network:** Reliable network connectivity to OpenAI API endpoints is required.
     * **Model Availability:** Assumes the specified AI models (`LlmConfig.ModelName`, `TranscribeConfig.ModelName`) are available and accessible via the provided API key.
     * **Prompt Validity:** `LlmService` assumes the provided `PromptBase` objects contain valid system prompts and function schemas (when used).

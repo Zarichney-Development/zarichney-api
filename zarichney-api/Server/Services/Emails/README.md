@@ -1,6 +1,6 @@
 # Module/Directory: Server/Services/Emails
 
-**Last Updated:** 2025-04-03
+**Last Updated:** 2025-04-14
 
 > **Parent:** [`Server/Services`](../README.md)
 
@@ -26,8 +26,13 @@
 * **Key Public Interfaces:**
     * `IEmailService`: Defines `SendEmail` and `ValidateEmail` methods. [cite: zarichney-api/Server/Services/Emails/EmailService.cs]
     * `ITemplateService`: Defines `ApplyTemplate` method. [cite: zarichney-api/Server/Services/Emails/TemplateService.cs]
+* **Runtime Configuration Exceptions:**
+    * `EmailService.SendEmail()` will throw `ConfigurationMissingException` if the `GraphServiceClient` is null due to missing Azure credentials (Tenant ID, App ID, App Secret, or FromEmail).
+    * `EmailService.ValidateEmail()` will throw `ConfigurationMissingException` if the `MailCheckApiKey` is missing or invalid.
+    * These exceptions are thrown at runtime when the methods are called, rather than at startup, allowing the application to start with partial functionality even when some configuration is missing.
 * **Assumptions:**
     * **Configuration:** Assumes `EmailConfig` contains valid and functional credentials for Microsoft Graph (Azure Tenant/App ID/Secret) and the MailCheck API key. Assumes `FromEmail` is a valid address authorized to send via the configured Graph App. Assumes `TemplateDirectory` path is correct relative to the application root. [cite: zarichney-api/Server/Services/Emails/EmailModels.cs]
+    * **GraphServiceClient Availability:** The injected `GraphServiceClient` might be `null` if the required configuration is missing or invalid. The `EmailService` will need to handle this possibility appropriately by checking for null before using the client. [cite: zarichney-api/Server/Startup/ServiceStartup.cs]
     * **External Services:** Relies on the availability and correct functioning of Microsoft Graph API and the MailCheck API.
     * **Network Connectivity:** Requires network access to Microsoft Graph and MailCheck endpoints.
     * **Templates:** Assumes the `EmailTemplates` directory exists and contains valid Handlebars `.html` files, including `base.html`. Assumes templates requested by `SendEmail` exist. [cite: zarichney-api/Server/Services/Emails/TemplateService.cs]

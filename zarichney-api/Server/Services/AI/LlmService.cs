@@ -68,36 +68,52 @@ public interface ILlmService
   Task<(string, T)> GetRunAction<T>(string threadId, string runId, string functionName);
 }
 
-public class LlmService(
-  OpenAIClient client,
-  IMapper mapper,
-  LlmConfig config,
-  ISessionManager sessionManager,
-  IScopeContainer scope
-) : ILlmService
+public class LlmService : ILlmService
 {
   private static readonly ILogger Log = Serilog.Log.ForContext<LlmService>();
+  private readonly OpenAIClient _client;
+  private readonly IMapper _mapper;
+  private readonly LlmConfig _config;
+  private readonly ISessionManager _sessionManager;
+  private readonly IScopeContainer _scope;
   private readonly Dictionary<string, List<(string toolCallId, string output)>> _runToolOutputs = new();
 
-  private readonly AsyncRetryPolicy _retryPolicy = Policy
-    .Handle<Exception>()
-    .WaitAndRetryAsync(
-      retryCount: config.RetryAttempts,
-      sleepDurationProvider: _ => TimeSpan.FromSeconds(1),
-      onRetry: (exception, _, retryCount, context) =>
-      {
-        Log.Warning(exception,
-          "LLM attempt {retryCount}: Retrying due to {exception}. Retry Context: {@Context}",
-          retryCount, exception.Message, context);
-      }
-    );
+  private readonly AsyncRetryPolicy _retryPolicy;
+
+  public LlmService(
+    OpenAIClient client,
+    IMapper mapper,
+    LlmConfig config,
+    ISessionManager sessionManager,
+    IScopeContainer scope
+  )
+  {
+    _client = client;
+    _mapper = mapper;
+    _config = config;
+    _sessionManager = sessionManager;
+    _scope = scope;
+
+    _retryPolicy = Policy
+      .Handle<Exception>()
+      .WaitAndRetryAsync(
+        retryCount: config.RetryAttempts,
+        sleepDurationProvider: _ => TimeSpan.FromSeconds(1),
+        onRetry: (exception, _, retryCount, context) =>
+        {
+          Log.Warning(exception,
+            "LLM attempt {retryCount}: Retrying due to {exception}. Retry Context: {@Context}",
+            retryCount, exception.Message, context);
+        }
+      );
+  }
 
   private async Task<T> ExecuteWithRetry<T>(int? retryCount, Func<Task<T>> action)
   {
     var policy = Policy
       .Handle<Exception>()
       .WaitAndRetryAsync(
-        retryCount: retryCount ?? config.RetryAttempts,
+        retryCount: retryCount ?? _config.RetryAttempts,
         sleepDurationProvider: _ => TimeSpan.FromSeconds(1),
         onRetry: (exception, _, currentRetry, context) =>
         {
@@ -112,12 +128,17 @@ public class LlmService(
   
   public async Task<string> CreateAssistant(PromptBase prompt)
   {
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+    }
+
     try
     {
-      var assistantClient = client.GetAssistantClient();
-      var functionToolDefinition = mapper.Map<FunctionToolDefinition>(prompt.GetFunction());
+      var assistantClient = _client.GetAssistantClient();
+      var functionToolDefinition = _mapper.Map<FunctionToolDefinition>(prompt.GetFunction());
       functionToolDefinition.StrictParameterSchemaEnabled = true;
-      var response = await assistantClient.CreateAssistantAsync(prompt.Model ?? config.ModelName,
+      var response = await assistantClient.CreateAssistantAsync(prompt.Model ?? _config.ModelName,
         new AssistantCreationOptions
         {
           Name = prompt.Name,
@@ -136,9 +157,14 @@ public class LlmService(
 
   public async Task<string> CreateThread()
   {
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+    }
+
     try
     {
-      var assistantClient = client.GetAssistantClient();
+      var assistantClient = _client.GetAssistantClient();
       var response = await assistantClient.CreateThreadAsync();
       return response.Value.Id;
     }
@@ -151,10 +177,15 @@ public class LlmService(
 
   public async Task CreateMessage(string threadId, string content, MessageRole role = MessageRole.User)
   {
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+    }
+
     try
     {
       Log.Information("Creating message for thread {threadId}, message: {content}", threadId, content);
-      var assistantClient = client.GetAssistantClient();
+      var assistantClient = _client.GetAssistantClient();
       await assistantClient.CreateMessageAsync(
         threadId,
         role,
@@ -170,9 +201,14 @@ public class LlmService(
 
   public async Task<string> CreateRun(string threadId, string assistantId, bool requiresToolConstraint = true)
   {
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+    }
+
     try
     {
-      var assistantClient = client.GetAssistantClient();
+      var assistantClient = _client.GetAssistantClient();
       var result = await assistantClient.CreateRunAsync(threadId, assistantId, new RunCreationOptions
       {
         ToolConstraint = requiresToolConstraint ? ToolConstraint.Required : ToolConstraint.None,
@@ -193,6 +229,11 @@ public class LlmService(
 
   public async Task<(bool isComplete, RunStatus status)> GetRun(string threadId, string runId)
   {
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+    }
+
     try
     {
       var run = await GetThreadRun(threadId, runId);
@@ -214,10 +255,15 @@ public class LlmService(
 
   public async Task<string> CancelRun(string threadId, string runId)
   {
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+    }
+
     Log.Information("Cancelling run: {runId} for thread: {threadId}", runId, threadId);
     try
     {
-      var assistantClient = client.GetAssistantClient();
+      var assistantClient = _client.GetAssistantClient();
 
       var run = await GetRun(threadId, runId);
       if (run.isComplete)
@@ -246,6 +292,11 @@ public class LlmService(
 
   public async Task SubmitToolOutputToRun(string threadId, string runId, string toolCallId, string output)
   {
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+    }
+
     try
     {
       Log.Information(
@@ -267,7 +318,7 @@ public class LlmService(
 
       var toolOutputsToSubmit = toolOutputs.Where(to => requiredToolCallIds.Contains(to.toolCallId)).ToList();
 
-      var assistantClient = client.GetAssistantClient();
+      var assistantClient = _client.GetAssistantClient();
       await assistantClient.SubmitToolOutputsToRunAsync(threadId, runId,
         toolOutputsToSubmit.Select(to => new ToolOutput(to.toolCallId, to.output)).ToList());
     }
@@ -281,9 +332,14 @@ public class LlmService(
 
   private async Task<ThreadRun> GetThreadRun(string threadId, string runId)
   {
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+    }
+
     try
     {
-      var assistantClient = client.GetAssistantClient();
+      var assistantClient = _client.GetAssistantClient();
       var runResult = await assistantClient.GetRunAsync(threadId, runId);
       return runResult.Value;
     }
@@ -296,9 +352,14 @@ public class LlmService(
 
   public async Task DeleteAssistant(string assistantId)
   {
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+    }
+
     try
     {
-      var assistantClient = client.GetAssistantClient();
+      var assistantClient = _client.GetAssistantClient();
       await assistantClient.DeleteAssistantAsync(assistantId);
     }
     catch (Exception e)
@@ -309,9 +370,14 @@ public class LlmService(
 
   public async Task DeleteThread(string threadId)
   {
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+    }
+
     try
     {
-      var assistantClient = client.GetAssistantClient();
+      var assistantClient = _client.GetAssistantClient();
       await assistantClient.DeleteThreadAsync(threadId);
     }
     catch (Exception e)
@@ -328,6 +394,11 @@ public class LlmService(
     int? retryCount = null
   )
   {
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+    }
+
     Log.Information(
       "Getting response from model. System prompt: {systemPrompt}, User prompt: {userPrompt}, Function: {@function}",
       systemPrompt, userPrompt, function);
@@ -351,7 +422,12 @@ public class LlmService(
     int? retryCount = null
   )
   {
-    var functionToolDefinition = mapper.Map<FunctionToolDefinition>(function);
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+    }
+
+    var functionToolDefinition = _mapper.Map<FunctionToolDefinition>(function);
     functionToolDefinition.StrictParameterSchemaEnabled = true;
 
     return await CallFunction<T>(
@@ -374,9 +450,14 @@ public class LlmService(
     int? retryCount = null
   )
   {
-    var scopeId = scope.Id;
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+    }
+
+    var scopeId = _scope.Id;
     // If no conversation ID is provided, create a new conversation
-    conversationId ??= await sessionManager.InitializeConversation(scopeId, messages, functionTool);
+    conversationId ??= await _sessionManager.InitializeConversation(scopeId, messages, functionTool);
 
     var allMessages = await GetConversation(conversationId);
 
@@ -428,7 +509,7 @@ public class LlmService(
 
         var prompt = messages.Last(m => m is UserChatMessage).Content[0].Text;
         // Store the message in the session
-        await sessionManager.AddMessage(scope.Id, conversationId, prompt, chatCompletion, result);
+        await _sessionManager.AddMessage(_scope.Id, conversationId, prompt, chatCompletion, result);
 
         return new LlmResult<T>
         {
@@ -454,6 +535,11 @@ public class LlmService(
     ChatCompletionOptions? options = null,
     int? retryCount = null)
   {
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+    }
+
     var messages = new List<ChatMessage> { new UserChatMessage(userPrompt) };
     var result = await GetCompletionContent(messages, conversationId, options, retryCount);
     return result.Data;
@@ -466,8 +552,13 @@ public class LlmService(
     int? retryCount = null
   )
   {
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+    }
+
     // If no conversation ID is provided, create a new conversation
-    conversationId ??= await sessionManager.InitializeConversation(scope.Id, messages);
+    conversationId ??= await _sessionManager.InitializeConversation(_scope.Id, messages);
 
     var allMessages = await GetConversation(conversationId);
 
@@ -481,7 +572,7 @@ public class LlmService(
     var response = completion.Content[0].Text;
 
     // Store the message in the session
-    await sessionManager.AddMessage(scope.Id, conversationId, prompt, completion);
+    await _sessionManager.AddMessage(_scope.Id, conversationId, prompt, completion);
 
     return new LlmResult<string>
     {
@@ -492,8 +583,13 @@ public class LlmService(
 
   private async Task<List<ChatMessage>> GetConversation(string conversationId)
   {
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+    }
+
     // Get existing conversation messages if any
-    var conversation = await sessionManager.GetConversation(scope.Id, conversationId);
+    var conversation = await _sessionManager.GetConversation(_scope.Id, conversationId);
 
     // Prepend existing messages if there are any
     var allMessages = GetChatMessages(conversation);
@@ -524,9 +620,14 @@ public class LlmService(
   private async Task<ChatCompletion> GetCompletion(List<ChatMessage> messages, ChatCompletionOptions? options = null,
     int? retryCount = null)
   {
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+    }
+
     return await ExecuteWithRetry(retryCount, async () =>
     {
-      var chatClient = client.GetChatClient(config.ModelName);
+      var chatClient = _client.GetChatClient(_config.ModelName);
 
       try
       {
@@ -548,6 +649,11 @@ public class LlmService(
 
   public async Task<(string, T)> GetRunAction<T>(string threadId, string runId, string functionName)
   {
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+    }
+
     return await _retryPolicy.ExecuteAsync(async () =>
     {
       try
@@ -594,6 +700,11 @@ public class LlmService(
 
   internal async Task<string> GetToolCallId(string threadId, string runId, string functionName)
   {
+    if (_client == null)
+    {
+      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+    }
+
     try
     {
       var run = await GetThreadRun(threadId, runId);

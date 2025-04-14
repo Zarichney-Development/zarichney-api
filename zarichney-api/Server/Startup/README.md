@@ -1,6 +1,6 @@
 # Module/Directory: Server/Startup
 
-**Last Updated:** 2025-04-03
+**Last Updated:** 2025-04-14
 
 > **Parent:** [`Server`](../README.md)
 
@@ -35,6 +35,8 @@
     3. After building the application, `ConfigureApplication` is called to set up the middleware pipeline.
 * **Key Data Structures:** Primarily operates on ASP.NET Core types like `WebApplicationBuilder`, `WebApplication`, and `IServiceCollection`.
 * **State Management:** This module primarily establishes the application's initial state and configuration. It doesn't directly manage runtime state but sets up the services and middleware that will.
+* **Service Registration:**
+    * Registers `IConfigurationStatusService` and `ConfigurationStatusService` for configuration status reporting, enabling the `/api/status/config` endpoint for health checks.
 
 ## 3. Interface Contract & Assumptions
 
@@ -49,6 +51,7 @@
         * `ConfigureLogging(WebApplicationBuilder)`: Configures Serilog logging.
         * `RegisterConfigurationServices(IServiceCollection, IConfiguration)`: Registers configuration services.
         * `AddPrompts(IServiceCollection, Assembly[])`: Registers prompt types from specified assemblies.
+        * `ValidateAndReplaceProperties(object, string)`: Validates config properties and logs warnings for missing required values (no longer throws exceptions).
     * `AuthenticationStartup`:
         * `ConfigureIdentity(WebApplicationBuilder)`: Sets up ASP.NET Core Identity and JWT authentication.
         * `AddIdentityServices(IServiceCollection, IConfiguration)`: Adds Identity and JWT authentication services.
@@ -59,13 +62,14 @@
         * `UseSessionManagement(IApplicationBuilder)`: Uses session management middleware.
     * `ServiceStartup`:
         * `ConfigureServices(WebApplicationBuilder)`: Registers core application services.
-        * `ConfigureEmailServices(IServiceCollection)`: Sets up email services using Microsoft Graph.
-        * `ConfigureOpenAiServices(IServiceCollection)`: Sets up OpenAI services.
+        * `ConfigureEmailServices(IServiceCollection)`: Sets up email services using Microsoft Graph. Uses a factory that returns null if configuration is missing.
+        * `ConfigureOpenAiServices(IServiceCollection)`: Sets up OpenAI services. Uses factories that return null if configuration is missing.
         * `ConfigureApplicationServices(IServiceCollection)`: Registers domain-specific application services.
         * `ConfigureSwagger(WebApplicationBuilder)`: Configures Swagger/OpenAPI documentation.
 * **Critical Assumptions:**
     * **Dependency Injection:** Assumes proper DI container setup in `Program.cs` before these methods are called.
     * **Configuration:** Assumes `IConfiguration` has been properly initialized by the time these methods are invoked.
+    * **Missing Configuration Handling:** Properties marked with `[Required]` will generate warnings at startup if missing but will not prevent application startup. Services should check for null/placeholder values at runtime and throw `ConfigurationMissingException` if trying to use missing configuration.
     * **Middleware Order:** Assumes the specific order of middleware registration in `ConfigureApplication` is maintained to ensure proper request processing.
     * **Order of Operations:** Methods in `ConfigureBuilder` must be called in the correct order to ensure dependencies are properly established.
 
@@ -112,6 +116,7 @@
 * **Refactoring Motivation:** This module was created to improve the organization and maintainability of the application's startup code by centralizing configuration and service registration logic that was previously scattered across `Program.cs` and various extension files.
 * **Logical Grouping:** The decision to organize code by functional area (App, Authentication, Configuration, Middleware, Services) provides a clearer separation of concerns and makes it easier to locate specific functionality.
 * **Middleware Ordering:** The specific order of middleware registration in `ApplicationStartup.ConfigureApplication` has been carefully preserved to ensure proper request processing, with critical middleware like error handling and authentication positioned appropriately.
+* **Configuration Validation Change:** The configuration validation process was modified to log warnings instead of throwing exceptions for missing required configuration values. This change allows the application to start even with incomplete configuration, deferring validation failures to runtime when specific features attempt to use the missing configuration. This approach enables partial functionality of the application even when some external service configurations (like API keys) are missing.
 
 ## 8. Known Issues & TODOs
 

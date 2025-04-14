@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
-using Microsoft.IdentityModel.Protocols.Configuration;
 using Serilog;
 using Zarichney.Server.Config;
 using Zarichney.Server.Services.AI;
@@ -172,16 +171,18 @@ public static class ConfigurationStartup
         continue;
       }
 
-      var exceptionMessage = $"Required property '{property.Name}' in configuration section '{sectionName}'";
+      var warningMessage = $"Configuration Warning: Required property '{property.Name}' in section '{sectionName}'";
 
-      exceptionMessage += value switch
+      warningMessage += value switch
       {
         null => " is missing.",
         PlaceholderValue => " has a placeholder value. Please set it in your user secrets.",
         _ => string.Empty
       };
 
-      throw new InvalidConfigurationException(exceptionMessage);
+      // Log a warning instead of throwing an exception
+      Log.Warning(warningMessage + " Dependent services may fail at runtime.", 
+        new { ConfigSection = sectionName, ConfigProperty = property.Name });
     }
   }
 

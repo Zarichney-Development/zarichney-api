@@ -11,6 +11,26 @@ public class ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandling
     {
       await next(context);
     }
+    catch (ConfigurationMissingException configEx)
+    {
+      logger.LogError(configEx,
+        "ConfigurationMissingException caught by middleware for {Method} {Path}. Section: {Section}, Details: {Details}",
+        context.Request.Method,
+        context.Request.Path,
+        configEx.ConfigurationSection,
+        configEx.MissingKeyDetails);
+
+      context.Response.StatusCode = (int)HttpStatusCode.ServiceUnavailable; // 503
+      context.Response.ContentType = "application/json";
+
+      var errorResponse = new
+      {
+        Error = "Service Temporarily Unavailable",
+        Message = $"A required configuration for a service is missing or invalid. Please contact the administrator. Section: {configEx.ConfigurationSection}",
+        TraceId = context.TraceIdentifier
+      };
+      await context.Response.WriteAsJsonAsync(errorResponse);
+    }
     catch (Exception ex)
     {
       logger.LogError(ex,

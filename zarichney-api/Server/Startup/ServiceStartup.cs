@@ -1,6 +1,5 @@
 using Azure.Identity;
 using Microsoft.Graph;
-using Microsoft.IdentityModel.Protocols.Configuration;
 using Microsoft.OpenApi.Models;
 using OpenAI;
 using OpenAI.Audio;
@@ -16,6 +15,7 @@ using Zarichney.Server.Services.FileSystem;
 using Zarichney.Server.Services.GitHub;
 using Zarichney.Server.Services.Payment;
 using Zarichney.Server.Services.PdfGeneration;
+using Zarichney.Server.Services.Status;
 using Zarichney.Server.Services.Web;
 
 namespace Zarichney.Server.Startup;
@@ -23,7 +23,7 @@ namespace Zarichney.Server.Startup;
 /// <summary>
 /// Configures application services and dependencies
 /// </summary>
-public static class ServiceStartup
+public class ServiceStartup
 {
   /// <summary>
   /// Configures core application services
@@ -61,20 +61,46 @@ public static class ServiceStartup
   /// </summary>
   private static void ConfigureEmailServices(IServiceCollection services)
   {
-    var emailConfig = services.GetService<EmailConfig>();
-    var graphClient = new GraphServiceClient(
-      new ClientSecretCredential(
-        emailConfig.AzureTenantId,
-        emailConfig.AzureAppId,
-        emailConfig.AzureAppSecret,
-        new TokenCredentialOptions
-        {
-          AuthorityHost = AzureAuthorityHosts.AzurePublicCloud
-        }
-      ),
-      ["https://graph.microsoft.com/.default"]
-    );
-    services.AddSingleton(graphClient);
+    services.AddScoped<GraphServiceClient>(sp => 
+    {
+      var emailConfig = sp.GetRequiredService<EmailConfig>();
+      var logger = sp.GetRequiredService<ILogger<ServiceStartup>>();
+
+      // Check if the required configuration values are present
+      if (string.IsNullOrEmpty(emailConfig.AzureTenantId) || 
+          string.IsNullOrEmpty(emailConfig.AzureAppId) || 
+          string.IsNullOrEmpty(emailConfig.AzureAppSecret) ||
+          string.IsNullOrEmpty(emailConfig.FromEmail) ||
+          emailConfig.AzureTenantId == "recommended to set in app secrets" ||
+          emailConfig.AzureAppId == "recommended to set in app secrets" ||
+          emailConfig.AzureAppSecret == "recommended to set in app secrets" ||
+          emailConfig.FromEmail == "recommended to set in app secrets")
+      {
+        logger.LogWarning("Missing required configuration for GraphServiceClient. Email functionality will not be available. Required: AzureTenantId, AzureAppId, AzureAppSecret, FromEmail");
+        return null!;
+      }
+
+      try 
+      {
+        return new GraphServiceClient(
+          new ClientSecretCredential(
+            emailConfig.AzureTenantId,
+            emailConfig.AzureAppId,
+            emailConfig.AzureAppSecret,
+            new TokenCredentialOptions
+            {
+              AuthorityHost = AzureAuthorityHosts.AzurePublicCloud
+            }
+          ),
+          ["https://graph.microsoft.com/.default"]
+        );
+      }
+      catch (Exception ex)
+      {
+        logger.LogWarning(ex, "Failed to create GraphServiceClient. Email functionality will not be available.");
+        return null!;
+      }
+    });
   }
 
   /// <summary>
@@ -82,12 +108,54 @@ public static class ServiceStartup
   /// </summary>
   private static void ConfigureOpenAiServices(IServiceCollection services)
   {
-    var llmConfig = services.GetService<LlmConfig>();
-    var apiKey = llmConfig.ApiKey ??
-                 throw new InvalidConfigurationException("Missing required configuration for OpenAI API key.");
+    // Add OpenAIClient with factory method
+    services.AddScoped<OpenAIClient>(sp => {
+      var llmConfig = sp.GetRequiredService<LlmConfig>();
+      var logger = sp.GetRequiredService<ILogger<ServiceStartup>>();
 
-    services.AddSingleton(new OpenAIClient(apiKey));
-    services.AddSingleton(sp => new AudioClient(sp.GetRequiredService<TranscribeConfig>().ModelName, apiKey));
+      // Check if the required API key is present and valid
+      if (string.IsNullOrEmpty(llmConfig.ApiKey) || 
+          llmConfig.ApiKey == "recommended to set in app secrets")
+      {
+        logger.LogWarning("Missing required OpenAI API key configuration. LLM functionality will not be available.");
+        return null!;
+      }
+
+      try
+      {
+        return new OpenAIClient(llmConfig.ApiKey);
+      }
+      catch (Exception ex)
+      {
+        logger.LogWarning(ex, "Failed to create OpenAIClient. LLM functionality will not be available.");
+        return null!;
+      }
+    });
+
+    // Add AudioClient with factory method
+    services.AddScoped<AudioClient>(sp => {
+      var transcribeConfig = sp.GetRequiredService<TranscribeConfig>();
+      var llmConfig = sp.GetRequiredService<LlmConfig>();
+      var logger = sp.GetRequiredService<ILogger<ServiceStartup>>();
+
+      // Check if the required API key is present and valid
+      if (string.IsNullOrEmpty(llmConfig.ApiKey) || 
+          llmConfig.ApiKey == "recommended to set in app secrets")
+      {
+        logger.LogWarning("Missing required OpenAI API key configuration. Audio transcription functionality will not be available.");
+        return null!;
+      }
+
+      try
+      {
+        return new AudioClient(transcribeConfig.ModelName, llmConfig.ApiKey);
+      }
+      catch (Exception ex)
+      {
+        logger.LogWarning(ex, "Failed to create AudioClient. Audio transcription functionality will not be available.");
+        return null!;
+      }
+    });
   }
 
   /// <summary>
@@ -104,7 +172,6 @@ public static class ServiceStartup
     // Prompts and Core Services
     services.AddPrompts(typeof(PromptBase).Assembly);
     services.AddSingleton<IFileService, FileService>();
-    services.AddSingleton<IEmailService, EmailService>();
     services.AddSingleton<ITemplateService, TemplateService>();
     services.AddSingleton<IBrowserService, BrowserService>();
 
@@ -124,6 +191,8 @@ public static class ServiceStartup
     services.AddScoped<ILlmService, LlmService>();
     services.AddScoped<IAuthService, AuthService>();
     services.AddScoped<IApiKeyService, ApiKeyService>();
+    services.AddScoped<IEmailService, EmailService>();
+    services.AddScoped<IStatusService, StatusService>();
     services.AddTransient<IRecipeService, RecipeService>();
     services.AddTransient<IOrderService, OrderService>();
     services.AddTransient<ICustomerService, CustomerService>();
