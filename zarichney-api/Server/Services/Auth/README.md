@@ -1,6 +1,6 @@
 # Module/Directory: Server/Auth
 
-**Last Updated:** 2025-04-03
+**Last Updated:** 2025-04-14
 
 > **Parent:** [`Server`](../README.md)
 
@@ -15,7 +15,7 @@
     * API Key generation, validation, and revocation for non-interactive authentication. [cite: zarichney-api/Server/Auth/ApiKeyService.cs, zarichney-api/Server/Auth/Commands/ApiKeyCommands.cs]
     * Role definition (e.g., "admin") and management (assigning/removing roles). [cite: zarichney-api/Server/Auth/RoleManager.cs, zarichney-api/Server/Auth/Commands/RoleCommands.cs]
     * Database schema management for identity entities using EF Core. [cite: zarichney-api/Server/Auth/UserDbContext.cs, zarichney-api/Server/Auth/Migrations/]
-    * Middleware for API Key authentication. [cite: zarichney-api/Server/Auth/ApiKeyAuthMiddleware.cs]
+    * Middleware for API Key and general authentication. [cite: zarichney-api/Server/Services/Auth/AuthenticationMiddleware.cs]
 * **Why it exists:** To centralize all authentication and authorization concerns, separating them from other application logic like cookbook or payment processing. Provides a secure and maintainable way to manage user identity and access control. [cite: zarichney-api/Docs/AuthRefactoring.md]
 * **Submodules:**
     * [`Commands`](./Commands/README.md) - Contains MediatR command handlers for auth operations (Register, Login, etc.).
@@ -29,17 +29,17 @@
 * **Authentication Mechanisms:**
     * **JWT Bearer Tokens:** Standard mechanism using short-lived access tokens. [cite: zarichney-api/Server/Auth/AuthConfigurations.cs]
     * **Refresh Tokens:** Long-lived tokens stored in the database, used to obtain new access tokens. [cite: zarichney-api/Server/Auth/Models/RefreshToken.cs, zarichney-api/Server/Auth/AuthService.cs]
-    * **API Keys:** For server-to-server or non-interactive clients via `X-Api-Key` header. [cite: zarichney-api/Server/Auth/ApiKeyAuthMiddleware.cs, zarichney-api/Server/Auth/ApiKeyService.cs]
+    * **API Keys:** For server-to-server or non-interactive clients via `X-Api-Key` header. [cite: zarichney-api/Server/Services/Auth/AuthenticationMiddleware.cs, zarichney-api/Server/Auth/ApiKeyService.cs]
 * **Token Transport:** JWT access tokens and refresh tokens are primarily handled via secure, HttpOnly cookies (`AuthAccessToken`, `AuthRefreshToken`) managed by `CookieAuthManager`. [cite: zarichney-api/Server/Auth/CookieAuthManager.cs, zarichney-api/Docs/AuthRefactoring.md]
 * **Design Pattern:** CQRS (Command Query Responsibility Segregation) implemented using MediatR. Authentication actions are handled by specific command handlers in the `Commands` directory. [cite: zarichney-api/Server/Auth/Commands/, zarichney-api/Docs/AuthRefactoring.md]
 * **Key Classes:**
     * `AuthController`: Exposes HTTP endpoints for authentication actions. [cite: zarichney-api/Server/Controllers/AuthController.cs]
     * `AuthService`: Provides core token generation and refresh token DB operations. [cite: zarichney-api/Server/Auth/AuthService.cs]
-    * `ApiKeyService`: Manages API key lifecycle and validation. [cite: zarichney-api/Server/Auth/ApiKeyService.cs]
+    * `ApiKeyService`: Manages API key lifecycle, validation, and authentication. [cite: zarichney-api/Server/Auth/ApiKeyService.cs]
     * `CookieAuthManager`: Handles setting/clearing authentication cookies. [cite: zarichney-api/Server/Auth/CookieAuthManager.cs]
     * `RoleManager`: Manages application roles. [cite: zarichney-api/Server/Auth/RoleManager.cs]
     * `UserDbContext`: EF Core database context for Identity entities. [cite: zarichney-api/Server/Auth/UserDbContext.cs]
-    * `ApiKeyAuthMiddleware`: Middleware to handle authentication via `X-Api-Key` header. [cite: zarichney-api/Server/Auth/ApiKeyAuthMiddleware.cs]
+    * `AuthenticationMiddleware`: Middleware to handle authentication via `X-Api-Key` header or JWT. Respects endpoints marked with the `[AllowAnonymous]` attribute and skips authentication for them. [cite: zarichney-api/Server/Services/Auth/AuthenticationMiddleware.cs]
     * `RefreshTokenCleanupService`: Background service to remove expired/used tokens. [cite: zarichney-api/Server/Auth/RefreshTokenCleanupService.cs]
 * **Core Logic Flow (Login):**
     1.  `AuthController.Login` receives email/password. [cite: zarichney-api/Server/Controllers/AuthController.cs]
@@ -73,6 +73,11 @@
         * **Preconditions:** Request must include a valid, non-expired `AuthAccessToken` cookie OR a valid, active `X-Api-Key` header.
         * **Postconditions:** User identity (ID, roles, etc.) is populated in `HttpContext.User`.
         * **Error Handling:** Returns 401 Unauthorized if no valid token/key is provided or if the token/key is invalid/expired. Returns 403 Forbidden if authenticated but lacks required roles (`[Authorize(Roles = "...")]`).
+    * Any endpoint using `[AllowAnonymous]`:
+        * **Purpose:** Allow access without authentication.
+        * **Preconditions:** None. Endpoint can be accessed without any authentication.
+        * **Postconditions:** No user identity is required. The authentication middleware will skip validation for these endpoints.
+        * **Error Handling:** Standard response based on the controller/action logic, not related to authentication.
 * **Critical Assumptions:**
     * **External Systems/Config:** Assumes PostgreSQL database is available and connection string (`IdentityConnection`) is correct. Assumes `JwtSettings` (SecretKey, Issuer, Audience, Expiry) are securely configured and consistent across instances. Assumes `IEmailService` is configured and functional for registration/password reset flows.
     * **Data Integrity:** Assumes `UserDbContext` schema matches the entities defined in `Models/`. Relies on EF Core Identity for password hashing and token generation integrity. Assumes uniqueness constraints (Email, API Key value) are enforced by the database.
@@ -107,7 +112,7 @@
     * `Server/Controllers/` (Any using `[Authorize]`): Rely on this module's authentication middleware and claims principal setup.
     * `Program.cs`: Configures Identity, JWT authentication, API Key middleware, registers auth services.
     * `Server/Services/Sessions/SessionMiddleware.cs`: Uses `HttpContext.User` populated by this module's authentication.
-    * `Server/Auth/ApiKeyAuthMiddleware.cs`: Relies on `IApiKeyService`.
+    * `Server/Services/Auth/AuthenticationMiddleware.cs`: Relies on `IApiKeyService`.
 
 ## 7. Rationale & Key Historical Context
 
@@ -116,6 +121,8 @@
 * **Database-Stored Refresh Tokens:** Provides persistence and allows for features like revocation and tracking usage across devices. Enables longer user sessions without compromising access token security. [cite: zarichney-api/Docs/AuthRefactoring.md, zarichney-api/Server/Auth/Models/RefreshToken.cs]
 * **API Keys:** Added to support non-interactive authentication scenarios (e.g., automated scripts, server-to-server). [cite: zarichney-api/Docs/ApiKeyAuthentication.md]
 * **ASP.NET Core Identity:** Leveraged for its robust, built-in features for user management, password hashing, role management, and token providers (email confirmation, password reset).
+* **[AllowAnonymous] Attribute Recognition:** Replaced the hardcoded route bypass list with standard ASP.NET Core `[AllowAnonymous]` attribute checking to improve maintainability and ensure all endpoints marked for anonymous access work correctly without API key validation.
+* **Centralized Authentication Middleware:** Renamed from `ApiKeyAuthMiddleware` to `AuthenticationMiddleware` to better reflect its general authentication role. API key authentication logic was moved into the `ApiKeyService` class for better separation of concerns and maintainability.
 
 ## 8. Known Issues & TODOs
 

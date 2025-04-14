@@ -89,7 +89,7 @@
   * Ensure proper authorization checks are in place (`[Authorize]`, role checks).
 * Do not log sensitive data like passwords, full API keys, or complete JWTs. Use masking where appropriate (see `LoggingMiddleware` for header masking). [cite: zarichney-api/Server/Config/LoggingMiddleware.cs]
 * Handle API keys and secrets securely. Do not hardcode them; use configuration providers like User Secrets, Environment Variables, AWS Secrets Manager, or Parameter Store.
-* Adhere to existing authentication (`[Authorize]`, `ApiKeyAuthMiddleware`, `CookieAuthManager`) and authorization (`RoleManager`, `[Authorize(Roles = "...")]`) patterns. [cite: zarichney-api/Server/Controllers/CookbookController.cs, zarichney-api/Server/Services/Auth/ApiKeyAuthMiddleware.cs]
+* Adhere to existing authentication (`[Authorize]`, `AuthenticationMiddleware`, `CookieAuthManager`) and authorization (`RoleManager`, `[Authorize(Roles = "...")]`) patterns. [cite: zarichney-api/Server/Controllers/CookbookController.cs, zarichney-api/Server/Services/Auth/AuthenticationMiddleware.cs]
 
 ## 11. External Libraries
 

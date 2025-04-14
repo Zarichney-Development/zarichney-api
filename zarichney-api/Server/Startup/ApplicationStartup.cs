@@ -105,9 +105,7 @@ public static class ApplicationStartup
     // }
 
     application.UseCors("AllowSpecificOrigin");
-    application.UseAuthentication();
-    application.UseApiKeyAuth();
-    application.UseAuthorization();
+    application.UseCustomAuthentication();
     application.UseSessionManagement(); // Session's user detection requires authentication, must be after
     application.MapControllers();
 

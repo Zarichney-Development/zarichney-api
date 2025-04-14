@@ -103,10 +103,12 @@ public static class AuthenticationStartup
   }
 
   /// <summary>
-  /// Adds API key authentication middleware
+  /// Adds authentication middleware
   /// </summary>
-  public static void UseApiKeyAuth(this IApplicationBuilder builder)
+  public static void UseCustomAuthentication(this IApplicationBuilder builder)
   {
-    builder.UseMiddleware<ApiKeyAuthMiddleware>();
+    builder.UseAuthentication();
+    builder.UseMiddleware<AuthenticationMiddleware>();
+    builder.UseAuthorization();
   }
 }

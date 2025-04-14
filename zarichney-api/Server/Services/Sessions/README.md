@@ -34,7 +34,7 @@
 * **Key Public Interfaces:** `ISessionManager`, `IScopeContainer`, `IScopeFactory`.
   * **New Method:** `FindReusableAnonymousSession()` returns an existing anonymous session (with no `UserId` or `ApiKeyValue`) that is not set to expire immediately, or `null` if none is found. This allows background tasks to reuse existing sessions rather than always creating new ones.
 * **Assumptions:**
-    * **Middleware Order:** Assumes `SessionMiddleware` (`UseSessionManagement`) is registered *after* Authentication middleware (`UseAuthentication`, `UseAuthorization`, `UseApiKeyAuth`) in `Program.cs` so that user identity is available when the session middleware runs. [cite: zarichney-api/Program.cs]
+    * **Middleware Order:** Assumes `SessionMiddleware` (`UseSessionManagement`) is registered *after* Authentication middleware in `Program.cs` so that user identity is available when the session middleware runs. [cite: zarichney-api/Program.cs]
     * **DI Registration:** Assumes all services (`ISessionManager`, `IScopeFactory`, `SessionCleanupService`, etc.) are correctly registered with appropriate lifetimes in `Program.cs` via `AddSessionManagement`. [cite: zarichney-api/Server/Services/Sessions/SessionExtensions.cs]
     * **Configuration:** Assumes `SessionConfig` is correctly configured.
     * **Persistence on EndSession:** Assumes that the `EndSession` logic in `SessionManager` correctly identifies and persists necessary related data (like Orders, Conversations) via injected repositories (`IOrderRepository`, `ILlmRepository`). The session data *itself* (besides the persisted related data) is lost. [cite: zarichney-api/Server/Services/Sessions/SessionManager.cs]

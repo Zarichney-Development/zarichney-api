@@ -35,7 +35,7 @@ The API supports two primary authentication methods, with JWT taking precedence 
 1.  An authenticated user (typically an admin) creates an API key via the `/api/auth/api-keys` endpoint [cite: zarichney-api/Docs/ApiKeyAuthentication.md].
 2.  The generated API key value (returned only once) is stored securely by the client/service [cite: zarichney-api/Docs/ApiKeyAuthentication.md].
 3.  For subsequent requests, the client includes the key in the `X-Api-Key` HTTP header [cite: zarichney-api/Docs/ApiKeyAuthentication.md].
-4.  The `ApiKeyAuthMiddleware` intercepts the request, validates the key against the database using `IApiKeyService`, and checks its active status and expiry [cite: zarichney-api/Server/Services/Auth/ApiKeyAuthMiddleware.cs, zarichney-api/Server/Services/Auth/ApiKeyService.cs].
+4.  The `AuthenticationMiddleware` intercepts the request, validates the key against the database using `IApiKeyService`, and checks its active status and expiry [cite: zarichney-api/Server/Services/Auth/AuthenticationMiddleware.cs, zarichney-api/Server/Services/Auth/ApiKeyService.cs].
 5.  If valid, the middleware identifies the associated user and creates an authenticated `ClaimsPrincipal` for the request, allowing access similar to JWT authentication [cite: zarichney-api/Docs/ApiKeyAuthentication.md].
 
 ### 2.3. Precedence Rules
@@ -73,7 +73,7 @@ Authentication settings are defined in `appsettings.json` and rely on secure con
      "TemplateDirectory": "EmailTemplates"
    }
  }
-````
+```
 
 ### Key Configuration Recommendations
 
@@ -159,7 +159,7 @@ Authentication settings are defined in `appsettings.json` and rely on secure con
   GET /api/some-protected-endpoint
   X-Api-Key: your-api-key-value
   ```
-* The `ApiKeyAuthMiddleware` validates the key [cite: zarichney-api/Server/Services/Auth/ApiKeyAuthMiddleware.cs].
+* The `AuthenticationMiddleware` validates the key [cite: zarichney-api/Server/Services/Auth/AuthenticationMiddleware.cs].
 
 ## 6. Email Verification
 
@@ -218,12 +218,12 @@ Authentication settings are defined in `appsettings.json` and rely on secure con
 
 ### API Key Authentication Issues
 
-1.  **Error: "API key or JWT authentication is required"**: Ensure `X-Api-Key` header is present and spelled correctly [cite: zarichney-api/Server/Services/Auth/ApiKeyAuthMiddleware.cs].
+1.  **Error: "API key or JWT authentication is required"**: Ensure `X-Api-Key` header is present and spelled correctly [cite: zarichney-api/Server/Services/Auth/AuthenticationMiddleware.cs].
 2.  **Error: "Invalid API key"**:
     * Verify the key value matches an entry in the `ApiKeys` table.
     * Check `IsActive` is `true` and `ExpiresAt` (if set) is in the future [cite: zarichney-api/Docs/ApiKeyAuthentication.md].
-3.  **Error: "User associated with API key not found"**: The `UserId` linked to the API key in the `ApiKeys` table does not correspond to a valid user in `AspNetUsers` [cite: zarichney-api/Server/Services/Auth/ApiKeyAuthMiddleware.cs].
-4.  **Error: "Authorization failed. These requirements were not met..."**: The `ApiKeyAuthMiddleware` successfully authenticated the key, but the user lacks the required roles/claims for the specific endpoint being accessed, OR the `ClaimsIdentity` wasn't properly created by the middleware (check `AuthenticationType` is non-null) [cite: zarichney-api/Docs/ApiKeyAuthentication.md].
+3.  **Error: "User associated with API key not found"**: The `UserId` linked to the API key in the `ApiKeys` table does not correspond to a valid user in `AspNetUsers` [cite: zarichney-api/Server/Services/Auth/AuthenticationMiddleware.cs].
+4.  **Error: "Authorization failed. These requirements were not met..."**: The `AuthenticationMiddleware` successfully authenticated the key, but the user lacks the required roles/claims for the specific endpoint being accessed, OR the `ClaimsIdentity` wasn't properly created by the middleware (check `AuthenticationType` is non-null) [cite: zarichney-api/Docs/ApiKeyAuthentication.md].
 5.  Use the `/api/test-auth` endpoint with the `X-Api-Key` header to check authentication status, assigned roles, and whether API key auth was recognized [cite: zarichney-api/Docs/ApiKeyAuthentication.md].
 
 ### Email Verification Issues

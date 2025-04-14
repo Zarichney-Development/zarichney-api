@@ -55,7 +55,7 @@
     * `AuthenticationStartup`:
         * `ConfigureIdentity(WebApplicationBuilder)`: Sets up ASP.NET Core Identity and JWT authentication.
         * `AddIdentityServices(IServiceCollection, IConfiguration)`: Adds Identity and JWT authentication services.
-        * `UseApiKeyAuth(IApplicationBuilder)`: Adds API key authentication middleware.
+        * `UseCustomAuthentication(IApplicationBuilder)`: Adds API key authentication middleware.
     * `MiddlewareStartup`:
         * `AddRequestResponseLogger(IServiceCollection, Action<RequestResponseLoggerOptions>?)`: Adds request/response logging configuration.
         * `AddSessionManagement(IServiceCollection)`: Adds session management services.
