@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "zarichney-api", "zarichney-api\zarichney-api.csproj", "{23D70ED9-05A9-47DB-A187-F58FBBB2F1D2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "api-server", "api-server\api-server.csproj", "{23D70ED9-05A9-47DB-A187-F58FBBB2F1D2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
