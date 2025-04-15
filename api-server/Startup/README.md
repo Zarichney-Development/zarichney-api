@@ -1,6 +1,6 @@
 # Module/Directory: /Startup
 
-**Last Updated:** 2025-04-14
+**Last Updated:** 2025-04-15
 
 > **Parent:** [`Server`](../README.md)
 
@@ -70,6 +70,7 @@
     * **Dependency Injection:** Assumes proper DI container setup in `Program.cs` before these methods are called.
     * **Configuration:** Assumes `IConfiguration` has been properly initialized by the time these methods are invoked.
     * **Missing Configuration Handling:** Properties marked with `[Required]` will generate warnings at startup if missing but will not prevent application startup. Services should check for null/placeholder values at runtime and throw `ConfigurationMissingException` if trying to use missing configuration.
+    * **AWS Systems Manager Configuration:** The AWS Systems Manager configuration provider is now optional, allowing the application to start successfully even if AWS credentials are not configured or accessible. This adheres to the goal of deferring configuration validation failures to runtime rather than preventing application startup.
     * **Middleware Order:** Assumes the specific order of middleware registration in `ConfigureApplication` is maintained to ensure proper request processing.
     * **Order of Operations:** Methods in `ConfigureBuilder` must be called in the correct order to ensure dependencies are properly established.
 
@@ -117,6 +118,7 @@
 * **Logical Grouping:** The decision to organize code by functional area (App, Authentication, Configuration, Middleware, Services) provides a clearer separation of concerns and makes it easier to locate specific functionality.
 * **Middleware Ordering:** The specific order of middleware registration in `ApplicationStartup.ConfigureApplication` has been carefully preserved to ensure proper request processing, with critical middleware like error handling and authentication positioned appropriately.
 * **Configuration Validation Change:** The configuration validation process was modified to log warnings instead of throwing exceptions for missing required configuration values. This change allows the application to start even with incomplete configuration, deferring validation failures to runtime when specific features attempt to use the missing configuration. This approach enables partial functionality of the application even when some external service configurations (like API keys) are missing.
+* **AWS Systems Manager Configuration:** The AWS Systems Manager configuration provider was made optional to align with the overall configuration validation strategy. This prevents the application from failing to start when AWS credentials are not configured or the AWS service is unavailable, allowing for local development without AWS setup and ensuring that only the specific features requiring AWS configuration will fail at runtime rather than blocking the entire application startup.
 
 ## 8. Known Issues & TODOs
 

@@ -1,9 +1,11 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Models;
 
@@ -75,6 +77,34 @@ public static class AuthenticationStartup
       {
         options.SaveToken = true;
         options.RequireHttpsMetadata = true;
+
+        byte[] signingKeyBytes;
+
+        // Check if the JWT secret key is missing, empty, or has a placeholder value
+        if (string.IsNullOrWhiteSpace(jwtSettings.SecretKey) || jwtSettings.SecretKey == "recommended to set in app secrets")
+        {
+          // Generate a secure random 32-byte key (256 bits) for the current instance
+          var randomKey = new byte[32];
+          RandomNumberGenerator.Fill(randomKey);
+          signingKeyBytes = randomKey;
+
+          // Create a Base64 representation for logging
+          var base64KeyForLog = Convert.ToBase64String(randomKey);
+
+          // Log a warning about the temporary key
+          Log.Warning(
+            "JwtSettings:SecretKey is missing or invalid in configuration. A temporary, instance-specific key has been generated for development/testing purposes only. " +
+            "This key is NOT suitable for production and will cause token validation failures across restarts or multiple instances. " +
+            "Set a persistent key using: dotnet user-secrets set \"JwtSettings:SecretKey\" \"YOUR_STRONG_SECRET_KEY\" " +
+            "For immediate testing, you can use this generated key: {GeneratedKey}",
+            base64KeyForLog);
+        }
+        else
+        {
+          // Use the configured secret key
+          signingKeyBytes = Encoding.UTF8.GetBytes(jwtSettings.SecretKey);
+        }
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
           ValidateIssuer = true,
@@ -83,7 +113,7 @@ public static class AuthenticationStartup
           ValidateIssuerSigningKey = true,
           ValidIssuer = jwtSettings.Issuer,
           ValidAudience = jwtSettings.Audience,
-          IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
+          IssuerSigningKey = new SymmetricSecurityKey(signingKeyBytes),
           ClockSkew = TimeSpan.Zero,
           // Explicitly specify that ClaimTypes.Role should be used for role claims
           RoleClaimType = ClaimTypes.Role

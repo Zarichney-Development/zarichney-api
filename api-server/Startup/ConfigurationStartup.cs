@@ -24,7 +24,7 @@ public static class ConfigurationStartup
       .AddSystemsManager("/cookbook-api", new Amazon.Extensions.NETCore.Setup.AWSOptions
       {
         Region = Amazon.RegionEndpoint.USEast2
-      });
+      }, optional: true);
   }
 
   /// <summary>
