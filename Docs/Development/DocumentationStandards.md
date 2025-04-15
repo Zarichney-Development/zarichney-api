@@ -1,7 +1,7 @@
 # Project Documentation Standards (Per-Directory README.md Files)
 
-**Version:** 1.1 *(Revised)*
-**Last Updated:** 2025-04-13 *(Revised)*
+**Version:** 1.2
+**Last Updated:** 2025-04-15
 
 ## 1. Purpose and Scope
 
@@ -46,6 +46,7 @@ Create a navigable documentation network for the AI:
 
 ## 5. Maintenance and Updates (AI Coder Responsibility)
 
-* **Trigger:** Any task (performed by human or AI) that modifies the code within a directory in a way that impacts its documented purpose, architecture, interface, assumptions, dependencies, or documented issues **MUST** also update the corresponding `README.md` file within the same commit/change, following the standards herein.
+* **Trigger:** Any task (performed by human or AI) that modifies the code or associated tests within a directory in a way that impacts its documented purpose, architecture, interface contracts, assumptions, dependencies, testing strategy (if documented in the README), or known issues **MUST** also update the corresponding `README.md` file within the same commit/change, following the standards herein.
 * **Pruning:** When updating, review Section 7 (Rationale) and Section 8 (Known Issues) and **actively remove** any information that is no longer relevant due to the code changes. Keep the README focused on the *current* state.
 * **`Last Updated` Date:** Always update the `Last Updated: [YYYY-MM-DD]` field at the top of the README when making any changes.
+* **Annotation Instruction:** **Do NOT** include explanatory annotations like "" or "<-- UPDATED -->" within the documentation content itself.
