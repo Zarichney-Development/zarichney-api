@@ -1,9 +1,10 @@
 node_modules
 env
+.env
+.idea
+.vscode
 bin
 obj
-.idea
-.env
 Data
 appsettings.Development.json
 !appsettings.json
