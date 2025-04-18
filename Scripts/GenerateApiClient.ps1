@@ -67,8 +67,8 @@ if (-not $refitterInstalled) {
 Write-Host "Generating Refit client..." -ForegroundColor Green
 refitter "$swaggerJsonPath" `
     --namespace "Zarichney.Client" `
-    --output "$apiClientDir/ZarichneyClient.cs" `
-    --interface-name "IZarichneyClient" `
+    --output "$apiClientDir/ZarichneyAPI.cs" `
+    --interface-name "IZarichneyAPI" `
     --use-api-response-for-all-responses `
     --use-nullable-reference-types `
     --use-api-response-for-successful-responses
@@ -84,6 +84,6 @@ if (Test-Path -Path $swaggerJsonPath) {
 }
 
 Write-Host "API client generation completed successfully!" -ForegroundColor Cyan
-Write-Host "Generated client is available at: $apiClientDir/ZarichneyClient.cs" -ForegroundColor Cyan
-Write-Host "Client interface name: IZarichneyClient" -ForegroundColor Cyan
+Write-Host "Generated client is available at: $apiClientDir/ZarichneyAPI.cs" -ForegroundColor Cyan
+Write-Host "Client interface name: IZarichneyAPI" -ForegroundColor Cyan
 Write-Host "Client namespace: Zarichney.Client" -ForegroundColor Cyan

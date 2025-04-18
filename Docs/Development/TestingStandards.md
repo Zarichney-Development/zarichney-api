@@ -26,7 +26,7 @@
 * **Mocking Library:** Moq (*Mandatory*)
 * **Test Data:** AutoFixture, Custom Test Data Builders
 * **Integration Host:** `CustomWebApplicationFactory<Program>` (in `api-server.Tests/Fixtures/`)
-* **Integration API Client:** Refit (`IZarichneyClient` generated via `Scripts/GenerateApiClient.ps1` into `api-server.Tests/ApiClient/`)
+* **Integration API Client:** Refit (`IZarichneyAPI` generated via `Scripts/GenerateApiClient.ps1` into `api-server.Tests/Client/`)
 * **Integration Database:** Testcontainers (PostgreSQL) via `DatabaseFixture`
 * **Database Cleanup:** Respawn (within `DatabaseFixture`)
 * **Code Coverage:** Coverlet
@@ -35,7 +35,7 @@
 
 * **Test Project:** All tests **must** reside in the `api-server.Tests` project.
 * **Folder Structure:** Strictly adhere to the structure defined in the TDD:
-    * `ApiClient/` (Generated Refit client)
+    * `Client/` (Generated Refit client)
     * `Configuration/`
     * `Unit/` (Mirrors `api-server` structure)
     * `Integration/` (Mirrors `api-server` structure)
@@ -71,8 +71,8 @@
 ## 7. Integration Test Standards
 
 * **Scope:** Cover all public API endpoints, focusing on key success/error paths, authorization, and component interactions.
-* **Framework:** Use `IClassFixture<CustomWebApplicationFactory>`, `ICollectionFixture<DatabaseFixture>`. Derive tests from a base class (e.g., `IntegrationTestBase`) providing access to the factory, fixtures, and the generated Refit client (`IZarichneyClient`).
-* **API Interaction:** All interactions with the `api-server` **must** go through the generated `IZarichneyClient`. Direct service calls are forbidden in integration tests.
+* **Framework:** Use `IClassFixture<CustomWebApplicationFactory>`, `ICollectionFixture<DatabaseFixture>`. Derive tests from a base class (e.g., `IntegrationTestBase`) providing access to the factory, fixtures, and the generated Refit client (`IZarichneyAPI`).
+* **API Interaction:** All interactions with the `api-server` **must** go through the generated `IZarichneyAPI`. Direct service calls are forbidden in integration tests.
 * **Database (`DatabaseFixture`):**
     * Tests requiring DB interaction **must** use `ICollectionFixture<DatabaseFixture>`.
     * **Mandatory:** Call `await _dbFixture.ResetDatabaseAsync();` at the *beginning* of each test requiring a clean database state.

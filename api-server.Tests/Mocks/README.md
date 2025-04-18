@@ -1,69 +1,82 @@
-# Module/Directory: /api-server.Tests/Mocks/Factories
+# Module/Directory: /api-server.Tests/Mocks
 
 **Last Updated:** 2025-04-18
 
-> **Parent:** [`api-server.Tests/Mocks/`](../Mocks/README.md) (Assuming a parent Mocks README exists or will be created)
-> If `/api-server.Tests/Mocks/README.md` doesn't exist, the parent link should be:
-> **Parent:** [`api-server.Tests`](../../README.md)
+> **Parent:** [`api-server.Tests`](../README.md)
 
 ## 1. Purpose & Responsibility
 
-* **What it is:** A collection of factory classes responsible for creating configured `Moq.Mock<T>` instances for external service interfaces (e.g., `IStripeService`, `ILlmService`, `IGitHubService`).
+* **What it is:** Contains mocks, mock factories, and mock data for simulating external dependencies in tests.
 * **Key Responsibilities:**
-    * Providing static `CreateMock()` methods to easily generate mock objects for specific external services.
-    * Setting up *default* behaviors on the mocks (e.g., returning successful responses, empty lists) to simplify test setup for common scenarios.
-    * Ensuring consistency in how external services are mocked across different tests.
-* **Why it exists:** To centralize the creation and default configuration of mock objects, reducing boilerplate code in tests and promoting standard mock setups.
+    * Providing standardized mock implementations of external services
+    * Centralizing mock creation logic through factory classes
+    * Ensuring consistent behavior of mocked dependencies across tests
+* **Child Components:**
+    * [`Factories/`](./Factories/README.md): Factory classes for creating configured mock objects
 
 ## 2. Architecture & Key Concepts
 
-* **Base Class:** Most factories inherit from `BaseMockFactory<T>`, which provides a common structure.
-* **Individual Factories:** Each factory (e.g., `MockStripeServiceFactory`, `MockOpenAIServiceFactory`) targets a specific external service interface.
-* **`CreateMock()` Method:** The primary static method used to get a mock instance with default setups applied.
-* **`SetupDefaultMock()` Method:** An abstract/virtual method implemented by each specific factory to define the default `mock.Setup(...)` calls for that service.
-* **Usage:**
-    * The `CustomWebApplicationFactory` uses these factories to register default mocks in the test application's service container.
-    * Individual tests can retrieve these pre-configured mocks from the factory's service provider (`_factory.Services.GetRequiredService<Mock<IExternalService>>()`) and further customize their behavior (`Setup()`, `Verify()`) as needed for specific test scenarios.
+* **Mock Factories:** Classes that create pre-configured mock objects for external service interfaces
+* **Base Factory Pattern:** Most factories inherit from `BaseMockFactory<T>`, providing a consistent approach
+* **Default Setups:** Factories apply default behaviors to mock objects, which can be overridden in specific tests
+* **Usage in Tests:** Mocks are registered in `CustomWebApplicationFactory` and retrieved in tests via dependency injection
 
 ## 3. Interface Contract & Assumptions
 
-* **`MockXServiceFactory.CreateMock()`**:
-    * **Purpose:** Returns a `Mock<IXService>` instance.
-    * **Critical Postconditions:** The returned mock object has default behaviors pre-configured via `SetupDefaultMock`. These defaults usually represent successful, non-exceptional paths.
+* **Factory Methods:** Each factory provides a static `CreateMock()` method returning a configured `Mock<T>` instance
+* **Default Behavior:** Unless specified otherwise, mocks simulate successful operations by default
 * **Critical Assumptions:**
-    * Assumes the interfaces being mocked (`IStripeService`, `ILlmService`, etc.) accurately reflect the actual service contracts used by the main application.
-    * Assumes the default mock behaviors are suitable for the *majority* of test cases; specific tests needing different behavior must override the setup.
+    * Assumes the interfaces being mocked accurately reflect the real service contracts
+    * Assumes tests will override default mock behavior when testing specific scenarios
 
-## 4. Local Conventions & Constraints (Beyond Global Standards)
+## 4. Local Conventions & Constraints
 
-* **Naming:** Factories are named `Mock[ServiceName]ServiceFactory`.
-* **Structure:** Follows the `BaseMockFactory<T>` pattern.
-* **Default Behavior:** Default setups should generally mock successful operations and avoid throwing exceptions unless specifically testing failure paths.
+* **Factory Naming:** Mock factories follow the pattern `Mock[ServiceName]Factory`
+* **Implementation:** Factories implement `SetupDefaultMock()` to configure standard mock behavior
+* **Registration:** All factory-created mocks must be registered in `CustomWebApplicationFactory`
 
 ## 5. How to Work With This Code
 
-* **Adding a New Mock Factory:**
-    1.  Create a new class `MockMyNewServiceFactory` inheriting `BaseMockFactory<IMyNewService>`.
-    2.  Implement the `SetupDefaultMock(Mock<IMyNewService> mock)` method to define default behaviors.
-    3.  Add a static `CreateMock()` method.
-    4.  Register the factory's output in `CustomWebApplicationFactory`.
-* **Testing:** These factories are typically not unit tested directly. Their correctness is implicitly tested by the integration tests that rely on the mocks they produce.
-* **Common Pitfalls / Gotchas:** Forgetting to register a new mock factory in `CustomWebApplicationFactory` will mean the real service (or no service) is used in integration tests, likely causing failures. Ensure default mock setups don't conflict with specific setups needed in individual tests.
+* **Using Existing Mocks:**
+  ```csharp
+  // In integration tests
+  var mockService = _factory.Services.GetRequiredService<Mock<IExternalService>>();
+  
+  // Configure mock for specific test scenario
+  mockService.Setup(s => s.GetDataAsync(It.IsAny<string>()))
+      .ReturnsAsync(testData);
+      
+  // Verify mock interactions after the test
+  mockService.Verify(s => s.GetDataAsync(It.IsAny<string>()), Times.Once);
+  ```
+
+* **Creating a New Mock Factory:**
+  1. Create a class inheriting from `BaseMockFactory<T>`
+  2. Implement the `SetupDefaultMock()` method
+  3. Add a static `CreateMock()` method
+  4. Register in `CustomWebApplicationFactory.RegisterMockExternalServices()`
+
+* **Common Pitfalls:**
+  * Forgetting to register new mocks in the factory
+  * Conflicting mock setups between default configuration and test-specific setup
+  * Overly strict mock verifications making tests brittle
 
 ## 6. Dependencies
 
 * **Internal Code Dependencies:**
-    * Interfaces defined in `api-server` (e.g., `api-server/Services/Payment/IStripeService.cs`, `api-server/Services/AI/ILlmService.cs`).
+  * [`api-server.Tests/Fixtures/CustomWebApplicationFactory.cs`](../Fixtures/README.md): Consumes these factories
+  * External service interfaces from the main `api-server` project
 * **External Library Dependencies:**
-    * `Moq` - The core mocking library.
-* **Dependents (Impact of Changes):**
-    * [`/api-server.Tests/Fixtures/CustomWebApplicationFactory.cs`](../Fixtures/README.md) - Consumes these factories for registration.
-    * [`/api-server.Tests/Integration/`](../Integration/README.md) - Integration tests rely on the mocks provided by these factories. Changes to default behavior can affect test outcomes.
+  * `Moq`: The core mocking library
+* **Dependents:**
+  * All integration tests that rely on mocked external services
 
 ## 7. Rationale & Key Historical Context
 
-* Centralizes mock creation logic, promoting DRY (Don't Repeat Yourself) and consistency in testing. Simplifies the setup required in `CustomWebApplicationFactory` and individual tests.
+* Centralized mock factories promote consistency and reduce duplication in test code
+* The approach ensures external dependencies are properly isolated in tests
 
 ## 8. Known Issues & TODOs
 
-* None currently identified.
+* Consider adding specialized mock data models for common external service responses
+* Evaluate adding more sophisticated default behaviors for complex services

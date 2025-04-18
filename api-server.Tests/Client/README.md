@@ -23,7 +23,7 @@
 
 ## 3. Interface Contract & Assumptions
 
-* **Interface:** The methods and DTOs defined in `IZarichneyAPI.cs` and related files represent the client-side view of the `api-server` contract *at the time the generation script was last run*.
+* **Interface:** The methods and DTOs defined in `ZarichneyAPI.cs` and related files represent the client-side view of the `api-server` contract *at the time the generation script was last run*.
 * **Critical Assumptions:**
     * Assumes the generated code accurately reflects the actual API behavior. **If the API changes, this code MUST be regenerated.**
     * Assumes the underlying `HttpClient` used to create the Refit instance is correctly configured (e.g., `BaseAddress`, authentication headers) by the test setup (e.g., `CustomWebApplicationFactory`).

@@ -8,6 +8,7 @@ namespace Zarichney.Tests.Helpers;
 /// - Use [Trait(TestCategories.Category, TestCategories.Unit)] to mark a test as a unit test
 /// - Use [Trait(TestCategories.Feature, TestCategories.Auth)] to associate with a feature area
 /// - Use [Trait(TestCategories.Dependency, TestCategories.Database)] to declare dependencies
+/// - Use [Trait(TestCategories.Mutability, TestCategories.ReadOnly)] to indicate if a test changes state
 /// 
 /// For dependency-aware tests, use:
 /// - [DependencyFact] instead of [Fact] - this will properly skip when dependencies are missing
@@ -18,6 +19,7 @@ public static class TestCategories
     public const string Category = "Category";
     public const string Feature = "Feature";
     public const string Dependency = "Dependency";
+    public const string Mutability = "Mutability";
     
     // Categories
     public const string Unit = "Unit";
@@ -44,4 +46,8 @@ public static class TestCategories
     public const string ExternalOpenAI = "ExternalOpenAI";
     public const string ExternalGitHub = "ExternalGitHub";
     public const string ExternalMSGraph = "ExternalMSGraph";
+    
+    // Mutability (for filtering tests that can safely run against production-like environments)
+    public const string ReadOnly = "ReadOnly";        // Tests that do not alter state
+    public const string DataMutating = "DataMutating"; // Tests that might alter state
 }

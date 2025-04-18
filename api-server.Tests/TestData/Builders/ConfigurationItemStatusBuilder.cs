@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Zarichney.Services.Status;
 using Zarichney.Tests.Helpers;
 
 namespace Zarichney.Tests.TestData.Builders;
@@ -14,11 +15,28 @@ public class ConfigurationItemStatusBuilder
     private string? _message;
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="ConfigurationItemStatusBuilder"/> class.
+    /// </summary>
+    public ConfigurationItemStatusBuilder()
+    {
+    }
+
+    /// <summary>
+    /// Creates a new builder instance with random values.
+    /// </summary>
+    /// <returns>A new builder instance with random values.</returns>
+    public static ConfigurationItemStatusBuilder CreateRandom()
+    {
+        return new ConfigurationItemStatusBuilder()
+            .WithName(GetRandom.String());
+    }
+
+    /// <summary>
     /// Sets the name of the configuration item.
     /// </summary>
     /// <param name="name">The name to set.</param>
     /// <returns>The builder instance for method chaining.</returns>
-    private ConfigurationItemStatusBuilder WithName(string name)
+    public ConfigurationItemStatusBuilder WithName(string name)
     {
         _name = name;
         return this;
@@ -51,9 +69,9 @@ public class ConfigurationItemStatusBuilder
     /// Builds a configuration item status object with the configured properties.
     /// </summary>
     /// <returns>A new configuration item status object.</returns>
-    private Services.Status.ConfigurationItemStatus Build()
+    public ConfigurationItemStatus Build()
     {
-        return new Services.Status.ConfigurationItemStatus(_name, _status, _message);
+        return new ConfigurationItemStatus(_name, _status, _message);
     }
 
     /// <summary>
@@ -61,13 +79,13 @@ public class ConfigurationItemStatusBuilder
     /// </summary>
     /// <param name="count">The number of objects to create.</param>
     /// <returns>A list of configuration item status objects.</returns>
-    public List<Services.Status.ConfigurationItemStatus> BuildList(int count)
+    public List<ConfigurationItemStatus> BuildList(int count)
     {
-        var list = new List<Services.Status.ConfigurationItemStatus>();
+        var list = new List<ConfigurationItemStatus>();
         for (var i = 0; i < count; i++)
         {
             list.Add(new ConfigurationItemStatusBuilder()
-                .WithName(GetRandom.String())
+                .WithName($"{GetRandom.String()}_{i}")
                 .Build());
         }
         return list;
