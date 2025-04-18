@@ -35,7 +35,7 @@ public class RecipeService(
   IRecipeRepository recipeRepository,
   RecipeConfig config,
   ILlmService llmService,
-  WebScraperService webscraper,
+  IWebScraperService webscraper,
   IMapper mapper,
   RankRecipePrompt rankRecipePrompt,
   SynthesizeRecipePrompt synthesizeRecipePrompt,

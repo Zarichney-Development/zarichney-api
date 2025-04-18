@@ -29,7 +29,7 @@ public class CookbookController(
   IEmailService emailService,
   IBackgroundWorker worker,
   IRecipeRepository recipeRepository,
-  WebScraperService scraperService,
+  IWebScraperService scraperService,
   IScopeContainer scope,
   ISessionManager sessionManager,
   ILogger<CookbookController> logger

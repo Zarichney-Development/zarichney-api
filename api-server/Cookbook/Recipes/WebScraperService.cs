@@ -12,6 +12,11 @@ using Zarichney.Services.Web;
 
 namespace Zarichney.Cookbook.Recipes;
 
+public interface IWebScraperService
+{
+    Task<List<ScrapedRecipe>> ScrapeForRecipesAsync(string query, int? acceptableScore = null, int? recipesNeeded = null, string? targetSite = null);
+}
+
 public class WebscraperConfig : IConfig
 {
   public int MaxNumResultsPerQuery { get; init; } = 3;
@@ -31,12 +36,12 @@ public class WebScraperService(
   IBrowserService browserService,
   ILogger<WebScraperService> logger,
   IRecipeRepository recipeRepository
-)
+):IWebScraperService
 {
   private static Dictionary<string, Dictionary<string, string>>? _siteSelectors;
   private static Dictionary<string, Dictionary<string, string>>? _siteTemplates;
 
-  internal async Task<List<ScrapedRecipe>> ScrapeForRecipesAsync(string query, int? acceptableScore = null,
+  public async Task<List<ScrapedRecipe>> ScrapeForRecipesAsync(string query, int? acceptableScore = null,
     int? recipesNeeded = null,
     string? targetSite = null)
   {

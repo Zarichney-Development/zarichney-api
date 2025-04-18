@@ -20,11 +20,15 @@ public static class ConfigurationStartup
       .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
       .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
       .AddUserSecrets<Program>()
-      .AddEnvironmentVariables()
-      .AddSystemsManager("/cookbook-api", new Amazon.Extensions.NETCore.Setup.AWSOptions
+      .AddEnvironmentVariables();
+
+    if (builder.Environment.IsProduction())
+    {
+      builder.Configuration.AddSystemsManager("/cookbook-api", new Amazon.Extensions.NETCore.Setup.AWSOptions
       {
         Region = Amazon.RegionEndpoint.USEast2
       }, optional: true);
+    }
   }
 
   /// <summary>
@@ -181,7 +185,7 @@ public static class ConfigurationStartup
       };
 
       // Log a warning instead of throwing an exception
-      Log.Warning(warningMessage + " Dependent services may fail at runtime.", 
+      Log.Warning(warningMessage + " Dependent services may fail at runtime.",
         new { ConfigSection = sectionName, ConfigProperty = property.Name });
     }
   }

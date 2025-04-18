@@ -44,13 +44,13 @@
 **5. Test Project Structure (`api-server.Tests/`) (Expected)**
 
 * A clear folder structure separating configuration, unit tests, integration tests, fixtures, helpers, mocks (including mock factories), test data artifacts (including builders), and the generated API client code.
-    * `ApiClient/`: Will contain the auto-generated Refit client code (Namespace: `Zarichney.Client`).
+    * `Client/`: Will contain the auto-generated Refit client code (Namespace: `Zarichney.Client`).
     * `Configuration/`: Expected to contain helpers for loading test configuration.
     * `Unit/`, `Integration/`: Organized mirroring `api-server` structure where applicable.
     * `Fixtures/`: Must contain implementations for `CustomWebApplicationFactory` and `DatabaseFixture`.
     * `Helpers/`: Must contain utilities like `GetRandom` and `AuthTestHelper`.
     * `Mocks/Factories/`: Must contain factories for external service mock setup (e.g., Stripe, OpenAI, GitHub).
-    * `TestData/Builders/`: **TODO:** Expects implementations for core object builders once models are defined.
+    * `TestData/Builders/`: Implementations for core object builders once models are defined.
 
 **6. Naming Conventions (Requirement)**
 
@@ -63,32 +63,35 @@
 * **Mandatory Base Traits:** `"Unit"`, `"Integration"`.
 * **Mandatory Dependency Traits (Apply all relevant):** `"Database"`, `"External:Stripe"`, `"External:OpenAI"`, `"External:GitHub"`, `"External:MSGraph"`, etc.
 * **Purpose:** Enable granular test execution filtering for development efficiency and CI optimization. (Expected dev workflow: specific tests -> all unit -> relevant integration).
+* **Note:** Tests that depend on external resources declared via `Dependency` traits should use the `[DependencyFact]` attribute. This attribute ensures the test is skipped if the `IntegrationTestBase` determines required configurations are missing. The `[DockerAvailableFact]` attribute can be used for tests requiring the Docker runtime itself to be available, independent of specific service configuration.
 
 **8. Unit Testing Strategy (Requirements)**
 
-* **Philosophy:** Test units in isolation, verify behavior, promote resilience. Follow AAA.
+* **Philosophy:** Test units in isolation, verify behavior, promote resilience, refactor to reduce redundancy. Follow AAA.
 * **Mocking:** Use Moq. Employ mock factories (`Mocks/Factories/`) for consistent external service mock setup.
-* **Assertions:** Use FluentAssertions. Utilize `.Because("...")` for intent and specific assertions for clear diagnostics.
+* **Assertions:** Use FluentAssertions. Utilize `"Because ...")` for intent and specific assertions for clear diagnostics. Logging content is to emphasize being beneficial for future code maintainers.
 * **Parameterization:** Use `[Fact]` and `[Theory]`.
 * **Data:** Use AutoFixture and Builders.
+* **Directory Structure**: With the expectation to achieve a maximal practice unit test coverage (striving for >=90%), along with proper organization of the test classes, the unit tests should be organized in a way that mirrors the structure of the `api-server` project. For complex functions that warrants multiple test cases, the unit directory is to contain a dedicated file for that function's test cases. Only if a function has a single test case, should it be placed in a parent file rather than it's own dedicated file. The future expectation is that when a function warrants additional test cases, it will be migrated to a dedicated file to well organize the multitude of test cases and make it easy to find for code maintainers.
 
 **9. Integration Testing Strategy (Requirements)**
 
-* **Approach:** Host `api-server` in-memory via `CustomWebApplicationFactory`. Interact using the generated Refit client (`Zarichney.Client.IZarichneyClient`) from `api-server.Tests/ApiClient/`.
+* **Approach:** Host `api-server` in-memory via `CustomWebApplicationFactory`. Interact using the generated Refit client (`Zarichney.Client.IZarichneyAPI`) from `api-server.Tests/Client/`. Tests declare dependencies on external resources (Database, external APIs) using `[Trait("Dependency", "...")]`. The `IntegrationTestBase` checks these dependencies against runtime configuration status during initialization. Test methods requiring these dependencies use `[DependencyFact]` to ensure they are automatically skipped if dependencies are unavailable.
 * **Test Configuration:** Implement `TestConfigurationHelper` (`Configuration/`) to load test `IConfiguration`.
 * **`CustomWebApplicationFactory` (`Fixtures/`):** Must be implemented to inherit `WebApplicationFactory<Program>`, use test configuration, override `ConfigureServices` to register test DbContext, register mocked external services (using `Mocks/Factories/`), register `TestAuthHandler`, and provide server `BaseAddress`.
 * **`DatabaseFixture` (`Fixtures/`, `ICollectionFixture`):** Must implement `IAsyncLifetime`, manage the PostgreSQL Testcontainer, provide its connection string, initialize Respawn, and offer a `ResetDatabaseAsync()` method.
-* **Refit Client Usage:** Tests must obtain and use instances of the generated `IZarichneyClient`. Client instantiation must use an `HttpClient` derived from `CustomWebApplicationFactory.CreateClient()` and be configured appropriately (likely within `IntegrationTestBase` or a dedicated fixture).
+* **Refit Client Usage:** Tests must obtain and use instances of the generated `IZarichneyAPI`. Client instantiation must use an `HttpClient` derived from `CustomWebApplicationFactory.CreateClient()` and be configured appropriately (likely within `IntegrationTestBase` or a dedicated fixture).
 * **Database Handling:** Tests requiring DB access must use `DatabaseFixture` and call `ResetDatabaseAsync()`. Interaction should prioritize API calls over direct DB manipulation for setup/assert.
 * **External API Handling:** Tests must interact with mocks registered by `CustomWebApplicationFactory` (provided via `Mocks/Factories/`). Mocks retrieved via `_factory.Services.GetRequiredService<Mock<IExternalService>>()` and configured per-test.
 * **Authentication Simulation:** Implement and use `TestAuthHandler` (registered in factory). Employ `AuthTestHelper` or base class methods to configure user/claims before API calls.
-* **Fixtures & Test Base Class:** Implement standard xUnit fixture usage (`ICollectionFixture<DatabaseFixture>`, `IClassFixture<CustomWebApplicationFactory>`). Provide an `IntegrationTestBase` class for common setup and accessors (client, helpers, fixtures).
+* **Fixtures & Test Base Class:** Implement standard xUnit fixture usage (`ICollectionFixture<DatabaseFixture>`, `IClassFixture<CustomWebApplicationFactory>`). Provide an `IntegrationTestBase` class for common setup, accessors (client, helpers, fixtures), and automated dependency checking/skipping logic.
 
-**10. Test Data Management (Requirements)**
+**10. Test Data Management & Reusable Utilities (Requirements)**
 
 * **Primary Tools:** AutoFixture and Custom Builders.
-* **AutoFixture:** Must be used for anonymous data, simple DTOs, test parameters (`[AutoData]`), and populating builders.
-* **Builders (`TestData/Builders/`):** **TODO:** Builders for core/complex objects must be implemented once models are stable.
+* **AutoFixture:** Must be used for anonymous data, simple DTOs, test parameters (`[AutoData]`), and populating builders (via `GetRandom` helper).
+* **Builders (`TestData/Builders/`):** Implementations for core object builders (e.g., `RecipeBuilder`), leveraging `AutoFixture` via the `GetRandom` helper where appropriate.
+* **Reusable Utilities:** Implement `GetRandom` and `AuthTestHelper` in `Helpers/` for generating random data and simulating authentication. These are examples of reusable utilities that can be used across multiple tests. You are at liberty to identify redundancy in your tests and create reusable utilities to help reduce redundancy. The goal is to minimize redundancy across the test suite, and to encourage future code maintainers to refactor in order to effectively reduce code duplication.
 
 **11. CI/CD Integration (GitHub Actions) (Requirements)**
 
@@ -109,12 +112,22 @@
 
 **13. API Client Generation for Tests (Requirement)**
 
-* **Purpose:** Provide a strongly-typed Refit client (`IZarichneyClient`) within `api-server.Tests` for integration testing.
+* **Purpose:** Provide a strongly-typed Refit client (`IZarichneyAPI`) within `api-server.Tests` for integration testing.
 * **Mechanism:** A PowerShell script must be provided at `/Scripts/GenerateApiClient.ps1`.
 * **Script Functionality:** The script must automate:
     1.  Building the `api-server` project (Debug config).
     2.  Generating `swagger.json` using `dotnet swagger tofile`.
-    3.  Generating the Refit client (`IZarichneyClient` and models) using `refitter`.
-    4.  Placing the generated code into `api-server.Tests/ApiClient/` with the namespace `Zarichney.Client`.
-* **Deliverable:** The functional `GenerateApiClient.ps1` script in the `/Scripts` directory.
+    3.  Generating the Refit client (`IZarichneyAPI` and models) using `refitter`.
+    4.  Placing the generated code into `api-server.Tests/Client/` with the namespace `Zarichney.Client`.
 * **Usage Requirement:** The developer (or AI coder) assigned a task **must** run this script after any changes to `api-server` controller signatures, routes, or associated models to ensure the test client is synchronized with the API contract. Relevant documentation should remind users of this step.
+* **Deliverable:** The functional `GenerateApiClient.ps1` script in the `/Scripts` directory, and references to this script in the relevant endpoint and standards documentation, to ensure future maintenance and usage of endpoint changes (important: this is part of the expected workflow - when making endpoint changes, this script must be run in order to detect whether the change broke any tests!! So this needs to be well reflected in documentation in order for code maintainers not to miss this).
+
+**14. API Server Project Modifications**
+* **Refactoring into a testable state**: The only reason to modify anything under the `/api-server/` directory is to refactor any code to make it testing compatible. You are at liberty to refactor any code that is not testable in it's current state. Confirm any refactoring and ensure no regression via automation test case implementation.
+
+**15. Documentation & Maintenance (Requirements)**
+* **General Documentation:** All general or solution related (non localized specific) documentation must be maintained in the `/Docs/` directory.
+* **Testing Standards:** The `TestingStandards.md` document must be maintained in `/Docs/Development/`. This will be the ongoing reference for future code maintainers. The expectation is that this is read and reviewed prior to any assignment work to ensure consistent changes of test suite changes.
+* **Existing Documentation Standards:** `/Docs/Development/DocumentationStandards.md` must be followed for the introduction of documentation within the `api-server.Tests` project. Use the `/Docs/Development/README_template.md` for the introduction of new README files. Note the emphasis on capturing the why and what, and not the how, as these are most beneficial as english documentation, while the how is well articulated via the code itself.
+* **Maintenance:** Use the `/Docs/Maintenance/` for any requirement of manual setups, or beneficial documentation for a human solution maintainer.
+* **Document Recommendations**: For anything that is out-of-scope from this technical design, please leave references where appropriate regarding future recommended enhancements to the test suite or testing framework. You are at liberty to implement any existing recommendations that you see fit, there is no limit to putting in additional effort in order to deliver the highest quality testing project. The ultimate goal to the overall endeavor is to maximize code quality. Your expertise is appreciated.

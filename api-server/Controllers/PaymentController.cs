@@ -7,13 +7,14 @@ using Zarichney.Services.Payment;
 namespace Zarichney.Controllers;
 
 [ApiController]
-[Route("api/payment")]
+[Route("api/payments")]
 [Authorize]
 public class PaymentController(
   ILogger<PaymentController> logger,
   IPaymentService paymentService,
   IOrderService orderService,
-  ICustomerService customerService)
+  ICustomerService customerService,
+  IStripeService stripeService)
   : ControllerBase
 {
   /// <summary>
@@ -187,6 +188,44 @@ public class PaymentController(
         "An error occurred while retrieving the session information");
     }
   }
+
+  /// <summary>
+  /// Creates a Stripe payment intent directly.
+  /// </summary>
+  [HttpPost("create-intent")]
+  [ProducesResponseType(StatusCodes.Status200OK)]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
+  public async Task<IActionResult> CreatePaymentIntent([FromBody] PaymentIntentRequest request)
+  {
+      if (request.Amount <= 0 || string.IsNullOrEmpty(request.Currency))
+      {
+          return BadRequest("Invalid payment intent request");
+      }
+      var ct = HttpContext.RequestAborted;
+      var email = User.Identity?.Name ?? string.Empty;
+      var intent = await stripeService.CreatePaymentIntentAsync(
+          email,
+          request.Amount,
+          request.Currency,
+          new Dictionary<string, string>(),
+          ct);
+      return Ok(intent);
+  }
+
+  /// <summary>
+  /// Gets status of a Stripe payment intent.
+  /// </summary>
+  [HttpGet("status/{paymentId}")]
+  [ProducesResponseType(StatusCodes.Status200OK)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
+  public async Task<IActionResult> GetPaymentStatus([FromRoute] string paymentId)
+  {
+      if (string.IsNullOrEmpty(paymentId)) return BadRequest("Payment ID is required");
+      var ct = HttpContext.RequestAborted;
+      var intent = await stripeService.GetPaymentIntent(paymentId, ct);
+      if (intent == null) return NotFound();
+      return Ok(intent);
+  }
 }
 
 public class CheckoutUrlResponse
@@ -205,4 +244,11 @@ public class RecipeCreditRequest
 {
   public string Email { get; init; } = string.Empty;
   public int RecipeCount { get; init; }
+}
+
+public class PaymentIntentRequest
+{
+    public long Amount { get; set; }
+    public string Currency { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
 }

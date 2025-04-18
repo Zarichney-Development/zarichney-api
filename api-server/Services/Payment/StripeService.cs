@@ -58,7 +58,7 @@ public interface IStripeService
   /// <summary>
   /// Gets a payment intent by ID
   /// </summary>
-  Task<PaymentIntent> GetPaymentIntent(string paymentIntentId);
+  Task<PaymentIntent> GetPaymentIntent(string paymentIntentId, CancellationToken cancellationToken = default);
 
   /// <summary>
   /// Creates a mock Stripe event for testing or handler reuse
@@ -67,6 +67,16 @@ public interface IStripeService
 
   StripeSessionMetadata ParseSessionMetadata(Session sessionWithLineItems);
   int GetPurchasedQuantity(Session sessionWithLineItems);
+
+  /// <summary>
+  /// Creates a payment intent.
+  /// </summary>
+  Task<object> CreatePaymentIntentAsync(
+    string customerEmail,
+    long amount,
+    string currency,
+    Dictionary<string, string> metadata,
+    CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -265,11 +275,11 @@ public class StripeService : IStripeService
   /// <summary>
   /// Gets a payment intent by ID
   /// </summary>
-  public async Task<PaymentIntent> GetPaymentIntent(string paymentIntentId)
+  public async Task<PaymentIntent> GetPaymentIntent(string paymentIntentId, CancellationToken cancellationToken = default)
   {
     EnsureStripeKeyConfigured();
     var paymentIntentService = new PaymentIntentService();
-    return await paymentIntentService.GetAsync(paymentIntentId);
+    return await paymentIntentService.GetAsync(paymentIntentId, cancellationToken: cancellationToken);
   }
 
   /// <summary>
@@ -334,5 +344,27 @@ public class StripeService : IStripeService
       purchasedQuantity = session.LineItems.Data.Aggregate(purchasedQuantity, (current, item) => (int)(current + item.Quantity.GetValueOrDefault()));
     }
     return purchasedQuantity;
+  }
+
+  /// <summary>
+  /// Creates a payment intent using Stripe.
+  /// </summary>
+  public async Task<object> CreatePaymentIntentAsync(
+    string customerEmail,
+    long amount,
+    string currency,
+    Dictionary<string, string> metadata,
+    CancellationToken cancellationToken = default)
+  {
+    EnsureStripeKeyConfigured();
+    var paymentIntentService = new PaymentIntentService();
+    var options = new PaymentIntentCreateOptions
+    {
+      Amount = amount,
+      Currency = currency,
+      Metadata = metadata
+    };
+    var intent = await paymentIntentService.CreateAsync(options, cancellationToken: cancellationToken);
+    return intent;
   }
 }

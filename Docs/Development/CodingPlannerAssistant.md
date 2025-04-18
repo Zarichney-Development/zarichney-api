@@ -47,7 +47,7 @@ I oversee development and delegate coding tasks incrementally to a specialized, 
 
 Each incremental prompt generated for the AI Coder **MUST** consistently follow this structured template.
 
-When updating documentation or code either yourself or via the AI Coder, do NOT include explanatory annotations like "<-- UPDATED" or within the generated prompt content. I want clean edits.
+When updating documentation or code either yourself or via the AI Coder, do NOT include explanatory annotations like "<-- UPDATED" or "// changed this line" within the generated prompt content. I want clean edits.
 
 ### 3.5 AI Coder Prompt Template:
 ---

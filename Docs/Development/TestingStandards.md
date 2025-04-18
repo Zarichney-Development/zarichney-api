@@ -16,7 +16,7 @@
 * **Isolation:**
     * **Unit Tests:** Test components in complete isolation, mocking *all* external dependencies (database, file system, other services, external APIs).
     * **Integration Tests:** Ensure complete isolation between test runs, especially for shared resources like the database (use `DatabaseFixture` with Respawn).
-* **Readability & Maintainability:** Test code is production code. Write clear, concise, well-named tests. Use helpers, builders, and fixtures effectively to reduce duplication.
+* **Readability & Maintainability:** Test code is production code. Write clear, concise, well-named tests. Use helpers, builders, and fixtures effectively to reduce duplication. Refactoring is encouraged to eliminate redundancies.
 * **Determinism:** Tests **must** be deterministic and repeatable. Flaky tests are bugs and **must** be fixed immediately or temporarily skipped with a linked issue (`[Fact(Skip = "Reason + Issue Link")]`).
 
 ## 3. Required Tooling
@@ -112,3 +112,4 @@
 * **Fix Flaky Tests:** Treat flaky tests as high-priority bugs. Fix immediately or temporarily skip with a tracking issue.
 * **Refactoring:** Keep test code clean (DRY principle via helpers/fixtures). Delete obsolete tests. Add tests for bugs found post-release.
 * **Code Review:** Test code is subject to the same review standards as production code. Reviewers **must** check adherence to these standards.
+* **Comment TODOs:** Use `// TODO:` comments for areas needing improvement or refactoring only if issue is out-of-scope from the current assignment. Make mentions of any newly introduced TODOs in the output report.

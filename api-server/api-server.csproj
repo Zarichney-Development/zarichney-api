@@ -7,7 +7,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <InvariantGlobalization>true</InvariantGlobalization>
         <RootNamespace>Zarichney</RootNamespace>
-        <UserSecretsId>a35593bb-4d12-4d33-9746-36ebf20b99e7</UserSecretsId>
+         <UserSecretsId>a35593bb-4d12-4d33-9746-36ebf20b99e7</UserSecretsId> 
         <NoWarn>OPENAI001</NoWarn>
         <EnableDefaultContentItems>false</EnableDefaultContentItems>
         <AssemblyName>Zarichney</AssemblyName>
@@ -87,6 +87,12 @@
       <None Update="..\Docs\Maintenance\AmazonWebServices.md">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="api-server.Tests" />
+        <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+        <InternalsVisibleTo Include="Zarichney.Tests" />
     </ItemGroup>
 
 </Project>

@@ -196,7 +196,7 @@ public class ServiceStartup
     services.AddTransient<IRecipeService, RecipeService>();
     services.AddTransient<IOrderService, OrderService>();
     services.AddTransient<ICustomerService, CustomerService>();
-    services.AddTransient<WebScraperService>();
+    services.AddTransient<IWebScraperService,WebScraperService>();
     services.AddTransient<PdfCompiler>();
     services.AddTransient<ITranscribeService, TranscribeService>();
     services.AddTransient<IStripeService, StripeService>();
