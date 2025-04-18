@@ -1,11 +1,14 @@
-name: Deploy Zarichney API to AWS
+name: Build, Test and Deploy Zarichney API
 
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 env:
+  DOTNET_VERSION: '8.0.x'
   AWS_REGION: us-east-2
   # Define path where the generated script will be saved in the runner
   MIGRATION_SCRIPT_PATH: ./publish/migrations/ApplyAllMigrations.sql
@@ -23,7 +26,62 @@ permissions:
   contents: read
 
 jobs:
+  build_and_test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install tools
+        run: |
+          dotnet tool update --global dotnet-ef --version 8.*
+          dotnet tool restore
+
+      - name: Restore dependencies
+        run: dotnet restore zarichney-api.sln
+
+      - name: Build
+        run: dotnet build zarichney-api.sln --configuration Release --no-restore
+
+      - name: Generate API Client
+        run: pwsh ./Scripts/GenerateApiClient.ps1
+
+      - name: Run unit tests with coverage
+        run: |
+          dotnet test zarichney-api.sln --filter "Category=Unit" --configuration Release --no-build \
+            --collect:"XPlat Code Coverage" --results-directory ./TestResults/unit \
+            --logger "trx;LogFileName=unit_tests.trx"
+
+      - name: Run integration tests
+        run: |
+          dotnet test zarichney-api.sln --filter "Category=Integration" --configuration Release --no-build \
+            --collect:"XPlat Code Coverage" --results-directory ./TestResults/integration \
+            --logger "trx;LogFileName=integration_tests.trx"
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: ./TestResults/**/*.trx
+
+      - name: Upload coverage results
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-results
+          path: ./TestResults/**/coverage.cobertura.xml
+
   deploy:
+    name: Deploy
+    needs: build_and_test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
@@ -31,9 +89,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Clean Project
         run: dotnet clean zarichney-api/zarichney-api.csproj -c Release
