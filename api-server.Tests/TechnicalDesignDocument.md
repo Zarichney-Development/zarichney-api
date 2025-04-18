@@ -1,5 +1,8 @@
 **Technical Design Document: Automation Testing Strategy for api-server**
 
+**Version:** 1.4
+**Last Updated:** 2025-04-18
+
 **1. Introduction & Goals**
 
 * **Purpose:** This document outlines the standards, frameworks, structure, and practices required for implementing automated testing within the `api-server` solution (.NET 8). It serves as the strategic blueprint defining the expected testing infrastructure.
@@ -45,7 +48,7 @@
 
 * A clear folder structure separating configuration, unit tests, integration tests, fixtures, helpers, mocks (including mock factories), test data artifacts (including builders), and the generated API client code.
     * `Client/`: Will contain the auto-generated Refit client code (Namespace: `Zarichney.Client`).
-    * `Configuration/`: Expected to contain helpers for loading test configuration.
+    * `Configuration/`: Expected to contain helpers for loading test configuration (though the factory primarily uses direct `IConfigurationBuilder` methods).
     * `Unit/`, `Integration/`: Organized mirroring `api-server` structure where applicable.
     * `Fixtures/`: Must contain implementations for `CustomWebApplicationFactory` and `DatabaseFixture`.
     * `Helpers/`: Must contain utilities like `GetRandom` and `AuthTestHelper`.
@@ -62,6 +65,7 @@
 * Test methods **must** use `[Trait("Category", "...")]`.
 * **Mandatory Base Traits:** `"Unit"`, `"Integration"`.
 * **Mandatory Dependency Traits (Apply all relevant):** `"Database"`, `"External:Stripe"`, `"External:OpenAI"`, `"External:GitHub"`, `"External:MSGraph"`, etc.
+* **Mutability:** `"ReadOnly"`, `"DataMutating"` (Used to filter tests for safe execution against production-like environments. `ReadOnly` tests should not alter state; `DataMutating` tests might alter state and should only be run against test environments).
 * **Purpose:** Enable granular test execution filtering for development efficiency and CI optimization. (Expected dev workflow: specific tests -> all unit -> relevant integration).
 * **Note:** Tests that depend on external resources declared via `Dependency` traits should use the `[DependencyFact]` attribute. This attribute ensures the test is skipped if the `IntegrationTestBase` determines required configurations are missing. The `[DockerAvailableFact]` attribute can be used for tests requiring the Docker runtime itself to be available, independent of specific service configuration.
 
@@ -77,8 +81,21 @@
 **9. Integration Testing Strategy (Requirements)**
 
 * **Approach:** Host `api-server` in-memory via `CustomWebApplicationFactory`. Interact using the generated Refit client (`Zarichney.Client.IZarichneyAPI`) from `api-server.Tests/Client/`. Tests declare dependencies on external resources (Database, external APIs) using `[Trait("Dependency", "...")]`. The `IntegrationTestBase` checks these dependencies against runtime configuration status during initialization. Test methods requiring these dependencies use `[DependencyFact]` to ensure they are automatically skipped if dependencies are unavailable.
-* **Test Configuration:** Implement `TestConfigurationHelper` (`Configuration/`) to load test `IConfiguration`.
-* **`CustomWebApplicationFactory` (`Fixtures/`):** Must be implemented to inherit `WebApplicationFactory<Program>`, use test configuration, override `ConfigureServices` to register test DbContext, register mocked external services (using `Mocks/Factories/`), register `TestAuthHandler`, and provide server `BaseAddress`.
+* **Test Configuration:** The `CustomWebApplicationFactory` configures the test application's `IConfiguration` to closely mimic the main application's loading strategy while allowing for test-specific overrides. The goal is to ensure tests run under realistic configuration conditions.
+    * **Loading Order:** Configuration providers are added in the following order within the factory's `ConfigureAppConfiguration`:
+        1.  `appsettings.json` (Required base configuration)
+        2.  `appsettings.{EnvironmentName}.json` (e.g., `appsettings.Testing.json`, optional environment-specific settings)
+        3.  `appsettings.Testing.json` (Optional, primary mechanism for test-suite-wide overrides of settings from previous files)
+        4.  User Secrets (Loaded conditionally, typically only if `EnvironmentName` is "Development", for local testing)
+        5.  Environment Variables (Allows overrides from CI/CD or local environment)
+        6.  Database Connection String Override (An `InMemoryCollection` is added *last* to force `ConnectionStrings:IdentityConnection` to use the test database provided by `DatabaseFixture`)
+    * **Scenario Handling:** This strategy supports various scenarios:
+        * **No Config:** If only `appsettings.json` is present (or even absent if allowed by code), tests relying on missing external dependencies (not configured via *any* provider) will be skipped by the `[DependencyFact]` mechanism. Basic application startup should still succeed if `appsettings.json` provides minimal defaults.
+        * **Local Dev:** Loads `appsettings.json`, `appsettings.Development.json` (if present), User Secrets, `appsettings.Testing.json` (for specific test overrides), and allows environment variables. This covers the typical local development workflow.
+        * **Test Overrides:** Specific settings can be overridden for the entire test suite using `appsettings.Testing.json`, or for specific runs using Environment Variables (e.g., in CI).
+        * **Prod Check (Future):** This scenario is supported by relying on Environment Variables to mimic production configuration. Tests can then be filtered using the `Mutability` trait to run only `ReadOnly` tests against this configuration.
+    * **Note:** The `TestConfigurationHelper` class in `Configuration/` is less critical for the factory's primary setup but may still be useful for creating specific, isolated `IConfiguration` instances within individual tests if needed.
+* **`CustomWebApplicationFactory` (`Fixtures/`):** Must be implemented to inherit `WebApplicationFactory<Program>`, use the test configuration strategy described above, override `ConfigureServices` to register test DbContext (using the overridden connection string), register mocked external services (using `Mocks/Factories/`), register `TestAuthHandler`, and provide server `BaseAddress`.
 * **`DatabaseFixture` (`Fixtures/`, `ICollectionFixture`):** Must implement `IAsyncLifetime`, manage the PostgreSQL Testcontainer, provide its connection string, initialize Respawn, and offer a `ResetDatabaseAsync()` method.
 * **Refit Client Usage:** Tests must obtain and use instances of the generated `IZarichneyAPI`. Client instantiation must use an `HttpClient` derived from `CustomWebApplicationFactory.CreateClient()` and be configured appropriately (likely within `IntegrationTestBase` or a dedicated fixture).
 * **Database Handling:** Tests requiring DB access must use `DatabaseFixture` and call `ResetDatabaseAsync()`. Interaction should prioritize API calls over direct DB manipulation for setup/assert.
@@ -97,6 +114,7 @@
 
 * **Workflow:** Must run on PRs to `main` and merges to `main`.
 * **Steps:** Must include Checkout, Setup .NET SDK, Restore, Build, Run Unit Tests (filtered), Run Integration Tests (filtered, potentially parallelized by category), Publish Test Results (TRX), Generate & Publish Coverage Report (Cobertura). Consider adding a step to run the client generation script.
+* **Production Check Scenario:** A potential future step in a deployment workflow could involve running tests against a production-like environment. This step **must** filter tests to exclude those marked with `[Trait("Mutability", "DataMutating")]` (e.g., using `--filter "Category=Integration&Mutability!=DataMutating"`) to prevent unintended state changes.
 * **Deliverables:**
     * Updated `/.github/workflows/main.yml` file implementing the workflow.
     * Documentation in `/Docs/Maintenance/TestingSetup.md` for any manual setup or maintenance procedures.

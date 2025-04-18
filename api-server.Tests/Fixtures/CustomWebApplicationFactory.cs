@@ -11,7 +11,6 @@ using Moq;
 using Zarichney.Client;
 using Zarichney.Services.AI;
 using Zarichney.Services.Auth;
-using Zarichney.Tests.Configuration;
 using Zarichney.Tests.Helpers;
 using Zarichney.Tests.Mocks.Factories;
 
@@ -87,19 +86,34 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     /// <param name="builder">The <see cref="IWebHostBuilder"/> for configuring the application.</param>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureAppConfiguration((_, configBuilder) =>
+        builder.ConfigureAppConfiguration((hostingContext, configBuilder) =>
         {
-            // Use our test configuration helper to set up test-specific configuration
-            var testConfig = TestConfigurationHelper.CreateTestConfiguration();
+            // Set the environment to Testing if not already set
+            hostingContext.HostingEnvironment.EnvironmentName = "Testing";
             
-            // Add the test database connection string to the configuration
-            // This ensures that any code retrieving the connection string from IConfiguration will get the test value
-            configBuilder.AddInMemoryCollection(new Dictionary<string, string>
+            // Clear existing sources to ensure our order is respected
+            configBuilder.Sources.Clear();
+            
+            // Add configuration providers in specific order
+            configBuilder
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+                .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: false)
+                .AddJsonFile("appsettings.Testing.json", optional: true, reloadOnChange: false);
+
+            // Add user secrets in development mode
+            if (hostingContext.HostingEnvironment.EnvironmentName == "Development")
+            {
+                configBuilder.AddUserSecrets<Program>(optional: true);
+            }
+            
+            // Add environment variables
+            configBuilder.AddEnvironmentVariables();
+            
+            // Add the test database connection string as the very last provider to override any existing settings
+            configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 { "ConnectionStrings:IdentityConnection", GetDatabaseConnectionString() }
-            }!);
-            
-            configBuilder.AddConfiguration(testConfig);
+            });
         });
 
         builder.ConfigureTestServices(services =>

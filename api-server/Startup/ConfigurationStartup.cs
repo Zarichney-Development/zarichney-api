@@ -17,10 +17,15 @@ public static class ConfigurationStartup
   public static void ConfigureConfiguration(WebApplicationBuilder builder)
   {
     builder.Configuration
-      .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-      .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
-      .AddUserSecrets<Program>()
-      .AddEnvironmentVariables();
+      .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+      .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+    
+    if (builder.Environment.IsDevelopment())
+    {
+      builder.Configuration.AddUserSecrets<Program>(optional: true);
+    }
+    
+    builder.Configuration.AddEnvironmentVariables();
 
     if (builder.Environment.IsProduction())
     {
