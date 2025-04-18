@@ -18,7 +18,7 @@
 
 * **Test Models:** Simple POCOs representing core domain objects needed for testing
 * **Builders:** Classes following the Builder pattern to facilitate creating complex test objects
-* **Data Integration:** Works with the random data generation utilities from [`Helpers/`](../Helpers/README.md)
+* **Data Integration:** Works with the random data generation utilities from [`Helpers/`](Framework/Helpers/README.md)
 * **Data Isolation:** Test data is isolated from production data models, allowing for simpler test-specific implementations
 
 ## 3. Interface Contract & Assumptions
@@ -63,7 +63,7 @@
 ## 6. Dependencies
 
 * **Internal Code Dependencies:**
-  * [`api-server.Tests/Helpers/GetRandom.cs`](../Helpers/README.md): For random data generation
+  * [`api-server.Tests/Framework/Helpers/GetRandom.cs`](Framework/Helpers/README.md): For random data generation
   * Production models in the main `api-server` project (for structural reference)
 * **External Library Dependencies:**
   * `AutoFixture` (indirectly via `GetRandom`)

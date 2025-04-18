@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using FluentAssertions;
 using Xunit;
-using Zarichney.Tests.Helpers;
+using Zarichney.Tests.Framework.Helpers;
 
 namespace Zarichney.Tests.Unit.Helpers;
 
@@ -35,7 +35,7 @@ public class AuthTestHelperTests
         
         // Assert
         token.Should().NotBeNullOrEmpty("because a token should be generated even without roles");
-        var claims = AuthTestHelper.ParseTestToken(token);
+        var claims = AuthTestHelper.ParseTestToken(token).ToList();
         claims.Should().Contain(c => c.Type == ClaimTypes.NameIdentifier && c.Value == userId,
             "because user ID claim should be present");
         claims.Should().NotContain(c => c.Type == ClaimTypes.Role,
@@ -51,7 +51,7 @@ public class AuthTestHelperTests
         
         // Act
         var token = AuthTestHelper.GenerateTestToken(userId, roles);
-        var claims = AuthTestHelper.ParseTestToken(token);
+        var claims = AuthTestHelper.ParseTestToken(token).ToList();
         
         // Assert
         claims.Should().Contain(c => c.Type == ClaimTypes.NameIdentifier && c.Value == userId,
@@ -74,7 +74,7 @@ public class AuthTestHelperTests
         var token = AuthTestHelper.GenerateTestToken(userId, roles);
         
         // Act
-        var claims = AuthTestHelper.ParseTestToken(token);
+        var claims = AuthTestHelper.ParseTestToken(token).ToList();
         
         // Assert
         claims.Should().NotBeEmpty("because a valid token should contain claims");
@@ -147,7 +147,7 @@ public class AuthTestHelperTests
         var roles = Array.Empty<string>();
         
         // Act
-        var claims = AuthTestHelper.CreateTestClaims(userId, roles);
+        var claims = AuthTestHelper.CreateTestClaims(userId, roles).ToList();
         
         // Assert
         claims.Should().HaveCount(2, "because only userId and name claims should be present without roles");

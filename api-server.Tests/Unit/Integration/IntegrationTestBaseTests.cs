@@ -1,8 +1,7 @@
 using System.Reflection;
 using FluentAssertions;
 using Xunit;
-using Zarichney.Services.Status;
-using Zarichney.Tests.Helpers;
+using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Integration;
 
 namespace Zarichney.Tests.Unit.Integration;

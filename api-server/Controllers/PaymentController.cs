@@ -217,13 +217,11 @@ public class PaymentController(
   /// </summary>
   [HttpGet("status/{paymentId}")]
   [ProducesResponseType(StatusCodes.Status200OK)]
-  [ProducesResponseType(StatusCodes.Status404NotFound)]
   public async Task<IActionResult> GetPaymentStatus([FromRoute] string paymentId)
   {
       if (string.IsNullOrEmpty(paymentId)) return BadRequest("Payment ID is required");
       var ct = HttpContext.RequestAborted;
       var intent = await stripeService.GetPaymentIntent(paymentId, ct);
-      if (intent == null) return NotFound();
       return Ok(intent);
   }
 }

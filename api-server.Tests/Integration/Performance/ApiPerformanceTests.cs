@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Xunit;
-using Zarichney.Tests.Fixtures;
-using Zarichney.Tests.Helpers;
+using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Fixtures;
 
 namespace Zarichney.Tests.Integration.Performance;
 

@@ -18,7 +18,7 @@
 
 * **Isolation:** The fundamental principle is testing units in isolation. All external dependencies (other services, repositories, `ILogger`, `IConfiguration`, `HttpClient`, `DbContext`, external APIs) **must** be mocked.
 * **Mocking Framework:** Uses `Moq` as the primary mocking library.
-* **Mock Factories:** May leverage mock factories from [`/api-server.Tests/Mocks/Factories/`](../Mocks/Factories/README.md) for consistent setup of mocks representing external service interfaces (like `ILlmService`), although direct `Mock<T>` instantiation is also common.
+* **Mock Factories:** May leverage mock factories from [`/api-server.Tests/Framework/Mocks/Factories/`](../Mocks/Factories/README.md) for consistent setup of mocks representing external service interfaces (like `ILlmService`), although direct `Mock<T>` instantiation is also common.
 * **Assertion Library:** Uses `FluentAssertions` for writing expressive and readable assertions.
 * **Test Data:** Uses a combination of direct instantiation, Test Data Builders from [`/api-server.Tests/TestData/Builders/`](../TestData/Builders/README.md), and potentially `AutoFixture` (via helpers like `GetRandom`) for creating input data and mock return values.
 * **Structure:** Follows the Arrange-Act-Assert (AAA) pattern clearly within each test method.
@@ -66,7 +66,7 @@
     * The specific `api-server` class being tested.
     * Interfaces of dependencies being mocked (from `api-server`).
     * [`/api-server.Tests/TestData/Builders/`](../TestData/Builders/README.md) - Used for data setup.
-    * [`/api-server.Tests/Mocks/Factories/`](../Mocks/Factories/README.md) - Optionally used for mock creation.
+    * [`/api-server.Tests/Framework/Mocks/Factories/`](../Mocks/Factories/README.md) - Optionally used for mock creation.
 * **External Library Dependencies:**
     * `Xunit` - Test framework.
     * `FluentAssertions` - Assertion library.

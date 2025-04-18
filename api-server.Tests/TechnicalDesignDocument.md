@@ -28,7 +28,7 @@
 **3. Solution Project Structure (Expected)**
 
 1.  `api-server/`: The main ASP.NET Core Web API project.
-2.  `api-server.Tests/`: The single test project containing all automated tests and the generated Refit API client code. (Depends on `api-server`).
+2.  `api-server.Tests/Framework/`: The single test project containing all automated tests and the generated Refit API client code. (Depends on `api-server`).
 
 **4. Chosen Framework & Tools (Requirements)**
 
@@ -44,7 +44,7 @@
 * **Code Coverage:** Coverlet
 * **CI/CD Platform:** GitHub Actions
 
-**5. Test Project Structure (`api-server.Tests/`) (Expected)**
+**5. Test Project Structure (`api-server.Tests/Framework/`) (Expected)**
 
 * A clear folder structure separating configuration, unit tests, integration tests, fixtures, helpers, mocks (including mock factories), test data artifacts (including builders), and the generated API client code.
     * `Client/`: Will contain the auto-generated Refit client code (Namespace: `Zarichney.Client`).
@@ -80,7 +80,7 @@
 
 **9. Integration Testing Strategy (Requirements)**
 
-* **Approach:** Host `api-server` in-memory via `CustomWebApplicationFactory`. Interact using the generated Refit client (`Zarichney.Client.IZarichneyAPI`) from `api-server.Tests/Client/`. Tests declare dependencies on external resources (Database, external APIs) using `[Trait("Dependency", "...")]`. The `IntegrationTestBase` checks these dependencies against runtime configuration status during initialization. Test methods requiring these dependencies use `[DependencyFact]` to ensure they are automatically skipped if dependencies are unavailable.
+* **Approach:** Host `api-server` in-memory via `CustomWebApplicationFactory`. Interact using the generated Refit client (`Zarichney.Client.IZarichneyAPI`) from `api-server.Tests/Framework/Framework/Client/`. Tests declare dependencies on external resources (Database, external APIs) using `[Trait("Dependency", "...")]`. The `IntegrationTestBase` checks these dependencies against runtime configuration status during initialization. Test methods requiring these dependencies use `[DependencyFact]` to ensure they are automatically skipped if dependencies are unavailable.
 * **Test Configuration:** The `CustomWebApplicationFactory` configures the test application's `IConfiguration` to closely mimic the main application's loading strategy while allowing for test-specific overrides. The goal is to ensure tests run under realistic configuration conditions.
     * **Loading Order:** Configuration providers are added in the following order within the factory's `ConfigureAppConfiguration`:
         1.  `appsettings.json` (Required base configuration)
@@ -136,7 +136,7 @@
     1.  Building the `api-server` project (Debug config).
     2.  Generating `swagger.json` using `dotnet swagger tofile`.
     3.  Generating the Refit client (`IZarichneyAPI` and models) using `refitter`.
-    4.  Placing the generated code into `api-server.Tests/Client/` with the namespace `Zarichney.Client`.
+    4.  Placing the generated code into `api-server.Tests/Framework/Framework/Client/` with the namespace `Zarichney.Client`.
 * **Usage Requirement:** The developer (or AI coder) assigned a task **must** run this script after any changes to `api-server` controller signatures, routes, or associated models to ensure the test client is synchronized with the API contract. Relevant documentation should remind users of this step.
 * **Deliverable:** The functional `GenerateApiClient.ps1` script in the `/Scripts` directory, and references to this script in the relevant endpoint and standards documentation, to ensure future maintenance and usage of endpoint changes (important: this is part of the expected workflow - when making endpoint changes, this script must be run in order to detect whether the change broke any tests!! So this needs to be well reflected in documentation in order for code maintainers not to miss this).
 

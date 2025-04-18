@@ -18,11 +18,11 @@
 
 ## 2. Architecture & Key Concepts
 
-* **Test Host:** Uses `CustomWebApplicationFactory` from [`/api-server.Tests/Fixtures/`](../Fixtures/README.md) to host the `api-server` in-memory.
-* **API Client:** Interacts with the API exclusively through the generated Refit client (`IZarichneyAPI`) located in [`/api-server.Tests/Client/`](../Client/README.md).
+* **Test Host:** Uses `CustomWebApplicationFactory` from [`/api-server.Tests/Framework/Fixtures/`](Framework/Fixtures/README.md) to host the `api-server` in-memory.
+* **API Client:** Interacts with the API exclusively through the generated Refit client (`IZarichneyAPI`) located in [`/api-server.Tests/Framework/Framework/Client/`](../Framework/Client/README.md).
 * **Base Classes:** Tests typically inherit from `IntegrationTestBase` or `DatabaseIntegrationTestBase` which provide access to the factory, fixtures, API client, and helper methods.
 * **Database Interaction:** Tests requiring database access use the `DatabaseFixture` (via `[Collection("Database")]` and `DatabaseIntegrationTestBase`) and **must** call `await ResetDatabaseAsync()` at the start.
-* **Mocking:** Relies on mocks pre-registered by `CustomWebApplicationFactory` using factories from [`/api-server.Tests/Mocks/Factories/`](../Mocks/Factories/README.md). Tests retrieve and configure these mocks as needed.
+* **Mocking:** Relies on mocks pre-registered by `CustomWebApplicationFactory` using factories from [`/api-server.Tests/Framework/Mocks/Factories/`](../Mocks/Factories/README.md). Tests retrieve and configure these mocks as needed.
 * **Authentication:** Uses `TestAuthHandler` (registered by the factory) and helper methods (e.g., `CreateAuthenticatedRefitClient`) to simulate authenticated users.
 * **Dependency Skipping:** Uses `[DependencyFact]` and dependency traits (e.g., `[Trait(TestCategories.Dependency, TestCategories.Database)]`) along with logic in `IntegrationTestBase` to automatically skip tests if required configurations (API keys, database connection) are unavailable.
 
@@ -31,7 +31,7 @@
 * **Tests as Consumers:** Integration tests act as consumers of the `api-server` API, the generated Refit client, and the test fixtures.
 * **Critical Assumptions:**
     * Assumes `CustomWebApplicationFactory` and `DatabaseFixture` are correctly configured and functional.
-    * Assumes the generated Refit client in [`/api-server.Tests/Client/`](../Client/README.md) is up-to-date with the actual API contract.
+    * Assumes the generated Refit client in [`/api-server.Tests/Framework/Framework/Client/`](../Framework/Client/README.md) is up-to-date with the actual API contract.
     * Assumes the dependency checking mechanism (`IntegrationTestBase`, `ConfigurationStatusHelper`) accurately reflects the availability of necessary configurations.
     * Assumes mocks provided by the factories behave as expected (or are correctly configured within the test).
 
@@ -65,11 +65,11 @@
 ## 6. Dependencies
 
 * **Internal Code Dependencies:**
-    * [`/api-server.Tests/Fixtures/`](../Fixtures/README.md) - Core test environment setup.
-    * [`/api-server.Tests/Client/`](../Client/README.md) - Generated API client.
-    * [`/api-server.Tests/Helpers/`](../Helpers/README.md) - Authentication and utility helpers.
+    * [`/api-server.Tests/Framework/Fixtures/`](Framework/Fixtures/README.md) - Core test environment setup.
+    * [`/api-server.Tests/Framework/Framework/Client/`](../Framework/Client/README.md) - Generated API client.
+    * [`/api-server.Tests/Framework/Helpers/`](Framework/Helpers/README.md) - Authentication and utility helpers.
     * [`/api-server.Tests/TestData/Builders/`](../TestData/Builders/README.md) - For creating request DTOs.
-    * [`/api-server.Tests/Mocks/Factories/`](../Mocks/Factories/README.md) - Relies on mocks registered by the factory.
+    * [`/api-server.Tests/Framework/Mocks/Factories/`](../Mocks/Factories/README.md) - Relies on mocks registered by the factory.
 * **External Library Dependencies:**
     * `Xunit` - Test framework.
     * `FluentAssertions` - Assertion library.

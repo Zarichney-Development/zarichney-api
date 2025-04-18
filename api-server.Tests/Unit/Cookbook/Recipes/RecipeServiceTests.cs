@@ -3,13 +3,12 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using Zarichney.Cookbook.Orders;
 using Zarichney.Cookbook.Prompts;
 using Zarichney.Cookbook.Recipes;
 using Zarichney.Services.AI;
 using Zarichney.Services.Sessions;
-using Zarichney.Tests.Helpers;
-using Zarichney.Tests.Mocks.Factories;
+using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Mocks.Factories;
 
 namespace Zarichney.Tests.Unit.Cookbook.Recipes
 {
@@ -23,17 +22,8 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
     public class RecipeServiceTests
     {
         private readonly Mock<IRecipeRepository> _mockRepository;
-        private readonly Mock<ILlmService> _mockLlmService;
         private readonly Mock<IWebScraperService> _mockWebScraper;
         private readonly Mock<IMapper> _mockMapper;
-        private readonly Mock<ISessionManager> _mockSessionManager;
-        private readonly Mock<IScopeContainer> _mockScopeContainer;
-        private readonly Mock<ILogger<RecipeService>> _mockLogger;
-        private readonly RecipeConfig _recipeConfig;
-        private readonly RankRecipePrompt _rankRecipePrompt;
-        private readonly SynthesizeRecipePrompt _synthesizeRecipePrompt;
-        private readonly AnalyzeRecipePrompt _analyzeRecipePrompt;
-        private readonly GetAlternativeQueryPrompt _getAlternativeQueryPrompt;
 
         // Test data fields
         private readonly List<Recipe> _recipes;
@@ -47,16 +37,16 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
         {
             // Arrange - Setup mocks
             _mockRepository = new Mock<IRecipeRepository>();
-            _mockLlmService = MockOpenAIServiceFactory.CreateMock();
+            Mock<ILlmService> mockLlmService = MockOpenAIServiceFactory.CreateMock();
             _mockWebScraper = new Mock<IWebScraperService>();
             _mockMapper = new Mock<IMapper>();
-            _mockSessionManager = new Mock<ISessionManager>();
-            _mockScopeContainer = new Mock<IScopeContainer>();
-            _mockLogger = new Mock<ILogger<RecipeService>>();
-            _rankRecipePrompt = new RankRecipePrompt();
-            _synthesizeRecipePrompt = new SynthesizeRecipePrompt(_mockMapper.Object);
-            _analyzeRecipePrompt = new AnalyzeRecipePrompt();
-            _getAlternativeQueryPrompt = new GetAlternativeQueryPrompt();
+            Mock<ISessionManager> mockSessionManager = new();
+            Mock<IScopeContainer> mockScopeContainer = new();
+            Mock<ILogger<RecipeService>> mockLogger = new();
+            var rankRecipePrompt = new RankRecipePrompt();
+            var synthesizeRecipePrompt = new SynthesizeRecipePrompt(_mockMapper.Object);
+            var analyzeRecipePrompt = new AnalyzeRecipePrompt();
+            var getAlternativeQueryPrompt = new GetAlternativeQueryPrompt();
 
             // Setup test data
             _recipes = new List<Recipe>
@@ -150,7 +140,7 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
                 .ReturnsAsync(_recipes);
 
             // Setup default LLM service behavior
-            _mockLlmService.Setup(s => s.CallFunction<RelevancyResult>(
+            mockLlmService.Setup(s => s.CallFunction<RelevancyResult>(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<FunctionDefinition>(),
@@ -168,27 +158,27 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
                 .ReturnsAsync(new List<ScrapedRecipe>());
 
             // Setup config
-            _recipeConfig = new RecipeConfig
+            var recipeConfig = new RecipeConfig
             {
                 AcceptableScoreThreshold = 70,
                 RecipesToReturnPerRetrieval = 3,
                 MaxSearchResults = 8
             };
-            
+
             // Create the service with mocked dependencies
             _service = new RecipeService(
                 _mockRepository.Object,
-                _recipeConfig,
-                _mockLlmService.Object,
+                recipeConfig,
+                mockLlmService.Object,
                 _mockWebScraper.Object,
                 _mockMapper.Object,
-                _rankRecipePrompt,
-                _synthesizeRecipePrompt,
-                _analyzeRecipePrompt,
-                _getAlternativeQueryPrompt,
-                _mockSessionManager.Object,
-                _mockLogger.Object,
-                _mockScopeContainer.Object);
+                rankRecipePrompt,
+                synthesizeRecipePrompt,
+                analyzeRecipePrompt,
+                getAlternativeQueryPrompt,
+                mockSessionManager.Object,
+                mockLogger.Object,
+                mockScopeContainer.Object);
         }
 
         [Fact]

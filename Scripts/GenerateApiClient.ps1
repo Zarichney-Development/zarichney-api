@@ -11,7 +11,7 @@ Write-Host "Starting API client generation process..." -ForegroundColor Cyan
 $rootDir = Split-Path -Parent $PSScriptRoot
 $apiServerDir = Join-Path -Path $rootDir -ChildPath "api-server"
 $apiServerTestsDir = Join-Path -Path $rootDir -ChildPath "api-server.Tests"
-$apiClientDir = Join-Path -Path $apiServerTestsDir -ChildPath "Client"
+$apiClientDir = Join-Path -Path $apiServerTestsDir -ChildPath "Framework\Client"
 $swaggerJsonPath = Join-Path -Path $apiServerDir -ChildPath "swagger.json"
 
 # Ensure the ApiClient directory exists

@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Xunit;
 using Zarichney.Services.Status;
-using Zarichney.Tests.Helpers;
+using Zarichney.Tests.Framework.Helpers;
 
 namespace Zarichney.Tests.Unit.Helpers;
 

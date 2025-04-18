@@ -1,6 +1,6 @@
 using Zarichney.Client;
-using Zarichney.Tests.Fixtures;
 using Xunit;
+using Zarichney.Tests.Framework.Fixtures;
 
 namespace Zarichney.Tests.Integration;
 

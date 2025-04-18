@@ -1,4 +1,4 @@
-using Zarichney.Tests.Helpers;
+using Zarichney.Tests.Framework.Helpers;
 
 namespace Zarichney.Tests.TestData.Builders;
 

@@ -1,9 +1,10 @@
 using System.Net.Http.Headers;
 using Zarichney.Client;
-using Zarichney.Tests.Fixtures;
-using Zarichney.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.Tests.Framework.Helpers;
 
 namespace Zarichney.Tests.Integration;
 

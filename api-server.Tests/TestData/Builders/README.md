@@ -55,7 +55,7 @@
 
 * **Internal Code Dependencies:**
     * Domain models and DTOs defined in `api-server` (e.g., `Recipe`).
-    * Potentially [`/api-server.Tests/Helpers/`](../Helpers/README.md) if using random data generators like `GetRandom`.
+    * Potentially [`/api-server.Tests/Framework/Helpers/`](Framework/Helpers/README.md) if using random data generators like `GetRandom`.
 * **External Library Dependencies:**
     * Potentially `AutoFixture` (if used by `GetRandom`).
 * **Dependents (Impact of Changes):**
