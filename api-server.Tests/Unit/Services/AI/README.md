@@ -11,7 +11,7 @@
 >   * [`Services/AI/TranscribeService.cs`](../../../../api-server/Services/AI/TranscribeService.cs)
 >   * [`Services/AI/PromptBase.cs`](../../../../api-server/Services/AI/PromptBase.cs)
 > * **Interfaces:** [`Services/AI/ILlmRepository.cs`](../../../../api-server/Services/AI/ILlmRepository.cs) (Implicitly defined by LlmRepository)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Development/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 
@@ -30,7 +30,7 @@ Unit tests within this directory cover the distinct responsibilities# Module/Dir
 > **Related:**
 > * **Source:** [`Services/AI/TranscribeService.cs`](../../../../../api-server/Services/AI/TranscribeService.cs)
 > * **Dependencies:** `OpenAIClient` (from Azure.AI.OpenAI), `IFileService`, `IGitHubService`, `IConfiguration` / `IOptions<OpenAISettings>`
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Development/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

@@ -8,7 +8,7 @@
 > * **Source:** [`Services/Sessions/SessionCleanup.cs`](../../../../../api-server/Services/Sessions/SessionCleanup.cs)
 > * **Dependencies:** `IServiceScopeFactory`, `ISessionManager` / Repositories (`IOrderRepository`, etc.), `ILogger<SessionCleanup>`, `TimeProvider` (potentially)
 > * **Models:** [`Services/Sessions/SessionModels.cs`](../../../../../api-server/Services/Sessions/SessionModels.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Development/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

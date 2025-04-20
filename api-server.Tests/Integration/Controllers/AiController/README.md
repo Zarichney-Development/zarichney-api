@@ -6,7 +6,7 @@
 > **Related:**
 > * **Source:** [`AiController.cs`](../../../../api-server/Controllers/AiController.cs)
 > * **Test Infrastructure:** [`IntegrationTestBase.cs`](../../IntegrationTestBase.cs), [`CustomWebApplicationFactory.cs`](../../../Framework/Fixtures/CustomWebApplicationFactory.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Development/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 
@@ -51,28 +51,38 @@ These tests focus on the externally observable behavior of the `AiController` en
 * **Bad Requests (400):** For `/api/transcribe`, pay close attention to the construction of `MultipartFormDataContent`, ensuring the correct form field name (`audioFile`) is used. For `/api/completion`, check JSON serialization.
 * **Server Errors (500):** Usually indicates an issue with mock setup (e.g., a mocked method wasn't configured to handle the specific input) or an unhandled exception within the controller/middleware during the test execution. Review the mock setup in the factory and the specific test logic.
 
-## 5. Test Cases & TODOs
+## 5. Test Cases & Implementation Status
 
-* **TODO:** Test `/api/completion` POST with valid text prompt, authenticated user, verify 200 OK and response structure.
-* **TODO:** Test `/api/completion` POST with valid audio prompt (`audioPrompt` form field), authenticated user, verify 200 OK.
-* **TODO:** Test `/api/completion` POST with *both* text and audio prompts (define expected behavior - prioritize one or return 400?).
-* **TODO:** Test `/api/completion` POST with missing prompt (should return 400 Bad Request).
-* **TODO:** Test `/api/completion` POST unauthenticated (should return 401 Unauthorized).
-* **TODO:** Test `/api/completion` POST when `ILlmService` mock throws an exception (should return 500 Internal Server Error via `ErrorHandlingMiddleware`).
-* **TODO:** Test `/api/completion` POST verifies `X-Session-Id` header is present in the response.
-* **TODO:** Test `/api/transcribe` POST with valid audio file (`audioFile` form field), authenticated user, verify 200 OK.
-* **TODO:** Test `/api/transcribe` POST with missing audio file (should return 400).
-* **TODO:** Test `/api/transcribe` POST with empty audio file (should return 400 or specific error).
-* **TODO:** Test `/api/transcribe` POST with incorrect form field name (e.g., `file` instead of `audioFile`) (should return 400).
-* **TODO:** Test `/api/transcribe` POST unauthenticated (should return 401).
-* **TODO:** Test `/api/transcribe` POST when `ITranscribeService` mock throws exception (should return 500).
-* **TODO:** Test `/api/transcribe` POST when `IGitHubService` mock throws exception (should return 500).
-* **TODO:** Test `/api/transcribe` POST verifies `X-Session-Id` header is present in the response.
-* **TODO:** Consider tests for different audio file types/sizes if relevant validation exists.
-* **TODO:** Add tests verifying specific claims/roles are required if authorization policies are applied.
+### Completed Test Cases:
+
+* **✅ Authentication / Error Handling Tests:**
+    * `Completion_WithMissingPrompt_ReturnsBadRequest` - Verifies correct 400 response when no prompt is provided
+    * `Completion_Unauthenticated_ReturnsUnauthorized` - Verifies 401 response for unauthenticated requests
+    * `Transcribe_WithMissingAudioFile_ReturnsBadRequest` - Verifies correct 400 response when no audio file is provided
+    * `Transcribe_WithEmptyAudioFile_ReturnsBadRequest` - Verifies correct 400 response when an empty audio file is sent
+    * `Transcribe_WithIncorrectFormFieldName_ReturnsBadRequest` - Verifies 400 response when incorrect form field is used
+    * `Transcribe_Unauthenticated_ReturnsUnauthorized` - Verifies 401 response for unauthenticated requests
+
+### Outstanding TODOs:
+
+* **Success Path Tests:**
+    * **TODO:** Test `/api/completion` POST with valid text prompt, authenticated user, verify 200 OK and response structure
+    * **TODO:** Test `/api/completion` POST with valid audio prompt (`audioPrompt` form field), authenticated user, verify 200 OK
+    * **TODO:** Test `/api/completion` POST with *both* text and audio prompts (define expected behavior - prioritize one or return 400?)
+    * **TODO:** Test `/api/completion` POST when `ILlmService` mock throws an exception (should return 500 Internal Server Error via `ErrorHandlingMiddleware`)
+    * **TODO:** Test `/api/completion` POST verifies `X-Session-Id` header is present in the response
+    * **TODO:** Test `/api/transcribe` POST with valid audio file (`audioFile` form field), authenticated user, verify 200 OK
+    * **TODO:** Test `/api/transcribe` POST when `ITranscribeService` mock throws exception (should return 500)
+    * **TODO:** Test `/api/transcribe` POST when `IGitHubService` mock throws exception (should return 500)
+    * **TODO:** Test `/api/transcribe` POST verifies `X-Session-Id` header is present in the response
+
+* **Additional Test Ideas:**
+    * **TODO:** Consider tests for different audio file types/sizes if relevant validation exists
+    * **TODO:** Add tests verifying specific claims/roles are required if authorization policies are applied
 
 ## 6. Changelog
 
+* **2025-04-18:** Revision 3 - Updated test implementation status, marking completed tests and outstanding TODOs.
 * **2025-04-18:** Revision 2 - Refocused content on why/what, aligned with standards, added Maintenance Notes, streamlined setup/dependency info. (Gemini)
 * **2025-04-18:** Revision 1 - Initial creation and population of sections. (Gemini)
 

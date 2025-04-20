@@ -8,7 +8,7 @@
 > * **Interface:** [`Cookbook/Customers/ICustomerRepository.cs`](../../../../../api-server/Cookbook/Customers/CustomerRepository.cs) (Implicit)
 > * **Dependencies:** `DbContext` (e.g., `AppDbContext` or `UserDbContext`), `IConfiguration`, `ILogger<CustomerRepository>`
 > * **Models:** [`Cookbook/Customers/CustomerModels.cs`](../../../../../api-server/Cookbook/Customers/CustomerModels.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Development/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

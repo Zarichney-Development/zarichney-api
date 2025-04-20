@@ -5,7 +5,7 @@
 > **Parent:** [`api-server.Tests`](../README.md)
 > **Related:**
 > * **Subdirectories:** [`Client/`](Client/README.md), [`Configuration/`](Configuration/README.md), [`Fixtures/`](Fixtures/README.md), [`Helpers/`](Helpers/README.md), [`Mocks/`](Mocks/README.md)
-> * **Standards:** [`TestingStandards.md`](../../Docs/Development/TestingStandards.md), [`DocumentationStandards.md`](../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../Docs/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

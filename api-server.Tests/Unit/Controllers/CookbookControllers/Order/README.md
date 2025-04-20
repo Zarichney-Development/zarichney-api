@@ -9,7 +9,7 @@
 > * **Service:** [`Cookbook/Orders/IOrderService.cs`](../../../../../api-server/Cookbook/Orders/IOrderService.cs)
 > * **Models:** [`Cookbook/Orders/OrderModels.cs`](../../../../../api-server/Cookbook/Orders/OrderModels.cs)
 > * **Other Services:** [`IPdfCompiler.cs`](../../../../../api-server/Services/PdfGeneration/IPdfCompiler.cs), [`IFileService.cs`](../../../../../api-server/Services/FileSystem/IFileService.cs), [`IBackgroundWorker.cs`](../../../../../api-server/Services/BackgroundTasks/IBackgroundWorker.cs), [`IEmailService.cs`](../../../../../api-server/Services/Email/IEmailService.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Development/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

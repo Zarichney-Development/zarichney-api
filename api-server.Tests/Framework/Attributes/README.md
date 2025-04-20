@@ -6,7 +6,7 @@
 > **Related:**
 > * **Attribute Sources:** [`DockerAvailableFactAttribute.cs`](DockerAvailableFactAttribute.cs), [`DependencyFactAttribute.cs`](DependencyFactAttribute.cs), [`SkipMissingDependencyDiscoverer.cs`](SkipMissingDependencyDiscoverer.cs), [`SkipMissingDependencyTestCase.cs`](SkipMissingDependencyTestCase.cs) (List may vary)
 > * **Usage Context:** Applied to test methods in `/Unit` and `/Integration`.
-> * **Standards:** [`TestingStandards.md`](../../../Docs/Development/TestingStandards.md), [`DocumentationStandards.md`](../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../Docs/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

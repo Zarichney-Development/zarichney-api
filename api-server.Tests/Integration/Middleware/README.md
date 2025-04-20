@@ -10,7 +10,7 @@
 >   * [`Services/Auth/AuthenticationMiddleware.cs`](../../../api-server/Services/Auth/AuthenticationMiddleware.cs)
 >   * [`Services/Sessions/SessionMiddleware.cs`](../../../api-server/Services/Sessions/SessionMiddleware.cs)
 > * **Startup:** [`Startup/MiddlewareStartup.cs`](../../../api-server/Startup/MiddlewareStartup.cs)
-> * **Standards:** [`TestingStandards.md`](../../../Docs/Development/TestingStandards.md), [`DocumentationStandards.md`](../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../Docs/Development/DocumentationStandards.md)
 > * **Test Infrastructure:** [`IntegrationTestBase.cs`](../IntegrationTestBase.cs), [`CustomWebApplicationFactory.cs`](../Framework/Fixtures/CustomWebApplicationFactory.cs)
 
 ## 1. Purpose & Rationale (Why?)

@@ -8,7 +8,7 @@
 > * **Source:** [`Services/Status/StatusService.cs`](../../../../api-server/Services/Status/StatusService.cs)
 > * **Models:** [`Services/Status/ConfigurationItemStatus.cs`](../../../../api-server/Services/Status/ConfigurationItemStatus.cs)
 > * **Dependencies:** `IConfiguration`, potentially other service interfaces (e.g., `IEmailService`, `IStripeService`, `IOpenAIService`), `ILogger<StatusService>`
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Development/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

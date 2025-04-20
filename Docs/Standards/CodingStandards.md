@@ -1,15 +1,15 @@
 # Project Coding Standards for AI Assistants
 
-**Version:** 1.3
-**Last Updated:** 2025-04-15
+**Version:** 1.4
+**Last Updated:** 2025-04-20
 
 ## 1. Core Principles
 
 * **Clarity:** Write code that is easy for others (human or AI) to understand. Prioritize readability.
 * **Consistency:** Follow the patterns and conventions already established in this codebase. When in doubt, match the style of surrounding code. Refer to existing services, controllers, and configuration classes as examples.
-* **Correctness:** Ensure code behaves as intended and meets requirements specified in the task prompt and associated `README.md` files. Verify against documented contracts.
+* **Correctness:** Ensure code behaves as intended and meets requirements specified in the task prompt and associated `README.md` files. Verify against documented contracts and diagrams.
 * **Robustness:** Write code that anticipates and handles potential errors and edge cases gracefully. Validate inputs and manage external dependencies reliably.
-* **Maintainability:** Create code that is easy to debug, modify, extend, and test. Favor modularity and clear separation of concerns.
+* **Maintainability:** Create code that is easy to debug, modify, extend, and test. Favor modularity and clear separation of concerns. Ensure documentation and diagrams are kept current.
 
 ## 2. Language & Formatting (C#)
 
@@ -71,18 +71,19 @@
 
 * **MUST** use `using` statements or `await using` for all `IDisposable` objects to ensure proper resource cleanup. This includes streams (`MemoryStream`, `FileStream`), `HttpClient`, `DbContext` instances obtained via scope, `SemaphoreSlim`, `ChannelReader/Writer`, and custom disposable services like `BrowserService`. [cite: api-server/Services/FileService.cs, api-server/Services/BrowserService.cs, api-server/Services/Auth/RefreshTokenCleanupService.cs]
 
-## 9. Documentation & Testing
+## 9. Documentation, Diagrams & Testing
 
 * **Code Comments:**
   * **MUST** write clear XML documentation comments (`/// <summary>...`) for all new or significantly modified public types (classes, interfaces, enums) and members (methods, properties). Follow existing examples for detail level.
   * Explain the **purpose (why)** and **usage/contract (how)**, not just *what* the code does literally. Document parameters (`<param>`) and return values (`<returns>`) clearly.
   * Use inline comments (`//`) sparingly, only to clarify particularly complex, non-obvious, or potentially confusing sections of logic.
 * **Testing:**
-    * **WHEN Code Changes Occur:** Any task (performed by human or AI) that modifies the code within a directory **MUST** also add or update relevant unit and/or integration tests within the same commit/change.
-    * **HOW to Write Tests:** For specific standards, structure, frameworks, naming, and quality expectations for automated tests, you **MUST** consult and adhere to the **[`Docs/Development/TestingStandards.md`](./TestingStandards.md)** document.
-* **README.md Updates:**
-  * **WHEN Code/Test Changes Impact Documentation:** Any task (performed by human or AI) that modifies the code or tests within a directory in a way that impacts its documented purpose, architecture, interface contracts, assumptions, local conventions, dependencies, testing strategy, or known issues/TODOs **MUST** also update the corresponding `README.md` file within the same commit/change.
-  * **HOW to Update READMEs:** For the specific standards, structure, content guidelines, and linking strategy for `README.md` files, you **MUST** consult and adhere to the **[`Docs/Development/DocumentationStandards.md`](./DocumentationStandards.md)** document. This document governs *how* READMEs are written and maintained. [cite: Docs/Development/DocumentationStandards.md]
+  * **WHEN Code Changes Occur:** Any task (performed by human or AI) that modifies the code within a directory **MUST** also add or update relevant unit and/or integration tests within the same commit/change.
+  * **HOW to Write Tests:** For specific standards, structure, frameworks, naming, and quality expectations for automated tests, you **MUST** consult and adhere to the **[`Docs/Standards/TestingStandards.md`](./TestingStandards.md)** document. [cite: Docs/Standards/TestingStandards.md]
+* **README.md & Diagram Updates:**
+  * **WHEN Code/Test Changes Impact Documentation/Diagrams:** Any task (performed by human or AI) that modifies the code or tests within a directory in a way that impacts its documented purpose, architecture, interface contracts, assumptions, dependencies, testing strategy, or **visualized architecture/flows** **MUST** also update the corresponding `README.md` file and any relevant Mermaid diagrams within the same commit/change.
+  * **HOW to Update READMEs:** For the specific standards, structure, content guidelines, and linking strategy for `README.md` files, you **MUST** consult and adhere to the **[`Docs/Standards/DocumentationStandards.md`](./DocumentationStandards.md)** document. [cite: Docs/Standards/DocumentationStandards.md]
+  * **HOW to Update Diagrams:** For the specific standards, diagram types, styling, linking, and maintenance requirements for Mermaid diagrams, you **MUST** consult and adhere to the **[`Docs/Standards/DiagrammingStandards.md`](./DiagrammingStandards.md)** document. [cite: Docs/Standards/DiagrammingStandards.md]
 
 ## 10. Security
 
@@ -102,15 +103,20 @@
 ## 12. AI Coder Specific Workflow (**MANDATORY**)
 
 1.  **Consult Documentation First:** Before writing *any* code, **MUST** review:
-    * The specific task prompt provided to you.
-    * The `README.md` file in the primary directory/directories related to your task. Pay close attention to Section 3 (Interface Contract & Assumptions) and Section 4 (Local Conventions).
-    * This `CodingStandards.md` document.
-    * The **[`Docs/Development/TestingStandards.md`](./TestingStandards.md)** document for rules on writing tests.
-    * The **[`Docs/Development/DocumentationStandards.md`](./DocumentationStandards.md)** document for rules on updating READMEs.
+  * The specific task prompt provided to you.
+  * The `README.md` file in the primary directory/directories related to your task. Pay close attention to Section 3 (Interface Contract & Assumptions), Section 4 (Local Conventions), and any embedded diagrams.
+  * This `CodingStandards.md` document.
+  * The **[`Docs/Standards/TestingStandards.md`](./TestingStandards.md)** document for rules on writing tests.
+  * The **[`Docs/Standards/DocumentationStandards.md`](./DocumentationStandards.md)** document for rules on updating READMEs.
+  * The **[`Docs/Standards/DiagrammingStandards.md`](./DiagrammingStandards.md)** document for rules on updating diagrams. [cite: Docs/Standards/DiagrammingStandards.md]
 2.  **Adhere to Standards:** Strictly follow all guidelines in this document and the local conventions noted in the relevant `README.md`. Match the style and patterns of the surrounding code.
-3.  **Respect Contracts:** Do not violate the explicit or implicit contracts defined in the relevant `README.md` (Section 3).
-4.  **Add/Update Tests:** Add or update unit/integration tests according to **[`Docs/Development/TestingStandards.md`](./TestingStandards.md)** to cover your code changes.
+3.  **Respect Contracts:** Do not violate the explicit or implicit contracts defined in the relevant `README.md` (Section 3) or visualized in diagrams.
+4.  **Add/Update Tests:** Add or update unit/integration tests according to **[`Docs/Standards/TestingStandards.md`](./TestingStandards.md)** to cover your code changes.
 5.  **Run Tests:** Run the tests you added/updated and ensure they pass. Run all unit tests (`dotnet test --filter "Category=Unit"`) and ensure they pass. Fix any failures.
-6.  **Update Documentation:** If your code or test changes alter the module's documented aspects (purpose, architecture, interface, assumptions, dependencies, testing, etc.), you **MUST** update the relevant `README.md` file(s) following the rules in **[`Docs/Development/DocumentationStandards.md`](./DocumentationStandards.md)**. Update the `Last Updated:` date. [cite: Docs/Development/DocumentationStandards.md]
+6.  **Update Documentation & Diagrams:** If your code or test changes alter the module's documented aspects (purpose, architecture, interface, assumptions, dependencies, testing, visualized flows/structures, etc.), you **MUST**:
+  * Update the relevant `README.md` file(s) following the rules in **[`Docs/Standards/DocumentationStandards.md`](./DocumentationStandards.md)**.
+  * Update the relevant Mermaid diagram(s) following the rules in **[`Docs/Standards/DiagrammingStandards.md`](./DiagrammingStandards.md)**.
+  * Update the `Last Updated:` date in the affected `README.md`.
 7.  **Implement Thoroughly:** Ensure code includes necessary error handling, logging, parameter validation, and resource disposal (`using`).
 8.  **XML Docs:** Write clear XML documentation comments for any new public members or types you create or modify significantly.
+

@@ -9,7 +9,7 @@
 > * **Dependencies:** `IBrowserService`, `IConfiguration`, `IFileService`, `ILogger<WebScraperService>`, HtmlAgilityPack / AngleSharp
 > * **Configuration:** [`Config/site_selectors.json`](../../../../../api-server/Config/site_selectors.json)
 > * **Models:** [`Cookbook/Recipes/RecipeModels.cs`](../../../../../api-server/Cookbook/Recipes/RecipeModels.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Development/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

@@ -7,7 +7,7 @@
 > * **Source:** [`Services/Email/EmailService.cs`](../../../../../api-server/Services/Email/EmailService.cs)
 > * **Dependencies:** `ITemplateService`, Email Provider SDK/Framework/Client (e.g., `ISendGridClient`, `IMailKitClient`, `ISmtpClient`), `IOptions<EmailSettings>`, `ILogger<EmailService>`
 > * **Models:** [`Services/Email/EmailModels.cs`](../../../../../api-server/Services/Email/EmailModels.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Development/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

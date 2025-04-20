@@ -6,7 +6,7 @@
 > **Related:**
 > * **Source:** [`Services/AI/LlmRepository.cs`](../../../../../api-server/Services/AI/LlmRepository.cs)
 > * **Dependencies:** `OpenAIClient` (from Azure.AI.OpenAI), `IConfiguration` / `IOptions<OpenAISettings>`
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Development/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

@@ -1,105 +1,185 @@
-# Module/Directory: Server
+# Module/Directory: api-server (Root)
 
-**Last Updated:** 2025-04-14
+**Last Updated:** 2025-04-20
 
 ## 1. Purpose & Responsibility
 
-* **What it is:** This directory contains the backend API server for the Zarichney application, providing API endpoints and core logic for features including personalized cookbook generation, AI interactions, user authentication, and payment processing.
+* **What it is:** This project contains the backend API server for the Zarichney application, responsible for handling user authentication, managing cookbook creation workflows, processing payments, interacting with AI services, and serving data to client applications.
 * **Key Responsibilities:**
-  * Exposing RESTful API endpoints for client interaction ([`Controllers`](./Controllers/README.md)).
-  * Managing user authentication, authorization, sessions, and API keys ([`Auth`](./Services/Auth/README.md), [`Services/Sessions`](./Services/Sessions/README.md)).
-  * Handling cookbook order submission and coordinating processing ([`Cookbook/Orders`](./Cookbook/Orders/README.md)).
-  * Managing recipe data: searching, scraping, cleaning, indexing, and AI-driven synthesis ([`Cookbook/Recipes`](./Cookbook/Recipes/README.md)).
-  * Interacting with external services: OpenAI, Stripe, GitHub, Microsoft Graph (Email), Playwright (`Services`).
-  * Managing application configuration ([`Config`](./Config/README.md)).
-  * Centralizing application startup logic ([`Startup`](./Startup/README.md)).
-  * Executing background tasks (`Services/BackgroundWorker`).
-* **Why it exists:** To provide the core backend logic and API interface for the Zarichney application, separating concerns into distinct modules powering the `zarichney.com` website and integrated AI features.
-* **Submodules:**
-  * [`Auth`](./Services/Auth/README.md) - Handles user identity, authentication (JWT/Cookie/API Key), authorization, and user database interactions.
-  * [`Config`](./Config/README.md) - Defines configuration models and shared utilities.
-  * [`Controllers`](./Controllers/README.md) - Defines the external API endpoints exposed by the server.
-  * [`Cookbook`](./Cookbook/README.md) - Contains the core domain logic for customers, orders, recipes, and AI prompts related to cookbook generation.
-  * [`Services`](./Services/README.md) - Implements cross-cutting concerns, background tasks, session management, and integrations with external systems (AI, Stripe, GitHub, Filesystem, Email, Browser).
-  * [`Startup`](./Startup/README.md) - Centralizes application startup configuration, service registration, and middleware setup logic.
+    * Providing a secure HTTP API for client interactions.
+    * Orchestrating the personalized cookbook generation process.
+    * Managing user accounts, authentication, and authorization.
+    * Integrating with external services like OpenAI (AI tasks), Stripe (payments), MS Graph (email), Playwright (web scraping), and GitHub (logging).
+    * Providing configuration and startup logic for the application.
+* **Why it exists:** To serve as the central backend logic and data hub for the Zarichney application suite.
+* **Top-Level Subdirectories:**
+    * [`Config/`](./Config/README.md) - Shared configuration models, middleware, and utilities. [cite: api-server/Config/README.md]
+    * [`Controllers/`](./Controllers/README.md) - Defines the external HTTP API endpoints. [cite: api-server/Controllers/README.md]
+    * [`Cookbook/`](./Cookbook/README.md) - Core domain logic for cookbook generation (recipes, orders, customers). [cite: api-server/Cookbook/README.md]
+    * [`Docs/`](./Docs/README.md) - Project documentation, including development standards.
+    * [`Properties/`](./Properties/launchSettings.json) - Visual Studio launch settings.
+    * [`Services/`](./Services/README.md) - Cross-cutting concerns and external service integrations (Auth, AI, Payment, Email, etc.). [cite: api-server/Services/README.md]
+    * [`Startup/`](./Startup/README.md) - Application startup and service registration logic. [cite: api-server/Startup/README.md]
+    * [`api-server.Tests/`](../api-server.Tests/README.md) - (Assumed location) Automated tests project.
 
 ## 2. Architecture & Key Concepts
 
-* **High-Level Design:** ASP.NET Core Web API application. Exposes API endpoints via [`Controllers`](./Controllers/README.md) which orchestrate calls to various [`Services`](./Services/README.md) and domain-specific logic within [`Cookbook`](./Cookbook/README.md) and [`Auth`](./Services/Auth/README.md). Employs Dependency Injection and standard ASP.NET Core middleware patterns.
-* **Core Logic Flow (Example: API Request):**
-  1.  Request received by ASP.NET Core.
-  2.  Middleware executes (Logging, Error Handling, Auth, Session).
-  3.  Request routed to a specific `Controller` action.
-  4.  Controller action validates input and calls relevant `Service`(s) (e.g., `IOrderService`, `IRecipeService`, `IAuthService`).
-  5.  Services perform business logic, potentially interacting with repositories (`IOrderRepository`, `IRecipeRepository`, `ICustomerRepository`), external APIs (`LlmService`, `PaymentService`, `EmailService`, `GitHubService`), or queuing background tasks (`IBackgroundWorker`).
-  6.  Results are returned to the Controller, which forms the HTTP response.
-* **Key Data Structures:** `CookbookOrder`, `Recipe`, `Customer` ([`Cookbook`](./Cookbook/README.md)), `ApplicationUser`, `ApiKey`, `RefreshToken` ([`Auth`](./Services/Auth/README.md)), `Session`, `ScopeContainer` ([`Services/Sessions`](./Services/Sessions/README.md)). Various configuration models ([`Config`](./Config/README.md)).
-* **State Management:**
-  * User authentication state managed via JWT cookies and validated by ASP.NET Core Identity + JWT Bearer middleware ([`Auth`](./Services/Auth/README.md)). API Key authentication is also supported ([`Auth/AuthenticationMiddleware.cs`](./Services/Auth/AuthenticationMiddleware.cs)).
-  * User identity data stored in PostgreSQL via EF Core ([`Auth/UserDbContext.cs`](./Services/Auth/UserDbContext.cs)).
-  * Request/operation state managed via custom `SessionManager` using in-memory dictionaries, tied to scopes ([`Services/Sessions`](./Services/Sessions/README.md)).
-  * Cookbook orders, customer data, and recipe data persisted primarily via `FileService` (to the filesystem) and `GitHubService` (to a GitHub repository) ([`Services/FileService.cs`](./Services/FileSystem/FileService.cs), [`Services/GitHubService.cs`](./Services/GitHub/GitHubService.cs), [`Cookbook/Orders/OrderRepository.cs`](./Cookbook/Orders/OrderRepository.cs), [`Cookbook/Recipes/RecipeRepository.cs`](./Cookbook/Recipes/RecipeRepository.cs), [`Cookbook/Customers/CustomerRepository.cs`](./Cookbook/Customers/CustomerRepository.cs)).
-  * LLM conversation logs persisted via `LlmRepository` to GitHub ([`Services/AI/LlmRepository.cs`](./Services/AI/LlmRepository.cs)).
+* **High-Level Design:** The application is an ASP.NET Core Web API built using a modular, service-oriented architecture. It leverages dependency injection heavily. Key architectural components include Controllers handling API requests, Services encapsulating business logic and external integrations, and specific domain logic within the `Cookbook` module. Persistence uses a mix of file system storage (`FileService`) for cookbook data and PostgreSQL (`UserDbContext`) for authentication data. Background tasks are handled via `IHostedService`. AI capabilities are integrated via dedicated services interacting with OpenAI.
+* **Core Logic Flow:** Client applications interact via HTTP requests routed through Controllers. Controllers typically delegate work to Services (often via MediatR commands/queries in the Auth module). Services coordinate actions, interact with repositories or other services, manage state (via `SessionManager` or persistence), and potentially queue background work (`BackgroundWorker`). External APIs (OpenAI, Stripe, GitHub, MS Graph) are accessed through dedicated service abstractions.
+* **Architectural Overview Diagram:**
+    *(Diagram follows conventions defined in [`Docs/Standards/DiagrammingStandards.md`](./Docs/Standards/DiagrammingStandards.md))*
+    ```mermaid
+    %%{init: {'theme': 'base'}}%%
+    graph TD
+        %% Define Standard Styles (as per DiagrammingStandards.md)
+        classDef controller fill:#f9f,stroke:#333,stroke-width:2px;
+        classDef service fill:#ccf,stroke:#333,stroke-width:2px;
+        classDef repository fill:#ccf,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
+        classDef database fill:#f5deb3,stroke:#8b4513,stroke-width:2px;
+        classDef externalApi fill:#ffcc99,stroke:#ff6600,stroke-width:2px;
+        classDef middleware fill:#eee,stroke:#666,stroke-width:1px;
+        classDef background fill:#fff0b3,stroke:#cca300,stroke-width:1px;
+        classDef config fill:#d9ead3,stroke:#6aa84f,stroke-width:1px;
+        classDef startup fill:#d9ead3,stroke:#6aa84f,stroke-width:1px;
+        classDef domain fill:#cfe2f3,stroke:#3d85c6,stroke-width:2px;
+        classDef ui fill:#cceeff,stroke:#007acc,stroke-width:1px;
+
+        %% Nodes
+        subgraph ext [External Systems]
+            direction LR
+            ClientApp[Client App]:::ui
+            PostgresDB[(PostgreSQL)]:::database
+            OpenAI[OpenAI API]:::externalApi
+            Stripe[Stripe API]:::externalApi
+            GitHub[GitHub API]:::externalApi
+            MSGraph[MS Graph API]:::externalApi
+        end
+
+        subgraph apisrv [API Server Application]
+            direction TB
+            subgraph req_pipeline [Request Pipeline]
+                direction TB
+                Controllers[Controllers]:::controller
+                Middleware[Middleware]:::middleware
+                StartupLogic[Startup / Config]:::startup
+            end
+
+            subgraph core_logic [Core Logic]
+                direction TB
+                Services["Services (Auth, AI, Email, etc.)"]:::service
+                CookbookDomain[Cookbook Domain]:::domain
+                BackgroundTasks[Background Tasks]:::background
+            end
+
+            subgraph persistence [Persistence]
+                direction TB
+                UserRepo[User/Auth Repository]:::repository
+                FileRepo[File-based Repositories]:::repository
+            end
+
+            %% Internal High-Level Connections
+            Controllers --> Services
+            Controllers --> CookbookDomain
+            Middleware -.-> Controllers
+            %% Middleware intercepts before controllers
+            Services --> Persistence
+            CookbookDomain --> Services
+            %% e.g., Cookbook uses AI Service
+            CookbookDomain --> Persistence
+            BackgroundTasks -.-> Services
+            %% Background tasks use services via scope factory
+            Persistence --> UserRepo
+            Persistence --> FileRepo
+
+            StartupLogic -- configures --> Middleware
+            StartupLogic -- registers --> Services
+            StartupLogic -- registers --> CookbookDomain
+            StartupLogic -- registers --> Persistence
+            StartupLogic -- registers --> BackgroundTasks
+        end
+
+        %% External Connections
+        ClientApp --> Controllers
+        UserRepo --> PostgresDB
+        FileRepo -- Stores Data --> Filesystem[(File System)]:::database
+        %% Representing FileService target
+        Services --> OpenAI
+        Services --> Stripe
+        Services --> GitHub
+        Services --> MSGraph
+        CookbookDomain --> OpenAI
+        %% Specifically for recipe processing
+
+        %% Apply Styles
+        class ClientApp ui;
+        class PostgresDB database;
+        class OpenAI,Stripe,GitHub,MSGraph externalApi;
+        class Controllers controller;
+        class Middleware middleware;
+        class StartupLogic startup;
+        class Services service;
+        class CookbookDomain domain;
+        class BackgroundTasks background;
+        class UserRepo,FileRepo repository;
+        class Filesystem database;
+
+
+    ```
 
 ## 3. Interface Contract & Assumptions
 
-* **Key Public Interfaces (API Endpoints):** Defined within the [`Controllers`](./Controllers/README.md) directory, providing external access to authentication, cookbook, payment, AI, and general API functionalities. Specific contracts are detailed within the respective controller READMEs.
+* **Key Public Interfaces (for external callers):**
+    * The primary interface is the **HTTP RESTful API** exposed by the Controllers. Specific endpoints, request/response formats, and authentication requirements are detailed within the `/Controllers` module and potentially via Swagger/OpenAPI documentation (if generated).
 * **Critical Assumptions:**
-  * **External Systems Availability & Configuration:** Relies on the availability and correct configuration (API keys, secrets, URLs, connection strings) of:
-    * OpenAI API ([`Services/AI`](./Services/AI/README.md))
-    * Stripe API ([`Services/Payment`](./Services/Payment/README.md))
-    * GitHub API ([`Services/GitHubService.cs`](./Services/GitHub/GitHubService.cs))
-    * Microsoft Graph API (for email) ([`Services/Email`](./Services/Email/README.md))
-    * MailCheck API (for email validation) ([`Services/Email`](./Services/Email/README.md))
-    * Target websites for scraping ([`Services/BrowserService.cs`](./Services/Web/BrowserService.cs), [`Config/site_selectors.json`](./Config/site_selectors.json))
-    * PostgreSQL Database ([`Auth/UserDbContext.cs`](./Services/Auth/UserDbContext.cs))
-  * **Playwright Dependencies:** Assumes the necessary Playwright browser executables are installed in the runtime environment ([`Services/BrowserService.cs`](./Services/Web/BrowserService.cs)).
-  * **Data Persistence:** Assumes the file system paths specified in configuration are writable. Assumes the GitHub repository used by `GitHubService` is accessible and configured.
-  * **Background Processing:** Relies on the ASP.NET Core hosting environment to keep background services (`BackgroundTaskService`, `SessionCleanupService`, `RefreshTokenCleanupService`, `GitHubService`) running reliably.
-  * **Session Management:** Assumes client interactions (especially long-running ones like cookbook generation) can span multiple requests and relies on the `SessionManager` to maintain state. Session expiration and cleanup are critical.
-  * For configuration/health status endpoint details, see [`/Services/Status/README.md`](./Services/Status/README.md).
+    * **Deployment Environment:** Assumes a hosting environment capable of running ASP.NET Core 8, with necessary network access to external APIs (OpenAI, Stripe, GitHub, MS Graph) and the PostgreSQL database. Assumes write access to a local or mounted file system for `FileService`.
+    * **Configuration:** Assumes all required configuration values (API keys, connection strings, service URLs) are correctly provided via `appsettings.json`, environment variables, user secrets, or other configured providers. Missing critical configuration will likely cause startup failures or runtime errors.
+    * **External Services:** Assumes availability and correct functioning of all integrated external services (Database, OpenAI, Stripe, GitHub, MS Graph). Service outages will impact corresponding application features.
+    * **Client Behavior:** Assumes clients adhere to API contracts regarding request formats, authentication tokens, and rate limits (if applicable).
 
 ## 4. Local Conventions & Constraints (Beyond Global Standards)
 
-* **Configuration:** Driven by `appsettings.json`, environment variables, and user secrets, loaded via [`Startup/StartupExtensions.cs`](./Startup/StartupExtensions.cs). Specific configuration classes (e.g., `RecipeConfig`, `JwtSettings`) are injected via DI. External `site_selectors.json` defines scraping targets.
-* **Directory Structure:** Modules organized by feature area (`Auth`, `Cookbook`, `Controllers`, `Services`, `Config`, `Startup`). Data persistence targets `Data/` subfolders by default.
-* **Technology Choices:** ASP.NET Core 8, EF Core/PostgreSQL (Identity), Serilog, MediatR, Polly, Playwright, QuestPDF, Octokit, OpenAI SDK, Stripe SDK, Handlebars.Net, AngleSharp.
-* **Performance/Resource Notes:** Web scraping (`BrowserService`) and LLM interactions (`LlmService`) are key areas for performance monitoring and potential bottlenecks. Background tasks and session cleanup frequency impact resource usage.
-* **Security Notes:** Authentication handled via JWT Cookies & API Keys. Secure management of secrets is paramount. CSRF protection depends on client interaction patterns (likely needed for web apps).
+* **Global Standards:** All code and documentation adhere to the standards defined in [`Docs/Standards/`](./Docs/Standards/).
+* **Technology Stack:** ASP.NET Core 8, C#, Serilog (Logging), EF Core (DB access for Auth), MediatR (Auth Commands), Polly (Retries), RestSharp/HttpClient (HTTP Clients), Playwright (Scraping), QuestPDF (PDF Gen), Testcontainers (Integration Testing), xUnit (Testing), Moq (Mocking), FluentAssertions (Assertions).
+* **Branching Strategy:** (Define your branching strategy here, e.g., Gitflow, GitHub Flow).
+* **Dependency Management:** Uses .NET SDK built-in package management (NuGet).
 
-## 5. Dependencies
+## 5. How to Work With This Code
 
-* **Internal Code Dependencies:** Components are designed to be relatively modular, but rely on shared services and configuration:
-  * [Auth](./Services/Auth/README.md)
-  * [Config](./Config/README.md)
-  * [Controllers](./Controllers/README.md)
-  * [Cookbook](./Cookbook/README.md)
-  * [Services](./Services/README.md)
-  * [Startup](./Startup/README.md)
-* **External Library Dependencies:** `Microsoft.AspNetCore.*`, `Microsoft.EntityFrameworkCore.*` (Npgsql), `Serilog.*`, `MediatR`, `Polly`, `OpenAI`, `Stripe.net`, `Microsoft.Playwright`, `AngleSharp`, `QuestPDF`, `Handlebars.Net`, `Octokit`, `Swashbuckle.AspNetCore`. (Specific versions managed via project files).
-* **Dependents (Impact of Changes):**
-  * **Primary:** `zarichney.com` (Angular SSR web application) - Consumes the `/api/*` endpoints. Changes to API contracts in `Controllers` require corresponding updates in the frontend.
-  * **Secondary:** Custom GPT (OpenAI GPT Store) - Uses API Key authentication to interact with specific API endpoints (likely related to cookbook/AI features).
+* **Setup:**
+    1.  Clone the repository.
+    2.  Ensure [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) is installed.
+    3.  Configure required secrets (API Keys for OpenAI, Stripe, GitHub; Connection String for PostgreSQL) using User Secrets (`dotnet user-secrets set "Key" "Value"`) or other appropriate methods. Refer to `appsettings.json` and specific service `README.md` files for required keys.
+    4.  Set up a PostgreSQL database instance accessible to the application.
+    5.  Run Entity Framework migrations for the Auth database: `dotnet ef database update --project api-server --startup-project api-server` (adjust paths if needed).
+    6.  (If scraping) Install Playwright browsers: `pwsh ./Scripts/Install-Playwright.ps1` (or equivalent).
+* **Building:** `dotnet build` from the root directory.
+* **Running Locally:** `dotnet run --project api-server` (uses `Properties/launchSettings.json`).
+* **Testing:**
+    * **Run All Tests:** `dotnet test` from the root directory.
+    * **Run Unit Tests:** `dotnet test --filter "Category=Unit"`
+    * **Run Integration Tests:** `dotnet test --filter "Category=Integration"` (Requires Docker for Testcontainers).
+    * Refer to [`Docs/Standards/TestingStandards.md`](./Docs/Standards/TestingStandards.md) for details.
+* **Documentation:**
+    * Per-directory `README.md` files provide detailed context. Start exploration from the relevant directory.
+    * Adhere to [`Docs/Standards/DocumentationStandards.md`](./Docs/Standards/DocumentationStandards.md) and [`Docs/Standards/DiagrammingStandards.md`](./Docs/Standards/DiagrammingStandards.md).
 
-## 6. Rationale & Key Historical Context
+## 6. Dependencies
 
-* **Project Evolution:** This project originated as a personal development playground and evolved into an experimental platform for integrating AI capabilities, eventually becoming a side hustle and showcase application (`zarichney.com`). The long-term vision is to expand its capabilities towards a comprehensive AI platform.
-* **Architectural Approach:** Standard ASP.NET Core patterns provide a familiar and maintainable structure. The separation into `Services`, `Cookbook`, `Auth`, etc., aims for modularity.
-* **Data Persistence Choices:**
-  * **PostgreSQL (EF Core):** Used for structured user identity data leveraging ASP.NET Core Identity's robust features.
-  * **File System / GitHub:** Chosen for storing cookbook orders, recipes, customer data (outside identity), and LLM logs. This was likely selected for simplicity, cost-effectiveness (compared to scaling database storage), ease of backup/versioning (via Git), and potentially for easier inspection/manual editing during development or for specific debugging/logging needs. This choice implies trade-offs regarding transactional integrity, complex querying, and potential performance bottlenecks compared to a full database solution for this data.
-* **Background Tasks:** Essential for decoupling long-running operations (order processing, scraping, PDF generation, email sending) from the initial web request, improving responsiveness.
-* **Custom Session Management:** Implemented to manage state across multiple requests, particularly relevant for the multi-step cookbook generation process which involves user interaction, background tasks, and potentially long delays.
-* **Startup Refactoring:** The application startup logic was recently centralized in the `Startup` module to improve organization and maintainability by separating it from the main program entry point.
-* **Runtime Configuration Resilience:**
-    * The server now defers external service configuration checks (Email, OpenAI, GitHub, Stripe, etc.) to runtime. This allows the application to start even if some configuration is missing or invalid, improving operational resilience and flexibility.
-    * If a required configuration is missing when a service is used, a `ConfigurationMissingException` is thrown. The global error handling middleware catches this and returns a 503 Service Unavailable response with a user-friendly message, surfacing configuration issues to clients at runtime without crashing the server.
+* **Internal Code Dependencies:** See Section 1 for links to top-level module READMEs. Key modules rely on each other (e.g., Controllers use Services, Services use Config, Cookbook uses Services).
+* **External Library Dependencies:** Major dependencies include ASP.NET Core 8, EF Core, Serilog, MediatR, Polly, OpenAI SDK, Stripe SDK, Octokit.NET, MS Graph SDK, Playwright, QuestPDF, Testcontainers, xUnit, Moq, FluentAssertions. See `.csproj` files for a complete list.
+* **External Service Dependencies:** PostgreSQL Database, OpenAI API, Stripe API, GitHub API, Microsoft Graph API.
+* **Dependents (Impact of Changes):** Primarily consumed by client applications (Web UI, Mobile App - not included in this repo). Changes to API contracts in `/Controllers` will impact these clients.
+
+## 7. Rationale & Key Historical Context
+
+* This API was developed to provide a robust, scalable, and maintainable backend for the Zarichney personalized cookbook application.
+* The architecture prioritizes separation of concerns, dependency injection for testability, and asynchronous processing for potentially long-running tasks (AI interactions, scraping, PDF generation).
+* File-based storage for cookbook data was chosen initially for simplicity/cost, while a relational database (PostgreSQL) was used for structured authentication data via ASP.NET Core Identity.
 
 ## 8. Known Issues & TODOs
 
-* Web scraping fragility requires continuous monitoring and updates to `site_selectors.json`.
-* Dependence on external API stability (OpenAI, Stripe, GitHub, etc.).
-* Potential scalability limitations of file-based storage for high volumes of orders/recipes.
-* Session management complexity requires careful testing, especially around cleanup and concurrency.
-* Currently lacks automated tests; adding unit, integration, and potentially end-to-end tests is a future goal.
-* PDF generation performance might need optimization for very large cookbooks.
+* **Scalability:** File-based storage for recipes/orders may face scalability limitations under very high load; consider migration to a database or blob storage in the future.
+* **Scraping Fragility:** Web scraping logic (`WebScraperService`) is inherently brittle and may break if target website structures change. Requires monitoring and maintenance.
+* **Configuration Management:** Explore more robust configuration management for production environments (e.g., Azure App Configuration, AWS Parameter Store).
+* **Monitoring & Alerting:** Implement comprehensive application monitoring, logging aggregation, and alerting for production readiness.
+

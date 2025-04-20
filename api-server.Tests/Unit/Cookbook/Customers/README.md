@@ -7,7 +7,7 @@
 > **Related:**
 > * **Source:** [`Cookbook/Customers/`](../../../../api-server/Cookbook/Customers/)
 > * **Subdirectories:** [`CustomerService/`](CustomerService/README.md), [`CustomerRepository/`](CustomerRepository/README.md)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Development/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

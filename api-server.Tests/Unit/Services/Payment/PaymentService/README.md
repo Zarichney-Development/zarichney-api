@@ -8,7 +8,7 @@
 > * **Source:** [`Services/Payment/PaymentService.cs`](../../../../../api-server/Services/Payment/PaymentService.cs)
 > * **Dependencies:** `IStripeService`, `UserManager<IdentityUser>` / `ICustomerService` (potentially), `ILogger<PaymentService>`
 > * **Interface:** [`Services/Payment/IStripeService.cs`](../../../../../api-server/Services/Payment/StripeService.cs) (Defines contract for StripeService)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Development/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

@@ -7,7 +7,7 @@
 > **Related:**
 > * **Source:** [`Services/BackgroundTasks/BackgroundWorker.cs`](../../../../api-server/Services/BackgroundTasks/BackgroundWorker.cs)
 > * **Dependencies:** `Microsoft.Extensions.Hosting.IHostedService`, `Microsoft.Extensions.DependencyInjection.IServiceScopeFactory`, `Microsoft.Extensions.Logging.ILogger`
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Development/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

@@ -8,7 +8,7 @@
 > * **Source:** [`Services/GitHub/GitHubService.cs`](../../../../api-server/Services/GitHub/GitHubService.cs)
 > * **Dependencies:** `Octokit.IGitHubClient` (or `GitHubClient`), `IOptions<GitHubSettings>`, `ILogger<GitHubService>`
 > * **Models:** [`Config/ConfigModels.cs`](../../../../api-server/Config/ConfigModels.cs) (for `GitHubSettings`)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Development/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

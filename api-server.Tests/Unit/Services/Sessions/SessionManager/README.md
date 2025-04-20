@@ -9,7 +9,7 @@
 > * **Interface:** [`Services/Sessions/ISessionManager.cs`](../../../../../api-server/Services/Sessions/SessionManager.cs) (Likely implicitly defined)
 > * **Dependencies:** `IOrderRepository`, `ILlmRepository`, `ICustomerRepository` (or a combined `ISessionRepository`), `ILogger<SessionManager>`
 > * **Models:** [`Services/Sessions/SessionModels.cs`](../../../../../api-server/Services/Sessions/SessionModels.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Development/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

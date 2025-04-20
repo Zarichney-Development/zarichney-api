@@ -5,7 +5,7 @@
 > **Parent:** [`Controllers`](../README.md)
 > **Related:**
 > * **Source:** [`ApiController.cs`](../../../../api-server/Controllers/ApiController.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Development/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
 > * **Test Infrastructure:** [`IntegrationTestBase.cs`](../../IntegrationTestBase.cs), [`CustomWebApplicationFactory.cs`](../../../Framework/Fixtures/CustomWebApplicationFactory.cs)
 
 ## 1. Purpose & Rationale (Why?)

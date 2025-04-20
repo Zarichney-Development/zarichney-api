@@ -1,23 +1,25 @@
 # --- README Template Instructions ---
 
-**Purpose:** This template provides a standardized structure for creating `README.md` files within each directory of the codebase. Its primary goal is to capture essential contextual information, design rationale, and interface contracts that are *not* immediately obvious from the code itself, specifically to aid AI coding assistants in understanding and safely modifying the code within this directory.
+**Purpose:** This template provides a standardized structure for creating `README.md` files within each directory of the codebase. Its primary goal is to capture essential contextual information, design rationale, interface contracts, and operational guidance that are *not* immediately obvious from the code itself, specifically to aid AI coding assistants in understanding and safely modifying the code within this directory.
 
 **Target Audience:** AI assistants tasked with generating or updating README files for specific code directories.
 
-**Core Goal:** Maximize value for future AI maintainers by documenting the 'why' and the 'rules' of the code in this directory. Avoid simple code-to-English translation; focus on implicit knowledge, assumptions, and design decisions. **Create a navigable documentation network by linking related READMEs.** This README should complement, not duplicate, information readily available in code comments or the central `Docs/CodingStandards.md`.
+**Core Goal:** Maximize value for future AI maintainers by documenting the 'why' and the 'rules' of the code in this directory, potentially supplemented by diagrams. Avoid simple code-to-English translation; focus on implicit knowledge, assumptions, and design decisions. **Create a navigable documentation network by linking related READMEs.** This README should complement, not duplicate, information readily available in code comments or the central standards documents in `/Docs/Standards/`.
 
 **How to Use:**
 1.  Replace placeholders like `[Directory Name]`, `[YYYY-MM-DD]`, `[Path to Parent README]`, etc., with specific details.
 2.  Fill out each section based on the code and components *within this specific directory*.
-3.  **Linking (Crucial):**
+3.  **Embedding Diagrams:** Section 2 (Architecture & Key Concepts) is the primary location for embedding relevant Mermaid diagrams. Follow the rules in `Docs/Standards/DiagrammingStandards.md` when creating or updating diagrams.
+4.  **Linking (Crucial):**
     * **Parent:** Always include a link to the parent directory's README.md (unless this is the root).
     * **Children:** If this directory contains subdirectories with their own READMEs, link to each one from Section 1.
     * **Dependencies/Dependents:** In Section 6, link to the READMEs of any internal dependencies or dependents mentioned.
-    * Use relative paths for links (e.g., `../README.md`, `./Subdirectory/README.md`).
-4.  Be concise but thorough. Focus on information that a stateless AI assistant would need.
-5.  **Pruning:** When updating, remove historical rationale (Section 7) or known issues (Section 8) that are no longer relevant. Keep the documentation focused on the *current* state.
-6.  Reference the central `Docs/CodingStandards.md` for global rules, but detail *local* conventions or exceptions in Section 4.
-7.  Update the `Last Updated` date whenever significant changes are made.
+    * **Diagrams (Optional):** If using separate `.mmd` files, link to them from Section 2.
+    * Use relative paths for links (e.g., `../README.md`, `./Subdirectory/README.md`, `../../../docs/diagrams/MyModule/Diagram.mmd`).
+5.  Be concise but thorough. Focus on information that a stateless AI assistant would need.
+6.  **Pruning:** When updating, remove historical rationale (Section 7) or known issues (Section 8) that are no longer relevant. Keep the documentation focused on the *current* state.
+7.  Reference the central standards documents in `/Docs/Standards/` for global rules, but detail *local* conventions or exceptions in Section 4.
+8.  Update the `Last Updated` date whenever significant changes are made to the text or embedded diagrams.
 
 # --- End of Instructions ---
 
@@ -48,6 +50,14 @@
 * **Core Logic Flow:** [Describe the typical sequence for a primary responsibility, focusing on the interaction between components. E.g., "1. `RecipeService.GetRecipes` called. 2. Checks `RecipeRepository`. 3. If needed, calls `WebScraperService`. 4. Results passed back to `RecipeRepository` for ranking/storage..."]
 * **Key Data Structures:** [List the primary C# classes/records representing the core domain data *defined* or *centrally managed* here (e.g., `Recipe`, `ScrapedRecipe`, `SynthesizedRecipe`). No need to list every DTO.]
 * **State Management:** [Where is persistent state managed? E.g., "`RecipeRepository` manages state via `FileService` (file system). `RecipeIndexer` maintains an in-memory index."]
+* **Diagram(s):** [Embed relevant Mermaid diagram(s) here using ```mermaid code blocks. Diagrams MUST follow [`Docs/Standards/DiagrammingStandards.md`](../Standards/DiagrammingStandards.md). Link to separate `.mmd` files if necessary.]
+    ```mermaid
+    %% Example Placeholder - Replace with actual diagram
+    graph TD
+        A[Component A] --> B{Decision};
+        B -- Yes --> C[Result 1];
+        B -- No --> D[Result 2];
+    ```
 
 ## 3. Interface Contract & Assumptions
 
@@ -76,7 +86,7 @@
 * **Testing:**
     * **Location:** [Path to relevant test projects/files.]
     * **How to Run:** [Command to run tests for this module.]
-    * **Testing Strategy:** [Key areas to focus testing on (e.g., "Mock `LlmService` for unit tests", "Integration tests needed for service interactions", "Test scraping error handling").]
+    * **Testing Strategy:** [Key areas to focus testing on (e.g., "Mock `LlmService` for unit tests", "Integration tests needed for service interactions", "Test scraping error handling"). Refer to [`Docs/Standards/TestingStandards.md`](../Standards/TestingStandards.md).]
 * **Common Pitfalls / Gotchas:** [Non-obvious behaviors or frequent issues (e.g., "Scraping selectors break if websites change", "AI model updates might require prompt changes", "Ensure thread-safety around index updates").]
 
 ## 6. Dependencies
