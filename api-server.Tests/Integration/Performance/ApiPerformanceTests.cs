@@ -8,10 +8,11 @@ namespace Zarichney.Tests.Integration.Performance;
 /// <summary>
 /// Performance tests for the API.
 /// </summary>
+[Collection("Integration")]
 [Trait(TestCategories.Category, TestCategories.Performance)]
 [Trait(TestCategories.Feature, TestCategories.Cookbook)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
-public class ApiPerformanceTests(CustomWebApplicationFactory factory, ApiClientFixture apiClientFixture) : IntegrationTestBase(factory, apiClientFixture)
+public class ApiPerformanceTests(ApiClientFixture apiClientFixture) : IntegrationTestBase(apiClientFixture)
 {
   [DependencyFact]
   public async Task GetRecipes_Performance_CompletesWithinTimeLimit()

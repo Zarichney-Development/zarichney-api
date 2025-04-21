@@ -8,15 +8,13 @@ namespace Zarichney.Tests.Integration.Controllers.CookbookControllers.Recipe;
 /// <summary>
 /// Integration tests for the CookbookController.
 /// </summary>
+[Collection("Integration")]
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Component, TestCategories.Controller)]
 [Trait(TestCategories.Feature, TestCategories.Cookbook)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
-public class GetRecipeDetailsTests(
-    CustomWebApplicationFactory factory,
-    DatabaseFixture databaseFixture,
-    ApiClientFixture apiClientFixture)
-    : DatabaseIntegrationTestBase(factory, databaseFixture, apiClientFixture)
+public class GetRecipeDetailsTests(ApiClientFixture apiClientFixture)
+    : DatabaseIntegrationTestBase(apiClientFixture)
 {
     [DependencyFact]
     public async Task GetRecipes_Unauthenticated_ReturnsUnauthorized()

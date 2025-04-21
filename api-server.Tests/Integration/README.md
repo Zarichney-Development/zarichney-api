@@ -1,6 +1,6 @@
 # Module/Directory: /api-server.Tests/Integration
 
-**Last Updated:** 2025-04-21
+**Last Updated:** 2025-04-22
 
 > **Parent:** [`/api-server.Tests/Framework/`](../README.md)
 
@@ -97,12 +97,12 @@
 
 ## 8. Known Issues & TODOs
 
-* **TODO:** Implement the fixture/collection consolidation described in Section 2 (Future State) and the [`/api-server.Tests/Framework/Fixtures/README.md`](../Fixtures/README.md). This includes:
-  * Defining the single `"Integration"` collection.
-  * Removing old collection definitions.
-  * Refactoring `ApiClientFixture`.
-  * Simplifying base classes (`IntegrationTestBase`, `DatabaseIntegrationTestBase`) by removing `IClassFixture<>`.
-  * Updating all test classes to use `[Collection("Integration")]` and inherit the correct base class.
+* ~~Implement the fixture/collection consolidation described in Section 2 (Future State) and the [`/api-server.Tests/Framework/Fixtures/README.md`](../Fixtures/README.md). This includes:~~ ✅ Completed
+  * ~~Defining the single `"Integration"` collection.~~ ✅ Completed
+  * ~~Removing old collection definitions.~~ ✅ Completed
+  * ~~Refactoring `ApiClientFixture`.~~ ✅ Completed
+  * ~~Simplifying base classes (`IntegrationTestBase`, `DatabaseIntegrationTestBase`) by removing `IClassFixture<>`.~~ ✅ Completed
+  * ~~Updating all test classes to use `[Collection("Integration")]` and inherit the correct base class.~~ ✅ Completed
 * **TODO:** Implement comprehensive test coverage for all major API endpoints and scenarios.
 * **TODO:** Continuously monitor test flakiness and performance after refactoring.
 

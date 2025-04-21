@@ -6,10 +6,12 @@ using Zarichney.Tests.Framework.Fixtures;
 
 namespace Zarichney.Tests.Integration.Controllers.AuthController;
 
+[Collection("Integration")]
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Feature, TestCategories.Auth)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
-public class LoginEndpointsTests(CustomWebApplicationFactory factory, ApiClientFixture apiClientFixture) : IntegrationTestBase(factory, apiClientFixture)
+public class LoginEndpointsTests(ApiClientFixture apiClientFixture) 
+    : DatabaseIntegrationTestBase(apiClientFixture)
 {
     [DependencyFact]
     public async Task Login_WithValidCredentials_ShouldSucceed()

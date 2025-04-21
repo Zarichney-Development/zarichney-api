@@ -14,8 +14,8 @@ namespace Zarichney.Tests.Integration.Smoke;
 [Trait(TestCategories.Category, TestCategories.Smoke)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
 [Trait(TestCategories.Dependency, TestCategories.ExternalStripe)]
-[Collection("Integration Tests")]
-public class ApiSmokeTests(CustomWebApplicationFactory factory, ApiClientFixture apiClientFixture) : IntegrationTestBase(factory, apiClientFixture)
+[Collection("Integration")]
+public class ApiSmokeTests(ApiClientFixture apiClientFixture) : IntegrationTestBase(apiClientFixture)
 {
   [DependencyFact]
   [Trait(TestCategories.Feature, TestCategories.Auth)]

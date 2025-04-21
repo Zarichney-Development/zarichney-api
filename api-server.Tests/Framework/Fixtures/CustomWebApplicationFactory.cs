@@ -23,42 +23,28 @@ namespace Zarichney.Tests.Framework.Fixtures;
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly DatabaseFixture? _databaseFixture;
-    private readonly bool _isDatabaseAvailable;
-
+    
     /// <summary>
     /// Gets a value indicating whether the database is available.
     /// </summary>
-    public bool IsDatabaseAvailable => _isDatabaseAvailable;
+    public bool IsDatabaseAvailable => _databaseFixture?.IsContainerAvailable ?? false;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CustomWebApplicationFactory"/> class.
     /// </summary>
-    /// <remarks>
-    /// Note: Creating a new DatabaseFixture instance here is not ideal for shared fixture usage.
-    /// In a production testing environment, the fixture should be shared via xUnit's IClassFixture
-    /// or ICollectionFixture mechanisms. This implementation ensures the tests work correctly
-    /// while a more robust solution is developed.
-    /// </remarks>
     public CustomWebApplicationFactory()
     {
-        // No-op: Database initialization is handled by DatabaseFixture in DB tests
+        // No database fixture available
         _databaseFixture = null;
-        _isDatabaseAvailable = false;
     }
-
+    
     /// <summary>
-    /// Gets the database connection string, or a placeholder if the database is not available.
+    /// Initializes a new instance of the <see cref="CustomWebApplicationFactory"/> class.
     /// </summary>
-    /// <returns>The database connection string, or a placeholder if the database is not available.</returns>
-    private string GetDatabaseConnectionString()
+    /// <param name="databaseFixture">The database fixture to use. This is injected by the collection fixture system.</param>
+    public CustomWebApplicationFactory(DatabaseFixture databaseFixture)
     {
-        if (_isDatabaseAvailable && _databaseFixture != null)
-        {
-            return _databaseFixture.ConnectionString;
-        }
-        
-        // Return a placeholder connection string for tests that can run without a real database
-        return "Host=localhost;Database=zarichney_unavailable;Username=postgres;Password=postgres";
+        _databaseFixture = databaseFixture;
     }
 
     /// <summary>
@@ -69,32 +55,36 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     {
         builder.ConfigureAppConfiguration((hostingContext, configBuilder) =>
         {
-            // Set the environment to Testing if not already set
-            hostingContext.HostingEnvironment.EnvironmentName = "Testing";
+            var env = hostingContext.HostingEnvironment;
+            if (string.IsNullOrEmpty(env.EnvironmentName))
+            {
+                env.EnvironmentName = "Testing";
+            }
             
             // Clear existing sources to ensure our order is respected
             configBuilder.Sources.Clear();
             
-            // Add configuration providers in specific order
+            // Add configuration providers in specific order according to TDD v1.5
+            // 1. Default environment settings
+            // 2. JSON files (main, environment-specific, and testing)
+            // 3. User Secrets (if in Development)
+            // 4. Environment Variables
             configBuilder
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-                .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: false)
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: false)
                 .AddJsonFile("appsettings.Testing.json", optional: true, reloadOnChange: false);
 
             // Add user secrets in development mode
-            if (hostingContext.HostingEnvironment.EnvironmentName == "Development")
+            if (env.EnvironmentName == "Development")
             {
                 configBuilder.AddUserSecrets<Program>(optional: true);
             }
             
-            // Add environment variables
+            // Add environment variables (highest precedence)
             configBuilder.AddEnvironmentVariables();
             
-            // Add the test database connection string as the very last provider to override any existing settings
-            configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                { "ConnectionStrings:IdentityConnection", GetDatabaseConnectionString() }
-            });
+            // Note: We no longer override the connection string here with AddInMemoryCollection
+            // Instead, we'll determine it dynamically in ConfigureTestServices based on the prioritized strategy
         });
 
         builder.ConfigureTestServices(services =>
@@ -108,43 +98,69 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 options.DefaultChallengeScheme = "Test";
             })
             .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
-                "Test", _ => { });
+                "Test", options => { });
 
             // Register mock external services
             RegisterMockExternalServices(services);
 
-            // --- Ensure DbContext uses test database connection string ---
-            // Remove all existing DbContext registrations (if any)
-            var dbContextDescriptors = services.Where(d => 
-                d.ServiceType == typeof(DbContextOptions<UserDbContext>) ||
-                d.ServiceType == typeof(UserDbContext)).ToList();
-                
-            foreach (var descriptor in dbContextDescriptors)
-            {
-                services.Remove(descriptor);
-            }
-            
-            // Register UserDbContext with the test database connection string
-            // For minimal functionality tests that don't actually use the database,
-            // this will be configured with a placeholder connection string
-            services.AddDbContext<UserDbContext>(options =>
-            {
-                if (_isDatabaseAvailable && _databaseFixture != null)
-                {
-                    options.UseNpgsql(GetDatabaseConnectionString(), b => b.MigrationsAssembly("Zarichney"));
-                }
-                else
-                {
-                    // Use in-memory database for tests when real DB is unavailable
-                    options.UseInMemoryDatabase("TestDb");
-                }
-            });
+            // Implement prioritized database selection logic
+            ConfigureTestDatabase(services);
         });
 
         builder.ConfigureLogging(logging =>
         {
             logging.ClearProviders();
             logging.AddConsole();
+        });
+    }
+
+    /// <summary>
+    /// Configures the test database with prioritized selection logic:
+    /// 1. Use connection string from IConfiguration if valid
+    /// 2. Else, use connection string from the shared DatabaseFixture if available and running
+    /// 3. Else, fallback to UseInMemoryDatabase
+    /// </summary>
+    /// <param name="services">The service collection to configure.</param>
+    private void ConfigureTestDatabase(IServiceCollection services)
+    {
+        // Get the loaded configuration to check for connection string
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile("appsettings.json", optional: true)
+            .AddJsonFile("appsettings.Testing.json", optional: true)
+            .AddEnvironmentVariables()
+            .Build();
+        
+        var connectionString = configuration.GetConnectionString("IdentityConnection");
+        
+        // Remove existing DbContext registrations
+        var dbContextDescriptors = services.Where(d => 
+            d.ServiceType == typeof(DbContextOptions<UserDbContext>) ||
+            d.ServiceType == typeof(UserDbContext)).ToList();
+            
+        foreach (var descriptor in dbContextDescriptors)
+        {
+            services.Remove(descriptor);
+        }
+        
+        // Add DbContext with the appropriate provider based on prioritized logic
+        services.AddDbContext<UserDbContext>(options =>
+        {
+            // Priority 1: Valid connection string from configuration
+            if (!string.IsNullOrEmpty(connectionString) && 
+                !connectionString.Contains("zarichney_unavailable"))
+            {
+                options.UseNpgsql(connectionString, b => b.MigrationsAssembly("Zarichney"));
+            }
+            // Priority 2: DatabaseFixture's container if available
+            else if (IsDatabaseAvailable && _databaseFixture != null)
+            {
+                options.UseNpgsql(_databaseFixture.ConnectionString, b => b.MigrationsAssembly("Zarichney"));
+            }
+            // Priority 3: In-memory database as fallback
+            else
+            {
+                options.UseInMemoryDatabase("TestDb");
+            }
         });
     }
 
@@ -221,7 +237,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     /// <inheritdoc/>
     protected override void Dispose(bool disposing)
     {
-        if (disposing && _databaseFixture != null && _isDatabaseAvailable)
+        if (disposing && _databaseFixture != null && _databaseFixture.IsContainerAvailable)
         {
             _databaseFixture.DisposeAsync().GetAwaiter().GetResult();
         }

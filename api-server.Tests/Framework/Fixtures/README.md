@@ -1,6 +1,6 @@
 # Module/Directory: /api-server.Tests/Framework/Fixtures
 
-**Last Updated:** 2025-04-21
+**Last Updated:** 2025-04-22
 
 > **Parent:** [`/api-server.Tests/Framework/`](../README.md)
 
@@ -107,14 +107,14 @@
 
 ## 8. Known Issues & TODOs (Refactoring Plan)
 
-* **TODO:** Define the single `[Collection("Integration")]` class providing `CustomWebApplicationFactory`, `DatabaseFixture`, and `ApiClientFixture` via `ICollectionFixture<>`.
-* **TODO:** Remove the old collection definition classes (`IntegrationTestCollection.cs`, `DatabaseIntegrationTestCollection.cs`).
-* **TODO:** Refactor `ApiClientFixture` to remove internal `CustomWebApplicationFactory` creation. Inject the shared `CustomWebApplicationFactory` via the constructor. Use the injected factory to create `HttpClient` and resolve `IConfiguration`. Remove `DisposeAsync` logic related to the internal factory.
-* **TODO:** Refactor `CustomWebApplicationFactory.ConfigureWebHost` to implement the configuration loading order specified in TDD v1.5 (Default Env -> JSON files -> User Secrets (Dev) -> Env Vars). Remove the `AddInMemoryCollection` override for the connection string.
-* **TODO:** Refactor `CustomWebApplicationFactory.ConfigureTestServices` to implement the prioritized database selection logic (Config -> `DatabaseFixture` -> InMemory) and configure `UserDbContext` accordingly.
-* **TODO:** Implement automatic EF Core migration application within `DatabaseFixture.InitializeAsync` after the container starts. Ensure proper error handling if migrations fail.
-* **TODO:** Remove `IClassFixture<>` interface declarations from `IntegrationTestBase` and `DatabaseIntegrationTestBase`. Ensure constructors still accept the fixtures.
-* **TODO:** Add `[Collection("Integration")]` to all integration test classes.
-* **TODO:** Ensure all test classes requiring database access inherit from `DatabaseIntegrationTestBase` (e.g., fix `LoginEndpointTests.cs`).
-* **TODO:** Verify `TestUser` credentials are still loaded correctly from configuration and used successfully by the refactored `ApiClientFixture`.
+* ~~Define the single `[Collection("Integration")]` class providing `CustomWebApplicationFactory`, `DatabaseFixture`, and `ApiClientFixture` via `ICollectionFixture<>`.~~ ✅ Completed
+* ~~Remove the old collection definition classes (`IntegrationTestCollection.cs`, `DatabaseIntegrationTestCollection.cs`).~~ ✅ Completed
+* ~~Refactor `ApiClientFixture` to remove internal `CustomWebApplicationFactory` creation. Inject the shared `CustomWebApplicationFactory` via the constructor. Use the injected factory to create `HttpClient` and resolve `IConfiguration`. Remove `DisposeAsync` logic related to the internal factory.~~ ✅ Completed
+* ~~Refactor `CustomWebApplicationFactory.ConfigureWebHost` to implement the configuration loading order specified in TDD v1.5 (Default Env -> JSON files -> User Secrets (Dev) -> Env Vars). Remove the `AddInMemoryCollection` override for the connection string.~~ ✅ Completed
+* ~~Refactor `CustomWebApplicationFactory.ConfigureTestServices` to implement the prioritized database selection logic (Config -> `DatabaseFixture` -> InMemory) and configure `UserDbContext` accordingly.~~ ✅ Completed
+* ~~Implement automatic EF Core migration application within `DatabaseFixture.InitializeAsync` after the container starts. Ensure proper error handling if migrations fail.~~ ✅ Completed
+* ~~Remove `IClassFixture<>` interface declarations from `IntegrationTestBase` and `DatabaseIntegrationTestBase`. Ensure constructors still accept the fixtures.~~ ✅ Completed
+* ~~Add `[Collection("Integration")]` to all integration test classes.~~ ✅ Completed
+* ~~Ensure all test classes requiring database access inherit from `DatabaseIntegrationTestBase` (e.g., fix `LoginEndpointTests.cs`).~~ ✅ Completed
+* ~~Verify `TestUser` credentials are still loaded correctly from configuration and used successfully by the refactored `ApiClientFixture`.~~ ✅ Completed
 

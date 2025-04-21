@@ -7,12 +7,11 @@ using Zarichney.Tests.Framework.Helpers;
 
 namespace Zarichney.Tests.Integration;
 
-[Collection("Integration Tests")]
 /// <summary>
 /// Base class for integration tests that provides common setup and accessors.
 /// Implements IAsyncLifetime to check for required configuration dependencies based on test traits.
 /// </summary>
-public abstract class IntegrationTestBase : IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime
+public abstract class IntegrationTestBase : IAsyncLifetime
 {
   private static readonly Dictionary<string, List<string>> _traitToConfigNamesMap = new()
   {
@@ -31,7 +30,7 @@ public abstract class IntegrationTestBase : IClassFixture<CustomWebApplicationFa
     }
   };
 
-  protected readonly CustomWebApplicationFactory Factory;
+  protected CustomWebApplicationFactory Factory => _apiClientFixture.Factory;
   private readonly ApiClientFixture _apiClientFixture;
 
   private bool _dependenciesChecked;
@@ -53,11 +52,9 @@ public abstract class IntegrationTestBase : IClassFixture<CustomWebApplicationFa
   /// <summary>
   /// Initializes a new instance of the <see cref="IntegrationTestBase"/> class.
   /// </summary>
-  /// <param name="factory">The web application factory.</param>
   /// <param name="apiClientFixture">The API client fixture.</param>
-  protected IntegrationTestBase(CustomWebApplicationFactory factory, ApiClientFixture apiClientFixture)
+  protected IntegrationTestBase(ApiClientFixture apiClientFixture)
   {
-    Factory = factory;
     _apiClientFixture = apiClientFixture;
     // Database availability will be checked based on dependency traits during InitializeAsync
   }

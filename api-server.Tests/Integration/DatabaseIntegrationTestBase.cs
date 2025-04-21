@@ -5,26 +5,22 @@ namespace Zarichney.Tests.Integration;
 
 /// <summary>
 /// Base class for integration tests that require database access.
-/// Combines CustomWebApplicationFactory and DatabaseFixture to provide a complete test environment.
-/// Tests using this class should be part of the "Integration Tests" collection.
+/// Combines CustomWebApplicationFactory, DatabaseFixture, and ApiClientFixture to provide a complete test environment.
+/// Tests using this class should be part of the "Integration" collection.
 /// </summary>
-public abstract class DatabaseIntegrationTestBase : IntegrationTestBase, IClassFixture<DatabaseFixture>, IClassFixture<ApiClientFixture>
+public abstract class DatabaseIntegrationTestBase : IntegrationTestBase
 {
-  protected readonly DatabaseFixture DatabaseFixture;
+  protected DatabaseFixture DatabaseFixture => _apiClientFixture.DatabaseFixture;
+  private readonly ApiClientFixture _apiClientFixture;
 
   /// <summary>
   /// Initializes a new instance of the <see cref="DatabaseIntegrationTestBase"/> class.
   /// </summary>
-  /// <param name="factory">The web application factory.</param>
-  /// <param name="databaseFixture">The database fixture.</param>
   /// <param name="apiClientFixture">The API client fixture.</param>
-  protected DatabaseIntegrationTestBase(
-    CustomWebApplicationFactory factory,
-    DatabaseFixture databaseFixture,
-    ApiClientFixture apiClientFixture)
-    : base(factory, apiClientFixture)
+  protected DatabaseIntegrationTestBase(ApiClientFixture apiClientFixture)
+    : base(apiClientFixture)
   {
-    DatabaseFixture = databaseFixture;
+    _apiClientFixture = apiClientFixture;
     if (!DatabaseFixture.IsContainerAvailable)
     {
         // Skip all database-backed tests if container is unavailable

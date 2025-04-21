@@ -1,9 +1,12 @@
 using System.Data.Common;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 using Respawn;
 using Testcontainers.PostgreSql;
 using Xunit;
+using Zarichney.Services.Auth;
 
 namespace Zarichney.Tests.Framework.Fixtures;
 
@@ -63,10 +66,43 @@ public class DatabaseFixture : IAsyncLifetime
             return;
         }
 
+        try
+        {
+            // Apply EF Core migrations programmatically
+            _logger.LogInformation("Applying database migrations...");
+            await ApplyMigrationsAsync();
+            _logger.LogInformation("Database migrations applied successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to apply database migrations");
+            _isContainerAvailable = false;
+            await _dbContainer.DisposeAsync();
+            throw;
+        }
+
         // Initialize Respawner
         await InitializeRespawner();
 
         _logger.LogInformation("Database fixture initialized successfully");
+    }
+    
+    /// <summary>
+    /// Applies EF Core migrations to the database.
+    /// </summary>
+    private async Task ApplyMigrationsAsync()
+    {
+        // Create a DbContext using the container connection string
+        var serviceProvider = new ServiceCollection()
+            .AddDbContext<UserDbContext>(options =>
+                options.UseNpgsql(ConnectionString, b => b.MigrationsAssembly("Zarichney")))
+            .BuildServiceProvider();
+
+        using var scope = serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<UserDbContext>();
+        
+        // Apply migrations
+        await dbContext.Database.MigrateAsync();
     }
 
     /// <summary>
@@ -135,16 +171,4 @@ public class DatabaseFixture : IAsyncLifetime
 public class TestSkippedException(string message) : Exception(message)
 {
     // Properly implemented constructor just passes message to base Exception
-}
-
-/// <summary>
-/// Collection definition for tests that require a database.
-/// Tests using this collection will share a single DatabaseFixture instance.
-/// </summary>
-[CollectionDefinition("Database")]
-public class DatabaseCollection : ICollectionFixture<DatabaseFixture>
-{
-    // This class has no code, and is never created. Its purpose is simply
-    // to be the place to apply [CollectionDefinition] and all the
-    // ICollectionFixture<> interfaces.
 }

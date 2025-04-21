@@ -15,12 +15,12 @@ namespace Zarichney.Tests.Integration.Controllers.PaymentController;
 /// Integration tests for the PaymentController.
 /// Demonstrates database testing and external service mocking.
 /// </summary>
-[Collection("Database Integration Tests")]
+[Collection("Integration")]
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
 [Trait(TestCategories.Dependency, TestCategories.ExternalStripe)]
-public class PaymentControllerTests(CustomWebApplicationFactory factory, DatabaseFixture dbFixture, ApiClientFixture apiClientFixture)
-  : DatabaseIntegrationTestBase(factory, dbFixture, apiClientFixture)
+public class PaymentControllerTests(ApiClientFixture apiClientFixture)
+  : DatabaseIntegrationTestBase(apiClientFixture)
 {
   [DependencyFact]
   public async Task CreatePaymentIntent_ValidOrder_ReturnsPaymentIntent()
