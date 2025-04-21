@@ -44,11 +44,17 @@ if (-not $swaggerToolInstalled) {
 
 # Step 3: Generate swagger.json using swagger CLI (full path)
 Write-Host "Generating swagger.json..." -ForegroundColor Green
-$swashbuckleVersion = "8.1.1"  # Should match the version in api-server.csproj
-& $swaggerExe tofile --output "$swaggerJsonPath" "$apiServerDir/bin/Debug/net8.0/Zarichney.dll" swagger
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Error generating swagger.json. Exiting." -ForegroundColor Red
-    exit 1
+Push-Location $apiServerDir
+try {
+    & $swaggerExe tofile --output "swagger.json" "bin/Debug/net8.0/Zarichney.dll" swagger
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Error generating swagger.json. Exiting." -ForegroundColor Red
+        exit 1
+    }
+    Move-Item -Path "swagger.json" -Destination "$swaggerJsonPath" -Force
+}
+finally {
+    Pop-Location
 }
 
 # Step 4: Install refitter if not already installed
@@ -67,7 +73,7 @@ if (-not $refitterInstalled) {
 Write-Host "Generating Refit client..." -ForegroundColor Green
 refitter "$swaggerJsonPath" `
     --namespace "Zarichney.Client" `
-    --output "$apiClientDir/ZarichneyAPI.cs" `
+    --output "$apiClientDir/IZarichneyAPI.cs" `
     --interface-name "IZarichneyAPI" `
     --use-api-response-for-all-responses `
     --use-nullable-reference-types `

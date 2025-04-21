@@ -1093,20 +1093,7 @@ namespace Zarichney.Client
 
         /// <summary>Gets status of a Stripe payment intent.</summary>
         /// <returns>A <see cref="Task"/> that completes when the request is finished.</returns>
-        /// <exception cref="ApiException">
-        /// Thrown when the request returns a non-success status code:
-        /// <list type="table">
-        /// <listheader>
-        /// <term>Status</term>
-        /// <description>Description</description>
-        /// </listheader>
-        /// <item>
-        /// <term>404</term>
-        /// <description>Not Found</description>
-        /// </item>
-        /// </list>
-        /// </exception>
-        [Headers("Accept: text/plain, application/json, text/json")]
+        /// <exception cref="ApiException">Thrown when the request returns a non-success status code.</exception>
         [Get("/api/payments/status/{paymentId}")]
         Task Status(string paymentId);
 

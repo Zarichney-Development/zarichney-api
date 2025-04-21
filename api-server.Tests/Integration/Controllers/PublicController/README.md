@@ -18,9 +18,8 @@ This directory contains integration tests for the `PublicController` endpoints, 
 
 ## 2. Scope & Key Functionality Tested (What?)
 
-These tests cover endpoints intended for public consumption:
-
-* **`GET /api/health`:** A simple, unauthenticated endpoint to verify basic API responsiveness and expected response structure.
+* **`GET /api/health`:** A simple, unauthenticated endpoint to verify basic API responsiveness.
+  This smoke test uses the generated Refit client (`Health()` method) to ensure the endpoint returns a successful response, without inspecting the response body.
 * **`GET /api/status/config`:** An endpoint exposing the status of various configuration items (API keys, connection strings, etc.) via the `IStatusService`.
 * **Accessibility:** Verifying that these endpoints can be accessed *without* providing authentication tokens or cookies.
 * **Response Validation:** Ensuring the endpoints return the expected data structure and status codes (typically 200 OK).
@@ -41,7 +40,7 @@ These tests cover endpoints intended for public consumption:
 ## 5. Test Cases & Status
 
 ### Public Health Check (`PublicControllerTests.cs`)
-* **DONE:** Test `GET /api/health` without authentication -> verify 200 OK and expected response structure (`GetHealth_WhenCalled_ReturnsOkStatusAndTimeInfo`).
+* **DONE:** Test `GET /api/health` without authentication -> verify 200 OK using the `Health()` method on the Refit client (`GetHealth_WhenCalled_ReturnsOkStatusAndTimeInfo`).
 * **Optional:** Test `GET /api/health` *with* authentication -> verify 200 OK (should still work).
 
 ### Public Configuration Status (`PublicControllerTests.cs`)

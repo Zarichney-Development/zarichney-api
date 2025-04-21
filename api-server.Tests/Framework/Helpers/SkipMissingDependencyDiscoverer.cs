@@ -7,8 +7,15 @@ namespace Zarichney.Tests.Framework.Helpers;
 /// Custom test case discoverer for dependency-aware tests.
 /// This discoverer creates test cases that check for missing dependencies and skip tests when needed.
 /// </summary>
-public class SkipMissingDependencyDiscoverer(IMessageSink diagnosticMessageSink) : IXunitTestCaseDiscoverer
+public class SkipMissingDependencyDiscoverer : IXunitTestCaseDiscoverer
 {
+    private readonly IMessageSink _diagnosticMessageSink;
+
+    public SkipMissingDependencyDiscoverer(IMessageSink diagnosticMessageSink)
+    {
+        _diagnosticMessageSink = diagnosticMessageSink;
+    }
+
     /// <summary>
     /// Discovers test cases for dependency-aware tests.
     /// </summary>
@@ -17,11 +24,15 @@ public class SkipMissingDependencyDiscoverer(IMessageSink diagnosticMessageSink)
         ITestMethod testMethod,
         IAttributeInfo factAttribute)
     {
-        // Create our custom test case that will check for missing dependencies
+        // Get test name settings from discovery options
+        var methodDisplay = discoveryOptions.MethodDisplayOrDefault();
+        var methodDisplayOptions = discoveryOptions.MethodDisplayOptionsOrDefault();
+
+        // Create test case with proper display name settings
         yield return new SkipMissingDependencyTestCase(
-            diagnosticMessageSink,
-            discoveryOptions.MethodDisplayOrDefault(),
-            discoveryOptions.MethodDisplayOptionsOrDefault(),
+            _diagnosticMessageSink,
+            methodDisplay,
+            methodDisplayOptions,
             testMethod);
     }
 }

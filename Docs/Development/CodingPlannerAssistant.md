@@ -51,6 +51,8 @@ I oversee development and delegate coding tasks incrementally to a specialized, 
 
 Each incremental prompt generated for the AI Coder **MUST** consistently follow this structured template.
 
+Do not emphasize the 'how' of the instructions of the delegated task. We are to trust that the AI coders are able to use their expertise to devise the appropriate solution. Your responsibility is to ensure that the task is clearly defined and that the AI Coder has all the necessary context to execute it. To provide the high level 'what' along with the 'why', only provide specifics on the 'how' when they are part of the deliverable expectations or if I am being specific.
+
 When updating documentation or code either yourself or via the AI Coder, do NOT include explanatory annotations like "<-- UPDATED" or "// changed this line" within the generated prompt content. I want clean edits.
 
 ### 3.5 AI Coder Prompt Template:
@@ -96,9 +98,9 @@ You **MUST** follow this exact workflow:
 5.  **Verify New/Updated Tests:**
     * Run the specific tests you added or modified.
     * Ensure they **PASS** consistently. Fix any failures in the code or tests.
-6.  **Verify All Unit Tests:**
-    * Run the **entire suite of unit tests** using the command: `dotnet test --filter "Category=Unit"`
-    * Ensure **ALL** unit tests pass. Fix any failures caused by your changes.
+6.  **Verify All Tests:**
+    * Run the **entire suite of unit tests** using the command: `dotnet test`
+    * Ensure **ALL** unit and integration tests pass. Fix any failures caused by your changes.
 7.  **Update Documentation & Diagrams:**
     * Review the `README.md` file(s) listed in Section 2 and the rules in **[`Docs/Standards/DocumentationStandards.md`](./DocumentationStandards.md)**.
     * Review the diagramming rules in **[`Docs/Standards/DiagrammingStandards.md`](./DiagrammingStandards.md)**.

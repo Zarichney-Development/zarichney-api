@@ -16,8 +16,8 @@ public static class TestEnvironmentHelper
     public enum TestEnvironment
     {
         Development,
-        Staging,
-        CI
+        Testing,
+        Production
     }
     
     /// <summary>
@@ -41,21 +41,21 @@ public static class TestEnvironmentHelper
         switch (environment)
         {
             case TestEnvironment.Development:
-                configValues["Logging:LogLevel:Default"] = "Debug";
+                configValues["Logging:LogLevel:Default"] = "Information";
                 configValues["TestSettings:UseInMemoryServices"] = "true";
                 configValues["Services:Stripe:UseTestMode"] = "true";
                 break;
                 
-            case TestEnvironment.Staging:
-                configValues["Logging:LogLevel:Default"] = "Information";
+            case TestEnvironment.Testing:
+                configValues["Logging:LogLevel:Default"] = "Debug";
                 configValues["TestSettings:UseInMemoryServices"] = "false";
                 configValues["Services:Stripe:UseTestMode"] = "true";
                 break;
                 
-            case TestEnvironment.CI:
+            case TestEnvironment.Production:
                 configValues["Logging:LogLevel:Default"] = "Warning";
                 configValues["TestSettings:UseInMemoryServices"] = "true";
-                configValues["Services:Stripe:UseTestMode"] = "true";
+                configValues["Services:Stripe:UseTestMode"] = "false";
                 break;
         }
         

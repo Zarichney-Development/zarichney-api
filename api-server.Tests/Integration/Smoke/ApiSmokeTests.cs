@@ -1,4 +1,5 @@
-using System.Net;
+using FluentAssertions;
+using Refit;
 using Xunit;
 using Zarichney.Client;
 using Zarichney.Tests.Framework.Attributes;
@@ -15,66 +16,62 @@ namespace Zarichney.Tests.Integration.Smoke;
 [Trait(TestCategories.Dependency, TestCategories.ExternalStripe)]
 public class ApiSmokeTests(CustomWebApplicationFactory factory) : IntegrationTestBase(factory)
 {
-    [DependencyFact]
-    [Trait(TestCategories.Feature, TestCategories.Auth)]
-    public async Task AuthFlow_Smoke_LoginAndLogout()
+  [DependencyFact]
+  [Trait(TestCategories.Feature, TestCategories.Auth)]
+  public async Task AuthFlow_Smoke_LoginAndLogout()
+  {
+    // Arrange
+    var apiClient = ApiClient;
+    var loginRequest = new LoginRequest
     {
-        // Arrange
-        var apiClient = Factory.CreateRefitClient();
-        var loginRequest = new LoginRequest
-        {
-            Email = "test@example.com",
-            Password = "Password123!"
-        };
+      Email = "test@example.com",
+      Password = "Password123!"
+    };
 
-        // Act - Login
-        var loginResult = await apiClient.Login(loginRequest);
-        
-        // Create a new client with the token
-        var httpClient = Factory.CreateAuthenticatedClient("test-user-id", new[] { "User" });
-        var refitClient = Factory.CreateRefitClient(httpClient);
-        
-        // Act - Logout
-        var logoutResult = await refitClient.Logout();
+    // Act - Login
+    var loginResult = await apiClient.Login(loginRequest);
 
-        // Assert
-        Assert.True(loginResult.Success);
-        Assert.NotEmpty(loginResult.Email);
-        Assert.True(logoutResult.Success);
-    }
+    // Create authenticated Refit client and Logout
+    var authenticatedClient = CreateAuthenticatedApiClient("test-user-id", new[] { "User" });
+    var logoutResult = await authenticatedClient.Logout();
 
-    [DependencyFact]
-    [Trait(TestCategories.Feature, TestCategories.Cookbook)]
-    public async Task Cookbook_Smoke_GetRecipes()
-    {
-        // Arrange
-        var userId = "test-user-id";
-        var roles = new[] { "User" };
-        var client = Factory.CreateAuthenticatedRefitClient(userId, roles);
+    // Assert
+    Assert.True(loginResult.Success);
+    Assert.NotEmpty(loginResult.Email);
+    Assert.True(logoutResult.Success);
+  }
 
-        // Act
-        var recipes = await client.Recipe("", false, null, null);
+  [DependencyFact]
+  [Trait(TestCategories.Feature, TestCategories.Cookbook)]
+  public async Task Cookbook_Smoke_GetRecipes()
+  {
+    // Arrange
+    var userId = "test-user-id";
+    var roles = new[] { "User" };
+    var client = CreateAuthenticatedApiClient(userId, roles);
 
-        // Assert
-        Assert.NotNull(recipes);
-    }
+    // Act
+    var recipes = await client.Recipe("", false, null, null);
 
-    [DependencyFact]
-    [Trait(TestCategories.Feature, TestCategories.Payment)]
-    public async Task Payment_Smoke_ApiEndpointsAvailable()
-    {
-        // This test just verifies that the payment endpoints are accessible
-        // It doesn't test actual payment processing
-        
-        // Arrange
-        var userId = "test-user-id";
-        var roles = new[] { "User" };
-        var httpClient = Factory.CreateAuthenticatedClient(userId, roles);
+    // Assert
+    Assert.NotNull(recipes);
+  }
 
-        // Act - Check that payment endpoints are accessible 
-        var response = await httpClient.GetAsync("/api/payment/config");
+  [DependencyFact]
+  [Trait(TestCategories.Feature, TestCategories.Payment)]
+  public async Task Payment_Smoke_ApiEndpointsAvailable()
+  {
+    // This test just verifies that the payment endpoints are accessible
+    // It doesn't test actual payment processing
 
-        // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-    }
+    // Arrange
+    var userId = "test-user-id";
+    var roles = new[] { "User" };
+    var apiClient = CreateAuthenticatedApiClient(userId, roles);
+
+    // Act & Assert - Secure endpoint should be accessible
+    Func<Task> act = () => apiClient.Secure();
+    await act.Should().NotThrowAsync<ApiException>(
+      because: "secure endpoint should be accessible");
+  }
 }

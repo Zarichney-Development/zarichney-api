@@ -85,7 +85,10 @@
   * **HOW to Update READMEs:** For the specific standards, structure, content guidelines, and linking strategy for `README.md` files, you **MUST** consult and adhere to the **[`Docs/Standards/DocumentationStandards.md`](./DocumentationStandards.md)** document. [cite: Docs/Standards/DocumentationStandards.md]
   * **HOW to Update Diagrams:** For the specific standards, diagram types, styling, linking, and maintenance requirements for Mermaid diagrams, you **MUST** consult and adhere to the **[`Docs/Standards/DiagrammingStandards.md`](./DiagrammingStandards.md)** document. [cite: Docs/Standards/DiagrammingStandards.md]
 
-## 10. Security
+## 10. Style Guide
+* **Spacing:** Use spaces, not tabs, with an indentation size of two spaces. Rectify this for files that are inconsistent.
+
+## 11. Security
 
 * Be mindful of potential security vulnerabilities:
   * Validate and sanitize inputs, especially those originating from external sources (user input, API requests, scraped data).
@@ -95,12 +98,12 @@
 * Handle API keys and secrets securely. Do not hardcode them; use configuration providers like User Secrets, Environment Variables, AWS Secrets Manager, or Parameter Store.
 * Adhere to existing authentication (`[Authorize]`, `AuthenticationMiddleware`, `CookieAuthManager`) and authorization (`RoleManager`, `[Authorize(Roles = "...")]`) patterns. [cite: api-server/Controllers/CookbookController.cs, api-server/Services/Auth/AuthenticationMiddleware.cs]
 
-## 11. External Libraries
+## 12. External Libraries
 
 * Utilize the existing libraries (e.g., Serilog, Polly, MediatR, AutoMapper, EF Core, OpenAI, Playwright, Octokit, QuestPDF, AngleSharp, RestSharp) according to established patterns within the codebase.
 * Do not add new major dependencies (NuGet packages) without prior architectural review/approval.
 
-## 12. AI Coder Specific Workflow (**MANDATORY**)
+## 13. AI Coder Specific Workflow (**MANDATORY**)
 
 1.  **Consult Documentation First:** Before writing *any* code, **MUST** review:
   * The specific task prompt provided to you.

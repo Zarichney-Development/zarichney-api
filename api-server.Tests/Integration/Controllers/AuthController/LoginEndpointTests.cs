@@ -15,7 +15,7 @@ public class LoginEndpointsTests(CustomWebApplicationFactory factory) : Integrat
     public async Task Login_WithValidCredentials_ShouldSucceed()
     {
         // Arrange
-        var client = Factory.CreateRefitClient();
+        var client = ApiClient;
         var request = new LoginRequest
         {
             Email = "test@example.com",
@@ -34,7 +34,7 @@ public class LoginEndpointsTests(CustomWebApplicationFactory factory) : Integrat
     public async Task Login_WithInvalidCredentials_ShouldFail()
     {
         // Arrange
-        var client = Factory.CreateRefitClient();
+        var client = ApiClient;
         var request = new LoginRequest
         {
             Email = "invalid@example.com",
@@ -49,7 +49,7 @@ public class LoginEndpointsTests(CustomWebApplicationFactory factory) : Integrat
     public async Task Login_WithEmptyEmail_ShouldFail()
     {
         // Arrange
-        var client = Factory.CreateRefitClient();
+        var client = ApiClient;
         var request = new LoginRequest
         {
             Email = "",
