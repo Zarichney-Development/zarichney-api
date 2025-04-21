@@ -1,6 +1,6 @@
 # Module/Directory: /api-server.Tests/Integration
 
-**Last Updated:** 2025-04-18
+**Last Updated:** 2025-04-21
 
 > **Parent:** [`api-server.Tests`](../README.md)
 
@@ -19,11 +19,13 @@
 ## 2. Architecture & Key Concepts
 
 * **Test Host:** Uses `CustomWebApplicationFactory` from [`/api-server.Tests/Framework/Fixtures/`](Framework/Fixtures/README.md) to host the `api-server` in-memory.
-* **API Client:** Interacts with the API exclusively through the generated Refit client (`IZarichneyAPI`) located in [`/api-server.Tests/Framework/Framework/Client/`](../Framework/Client/README.md).
-* **Base Classes:** Tests typically inherit from `IntegrationTestBase` or `DatabaseIntegrationTestBase` which provide access to the factory, fixtures, API client, and helper methods.
-* **Database Interaction:** Tests requiring database access use the `DatabaseFixture` (via `[Collection("Database")]` and `DatabaseIntegrationTestBase`) and **must** call `await ResetDatabaseAsync()` at the start.
-* **Mocking:** Relies on mocks pre-registered by `CustomWebApplicationFactory` using factories from [`/api-server.Tests/Framework/Mocks/Factories/`](../Mocks/Factories/README.md). Tests retrieve and configure these mocks as needed.
-* **Authentication:** Uses `TestAuthHandler` (registered by the factory) and helper methods (e.g., `CreateAuthenticatedRefitClient`) to simulate authenticated users.
+* **API Client:** Tests interact with the API exclusively through `IZarichneyAPI` instances provided by `ApiClientFixture` and exposed via `IntegrationTestBase` properties (`ApiClient`, `AuthenticatedApiClient`).
+* **ApiClientFixture:** Implements `IAsyncLifetime` to create shared, pre-configured authenticated/unauthenticated Refit clients, reading credentials from `appsettings.Testing.json` and managing login during setup.
+* **Collection Fixture:** `IntegrationTestCollection` defines the "Integration Tests" collection, applying `ICollectionFixture<ApiClientFixture>` so all tests in this collection share the same clients.
+* **Base Classes:** `IntegrationTestBase` is marked with `[Collection("Integration Tests")]`, injects `ApiClientFixture`, and exposes `ApiClient` and `AuthenticatedApiClient` for direct use in tests.
+* **Database Interaction:** Tests requiring database access use `DatabaseFixture` and must call `await ResetDatabaseAsync()` at the start.
+* **Mocking:** Mocks for external services are registered in the factory and retrieved via `Factory.Services.GetRequiredService<Mock<IService>>()`.
+* **Authentication:** Authenticated calls use the client from `AuthenticatedApiClient`; no per-test client creation is needed.
 * **Dependency Skipping:** Uses `[DependencyFact]` and dependency traits (e.g., `[Trait(TestCategories.Dependency, TestCategories.Database)]`) along with logic in `IntegrationTestBase` to automatically skip tests if required configurations (API keys, database connection) are unavailable.
 
 ## 3. Interface Contract & Assumptions
@@ -48,13 +50,10 @@
 * **Setup:** Ensure Docker is running if database tests are included. Run `Scripts/GenerateApiClient.ps1` if API contracts have changed. Ensure necessary configurations (user secrets, environment variables) are set if not relying on skipping.
 * **Running Tests:** Use `dotnet test --filter "Category=Integration"`. Filter further by `Feature`, `Dependency`, or `Mutability` traits as needed (e.g., `dotnet test --filter "Category=Integration&Feature=Auth"`).
 * **Adding Tests:**
-    1.  Create a test class in the appropriate subdirectory (e.g., `./Controllers/`) inheriting from `IntegrationTestBase` or `DatabaseIntegrationTestBase`.
-    2.  Inject fixtures via `IClassFixture`/`ICollectionFixture` as needed (usually handled by base class constructor).
-    3.  Write test methods using `[DependencyFact]` or `[Fact]`/`[Theory]`.
-    4.  Add appropriate `[Trait]` attributes.
-    5.  Use the API client (`ApiClient` property from base class or create authenticated version) to interact with the API.
-    6.  Use `FluentAssertions` for assertions.
-    7.  If database interaction occurs, call `ResetDatabaseAsync()`.
+    1. Inherit from `IntegrationTestBase` (which provides `ApiClient` and `AuthenticatedApiClient`).
+    2. Apply appropriate `[Trait]` and `[DependencyFact]` attributes.
+    3. Use `ApiClient` or `AuthenticatedApiClient` properties to make API calls.
+    4. Call `ResetDatabaseAsync()` if the test modifies or relies on specific DB state.
 * **Common Pitfalls / Gotchas:**
     * Outdated Refit client.
     * Forgetting `ResetDatabaseAsync()`.

@@ -9,17 +9,18 @@ namespace Zarichney.Tests.Integration.Controllers.AuthController;
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Feature, TestCategories.Auth)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
-public class LoginEndpointsTests(CustomWebApplicationFactory factory) : IntegrationTestBase(factory)
+public class LoginEndpointsTests(CustomWebApplicationFactory factory, ApiClientFixture apiClientFixture) : IntegrationTestBase(factory, apiClientFixture)
 {
     [DependencyFact]
     public async Task Login_WithValidCredentials_ShouldSucceed()
     {
         // Arrange
         var client = ApiClient;
+        // todo replace with the test user values that resides in config
         var request = new LoginRequest
         {
-            Email = "test@example.com",
-            Password = "Password123!"
+            Email = "zarichney@gmail.com",
+            Password = "password"
         };
 
         // Act

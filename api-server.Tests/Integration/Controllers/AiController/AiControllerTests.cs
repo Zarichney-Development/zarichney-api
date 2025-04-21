@@ -25,7 +25,8 @@ namespace Zarichney.Tests.Integration.Controllers.AiController;
 [Trait(TestCategories.Feature, TestCategories.AI)]
 [Trait(TestCategories.Dependency, TestCategories.ExternalOpenAI)]
 [Trait(TestCategories.Dependency, TestCategories.ExternalGitHub)]
-public class AiControllerTests(CustomWebApplicationFactory factory) : IntegrationTestBase(factory)
+[Collection("Integration Tests")]
+public class AiControllerTests(CustomWebApplicationFactory factory, ApiClientFixture apiClientFixture) : IntegrationTestBase(factory, apiClientFixture)
 {
     private const string TestUserId = "ai-test-user";
     private static readonly string[] TestUserRoles = ["User"];
@@ -89,7 +90,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Completion_WithValidTextPrompt_Authenticated_ReturnsOkAndCompletion()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var mockLlmService = Factory.Services.GetRequiredService<Mock<ILlmService>>();
 
         mockLlmService
@@ -126,7 +127,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Completion_WithValidAudioPrompt_Authenticated_ReturnsOkAndCompletion()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var mockTranscribeService = Factory.Services.GetRequiredService<Mock<ITranscribeService>>();
         var mockLlmService = Factory.Services.GetRequiredService<Mock<ILlmService>>();
 
@@ -164,7 +165,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Completion_WithBothTextAndAudioPrompt_PrioritizesAudioAndReturnsOk()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var mockTranscribeService = Factory.Services.GetRequiredService<Mock<ITranscribeService>>();
         var mockLlmService = Factory.Services.GetRequiredService<Mock<ILlmService>>();
 
@@ -200,7 +201,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Completion_WhenLlmServiceThrows_ReturnsInternalServerError()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var mockLlmService = Factory.Services.GetRequiredService<Mock<ILlmService>>();
         var exceptionMessage = "LLM service failed unexpectedly";
         
@@ -226,7 +227,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Completion_WithMissingPrompt_ReturnsBadRequest()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var formData = CreateCompletionContent(); // No text or audio
 
         // Act
@@ -240,7 +241,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Completion_Unauthenticated_ReturnsUnauthorized()
     {
         // Arrange
-        var client = Factory.CreateClient(); // Unauthenticated
+        var client = ApiClient; // Unauthenticated
         var formData = CreateCompletionContent(textPrompt: "Test prompt");
 
         // Act
@@ -261,7 +262,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Transcribe_WithValidAudioFile_Authenticated_ReturnsOkAndTranscription()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var mockTranscribeService = Factory.Services.GetRequiredService<Mock<ITranscribeService>>();
         var mockGitHubService = Factory.Services.GetRequiredService<Mock<IGitHubService>>();
 
@@ -323,7 +324,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Transcribe_WithValidAudioFile_ReturnsOkAndTranscription()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var mockTranscribeService = Factory.Services.GetRequiredService<Mock<ITranscribeService>>();
         var mockGitHubService = Factory.Services.GetRequiredService<Mock<IGitHubService>>();
         
@@ -377,7 +378,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Transcribe_WhenTranscribeServiceThrows_ReturnsInternalServerError()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var mockTranscribeService = Factory.Services.GetRequiredService<Mock<ITranscribeService>>();
         var mockGitHubService = Factory.Services.GetRequiredService<Mock<IGitHubService>>();
         var exceptionMessage = "Transcription service failed";
@@ -431,7 +432,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Transcribe_WhenGitHubServiceThrowsOnAudioCommit_ReturnsInternalServerError()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var mockTranscribeService = Factory.Services.GetRequiredService<Mock<ITranscribeService>>();
         var mockGitHubService = Factory.Services.GetRequiredService<Mock<IGitHubService>>();
         var exceptionMessage = "GitHub audio commit failed";
@@ -477,7 +478,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Transcribe_WhenGitHubServiceThrowsOnTranscriptCommit_ReturnsInternalServerError()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var mockTranscribeService = Factory.Services.GetRequiredService<Mock<ITranscribeService>>();
         var mockGitHubService = Factory.Services.GetRequiredService<Mock<IGitHubService>>();
         var exceptionMessage = "GitHub transcript commit failed";
@@ -535,7 +536,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Transcribe_WhenTranscribeServiceThrowsException_Returns500Error()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var mockTranscribeService = Factory.Services.GetRequiredService<Mock<ITranscribeService>>();
         
         mockTranscribeService
@@ -562,7 +563,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Transcribe_WhenTranscribeServiceThrowsException_Returns500()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var mockTranscribeService = Factory.Services.GetRequiredService<Mock<ITranscribeService>>();
         
         mockTranscribeService
@@ -592,7 +593,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Transcribe_WhenGitHubServiceThrowsException_Returns500Error()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var mockTranscribeService = Factory.Services.GetRequiredService<Mock<ITranscribeService>>();
         var mockGitHubService = Factory.Services.GetRequiredService<Mock<IGitHubService>>();
         
@@ -624,7 +625,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Transcribe_WhenGitHubServiceThrowsException_Returns500()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var mockTranscribeService = Factory.Services.GetRequiredService<Mock<ITranscribeService>>();
         var mockGitHubService = Factory.Services.GetRequiredService<Mock<IGitHubService>>();
         
@@ -655,7 +656,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Transcribe_WithMissingAudioFile_ReturnsBadRequest()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var formData = CreateTranscribeContent(null);
 
         // Act
@@ -669,7 +670,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Transcribe_WithEmptyAudioFile_ReturnsBadRequest()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var audioFile = CreateMockFormFile(AudioFileName, AudioContentType, EmptyAudioBytes);
         var formData = CreateTranscribeContent(audioFile);
 
@@ -684,7 +685,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Transcribe_WithIncorrectFormFieldName_ReturnsBadRequest()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var audioFile = CreateMockFormFile(AudioFileName, AudioContentType, ValidAudioBytes);
         var formData = CreateTranscribeContent(audioFile, formFieldName: "file");
 
@@ -699,7 +700,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Transcribe_Unauthenticated_ReturnsUnauthorized()
     {
         // Arrange
-        var client = Factory.CreateClient();
+        var client = ApiClient;
         var audioFile = CreateMockFormFile(AudioFileName, AudioContentType, ValidAudioBytes);
         var formData = CreateTranscribeContent(audioFile);
 
@@ -717,7 +718,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Transcribe_WithValidRequest_IncludesSessionIdHeader()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var mockTranscribeService = Factory.Services.GetRequiredService<Mock<ITranscribeService>>();
         var expectedTranscription = "This is a transcribed text";
         
@@ -747,7 +748,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Transcribe_WithNoAudioFile_ReturnsBadRequest()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var formData = new MultipartFormDataContent(); // Empty form data
 
         // Act
@@ -770,7 +771,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Transcribe_WithEmptyAudioFile_ReturnsBadRequest()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var audioFile = CreateMockFormFile(AudioFileName, AudioContentType, EmptyAudioBytes);
         var formData = CreateTranscribeContent(audioFile);
 
@@ -794,7 +795,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Transcribe_WithInvalidAudioContentType_ReturnsBadRequest()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var audioFile = CreateMockFormFile(AudioFileName, "application/pdf", ValidAudioBytes);
         var formData = CreateTranscribeContent(audioFile);
 
@@ -818,7 +819,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Transcribe_Unauthenticated_ReturnsUnauthorized()
     {
         // Arrange
-        var client = Factory.CreateClient(); // Unauthenticated client
+        var client = ApiClient; // Unauthenticated client
         var audioFile = CreateMockFormFile(AudioFileName, AudioContentType, ValidAudioBytes);
         var formData = CreateTranscribeContent(audioFile);
 
@@ -838,7 +839,7 @@ public class AiControllerTests(CustomWebApplicationFactory factory) : Integratio
     public async Task Transcribe_WithIncorrectFormFieldName_ReturnsBadRequest()
     {
         // Arrange
-        var client = Factory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
+        var client = AuthenticatedApiClient;
         var audioFile = CreateMockFormFile(AudioFileName, AudioContentType, ValidAudioBytes);
         var formData = CreateTranscribeContent(audioFile, formFieldName: "wrongFieldName");
 

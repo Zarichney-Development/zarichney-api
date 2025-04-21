@@ -18,6 +18,7 @@ public class DatabaseFixture : IAsyncLifetime
     private PostgreSqlContainer? _dbContainer;
     private Respawner _respawner = null!;
     private readonly ILogger<DatabaseFixture> _logger;
+    private bool _isContainerAvailable;
 
     /// <summary>
     /// Gets the connection string for the PostgreSQL test database.
@@ -50,22 +51,21 @@ public class DatabaseFixture : IAsyncLifetime
         _logger.LogInformation("Starting PostgreSQL test container...");
         try
         {
-            // Build and start the container
             _dbContainer = _builder.Build();
             await _dbContainer.StartAsync();
+            _isContainerAvailable = true;
+            _logger.LogInformation("PostgreSQL test container started: {ConnectionString}", ConnectionString);
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            _logger.LogWarning("Skipping database tests: Docker misconfigured: {Message}", ex.Message);
-            throw new TestSkippedException("Docker is not running or misconfigured, skipping database-backed tests.");
+            _logger.LogWarning("Database unavailable, skipping DB tests: {Message}", ex.Message);
+            _isContainerAvailable = false;
+            return;
         }
-
-        _logger.LogInformation("PostgreSQL test container started. Connection string: {ConnectionString}", 
-            ConnectionString.Replace("Password=postgres", "Password=********"));
 
         // Initialize Respawner
         await InitializeRespawner();
-        
+
         _logger.LogInformation("Database fixture initialized successfully");
     }
 
@@ -74,7 +74,7 @@ public class DatabaseFixture : IAsyncLifetime
     /// </summary>
     public async Task DisposeAsync()
     {
-        if (_dbContainer != null) await _dbContainer.DisposeAsync();
+        if (_dbContainer != null && _isContainerAvailable) await _dbContainer.DisposeAsync();
 
         _logger.LogInformation("PostgreSQL test container stopped");
     }
@@ -125,6 +125,11 @@ public class DatabaseFixture : IAsyncLifetime
             ]
         });
     }
+
+    /// <summary>
+    /// Indicates whether the database container is available.
+    /// </summary>
+    public bool IsContainerAvailable => _isContainerAvailable;
 }
 
 public class TestSkippedException(string message) : Exception(message)

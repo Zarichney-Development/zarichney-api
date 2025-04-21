@@ -11,7 +11,7 @@ namespace Zarichney.Tests.Integration.Performance;
 [Trait(TestCategories.Category, TestCategories.Performance)]
 [Trait(TestCategories.Feature, TestCategories.Cookbook)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
-public class ApiPerformanceTests(CustomWebApplicationFactory factory) : IntegrationTestBase(factory)
+public class ApiPerformanceTests(CustomWebApplicationFactory factory, ApiClientFixture apiClientFixture) : IntegrationTestBase(factory, apiClientFixture)
 {
   [DependencyFact]
   public async Task GetRecipes_Performance_CompletesWithinTimeLimit()
@@ -19,7 +19,7 @@ public class ApiPerformanceTests(CustomWebApplicationFactory factory) : Integrat
     // Arrange
     var userId = "test-user-id";
     var roles = new[] { "User" };
-    var client = CreateAuthenticatedApiClient(userId, roles);
+    var client = AuthenticatedApiClient;
 
     // Set an acceptable performance threshold
     const int maxAcceptableMilliseconds = 500;
@@ -42,7 +42,7 @@ public class ApiPerformanceTests(CustomWebApplicationFactory factory) : Integrat
     // Arrange
     var userId = "test-user-id";
     var roles = new[] { "User" };
-    var client = CreateAuthenticatedApiClient(userId, roles);
+    var client = AuthenticatedApiClient;
 
     const int requestCount = 10;
     var responseTimes = new List<long>(requestCount);

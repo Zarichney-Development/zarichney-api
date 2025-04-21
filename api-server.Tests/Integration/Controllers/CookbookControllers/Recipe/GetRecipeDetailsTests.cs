@@ -14,8 +14,9 @@ namespace Zarichney.Tests.Integration.Controllers.CookbookControllers.Recipe;
 [Trait(TestCategories.Dependency, TestCategories.Database)]
 public class GetRecipeDetailsTests(
     CustomWebApplicationFactory factory,
-    DatabaseFixture databaseFixture)
-    : DatabaseIntegrationTestBase(factory, databaseFixture)
+    DatabaseFixture databaseFixture,
+    ApiClientFixture apiClientFixture)
+    : DatabaseIntegrationTestBase(factory, databaseFixture, apiClientFixture)
 {
     [DependencyFact]
     public async Task GetRecipes_Unauthenticated_ReturnsUnauthorized()
@@ -38,9 +39,7 @@ public class GetRecipeDetailsTests(
         // var testRecipes = await SeedTestRecipesAsync();
         
         // Create an authenticated client with user roles
-        var userId = "test-user-id";
-        var roles = new[] { "User" };
-        var authenticatedClient = CreateAuthenticatedApiClient(userId, roles);
+        var authenticatedClient = AuthenticatedApiClient;
 
         // Act
         var recipes = await authenticatedClient.Recipe("", scrape: false, acceptableScore: null, requiredCount: null);
@@ -60,9 +59,7 @@ public class GetRecipeDetailsTests(
         var recipeId = "sample-recipe-id"; // In a real test, this would be the ID of a seeded recipe
         
         // Create an authenticated client
-        var userId = "test-user-id";
-        var roles = new[] { "User" };
-        var authenticatedClient = CreateAuthenticatedApiClient(userId, roles);
+        var authenticatedClient = AuthenticatedApiClient;
 
         // Act
         var order = await authenticatedClient.OrderGET(recipeId);
@@ -81,9 +78,7 @@ public class GetRecipeDetailsTests(
         var nonExistentId = "non-existent-id";
         
         // Create an authenticated client
-        var userId = "test-user-id";
-        var roles = new[] { "User" };
-        var authenticatedClient = CreateAuthenticatedApiClient(userId, roles);
+        var authenticatedClient = AuthenticatedApiClient;
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<ApiException>(() => authenticatedClient.OrderGET(nonExistentId));

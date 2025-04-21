@@ -1,4 +1,6 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.UserSecrets;
+using System.Reflection;
 
 namespace Zarichney.Tests.Framework.Configuration;
 
@@ -77,6 +79,8 @@ public static class TestConfigurationHelper
         return new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.Testing.json", optional: false)
+            .AddUserSecrets(Assembly.GetExecutingAssembly(), optional: true)
+            .AddEnvironmentVariables()
             .Build();
     }
 }

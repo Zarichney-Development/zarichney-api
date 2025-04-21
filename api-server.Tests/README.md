@@ -94,20 +94,11 @@ public async Task Database_ShouldBeAccessible_WhenContainerStarted()
 
 Integration tests use:
 
-1. `CustomWebApplicationFactory`: Configures the test server with:
-   - Test-specific configuration
-   - In-memory hosting of the API
-   - Test database connection
-   - Mocked external services
-
-2. `DatabaseFixture`: Manages a PostgreSQL test database with Testcontainers
-
-3. `IntegrationTestBase`: Base class for integration tests that:
-   - Implements dependency checking logic
-   - Provides test authentication utilities
-   - Offers access to services and mocks
-
-4. Refit API Client: Strongly-typed client generated from Swagger for API interaction
+1. `CustomWebApplicationFactory`: Configures the test server with test-specific settings.
+2. `DatabaseFixture`: Manages a PostgreSQL test database container.
+3. `ApiClientFixture`: Provides shared, pre-configured unauthenticated and authenticated `IZarichneyAPI` clients via a collection fixture, improving test performance by reusing clients across tests.
+4. `IntegrationTestBase`: Marked with `[Collection("Integration Tests")]`, injects `ApiClientFixture`, and exposes `ApiClient` and `AuthenticatedApiClient` properties for tests.
+5. `Refit API Client`: Tests access the API through `ApiClient` or `AuthenticatedApiClient` properties; clients are configured and initialized in `ApiClientFixture`.
 
 ### Database Reset
 
@@ -181,4 +172,4 @@ The test suite is integrated with GitHub Actions:
 
 For more details, see the `/Docs/Maintenance/TestingSetup.md` document.
 
-Last Updated: April 18, 2025
+Last Updated: April 21, 2025

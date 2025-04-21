@@ -1,4 +1,3 @@
-using Zarichney.Client;
 using Xunit;
 using Zarichney.Tests.Framework.Fixtures;
 
@@ -7,26 +6,30 @@ namespace Zarichney.Tests.Integration;
 /// <summary>
 /// Base class for integration tests that require database access.
 /// Combines CustomWebApplicationFactory and DatabaseFixture to provide a complete test environment.
-/// Tests using this class should be part of the "Database" collection.
+/// Tests using this class should be part of the "Integration Tests" collection.
 /// </summary>
-[Collection("Database")]
-public abstract class DatabaseIntegrationTestBase : IntegrationTestBase
+public abstract class DatabaseIntegrationTestBase : IntegrationTestBase, IClassFixture<DatabaseFixture>, IClassFixture<ApiClientFixture>
 {
   protected readonly DatabaseFixture DatabaseFixture;
-  protected new readonly IZarichneyAPI ApiClient;
 
   /// <summary>
   /// Initializes a new instance of the <see cref="DatabaseIntegrationTestBase"/> class.
   /// </summary>
   /// <param name="factory">The web application factory.</param>
   /// <param name="databaseFixture">The database fixture.</param>
+  /// <param name="apiClientFixture">The API client fixture.</param>
   protected DatabaseIntegrationTestBase(
     CustomWebApplicationFactory factory,
-    DatabaseFixture databaseFixture)
-    : base(factory)
+    DatabaseFixture databaseFixture,
+    ApiClientFixture apiClientFixture)
+    : base(factory, apiClientFixture)
   {
     DatabaseFixture = databaseFixture;
-    ApiClient = factory.CreateRefitClient();
+    if (!DatabaseFixture.IsContainerAvailable)
+    {
+        // Skip all database-backed tests if container is unavailable
+        SetSkipReason("Database unavailable, skipping database-backed integration tests.");
+    }
   }
 
   /// <summary>

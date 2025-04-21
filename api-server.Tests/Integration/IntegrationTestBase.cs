@@ -7,6 +7,7 @@ using Zarichney.Tests.Framework.Helpers;
 
 namespace Zarichney.Tests.Integration;
 
+[Collection("Integration Tests")]
 /// <summary>
 /// Base class for integration tests that provides common setup and accessors.
 /// Implements IAsyncLifetime to check for required configuration dependencies based on test traits.
@@ -31,7 +32,7 @@ public abstract class IntegrationTestBase : IClassFixture<CustomWebApplicationFa
   };
 
   protected readonly CustomWebApplicationFactory Factory;
-  protected readonly IZarichneyAPI ApiClient;
+  private readonly ApiClientFixture _apiClientFixture;
 
   private bool _dependenciesChecked;
   private string? SkipReason { get; set; }
@@ -39,7 +40,7 @@ public abstract class IntegrationTestBase : IClassFixture<CustomWebApplicationFa
   /// <summary>
   /// Sets a skip reason. This is used internally and by derived classes.
   /// </summary>
-  private void SetSkipReason(string reason)
+  protected void SetSkipReason(string reason)
   {
     SkipReason = reason;
   }
@@ -53,30 +54,23 @@ public abstract class IntegrationTestBase : IClassFixture<CustomWebApplicationFa
   /// Initializes a new instance of the <see cref="IntegrationTestBase"/> class.
   /// </summary>
   /// <param name="factory">The web application factory.</param>
-  protected IntegrationTestBase(CustomWebApplicationFactory factory)
+  /// <param name="apiClientFixture">The API client fixture.</param>
+  protected IntegrationTestBase(CustomWebApplicationFactory factory, ApiClientFixture apiClientFixture)
   {
     Factory = factory;
-    var client = factory.CreateClient();
-    ApiClient = Factory.CreateRefitClient(client);
-
-    // Set a forced skip reason if database is not available
-    if (!factory.IsDatabaseAvailable)
-    {
-      SetSkipReason("Database is not available.");
-    }
+    _apiClientFixture = apiClientFixture;
+    // Database availability will be checked based on dependency traits during InitializeAsync
   }
 
   /// <summary>
-  /// Creates an authenticated API client for the specified user.
+  /// Unauthenticated API client from shared fixture.
   /// </summary>
-  /// <param name="userId">The user ID to authenticate as.</param>
-  /// <param name="roles">The roles to assign to the user.</param>
-  /// <returns>An API client configured with authentication.</returns>
-  protected IZarichneyAPI CreateAuthenticatedApiClient(string userId, string[] roles)
-  {
-    var httpClient = Factory.CreateAuthenticatedClient(userId, roles);
-    return Factory.CreateRefitClient(httpClient);
-  }
+  protected IZarichneyAPI ApiClient => _apiClientFixture.UnauthenticatedClient;
+
+  /// <summary>
+  /// Authenticated API client from shared fixture.
+  /// </summary>
+  protected IZarichneyAPI AuthenticatedApiClient => _apiClientFixture.AuthenticatedClient;
 
   /// <summary>
   /// Gets a service from the factory's service provider.

@@ -15,21 +15,21 @@ namespace Zarichney.Tests.Integration.Controllers.PaymentController;
 /// Integration tests for the PaymentController.
 /// Demonstrates database testing and external service mocking.
 /// </summary>
-[Collection("Database")]
+[Collection("Database Integration Tests")]
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
 [Trait(TestCategories.Dependency, TestCategories.ExternalStripe)]
-public class PaymentControllerTests(CustomWebApplicationFactory factory, DatabaseFixture dbFixture)
-  : DatabaseIntegrationTestBase(factory, dbFixture)
+public class PaymentControllerTests(CustomWebApplicationFactory factory, DatabaseFixture dbFixture, ApiClientFixture apiClientFixture)
+  : DatabaseIntegrationTestBase(factory, dbFixture, apiClientFixture)
 {
   [DependencyFact]
   public async Task CreatePaymentIntent_ValidOrder_ReturnsPaymentIntent()
   {
     // Arrange
-    await DatabaseFixture.ResetDatabaseAsync();
+    await ResetDatabaseAsync();
     var userId = "user-" + GetRandom.String();
     var roles = new[] { "User" };
-    var apiClient = CreateAuthenticatedApiClient(userId, roles);
+    var apiClient = AuthenticatedApiClient;
     var requestDto = new PaymentIntentRequest
     {
       Amount = 1000,
@@ -55,7 +55,7 @@ public class PaymentControllerTests(CustomWebApplicationFactory factory, Databas
       });
 
     // Act & Assert: call CreateIntent and ensure no exception is thrown (HTTP 2xx)
-    Func<Task> act = () => apiClient.CreateIntent(requestDto);
+    var act = () => apiClient.CreateIntent(requestDto);
     await act.Should().NotThrowAsync<ApiException>(
       because: "valid order should create a payment intent");
 
@@ -72,10 +72,10 @@ public class PaymentControllerTests(CustomWebApplicationFactory factory, Databas
   public async Task GetPaymentStatus_ValidPaymentId_ReturnsStatus()
   {
     // Arrange
-    await DatabaseFixture.ResetDatabaseAsync();
+    await ResetDatabaseAsync();
     var userId = "user-" + GetRandom.String();
     var roles = new[] { "User" };
-    var apiClient = CreateAuthenticatedApiClient(userId, roles);
+    var apiClient = AuthenticatedApiClient;
     var paymentId = "pi_test_" + GetRandom.String();
 
     // Mock the Stripe service

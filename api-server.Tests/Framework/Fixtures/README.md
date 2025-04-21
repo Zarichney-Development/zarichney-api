@@ -1,6 +1,6 @@
 # Module/Directory: /api-server.Tests/Framework/Fixtures
 
-**Last Updated:** 2025-04-18
+**Last Updated:** 2025-04-21
 
 > **Parent:** [`api-server.Tests`](../README.md)
 
@@ -30,7 +30,11 @@
     * Uses `Respawn` to efficiently clean database tables between test runs via the `ResetDatabaseAsync` method.
     * Provides the connection string to the running test container.
     * Handles Docker availability checks, throwing `TestSkippedException` if the container cannot be started.
-* **Usage:** Test classes typically use `IClassFixture<CustomWebApplicationFactory>` and `ICollectionFixture<DatabaseFixture>` (via `[Collection("Database")]`) to inject these fixtures.
+* **`ApiClientFixture`**:
+    * Implements `IAsyncLifetime` to create and manage shared `IZarichneyAPI` clients (unauthenticated & authenticated) for integration tests.
+    * Instantiates its own `CustomWebApplicationFactory`, reads `TestUser:Username` and `TestUser:Password` from `appsettings.Testing.json` via `TestConfigurationHelper`, logs in to obtain auth, and exposes two clients via `UnauthenticatedClient` and `AuthenticatedClient` properties.
+    * Used via `ICollectionFixture<ApiClientFixture>` in the "Integration Tests" collection defined by `IntegrationTestCollection.cs`.
+    * Improves performance by reusing initialized clients across multiple tests.
 
 ## 3. Interface Contract & Assumptions
 
@@ -44,13 +48,21 @@
     * `Task DisposeAsync()`: Stops and cleans up the Docker container.
     * `Task ResetDatabaseAsync()`: Cleans data from tables using Respawner. Must be called explicitly by tests needing a clean state.
     * `string ConnectionString`: Provides the connection string to the running container. Throws `InvalidOperationException` if accessed before the container is started.
+* **`ApiClientFixture`**:
+    * **Purpose:** Provides shared API clients for integration tests.
+    * **Critical Preconditions:** Assumes `appsettings.Testing.json` contains valid test user credentials.
+    * **Critical Postconditions:** Exposes initialized `UnauthenticatedClient` and `AuthenticatedClient` properties for reuse across tests.
+    * **Non-Obvious Error Handling:** Handles authentication failures gracefully, ensuring tests can still run with unauthenticated clients if necessary.
 * **Critical Assumptions:**
     * Docker Desktop (or equivalent) is installed and running on the machine executing tests that require the `DatabaseFixture`.
     * The configurations specified in [`/api-server.Tests/Framework/TechnicalDesignDocument.md`](../TechnicalDesignDocument.md) are adhered to regarding mock registration and authentication setup within the factory.
 
 ## 4. Local Conventions & Constraints (Beyond Global Standards)
 
-* **Fixture Usage:** `CustomWebApplicationFactory` is used via `IClassFixture`, while `DatabaseFixture` uses `ICollectionFixture` with `[Collection("Database")]` to ensure a single database container is shared across tests within the collection.
+* **Fixture Usage:** 
+    * `CustomWebApplicationFactory` is used via `IClassFixture`.
+    * `DatabaseFixture` uses `ICollectionFixture` with `[Collection("Database")]` to share a single database container.
+    * **`ApiClientFixture`** uses `ICollectionFixture<ApiClientFixture>` under the `"Integration Tests"` collection to provide shared API clients to integration tests.
 * **Mocking:** Relies on mock factories located in [`/api-server.Tests/Framework/Mocks/Factories/`](../Mocks/Factories/README.md).
 * **Configuration:** The factory defines the primary configuration loading strategy for integration tests, as documented in the TDD.
 

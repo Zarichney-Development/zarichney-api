@@ -12,4 +12,5 @@ appsettings.Development.json
 backup*
 test_results
 **/Migrations/*.sql
+api-server/logs
 

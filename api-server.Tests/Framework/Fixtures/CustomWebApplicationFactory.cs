@@ -41,28 +41,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     /// </remarks>
     public CustomWebApplicationFactory()
     {
-        try
-        {
-            _databaseFixture = new DatabaseFixture();
-            // Initialize database fixture synchronously to ensure it's ready before tests run
-            _databaseFixture.InitializeAsync().GetAwaiter().GetResult();
-            _isDatabaseAvailable = true;
-        }
-        catch (TestSkippedException ex)
-        {
-            // Log the exception but continue with a null database fixture
-            // This allows minimal functionality tests to run even without a database
-            Console.WriteLine($"Database initialization failed: {ex.Message}");
-            _isDatabaseAvailable = false;
-            _databaseFixture = null;
-        }
-        catch (Exception ex)
-        {
-            // For unexpected exceptions, log and rethrow
-            Console.WriteLine($"Unexpected error during database initialization: {ex.Message}");
-            _isDatabaseAvailable = false;
-            throw;
-        }
+        // No-op: Database initialization is handled by DatabaseFixture in DB tests
+        _databaseFixture = null;
+        _isDatabaseAvailable = false;
     }
 
     /// <summary>
@@ -148,8 +129,15 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             // this will be configured with a placeholder connection string
             services.AddDbContext<UserDbContext>(options =>
             {
-                options.UseNpgsql(GetDatabaseConnectionString(), 
-                    b => b.MigrationsAssembly("Zarichney")); // Keep the same migrations assembly as the main app
+                if (_isDatabaseAvailable && _databaseFixture != null)
+                {
+                    options.UseNpgsql(GetDatabaseConnectionString(), b => b.MigrationsAssembly("Zarichney"));
+                }
+                else
+                {
+                    // Use in-memory database for tests when real DB is unavailable
+                    options.UseInMemoryDatabase("TestDb");
+                }
             });
         });
 

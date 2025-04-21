@@ -14,7 +14,8 @@ namespace Zarichney.Tests.Integration.Smoke;
 [Trait(TestCategories.Category, TestCategories.Smoke)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
 [Trait(TestCategories.Dependency, TestCategories.ExternalStripe)]
-public class ApiSmokeTests(CustomWebApplicationFactory factory) : IntegrationTestBase(factory)
+[Collection("Integration Tests")]
+public class ApiSmokeTests(CustomWebApplicationFactory factory, ApiClientFixture apiClientFixture) : IntegrationTestBase(factory, apiClientFixture)
 {
   [DependencyFact]
   [Trait(TestCategories.Feature, TestCategories.Auth)]
@@ -32,7 +33,7 @@ public class ApiSmokeTests(CustomWebApplicationFactory factory) : IntegrationTes
     var loginResult = await apiClient.Login(loginRequest);
 
     // Create authenticated Refit client and Logout
-    var authenticatedClient = CreateAuthenticatedApiClient("test-user-id", new[] { "User" });
+    var authenticatedClient = AuthenticatedApiClient;
     var logoutResult = await authenticatedClient.Logout();
 
     // Assert
@@ -48,7 +49,7 @@ public class ApiSmokeTests(CustomWebApplicationFactory factory) : IntegrationTes
     // Arrange
     var userId = "test-user-id";
     var roles = new[] { "User" };
-    var client = CreateAuthenticatedApiClient(userId, roles);
+    var client = AuthenticatedApiClient;
 
     // Act
     var recipes = await client.Recipe("", false, null, null);
@@ -67,7 +68,7 @@ public class ApiSmokeTests(CustomWebApplicationFactory factory) : IntegrationTes
     // Arrange
     var userId = "test-user-id";
     var roles = new[] { "User" };
-    var apiClient = CreateAuthenticatedApiClient(userId, roles);
+    var apiClient = AuthenticatedApiClient;
 
     // Act & Assert - Secure endpoint should be accessible
     Func<Task> act = () => apiClient.Secure();

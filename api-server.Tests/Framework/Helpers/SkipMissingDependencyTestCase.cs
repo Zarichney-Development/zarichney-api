@@ -1,4 +1,5 @@
 using System.Reflection;
+using Xunit;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
@@ -37,6 +38,12 @@ public class SkipMissingDependencyTestCase : XunitTestCase
         var testClass = TestMethod.TestClass.Class.ToRuntimeType();
         var testClassInstance = Activator.CreateInstance(testClass, constructorArguments);
         
+        // If the test class has asynchronous initialization, invoke it to set up SkipReason
+        if (testClassInstance is IAsyncLifetime asyncInit)
+        {
+            await asyncInit.InitializeAsync();
+        }
+
         // Check if the test class has a ShouldSkip property
         var shouldSkipProperty = testClass.GetProperty("ShouldSkip", 
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);

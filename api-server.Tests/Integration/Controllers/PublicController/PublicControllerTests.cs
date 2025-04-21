@@ -15,7 +15,8 @@ namespace Zarichney.Tests.Integration.Controllers.PublicController;
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Component, TestCategories.Controller)]
 [Trait(TestCategories.Feature, "Public")]
-public class PublicControllerTests(CustomWebApplicationFactory factory) : IntegrationTestBase(factory)
+[Collection("Integration Tests")]
+public class PublicControllerTests(CustomWebApplicationFactory factory, ApiClientFixture apiClientFixture) : IntegrationTestBase(factory, apiClientFixture)
 {
   /// <summary>
   /// Tests that the health check endpoint returns an OK result with the expected structure.
