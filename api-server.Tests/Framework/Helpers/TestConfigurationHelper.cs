@@ -1,8 +1,7 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.UserSecrets;
 using System.Reflection;
+using Microsoft.Extensions.Configuration;
 
-namespace Zarichney.Tests.Framework.Configuration;
+namespace Zarichney.Tests.Framework.Helpers;
 
 /// <summary>
 /// Helper for loading and managing test configuration.

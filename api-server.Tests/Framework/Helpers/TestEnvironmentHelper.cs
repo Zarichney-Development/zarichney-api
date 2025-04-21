@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Configuration;
-using Zarichney.Tests.Framework.Configuration;
 using Zarichney.Tests.Framework.Fixtures;
 
 namespace Zarichney.Tests.Framework.Helpers;

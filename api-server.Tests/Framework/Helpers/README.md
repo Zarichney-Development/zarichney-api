@@ -1,90 +1,94 @@
-``# Module/Directory: /api-server.Tests/Framework/Helpers
+# Module/Directory: /api-server.Tests/Framework/Helpers
 
-**Last Updated:** 2025-04-17
+**Last Updated:** 2025-04-21
 
-> **Parent:** [`/api-server.Tests/Framework/README.md`](../README.md)
+> **Parent:** [`/api-server.Tests/Framework/`](../README.md)
 
 ## 1. Purpose & Responsibility
 
-* **What it is:** A collection of utility and helper classes that support the testing infrastructure for the Zarichney API.
+* **What it is:** A collection of utility and helper classes supporting the testing infrastructure for the Zarichney API.
 * **Key Responsibilities:**
-    * Providing authentication test helpers (`AuthTestHelper`, `TestAuthHandler`)
-    * Managing test categories and traits (`TestCategories`)
-    * Supporting conditional test execution (`DockerAvailableFactAttribute`)
-    * Generating random test data (`GetRandom`)
-    * Checking configuration status across the application (`ConfigurationStatusHelper`)
-    * Supporting environment-specific testing (`TestEnvironmentHelper`)
-* **Why it exists:** To centralize common testing utilities, reduce code duplication, and provide a consistent approach to handling cross-cutting testing concerns.
+    * Providing authentication test helpers (`AuthTestHelper`, `TestAuthHandler`).
+    * Supporting conditional test execution based on runtime conditions (`DependencyFactAttribute`, `DockerAvailableFactAttribute`, `SkipMissingDependency*`).
+    * Generating random test data (`GetRandom`).
+    * Checking configuration status (`ConfigurationStatusHelper`).
+    * **Providing test configuration loading utilities (`TestConfigurationHelper`).**
+    * (Potentially) Managing environment-specific test configurations (`TestEnvironmentHelper`).
+* **Why it exists:** To centralize common testing utilities, reduce code duplication, and provide a consistent approach to handling cross-cutting testing concerns like authentication, configuration, and conditional execution.
 
 ## 2. Architecture & Key Concepts
 
-* **Authentication Helpers:** `AuthTestHelper` generates test tokens for authentication, while `TestAuthHandler` provides an authentication scheme for tests.
-* **Test Configuration:** `TestEnvironmentHelper` manages environment-specific test configurations.
-* **Test Infrastructure:** `DockerAvailableFactAttribute` enables conditional execution of tests based on Docker availability.
-* **Data Generation:** `GetRandom` provides methods for generating random test data.
-* **Configuration Status:** `ConfigurationStatusHelper` provides methods to check the status of configuration items by querying the `/api/status/config` endpoint.
+* **Authentication Helpers:**
+    * `AuthTestHelper`: Generates test tokens/claims for simulating authenticated users.
+    * `TestAuthHandler`: Implements `AuthenticationHandler` for the "Test" scheme used by `CustomWebApplicationFactory` to bypass real authentication.
+* **Conditional Test Execution:**
+    * `DependencyFactAttribute` / `SkipMissingDependencyDiscoverer` / `SkipMissingDependencyTestCase`: Work together with `IntegrationTestBase` and `ConfigurationStatusHelper` to skip tests (`[DependencyFact]`) if required configurations (identified by traits) are missing.
+    * `DockerAvailableFactAttribute`: Skips tests (`[DockerAvailableFact]`) if the Docker runtime is not detected.
+* **Configuration Helpers:**
+    * `ConfigurationStatusHelper`: Provides methods to query the application's `/api/status/config` endpoint (via `CustomWebApplicationFactory`) to check the availability of specific configuration items (API keys, DB connection string, etc.). Used by the dependency skipping mechanism.
+    * **`TestConfigurationHelper` (Moved Here):** Provides static methods to build `IConfiguration` instances for specific test needs. Includes methods to load `appsettings.Testing.json`, user secrets, and environment variables. *Note: While potentially useful for isolated configuration scenarios within specific tests, the primary configuration for integration tests is now managed directly within `CustomWebApplicationFactory`.*
+    * `TestEnvironmentHelper`: Provides methods to create programmatic `IConfiguration` instances based on a `TestEnvironment` enum. *Note: Its relevance might decrease with the factory's improved configuration handling.*
+* **Data Generation:**
+    * `GetRandom`: Static class providing simple methods (`String()`, `Int()`, `DateTime()`, etc.) backed by `AutoFixture` for generating random primitive values and basic objects.
 
 ## 3. Interface Contract & Assumptions
 
-* **ConfigurationStatusHelper:**
-    * `Task<List<ConfigurationItemStatus>> GetConfigurationStatusAsync(CustomWebApplicationFactory factory)`:
-        * **Purpose:** Fetches the status of all configuration items from the `/api/status/config` endpoint.
-        * **Critical Preconditions:** `factory` must be a valid `CustomWebApplicationFactory` instance.
-        * **Critical Postconditions:** Returns a list of configuration item statuses or throws an exception if the request fails.
-        * **Non-Obvious Error Handling:** Throws `InvalidOperationException` if response deserialization fails.
-    * `bool IsConfigurationAvailable(List<ConfigurationItemStatus> statuses, string configName)`:
-        * **Purpose:** Checks if a specific configuration item is available (configured).
-        * **Critical Preconditions:** `statuses` must not be null, `configName` must not be null or whitespace.
-        * **Critical Postconditions:** Returns `true` only if a matching item with "Configured" status is found.
-        * **Non-Obvious Error Handling:** Returns `false` if the item is not found or not "Configured".
-* **AuthTestHelper:**
-    * `GenerateTestToken(string userId, string[] roles)`: Generates a test token for authentication.
-    * `ValidateTestToken(string token)`: Validates a test token.
-* **TestCategories:**
-    * Constants for consistent test categorization using traits.
+* **`ConfigurationStatusHelper`:**
+    * Assumes the `/api/status/config` endpoint is functional within the test host provided by the factory.
+    * Assumes the status strings ("Configured", "Missing/Invalid") are consistent.
+* **`AuthTestHelper` / `TestAuthHandler`:**
+    * Assumes the token/claim structure generated by `AuthTestHelper` is correctly interpreted by `TestAuthHandler`.
+    * Assumes `TestAuthHandler` is correctly registered by `CustomWebApplicationFactory`.
+* **`TestConfigurationHelper`:**
+    * `GetConfiguration()`: Assumes `appsettings.Testing.json` exists in the execution directory. Loads user secrets based on the executing assembly.
+    * Other methods assume parameters (like dictionaries) are valid.
+* **`DependencyFactAttribute` / `DockerAvailableFactAttribute`:**
+    * Rely on the correct functioning of their respective discoverers and the underlying checks (`ConfigurationStatusHelper`, Docker runtime detection).
 * **Critical Assumptions:**
-    * `ConfigurationStatusHelper` assumes the `/api/status/config` endpoint is working correctly and returning valid data.
-    * `AuthTestHelper` assumes the token format is compatible with `TestAuthHandler`.
-    * Testing utilities assume their dependencies (e.g., `CustomWebApplicationFactory`) are properly initialized.
+    * Testing utilities assume their dependencies (e.g., `CustomWebApplicationFactory` passed to `ConfigurationStatusHelper`) are properly initialized.
+    * `GetRandom` assumes `AutoFixture` is available.
 
-## 4. Local Conventions & Constraints
+## 4. Local Conventions & Constraints (Beyond Global Standards)
 
-* **Naming:** Helper classes follow the naming convention of `[Purpose]Helper` or `[Purpose]Handler`.
-* **Common Patterns:** Static helper methods are used for utility functions, while instance methods are used for stateful helpers.
-* **Exception Handling:** Helpers should validate inputs and throw appropriate exceptions for invalid parameters.
-* **Test Categories:** All tests should use the categories defined in `TestCategories` for consistent filtering.
+* **Naming:** Helper classes generally follow `[Purpose]Helper`, `[Purpose]Handler`, or attribute naming conventions.
+* **Static vs. Instance:** Utility functions are often static (`GetRandom`, `TestConfigurationHelper`). Handlers (`TestAuthHandler`) are instance-based.
+* **Dependency:** Helpers should ideally have minimal dependencies on each other, except where logical (e.g., `DependencyFact` relies on `ConfigurationStatusHelper`).
 
 ## 5. How to Work With This Code
 
-* **Setup:** Most helper classes don't require special setup, as they are instantiated as needed by tests.
-* **Testing:**
-    * Unit tests for helper classes are located in `api-server.Tests/Unit/Helpers/`.
-    * Integration tests that use the helpers are spread across the integration test directories.
+* **Setup:** Most helpers require no specific setup. `TestAuthHandler` is registered by the factory. Ensure `appsettings.Testing.json` exists if using `TestConfigurationHelper.GetConfiguration()`.
+* **Usage:** Call static methods directly (e.g., `GetRandom.String()`). Use attributes (`[DependencyFact]`, `[DockerAvailableFact]`) on test methods. Access `ConfigurationStatusHelper` typically via `IntegrationTestBase`.
+* **Testing:** Unit tests for helpers are located in `/api-server.Tests/Unit/Helpers/`. Focus on testing logic within helpers (e.g., token generation/validation, configuration loading logic, status checking logic).
 * **Common Pitfalls / Gotchas:**
-    * `ConfigurationStatusHelper` performs case-sensitive comparisons for both config names and status values.
-    * `DockerAvailableFactAttribute` can lead to tests being silently skipped if Docker is not available.
+    * `ConfigurationStatusHelper` performs case-sensitive comparisons by default.
+    * Conditional Fact attributes can lead to tests being silently skipped; check test runner output carefully.
+    * Over-reliance on `TestConfigurationHelper` for integration test setup; prefer configuration via `CustomWebApplicationFactory`.
 
 ## 6. Dependencies
 
 * **Internal Code Dependencies:**
-    * [`/api-server.Tests/Framework/Fixtures`](Framework/Fixtures/README.md) - For `CustomWebApplicationFactory`
-    * [`/api-server/Services/Status`](../../api-server/Services/Status/README.md) - For `ConfigurationItemStatus` model
+    * [`/api-server.Tests/Framework/Fixtures/`](../Fixtures/README.md) - `ConfigurationStatusHelper` uses `CustomWebApplicationFactory`. `TestAuthHandler` is used by the factory.
+    * [`/api-server/Services/Status/`](../../../api-server/Services/Status/README.md) - `ConfigurationStatusHelper` uses `ConfigurationItemStatus` model.
+    * [`/api-server.Tests/Framework/Attributes/`](../Attributes/README.md) - Contains the custom Fact attributes.
 * **External Library Dependencies:**
-    * `Xunit` - For test attributes and assertions
-    * `FluentAssertions` - For more expressive assertions
-    * `Microsoft.AspNetCore.Mvc.Testing` - For `WebApplicationFactory`
+    * `Xunit` - Core testing framework, attributes.
+    * `FluentAssertions` - Used in helper tests.
+    * `Microsoft.AspNetCore.Mvc.Testing` - For `WebApplicationFactory`.
+    * `Microsoft.Extensions.Configuration.*` - Used by `TestConfigurationHelper`.
+    * `Microsoft.AspNetCore.Authentication` - Used by `TestAuthHandler`.
+    * `AutoFixture` - Used by `GetRandom`.
 * **Dependents (Impact of Changes):**
-    * Any test class that uses these helpers - Changes to these helpers can affect many tests
-    * Integration tests that need to check if required configurations are available
+    * [`/api-server.Tests/Integration/`](../../Integration/README.md) - Base classes and many integration tests rely on these helpers (especially for auth simulation and dependency skipping).
+    * [`/api-server.Tests/Unit/Helpers/`](../../Unit/Helpers/README.md) - Unit tests for these helpers.
 
 ## 7. Rationale & Key Historical Context
 
-* **ConfigurationStatusHelper:** Created to support conditional test execution based on available configurations, enabling tests to be skipped when dependencies (like databases or API keys) are not configured rather than failing.
-* **DockerAvailableFactAttribute:** Added to handle tests that require Docker, allowing them to be skipped gracefully when Docker is not available.
-* **TestCategories:** Standardized to ensure consistent categorization and filtering of tests.
+* **Consolidation:** `TestConfigurationHelper` moved here from `/Framework/Configuration/` to group all general testing utilities together.
+* **Dependency Skipping:** The `DependencyFact` mechanism (`ConfigurationStatusHelper`, attributes, base class logic) was created to allow tests with external dependencies (API keys, DB) to be skipped gracefully in environments where those dependencies aren't configured, improving CI stability.
+* **`TestAuthHandler`:** Provides a standard way to simulate authenticated users without needing real credentials or complex auth flows during integration tests.
 
 ## 8. Known Issues & TODOs
 
-* Consider adding caching to `ConfigurationStatusHelper.GetConfigurationStatusAsync()` to reduce redundant API calls during a test run.
-* Evaluate adding a more comprehensive configuration validation system that can automatically skip tests when required configurations are missing.
-* Consider creating a framework for conditional test execution based on multiple configuration dependencies.``
+* **TODO:** Review the necessity and usage of `TestEnvironmentHelper` now that `CustomWebApplicationFactory` handles environment-aware configuration loading more directly. Consider simplifying or deprecating it if redundant.
+* **TODO:** Evaluate if `TestConfigurationHelper` methods beyond `GetConfiguration()` are still required or if they can be simplified, given the factory's primary role in configuration.
+

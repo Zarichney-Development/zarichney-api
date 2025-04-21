@@ -2,7 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Refit;
 using Xunit;
 using Zarichney.Client;
-using Zarichney.Tests.Framework.Configuration;
+using Zarichney.Tests.Framework.Helpers;
 
 namespace Zarichney.Tests.Framework.Fixtures;
 

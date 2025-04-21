@@ -2,84 +2,107 @@
 
 **Last Updated:** 2025-04-21
 
-> **Parent:** [`api-server.Tests`](../README.md)
+> **Parent:** [`/api-server.Tests/Framework/`](../README.md)
 
 ## 1. Purpose & Responsibility
 
-* **What it is:** Contains integration tests that verify the behavior of the `api-server` application by interacting with its API endpoints.
+* **What it is:** Contains integration tests that verify the behavior of the `api-server` application by interacting with its API endpoints using a realistic, in-memory hosted environment.
 * **Key Responsibilities:**
-    * Testing the end-to-end flow of requests through controllers, services, repositories, and potentially the database.
-    * Validating API contracts (request/response formats, status codes).
-    * Verifying component interactions and integration points.
-    * Testing authentication and authorization rules for API endpoints.
-    * Checking behavior with mocked external services (Stripe, OpenAI, etc.).
+  * Testing the end-to-end flow of requests through controllers, services, repositories, and potentially the database.
+  * Validating API contracts (request/response formats, status codes).
+  * Verifying component interactions and integration points.
+  * Testing authentication and authorization rules for API endpoints.
+  * Checking behavior with mocked external services (Stripe, OpenAI, etc.).
 * **Why it exists:** To provide confidence that the different parts of the application work together correctly as a whole and that the public API behaves as expected under various conditions.
 * **Submodule Structure:** Tests are typically organized in subdirectories mirroring the `api-server/Controllers` structure (e.g., `./Controllers/AuthControllerTests.cs`, `./Controllers/CookbookControllerTests.cs`). Other categories like `./Performance/` or `./Smoke/` may also exist.
 
-## 2. Architecture & Key Concepts
+## 2. Architecture & Key Concepts (Refactoring Planned)
 
-* **Test Host:** Uses `CustomWebApplicationFactory` from [`/api-server.Tests/Framework/Fixtures/`](Framework/Fixtures/README.md) to host the `api-server` in-memory.
-* **API Client:** Tests interact with the API exclusively through `IZarichneyAPI` instances provided by `ApiClientFixture` and exposed via `IntegrationTestBase` properties (`ApiClient`, `AuthenticatedApiClient`).
-* **ApiClientFixture:** Implements `IAsyncLifetime` to create shared, pre-configured authenticated/unauthenticated Refit clients, reading credentials from `appsettings.Testing.json` and managing login during setup.
-* **Collection Fixture:** `IntegrationTestCollection` defines the "Integration Tests" collection, applying `ICollectionFixture<ApiClientFixture>` so all tests in this collection share the same clients.
-* **Base Classes:** `IntegrationTestBase` is marked with `[Collection("Integration Tests")]`, injects `ApiClientFixture`, and exposes `ApiClient` and `AuthenticatedApiClient` for direct use in tests.
-* **Database Interaction:** Tests requiring database access use `DatabaseFixture` and must call `await ResetDatabaseAsync()` at the start.
-* **Mocking:** Mocks for external services are registered in the factory and retrieved via `Factory.Services.GetRequiredService<Mock<IService>>()`.
-* **Authentication:** Authenticated calls use the client from `AuthenticatedApiClient`; no per-test client creation is needed.
-* **Dependency Skipping:** Uses `[DependencyFact]` and dependency traits (e.g., `[Trait(TestCategories.Dependency, TestCategories.Database)]`) along with logic in `IntegrationTestBase` to automatically skip tests if required configurations (API keys, database connection) are unavailable.
+### Current State (Pre-Refactor)
 
-## 3. Interface Contract & Assumptions
+* **Test Host:** Uses `CustomWebApplicationFactory` often instantiated per test class via `IClassFixture` in base classes.
+* **API Client:** Uses `ApiClientFixture` which creates its *own* factory instance, shared via `ICollectionFixture` in the `"Integration Tests"` collection.
+* **Collections:** Uses two separate collections (`"Integration Tests"` and `"Database Integration Tests"`) with different shared fixture setups.
+* **Base Classes:** `IntegrationTestBase` and `DatabaseIntegrationTestBase` declare `IClassFixture<>`, leading to potential redundancy and confusion with collection fixtures.
+* **Issues:** This leads to inefficient fixture instantiation (multiple factories) and potential configuration mismatches.
 
-* **Tests as Consumers:** Integration tests act as consumers of the `api-server` API, the generated Refit client, and the test fixtures.
+### Desired Future State (Consolidated Approach - TDD v1.5)
+
+* **Single Collection:** All integration tests will belong to a single `[Collection("Integration")]`. This collection definition will provide shared instances of `CustomWebApplicationFactory`, `DatabaseFixture`, and `ApiClientFixture` using `ICollectionFixture<>`.
+* **Shared Fixtures:** This ensures only one instance of the application host, database container (if used), and API client fixture is created and shared across all tests in the collection, improving performance and consistency.
+* **Test Host (`CustomWebApplicationFactory`):** The single shared factory instance will be configured according to TDD v1.5 (refined config loading, prioritized DB selection).
+* **API Client (`ApiClientFixture`):** The single shared instance will use the shared factory for client creation and configuration access.
+* **Base Classes:**
+  * `IntegrationTestBase`: Serves as the primary base, accepting shared fixtures (`CustomWebApplicationFactory`, `ApiClientFixture`) via constructor injection (but *without* declaring `IClassFixture<>`). Provides common setup (like dependency checking) and accessors.
+  * `DatabaseIntegrationTestBase`: Inherits `IntegrationTestBase`, accepts the shared `DatabaseFixture` via constructor injection (without declaring `IClassFixture<>`), and provides database-specific helpers (like `ResetDatabaseAsync`).
+* **Database Interaction:** Tests requiring database access will inherit `DatabaseIntegrationTestBase` and use the shared `DatabaseFixture`. Migrations will be applied automatically by the fixture. `ResetDatabaseAsync` must be called before seeding/mutating data.
+* **Mocking:** Mocks for external services are registered in the shared factory and retrieved via `Factory.Services.GetRequiredService<Mock<IService>>()`.
+* **Authentication:** Authenticated calls use the client from the shared `ApiClientFixture` (`AuthenticatedApiClient` property in base class).
+* **Dependency Skipping:** Continues to use `[DependencyFact]` and dependency traits along with logic in `IntegrationTestBase` to automatically skip tests if required configurations are unavailable.
+
+## 3. Interface Contract & Assumptions (Future State)
+
+* **Tests as Consumers:** Integration tests act as consumers of the `api-server` API (via the Refit client), the shared test fixtures, and the base classes.
 * **Critical Assumptions:**
-    * Assumes `CustomWebApplicationFactory` and `DatabaseFixture` are correctly configured and functional.
-    * Assumes the generated Refit client in [`/api-server.Tests/Framework/Framework/Client/`](../Framework/Client/README.md) is up-to-date with the actual API contract.
-    * Assumes the dependency checking mechanism (`IntegrationTestBase`, `ConfigurationStatusHelper`) accurately reflects the availability of necessary configurations.
-    * Assumes mocks provided by the factories behave as expected (or are correctly configured within the test).
+  * Assumes the shared `CustomWebApplicationFactory`, `DatabaseFixture`, and `ApiClientFixture` are correctly configured and functional according to TDD v1.5.
+  * Assumes the generated Refit client in [`/api-server.Tests/Framework/Client/`](../Client/README.md) is up-to-date with the actual API contract.
+  * Assumes the dependency checking mechanism accurately reflects the availability of necessary configurations.
+  * Assumes mocks provided by the factories behave as expected (or are correctly configured within the test).
 
-## 4. Local Conventions & Constraints (Beyond Global Standards)
+## 4. Local Conventions & Constraints (Future State)
 
 * **Test Structure:** Follow AAA pattern. Use descriptive method names (`[MethodName]_[Scenario]_[ExpectedOutcome]`).
-* **Assertions:** Use `FluentAssertions`. Assert on response status codes, DTO contents (`Should().BeEquivalentTo()`), and expected side effects (e.g., database state changes, mock service calls verified). Include `.Because("...")` clauses.
+* **Assertions:** Use `FluentAssertions`. Assert on response status codes, DTO contents (`Should().BeEquivalentTo()`), and expected side effects. Include `.Because("...")` clauses.
+* **Collection:** All integration tests **MUST** belong to the `[Collection("Integration")]`.
+* **Base Class Inheritance:** Tests **MUST** inherit `IntegrationTestBase`. Tests requiring database access **MUST** inherit `DatabaseIntegrationTestBase`.
 * **Traits:** Must use `[Trait("Category", "Integration")]` and relevant `Feature`, `Dependency`, and `Mutability` traits. Use `[DependencyFact]` for tests with external dependencies.
-* **API Interaction:** **MUST** use the Refit client. Direct service calls are forbidden.
+* **API Interaction:** **MUST** use the Refit client provided by the base class (`ApiClient` or `AuthenticatedApiClient`). Direct service calls are forbidden.
 * **Database Cleanup:** Call `await ResetDatabaseAsync()` at the start of tests modifying or relying on specific DB state.
 
-## 5. How to Work With This Code
+## 5. How to Work With This Code (Future State)
 
-* **Setup:** Ensure Docker is running if database tests are included. Run `Scripts/GenerateApiClient.ps1` if API contracts have changed. Ensure necessary configurations (user secrets, environment variables) are set if not relying on skipping.
-* **Running Tests:** Use `dotnet test --filter "Category=Integration"`. Filter further by `Feature`, `Dependency`, or `Mutability` traits as needed (e.g., `dotnet test --filter "Category=Integration&Feature=Auth"`).
+* **Setup:** Ensure Docker is running if database tests are included. Run `Scripts/GenerateApiClient.ps1` if API contracts have changed. Ensure necessary configurations (user secrets, environment variables) are set for the desired scenario (local dev vs. CI).
+* **Running Tests:** Use `dotnet test --filter "Category=Integration"`. Filter further by `Feature`, `Dependency`, or `Mutability` traits as needed.
 * **Adding Tests:**
-    1. Inherit from `IntegrationTestBase` (which provides `ApiClient` and `AuthenticatedApiClient`).
-    2. Apply appropriate `[Trait]` and `[DependencyFact]` attributes.
-    3. Use `ApiClient` or `AuthenticatedApiClient` properties to make API calls.
-    4. Call `ResetDatabaseAsync()` if the test modifies or relies on specific DB state.
+  1.  Create the test class in the appropriate subdirectory (e.g., `./Controllers/MyController/`).
+  2.  Add `[Collection("Integration")]`.
+  3.  Inherit from `IntegrationTestBase` or `DatabaseIntegrationTestBase` as needed.
+  4.  Apply appropriate `[Trait]` and `[DependencyFact]` attributes.
+  5.  Use `ApiClient` or `AuthenticatedApiClient` properties from the base class to make API calls.
+  6.  If inheriting `DatabaseIntegrationTestBase`, call `ResetDatabaseAsync()` when necessary.
 * **Common Pitfalls / Gotchas:**
-    * Outdated Refit client.
-    * Forgetting `ResetDatabaseAsync()`.
-    * Incorrect trait usage leading to tests not running/skipping appropriately.
-    * Tests interfering with each other due to shared state (though fixtures aim to prevent this).
-    * Configuration issues (missing secrets/env vars) causing unexpected skips or failures if dependency checking isn't perfect.
+  * Outdated Refit client.
+  * Forgetting `ResetDatabaseAsync()`.
+  * Missing `[Collection("Integration")]` attribute.
+  * Inheriting the wrong base class (`IntegrationTestBase` when `DatabaseIntegrationTestBase` is needed).
+  * Configuration issues causing unexpected skips or failures.
 
 ## 6. Dependencies
 
 * **Internal Code Dependencies:**
-    * [`/api-server.Tests/Framework/Fixtures/`](Framework/Fixtures/README.md) - Core test environment setup.
-    * [`/api-server.Tests/Framework/Framework/Client/`](../Framework/Client/README.md) - Generated API client.
-    * [`/api-server.Tests/Framework/Helpers/`](Framework/Helpers/README.md) - Authentication and utility helpers.
-    * [`/api-server.Tests/TestData/Builders/`](../TestData/Builders/README.md) - For creating request DTOs.
-    * [`/api-server.Tests/Framework/Mocks/Factories/`](../Mocks/Factories/README.md) - Relies on mocks registered by the factory.
+  * [`/api-server.Tests/Framework/Fixtures/`](../Fixtures/README.md) - Core test environment setup (Factory, DB Fixture, API Client Fixture).
+  * [`/api-server.Tests/Framework/Client/`](../Client/README.md) - Generated API client.
+  * [`/api-server.Tests/Framework/Helpers/`](../Helpers/README.md) - Authentication and utility helpers.
+  * [`/api-server.Tests/TestData/Builders/`](../../TestData/Builders/README.md) - For creating request DTOs.
+  * [`/api-server.Tests/Framework/Mocks/Factories/`](../Mocks/Factories/README.md) - Relies on mocks registered by the factory.
 * **External Library Dependencies:**
-    * `Xunit` - Test framework.
-    * `FluentAssertions` - Assertion library.
-    * `Refit` - Used by the generated client.
+  * `Xunit` - Test framework.
+  * `FluentAssertions` - Assertion library.
+  * `Refit` - Used by the generated client.
 * **Dependents (Impact of Changes):** CI/CD workflows consume the results of these tests.
 
 ## 7. Rationale & Key Historical Context
 
-* Integration tests provide the highest level of confidence that the API functions correctly as a whole, bridging the gap between unit tests and real-world usage. Using an in-memory host with Testcontainers provides a balance of realism and test performance/isolation.
+* Integration tests provide the highest level of confidence that the API functions correctly as a whole. Using an in-memory host with Testcontainers provides a balance of realism and test performance/isolation. Consolidating fixture management via a single `ICollectionFixture` definition improves efficiency and maintainability.
 
 ## 8. Known Issues & TODOs
 
-* Need to implement comprehensive test coverage for all major API endpoints and scenarios.
-* Continuously monitor test flakiness and performance.
+* **TODO:** Implement the fixture/collection consolidation described in Section 2 (Future State) and the [`/api-server.Tests/Framework/Fixtures/README.md`](../Fixtures/README.md). This includes:
+  * Defining the single `"Integration"` collection.
+  * Removing old collection definitions.
+  * Refactoring `ApiClientFixture`.
+  * Simplifying base classes (`IntegrationTestBase`, `DatabaseIntegrationTestBase`) by removing `IClassFixture<>`.
+  * Updating all test classes to use `[Collection("Integration")]` and inherit the correct base class.
+* **TODO:** Implement comprehensive test coverage for all major API endpoints and scenarios.
+* **TODO:** Continuously monitor test flakiness and performance after refactoring.
+
