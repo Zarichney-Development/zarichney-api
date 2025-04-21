@@ -126,6 +126,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         // Get the loaded configuration to check for connection string
         var configuration = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json", optional: true)
+            .AddUserSecrets<Program>()
             .AddJsonFile("appsettings.Testing.json", optional: true)
             .AddEnvironmentVariables()
             .Build();

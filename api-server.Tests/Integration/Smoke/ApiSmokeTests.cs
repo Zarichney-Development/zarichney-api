@@ -25,8 +25,8 @@ public class ApiSmokeTests(ApiClientFixture apiClientFixture) : IntegrationTestB
     var apiClient = ApiClient;
     var loginRequest = new LoginRequest
     {
-      Email = "test@example.com",
-      Password = "Password123!"
+      Email = "zarichney@gmail.com",
+      Password = "Hershey6"
     };
 
     // Act - Login
@@ -47,12 +47,10 @@ public class ApiSmokeTests(ApiClientFixture apiClientFixture) : IntegrationTestB
   public async Task Cookbook_Smoke_GetRecipes()
   {
     // Arrange
-    var userId = "test-user-id";
-    var roles = new[] { "User" };
     var client = AuthenticatedApiClient;
 
     // Act
-    var recipes = await client.Recipe("", false, null, null);
+    var recipes = await client.Recipe("burger", false, null, null);
 
     // Assert
     Assert.NotNull(recipes);

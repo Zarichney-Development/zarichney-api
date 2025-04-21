@@ -19,12 +19,12 @@ public static class ConfigurationStartup
     builder.Configuration
       .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
       .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
-    
+
     if (builder.Environment.IsDevelopment())
     {
       builder.Configuration.AddUserSecrets<Program>(optional: true);
     }
-    
+
     builder.Configuration.AddEnvironmentVariables();
 
     if (builder.Environment.IsProduction())
@@ -79,10 +79,59 @@ public static class ConfigurationStartup
   /// <summary>
   /// Registers configuration services and binds configuration objects
   /// </summary>
-  public static void RegisterConfigurationServices(this IServiceCollection services, IConfiguration configuration)
+  public static void RegisterConfigurationServices(this IServiceCollection services, IConfiguration configuration,
+    IWebHostEnvironment environment)
   {
-    var dataPath = Environment.GetEnvironmentVariable("APP_DATA_PATH") ?? DataFolderName;
-    Log.Information("APP_DATA_PATH environment variable: {DataPath}", dataPath);
+    string dataPath;
+    if (environment.IsDevelopment())
+    {
+      // Try to find the solution root directory by looking for a .sln file
+      var currentDir = AppContext.BaseDirectory; // Use BaseDirectory for better consistency
+      var directory = new DirectoryInfo(currentDir);
+
+      while (directory != null && !directory.GetFiles("*.sln").Any())
+      {
+        directory = directory.Parent;
+      }
+
+      if (directory != null && directory.GetFiles("*.sln").Any())
+      {
+        var solutionRoot = directory;
+        dataPath = Path.GetFullPath(Path.Combine(solutionRoot.FullName, DataFolderName));
+        Log.Information(
+          "Development environment detected. Found solution root at {SolutionRoot}. Using calculated data path: {DataPath}",
+          solutionRoot.FullName, dataPath);
+      }
+      else
+      {
+        // Fallback if .sln not found (might happen in specific deployment/test scenarios)
+        Log.Warning(
+          "Could not determine solution root directory. Falling back to relative path based on execution directory: {BaseDirectory}",
+          currentDir);
+        // This fallback might still result in the test output path, consider if another fallback is better.
+        // Maybe try the original parent logic as a secondary fallback?
+        var parentDirectory = Directory.GetParent(Environment.CurrentDirectory)?.FullName;
+        if (!string.IsNullOrEmpty(parentDirectory))
+        {
+          dataPath = Path.GetFullPath(Path.Combine(parentDirectory, DataFolderName));
+          Log.Information("Fallback using parent of CurrentDirectory ({CurrentDirectory}). Path: {DataPath}",
+            Environment.CurrentDirectory, dataPath);
+        }
+        else
+        {
+          dataPath = Path.GetFullPath(DataFolderName); // Relative to current execution dir
+          Log.Warning("Fallback using relative path from execution directory. Path: {DataPath}", dataPath);
+        }
+      }
+    }
+    else // Production or other environments
+    {
+      dataPath = Environment.GetEnvironmentVariable("APP_DATA_PATH") ?? DataFolderName;
+      Log.Information(
+        "Production/Other environment detected. Using APP_DATA_PATH environment variable (or default): {DataPath}",
+        dataPath);
+      // Consider adding validation here to ensure APP_DATA_PATH provides an absolute path in production if required.
+    }
 
     var pathConfigs = configuration.AsEnumerable()
       .Where(kvp => kvp.Value?.StartsWith(DataFolderName) == true)
@@ -116,7 +165,7 @@ public static class ConfigurationStartup
       }
     }
 
-    var configTypes = Assembly.GetExecutingAssembly()
+    var configTypes = Assembly.GetAssembly(typeof(Program))!
       .GetTypes()
       .Where(t => typeof(IConfig).IsAssignableFrom(t) && t is { IsInterface: false, IsAbstract: false });
 

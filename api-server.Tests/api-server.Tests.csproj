@@ -8,6 +8,7 @@
         <AssemblyName>Zarichney.Tests</AssemblyName>
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
+        <NoWarn>OPENAI001</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>

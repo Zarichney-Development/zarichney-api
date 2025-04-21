@@ -32,7 +32,7 @@ public class ServiceStartup
   {
     var services = builder.Services;
 
-    services.RegisterConfigurationServices(builder.Configuration);
+    services.RegisterConfigurationServices(builder.Configuration,builder.Environment);
     services.AddSingleton(Serilog.Log.Logger);
 
     if (builder.Environment.IsProduction())

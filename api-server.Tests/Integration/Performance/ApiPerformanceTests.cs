@@ -18,8 +18,6 @@ public class ApiPerformanceTests(ApiClientFixture apiClientFixture) : Integratio
   public async Task GetRecipes_Performance_CompletesWithinTimeLimit()
   {
     // Arrange
-    var userId = "test-user-id";
-    var roles = new[] { "User" };
     var client = AuthenticatedApiClient;
 
     // Set an acceptable performance threshold
@@ -28,7 +26,7 @@ public class ApiPerformanceTests(ApiClientFixture apiClientFixture) : Integratio
 
     // Act
     stopwatch.Start();
-    var recipes = await client.Recipe("", false, null, null);
+    var recipes = await client.Recipe("burger", false, null, null);
     stopwatch.Stop();
 
     // Assert
@@ -41,8 +39,6 @@ public class ApiPerformanceTests(ApiClientFixture apiClientFixture) : Integratio
   public async Task MultipleRequests_Performance_MaintainsConsistentResponseTime()
   {
     // Arrange
-    var userId = "test-user-id";
-    var roles = new[] { "User" };
     var client = AuthenticatedApiClient;
 
     const int requestCount = 10;
@@ -52,7 +48,7 @@ public class ApiPerformanceTests(ApiClientFixture apiClientFixture) : Integratio
     for (int i = 0; i < requestCount; i++)
     {
       var stopwatch = Stopwatch.StartNew();
-      var recipes = await client.Recipe("", false, null, null);
+      var recipes = await client.Recipe("burger", false, null, null);
       stopwatch.Stop();
 
       Assert.NotNull(recipes);
