@@ -1,6 +1,6 @@
 # Module/Directory: /Cookbook
 
-**Last Updated:** 2025-04-03
+**Last Updated:** 2025-04-20
 
 > **Parent:** [`Server`](../README.md)
 
@@ -8,11 +8,11 @@
 
 * **What it is:** This directory serves as the primary domain module for the "Cookbook Factory" feature of the Zarichney API. It encapsulates all logic related to customer interactions, order processing, recipe management (acquisition, synthesis, storage), and AI interactions specific to cookbook creation.
 * **Key Responsibilities:**
-    * Orchestrating the end-to-end cookbook generation process, from order submission to PDF compilation and delivery. [cite: api-server/Cookbook/Orders/OrderService.cs]
-    * Managing customer data and recipe credits. [cite: api-server/Cookbook/Customers/CustomerService.cs]
-    * Handling the lifecycle of cookbook orders. [cite: api-server/Cookbook/Orders/OrderService.cs]
-    * Managing recipe data, including scraping, cleaning, indexing, searching, ranking, and AI-driven synthesis. [cite: api-server/Cookbook/Recipes/RecipeService.cs]
-    * Defining specific prompts for interactions with AI services related to cookbook tasks. [cite: api-server/Cookbook/Prompts/]
+    * Orchestrating the end-to-end cookbook generation process, from order submission to PDF compilation and delivery.
+    * Managing customer data and recipe credits.
+    * Handling the lifecycle of cookbook orders.
+    * Managing recipe data, including scraping, cleaning, indexing, searching, ranking, and AI-driven synthesis.
+    * Defining specific prompts for interactions with AI services related to cookbook tasks.
 * **Why it exists:** To group all related functionalities for the cookbook feature into a cohesive and maintainable module, separating it from concerns like core authentication, generic AI services, or payment processing.
 * **Submodules:**
     * [`Customers`](./Customers/README.md) - Manages customer data, including available recipe credits.
@@ -23,30 +23,126 @@
 ## 2. Architecture & Key Concepts
 
 * **Modular Design:** Functionality is broken down into specific subdirectories (`Customers`, `Orders`, `Prompts`, `Recipes`) each handling a distinct part of the cookbook domain.
-* **Orchestration:** The `OrderService` typically acts as the central orchestrator, coordinating interactions between `CustomerService`, `RecipeService`, `PdfCompiler`, and `EmailService` to fulfill a cookbook order. [cite: api-server/Cookbook/Orders/OrderService.cs]
-* **Recipe Lifecycle:** Managed primarily within the `Recipes` submodule, involving `WebScraperService` for acquisition, `RecipeRepository` for storage/indexing/cleaning/naming, `RecipeSearcher` for retrieval, and `RecipeService` for overall orchestration and synthesis. [cite: api-server/Cookbook/Recipes/README.md]
-* **AI Integration:** Heavily relies on AI for various tasks, with specific prompt logic defined in `Prompts` and interactions handled via the central `LlmService`. [cite: api-server/Cookbook/Prompts/, api-server/Services/AI/LlmService.cs]
-* **Data Persistence:** Uses a file-based approach via `IFileService` for storing customer, order, and recipe data within the respective submodules. [cite: api-server/Cookbook/Customers/CustomerRepository.cs, api-server/Cookbook/Orders/OrderRepository.cs, api-server/Cookbook/Recipes/RecipeRepository.cs]
-* **Key Data Structures:** Defines core domain models within subdirectories (e.g., `Customer`, `CookbookOrder`, `Recipe`, `SynthesizedRecipe`). [cite: api-server/Cookbook/Customers/CustomerModels.cs, api-server/Cookbook/Orders/OrderModels.cs, api-server/Cookbook/Recipes/RecipeModels.cs]
+* **Orchestration:** The `OrderService` typically acts as the central orchestrator, coordinating interactions between `CustomerService`, `RecipeService`, `PdfCompiler`, and `EmailService` to fulfill a cookbook order.
+* **Recipe Lifecycle:** Managed primarily within the `Recipes` submodule, involving `WebScraperService` for acquisition, `RecipeRepository` for storage/indexing/cleaning/naming, `RecipeSearcher` for retrieval, and `RecipeService` for overall orchestration and synthesis.
+* **AI Integration:** Heavily relies on AI for various tasks, with specific prompt logic defined in `Prompts` and interactions handled via the central `LlmService`.
+* **Data Persistence:** Uses a file-based approach via `IFileService` for storing customer, order, and recipe data within the respective submodules.
+* **Module Interactions Diagram:**
+```mermaid
+%% High-level architecture of the Cookbook module
+graph TD
+    subgraph CookbookModule ["Cookbook Module"]
+        direction TB
+
+        subgraph OrdersSubmodule ["Orders"]
+            OrdersReadme["Orders/README.md"]
+            OrderService["OrderService"]
+        end
+
+        subgraph RecipesSubmodule ["Recipes"]
+            RecipesReadme["Recipes/README.md"]
+            RecipeService["RecipeService"]
+            RecipeRepo["RecipeRepository"]
+            WebScraper["WebScraperService"]
+        end
+
+        subgraph CustomersSubmodule ["Customers"]
+            CustomersReadme["Customers/README.md"]
+            CustomerService["CustomerService"]
+        end
+
+        subgraph PromptsSubmodule ["Prompts"]
+            PromptsReadme["Prompts/README.md"]
+            PromptClasses["Prompt Classes"]
+        end
+
+        CookbookReadme["Cookbook/README.md"] -.-> OrdersReadme & RecipesReadme & CustomersReadme & PromptsReadme
+
+        %% Core Interactions
+        OrderService --> RecipeService
+        OrderService --> CustomerService
+        OrderService --> PdfCompilerSvc["PdfCompiler (Service)"]
+        OrderService --> EmailSvc["EmailService (Service)"]
+        OrderService --> BackgroundWorkerSvc["BackgroundWorker (Service)"]
+        OrderService --> OrderRepo["OrderRepository"]
+
+        RecipeService --> RecipeRepo
+        RecipeService --> WebScraper
+        RecipeService --> LlmSvc["LlmService (Service)"]
+        RecipeService --> PromptClasses
+
+        WebScraper --> BrowserSvc["BrowserService (Service)"]
+        WebScraper --> LlmSvc
+
+        RecipeRepo --> FileSvc["FileService (Service)"]
+        RecipeRepo --> BackgroundWorkerSvc
+        RecipeRepo --> LlmSvc 
+        RecipeRepo --> PromptClasses
+
+        CustomerService --> CustomerRepo["CustomerRepository"]
+        CustomerRepo --> FileSvc
+
+        OrderRepo --> FileSvc
+
+        PromptsSubmodule -. Used By .-> LlmSvc
+    end
+
+    subgraph ExternalServices ["External Services / Core Utilities"]
+        LlmSvc
+        EmailSvc
+        FileSvc
+        PdfCompilerSvc
+        BackgroundWorkerSvc
+        BrowserSvc
+    end
+
+    subgraph Controllers ["API Controllers"]
+        CookbookCtrl["CookbookController"]
+        PaymentCtrl["PaymentController"]
+    end
+
+    %% External Interactions
+    CookbookCtrl --> OrderService
+    CookbookCtrl --> RecipeService
+    PaymentCtrl --> OrderService
+    PaymentCtrl --> CustomerService
+
+
+    %% Styling
+    classDef module fill:#cceeff,stroke:#007acc,stroke-width:1px;
+    classDef service fill:#ccf,stroke:#333,stroke-width:2px;
+    classDef file fill:#fff,stroke:#333,stroke-width:1px;
+    classDef external fill:#e6ffe6,stroke:#006400,stroke-width:1px;
+    classDef controller fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef prompt fill:#fff0b3,stroke:#cca300,stroke-width:1px;
+
+    class CookbookReadme,OrdersReadme,RecipesReadme,CustomersReadme,PromptsReadme file;
+    class OrderService,RecipeService,CustomerService,RecipeRepo,OrderRepo,CustomerRepo,WebScraper service;
+    class LlmSvc,EmailSvc,FileSvc,PdfCompilerSvc,BackgroundWorkerSvc,BrowserSvc external;
+    class CookbookCtrl,PaymentCtrl controller;
+    class PromptClasses prompt;
+
+```
+* **Key Data Structures:** Defines core domain models within subdirectories (e.g., `Customer`, `CookbookOrder`, `Recipe`, `SynthesizedRecipe`).
 
 ## 3. Interface Contract & Assumptions
 
 * **Key Public Interfaces (for external callers):** Primarily the service interfaces exposed by the submodules and consumed by controllers or other services:
-    * `IOrderService`: Interface for submitting, retrieving, and managing cookbook orders. [cite: api-server/Cookbook/Orders/OrderService.cs]
-    * `IRecipeService`: Interface for searching, retrieving, and synthesizing recipes. [cite: api-server/Cookbook/Recipes/RecipeService.cs]
-    * `ICustomerService`: Interface for managing customer data and credits. [cite: api-server/Cookbook/Customers/CustomerService.cs]
+    * `IOrderService`: Interface for submitting, retrieving, and managing cookbook orders.
+    * `IRecipeService`: Interface for searching, retrieving, and synthesizing recipes.
+    * `ICustomerService`: Interface for managing customer data and credits.
 * **Assumptions:**
-    * **Configuration:** Assumes relevant configuration sections (`OrderConfig`, `CustomerConfig`, `RecipeConfig`, `WebscraperConfig`, `LlmConfig`, `PdfCompilerConfig`) are correctly bound and available via DI. [cite: api-server/appsettings.json, api-server/Config/ConfigurationExtensions.cs]
+    * **Configuration:** Assumes relevant configuration sections (`OrderConfig`, `CustomerConfig`, `RecipeConfig`, `WebscraperConfig`, `LlmConfig`, `PdfCompilerConfig`) are correctly bound and available via DI.
     * **Service Availability:** Assumes dependent services ([`/Services/AI`](../../Services/AI/README.md), [`/Services/Email`](../../Services/Email/README.md), [`/Services/Payment`](../../Services/Payment/README.md), [`/Services`](../../Services/README.md) like `IFileService`, `IBackgroundWorker`, `IBrowserService`) are registered and functional.
-    * **Data Storage:** Assumes the file system paths configured for data output (`Data/Customers`, `Data/Orders`, `Data/Recipes`) are writable by the application user (`ec2-user` in production). [cite: Docs/AwsMaintenance.md]
+    * **Data Storage:** Assumes the file system paths configured for data output (`Data/Customers`, `Data/Orders`, `Data/Recipes`) are writable by the application user (`ec2-user` in production).
     * **AI Model Access:** Assumes valid credentials/API keys for AI services (e.g., OpenAI) are configured.
 
 ## 4. Local Conventions & Constraints (Beyond Global Standards)
 
 * **Subdirectory Structure:** Organizes code strictly by domain concern (Customers, Orders, Prompts, Recipes).
-* **AI Prompts:** All prompts specific to cookbook generation logic reside in the `Prompts` subdirectory, inheriting from `PromptBase`. [cite: api-server/Cookbook/Prompts/]
-* **Data Storage:** Adheres to a file-based persistence strategy using `IFileService`. Filenames often derived from IDs or email addresses (sanitized). [cite: api-server/Cookbook/Customers/CustomerRepository.cs, api-server/Cookbook/Orders/OrderRepository.cs, api-server/Cookbook/Recipes/RecipeRepository.cs]
-* **Training Data:** Example data for specific AI prompt fine-tuning (like `RecipeNamer`) is stored in the `Training` subdirectory within `Recipes`. [cite: api-server/Cookbook/Training/]
+* **AI Prompts:** All prompts specific to cookbook generation logic reside in the `Prompts` subdirectory, inheriting from `PromptBase`.
+* **Data Storage:** Adheres to a file-based persistence strategy using `IFileService`. Filenames often derived from IDs or email addresses (sanitized).
+* **Training Data:** Example data for specific AI prompt fine-tuning (like `RecipeNamer`) is stored in the `Training` subdirectory within `Recipes`.
 
 ## 5. How to Work With This Code
 
@@ -61,12 +157,12 @@
     * [`/Services`](../../Services/README.md): Relies heavily on `IFileService`, `ILlmService`, `IEmailService`, `PdfCompiler`, `IBackgroundWorker`, `IBrowserService`, `ISessionManager`.
     * [`/Config`](../../Config/README.md): Consumes various `*Config` objects.
 * **External Library Dependencies:**
-    * `AutoMapper`: Used for mapping between different recipe model types. [cite: api-server/Cookbook/Recipes/RecipeModels.cs]
+    * `AutoMapper`: Used for mapping between different recipe model types.
     * `MediatR`: May be used implicitly if commands/queries are defined within submodules (though primarily seen in Auth).
     * `OpenAI`: Core dependency for AI interactions via `LlmService`.
-    * `Polly`: Used for retries, especially within `OrderService` for email. [cite: api-server/Cookbook/Orders/OrderService.cs]
-    * `QuestPDF`: Used by `PdfCompiler` for PDF generation. [cite: api-server/Services/PdfCompiler.cs]
-    * `AngleSharp`, `Playwright`: Used by `WebScraperService` (within Recipes). [cite: api-server/Cookbook/Recipes/WebScraperService.cs]
+    * `Polly`: Used for retries, especially within `OrderService` for email.
+    * `QuestPDF`: Used by `PdfCompiler` for PDF generation.
+    * `AngleSharp`, `Playwright`: Used by `WebScraperService` (within Recipes).
 * **Dependents (Impact of Changes):**
     * [`/Controllers/CookbookController.cs`](../../Controllers/CookbookController.cs): Primary consumer of the services defined within this module (`IOrderService`, `IRecipeService`).
     * [`/Controllers/PaymentController.cs`](../../Controllers/PaymentController.cs): Consumes `IOrderService`, `ICustomerService`.
@@ -80,6 +176,6 @@
 ## 8. Known Issues & TODOs
 
 * File-based storage for recipes, orders, and customers may encounter performance bottlenecks or concurrency issues at very high scale. Consider migrating to a database solution if needed.
-* Web scraping logic in the `Recipes` submodule is inherently brittle and dependent on external website structures remaining consistent. [cite: api-server/Cookbook/Recipes/README.md]
+* Web scraping logic in the `Recipes` submodule is inherently brittle and dependent on external website structures remaining consistent.
 * Error handling for AI service failures could be further refined (e.g., more specific fallback strategies).
 * Lack of comprehensive unit and integration tests covering the interactions between the various services within this module.

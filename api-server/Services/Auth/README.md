@@ -49,6 +49,119 @@
     5.  Saves refresh token via `AuthService.SaveRefreshTokenAsync`.
     6.  Handler returns `AuthResult` with tokens.
     7.  `AuthController` calls `CookieAuthManager.SetAuthCookies` to store tokens in response cookies. [cite: api-server/Controllers/AuthController.cs, api-server/Auth/CookieAuthManager.cs]
+* **Component Diagram**:
+
+```mermaid
+%% Component diagram for the Auth Services module
+graph TD
+    subgraph AuthServices ["Services/Auth Module"]
+        direction LR
+        AuthSvc["AuthService (IAuthService)"]
+        ApiKeySvc["ApiKeyService (IApiKeyService)"]
+        CookieMgr["CookieAuthManager"]
+        RoleMgrSvc["RoleManager (IRoleManager)"]
+        RoleInit["RoleInitializer"]
+        CleanupSvc["RefreshTokenCleanupService"]
+        UserDbCtx["UserDbContext"]
+        AuthMw["AuthenticationMiddleware"]
+        CmdHandlers["Command Handlers (MediatR)"]
+        
+        %% Auth Models
+        AppUser["ApplicationUser"]
+        RefreshTokenModel["RefreshToken"]
+        ApiKeyModel["ApiKey"]
+        JwtSettingsModel["JwtSettings"]
+    end
+
+    subgraph ExternalConsumers ["Service Consumers / Triggers"]
+        AuthController["AuthController"]
+        OtherControllers["Other Controllers (using [Authorize])"]
+        Scheduler["BackgroundService Scheduler"]
+        Startup["ApplicationStartup"]
+    end
+
+    subgraph CoreServices ["Core Services / Config / External"]
+        AspNetIdentity["ASP.NET Core Identity"]
+        MediatR["MediatR"]
+        EmailSvc["EmailService"]
+        PostgresDB[("PostgreSQL Database")]
+        JwtConfig["JwtSettings Configuration"]
+    end
+
+    %% Interactions within Auth Module
+    AuthSvc --> UserDbCtx
+    AuthSvc --> AppUser
+    AuthSvc --> RefreshTokenModel
+    AuthSvc -- Uses --> JwtSettingsModel
+    AuthSvc -- Uses --> AspNetIdentity
+
+    ApiKeySvc --> UserDbCtx
+    ApiKeySvc --> ApiKeyModel
+    ApiKeySvc --> AppUser
+    ApiKeySvc --> AspNetIdentity
+
+    CookieMgr -- Uses --> JwtSettingsModel
+
+    RoleMgrSvc --> AspNetIdentity
+    RoleMgrSvc --> UserDbCtx
+    
+    RoleInit --> RoleMgrSvc
+
+    CleanupSvc --> UserDbCtx
+    CleanupSvc --> RefreshTokenModel
+
+    CmdHandlers --> AuthSvc
+    CmdHandlers --> ApiKeySvc
+    CmdHandlers --> RoleMgrSvc
+    CmdHandlers --> EmailSvc
+    CmdHandlers --> UserDbCtx
+    CmdHandlers --> AspNetIdentity
+    CmdHandlers -- Returns --> CookieMgr
+
+    AuthMw -- Uses --> ApiKeySvc
+    AuthMw -- Checks --> JwtSettingsModel
+
+    UserDbCtx -- Contains --> AppUser
+    UserDbCtx -- Contains --> RefreshTokenModel
+    UserDbCtx -- Contains --> ApiKeyModel
+    UserDbCtx -- Interacts With --> PostgresDB
+
+    JwtSettingsModel -- Loaded From --> JwtConfig
+
+    %% External Interactions
+    AuthController --> MediatR
+    MediatR -- Routes To --> CmdHandlers
+    AuthController --> CookieMgr
+
+    OtherControllers -- Authenticated By --> AuthMw
+    OtherControllers -- Authorized Via --> AspNetIdentity
+
+    Scheduler --> CleanupSvc
+    
+    Startup --> RoleInit
+    Startup --> AuthMw
+    Startup --> UserDbCtx
+
+    %% Styling
+    classDef service fill:#ccf,stroke:#333,stroke-width:2px;
+    classDef middleware fill:#eee,stroke:#666,stroke-width:1px;
+    classDef consumer fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef db fill:#f5deb3,stroke:#8b4513,stroke-width:2px;
+    classDef external fill:#e6ffe6,stroke:#006400,stroke-width:1px;
+    classDef config fill:#eee,stroke:#666,stroke-width:1px;
+    classDef handler fill:#dae8fc,stroke:#6c8ebf,stroke-width:1px;
+    classDef model fill:#d5e8d4,stroke:#82b366,stroke-width:1px;
+
+    class AuthSvc,ApiKeySvc,CookieMgr,RoleMgrSvc,CleanupSvc,RoleInit service;
+    class UserDbCtx db;
+    class AuthMw middleware;
+    class CmdHandlers handler;
+    class AuthController,OtherControllers,Scheduler,Startup consumer;
+    class AspNetIdentity,MediatR,EmailSvc external;
+    class PostgresDB db;
+    class JwtConfig,JwtSettingsModel config;
+    class AppUser,RefreshTokenModel,ApiKeyModel model;
+```
 
 ## 3. Interface Contract & Assumptions
 

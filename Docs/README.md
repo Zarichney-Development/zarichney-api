@@ -26,3 +26,47 @@
 * **Maintenance:** Consult the `Maintenance/` subdirectory (if applicable) for procedures related to infrastructure or database upkeep.
 * **New Module Documentation:** Use the `README_template.md` found in [`Standards/`](./Standards/README_template.md), following the guidelines in [`DocumentationStandards.md`](./Standards/DocumentationStandards.md) and [`DiagrammingStandards.md`](./Standards/DiagrammingStandards.md).
 
+```mermaid
+%% Diagram visualizing the Docs directory structure (Corrected Labels)
+graph TD
+    subgraph DocsDir["Docs Directory"]
+        direction LR
+        DocsReadme["Docs/README.md (Entry Point)"] -- Guides To --> StandardsDir{"Standards/"}
+        DocsReadme -- Guides To --> DevelopmentDir{"Development/"}
+        DocsReadme -- Guides To --> MaintenanceDir{"Maintenance/"}
+    end
+
+    subgraph StandardsDirContent [Standards]
+        StandardsReadme["Standards/README.md"]
+        StandardsList["Contains: Coding, Diagramming, Docs, Testing Standards & Template"]
+    end
+
+    subgraph DevelopmentDirContent [Development]
+        DevReadme["Development/README.md"]
+        DevList["Contains: AI Planner & Test Case Dev Docs"]
+    end
+
+    subgraph MaintenanceDirContent [Maintenance]
+        MaintReadme["Maintenance/README.md"]
+        MaintList["Contains: AWS, Auth, DB, Doc Audit, Testing Setup Guides"]
+    end
+
+    StandardsDir -- Contains --> StandardsReadme
+    StandardsReadme -- Describes --> StandardsList
+
+    DevelopmentDir -- Contains --> DevReadme
+    DevReadme -- Describes --> DevList
+
+    MaintenanceDir -- Contains --> MaintReadme
+    MaintReadme -- Describes --> MaintList
+
+    classDef entry fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef dir fill:#ccf,stroke:#333,stroke-width:2px;
+    classDef file fill:#fff,stroke:#333,stroke-width:1px;
+    classDef list fill:#f5f5f5,stroke:#666,stroke-width:1px,align:left;
+
+    class DocsReadme entry;
+    class StandardsDir,DevelopmentDir,MaintenanceDir dir;
+    class StandardsReadme,DevReadme,MaintReadme file;
+    class StandardsList,DevList,MaintList list;
+```

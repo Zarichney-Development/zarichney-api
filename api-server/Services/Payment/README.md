@@ -23,6 +23,68 @@
 * **Webhooks:** Relies on asynchronous webhook events sent from Stripe to the `/api/payment/webhook` endpoint to confirm payment status changes reliably. `PaymentService.HandleWebhookEvent` parses these events (using `IStripeService.ConstructEvent`) and triggers appropriate actions based on the event type (e.g., `checkout.session.completed`, `payment_intent.succeeded`). [cite: api-server/Services/Payment/PaymentService.cs, api-server/Controllers/PaymentController.cs]
 * **Metadata:** Uses Stripe session metadata to pass application-specific context (like `PaymentType`, `CustomerEmail`, `RecipeCount`, `order_id` via `ClientReferenceId`) through the checkout process, which is retrieved later during webhook processing. [cite: api-server/Services/Payment/PaymentModels.cs, api-server/Services/Payment/PaymentService.cs]
 * **Configuration:** Requires `PaymentConfig` (Stripe keys, webhook secret, product price, currency) and `ClientConfig` (for constructing success/cancel redirect URLs). [cite: api-server/Services/Payment/PaymentModels.cs, api-server/Config/ConfigModels.cs, api-server/appsettings.json]
+* **Diagram:**
+```mermaid
+%% Component diagram for the Payment Service module
+graph TD
+    subgraph PaymentServiceModule ["Services/Payment Module"]
+        direction LR
+        PaymentSvc["PaymentService (IPaymentService)"]
+        StripeSvc["StripeService (IStripeService)"]
+        PaymentCfg["PaymentConfig"]
+        PaymentModels["PaymentModels (e.g., CheckoutSessionInfo)"]
+    end
+
+    subgraph Consumers ["Service Consumers"]
+        PaymentCtrl["PaymentController"]
+    end
+
+    subgraph Dependencies ["Internal Dependencies"]
+        OrderSvc["OrderService (IOrderService)"]
+        CustomerSvc["CustomerService (ICustomerService)"]
+    end
+
+    subgraph StripeInfra ["External Stripe / Libraries"]
+        StripeSDK["Stripe.net SDK"]
+        StripeAPI[("Stripe API")]
+        StripeWebhooks[("Stripe Webhooks")]
+    end
+
+    %% Interactions
+    PaymentCtrl -- Calls --> PaymentSvc
+    PaymentCtrl -- Receives --> StripeWebhooks
+
+    PaymentSvc -- Uses --> StripeSvc
+    PaymentSvc -- Uses --> PaymentCfg
+    PaymentSvc -- Updates --> OrderSvc
+    PaymentSvc -- Updates --> CustomerSvc
+
+    StripeSvc -- Uses --> StripeSDK
+    StripeSvc -- Uses --> PaymentCfg
+    StripeSDK --> StripeAPI
+
+    %% Webhook Flow
+    StripeAPI -- Sends --> StripeWebhooks
+    PaymentSvc -- Handles --> StripeWebhooks
+
+
+    %% Styling
+    classDef service fill:#ccf,stroke:#333,stroke-width:2px;
+    classDef consumer fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef external fill:#e6ffe6,stroke:#006400,stroke-width:1px;
+    classDef config fill:#eee,stroke:#666,stroke-width:1px;
+    classDef api fill:#f5f5f5,stroke:#666,stroke-width:1px,shape:cylinder;
+    classDef model fill:#dae8fc,stroke:#6c8ebf,stroke-width:1px;
+    classDef sdk fill:#e7d1ff,stroke:#8a4baf,stroke-width:1px;
+
+    class PaymentSvc,StripeSvc service;
+    class PaymentCtrl consumer;
+    class OrderSvc,CustomerSvc service;
+    class StripeSDK sdk;
+    class StripeAPI,StripeWebhooks api;
+    class PaymentCfg config;
+    class PaymentModels model;
+```
 
 ## 3. Interface Contract & Assumptions
 

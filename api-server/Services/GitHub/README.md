@@ -28,6 +28,58 @@
     * `RateLimitExceededException`: When GitHub API rate limits are reached.
     * `ApiValidationException` with message containing "Update is not a fast forward": Handles race conditions that occur during concurrent branch updates by automatically retrying the entire commit operation.
 * **Configuration:** Requires `GitHubConfig` (registered via `IConfig`) providing repository owner, name, branch, and the essential Personal Access Token (PAT). [cite: api-server/Services/GitHubService.cs, api-server/appsettings.json]
+* **Diagram:**
+```mermaid
+%% Component diagram for the GitHub Service module
+graph TD
+    subgraph GitHubServiceModule ["Services/GitHub Module"]
+        direction LR
+        GitHubSvc["GitHubService (IGitHubService)"]
+        GitHubCfg["GitHubConfig"]
+    end
+
+    subgraph Consumers ["Service Consumers"]
+        LlmRepo["LlmRepository"]
+        AiCtrl["AiController"]
+    end
+
+    subgraph CoreServices ["Core Services / Libraries"]
+        BackgroundWorker["BackgroundWorker (IBackgroundWorker)"]
+        OctokitClient["Octokit GitHubClient"]
+        Polly["Polly (Retry Policy)"]
+    end
+
+    subgraph ExternalAPI ["External APIs"]
+        GitHubAPI[("GitHub API")]
+    end
+
+    %% Interactions
+    Consumers --> GitHubSvc
+
+    GitHubSvc -- Uses --> GitHubCfg
+    GitHubSvc -- Enqueues Job --> BackgroundWorker
+    GitHubSvc -- Uses --> Polly
+
+    %% Background Task (Conceptual)
+    BackgroundWorker -- Creates --> OctokitClient
+    OctokitClient -- Uses --> GitHubCfg
+    OctokitClient --> GitHubAPI
+
+    %% Styling
+    classDef service fill:#ccf,stroke:#333,stroke-width:2px;
+    classDef consumer fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef external fill:#e6ffe6,stroke:#006400,stroke-width:1px;
+    classDef config fill:#eee,stroke:#666,stroke-width:1px;
+    classDef api fill:#f5f5f5,stroke:#666,stroke-width:1px,shape:cylinder;
+    classDef library fill:#dae8fc,stroke:#6c8ebf,stroke-width:1px;
+
+    class GitHubSvc service;
+    class LlmRepo,AiCtrl consumer;
+    class BackgroundWorker external;
+    class OctokitClient,Polly library;
+    class GitHubCfg config;
+    class GitHubAPI api;
+```
 
 ## 3. Interface Contract & Assumptions
 

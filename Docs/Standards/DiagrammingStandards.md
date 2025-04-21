@@ -123,32 +123,56 @@ Use specific line styles, arrowheads, and labels to convey interaction semantics
 
 Based on practical experience and renderer limitations, follow these syntax rules strictly:
 
-* **Quoting Labels:** Node and Link labels containing special characters used by Mermaid syntax (e.g., `( )`, `[ ]`, `{ }`, `#`, `;`, `/`, `+`) or leading/trailing spaces **MUST** be enclosed in double quotes `""`.
+* **Code Block Indentation:** The Mermaid code block fence (\`\`\`mermaid) **MUST NOT** be indented within the Markdown file. Start it at the beginning of the line to avoid rendering issues in some platforms.
+    * *Correct:*
+    ```markdown
+    Some preceding text.
+    ```mermaid
+    graph TD
+        A --> B
+    ```
+    ```
+    * *Incorrect:*
+    ```markdown
+        * Some list item.
+            ```mermaid
+            graph TD
+                A --> B
+            ```
+    ```
+* **Quoting Labels:** Node and Link labels containing special characters used by Mermaid syntax (e.g., `( )`, `[ ]`, `{ }`, `#`, `;`, `/`, `+`), Markdown list characters (`- `, `* `, `1. `), or leading/trailing spaces **MUST** be enclosed in double quotes `""`.
     * *Example:* `MyNode["Label with (parentheses)"]`
     * *Example:* `A -- "Label with / Slash" --> B`
+    * *Example:* `C -- "1 - Initial Step" --> D`
+* **Markdown Lists in Labels:** Avoid using Markdown list syntax (`- item` or `1. item`) or newlines (`\n`) within node labels, as they may render incorrectly or inconsistently. Use single-line descriptions or break complex lists into separate nodes.
+    * *Recommended:* `NodeA["Step 1: Action A | Step 2: Action B"]`
+    * *Avoid:* `NodeA["- Action A\n- Action B"]`
 * **Comment Placement:** Comments (`%%`) **MUST** be placed on their own dedicated lines *before* or *after* the definition (node, link, classDef, etc.) they refer to. **Do NOT place comments on the same line immediately following a definition.**
     * *Correct:*
-      ```mermaid
-      %% This comment describes Node A
-      A[Node A]
-      %% This comment describes the link
-      A --> B
-      ```
+    ```mermaid
+    %% This comment describes Node A
+    A[Node A]
+    %% This comment describes the link
+    A --> B
+    ```
     * *Incorrect:* `A[Node A] %% Incorrect comment placement`
     * *Incorrect:* `A --> B %% Incorrect comment placement`
 * **Class Application:** Apply `classDef` styles to nodes using individual statements for each node: `class nodeId className;`. **Avoid** applying classes to multiple nodes listed with commas on a single line (e.g., `class node1,node2 className;`) as this is unreliable across renderers.
     * *Correct:*
-      ```mermaid
-      class NodeA myStyle;
-      class NodeB myStyle;
-      ```
+    ```mermaid
+    class NodeA myStyle;
+    class NodeB myStyle;
+    ```
     * *Incorrect:* `class NodeA, NodeB myStyle;`
-* **Link Label Formatting:** Avoid starting link labels with `Number.` (e.g., `"1. Description"`), as some parsers may misinterpret this as a Markdown list. Use alternative formats like `"1 - Description"`, `"Step 1: Description"`, or just `"Description"`.
+* **Link Label Formatting:** As mentioned under Quoting Labels, avoid starting link labels directly with list markers like `1.` or `-`. Use alternatives like `"1 - Description"`, `"Step 1: Description"`, or just `"Description"`.
     * *Recommended:* `A -- "1 - Initial Step" --> B`
     * *Avoid:* `A -- "1. Initial Step" --> B`
+* **Sequence Diagram Activation (`activate`/`deactivate`):** While useful for showing execution focus, these commands can sometimes cause rendering errors (e.g., "Trying to inactivate an inactive participant") in certain renderers, particularly with complex nesting or `alt`/`opt`/`loop` blocks.
+    * **Recommendation:** Use `activate`/`deactivate` sparingly if needed for clarity.
+    * **Troubleshooting:** If rendering errors related to activation occur, even if the syntax seems correct according to the Mermaid documentation or Live Editor, **simplify the diagram by removing all `activate` and `deactivate` commands.** The core message flow will remain, and this typically resolves renderer-specific activation state issues.
 * **Renderer Inconsistencies:** Be aware that diagrams may render slightly differently or encounter errors in various environments (e.g., GitHub, GitLab, VS Code Preview, Confluence Plugin) compared to the official Mermaid Live Editor ([https://mermaid.live/](https://mermaid.live/)).
     * **Validation:** Always test complex diagrams in the target rendering environment(s) *and* the Live Editor.
-    * **Workaround:** If a diagram uses valid syntax (verified in Live Editor) but consistently fails to render correctly in a target environment due to suspected renderer bugs/limitations, the recommended workaround is to replace the Mermaid code block with a **static image (PNG/SVG)** generated from a reliable source (Live Editor export, `mmdc` CLI). Document this change clearly. [cite: Conversation History]
+    * **Workaround:** If a diagram uses valid syntax (verified in Live Editor) but consistently fails to render correctly in a target environment due to suspected renderer bugs/limitations (like activation issues), the recommended workaround is to replace the Mermaid code block with a **static image (PNG/SVG)** generated from a reliable source (Live Editor export, `mmdc` CLI). Document this change clearly.
 
 ## 11. Tooling Recommendations
 
@@ -164,7 +188,7 @@ Based on practical experience and renderer limitations, follow these syntax rule
 * **Update Mandate:** As part of the standard AI Coder workflow [cite: Docs/Standards/CodingPlannerAssistant.md], if code changes impact the architecture, interactions, or flows depicted in a Mermaid diagram, the AI Coder **MUST**:
     1.  Update the Mermaid diagram definition(s) to accurately reflect the changes.
     2.  Adhere strictly to the standards defined in *this* document (`DiagrammingStandards.md`), paying close attention to Section 10.
-    3.  Ensure the updated diagram renders correctly (visual check if possible, rely on syntax correctness otherwise, validate against Live Editor if errors occur).
+    3.  Ensure the updated diagram renders correctly (visual check if possible, rely on syntax correctness otherwise, validate against Live Editor if errors occur, simplify if necessary - see Section 10).
     4.  Update the `Last Updated:` date in the containing `README.md` file if the diagram was modified.
 * **Pruning:** Remove obsolete elements or diagrams if architectural changes render them invalid.
 

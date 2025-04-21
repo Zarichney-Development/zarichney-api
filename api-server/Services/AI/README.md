@@ -27,6 +27,74 @@
 * **Configuration:** Uses `LlmConfig` and `TranscribeConfig` classes (registered via `IConfig`) injected via DI to configure API keys, model names, and retry attempts. [cite: api-server/Services/AI/LlmService.cs, api-server/Services/AI/TranscribeService.cs]
 * **Integration with Prompts:** `LlmService` consumes `PromptBase` implementations (defined elsewhere, e.g., [`/Cookbook/Prompts`](../../Cookbook/Prompts/README.md)) to get system instructions and function definitions for specific AI tasks. [cite: api-server/Services/AI/LlmService.cs, api-server/Services/AI/PromptBase.cs]
 * **Session Management:** `LlmService` interacts with `ISessionManager` to initialize and retrieve conversation context (`LlmConversation`) stored within user sessions. `LlmRepository` requires the `Session` object to determine the storage path for logs. [cite: api-server/Services/AI/LlmService.cs, api-server/Services/AI/LlmRepository.cs, api-server/Services/Sessions/SessionManager.cs]
+* **Component Diagram:**
+
+```mermaid
+%% Component diagram for the AI Services module
+graph TD
+    subgraph AIServices ["Services/AI Module"]
+        direction LR
+        LlmSvc["LlmService (ILlmService)"]
+        TranscribeSvc["TranscribeService (ITranscribeService)"]
+        LlmRepo["LlmRepository (ILlmRepository)"]
+        PromptBaseClass["PromptBase (Abstract Class)"]
+    end
+
+    subgraph ExternalConsumers ["Service Consumers"]
+        CookbookSvcs["Cookbook Services (RecipeService, etc.)"]
+        AiController["AiController"]
+    end
+
+    subgraph CoreServices ["Core Services / Config"]
+        SessionMgr["SessionManager"]
+        GithubSvc["GitHubService"]
+        LlmConfig["LlmConfig"]
+        TranscribeConfig["TranscribeConfig"]
+    end
+
+    subgraph ExternalAI ["External AI APIs"]
+        OpenAISDK["OpenAI SDK (Client/AudioClient)"]
+    end
+
+    subgraph PromptDefinitions ["Prompt Definitions (e.g., /Cookbook/Prompts)"]
+        ExamplePrompt["ExamplePrompt (inherits PromptBase)"]
+    end
+
+    %% Interactions
+    ExternalConsumers --> LlmSvc
+    AiController --> TranscribeSvc
+
+    LlmSvc --> OpenAISDK
+    LlmSvc --> SessionMgr
+    LlmSvc --> LlmRepo
+    LlmSvc -- Consumes --> ExamplePrompt
+    LlmSvc -- Uses --> LlmConfig
+
+    TranscribeSvc --> OpenAISDK
+    TranscribeSvc -- Uses --> TranscribeConfig
+
+    LlmRepo --> GithubSvc
+    LlmRepo --> SessionMgr
+
+    ExamplePrompt -- Inherits --> PromptBaseClass
+
+    %% Styling
+    classDef service fill:#ccf,stroke:#333,stroke-width:2px;
+    classDef repo fill:#dae8fc,stroke:#6c8ebf,stroke-width:1px;
+    classDef external fill:#e6ffe6,stroke:#006400,stroke-width:1px;
+    classDef prompt fill:#fff0b3,stroke:#cca300,stroke-width:1px;
+    classDef config fill:#eee,stroke:#666,stroke-width:1px;
+    classDef consumer fill:#f9f,stroke:#333,stroke-width:2px;
+
+    class LlmSvc,TranscribeSvc service;
+    class LlmRepo repo;
+    class PromptBaseClass,ExamplePrompt prompt;
+    class SessionMgr,GithubSvc external;
+    class OpenAISDK external;
+    class LlmConfig,TranscribeConfig config;
+    class CookbookSvcs,AiController consumer;
+
+```
 
 ## 3. Interface Contract & Assumptions
 

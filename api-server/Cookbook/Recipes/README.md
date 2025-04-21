@@ -1,6 +1,6 @@
 # Module/Directory: /Cookbook/Recipes
 
-**Last Updated:** 2025-04-13
+**Last Updated:** 2025-04-20
 
 > **Parent:** [`/Cookbook`](../README.md)
 
@@ -8,31 +8,148 @@
 
 * **What it is:** This module encompasses all functionalities related to the acquisition, processing, storage, retrieval, and synthesis of recipes for the Cookbook Factory. It's the core engine for recipe data management and generation.
 * **Key Responsibilities:**
-    * Acquiring recipe data from external websites via web scraping (`WebScraperService`). [cite: api-server/Cookbook/Recipes/WebScraperService.cs]
-    * Cleaning, standardizing, and enhancing scraped recipe data using AI (`RecipeRepository`, `CleanRecipePrompt`). [cite: api-server/Cookbook/Recipes/RecipeRepository.cs, api-server/Cookbook/Prompts/CleanRecipe.cs]
-    * Generating concise index titles and searchable aliases for recipes using AI (`RecipeRepository`, `RecipeNamerPrompt`). [cite: api-server/Cookbook/Recipes/RecipeRepository.cs, api-server/Cookbook/Prompts/RecipeNamer.cs]
-    * Ranking the relevance of scraped or existing recipes against specific queries using AI (`RecipeService`, `RankRecipePrompt`). [cite: api-server/Cookbook/Recipes/RecipeService.cs, api-server/Cookbook/Prompts/RankRecipe.cs]
-    * Persisting recipe data (currently to the file system via `RecipeRepository` and `IFileService`). [cite: api-server/Cookbook/Recipes/RecipeRepository.cs]
-    * Maintaining an in-memory index (`RecipeIndexer`) for fast recipe lookup by title/alias. [cite: api-server/Cookbook/Recipes/RecipeIndexer.cs]
-    * Providing search functionality (`RecipeSearcher`) to find relevant recipes based on queries and scores. [cite: api-server/Cookbook/Recipes/RecipeSearcher.cs]
-    * Orchestrating the synthesis of new, personalized recipes based on source recipes and order specifications (`RecipeService`, `SynthesizeRecipePrompt`). [cite: api-server/Cookbook/Recipes/RecipeService.cs, api-server/Cookbook/Prompts/SynthesizeRecipe.cs]
-    * Analyzing the quality and suitability of synthesized recipes using AI (`RecipeService`, `AnalyzeRecipePrompt`). [cite: api-server/Cookbook/Recipes/RecipeService.cs, api-server/Cookbook/Prompts/AnalyzeRecipe.cs]
-    * Defining recipe data structures (`Recipe`, `ScrapedRecipe`, `CleanedRecipe`, `SynthesizedRecipe`, etc.). [cite: api-server/Cookbook/Recipes/RecipeModels.cs]
+    * Acquiring recipe data from external websites via web scraping (`WebScraperService`).
+    * Cleaning, standardizing, and enhancing scraped recipe data using AI (`RecipeRepository`, `CleanRecipePrompt`).
+    * Generating concise index titles and searchable aliases for recipes using AI (`RecipeRepository`, `RecipeNamerPrompt`).
+    * Ranking the relevance of scraped or existing recipes against specific queries using AI (`RecipeService`, `RankRecipePrompt`).
+    * Persisting recipe data (currently to the file system via `RecipeRepository` and `IFileService`).
+    * Maintaining an in-memory index (`RecipeIndexer`) for fast recipe lookup by title/alias.
+    * Providing search functionality (`RecipeSearcher`) to find relevant recipes based on queries and scores.
+    * Orchestrating the synthesis of new, personalized recipes based on source recipes and order specifications (`RecipeService`, `SynthesizeRecipePrompt`).
+    * Analyzing the quality and suitability of synthesized recipes using AI (`RecipeService`, `AnalyzeRecipePrompt`).
+    * Defining recipe data structures (`Recipe`, `ScrapedRecipe`, `CleanedRecipe`, `SynthesizedRecipe`, etc.).
 * **Why it exists:** To consolidate all complex logic related to recipe data handling, from external acquisition to AI-driven generation and quality control, providing a clear service interface (`IRecipeService`) to other parts of the application (primarily `OrderService`).
-* **Submodules:**
-    * [`Training`](./Training/README.md) - Contains example data (`RecipeNamer.json`) used for few-shot learning in specific AI prompt tasks. [cite: api-server/Cookbook/Training/RecipeNamer.json]
+* **Subdirectories:**
+    * `Training/`: Contains example data files (e.g., `RecipeNamer.json`) and potentially prompt definition classes (e.g., `TrainingPrompt.cs`) used for few-shot learning or specific training-related tasks for AI prompts within this module.
 
 ## 2. Architecture & Key Concepts
 
-* **Orchestration:** `RecipeService` acts as the primary entry point and orchestrator for recipe retrieval (`GetRecipes`) and synthesis (`SynthesizeRecipe`). [cite: api-server/Cookbook/Recipes/RecipeService.cs]
-* **Repository Pattern:** `RecipeRepository` (`RecipeFileRepository` implementation) abstracts data persistence (file system via `IFileService`) and manages the asynchronous background processing (via `IBackgroundWorker`) of cleaning and naming tasks. It interacts with `RecipeIndexer` and `RecipeSearcher`. [cite: api-server/Cookbook/Recipes/RecipeRepository.cs]
-* **Alternative Query Generation:** `RecipeService.GetSearchQueryForRecipe` uses structured function calling with `GetAlternativeQueryPrompt` to generate more generic search terms when specific recipe names fail to yield results. It leverages conversation history through a provided `conversationId` and returns a structured `AlternativeQueryResult` containing the new query. This eliminates the need for manual conversation state management by utilizing the session-based context tracking in `ILlmService`. [cite: api-server/Cookbook/Recipes/RecipeService.cs, api-server/Cookbook/Prompts/GetAlternativeQuery.cs]
-* **Web Scraping:** `WebScraperService` handles finding and extracting recipe data from external websites using Playwright (`IBrowserService`) and CSS selectors defined in `site_selectors.json`. It uses `LlmService` (`ChooseRecipesPrompt`) to rank URL relevance. [cite: api-server/Cookbook/Recipes/WebScraperService.cs, api-server/Config/site_selectors.json, api-server/Cookbook/Prompts/ChooseRecipes.cs]
-* **Indexing & Search:** `RecipeIndexer` maintains an efficient in-memory `ConcurrentDictionary` mapping titles/aliases to recipes. `RecipeSearcher` implements the logic to query this index and apply scoring. [cite: api-server/Cookbook/Recipes/RecipeIndexer.cs, api-server/Cookbook/Recipes/RecipeSearcher.cs]
+* **Orchestration:** `RecipeService` acts as the primary entry point and orchestrator for recipe retrieval (`GetRecipes`) and synthesis (`SynthesizeRecipe`).
+* **Repository Pattern:** `RecipeRepository` (`RecipeFileRepository` implementation) abstracts data persistence (file system via `IFileService`) and manages the asynchronous background processing (via `IBackgroundWorker`) of cleaning and naming tasks. It interacts with `RecipeIndexer` and `RecipeSearcher`.
+* **Alternative Query Generation:** `RecipeService.GetSearchQueryForRecipe` uses structured function calling with `GetAlternativeQueryPrompt` to generate more generic search terms when specific recipe names fail to yield results. It leverages conversation history through a provided `conversationId` and returns a structured `AlternativeQueryResult` containing the new query. This eliminates the need for manual conversation state management by utilizing the session-based context tracking in `ILlmService`.
+* **Web Scraping:** `WebScraperService` handles finding and extracting recipe data from external websites using Playwright (`IBrowserService`) and CSS selectors defined in `site_selectors.json`. It uses `LlmService` (`ChooseRecipesPrompt`) to rank URL relevance.
+* **Indexing & Search:** `RecipeIndexer` maintains an efficient in-memory `ConcurrentDictionary` mapping titles/aliases to recipes. `RecipeSearcher` implements the logic to query this index and apply scoring.
 * **AI Integration:** Extensive use of `ILlmService` with specific prompts from [`/Cookbook/Prompts`](../Prompts/README.md) for data cleaning, relevance ranking, alias generation, recipe synthesis, and quality analysis.
-* **Data Models:** Defines various representations of recipe data (`Recipe`, `ScrapedRecipe`, `CleanedRecipe`, `SynthesizedRecipe`, `RelevancyResult`, `RecipeAnalysis`) in `RecipeModels.cs`. [cite: api-server/Cookbook/Recipes/RecipeModels.cs]
-* **Mapping:** `AutoMapper` is used (configured in `RecipeModels.cs`) to map between different recipe data representations (e.g., `ScrapedRecipe` to `Recipe`). [cite: api-server/Cookbook/Recipes/RecipeModels.cs]
-* **Concurrency:** Uses `Parallel.ForEachAsync` (via `ISessionManager`), `SemaphoreSlim`, and `ConcurrentDictionary` to handle parallel processing of scraping, ranking, cleaning, and indexing tasks. Parallelism levels are configured via `RecipeConfig` and `WebscraperConfig`. [cite: api-server/Cookbook/Recipes/RecipeRepository.cs, api-server/Cookbook/Recipes/WebScraperService.cs, api-server/Cookbook/Recipes/RecipeIndexer.cs]
+* **Data Models:** Defines various representations of recipe data (`Recipe`, `ScrapedRecipe`, `CleanedRecipe`, `SynthesizedRecipe`, `RelevancyResult`, `RecipeAnalysis`) in `RecipeModels.cs`.
+* **Mapping:** `AutoMapper` is used (configured in `RecipeModels.cs`) to map between different recipe data representations (e.g., `ScrapedRecipe` to `Recipe`).
+* **Concurrency:** Uses `Parallel.ForEachAsync` (via `ISessionManager`), `SemaphoreSlim`, and `ConcurrentDictionary` to handle parallel processing of scraping, ranking, cleaning, and indexing tasks. Parallelism levels are configured via `RecipeConfig` and `WebscraperConfig`.
+* **GetRecipes Workflow Diagram:**
+
+```mermaid
+%% Diagram illustrating the GetRecipes flow within the Recipes module
+graph TD
+    subgraph Input
+        Query["User Query (e.g., 'chicken soup')"]
+        ScrapeFlag["Scrape Flag (bool)"]
+        AcceptableScore["Acceptable Score (int?)"]
+        RequiredCount["Required Count (int?)"]
+    end
+
+    subgraph RecipeServiceLayer ["RecipeService"]
+        GetRecipes["GetRecipes(query, scrape, score, count)"]
+        RankUnranked["RankUnrankedRecipesAsync"]
+        GetAltQuery["GetSearchQueryForRecipe (if needed)"]
+    end
+
+    subgraph RepoLayer ["RecipeRepository / Indexer / Searcher"]
+        SearchRecipes["SearchRecipes(query, score, count)"]
+        ContainsRecipe["ContainsRecipe(id)"]
+        AddUpdateAsync["AddUpdateRecipesAsync (background)"]
+        Indexer["RecipeIndexer (In-Memory)"]
+        Searcher["RecipeSearcher"]
+    end
+
+    subgraph ScraperLayer ["WebScraperService"]
+        ScrapeForRecipes["ScrapeForRecipesAsync(query, score, count)"]
+        RankUrls["RankUrlsByRelevanceAsync"]
+        ParseRecipe["ParseRecipeFromSite"]
+    end
+
+    subgraph ExternalServicesLayer ["External/Core Services"]
+        LlmService["LlmService"]
+        BrowserService["BrowserService"]
+        FileService["FileService"]
+        BackgroundWorker["BackgroundWorker"]
+    end
+
+    subgraph PromptsLayer ["Prompts"]
+       RankPrompt["RankRecipePrompt"]
+       AltQueryPrompt["GetAlternativeQueryPrompt"]
+       ChoosePrompt["ChooseRecipesPrompt"]
+       CleanPrompt["CleanRecipePrompt"]
+       NamerPrompt["RecipeNamerPrompt"]
+    end
+
+    %% Flow
+    Input --> GetRecipes
+
+    GetRecipes -- 1 - Search Cache --> SearchRecipes
+    SearchRecipes --> Searcher
+    Searcher --> Indexer
+
+    SearchRecipes -- Existing Recipes --> GetRecipes
+
+    %% Ranking existing but unranked
+    GetRecipes -- 2 - Rank Unranked --> RankUnranked
+    RankUnranked -- Needs Ranking --> LlmService
+    LlmService -- Uses --> RankPrompt
+    RankUnranked -- Ranked Recipes --> GetRecipes
+
+    %% Scraping if needed
+    GetRecipes -- 3 - Check if Scrape Needed & Allowed --> ScrapeCheck{Scrape?}
+    ScrapeCheck -- Yes --> ScrapeForRecipes
+    ScrapeCheck -- No --> FilterResults
+
+    ScrapeForRecipes --> RankUrls
+    RankUrls --> LlmService
+    LlmService -- Uses --> ChoosePrompt
+    RankUrls -- Ranked URLs --> ScrapeForRecipes
+
+    ScrapeForRecipes --> ParseRecipe
+    ParseRecipe --> BrowserService
+
+    ScrapeForRecipes -- Scraped Recipes --> GetRecipes
+    GetRecipes -- 4 - Exclude Existing --> ContainsRecipe
+    ContainsRecipe --> Indexer
+    GetRecipes -- New Recipes --> RankUnranked
+
+    RankUnranked -- Newly Ranked --> GetRecipes
+
+    GetRecipes -- 5 - Persist New/Updated --> AddUpdateAsync
+    AddUpdateAsync --> BackgroundWorker
+    %% Background tasks (simplified link)
+    BackgroundWorker --> LlmService
+    LlmService -- Uses --> CleanPrompt
+    LlmService -- Uses --> NamerPrompt
+    BackgroundWorker --> FileService
+
+    GetRecipes -- 6 - Filter Final Results --> FilterResults((Return Top Recipes))
+
+    %% Alternative Query Loop (Simplified)
+    GetRecipes -- No Results & Retries Left --> GetAltQuery
+    GetAltQuery --> LlmService
+    LlmService -- Uses --> AltQueryPrompt
+    GetAltQuery -- New Query --> GetRecipes
+
+
+    %% Styling
+    classDef service fill:#ccf,stroke:#333,stroke-width:2px;
+    classDef repo fill:#dae8fc,stroke:#6c8ebf,stroke-width:1px;
+    classDef external fill:#e6ffe6,stroke:#006400,stroke-width:1px;
+    classDef prompt fill:#fff0b3,stroke:#cca300,stroke-width:1px;
+    classDef decision fill:#ffe6cc,stroke:#d99c7a,stroke-width:1px;
+    classDef input fill:#f5f5f5,stroke:#666,stroke-width:1px;
+
+    class GetRecipes,RankUnranked,GetAltQuery service;
+    class SearchRecipes,ContainsRecipe,AddUpdateAsync,Indexer,Searcher repo;
+    class ScrapeForRecipes,RankUrls,ParseRecipe service;
+    class LlmService,BrowserService,FileService,BackgroundWorker external;
+    class RankPrompt,AltQueryPrompt,ChoosePrompt,CleanPrompt,NamerPrompt prompt;
+    class ScrapeCheck decision;
+    class Query,ScrapeFlag,AcceptableScore,RequiredCount input;
+```
+
+
 
 ## 3. Interface Contract & Assumptions
 

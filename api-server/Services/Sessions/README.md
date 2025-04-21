@@ -28,6 +28,77 @@
 * **Session Lifecycle:** Sessions are created by `SessionMiddleware` or `SessionManager.CreateSession`. They are refreshed on access (`RefreshSession` method). `SessionManager.EndSession` removes the session from memory and triggers persistence logic (e.g., saving associated `CookbookOrder` via `IOrderRepository` and `LlmConversation` via `ILlmRepository`). `SessionCleanupService` periodically removes sessions that have passed their `ExpiresAt` time. [cite: api-server/Services/Sessions/SessionManager.cs, api-server/Services/Sessions/SessionCleanup.cs]
 * **Reusable Anonymous Sessions:** Provides a mechanism (`FindReusableAnonymousSession`) to find existing anonymous sessions (those without a `UserId` or `ApiKeyValue`) that are not set to expire immediately. This enables background tasks to reuse existing sessions rather than always creating new ones, which is particularly useful for maintaining context across related tasks and ensuring related LLM conversations are logged under the same session structure. [cite: api-server/Services/Sessions/SessionManager.cs]
 * **Configuration:** Uses `SessionConfig` for settings like default session duration, cleanup interval, and maximum concurrent cleanup tasks. [cite: api-server/Services/Sessions/SessionModels.cs, api-server/appsettings.json]
+* **Diagram:**
+```mermaid
+%% Component diagram for the Sessions Service module
+graph TD
+    subgraph SessionServices ["Services/Sessions Module"]
+        direction LR
+        SessionMgr["SessionManager (ISessionManager - Singleton)"]
+        SessionMw["SessionMiddleware"]
+        SessionCleanupSvc["SessionCleanup (BackgroundService)"]
+        ScopeContainer["ScopeContainer (IScopeContainer - Scoped)"]
+        SessionModels["SessionModels (Session, etc.)"]
+    end
+
+    subgraph Consumers ["Session Consumers / Related"]
+        OrderSvc["OrderService"]
+        LlmSvc["LlmService"]
+        OtherSvcs["Other Scoped Services"]
+        HttpCtx["HttpContext"]
+    end
+
+    subgraph Dependencies ["Dependencies"]
+        OrderRepo["OrderRepository"]
+        CustomerRepo["CustomerRepository"]
+        LlmRepo["LlmRepository"]
+        BackgroundWorker["BackgroundWorker"]
+        Scheduler["Background Scheduler (for CleanupSvc)"]
+    end
+
+    %% Interactions
+    HttpCtx -- Request Scope --> SessionMw
+    SessionMw -- Associates Scope --> ScopeContainer
+    SessionMw -- Uses --> SessionMgr
+
+    %% Consumers use ScopeContainer to get current session ID
+    OrderSvc -- Uses --> ScopeContainer
+    LlmSvc -- Uses --> ScopeContainer
+    OtherSvcs -- Uses --> ScopeContainer
+
+    %% Consumers use SessionManager to get/manage session data
+    OrderSvc -- Interacts With --> SessionMgr
+    LlmSvc -- Interacts With --> SessionMgr
+    SessionCleanupSvc -- Interacts With --> SessionMgr
+
+    %% SessionManager Dependencies
+    SessionMgr -- Reads From / Persists To --> OrderRepo
+    SessionMgr -- Reads From / Persists To --> CustomerRepo
+    SessionMgr -- Reads From / Persists To --> LlmRepo
+    SessionMgr -- Queues Persistence --> BackgroundWorker
+
+    %% Cleanup Service Trigger
+    Scheduler --> SessionCleanupSvc
+
+    %% Styling
+    classDef service fill:#ccf,stroke:#333,stroke-width:2px;
+    classDef middleware fill:#eee,stroke:#666,stroke-width:1px;
+    classDef consumer fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef repo fill:#dae8fc,stroke:#6c8ebf,stroke-width:1px;
+    classDef external fill:#e6ffe6,stroke:#006400,stroke-width:1px;
+    classDef model fill:#fff0b3,stroke:#cca300,stroke-width:1px;
+    classDef infra fill:#cceeff,stroke:#007acc,stroke-width:1px;
+
+    class SessionMgr,SessionCleanupSvc service;
+    class SessionMw middleware;
+    class ScopeContainer model;
+    class SessionModels model;
+    class OrderSvc,LlmSvc,OtherSvcs consumer;
+    class OrderRepo,CustomerRepo,LlmRepo repo;
+    class BackgroundWorker,Scheduler external;
+    class HttpCtx infra;
+```
+
 
 ## 3. Interface Contract & Assumptions
 

@@ -20,6 +20,74 @@
 * **Template Rendering:** `TemplateService` uses `Handlebars.Net` to process `.html` files located in the directory specified by `EmailConfig.TemplateDirectory`. It compiles a base template (`base.html`) and specific content templates (e.g., `email-verification.html`), merging provided data context before returning the final HTML content. [cite: api-server/Services/Email/TemplateService.cs, api-server/Services/Email/Templates/base.html]
 * **Email Validation:** `EmailService` uses `RestSharp` to make requests to the external MailCheck API (`mailcheck.p.rapidapi.com`) using the API key from `EmailConfig`. It caches validation results per domain using `IMemoryCache` to reduce redundant API calls. It throws an `InvalidEmailException` if validation fails certain criteria (invalid, blocked, disposable, high risk). [cite: api-server/Services/Email/EmailService.cs, api-server/Services/Email/EmailModels.cs]
 * **Configuration:** `EmailConfig` (registered via `IConfig`) holds Azure App credentials, the sending email address (`FromEmail`), the MailCheck API key, and the template directory path. [cite: api-server/Services/Email/EmailModels.cs, api-server/appsettings.json]
+* **Diagram:**
+```mermaid
+%% Component diagram for the Email Service module
+graph TD
+    subgraph EmailServiceModule ["Services/Email Module"]
+        direction LR
+        EmailSvc["EmailService (IEmailService)"]
+        TemplateSvc["TemplateService (ITemplateService)"]
+        EmailConfig["EmailConfig"]
+        EmailModels["EmailModels (e.g., InvalidEmailException)"]
+    end
+
+    subgraph ExternalConsumers ["Service Consumers"]
+        AuthCmdHandlers["Auth Command Handlers"]
+        OrderSvc["OrderService"]
+        ApiController["ApiController"]
+    end
+
+    subgraph CoreServices ["Core Services / External APIs"]
+        GraphClient["Microsoft Graph SDK (GraphServiceClient)"]
+        RestClient["RestSharp Client (for MailCheck)"]
+        FileSvc["FileService (IFileService)"]
+        MemoryCache["IMemoryCache"]
+        Handlebars["Handlebars.Net"]
+    end
+
+    subgraph ExternalAPIs ["External APIs"]
+        MSGraphAPI[("MS Graph API")]
+        MailCheckAPI[("MailCheck API")]
+    end
+
+    subgraph Templates ["Templates Directory"]
+        HTMLTemplates["HTML Files (e.g., base.html, ...)"]
+    end
+
+    %% Interactions
+    ExternalConsumers --> EmailSvc
+    EmailSvc --> GraphClient
+    EmailSvc --> RestClient
+    EmailSvc --> TemplateSvc
+    EmailSvc --> MemoryCache
+    EmailSvc -- Uses --> EmailConfig
+
+    TemplateSvc --> Handlebars
+    TemplateSvc --> FileSvc
+    TemplateSvc -- Reads --> HTMLTemplates
+    TemplateSvc -- Uses --> EmailConfig
+
+    GraphClient --> MSGraphAPI
+    RestClient --> MailCheckAPI
+
+    %% Styling
+    classDef service fill:#ccf,stroke:#333,stroke-width:2px;
+    classDef consumer fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef external fill:#e6ffe6,stroke:#006400,stroke-width:1px;
+    classDef config fill:#eee,stroke:#666,stroke-width:1px;
+    classDef model fill:#dae8fc,stroke:#6c8ebf,stroke-width:1px;
+    classDef template fill:#fff0b3,stroke:#cca300,stroke-width:1px;
+    classDef api fill:#f5f5f5,stroke:#666,stroke-width:1px,shape:cylinder;
+
+    class EmailSvc,TemplateSvc service;
+    class AuthCmdHandlers,OrderSvc,ApiController consumer;
+    class GraphClient,RestClient,FileSvc,MemoryCache,Handlebars external;
+    class EmailConfig config;
+    class EmailModels model;
+    class HTMLTemplates template;
+    class MSGraphAPI,MailCheckAPI api;
+```
 
 ## 3. Interface Contract & Assumptions
 

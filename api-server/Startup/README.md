@@ -37,6 +37,71 @@
 * **State Management:** This module primarily establishes the application's initial state and configuration. It doesn't directly manage runtime state but sets up the services and middleware that will.
 * **Service Registration:**
     * Registers `IConfigurationStatusService` and `ConfigurationStatusService` for configuration status reporting, enabling the `/api/status/config` endpoint for health checks.
+* **Diagram:**
+```mermaid
+%% Application Startup Flow in Program.cs
+graph TD
+    Start[Start Program.cs] --> CreateBuilder[WebApplication.CreateBuilder]
+
+    subgraph "ConfigureBuilder Method"
+        direction TB
+        CreateBuilder --> ConfigureConfig["ConfigurationStartup.ConfigureConfiguration \n - Environment-specific appsettings \n - UserSecrets (Dev) \n - EnvVars \n - AWS Systems Manager (Prod)"]
+        
+        ConfigureConfig --> ConfigureLogging["ConfigurationStartup.ConfigureLogging \n - Serilog setup with Console/File/Seq \n - Session/Scope enrichers"]
+        
+        ConfigureLogging --> ConfigureServices["ServiceStartup.ConfigureServices \n - RegisterConfigurationServices \n   (IConfig implementations, path transforms) \n - HttpsRedirection, HttpContext, JSON converters \n - EmailServices (GraphServiceClient w/ fallback) \n - OpenAIServices (LLM/Audio w/ fallbacks) \n - Application Services (20+ custom registrations)"]
+        
+        ConfigureServices --> ConfigureIdentity["AuthenticationStartup.ConfigureIdentity \n - PostgreSQL UserDbContext \n - Identity<ApplicationUser> \n - JWT with secure fallback \n - Cookie auth integration \n - Role Manager"]
+        
+        ConfigureIdentity --> ConfigureSwagger["ServiceStartup.ConfigureSwagger \n - API documentation \n - Multiple auth schemes (JWT/ApiKey) \n - XML comments integration"]
+        
+        ConfigureSwagger --> ConfigureCors["ApplicationStartup.ConfigureCors \n - Origin allowlist \n - Request/Response logging"]
+    end
+
+    ConfigureCors --> BuildApp["builder.Build()"]
+
+    subgraph "ConfigureApplication Method (async)"
+        direction TB
+        BuildApp --> ConfigureApp["await ApplicationStartup.ConfigureApplication \n - RequestResponseLogger middleware \n - ErrorHandling middleware \n - ForwardedHeaders (AWS/CloudFront) \n - Swagger UI \n - Custom Authentication middleware \n - Endpoint routing \n - API controllers \n - Database initialization"]
+    end
+
+    ConfigureApp --> RunApp["app.Run()"]
+    RunApp --> End[Application Running]
+
+    %% Critical background services
+    subgraph "Background Services (Registered)"
+        direction TB
+        BackgroundSvcs["Background Services \n - BackgroundTaskService \n - RefreshTokenCleanupService \n - RoleInitializer \n - GitHubService"]
+    end
+    ConfigureServices --- BackgroundSvcs
+    
+    %% Key data flows
+    subgraph "Data Repositories (File-based)"
+        direction TB
+        Repositories["Repository Pattern \n - LlmRepository \n - RecipeFileRepository \n - OrderFileRepository \n - CustomerFileRepository"]
+    end
+    ConfigureServices --- Repositories
+
+    %% Error handling
+    RunApp -- "Exception" --> LogFatal["Log.Fatal + CloseAndFlush"]
+
+    %% Styling
+    classDef startEnd fill:#e6ffe6,stroke:#006400,stroke-width:2px;
+    classDef process fill:#fff,stroke:#333,stroke-width:1px;
+    classDef configStep fill:#e6f2ff,stroke:#004080,stroke-width:1px;
+    classDef pipelineStep fill:#fff0b3,stroke:#cca300,stroke-width:1px;
+    classDef errorStep fill:#ffe6e6,stroke:#b30000,stroke-width:1px;
+    classDef repoStep fill:#f5f5dc,stroke:#8b4513,stroke-width:2px;
+    classDef serviceBg fill:#e6e6ff,stroke:#000080,stroke-width:2px;
+
+    class Start,End startEnd;
+    class CreateBuilder,BuildApp,RunApp process;
+    class ConfigureConfig,ConfigureLogging,ConfigureServices,ConfigureIdentity,ConfigureSwagger,ConfigureCors configStep;
+    class ConfigureApp pipelineStep;
+    class LogFatal errorStep;
+    class BackgroundSvcs serviceBg;
+    class Repositories repoStep;
+```
 
 ## 3. Interface Contract & Assumptions
 
