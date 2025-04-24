@@ -176,6 +176,7 @@ public class ServiceStartup
     // Prompts and Core Services
     services.AddPrompts(typeof(PromptBase).Assembly);
     services.AddSingleton<IFileService, FileService>();
+    services.AddSingleton<IFileWriteQueueService, FileWriteQueueService>();
     services.AddSingleton<ITemplateService, TemplateService>();
     services.AddSingleton<IBrowserService, BrowserService>();
 

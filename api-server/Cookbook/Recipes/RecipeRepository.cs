@@ -177,7 +177,7 @@ public class RecipeFileRepository(
 
           var combinedRecipes = UpdateExistingRecipes(existingRecipes, recipeList);
 
-          fileService.WriteToFileAsync(config.OutputDirectory, title, combinedRecipes);
+          fileService.QueueWrite(config.OutputDirectory, title, combinedRecipes);
         }
         catch (Exception ex)
         {

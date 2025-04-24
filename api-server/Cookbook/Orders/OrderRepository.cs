@@ -81,7 +81,7 @@ public class OrderFileRepository(
 
   public void AddUpdateOrderAsync(CookbookOrder order)
   {
-    fileService.WriteToFileAsync(
+    fileService.QueueWrite(
       Path.Combine(config.OutputDirectory, order.OrderId),
       "Order",
       order
@@ -90,7 +90,7 @@ public class OrderFileRepository(
 
   public void SaveRecipe(string orderId, string recipeTitle, string recipeMarkdown)
   {
-    fileService.WriteToFileAsync(
+    fileService.QueueWrite(
       Path.Combine(config.OutputDirectory, orderId, "recipes"),
       recipeTitle,
       recipeMarkdown,
@@ -100,7 +100,7 @@ public class OrderFileRepository(
 
   public void SaveCookbook(string orderId, string cookbookMarkdown)
   {
-    fileService.WriteToFileAsync(
+    fileService.QueueWrite(
       Path.Combine(config.OutputDirectory, orderId),
       "Cookbook",
       cookbookMarkdown,
@@ -120,7 +120,7 @@ public class OrderFileRepository(
   public async Task SaveCookbook(string orderId, byte[] pdf)
   {
     // Waits for completion
-    await fileService.WriteToFile(
+    await fileService.WriteToFileAndWait(
       Path.Combine(config.OutputDirectory, orderId),
       "Cookbook",
       pdf,
@@ -131,7 +131,7 @@ public class OrderFileRepository(
   public void SaveCookbookAsync(string orderId, byte[] pdf)
   {
     // Send to background queue
-    fileService.WriteToFileAsync(
+    fileService.QueueWrite(
       Path.Combine(config.OutputDirectory, orderId),
       "Cookbook",
       pdf,

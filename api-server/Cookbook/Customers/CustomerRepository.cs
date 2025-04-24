@@ -30,7 +30,7 @@ public class CustomerFileRepository(
   {
     var safeFileName = EmailService.MakeSafeFileName(customer.Email);
     
-    fileService.WriteToFileAsync(
+    fileService.QueueWrite(
       Path.Combine(config.OutputDirectory),
       safeFileName,
       customer
