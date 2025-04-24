@@ -32,7 +32,7 @@ public class ServiceStartup
   {
     var services = builder.Services;
 
-    services.RegisterConfigurationServices(builder.Configuration,builder.Environment);
+    services.RegisterConfigurationServices(builder.Configuration, builder.Environment);
     services.AddSingleton(Serilog.Log.Logger);
 
     if (builder.Environment.IsProduction())
@@ -61,14 +61,14 @@ public class ServiceStartup
   /// </summary>
   private static void ConfigureEmailServices(IServiceCollection services)
   {
-    services.AddScoped<GraphServiceClient>(sp => 
+    services.AddScoped<GraphServiceClient>(sp =>
     {
       var emailConfig = sp.GetRequiredService<EmailConfig>();
       var logger = sp.GetRequiredService<ILogger<ServiceStartup>>();
 
       // Check if the required configuration values are present
-      if (string.IsNullOrEmpty(emailConfig.AzureTenantId) || 
-          string.IsNullOrEmpty(emailConfig.AzureAppId) || 
+      if (string.IsNullOrEmpty(emailConfig.AzureTenantId) ||
+          string.IsNullOrEmpty(emailConfig.AzureAppId) ||
           string.IsNullOrEmpty(emailConfig.AzureAppSecret) ||
           string.IsNullOrEmpty(emailConfig.FromEmail) ||
           emailConfig.AzureTenantId == "recommended to set in app secrets" ||
@@ -76,11 +76,12 @@ public class ServiceStartup
           emailConfig.AzureAppSecret == "recommended to set in app secrets" ||
           emailConfig.FromEmail == "recommended to set in app secrets")
       {
-        logger.LogWarning("Missing required configuration for GraphServiceClient. Email functionality will not be available. Required: AzureTenantId, AzureAppId, AzureAppSecret, FromEmail");
+        logger.LogWarning(
+          "Missing required configuration for GraphServiceClient. Email functionality will not be available. Required: AzureTenantId, AzureAppId, AzureAppSecret, FromEmail");
         return null!;
       }
 
-      try 
+      try
       {
         return new GraphServiceClient(
           new ClientSecretCredential(
@@ -109,12 +110,13 @@ public class ServiceStartup
   private static void ConfigureOpenAiServices(IServiceCollection services)
   {
     // Add OpenAIClient with factory method
-    services.AddScoped<OpenAIClient>(sp => {
+    services.AddScoped<OpenAIClient>(sp =>
+    {
       var llmConfig = sp.GetRequiredService<LlmConfig>();
       var logger = sp.GetRequiredService<ILogger<ServiceStartup>>();
 
       // Check if the required API key is present and valid
-      if (string.IsNullOrEmpty(llmConfig.ApiKey) || 
+      if (string.IsNullOrEmpty(llmConfig.ApiKey) ||
           llmConfig.ApiKey == "recommended to set in app secrets")
       {
         logger.LogWarning("Missing required OpenAI API key configuration. LLM functionality will not be available.");
@@ -133,16 +135,18 @@ public class ServiceStartup
     });
 
     // Add AudioClient with factory method
-    services.AddScoped<AudioClient>(sp => {
+    services.AddScoped<AudioClient>(sp =>
+    {
       var transcribeConfig = sp.GetRequiredService<TranscribeConfig>();
       var llmConfig = sp.GetRequiredService<LlmConfig>();
       var logger = sp.GetRequiredService<ILogger<ServiceStartup>>();
 
       // Check if the required API key is present and valid
-      if (string.IsNullOrEmpty(llmConfig.ApiKey) || 
+      if (string.IsNullOrEmpty(llmConfig.ApiKey) ||
           llmConfig.ApiKey == "recommended to set in app secrets")
       {
-        logger.LogWarning("Missing required OpenAI API key configuration. Audio transcription functionality will not be available.");
+        logger.LogWarning(
+          "Missing required OpenAI API key configuration. Audio transcription functionality will not be available.");
         return null!;
       }
 
@@ -196,7 +200,7 @@ public class ServiceStartup
     services.AddTransient<IRecipeService, RecipeService>();
     services.AddTransient<IOrderService, OrderService>();
     services.AddTransient<ICustomerService, CustomerService>();
-    services.AddTransient<IWebScraperService,WebScraperService>();
+    services.AddTransient<IWebScraperService, WebScraperService>();
     services.AddTransient<PdfCompiler>();
     services.AddTransient<ITranscribeService, TranscribeService>();
     services.AddTransient<IStripeService, StripeService>();

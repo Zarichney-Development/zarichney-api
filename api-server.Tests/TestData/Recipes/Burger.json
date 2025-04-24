@@ -1,0 +1,69 @@
+﻿[
+  {
+    "Id": "3f84e9fb3d5abf0664278a8a5f73a9cf4395a891338a09136bb1532c54a45e79",
+    "Title": "Mushroom Swiss Pan Burgers",
+    "Description": "Mushroom Swiss Pan Burgers with Rosemary-Mushroom Pan Sauce is an easy yet restaurant-quality 20 minute meal made in just one pan!",
+    "Servings": "4",
+    "PrepTime": "10 minutes",
+    "CookTime": "20 minutes",
+    "TotalTime": "30 minutes",
+    "Ingredients": [
+      "1 lb lean ground beef",
+      "1 large shallot, minced and divided",
+      "1 Tablespoon fresh rosemary, minced and divided",
+      "1 Tablespoon worcestershire sauce",
+      "salt and pepper",
+      "1 Tablespoon extra virgin olive oil",
+      "4 slices swiss cheese",
+      "2 Tablespoons butter, divided",
+      "8 oz sliced mushrooms",
+      "1 clove garlic, minced",
+      "1 cup beef broth",
+      "4 buns"
+    ],
+    "Directions": [
+      "Combine ground beef, 2 Tablespoons shallots, 2/3 of the minced rosemary, Worcestershire sauce, salt, and pepper in a large bowl then mix until combined. Create 4 burger patties then set aside.",
+      "Heat extra virgin olive oil in a large, cast iron or heavy bottomed skillet. Add burger patties then saute for 4-5 minutes a side for burgers cooked to medium. Add swiss cheese slices then allow to melt slightly. Transfer to a plate then loosely tent with a piece of nonstick-sprayed foil.",
+      "Melt 1 Tablespoon butter in skillet then add mushrooms and remaining shallots. Season with salt and pepper then saute until mushrooms are golden brown, 5 minutes. Add remaining rosemary and garlic then saute for 1 more minute. Add beef broth then simmer, scraping the bits up from the bottom of the pan, until sauce has reduced and thickened slightly, 5 minutes. Add remaining Tablespoon butter then stir until melted. Place burgers on buns then top with mushrooms and sauce."
+    ],
+    "Notes": "",
+    "Cleaned": true,
+    "RecipeUrl": "https://iowagirleats.com/swiss-pan-burgers-with-rosemary-mushroom-pan-sauce/",
+    "ImageUrl": "https://iowagirleats.com/wp-content/uploads/2014/12/Swiss-Pan-Burgers-with-Rosemary-Mushroom-Sauce-04-300x300.jpg",
+    "Aliases": [
+      "Mushroom Swiss Pan Burgers",
+      "Burger",
+      "Swiss Burger",
+      "Mushroom Burger",
+      "Pan Burger"
+    ],
+    "IndexTitle": "Burger",
+    "Relevancy": {
+      "Partridge in a Creamy Mushroom Sauce": {
+        "Query": "Partridge in a Creamy Mushroom Sauce",
+        "Score": 10,
+        "Reasoning": "The recipe is for Mushroom Swiss Pan Burgers, which focuses on burgers with a mushroom sauce. It does not involve partridge or any creamy aspect, making it largely irrelevant to the specified query about 'Partridge in a Creamy Mushroom Sauce'."
+      },
+      "Bacon Cheese Burger": {
+        "Query": "Bacon Cheese Burger",
+        "Score": 30,
+        "Reasoning": "The recipe is for Mushroom Swiss Pan Burgers, which features beef burgers with mushrooms and Swiss cheese. While it is a type of burger, it does not include bacon and thus does not closely match the specific query for a 'Bacon Cheese Burger.' This makes it somewhat relevant, but not highly aligned with the desired recipe."
+      },
+      "bacon cheese burger": {
+        "Query": "bacon cheese burger",
+        "Score": 30,
+        "Reasoning": "The recipe is for Mushroom Swiss Pan Burgers which contain beef and Swiss cheese but do not include bacon. While it is still a type of burger, the absence of bacon makes it only somewhat relevant to the specific query for a 'Bacon Cheese Burger.'"
+      },
+      "spicy bacon cheese burger": {
+        "Query": "spicy bacon cheese burger",
+        "Score": 30,
+        "Reasoning": "The recipe is for Mushroom Swiss Pan Burgers, which includes beef and Swiss cheese but does not contain bacon, making it only somewhat relevant to the 'spicy bacon cheese burger' query."
+      },
+      "burger": {
+        "Query": "burger",
+        "Score": 42,
+        "Reasoning": "mocked"
+      }
+    }
+  }
+]

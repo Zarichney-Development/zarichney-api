@@ -64,8 +64,6 @@ public class ApiSmokeTests(ApiClientFixture apiClientFixture) : IntegrationTestB
     // It doesn't test actual payment processing
 
     // Arrange
-    var userId = "test-user-id";
-    var roles = new[] { "User" };
     var apiClient = AuthenticatedApiClient;
 
     // Act & Assert - Secure endpoint should be accessible

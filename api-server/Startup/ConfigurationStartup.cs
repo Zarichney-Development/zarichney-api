@@ -133,24 +133,7 @@ public static class ConfigurationStartup
       // Consider adding validation here to ensure APP_DATA_PATH provides an absolute path in production if required.
     }
 
-    var pathConfigs = configuration.AsEnumerable()
-      .Where(kvp => kvp.Value?.StartsWith(DataFolderName) == true)
-      .ToList();
-
-    Log.Information("Found {Count} {Path} paths in configuration:", pathConfigs.Count, DataFolderName);
-    foreach (var kvp in pathConfigs.Where(kvp =>
-               Path.Combine(dataPath, kvp.Value![DataFolderName.Length..]) != kvp.Value))
-    {
-      var newPath = Path.Combine(dataPath, kvp.Value![DataFolderName.Length..]);
-      Log.Information("Transforming path: {OldPath} -> {NewPath}", kvp.Value, newPath);
-    }
-
-    var transformedPaths = pathConfigs
-      .Select(kvp => new KeyValuePair<string, string>(
-        kvp.Key,
-        Path.Combine(dataPath, kvp.Value![DataFolderName.Length..])
-      ))
-      .ToList();
+    var transformedPaths = TransformConfigurationPaths(configuration, dataPath, DataFolderName);
 
     if (transformedPaths.Count != 0)
     {
@@ -158,10 +141,10 @@ public static class ConfigurationStartup
 
       // Verify final configuration
       Log.Information("Final configuration paths:");
-      foreach (var kvp in pathConfigs)
+      foreach (var key in transformedPaths.Keys)
       {
-        var finalValue = configuration[kvp.Key];
-        Log.Information("{Key}: {Value}", kvp.Key, finalValue);
+        var finalValue = configuration[key];
+        Log.Information("{Key}: {Value}", key, finalValue);
       }
     }
 
@@ -242,6 +225,43 @@ public static class ConfigurationStartup
       Log.Warning(warningMessage + " Dependent services may fail at runtime.",
         new { ConfigSection = sectionName, ConfigProperty = property.Name });
     }
+  }
+  
+  /// <summary>
+  /// Transforms paths in configuration that start with a specified prefix.
+  /// This method is designed to be reusable across both production and test environments.
+  /// </summary>
+  /// <param name="configuration">The configuration to scan for paths</param>
+  /// <param name="basePath">The base path to prepend after removing the prefix</param>
+  /// <param name="prefix">The prefix to look for and remove from paths (e.g., "Data/")</param>
+  /// <returns>Dictionary of transformed paths with keys being the config keys and values being the transformed paths</returns>
+  private static Dictionary<string, string> TransformConfigurationPaths(
+    IConfiguration configuration,
+    string basePath,
+    string prefix)
+  {
+    // Find all paths that start with the prefix
+    var pathConfigs = configuration.AsEnumerable()
+      .Where(kvp => kvp.Value?.StartsWith(prefix) == true)
+      .ToList();
+
+    Log.Information("Found {Count} {Prefix} paths in configuration:", pathConfigs.Count, prefix);
+    
+    // Log transformations
+    foreach (var kvp in pathConfigs.Where(kvp =>
+               Path.Combine(basePath, kvp.Value![prefix.Length..]) != kvp.Value))
+    {
+      var newPath = Path.Combine(basePath, kvp.Value![prefix.Length..]);
+      Log.Information("Transforming path: {OldPath} -> {NewPath}", kvp.Value, newPath);
+    }
+
+    // Create the transformed paths dictionary
+    return pathConfigs
+      .Select(kvp => new KeyValuePair<string, string>(
+        kvp.Key,
+        Path.Combine(basePath, kvp.Value![prefix.Length..])
+      ))
+      .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
   }
 
   #endregion
