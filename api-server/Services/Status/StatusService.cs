@@ -7,7 +7,7 @@ namespace Zarichney.Services.Status;
 
 public interface IStatusService
 {
-    Task<List<ConfigurationItemStatus>> GetConfigurationStatusAsync();
+  Task<List<ConfigurationItemStatus>> GetConfigurationStatusAsync();
 }
 
 public class StatusService(
@@ -18,19 +18,19 @@ public class StatusService(
     IConfiguration configuration)
     : IStatusService
 {
-    private const string Placeholder = "recommended to set in app secrets";
+  private const string Placeholder = "recommended to set in app secrets";
 
-    private ConfigurationItemStatus CheckConfigurationItem(string itemName, string? itemValue, string propertyName)
-    {
-        if (!string.IsNullOrWhiteSpace(itemValue) && itemValue != Placeholder)
-            return new ConfigurationItemStatus(itemName, "Configured");
-        
-        return new ConfigurationItemStatus(itemName, "Missing/Invalid", $"{propertyName} is missing or placeholder");
-    }
+  private ConfigurationItemStatus CheckConfigurationItem(string itemName, string? itemValue, string propertyName)
+  {
+    if (!string.IsNullOrWhiteSpace(itemValue) && itemValue != Placeholder)
+      return new ConfigurationItemStatus(itemName, "Configured");
 
-    public Task<List<ConfigurationItemStatus>> GetConfigurationStatusAsync()
-    {
-        var statusList = new List<ConfigurationItemStatus>
+    return new ConfigurationItemStatus(itemName, "Missing/Invalid", $"{propertyName} is missing or placeholder");
+  }
+
+  public Task<List<ConfigurationItemStatus>> GetConfigurationStatusAsync()
+  {
+    var statusList = new List<ConfigurationItemStatus>
         {
             // OpenAI
             CheckConfigurationItem("OpenAI API Key", llmConfig.ApiKey, nameof(llmConfig.ApiKey)),
@@ -53,6 +53,6 @@ public class StatusService(
             CheckConfigurationItem("Database Connection", configuration["ConnectionStrings:IdentityConnection"], "IdentityConnection")
         };
 
-        return Task.FromResult(statusList);
-    }
+    return Task.FromResult(statusList);
+  }
 }

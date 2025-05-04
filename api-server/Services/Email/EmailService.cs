@@ -123,7 +123,7 @@ public class EmailService(
   /// <exception cref="ConfigurationMissingException">Thrown when the MailCheck API key is missing or invalid.</exception>
   public async Task<bool> ValidateEmail(string email)
   {
-    if (string.IsNullOrEmpty(config.MailCheckApiKey) || 
+    if (string.IsNullOrEmpty(config.MailCheckApiKey) ||
         config.MailCheckApiKey == "recommended to set in app secrets")
     {
       throw new ConfigurationMissingException(nameof(EmailConfig), nameof(config.MailCheckApiKey));

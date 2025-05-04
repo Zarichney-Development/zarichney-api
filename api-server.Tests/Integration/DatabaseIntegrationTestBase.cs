@@ -23,8 +23,8 @@ public abstract class DatabaseIntegrationTestBase : IntegrationTestBase
     _apiClientFixture = apiClientFixture;
     if (!DatabaseFixture.IsContainerAvailable)
     {
-        // Skip all database-backed tests if container is unavailable
-        SetSkipReason("Database unavailable, skipping database-backed integration tests.");
+      // Skip all database-backed tests if container is unavailable
+      SetSkipReason("Database unavailable, skipping database-backed integration tests.");
     }
   }
 

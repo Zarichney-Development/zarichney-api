@@ -381,7 +381,7 @@ public class OrderService(
     {
       // Retrieve the conversation ID from the order
       var conversationId = order.LlmConversationId;
-      
+
       // Pass the conversation ID to the recipe service
       return await recipeService.GetRecipes(recipeName, acceptableScore: null, conversationId: conversationId, ct: ct);
     }

@@ -50,7 +50,8 @@ public class ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandling
         },
         Request = new
         {
-          Path = context.Request.Path.Value, context.Request.Method,
+          Path = context.Request.Path.Value,
+          context.Request.Method,
         },
         TraceId = context.TraceIdentifier
       };

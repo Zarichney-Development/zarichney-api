@@ -52,9 +52,9 @@ public class RecipeSearcher(
     // ---- Phase B: Exact alias matches (in case not indexed directly under the alias) ----
     var allIndexed = recipeIndexer.GetAllRecipes().ToList();
     foreach (var recipe in from kvp in allIndexed
-             from recipe in kvp.Value.Values
-             where !allPotentialResults.ContainsKey(recipe.Id!)
-             select recipe)
+                           from recipe in kvp.Value.Values
+                           where !allPotentialResults.ContainsKey(recipe.Id!)
+                           select recipe)
     {
       if (cancellationToken.IsCancellationRequested)
         return Task.FromResult(new List<Recipe>());

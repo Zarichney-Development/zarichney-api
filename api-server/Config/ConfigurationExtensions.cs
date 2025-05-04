@@ -10,11 +10,11 @@ public interface IConfig;
 /// </summary>
 public static partial class ServiceCollectionExtensions
 {
-    /// <summary>
-    /// Gets a service from the service collection (for use during configuration)
-    /// </summary>
-    public static T GetService<T>(this IServiceCollection services) where T : class
-    {
-        return services.BuildServiceProvider().GetRequiredService<T>();
-    }
+  /// <summary>
+  /// Gets a service from the service collection (for use during configuration)
+  /// </summary>
+  public static T GetService<T>(this IServiceCollection services) where T : class
+  {
+    return services.BuildServiceProvider().GetRequiredService<T>();
+  }
 }

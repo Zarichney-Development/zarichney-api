@@ -19,7 +19,7 @@ public class ApiClientFixture : IAsyncLifetime
   /// Gets the unauthenticated API client.
   /// </summary>
   public IZarichneyAPI UnauthenticatedClient { get; private set; } = null!;
-  
+
   /// <summary>
   /// Gets the authenticated API client.
   /// </summary>
@@ -42,7 +42,7 @@ public class ApiClientFixture : IAsyncLifetime
   {
     // Create and initialize the database fixture
     _databaseFixture = new DatabaseFixture();
-    
+
     // Create the web application factory with the database fixture
     _factory = new CustomWebApplicationFactory(_databaseFixture);
   }
@@ -54,7 +54,7 @@ public class ApiClientFixture : IAsyncLifetime
   {
     // Initialize the database fixture
     await _databaseFixture.InitializeAsync();
-    
+
     // Get configuration from the factory's service provider
     var serviceProvider = _factory.Services;
     _configuration = (IConfiguration)serviceProvider.GetService(typeof(IConfiguration))!;

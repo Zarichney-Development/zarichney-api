@@ -29,7 +29,7 @@ public class CustomerFileRepository(
   public void SaveCustomer(Customer customer)
   {
     var safeFileName = EmailService.MakeSafeFileName(customer.Email);
-    
+
     fileService.QueueWrite(
       Path.Combine(config.OutputDirectory),
       safeFileName,

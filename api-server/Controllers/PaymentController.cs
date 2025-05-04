@@ -197,19 +197,19 @@ public class PaymentController(
   [ProducesResponseType(StatusCodes.Status400BadRequest)]
   public async Task<IActionResult> CreatePaymentIntent([FromBody] PaymentIntentRequest request)
   {
-      if (request.Amount <= 0 || string.IsNullOrEmpty(request.Currency))
-      {
-          return BadRequest("Invalid payment intent request");
-      }
-      var ct = HttpContext.RequestAborted;
-      var email = User.Identity?.Name ?? string.Empty;
-      var intent = await stripeService.CreatePaymentIntentAsync(
-          email,
-          request.Amount,
-          request.Currency,
-          new Dictionary<string, string>(),
-          ct);
-      return Ok(intent);
+    if (request.Amount <= 0 || string.IsNullOrEmpty(request.Currency))
+    {
+      return BadRequest("Invalid payment intent request");
+    }
+    var ct = HttpContext.RequestAborted;
+    var email = User.Identity?.Name ?? string.Empty;
+    var intent = await stripeService.CreatePaymentIntentAsync(
+        email,
+        request.Amount,
+        request.Currency,
+        new Dictionary<string, string>(),
+        ct);
+    return Ok(intent);
   }
 
   /// <summary>
@@ -219,10 +219,10 @@ public class PaymentController(
   [ProducesResponseType(StatusCodes.Status200OK)]
   public async Task<IActionResult> GetPaymentStatus([FromRoute] string paymentId)
   {
-      if (string.IsNullOrEmpty(paymentId)) return BadRequest("Payment ID is required");
-      var ct = HttpContext.RequestAborted;
-      var intent = await stripeService.GetPaymentIntent(paymentId, ct);
-      return Ok(intent);
+    if (string.IsNullOrEmpty(paymentId)) return BadRequest("Payment ID is required");
+    var ct = HttpContext.RequestAborted;
+    var intent = await stripeService.GetPaymentIntent(paymentId, ct);
+    return Ok(intent);
   }
 }
 
@@ -246,7 +246,7 @@ public class RecipeCreditRequest
 
 public class PaymentIntentRequest
 {
-    public long Amount { get; set; }
-    public string Currency { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
+  public long Amount { get; set; }
+  public string Currency { get; set; } = string.Empty;
+  public string Description { get; set; } = string.Empty;
 }

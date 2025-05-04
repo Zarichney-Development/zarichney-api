@@ -75,7 +75,7 @@ public class GitHubService : BackgroundService, IGitHubService
       Directory = directory,
       CommitMessage = commitMessage
     };
-    
+
     _logger.LogInformation("Enqueuing GitHub commit for file {FilePath} in directory {Directory}",
       operation.FilePath, operation.Directory);
 

@@ -10,23 +10,23 @@ public abstract class BaseBuilder<TBuilder, TEntity>
     where TBuilder : BaseBuilder<TBuilder, TEntity>
     where TEntity : class, new()
 {
-    protected TEntity Entity { get; } = new TEntity();
+  protected TEntity Entity { get; } = new TEntity();
 
-    /// <summary>
-    /// Creates a new instance of the entity with default values.
-    /// </summary>
-    /// <returns>A new instance of the entity.</returns>
-    public TEntity Build()
-    {
-        return Entity;
-    }
+  /// <summary>
+  /// Creates a new instance of the entity with default values.
+  /// </summary>
+  /// <returns>A new instance of the entity.</returns>
+  public TEntity Build()
+  {
+    return Entity;
+  }
 
-    /// <summary>
-    /// Returns the builder for method chaining.
-    /// </summary>
-    /// <returns>The builder instance.</returns>
-    protected TBuilder Self()
-    {
-        return (TBuilder)this;
-    }
+  /// <summary>
+  /// Returns the builder for method chaining.
+  /// </summary>
+  /// <returns>The builder instance.</returns>
+  protected TBuilder Self()
+  {
+    return (TBuilder)this;
+  }
 }

@@ -226,7 +226,7 @@ public static class ConfigurationStartup
         new { ConfigSection = sectionName, ConfigProperty = property.Name });
     }
   }
-  
+
   /// <summary>
   /// Transforms paths in configuration that start with a specified prefix.
   /// This method is designed to be reusable across both production and test environments.
@@ -246,7 +246,7 @@ public static class ConfigurationStartup
       .ToList();
 
     Log.Information("Found {Count} {Prefix} paths in configuration:", pathConfigs.Count, prefix);
-    
+
     // Log transformations
     foreach (var kvp in pathConfigs.Where(kvp =>
                Path.Combine(basePath, kvp.Value![prefix.Length..]) != kvp.Value))

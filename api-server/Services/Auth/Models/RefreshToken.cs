@@ -7,9 +7,9 @@ public class RefreshToken
 {
   [Key] public int Id { get; init; }
 
-  [Required] [MaxLength(128)] public string UserId { get; init; } = string.Empty;
+  [Required][MaxLength(128)] public string UserId { get; init; } = string.Empty;
 
-  [Required] [MaxLength(256)] public string Token { get; init; } = string.Empty;
+  [Required][MaxLength(256)] public string Token { get; init; } = string.Empty;
 
   public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
 

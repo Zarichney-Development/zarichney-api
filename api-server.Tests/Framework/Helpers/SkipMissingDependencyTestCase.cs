@@ -10,83 +10,83 @@ namespace Zarichney.Tests.Framework.Helpers;
 /// </summary>
 public class SkipMissingDependencyTestCase : XunitTestCase
 {
-    [Obsolete("Called by the de-serializer", true)]
-    public SkipMissingDependencyTestCase() { }
+  [Obsolete("Called by the de-serializer", true)]
+  public SkipMissingDependencyTestCase() { }
 
-    public SkipMissingDependencyTestCase(
-        IMessageSink diagnosticMessageSink,
-        TestMethodDisplay defaultMethodDisplay,
-        TestMethodDisplayOptions defaultMethodDisplayOptions,
-        ITestMethod testMethod)
-        : base(diagnosticMessageSink, defaultMethodDisplay, defaultMethodDisplayOptions, testMethod)
+  public SkipMissingDependencyTestCase(
+      IMessageSink diagnosticMessageSink,
+      TestMethodDisplay defaultMethodDisplay,
+      TestMethodDisplayOptions defaultMethodDisplayOptions,
+      ITestMethod testMethod)
+      : base(diagnosticMessageSink, defaultMethodDisplay, defaultMethodDisplayOptions, testMethod)
+  {
+  }
+
+  protected override string GetDisplayName(IAttributeInfo factAttribute, string displayName)
+  {
+    return $"{TestMethod.TestClass.Class.Name}.{TestMethod.Method.Name}";
+  }
+
+  public override async Task<RunSummary> RunAsync(
+      IMessageSink diagnosticMessageSink,
+      IMessageBus messageBus,
+      object[] constructorArguments,
+      ExceptionAggregator aggregator,
+      CancellationTokenSource cancellationTokenSource)
+  {
+    // Create the test class instance
+    var testClass = TestMethod.TestClass.Class.ToRuntimeType();
+    var testClassInstance = Activator.CreateInstance(testClass, constructorArguments);
+
+    // If the test class has asynchronous initialization, invoke it to set up SkipReason
+    if (testClassInstance is IAsyncLifetime asyncInit)
     {
+      await asyncInit.InitializeAsync();
     }
 
-    protected override string GetDisplayName(IAttributeInfo factAttribute, string displayName)
+    // Check if the test class has a ShouldSkip property
+    var shouldSkipProperty = testClass.GetProperty("ShouldSkip",
+        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+    var skipReasonProperty = testClass.GetProperty("SkipReason",
+        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+    var shouldSkip = false;
+    string? skipReason = null;
+
+    if (shouldSkipProperty != null)
     {
-        return $"{TestMethod.TestClass.Class.Name}.{TestMethod.Method.Name}";
+      shouldSkip = (bool)(shouldSkipProperty.GetValue(testClassInstance) ?? false);
+
+      if (shouldSkip && skipReasonProperty != null)
+      {
+        skipReason = (string?)skipReasonProperty.GetValue(testClassInstance);
+      }
     }
 
-    public override async Task<RunSummary> RunAsync(
-        IMessageSink diagnosticMessageSink,
-        IMessageBus messageBus,
-        object[] constructorArguments,
-        ExceptionAggregator aggregator,
-        CancellationTokenSource cancellationTokenSource)
+    if (shouldSkip)
     {
-        // Create the test class instance
-        var testClass = TestMethod.TestClass.Class.ToRuntimeType();
-        var testClassInstance = Activator.CreateInstance(testClass, constructorArguments);
-        
-        // If the test class has asynchronous initialization, invoke it to set up SkipReason
-        if (testClassInstance is IAsyncLifetime asyncInit)
-        {
-            await asyncInit.InitializeAsync();
-        }
+      skipReason ??= "Test dependencies missing.";
 
-        // Check if the test class has a ShouldSkip property
-        var shouldSkipProperty = testClass.GetProperty("ShouldSkip", 
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        
-        var skipReasonProperty = testClass.GetProperty("SkipReason",
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        
-        var shouldSkip = false;
-        string? skipReason = null;
-        
-        if (shouldSkipProperty != null)
-        {
-            shouldSkip = (bool)(shouldSkipProperty.GetValue(testClassInstance) ?? false);
-            
-            if (shouldSkip && skipReasonProperty != null)
-            {
-                skipReason = (string?)skipReasonProperty.GetValue(testClassInstance);
-            }
-        }
+      // Create test with our properly formatted display name
+      var test = new XunitTest(this, DisplayName);
 
-        if (shouldSkip)
-        {
-            skipReason ??= "Test dependencies missing.";
-            
-            // Create test with our properly formatted display name
-            var test = new XunitTest(this, DisplayName);
+      // Send test starting message
+      if (!messageBus.QueueMessage(new TestStarting(test)))
+        cancellationTokenSource.Cancel();
 
-            // Send test starting message
-            if (!messageBus.QueueMessage(new TestStarting(test)))
-                cancellationTokenSource.Cancel();
+      // Send skip message
+      if (!messageBus.QueueMessage(new TestSkipped(test, skipReason)))
+        cancellationTokenSource.Cancel();
 
-            // Send skip message
-            if (!messageBus.QueueMessage(new TestSkipped(test, skipReason)))
-                cancellationTokenSource.Cancel();
+      // Send test finished message with the correct parameter order
+      if (!messageBus.QueueMessage(new TestFinished(test, 0, test.TestCase.TestMethod.Method.ToString())))
+        cancellationTokenSource.Cancel();
 
-            // Send test finished message with the correct parameter order
-            if (!messageBus.QueueMessage(new TestFinished(test, 0, test.TestCase.TestMethod.Method.ToString())))
-                cancellationTokenSource.Cancel();
-            
-            return new RunSummary { Total = 1, Skipped = 1 };
-        }
-
-        // Run the test normally if not skipped
-        return await base.RunAsync(diagnosticMessageSink, messageBus, constructorArguments, aggregator, cancellationTokenSource);
+      return new RunSummary { Total = 1, Skipped = 1 };
     }
+
+    // Run the test normally if not skipped
+    return await base.RunAsync(diagnosticMessageSink, messageBus, constructorArguments, aggregator, cancellationTokenSource);
+  }
 }

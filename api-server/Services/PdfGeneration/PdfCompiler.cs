@@ -450,10 +450,10 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
 
       // Image handler
       if (paragraph.Inline?.FirstOrDefault(x => x is LinkInline
-          {
-            IsImage:
+        {
+          IsImage:
             true
-          }) is LinkInline &&
+        }) is LinkInline &&
           fileService.FileExists(imagePath))
       {
         try

@@ -207,7 +207,7 @@ public class CookbookController(
       {
         // Resolve necessary services within the new scope for the background task
         var backgroundOrderService = newScope.GetService<IOrderService>();
-        
+
         // Call the appropriate method to process the order
         await backgroundOrderService.ProcessOrder(orderId);
       });

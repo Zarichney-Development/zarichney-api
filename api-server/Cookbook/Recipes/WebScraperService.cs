@@ -14,7 +14,7 @@ namespace Zarichney.Cookbook.Recipes;
 
 public interface IWebScraperService
 {
-    Task<List<ScrapedRecipe>> ScrapeForRecipesAsync(string query, int? acceptableScore = null, int? recipesNeeded = null, string? targetSite = null);
+  Task<List<ScrapedRecipe>> ScrapeForRecipesAsync(string query, int? acceptableScore = null, int? recipesNeeded = null, string? targetSite = null);
 }
 
 public class WebscraperConfig : IConfig
@@ -36,7 +36,7 @@ public class WebScraperService(
   IBrowserService browserService,
   ILogger<WebScraperService> logger,
   IRecipeRepository recipeRepository
-):IWebScraperService
+) : IWebScraperService
 {
   private static Dictionary<string, Dictionary<string, string>>? _siteSelectors;
   private static Dictionary<string, Dictionary<string, string>>? _siteTemplates;
@@ -324,10 +324,10 @@ public class WebScraperService(
       recipeUrls.Count, site, query);
 
     await Parallel.ForEachAsync(recipeUrls, new ParallelOptions
-      {
-        MaxDegreeOfParallelism = config.MaxParallelTasks,
-        CancellationToken = cancellationToken
-      },
+    {
+      MaxDegreeOfParallelism = config.MaxParallelTasks,
+      CancellationToken = cancellationToken
+    },
       async (url, ct) =>
       {
         try

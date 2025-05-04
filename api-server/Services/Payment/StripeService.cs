@@ -21,7 +21,7 @@ public interface IStripeService
     string productName,
     string productDescription,
     string? clientReferenceId = null);
-    
+
   /// <summary>
   /// Creates a Stripe checkout session and returns the full session including the checkout URL
   /// </summary>
@@ -150,7 +150,7 @@ public class StripeService : IStripeService
 
     return session.Id;
   }
-  
+
   /// <summary>
   /// Creates a Stripe checkout session with the specified parameters and returns the full session including URL
   /// </summary>
@@ -175,7 +175,7 @@ public class StripeService : IStripeService
       productDescription,
       clientReferenceId);
   }
-  
+
   /// <summary>
   /// Internal helper method to create a checkout session
   /// </summary>
@@ -295,7 +295,7 @@ public class StripeService : IStripeService
       }
     };
   }
-  
+
   /// <summary>
   /// Parses a Stripe session's metadata into a strongly typed model.
   /// </summary>
@@ -316,7 +316,7 @@ public class StripeService : IStripeService
       {
         result.CustomerEmail = email;
       }
-      
+
       if (metadata.TryGetValue("recipe_count", out var recipeCountStr) &&
           int.TryParse(recipeCountStr, out var count))
       {
@@ -332,7 +332,7 @@ public class StripeService : IStripeService
 
     return result;
   }
-  
+
   /// <summary>
   /// Calculates the total purchased quantity from the session's line items.
   /// </summary>

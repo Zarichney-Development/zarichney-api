@@ -21,7 +21,7 @@ public class LlmResult<T>
   /// The primary data returned from the LLM interaction.
   /// </summary>
   public required T Data { get; init; }
-  
+
   /// <summary>
   /// The ID of the conversation associated with this interaction.
   /// </summary>
@@ -125,7 +125,7 @@ public class LlmService : ILlmService
 
     return await policy.ExecuteAsync(action);
   }
-  
+
   public async Task<string> CreateAssistant(PromptBase prompt)
   {
     if (_client == null)

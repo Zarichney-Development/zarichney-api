@@ -10,56 +10,56 @@ namespace Zarichney.Tests.Integration.Controllers.AuthController;
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Feature, TestCategories.Auth)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
-public class LoginEndpointsTests(ApiClientFixture apiClientFixture) 
+public class LoginEndpointsTests(ApiClientFixture apiClientFixture)
     : DatabaseIntegrationTestBase(apiClientFixture)
 {
-    [DependencyFact]
-    public async Task Login_WithValidCredentials_ShouldSucceed()
+  [DependencyFact]
+  public async Task Login_WithValidCredentials_ShouldSucceed()
+  {
+    // Arrange
+    var client = ApiClient;
+    // todo replace with the test user values that resides in config
+    var request = new LoginRequest
     {
-        // Arrange
-        var client = ApiClient;
-        // todo replace with the test user values that resides in config
-        var request = new LoginRequest
-        {
-            Email = "zarichney@gmail.com",
-            Password = "password"
-        };
+      Email = "zarichney@gmail.com",
+      Password = "password"
+    };
 
-        // Act
-        var result = await client.Login(request);
+    // Act
+    var result = await client.Login(request);
 
-        // Assert
-        Assert.True(result.Success);
-        Assert.NotEmpty(result.Email);
-    }
+    // Assert
+    Assert.True(result.Success);
+    Assert.NotEmpty(result.Email);
+  }
 
-    [DependencyFact]
-    public async Task Login_WithInvalidCredentials_ShouldFail()
+  [DependencyFact]
+  public async Task Login_WithInvalidCredentials_ShouldFail()
+  {
+    // Arrange
+    var client = ApiClient;
+    var request = new LoginRequest
     {
-        // Arrange
-        var client = ApiClient;
-        var request = new LoginRequest
-        {
-            Email = "invalid@example.com",
-            Password = "WrongPassword123!"
-        };
+      Email = "invalid@example.com",
+      Password = "WrongPassword123!"
+    };
 
-        // Act & Assert
-        await Assert.ThrowsAsync<ApiException>(() => client.Login(request));
-    }
+    // Act & Assert
+    await Assert.ThrowsAsync<ApiException>(() => client.Login(request));
+  }
 
-    [DependencyFact]
-    public async Task Login_WithEmptyEmail_ShouldFail()
+  [DependencyFact]
+  public async Task Login_WithEmptyEmail_ShouldFail()
+  {
+    // Arrange
+    var client = ApiClient;
+    var request = new LoginRequest
     {
-        // Arrange
-        var client = ApiClient;
-        var request = new LoginRequest
-        {
-            Email = "",
-            Password = "Password123!"
-        };
+      Email = "",
+      Password = "Password123!"
+    };
 
-        // Act & Assert
-        await Assert.ThrowsAsync<ApiException>(() => client.Login(request));
-    }
+    // Act & Assert
+    await Assert.ThrowsAsync<ApiException>(() => client.Login(request));
+  }
 }

@@ -351,9 +351,9 @@ public class SessionManager(
   {
     ArgumentNullException.ThrowIfNull(order);
     ArgumentNullException.ThrowIfNull(scope);
-    
+
     var sessionId = scope.SessionId;
-    
+
     if (sessionId != null && sessionId != Guid.Empty)
     {
       if (Sessions.TryGetValue(sessionId.Value, out var existingSession))
@@ -362,14 +362,14 @@ public class SessionManager(
         {
           logger.LogWarning("Not Expected: Session {SessionId} already has an order associated with it", sessionId);
         }
-        
+
         existingSession.Order = order;
         return Task.CompletedTask;
       }
     }
-    
+
     var scopeId = scope.Id;
-    
+
     if (scopeId == Guid.Empty)
     {
       throw new ArgumentException("ScopeId cannot be empty", nameof(scopeId));
@@ -484,7 +484,7 @@ public class SessionManager(
   public Session? FindReusableAnonymousSession()
   {
     logger.LogDebug("Attempting to find a reusable anonymous session...");
-    
+
     var reusableSession = Sessions.Values.FirstOrDefault(s =>
         s.UserId == null &&
         s.ApiKeyValue == null &&
@@ -496,7 +496,7 @@ public class SessionManager(
       RefreshSession(reusableSession);
       return reusableSession;
     }
-    
+
     logger.LogInformation("No reusable anonymous session found.");
     return null;
   }

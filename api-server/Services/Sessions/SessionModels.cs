@@ -29,7 +29,7 @@ public class Session
   /// Optional user ID associated with this session
   /// </summary>
   public string? UserId { get; set; }
-  
+
   /// <summary>
   /// Optional API key value associated with this session
   /// </summary>

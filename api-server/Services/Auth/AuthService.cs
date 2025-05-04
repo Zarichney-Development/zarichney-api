@@ -54,7 +54,7 @@ public class AuthService(
       new(JwtRegisteredClaimNames.Email, user.Email!),
       new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
     };
-    
+
     // Get user roles and add them as claims
     var userRoles = await userManager.GetRolesAsync(user);
     foreach (var role in userRoles)

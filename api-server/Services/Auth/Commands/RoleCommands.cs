@@ -72,7 +72,7 @@ public class GetUserRolesQueryHandler(UserManager<ApplicationUser> userManager) 
   public async Task<RoleCommandResult> Handle(GetUserRolesQuery request, CancellationToken cancellationToken)
   {
     ApplicationUser? user;
-    
+
     if (request.Identifier.Contains("@"))
     {
       // Looks like an email address
@@ -99,7 +99,7 @@ public class GetUserRolesQueryHandler(UserManager<ApplicationUser> userManager) 
         };
       }
     }
-    
+
     // User found - get their roles
     var roles = await userManager.GetRolesAsync(user);
     return new RoleCommandResult

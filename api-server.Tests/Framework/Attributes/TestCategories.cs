@@ -15,39 +15,39 @@ namespace Zarichney.Tests.Framework.Attributes;
 /// </summary>
 public static class TestCategories
 {
-    // Trait names
-    public const string Category = "Category";
-    public const string Feature = "Feature";
-    public const string Dependency = "Dependency";
-    public const string Mutability = "Mutability";
-    
-    // Categories
-    public const string Unit = "Unit";
-    public const string Integration = "Integration";
-    public const string E2E = "E2E";
-    public const string Smoke = "Smoke";
-    public const string Performance = "Performance";
-    public const string Load = "Load";
-    public const string MinimalFunctionality = "MinimalFunctionality";
-    public const string Controller = "Controller";
-    public const string Component = "Component";
-    public const string Service = "Service";
-    
-    // Features
-    public const string Auth = "Auth";
-    public const string Cookbook = "Cookbook";
-    public const string Payment = "Payment";
-    public const string Email = "Email";
-    public const string AI = "AI";
-    
-    // Dependencies
-    public const string Database = "Database";
-    public const string ExternalStripe = "ExternalStripe";
-    public const string ExternalOpenAI = "ExternalOpenAI";
-    public const string ExternalGitHub = "ExternalGitHub";
-    public const string ExternalMSGraph = "ExternalMSGraph";
-    
-    // Mutability (for filtering tests that can safely run against production-like environments)
-    public const string ReadOnly = "ReadOnly";        // Tests that do not alter state
-    public const string DataMutating = "DataMutating"; // Tests that might alter state
+  // Trait names
+  public const string Category = "Category";
+  public const string Feature = "Feature";
+  public const string Dependency = "Dependency";
+  public const string Mutability = "Mutability";
+
+  // Categories
+  public const string Unit = "Unit";
+  public const string Integration = "Integration";
+  public const string E2E = "E2E";
+  public const string Smoke = "Smoke";
+  public const string Performance = "Performance";
+  public const string Load = "Load";
+  public const string MinimalFunctionality = "MinimalFunctionality";
+  public const string Controller = "Controller";
+  public const string Component = "Component";
+  public const string Service = "Service";
+
+  // Features
+  public const string Auth = "Auth";
+  public const string Cookbook = "Cookbook";
+  public const string Payment = "Payment";
+  public const string Email = "Email";
+  public const string AI = "AI";
+
+  // Dependencies
+  public const string Database = "Database";
+  public const string ExternalStripe = "ExternalStripe";
+  public const string ExternalOpenAI = "ExternalOpenAI";
+  public const string ExternalGitHub = "ExternalGitHub";
+  public const string ExternalMSGraph = "ExternalMSGraph";
+
+  // Mutability (for filtering tests that can safely run against production-like environments)
+  public const string ReadOnly = "ReadOnly";        // Tests that do not alter state
+  public const string DataMutating = "DataMutating"; // Tests that might alter state
 }

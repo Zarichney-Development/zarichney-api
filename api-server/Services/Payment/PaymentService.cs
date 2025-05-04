@@ -102,7 +102,7 @@ public class PaymentService(
     logger.LogInformation("Created Stripe checkout session {SessionId} for order {OrderId}", sessionId, order.OrderId);
     return sessionId;
   }
-  
+
   /// <summary>
   /// Creates a checkout session for completing a specific order and returns the full session with URL.
   /// </summary>
@@ -190,7 +190,7 @@ public class PaymentService(
       sessionId, customer.Email, recipeCount);
     return sessionId;
   }
-  
+
   /// <summary>
   /// Creates a checkout session for purchasing recipe credits and returns the full session with URL.
   /// </summary>

@@ -59,7 +59,7 @@ public class BrowserService : IBrowserService, IAsyncDisposable
 
   private readonly ILogger<BrowserService> _logger;
 
-  public BrowserService(WebscraperConfig config, IWebHostEnvironment env,    ILogger<BrowserService> logger)
+  public BrowserService(WebscraperConfig config, IWebHostEnvironment env, ILogger<BrowserService> logger)
   {
     _logger = logger;
     _config = config;

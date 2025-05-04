@@ -60,7 +60,7 @@ public class ApiController(
       User = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value ?? "Unknown"
     });
   }
-  
+
   [HttpGet("test-auth")]
   public IActionResult TestAuth()
   {
@@ -71,20 +71,20 @@ public class ApiController(
         .Where(c => c.Type == ClaimTypes.Role)
         .Select(c => c.Value)
         .ToList();
-        
+
     var isApiKeyAuth = HttpContext.Items.ContainsKey("ApiKey");
     var apiKey = isApiKeyAuth ? HttpContext.Items["ApiKey"]?.ToString() : null;
-        
-    return Ok(new 
+
+    return Ok(new
     {
-        userId,
-        authType,
-        isAuthenticated = User.Identity?.IsAuthenticated ?? false,
-        isAdmin,
-        roles = allRoles,
-        isApiKeyAuth,
-        apiKeyInfo = isApiKeyAuth ? new { keyId = apiKey } : null,
-        message = "Authentication successful!"
+      userId,
+      authType,
+      isAuthenticated = User.Identity?.IsAuthenticated ?? false,
+      isAdmin,
+      roles = allRoles,
+      isApiKeyAuth,
+      apiKeyInfo = isApiKeyAuth ? new { keyId = apiKey } : null,
+      message = "Authentication successful!"
     });
   }
 }
