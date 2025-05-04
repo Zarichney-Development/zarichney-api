@@ -1,63 +1,70 @@
-# Zarichney API - Personal Website Backend
+# Zarichney API Server & AI Workflow Testbed
 
-This repository contains the source code for the backend API powering Steven Zarichney's personal website (zarichney.com). Initially developed to support a sophisticated Cookbook AI application, the API is designed to be extensible for future website features and app development.
-
-## Overview
-
-The Zarichney API is a feature-rich .NET backend handling everything from user authentication and payments to complex AI-driven recipe generation and web scraping. It serves as the engine for interactive applications on the website.
-
-## Key Features
-
-* **Cookbook AI Application:**
-    * Processes user cookbook orders based on specific recipes or general criteria.
-    * Scrapes recipe data from various web sources using a custom engine (Playwright & selectors).
-    * Cleans and standardizes scraped recipe data.
-    * Ranks scraped recipes for relevance using AI.
-    * Synthesizes new, unique recipes using OpenAI's GPT models, tailored to user preferences and cookbook themes.
-    * Analyzes synthesized recipes for quality and alignment with user requests.
-    * Generates downloadable PDF cookbooks using QuestPDF.
-* **Authentication & Authorization:**
-    * Secure user registration with email verification.
-    * Password reset functionality.
-    * Robust JWT-based authentication using secure, HttpOnly cookies.
-    * Refresh token mechanism with sliding expiration.
-    * Support for API Key authentication.
-    * Role-based access control (e.g., 'admin' role).
-* **AI Services:**
-    * Integration with OpenAI GPT models for recipe synthesis, analysis, and ranking.
-    * Audio transcription capabilities using OpenAI Whisper.
-* **Payment Processing:**
-    * Integration with Stripe for handling payments for cookbook orders and recipe credits.
-    * Webhook handling for payment events.
-* **External Integrations:**
-    * Microsoft Graph API for sending transactional emails (verification, password reset, cookbook delivery).
-    * GitHub API for logging LLM interactions and potentially storing data.
-* **System Features:**
-    * Background task processing for handling long-running operations like order fulfillment.
-    * Session management linked to user authentication.
-    * File-based storage for recipe and order data.
-    * PostgreSQL database for user identity management (via EF Core).
-    * Structured logging with Serilog.
-    * Configuration managed via `appsettings.json` and AWS Systems Manager.
-
-## Technology Stack
-
-* **Backend:** .NET / ASP.NET Core
-* **Database:** PostgreSQL (for Identity), File System (for Recipe/Order data)
-* **Authentication:** ASP.NET Core Identity, JWT, API Keys
-* **AI:** OpenAI API (GPT-4o Mini, Whisper)
-* **PDF Generation:** QuestPDF
-* **Web Scraping:** Playwright
-* **Payments:** Stripe API
-* **Email:** Microsoft Graph API
-* **Logging:** Serilog, Seq (optional)
-* **ORM:** Entity Framework Core
-* **Other Libraries:** AutoMapper, MediatR, Polly, Handlebars.NET, Octokit
-
-## API Documentation
-
-Detailed API documentation generated via Swagger/OpenAPI is available at the `/api/swagger` endpoint when the application is running.
+**Last Updated:** 2025-05-04
 
 ---
 
-*This is a personal project and is not currently seeking external contributions directly to this GitHub Project.*
+## Overview
+
+Welcome! This repository hosts the **Zarichney API Server**, a modular backend built with **.NET 8**, serving as both a functional API and a practical testbed for exploring and refining **AI-assisted software development workflows**.
+
+Think of this repo in two ways:
+
+1.  **A Functional API:** It powers applications like the **Cookbook Factory AI**, which uses Large Language Models (LLMs) to scrape, analyze, clean, and synthesize recipes into custom cookbooks (PDF generation included!). It features secure authentication, payment integration (Stripe), background job processing, and more.
+2.  **An Experiment in Development:** It's actively developed using a **structured, AI-assisted workflow**. Specialized AI agents, guided by detailed prompts and rigorous standards documentation (all included in this repo!), handle significant portions of the coding, testing, and documentation tasks. This allows for rapid iteration while maintaining high quality.
+
+Whether you're interested in the API's features or the cutting-edge development methodology, explore the code and documentation to see it in action!
+
+## Key Features & Capabilities
+
+* **Modular .NET 8 API Server:** Designed to be extensible for various "micro-apps" or features.
+* **Cookbook Factory AI:**
+    * Web scraping and recipe data extraction.
+    * LLM-powered recipe analysis, cleaning, ranking, naming, and synthesis (using OpenAI).
+    * Automated generation of customized cookbook PDFs (using QuestPDF).
+    * User authentication (JWT/Refresh Tokens, API Keys via ASP.NET Core Identity).
+    * Payment processing via Stripe integration.
+    * Customer and order management.
+* **Core Services:** Email (MS Graph), File Storage, Background Tasks, Secure Configuration, Session Management.
+* **AI-Assisted Development Workflow (Meta-Feature):**
+    * Leverages AI Planning Assistants and AI Coders for development tasks.
+    * Includes comprehensive standards documentation (`/Docs/Standards/`) governing coding, testing, documentation, diagramming, and task management.
+    * Features detailed workflow definitions (`/Docs/Development/`) and prompt templates (`/Docs/Templates/`) for guiding AI agents.
+    * Aims for high code quality, test coverage, and maintainability through this structured AI collaboration. ([Learn More](./Docs/Development/README.md))
+
+## Technology Highlights
+
+* **Backend:** C# 12, .NET 8, ASP.NET Core Web API
+* **AI:** OpenAI API integration
+* **Database:** PostgreSQL (primarily for Identity; application data currently file-based)
+* **Authentication:** ASP.NET Core Identity, JWT, Refresh Tokens (Cookies), API Keys
+* **Testing:** xUnit, Moq, FluentAssertions, Testcontainers (for isolated DB testing), Refit (for API client generation) - *Aiming for >90% coverage.*
+* **API Documentation:** Swagger / OpenAPI
+* **Key Libraries:** Serilog, Polly, MediatR, AutoMapper, RestSharp, Stripe.net, Octokit, QuestPDF, PlaywrightSharp, AngleSharp
+* **Development Process:** Git, GitHub Actions (planned for CI/CD), AI Agent Assistance (via custom prompts/workflows).
+
+## Exploring the Repository
+
+* **`api-server/`:** Contains the main ASP.NET Core application code. Start with [`api-server/README.md`](./api-server/README.md) for an overview.
+* **`api-server.Tests/`:** Contains the unit and integration tests. See [`api-server.Tests/README.md`](./api-server.Tests/README.md).
+* **`Docs/`:** The heart of the documentation and AI workflow definitions.
+    * **`Docs/Standards/`:** Defines the rules (coding, testing, docs, etc.).
+    * **`Docs/Development/`:** Defines the AI-assisted workflow processes and roadmap.
+    * **`Docs/Templates/`:** Contains templates for AI prompts and GitHub Issues.
+    * Each module within `api-server/` also has its own detailed `README.md`.
+* **`Scripts/`:** Utility scripts (e.g., regenerating the test API client).
+
+## Getting Started (High Level)
+
+1.  Clone the repository.
+2.  Ensure [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) and [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for integration tests) are installed.
+3.  Review `api-server/README.md` for configuration prerequisites (secrets, API keys).
+4.  Build the solution (`dotnet build`).
+5.  Run the tests (`dotnet test`).
+6.  Run the API (`dotnet run` from `api-server/`).
+
+*(Detailed setup and contribution guidelines are part of the internal documentation standards.)*
+
+---
+
+This project is actively developed and evolves rapidly. Feel free to explore!

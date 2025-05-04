@@ -1,160 +1,134 @@
 # Module/Directory: Docs/Development
 
-**Last Updated:** 2025-04-20
+**Last Updated:** 2025-05-04
 
-> **Parent:** [`Docs`](../README.md) [cite: Docs/README.md]
+> **Parent:** [`Docs`](../README.md)
 
 ## 1. Purpose & Responsibility
 
 * **What it is:** This directory houses documentation defining the *workflows and processes* specifically governing the development of the Zarichney API application, with a focus on facilitating AI-assisted development.
 * **Key Responsibilities:**
-    * Outlining the AI-assisted workflow for code planning and implementation (`CodingPlannerAssistant.md`).
-    * Providing templates related to specific development tasks (e.g., `TestCaseDevelopmentTemplate.md`).
+    * Outlining the high-level AI-assisted workflow involving planning and coding agents.
+    * Providing links to the specific prompts, templates, and detailed workflow steps used in this process.
+    * Documenting the short-term technical roadmap and deferred items.
 * **Why it exists:** To establish a clear and effective AI-assisted development process, ensuring tasks are well-defined, context is appropriately provided to AI assistants, and standards are consistently referenced.
-* **Documents within this Directory:**
-    * [`CodingPlannerAssistant.md`](./CodingPlannerAssistant.md) - Defines the workflow for using an AI assistant to plan coding tasks and generate prompts for AI coders. [cite: Docs/Development/CodingPlannerAssistant.md]
-    * [`TestCaseDevelopmentTemplate.md`](./TestCaseDevelopmentTemplate.md) - Template for generating prompts for AI Coder tasks focused on test case implementation.
+* **Core Documents within this Directory:**
+    * [`CodingPlannerAssistant.md`](./CodingPlannerAssistant.md): Defines the workflow and prompt for the AI assistant responsible for planning and decomposing tasks.
+    * [`StandardWorkflow.md`](./StandardWorkflow.md): Details the step-by-step workflow for the AI Coder performing standard development tasks.
+    * [`ComplexTaskWorkflow.md`](./ComplexTaskWorkflow.md): Details the step-by-step workflow for the AI Coder performing complex or novel tasks using a TDD/Plan-First approach.
+    * [`TestCoverageWorkflow.md`](./TestCoverageWorkflow.md): Details the step-by-step workflow for the AI Coder performing test coverage enhancement tasks.
+    * [`ShortTermRoadmap.md`](./ShortTermRoadmap.md): Captures planned enhancements and deferred items for the codebase and development workflow.
+* **Related Templates (Located in /Docs/Templates/):**
+    * [`../Templates/AICoderPromptTemplate.md`](../Templates/AICoderPromptTemplate.md): The mandatory template structure used by the Planning Assistant to generate prompts for AI Coders performing coding tasks.
+    * [`../Templates/TestCaseDevelopmentTemplate.md`](../Templates/TestCaseDevelopmentTemplate.md): The mandatory template structure used by the Planning Assistant to generate prompts for AI Coders performing test coverage tasks.
+    * [`../Templates/GHCoderTaskTemplate.md`](../Templates/GHCoderTaskTemplate.md): Template for GitHub Issues related to general coding tasks.
+    * [`../Templates/GHTestCoverageTaskTemplate.md`](../Templates/GHTestCoverageTaskTemplate.md): Template for GitHub Issues related to test coverage tasks.
+    * [`../Templates/ReadmeTemplate.md`](../Templates/ReadmeTemplate.md): The mandatory template for per-directory READMEs.
 * **Core Standards (Located in /Docs/Standards/):**
-    * [`../Standards/CodingStandards.md`](../Standards/CodingStandards.md) - Defines C# coding rules. [cite: Docs/Standards/CodingStandards.md]
-    * [`../Standards/DocumentationStandards.md`](../Standards/DocumentationStandards.md) - Defines README content/structure rules. [cite: Docs/Standards/DocumentationStandards.md]
-    * [`../Standards/DiagrammingStandards.md`](../Standards/DiagrammingStandards.md) - Defines Mermaid diagramming rules. [cite: Docs/Standards/DiagrammingStandards.md]
-    * [`../Standards/TestingStandards.md`](../Standards/TestingStandards.md) - Defines automated testing rules. [cite: Docs/Standards/TestingStandards.md]
-    * [`../Standards/README_template.md`](../Standards/README_template.md) - The mandatory template for per-directory READMEs. [cite: Docs/Standards/README_template.md]
+    * (Links to CodingStandards.md, DocumentationStandards.md, DiagrammingStandards.md, TestingStandards.md, TaskManagementStandards.md)
 
-## 2. Architecture & Key Concepts
+## 2. AI-Assisted Development Workflow Overview
 
-* **AI-Assisted Development Workflow:** The core workflow leverages AI assistants in a structured, iterative process. This involves a planning phase with one AI assistant and an implementation phase using separate, stateless AI coder instances guided by detailed prompts. The workflow emphasizes adherence to centralized standards and context provided by per-directory documentation.
+The core workflow leverages AI assistants in a structured, iterative process, aiming for high quality and consistency through adherence to documented standards and context. The AI Planning Assistant acts as the central orchestrator, analyzing goals and codebase state, and then generating precise instructions for stateless AI Coders by referencing standardized templates and workflow definitions.
 
 * **Workflow Diagram:**
     *(Diagram follows conventions defined in [`../Standards/DiagrammingStandards.md`](../Standards/DiagrammingStandards.md))*
+
 ```mermaid
 ---
 config:
   layout: Dagre
 ---
-flowchart LR
-  subgraph EngineerTask["Human Workflow"]
-    direction LR
-        HUMAN["Human Developer"]
-        Step1["1 - Create Session"]
-        GoalsInput["Development Goals"]
-        EndGoal(("Goal"))
-  end
-  subgraph PlannerTask["AI Planning Assistant"]
-    direction LR
-        PLANNER["AI Planning Assistant (Gemini)"]
-        Step2["2 - Plan & Decompose Tasks"]
-        Step3["3 - Generate Coder Prompt"]
-        LoopDecision{"More Work?"}
-  end
-  subgraph CoderTask["AI Coder Task Execution"]
-    direction LR
-        CODER["AI Coder Agent"]
-        Step3_1["3.1 - Read Docs"]
-        Step3_2["3.2 - Implement Code"]
-        Step3_3["3.3 - Add/Update Tests"]
-        Step3_4["3.4 - Run Tests"]
-        Step3_5["3.5 - Update Docs/Diagrams"]
-  end
-  subgraph Codebase["API Server Codebase"]
-    CodeState["State of Codebase"]
-    PlannerPromptInput["PlanningAssistantPrompt.md"]
-    ReadmeDocs["READMEs"]
-    subgraph Standards["Docs/Standards"]
-      CodingStandards["CodingStandards.md"]
-      TestStandards["TestingStandards.md"]
-      DocStandards["DocumentationStandards.md"]
-      DiagramStandards["DiagrammingStandards.md"]
+flowchart TD
+    subgraph INPUTS ["Inputs & Context"]
+       direction LR
+       DevGoal["Developer Goal\n(via GitHub Issue)"] -- Provides --> PLANNER["AI Planning Assistant\n(Gemini)"]
+       CodebaseState["Codebase State\n(Files, Git Status)"] -- Informs --> PLANNER
+       PlannerPrompt["CodingPlannerAssistant.md"] -- Guides --> PLANNER
     end
-  end
 
-  HUMAN --> Step1
-  GoalsInput -.-> PLANNER
-  CodeState -.-> PLANNER
-  PlannerPromptInput -.-> PLANNER
-  Step1 --> PLANNER
-  PLANNER --> Step2
-  Step2 --> Step3
-  HUMAN -. Provide Feedback &amp; Confirm .-> Step2
-  Step3 --> CODER
-  CODER --> Step3_1
-  Step3_1 --> Step3_2
-  CodingStandards -.-> Step3_2
-  Step3_2 --> Step3_3
-  Step3_2 -.-> CodeState
-  Step3_3 -.-> CodeState
-  TestStandards -.-> Step3_3
-  Step3_3 --> Step3_4
-  Step3_4 --> Step3_5
-  DocStandards -.-> Step3_5
-  DiagramStandards -.-> Step3_5
-  Step3_4 -- Tests Fail --> Step3_2
-  ReadmeDocs -.-> Step3_1
-  Step3_5 --> LoopDecision
-  LoopDecision -- Yes --> Step3
-  LoopDecision -- No --> EndGoal
-  
-  HUMAN:::human
-  PLANNER:::aiPlanner
-  CODER:::aiCoder
-  GoalsInput:::input
-  Step1:::process
-  Step2:::process
-  Step3:::process
-  Step3_1:::process
-  Step3_2:::process
-  Step3_3:::process
-  Step3_4:::process
-  Step3_5:::process
-  CodeState:::codebase
-  PlannerPromptInput:::document
-  ReadmeDocs:::document
-  classDef human fill:#cceeff,stroke:#007acc,stroke-width:1px
-  classDef aiPlanner fill:#e6f2ff,stroke:#004080,stroke-width:1px
-  classDef aiCoder fill:#e6ffe6,stroke:#006400,stroke-width:1px
-  classDef process fill:#fff,stroke:#333,stroke-width:1px
-  classDef document fill:#f5f5f5,stroke:#666,stroke-width:1px
-  classDef codebase fill:#f5deb3,stroke:#8b4513,stroke-width:1px,shape:cylinder
-  classDef input fill:#fff0b3,stroke:#cca300,stroke-width:1px,shape:parallelogram
+    subgraph PLANNER_PROCESS ["Planner Task Execution"]
+       direction TB
+       Step1["1. Analyze Goal & Codebase"]
+       Step2["2. Strategize Breakdown\n(Epic/Single Issue, Workflow Type, Session Context)"]
+       Step3["3. Generate Coder Prompt"]
+       PLANNER --> Step1 --> Step2 --> Step3
+    end
+
+    subgraph DOCUMENTATION ["Documentation Artifacts"]
+       direction TB
+       subgraph Standards ["/Docs/Standards"]
+           STD_CS([CodingStandards.md])
+           STD_TS([TestingStandards.md])
+           STD_DS([DocumentationStandards.md])
+           STD_DG([DiagrammingStandards.md])
+           STD_TM([TaskManagementStandards.md])
+       end
+       subgraph Workflows ["/Docs/Development"]
+           WF_STD([StandardWorkflow.md])
+           WF_CMP([ComplexTaskWorkflow.md])
+           WF_TC([TestCoverageWorkflow.md])
+       end
+       subgraph Templates ["/Docs/Templates"]
+           TMP_CD([AICoderPromptTemplate.md])
+           TMP_TC([TestCaseDevelopmentTemplate.md])
+           TMP_GH([GHCoderTaskTemplate.md])
+           TMP_GHTC([GHTestCoverageTaskTemplate.md])
+           TMP_RM([ReadmeTemplate.md])
+       end
+       LocalREADMEs["Module READMEs"]
+    end
+
+    subgraph CODER_PROCESS ["Coder Task Execution"]
+       direction TB
+       GeneratedPrompt["Generated AI Coder Prompt"]
+       CODER["Stateless AI Coder Agent"]
+       Step4["4. Read Prompt & Referenced Docs"]
+       Step5["5. Execute Referenced Workflow Steps\n(Code, Test, Format, Git, PR, Update Docs)"]
+       FinalOutput["Final Output\n(Commit Hash, PR URL)"]
+       GeneratedPrompt --> CODER --> Step4 --> Step5 --> FinalOutput
+    end
+
+    %% Planner Inputs & References
+    Step1 -->|Reads| LocalREADMEs
+    Step2 -->|Consults| Standards
+    Step3 -->|Uses| Templates
+    Step3 -->|References| Workflows
+
+    %% Prompt Content
+    Step3 -->|Creates| GeneratedPrompt
+
+    %% Coder Inputs
+    GeneratedPrompt -->|References| DOCUMENTATION
+    Step4 -->|Reads| DOCUMENTATION
+
+    %% Coder Output affects Codebase
+    Step5 -->|Modifies| CodebaseState
+
+    classDef aiPlanner fill:#e6f2ff,stroke:#004080,stroke-width:1px;
+    classDef aiCoder fill:#e6ffe6,stroke:#006400,stroke-width:1px;
+    classDef document fill:#f5f5f5,stroke:#666,stroke-width:1px,shape:note;
+    classDef codebase fill:#f5deb3,stroke:#8b4513,stroke-width:1px,shape:cylinder;
+    classDef input fill:#fff0b3,stroke:#cca300,stroke-width:1px,shape:parallelogram;
+    classDef process fill:#fff,stroke:#333,stroke-width:1px;
+
+    class PLANNER aiPlanner;
+    class CODER aiCoder;
+    class WF_STD,WF_CMP,WF_TC,TMP_CD,TMP_TC,TMP_GH,TMP_GHTC,TMP_RM,LocalREADMEs,PlannerPrompt,GeneratedPrompt document;
+    class STD_CS,STD_TS,STD_DS,STD_DG,STD_TM document;
+    class CodebaseState codebase;
+    class DevGoal input;
+    class Step1,Step2,Step3,Step4,Step5 process;
+    class FinalOutput input;
 
 ```
 
-* **Documentation-Centric:** Per-directory `README.md` files (based on `README_template.md` in `/Docs/Standards/`) and embedded/linked diagrams are crucial artifacts, providing essential context for both human developers and AI assistants.
+## 3\. How to Use This Directory
 
-## 3. Interface Contract & Assumptions
+  * **AI Planning:** Use [`CodingPlannerAssistant.md`](https://www.google.com/search?q=./CodingPlannerAssistant.md) as the starting prompt when engaging the AI Planning Assistant.
+  * **AI Coding Workflows:** Review the detailed steps in [`StandardWorkflow.md`](https://www.google.com/search?q=./StandardWorkflow.md), [`ComplexTaskWorkflow.md`](https://www.google.com/search?q=./ComplexTaskWorkflow.md), and [`TestCoverageWorkflow.md`](https://www.google.com/search?q=./TestCoverageWorkflow.md) to understand the execution process for AI Coders.
+  * **Templates:** Refer to files in [`/Docs/Templates/`](https://www.google.com/search?q=../Templates/) for the structure of AI Coder prompts and GitHub Issues.
+  * **Future Plans:** Consult [`ShortTermRoadmap.md`](https://www.google.com/search?q=./ShortTermRoadmap.md) for planned features and refactoring efforts impacting the development process or codebase architecture.
+  * **Standards:** Always ensure development aligns with the rules defined in [`/Docs/Standards/`](https://www.google.com/search?q=../Standards/).
 
-* Not applicable for this documentation directory. Contracts are defined within the codebase and documented in specific module READMEs.
-
-## 4. Local Conventions & Constraints (Beyond Global Standards)
-
-* Not applicable for this documentation directory. Conventions are defined *within* the standard documents located in `/Docs/Standards/`.
-
-## 5. How to Work With This Documentation
-
-* **Intended Workflow:**
-    1.  **Engage with Planning Assistant:** Provide an AI Planning Assistant (like Gemini, with access to the full codebase via file upload) with the `CodingPlannerAssistant.md` prompt from this directory.
-    2.  **Define Goals:** Explain the desired changes or features for the codebase.
-    3.  **Collaborative Planning:** Work with the Planning Assistant to clarify requirements, validate the plan against existing documentation (module READMEs, standards in `/Docs/Standards/`), and decompose the work into logical, incremental coding tasks.
-    4.  **Generate Coder Prompts:** The Planning Assistant will generate detailed, self-contained prompts for each incremental task, following the template in `CodingPlannerAssistant.md`. Use `TestCaseDevelopmentTemplate.md` as a basis for test-focused tasks.
-    5.  **Delegate to AI Coder:** Use these generated prompts to delegate the implementation tasks to separate, stateless AI Coder instances.
-* **Mandatory Reading (Standards):** Before performing development tasks (or guiding AI), developers and AI assistants **MUST** consult the relevant standards documents located in `/Docs/Standards/`:
-    * `CodingStandards.md` (Before Coding)
-    * `DocumentationStandards.md` & `README_template.md` (Before Documenting)
-    * `DiagrammingStandards.md` (Before Creating/Updating Diagrams)
-    * `TestingStandards.md` (Before Testing)
-* **AI Collaboration Guidance:** Use `CodingPlannerAssistant.md` as the foundational prompt and guide for interacting with the Planning Assistant.
-
-## 6. Dependencies
-
-* **Parent:** [`Docs`](../README.md) - This directory is a child of the main documentation directory.
-* **Standards:** The workflows defined here rely heavily on the standards documents located in [`../Standards/`](../Standards/README.md).
-
-## 7. Rationale & Key Historical Context
-
-* This directory focuses specifically on the *process* of AI-assisted development, separating workflow definitions from the core standards themselves (which now reside in `/Docs/Standards/`).
-
-## 8. Known Issues & TODOs
-
-* **Maintenance:** The workflow documents (`CodingPlannerAssistant.md`, `TestCaseDevelopmentTemplate.md`) require periodic review and updates as the AI collaboration process evolves.
-* **Enforcement:** Consistency relies on adherence to the defined workflows and the referenced standards by both human developers and the AI assistants executing tasks.
-
+-----

@@ -27,6 +27,7 @@
 
 ---
 
+```md
 # Module/Directory: [Directory Name - e.g., /Cookbook/Recipes]
 
 **Last Updated:** [YYYY-MM-DD]
@@ -106,6 +107,10 @@
 ## 8. Known Issues & TODOs
 
 * [Bulleted list of known limitations or planned work *specific* to this module (e.g., "Scraping fragility requires ongoing selector maintenance", "Initial load performance might degrade with many recipes"). Link to issue tracker if available.]
+
+---
+
+```
 
 ---
 

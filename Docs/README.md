@@ -1,72 +1,45 @@
 # Module/Directory: Docs
 
-**Last Updated:** 2025-04-20
+**Last Updated:** 2025-05-04
+
+> **Parent:** [`/`](../README.md)
 
 ## 1. Purpose & Responsibility
 
-* **What it is:** This directory is the central repository for all project documentation for the Zarichney API application. It contains standards, guidelines, workflow definitions, templates, and maintenance procedures necessary for understanding, developing, and maintaining the codebase.
-* **Rationale:** This documentation is organized into `Standards` (defining *how* to build/document/test), `Development` (defining *workflows* for development), and `Maintenance` (defining operational procedures) to clearly separate different types of project knowledge.
-* **Key Responsibilities:**
-    * Establishing development, documentation, diagramming, and testing standards.
-    * Defining AI-assisted development workflows.
-    * Providing templates for consistent documentation.
-    * Supplying operational guides for system maintenance (AWS, Database, Authentication - if applicable).
-    * Acting as the primary entry point for project-related documentation.
-* **Why it exists:** To serve as a single source of truth for project knowledge, facilitate developer onboarding, ensure consistency in development and maintenance practices, and support AI coding assistants by providing necessary context and rules.
-* **Key Subdirectories:**
-    * [`Standards/`](./Standards/README.md) - **(Mandatory Reading)** Contains all development standards (Coding, Documentation, Diagramming, Testing) and templates.
-    * [`Development/`](./Development/README.md) - Defines the AI-assisted development workflow.
-    * [`Maintenance/`](./Maintenance/README.md) - (If exists) Contains operational guides for maintaining the application's infrastructure and database.
+* **What it is:** This directory is the central repository for all documentation related to the Zarichney API project. It includes coding standards, development workflows, reusable templates, maintenance guides, and architectural context.
+* **Goal:** To provide clear, comprehensive, and up-to-date documentation that supports both human developers and the AI-assisted development processes used in this project. High-quality documentation is critical for enabling effective AI Coder delegation and maintaining consistency.
 
-## 2. How to Work With This Documentation
+## 2. Documentation Structure Overview
 
-* **Starting Point:** Use this README as the entry point to navigate the project's documentation.
-* **Development Standards & Templates:** Refer to the [`Standards/`](./Standards/README.md) subdirectory for all rules regarding code style, README structure, diagram creation, testing practices, and required templates. **This is essential reading before contributing.**
-* **Development Workflow:** Consult the [`Development/`](./Development/README.md) subdirectory for understanding the AI-assisted planning and coding process.
-* **Maintenance:** Consult the `Maintenance/` subdirectory (if applicable) for procedures related to infrastructure or database upkeep.
-* **New Module Documentation:** Use the `README_template.md` found in [`Standards/`](./Standards/README_template.md), following the guidelines in [`DocumentationStandards.md`](./Standards/DocumentationStandards.md) and [`DiagrammingStandards.md`](./Standards/DiagrammingStandards.md).
+The `/Docs` directory is organized into the following key areas:
 
-```mermaid
-%% Diagram visualizing the Docs directory structure (Corrected Labels)
-graph TD
-    subgraph DocsDir["Docs Directory"]
-        direction LR
-        DocsReadme["Docs/README.md (Entry Point)"] -- Guides To --> StandardsDir{"Standards/"}
-        DocsReadme -- Guides To --> DevelopmentDir{"Development/"}
-        DocsReadme -- Guides To --> MaintenanceDir{"Maintenance/"}
-    end
+* **[`/Docs/Development/`](./Development/README.md): AI-Assisted Workflow & Planning**
+    * Defines the structured workflow leveraging AI Planning Assistants and AI Coders.
+    * Contains the prompt for the AI Planning Assistant (`CodingPlannerAssistant.md`).
+    * Details the specific step-by-step workflows used by AI Coders (`StandardWorkflow.md`, `ComplexTaskWorkflow.md`, `TestCoverageWorkflow.md`).
+    * Houses the project's short-term technical roadmap (`ShortTermRoadmap.md`).
+    * **Entry Point:** Start here to understand *how* development is performed using AI assistance.
 
-    subgraph StandardsDirContent [Standards]
-        StandardsReadme["Standards/README.md"]
-        StandardsList["Contains: Coding, Diagramming, Docs, Testing Standards & Template"]
-    end
+* **[`/Docs/Standards/`](./Standards/README.md): Mandatory Rules & Conventions**
+    * Contains the official standards that **MUST** be followed for all development work.
+    * Includes rules for C# Coding (`CodingStandards.md`), Automated Testing (`TestingStandards.md`), Per-Directory Documentation (`DocumentationStandards.md`), Mermaid Diagramming (`DiagrammingStandards.md`), and Git/Task Management (`TaskManagementStandards.md`).
+    * **Entry Point:** Consult these standards to understand the expected quality and conventions for code, tests, and documentation.
 
-    subgraph DevelopmentDirContent [Development]
-        DevReadme["Development/README.md"]
-        DevList["Contains: AI Planner & Test Case Dev Docs"]
-    end
+* **[`/Docs/Templates/`](./Templates/README.md): Reusable Templates**
+    * Stores standardized templates used throughout the development workflow.
+    * Includes templates for AI Coder Prompts (`AICoderPromptTemplate.md`, `TestCaseDevelopmentTemplate.md`), GitHub Issues (`GHCoderTaskTemplate.md`, `GHTestCoverageTaskTemplate.md`), and the standard per-directory README structure (`ReadmeTemplate.md`).
+    * **Entry Point:** Refer to these templates to understand the expected structure for generated artifacts.
 
-    subgraph MaintenanceDirContent [Maintenance]
-        MaintReadme["Maintenance/README.md"]
-        MaintList["Contains: AWS, Auth, DB, Doc Audit, Testing Setup Guides"]
-    end
+* **[`/Docs/Maintenance/`](./Maintenance/README.md): System & Infrastructure Guides**
+    * Provides operational guides, setup instructions, and context for specific systems or infrastructure components.
+    * Includes information on Authentication (`AuthenticationSystem.md`), Database (`PostgreSqlDatabase.md`), Cloud Infrastructure (`AmazonWebServices.md`), and potentially other specific maintenance procedures or tooling (`TestingSetup.md`, `DocAuditorAssistant.md`).
+    * **Entry Point:** Consult these guides for specific operational or setup tasks related to underlying systems.
 
-    StandardsDir -- Contains --> StandardsReadme
-    StandardsReadme -- Describes --> StandardsList
+## 3. How to Navigate
 
-    DevelopmentDir -- Contains --> DevReadme
-    DevReadme -- Describes --> DevList
+* **To understand the AI Development Process:** Start with [`/Docs/Development/README.md`](./Development/README.md).
+* **To understand Coding/Testing/Doc Rules:** Start with [`/Docs/Standards/README.md`](./Standards/README.md).
+* **To find specific templates:** Look in [`/Docs/Templates/`](./Templates/README.md).
+* **For system-specific operational info:** Look in [`/Docs/Maintenance/`](./Maintenance/README.md).
 
-    MaintenanceDir -- Contains --> MaintReadme
-    MaintReadme -- Describes --> MaintList
-
-    classDef entry fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef dir fill:#ccf,stroke:#333,stroke-width:2px;
-    classDef file fill:#fff,stroke:#333,stroke-width:1px;
-    classDef list fill:#f5f5f5,stroke:#666,stroke-width:1px,align:left;
-
-    class DocsReadme entry;
-    class StandardsDir,DevelopmentDir,MaintenanceDir dir;
-    class StandardsReadme,DevReadme,MaintReadme file;
-    class StandardsList,DevList,MaintList list;
-```
+---

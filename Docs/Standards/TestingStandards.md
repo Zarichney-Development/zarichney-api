@@ -1,7 +1,7 @@
 # Automation Testing Standards
 
-**Version:** 1.2
-**Last Updated:** 2025-04-20
+**Version:** 1.3
+**Last Updated:** 2025-05-03
 
 ## 1. Introduction
 
@@ -25,8 +25,8 @@
 * **Assertion Library:** FluentAssertions (*Mandatory*)
 * **Mocking Library:** Moq (*Mandatory*)
 * **Test Data:** AutoFixture, Custom Test Data Builders
-* **Integration Host:** `CustomWebApplicationFactory<Program>` (in `api-server.Tests/Fixtures/`)
-* **Integration API Client:** Refit (`IZarichneyAPI` generated via `Scripts/GenerateApiClient.ps1` into `api-server.Tests/Client/`)
+* **Integration Host:** `CustomWebApplicationFactory<Program>` (in `api-server.Tests/Framework/Fixtures/`)
+* **Integration API Client:** Refit (`IZarichneyAPI` generated via `Scripts/GenerateApiClient.ps1` into `api-server.Tests/Framework/Client/`)
 * **Integration Database:** Testcontainers (PostgreSQL) via `DatabaseFixture`
 * **Database Cleanup:** Respawn (within `DatabaseFixture`)
 * **Code Coverage:** Coverlet
@@ -35,16 +35,17 @@
 
 * **Test Project:** All tests **must** reside in the `api-server.Tests` project.
 * **Folder Structure:** Strictly adhere to the structure defined in the TDD:
-  * `Client/` (Generated Refit client)
-  * `Configuration/`
+  * `Framework/Client/` (Generated Refit client)
+  * `Framework/Configuration/`
+  * `Framework/Attributes/`
+  * `Framework/Fixtures/` (`CustomWebApplicationFactory`, `DatabaseFixture`, `ApiClientFixture`)
+  * `Framework/Helpers/` (`AuthTestHelper`, etc.)
+  * `Framework/Mocks/Factories/`
   * `Unit/` (Mirrors `api-server` structure)
   * `Integration/` (Mirrors `api-server` structure)
-  * `Fixtures/` (`CustomWebApplicationFactory`, `DatabaseFixture`)
-  * `Helpers/` (`AuthTestHelper`, etc.)
-  * `Mocks/Factories/`
   * `TestData/Builders/`
-* **Class Naming:** `[SystemUnderTest]Tests.cs` (e.g., `OrderServiceTests.cs`, `PaymentApiTests.cs`).
-* **Method Naming:** `[MethodUnderTest]_[Scenario]_[ExpectedOutcome]` (e.g., `CreateOrder_ValidInput_ReturnsCreatedResult`, `Login_IncorrectPassword_ReturnsBadRequest`). Names must be descriptive.
+* **Class Naming:** `[SystemUnderTest]Tests.cs` (e.g., `OrderServiceTests.cs`, `PaymentControllerTests.cs`).
+* **Method Naming:** `[MethodName]_[Scenario]_[ExpectedOutcome]` (e.g., `CreateOrder_ValidInput_ReturnsCreatedResult`, `Login_IncorrectPassword_ReturnsBadRequest`). Names must be descriptive.
 
 ## 5. Test Categorization (Traits)
 
@@ -71,24 +72,27 @@
 ## 7. Integration Test Standards
 
 * **Scope:** Cover all public API endpoints, focusing on key success/error paths, authorization, and component interactions.
-* **Framework:** Use `IClassFixture<CustomWebApplicationFactory>`, `ICollectionFixture<DatabaseFixture>`. Derive tests from a base class (e.g., `IntegrationTestBase`) providing access to the factory, fixtures, and the generated Refit client (`IZarichneyAPI`).
-* **API Interaction:** All interactions with the `api-server` **must** go through the generated `IZarichneyAPI`. Direct service calls are forbidden in integration tests.
+* **Framework:** Use `CustomWebApplicationFactory`, `DatabaseFixture`, and `ApiClientFixture` via the shared `"Integration"` collection fixture. Derive tests from `IntegrationTestBase` or `DatabaseIntegrationTestBase`.
+* **API Interaction:** All interactions with the `api-server` **must** go through the generated `IZarichneyAPI` provided by the base classes (`ApiClient` or `AuthenticatedApiClient`). **Direct service instantiation or calls are strictly forbidden in integration tests.**
 * **Database (`DatabaseFixture`):**
-  * Tests requiring DB interaction **must** use `ICollectionFixture<DatabaseFixture>`.
-  * **Mandatory:** Call `await _dbFixture.ResetDatabaseAsync();` at the *beginning* of each test requiring a clean database state.
+  * Tests requiring DB interaction **must** inherit `DatabaseIntegrationTestBase` and belong to the `"Integration"` collection.
+  * **Mandatory:** Call `await ResetDatabaseAsync();` at the *beginning* of each test requiring a clean database state.
 * **External APIs (Stripe, OpenAI, etc.):**
-  * **Must be mocked.** Mocks are configured in `CustomWebApplicationFactory` via `Mocks/Factories/`.
-  * Retrieve mocks in tests using `_factory.Services.GetRequiredService<Mock<IExternalService>>()`.
+  * **Must be mocked.** Mocks are configured in `CustomWebApplicationFactory` (often via `Mocks/Factories/`).
+  * Retrieve mocks in tests using `Factory.Services.GetRequiredService<Mock<IExternalService>>()`.
   * Configure `Setup()` and `Verify()` on these mocks as needed per test.
   * **Live external API calls are strictly forbidden.**
-* **Authentication (`TestAuthHandler`):** Use helper methods (e.g., `_authHelper.CreateAuthenticatedClient(userId, roles)`) to obtain an `HttpClient` (and subsequently a Refit client) configured with simulated user claims/roles for testing authorization.
+* **Authentication (`TestAuthHandler`):** Use helper methods (e.g., `_authHelper.CreateAuthenticatedClient(userId, roles)` available through the base class) to obtain an `HttpClient` (and subsequently a Refit client) configured with simulated user claims/roles for testing authorization.
 * **Assertions (FluentAssertions):** Assert on API response status codes, DTO content (`Should().BeEquivalentTo()`), and expected side effects (e.g., database state changes verified via a separate DbContext instance obtained from the factory's services *after* the API call). Use `.Because("...")`.
+* **Dependency Skipping:** Use the `[DependencyFact]` attribute for tests requiring specific external configurations (as declared by `Dependency` traits). Use `[DockerAvailableFact]` for tests requiring the Docker runtime. These attributes leverage the `IntegrationTestBase` and framework helpers to automatically skip tests if prerequisites are unmet.
 
 ## 8. Test Data Standards
 
 * **Tools:** AutoFixture and Custom Test Data Builders (`TestData/Builders/`).
-* **AutoFixture:** Use for anonymous data, simple DTOs, primitive test parameters (`[AutoData]`). Configure customizations as needed.
-* **Builders:** **TODO:** Implement builders for core domain models/complex DTOs. Use when specific, controlled object states are required. Leverage AutoFixture within builders.
+* **Usage:**
+    * Use **Builders** for core domain models or complex DTOs where specific, controlled object states are required for testing particular logic paths or validation rules.
+    * Use **AutoFixture** (typically via the `GetRandom` helper) for anonymous data, simple DTOs, primitive test parameters (`[AutoData]`), or populating non-critical properties within Builders.
+* **Clarity:** Test data setup should be clear and maintainable within the Arrange block.
 
 ## 9. Developer Workflow & CI/CD Integration
 
@@ -97,7 +101,7 @@
   1.  Run `Scripts/GenerateApiClient.ps1` if API contracts changed.
   2.  Run the specific tests added/modified.
   3.  Run **all unit tests** (`dotnet test --filter "Category=Unit"`).
-  4.  Run relevant integration tests (e.g., `dotnet test --filter "Category=Integration&Category=Database"`).
+  4.  Run relevant integration tests (e.g., `dotnet test --filter "Category=Integration&Feature=Auth"`).
   5.  Ensure **all** locally run tests pass.
 * **CI/CD (GitHub Actions):**
   * Workflow runs on Pull Requests and merges to `main`.
@@ -113,4 +117,3 @@
 * **Refactoring:** Keep test code clean (DRY principle via helpers/fixtures). Delete obsolete tests. Add tests for bugs found post-release.
 * **Code Review:** Test code is subject to the same review standards as production code. Reviewers **must** check adherence to these standards.
 * **Comment TODOs:** Use `// TODO:` comments for areas needing improvement or refactoring only if issue is out-of-scope from the current assignment. Make mentions of any newly introduced TODOs in the output report.
-

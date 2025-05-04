@@ -1,185 +1,179 @@
-# Module/Directory: api-server (Root)
+# Module/Directory: api-server
 
-**Last Updated:** 2025-04-20
+**Last Updated:** 2025-05-04
+
+> **Parent:** [`/`](../README.md)
 
 ## 1. Purpose & Responsibility
 
-* **What it is:** This project contains the backend API server for the Zarichney application, responsible for handling user authentication, managing cookbook creation workflows, processing payments, interacting with AI services, and serving data to client applications.
+* **What it is:** The main ASP.NET 8 Web API application for the Zarichney platform. It serves as the backend for various features, including the AI-powered Cookbook Factory, authentication, payment processing, and potentially future micro-applications.
 * **Key Responsibilities:**
-    * Providing a secure HTTP API for client interactions.
-    * Orchestrating the personalized cookbook generation process.
-    * Managing user accounts, authentication, and authorization.
-    * Integrating with external services like OpenAI (AI tasks), Stripe (payments), MS Graph (email), Playwright (web scraping), and GitHub (logging).
-    * Providing configuration and startup logic for the application.
-* **Why it exists:** To serve as the central backend logic and data hub for the Zarichney application suite.
-* **Top-Level Subdirectories:**
-    * [`Config/`](./Config/README.md) - Shared configuration models, middleware, and utilities. [cite: api-server/Config/README.md]
-    * [`Controllers/`](./Controllers/README.md) - Defines the external HTTP API endpoints. [cite: api-server/Controllers/README.md]
-    * [`Cookbook/`](./Cookbook/README.md) - Core domain logic for cookbook generation (recipes, orders, customers). [cite: api-server/Cookbook/README.md]
-    * [`Docs/`](./Docs/README.md) - Project documentation, including development standards.
-    * [`Properties/`](./Properties/launchSettings.json) - Visual Studio launch settings.
-    * [`Services/`](./Services/README.md) - Cross-cutting concerns and external service integrations (Auth, AI, Payment, Email, etc.). [cite: api-server/Services/README.md]
-    * [`Startup/`](./Startup/README.md) - Application startup and service registration logic. [cite: api-server/Startup/README.md]
-    * [`api-server.Tests/`](../api-server.Tests/README.md) - (Assumed location) Automated tests project.
+    * Exposing RESTful API endpoints via controllers.
+    * Implementing business logic within domain-specific services (e.g., Cookbook, Auth, Payment).
+    * Interacting with external services (OpenAI, Stripe, GitHub, MS Graph).
+    * Managing application configuration and state.
+    * Providing core infrastructure services (File System, Background Tasks, Email, PDF Generation).
+* **Key Subdirectories/Components:**
+    * [`/Config`](./Config/README.md): Core configuration, constants, middleware, extensions.
+    * [`/Controllers`](./Controllers/README.md): API endpoint definitions.
+    * [`/Cookbook`](./Cookbook/README.md): Domain logic for the AI Cookbook feature.
+    * [`/Docs`](./Docs/README.md): Swagger/OpenAPI documentation setup.
+    * `/Properties`: Build and launch settings.
+    * [`/Services`](./Services/README.md): Core infrastructure and cross-cutting services (Auth, AI, Email, Payment, etc.).
+    * [`/Startup`](./Startup/README.md): Application startup configuration logic (DI registration, middleware pipelines).
+    * **Related Project:** [`../api-server.Tests`](../api-server.Tests/README.md): Contains all unit and integration tests for this API server.
 
 ## 2. Architecture & Key Concepts
 
-* **High-Level Design:** The application is an ASP.NET Core Web API built using a modular, service-oriented architecture. It leverages dependency injection heavily. Key architectural components include Controllers handling API requests, Services encapsulating business logic and external integrations, and specific domain logic within the `Cookbook` module. Persistence uses a mix of file system storage (`FileService`) for cookbook data and PostgreSQL (`UserDbContext`) for authentication data. Background tasks are handled via `IHostedService`. AI capabilities are integrated via dedicated services interacting with OpenAI.
-* **Core Logic Flow:** Client applications interact via HTTP requests routed through Controllers. Controllers typically delegate work to Services (often via MediatR commands/queries in the Auth module). Services coordinate actions, interact with repositories or other services, manage state (via `SessionManager` or persistence), and potentially queue background work (`BackgroundWorker`). External APIs (OpenAI, Stripe, GitHub, MS Graph) are accessed through dedicated service abstractions.
-* **Architectural Overview Diagram:**
-    *(Diagram follows conventions defined in [`Docs/Standards/DiagrammingStandards.md`](./Docs/Standards/DiagrammingStandards.md))*
-    ```mermaid
-    %%{init: {'theme': 'base'}}%%
-    graph TD
-        %% Define Standard Styles (as per DiagrammingStandards.md)
-        classDef controller fill:#f9f,stroke:#333,stroke-width:2px;
-        classDef service fill:#ccf,stroke:#333,stroke-width:2px;
-        classDef repository fill:#ccf,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5;
-        classDef database fill:#f5deb3,stroke:#8b4513,stroke-width:2px;
-        classDef externalApi fill:#ffcc99,stroke:#ff6600,stroke-width:2px;
-        classDef middleware fill:#eee,stroke:#666,stroke-width:1px;
-        classDef background fill:#fff0b3,stroke:#cca300,stroke-width:1px;
-        classDef config fill:#d9ead3,stroke:#6aa84f,stroke-width:1px;
-        classDef startup fill:#d9ead3,stroke:#6aa84f,stroke-width:1px;
-        classDef domain fill:#cfe2f3,stroke:#3d85c6,stroke-width:2px;
-        classDef ui fill:#cceeff,stroke:#007acc,stroke-width:1px;
+* **Technology:** .NET 8, ASP.NET Core Web API, C#.
+* **Architecture Style:** Primarily a modular monolith with clear separation of concerns between controllers, services, and potentially repositories (where applicable, e.g., Auth `UserDbContext`, file-based repositories in `Cookbook`). Utilizes Dependency Injection heavily.
+* **Key Patterns:**
+    * **Dependency Injection:** Services are registered in `/Startup/` or extension methods and injected via constructors.
+    * **Middleware:** Used for cross-cutting concerns like logging (`LoggingMiddleware`), error handling (`ErrorHandlingMiddleware`), authentication (`AuthenticationMiddleware`), and session management (`SessionMiddleware`).
+    * **Configuration:** Strongly-typed configuration classes (`XConfig`) loaded from `appsettings.json` and environment variables/secrets, registered via `ConfigurationExtensions`.
+    * **Background Tasks:** Utilizes `BackgroundWorker` (based on `Channel<T>`) for queuing and processing long-running tasks asynchronously.
+    * **External API Integration:** Uses libraries like `RestSharp`, `OpenAI-DotNet`, `Stripe.net`, `Octokit`, `Microsoft.Graph` for interacting with external services, often wrapped in dedicated internal services (e.g., `LlmService`, `StripeService`, `GitHubService`, `EmailService`). Polly is used for retry policies.
+    * **Authentication:** Uses JWT Bearer tokens and Refresh Tokens managed via cookies (`CookieAuthManager`, `AuthService`). ASP.NET Core Identity is used for user/role management backed by `UserDbContext` (PostgreSQL). API Key authentication is also supported via `AuthenticationMiddleware`.
+    * **Testing:** A dedicated companion project (`../api-server.Tests`) contains comprehensive unit and integration tests. Integration tests leverage `CustomWebApplicationFactory` for in-memory hosting, Testcontainers for isolated PostgreSQL databases (`DatabaseFixture`), and a Refit-generated HTTP client (`IZarichneyAPI`) for API interaction. External dependencies are mocked during testing.
+* **Architectural Diagram:**
+    *(Diagram follows conventions defined in [`/Docs/Standards/DiagrammingStandards.md`](../Docs/Standards/DiagrammingStandards.md))*
+```mermaid
+graph TD
+    subgraph ExternalClients ["External Clients (UI, Mobile, Scripts)"]
+        CLIENT([Client App])
+    end
 
-        %% Nodes
-        subgraph ext [External Systems]
-            direction LR
-            ClientApp[Client App]:::ui
-            PostgresDB[(PostgreSQL)]:::database
-            OpenAI[OpenAI API]:::externalApi
-            Stripe[Stripe API]:::externalApi
-            GitHub[GitHub API]:::externalApi
-            MSGraph[MS Graph API]:::externalApi
+    subgraph ApiServer ["API Server (api-server)"]
+        direction LR
+        subgraph Controllers ["Controllers"]
+            CTRL(e.g., CookbookController)
         end
-
-        subgraph apisrv [API Server Application]
-            direction TB
-            subgraph req_pipeline [Request Pipeline]
-                direction TB
-                Controllers[Controllers]:::controller
-                Middleware[Middleware]:::middleware
-                StartupLogic[Startup / Config]:::startup
-            end
-
-            subgraph core_logic [Core Logic]
-                direction TB
-                Services["Services (Auth, AI, Email, etc.)"]:::service
-                CookbookDomain[Cookbook Domain]:::domain
-                BackgroundTasks[Background Tasks]:::background
-            end
-
-            subgraph persistence [Persistence]
-                direction TB
-                UserRepo[User/Auth Repository]:::repository
-                FileRepo[File-based Repositories]:::repository
-            end
-
-            %% Internal High-Level Connections
-            Controllers --> Services
-            Controllers --> CookbookDomain
-            Middleware -.-> Controllers
-            %% Middleware intercepts before controllers
-            Services --> Persistence
-            CookbookDomain --> Services
-            %% e.g., Cookbook uses AI Service
-            CookbookDomain --> Persistence
-            BackgroundTasks -.-> Services
-            %% Background tasks use services via scope factory
-            Persistence --> UserRepo
-            Persistence --> FileRepo
-
-            StartupLogic -- configures --> Middleware
-            StartupLogic -- registers --> Services
-            StartupLogic -- registers --> CookbookDomain
-            StartupLogic -- registers --> Persistence
-            StartupLogic -- registers --> BackgroundTasks
+        subgraph Services ["Services"]
+            SVCS(e.g., RecipeService, AuthService, PaymentService, LlmService)
         end
+        subgraph CoreInfra ["Core Infrastructure"]
+            DI("DI Container")
+            CONFIG("Configuration")
+            MIDDLEWARE("Middleware Pipeline\n(Logging, Error, Auth, Session)")
+            BG("BackgroundWorker")
+        end
+        subgraph Data ["Data Access"]
+             REPO(Repositories / DbContext)
+             FS("FileService")
+        end
+    end
 
-        %% External Connections
-        ClientApp --> Controllers
-        UserRepo --> PostgresDB
-        FileRepo -- Stores Data --> Filesystem[(File System)]:::database
-        %% Representing FileService target
-        Services --> OpenAI
-        Services --> Stripe
-        Services --> GitHub
-        Services --> MSGraph
-        CookbookDomain --> OpenAI
-        %% Specifically for recipe processing
-
-        %% Apply Styles
-        class ClientApp ui;
-        class PostgresDB database;
-        class OpenAI,Stripe,GitHub,MSGraph externalApi;
-        class Controllers controller;
-        class Middleware middleware;
-        class StartupLogic startup;
-        class Services service;
-        class CookbookDomain domain;
-        class BackgroundTasks background;
-        class UserRepo,FileRepo repository;
-        class Filesystem database;
+    subgraph Testing ["Testing (api-server.Tests)"]
+        direction LR
+        UNIT["Unit Tests\n(Mock Dependencies)"] -->|Test| SVCS
+        subgraph IntegrationTesting ["Integration Tests"]
+           direction TB
+           ITestClient(["Refit Client\n(IZarichneyAPI)"]) -->|Interact| ApiServer
+           DBContainer{{"Testcontainers\n(PostgreSQL)"}} <-- Manages --> REPO
+           TestFactory(["CustomWebApplicationFactory\n(In-Memory Host, Mock Externals)"]) -.-> ApiServer
+           TestFactory -.-> DBContainer
+           TestFactory -.-> ITestClient
+        end
+    end
 
 
-    ```
+    subgraph ExternalServices ["External Services"]
+        OPENAI("OpenAI API")
+        STRIPE("Stripe API")
+        GITHUB("GitHub API")
+        MSGRAPH("MS Graph API (Email)")
+        DB[(PostgreSQL)]
+    end
+
+    CLIENT -->|HTTPS Request| MIDDLEWARE
+    MIDDLEWARE --> CTRL
+    CTRL -->|Uses| SVCS
+    SVCS -->|Uses| SVCS
+    SVCS -->|Uses| REPO
+    SVCS -->|Uses| FS
+    SVCS -->|Uses| BG
+    SVCS -->|Accesses| CONFIG
+    SVCS -->|Calls External| OPENAI
+    SVCS -->|Calls External| STRIPE
+    SVCS -->|Calls External| GITHUB
+    SVCS -->|Calls External| MSGRAPH
+    REPO -->|Reads/Writes| DB
+
+    %% Apply Styles
+    classDef default fill:#fff,stroke:#333,stroke-width:1px;
+    classDef externalApi fill:#ffcc99,stroke:#ff6600,stroke-width:1px;
+    classDef database fill:#f5deb3,stroke:#8b4513,stroke-width:1px;
+    classDef ui fill:#cceeff,stroke:#007acc,stroke-width:1px;
+    classDef test fill:#e6ffe6,stroke:#006400,stroke-width:1px;
+
+    class CLIENT ui;
+    class OPENAI,STRIPE,GITHUB,MSGRAPH externalApi;
+    class DB,DBContainer database;
+    class UNIT,IntegrationTesting,ITestClient,TestFactory test;
+```
 
 ## 3. Interface Contract & Assumptions
 
-* **Key Public Interfaces (for external callers):**
-    * The primary interface is the **HTTP RESTful API** exposed by the Controllers. Specific endpoints, request/response formats, and authentication requirements are detailed within the `/Controllers` module and potentially via Swagger/OpenAPI documentation (if generated).
-* **Critical Assumptions:**
-    * **Deployment Environment:** Assumes a hosting environment capable of running ASP.NET Core 8, with necessary network access to external APIs (OpenAI, Stripe, GitHub, MS Graph) and the PostgreSQL database. Assumes write access to a local or mounted file system for `FileService`.
-    * **Configuration:** Assumes all required configuration values (API keys, connection strings, service URLs) are correctly provided via `appsettings.json`, environment variables, user secrets, or other configured providers. Missing critical configuration will likely cause startup failures or runtime errors.
-    * **External Services:** Assumes availability and correct functioning of all integrated external services (Database, OpenAI, Stripe, GitHub, MS Graph). Service outages will impact corresponding application features.
-    * **Client Behavior:** Assumes clients adhere to API contracts regarding request formats, authentication tokens, and rate limits (if applicable).
+* **API Contract:** Defined by the OpenAPI specification available at `/swagger`. Controllers define the request/response DTOs (often using Records).
+* **Authentication:** Most endpoints require authentication via JWT Bearer token (obtained via `/api/auth/login`) or API Key. Specific authorization requirements (roles) are documented per endpoint via `[Authorize]` attributes.
+* **Configuration Dependency:** Assumes necessary configuration (API keys, connection strings, settings) is provided via `appsettings.json`, environment variables, or secrets manager as defined in `/Config/README.md`. Missing critical config may lead to runtime errors (`ConfigurationMissingException`).
+* **External Services:** Assumes availability and correct configuration of external dependencies (OpenAI, Stripe, etc.). Uses Polly for transient error handling but may fail if external services are down or misconfigured.
 
-## 4. Local Conventions & Constraints (Beyond Global Standards)
+## 4. Local Conventions & Constraints
 
-* **Global Standards:** All code and documentation adhere to the standards defined in [`Docs/Standards/`](./Docs/Standards/).
-* **Technology Stack:** ASP.NET Core 8, C#, Serilog (Logging), EF Core (DB access for Auth), MediatR (Auth Commands), Polly (Retries), RestSharp/HttpClient (HTTP Clients), Playwright (Scraping), QuestPDF (PDF Gen), Testcontainers (Integration Testing), xUnit (Testing), Moq (Mocking), FluentAssertions (Assertions).
-* **Branching Strategy:** (Define your branching strategy here, e.g., Gitflow, GitHub Flow).
-* **Dependency Management:** Uses .NET SDK built-in package management (NuGet).
+* **Primary Language:** C\# 12 with .NET 8.
+* **Coding Standards:** Strictly adhere to [`/Docs/Standards/CodingStandards.md`](https://www.google.com/search?q=../Docs/Standards/CodingStandards.md) and rules enforced by `.editorconfig`.
+* **Documentation Standards:** All subdirectories with significant logic **MUST** have a `README.md` following [`/Docs/Standards/DocumentationStandards.md`](https://www.google.com/search?q=../Docs/Standards/DocumentationStandards.md) and the template in [`/Docs/Templates/ReadmeTemplate.md`](https://www.google.com/search?q=../Docs/Templates/ReadmeTemplate.md).
+* **Testing Standards:** All new features/fixes **MUST** include corresponding tests adhering to [`/Docs/Standards/TestingStandards.md`](https://www.google.com/search?q=../Docs/Standards/TestingStandards.md).
 
 ## 5. How to Work With This Code
 
 * **Setup:**
-    1.  Clone the repository.
-    2.  Ensure [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) is installed.
-    3.  Configure required secrets (API Keys for OpenAI, Stripe, GitHub; Connection String for PostgreSQL) using User Secrets (`dotnet user-secrets set "Key" "Value"`) or other appropriate methods. Refer to `appsettings.json` and specific service `README.md` files for required keys.
-    4.  Set up a PostgreSQL database instance accessible to the application.
-    5.  Run Entity Framework migrations for the Auth database: `dotnet ef database update --project api-server --startup-project api-server` (adjust paths if needed).
-    6.  (If scraping) Install Playwright browsers: `pwsh ./Scripts/Install-Playwright.ps1` (or equivalent).
-* **Building:** `dotnet build` from the root directory.
-* **Running Locally:** `dotnet run --project api-server` (uses `Properties/launchSettings.json`).
-* **Testing:**
-    * **Run All Tests:** `dotnet test` from the root directory.
-    * **Run Unit Tests:** `dotnet test --filter "Category=Unit"`
-    * **Run Integration Tests:** `dotnet test --filter "Category=Integration"` (Requires Docker for Testcontainers).
-    * Refer to [`Docs/Standards/TestingStandards.md`](./Docs/Standards/TestingStandards.md) for details.
-* **Documentation:**
-    * Per-directory `README.md` files provide detailed context. Start exploration from the relevant directory.
-    * Adhere to [`Docs/Standards/DocumentationStandards.md`](./Docs/Standards/DocumentationStandards.md) and [`Docs/Standards/DiagrammingStandards.md`](./Docs/Standards/DiagrammingStandards.md).
+1.  Ensure .NET 8 SDK is installed.
+2.  Configure necessary secrets (API Keys, DB connection string) using User Secrets (`dotnet user-secrets set ...`) or environment variables, referencing `appsettings.json` and module READMEs for required keys.
+3.  Ensure Docker Desktop is running (for integration tests using Testcontainers).
+4.  Build the solution: `dotnet build Zarichney.sln` (from root directory).
+5.  Apply database migrations (if using UserDbContext): Navigate to `/api-server/` and run `dotnet ef database update --context UserDbContext`.
+* **Running Locally:**
+* From the `/api-server/` directory, run `dotnet run`.
+* Access the API via `https://localhost:7061` (or configured port).
+* Swagger UI is available at `https://localhost:7061/swagger`.
+* **Running Tests:** **(New)**
+* Navigate to the repository root directory (`zarichney-api/`).
+* Run all tests: `dotnet test Zarichney.sln`
+* Run only Unit tests: `dotnet test --filter "Category=Unit"`
+* Run only Integration tests: `dotnet test --filter "Category=Integration"` (Requires Docker)
+* Run tests for a specific feature (using Traits): `dotnet test --filter "Category=Integration&Feature=Auth"`
+* **Regenerating API Client for Tests:** **(New)**
+* If API contracts in `/api-server/Controllers/` change, the Refit client used by integration tests (`/api-server.Tests/Framework/Client/IZarichneyAPI.cs`) needs regeneration.
+* From the repository root directory (`zarichney-api/`), run the script:
+```powershell
+./Scripts/GenerateApiClient.ps1
+```
+* **Key Tooling:**
+* `.NET CLI`
+* `Entity Framework Core Tools` (`dotnet ef`)
+* `Docker Desktop` (for integration testing)
+* `GitHub CLI` (`gh`) (for AI Coder workflow)
 
 ## 6. Dependencies
 
-* **Internal Code Dependencies:** See Section 1 for links to top-level module READMEs. Key modules rely on each other (e.g., Controllers use Services, Services use Config, Cookbook uses Services).
-* **External Library Dependencies:** Major dependencies include ASP.NET Core 8, EF Core, Serilog, MediatR, Polly, OpenAI SDK, Stripe SDK, Octokit.NET, MS Graph SDK, Playwright, QuestPDF, Testcontainers, xUnit, Moq, FluentAssertions. See `.csproj` files for a complete list.
-* **External Service Dependencies:** PostgreSQL Database, OpenAI API, Stripe API, GitHub API, Microsoft Graph API.
-* **Dependents (Impact of Changes):** Primarily consumed by client applications (Web UI, Mobile App - not included in this repo). Changes to API contracts in `/Controllers` will impact these clients.
+* **Internal (Key Modules Consumed):** Services consume each other via DI (e.g., `CookbookController` uses `RecipeService`, `OrderService`; `AuthService` uses `EmailService`). See individual service/controller READMEs for specifics.
+* **External Libraries:** .NET 8 SDK, ASP.NET Core, EF Core, Serilog, Polly, MediatR, AutoMapper, Swashbuckle, RestSharp, OpenAI-DotNet, Stripe.net, Octokit, Microsoft.Graph, PlaywrightSharp, AngleSharp, QuestPDF, Testcontainers, xUnit, Moq, FluentAssertions, Refit.
+* **Infrastructure:** PostgreSQL Database, potentially AWS services for deployment (S3, ECS, etc.).
 
 ## 7. Rationale & Key Historical Context
 
-* This API was developed to provide a robust, scalable, and maintainable backend for the Zarichney personalized cookbook application.
-* The architecture prioritizes separation of concerns, dependency injection for testability, and asynchronous processing for potentially long-running tasks (AI interactions, scraping, PDF generation).
-* File-based storage for cookbook data was chosen initially for simplicity/cost, while a relational database (PostgreSQL) was used for structured authentication data via ASP.NET Core Identity.
+* Developed as a modular backend to support various personal projects and experiments, starting with the AI Cookbook Factory.
+* Architecture aims for reasonable separation of concerns while remaining manageable as a single deployable unit initially.
+* Emphasis on robust testing (`api-server.Tests`) added early after encountering regressions.
+* AI-assisted development workflow adopted to accelerate development and explore new methodologies.
 
 ## 8. Known Issues & TODOs
 
-* **Scalability:** File-based storage for recipes/orders may face scalability limitations under very high load; consider migration to a database or blob storage in the future.
-* **Scraping Fragility:** Web scraping logic (`WebScraperService`) is inherently brittle and may break if target website structures change. Requires monitoring and maintenance.
-* **Configuration Management:** Explore more robust configuration management for production environments (e.g., Azure App Configuration, AWS Parameter Store).
-* **Monitoring & Alerting:** Implement comprehensive application monitoring, logging aggregation, and alerting for production readiness.
+* Scalability of file-based storage for Cookbook data needs review (see `ShortTermRoadmap.md`).
+* Configuration handling could be improved (see `ShortTermRoadmap.md`).
+* See individual module READMEs for specific TODOs or known issues.
+* Refer to `/Docs/Development/ShortTermRoadmap.md` for broader planned work.
 
+-----

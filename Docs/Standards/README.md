@@ -1,61 +1,41 @@
 # Module/Directory: Docs/Standards
 
-**Last Updated:** 2025-04-20
+**Last Updated:** 2025-05-04
 
-> **Parent:** [`Docs`](../README.md) [cite: Docs/README.md]
+> **Parent:** [`Docs`](../README.md)
 
 ## 1. Purpose & Responsibility
 
-* **What it is:** This directory serves as the central repository for all mandatory standards, guidelines, and templates governing the development process of the Zarichney API application.
-* **Key Responsibilities:**
-    * Defining rules and best practices for writing C# code (`CodingStandards.md`).
-    * Defining the structure, content, and maintenance requirements for per-directory README files (`DocumentationStandards.md`).
-    * Defining rules and conventions for creating and maintaining Mermaid architecture/workflow diagrams (`DiagrammingStandards.md`).
-    * Defining the standards, frameworks, and quality expectations for automated tests (`TestingStandards.md`).
-    * Providing the mandatory template for creating per-directory README files (`README_template.md`).
-* **Why it exists:** To ensure consistency, maintain high quality across the codebase and documentation, and provide clear, explicit rules essential for effective AI-assisted development workflows.
-* **Documents within this Directory:**
-    * [`CodingStandards.md`](./CodingStandards.md) - C# coding rules and best practices. [cite: Docs/Standards/CodingStandards.md]
-    * [`DocumentationStandards.md`](./DocumentationStandards.md) - Rules for per-directory README files. [cite: Docs/Standards/DocumentationStandards.md]
-    * [`DiagrammingStandards.md`](./DiagrammingStandards.md) - Rules for Mermaid diagrams. [cite: Docs/Standards/DiagrammingStandards.md]
-    * [`TestingStandards.md`](./TestingStandards.md) - Rules for automated tests. [cite: Docs/Standards/TestingStandards.md]
-    * [`README_template.md`](./README_template.md) - Template for per-directory README files. [cite: Docs/Standards/README_template.md]
+* **What it is:** This directory contains the official, **mandatory standards** that govern all aspects of software development for the Zarichney API project.
+* **Goal:** To ensure consistency, quality, maintainability, and robustness across the codebase and its associated documentation and tests.
+* **Critical Importance for AI Workflow:** Adherence to these standards is **essential** for the success of the AI-assisted development workflow. Both AI Planning Assistants and AI Coders rely heavily on these documents to understand expectations and perform tasks correctly and safely. Prompts and workflow steps will explicitly instruct AI agents to consult and adhere to these standards.
 
-## 2. Architecture & Key Concepts
+## 2. Overview of Standards Documents
 
-* **Centralized Standards:** This directory consolidates all core development standards into a single, easily discoverable location.
-* **Foundation for AI Collaboration:** These documents provide the ground rules referenced by the AI Coding Planning Assistant during task decomposition and prompt generation, and are mandatory reading for the AI Coder during implementation. Explicit, documented standards are crucial for guiding AI behavior effectively. [cite: Docs/Development/CodingPlannerAssistant.md]
-* **Living Documents:** The standards herein are expected to evolve alongside the project and industry best practices.
+This directory contains the following key standards documents:
 
-## 3. Interface Contract & Assumptions
+* **[`CodingStandards.md`](./CodingStandards.md):**
+    * Defines rules and best practices for writing C# code within this project.
+    * Covers naming, formatting (referencing `.editorconfig`), architecture (DI, file structure), error handling, logging, async patterns, security considerations, and more.
+    * *Mandates* updates to tests, documentation, and diagrams when code changes.
+* **[`DocumentationStandards.md`](./DocumentationStandards.md):**
+    * Defines rules for creating and maintaining the per-directory `README.md` files.
+    * Focuses on structure (using `ReadmeTemplate.md`), content philosophy (context for AI), linking strategy, and mandatory updates.
+* **[`TestingStandards.md`](./TestingStandards.md):**
+    * Defines rules for automated unit and integration testing.
+    * Covers required tooling (xUnit, Moq, FluentAssertions, Testcontainers), test structure (AAA), naming, categorization (Traits), mocking strategies, assertion requirements, and database handling.
+* **[`DiagrammingStandards.md`](./DiagrammingStandards.md):**
+    * Defines rules for creating and maintaining architecture and workflow diagrams using Mermaid.js.
+    * Covers diagram types, location, styling conventions, linking, complexity management, and mandatory syntax rules for reliable rendering.
+* **[`TaskManagementStandards.md`](./TaskManagementStandards.md):**
+    * Defines rules for integrating development tasks with GitHub Issues and managing the Git workflow.
+    * Covers issue usage/templates, branch naming conventions, Conventional Commits standard, and Pull Request creation procedures using the `gh` CLI. Includes mandatory formatting verification (`dotnet format`).
+* **Related Template:** [`../Templates/ReadmeTemplate.md`](../Templates/ReadmeTemplate.md) defines the mandatory structure referenced by `DocumentationStandards.md`.
 
-* Not applicable for this documentation directory.
+## 3. How to Use These Standards
 
-## 4. Local Conventions & Constraints (Beyond Global Standards)
+* **Developers (Human & AI):** Before starting any development task (coding, testing, documentation), review the relevant standard(s) to ensure compliance.
+* **AI Planning Assistant:** References these standards when validating plans and generating prompts.
+* **AI Coder:** Explicitly instructed by prompts and workflow steps files to consult and strictly adhere to these standards during task execution.
 
-* Not applicable for this documentation directory. This directory *defines* the global standards.
-
-## 5. How to Work With This Documentation
-
-* **Mandatory Reading:** Developers and AI assistants **MUST** consult the relevant standard document(s) within this directory *before* undertaking related tasks:
-    * **Coding:** Review `CodingStandards.md`.
-    * **Documenting (READMEs):** Review `DocumentationStandards.md` and use `README_template.md`.
-    * **Diagramming:** Review `DiagrammingStandards.md`.
-    * **Testing:** Review `TestingStandards.md`.
-* **AI Workflow Integration:** These standards are automatically referenced in the prompts generated by the AI Coding Planning Assistant for the AI Coder. [cite: Docs/Development/CodingPlannerAssistant.md]
-
-## 6. Dependencies
-
-* **Parent:** [`Docs`](../README.md) - This directory is a child of the main documentation directory.
-* **Dependents:**
-    * [`../Development/`](../Development/README.md) - The workflows defined in the Development directory rely heavily on these standards. [cite: Docs/Development/README.md]
-    * **Entire Codebase:** All code, tests, documentation, and diagrams throughout the `api-server` project are expected to adhere to the standards defined here.
-
-## 7. Rationale & Key Historical Context
-
-* Centralizing these standards from the previous `/Docs/Development` location aims to improve clarity and separation between *rules* (here in `/Standards`) and *process/workflow* definitions (in `/Development`). This structure makes it easier to locate and reference specific standards.
-
-## 8. Known Issues & TODOs
-
-* **Maintenance:** All standards documents within this directory require periodic review and updates to ensure they remain relevant, accurate, and reflect current best practices and project needs.
-
+---

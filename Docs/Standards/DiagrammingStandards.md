@@ -1,16 +1,16 @@
 # Project Diagramming Standards (Mermaid.js)
 
 **Version:** 1.2
-**Last Updated:** 2025-04-20
+**Last Updated:** 2025-05-03
 
 ## 1. Purpose and Scope
 
 * **Purpose:** To define the mandatory standards, practices, and quality expectations for creating and maintaining architectural and workflow diagrams using Mermaid.js within the `api-server` solution. These standards ensure clarity, accuracy, consistency, and maintainability of visual documentation, supporting both human understanding and AI-assisted development.
 * **Scope:** Applies to all diagrams created using Mermaid.js syntax, typically embedded within per-directory `README.md` files or potentially stored as separate `.mmd` files linked from READMEs.
 * **Relationship to Other Standards:**
-    * This document complements **[`DocumentationStandards.md`](./DocumentationStandards.md)** [cite: Docs/Standards/DocumentationStandards.md], which governs the overall structure and maintenance of README files where these diagrams are embedded.
-    * Diagram content must accurately reflect the code structure and conventions defined in **[`CodingStandards.md`](./CodingStandards.md)** [cite: Docs/Standards/CodingStandards.md].
-    * Diagram creation and maintenance are integrated into the AI Coder workflow described in **[`CodingPlannerAssistant.md`](./CodingPlannerAssistant.md)** [cite: Docs/Standards/CodingPlannerAssistant.md].
+    * This document complements **[`./DocumentationStandards.md`](./DocumentationStandards.md)**, which governs the overall structure and maintenance of README files where these diagrams are embedded.
+    * Diagram content must accurately reflect the code structure and conventions defined in **[`./CodingStandards.md`](./CodingStandards.md)**.
+    * Diagram creation and maintenance are integrated into the AI Coder workflow described in **[`/Docs/Development/CodingPlannerAssistant.md`](../Development/CodingPlannerAssistant.md)**.
 
 ## 2. Core Philosophy & Principles
 
@@ -23,7 +23,7 @@
 ## 3. Diagram Creation & Maintenance Mandate
 
 * **Trigger:** Any task (performed by human or AI) that introduces or modifies code affecting the documented architecture, component interactions, dependencies, or primary workflows within a module **MUST** also create or update the relevant Mermaid diagram(s) within the same commit/change.
-* **Responsibility:** Both human developers and AI Coders are responsible for adhering to these standards when creating or updating diagrams. The AI Coder workflow explicitly includes checking for and performing necessary diagram updates. [cite: Docs/Standards/CodingPlannerAssistant.md, Docs/Standards/CodingStandards.md]
+* **Responsibility:** Both human developers and AI Coders are responsible for adhering to these standards when creating or updating diagrams. The AI Coder workflow explicitly includes checking for and performing necessary diagram updates.
 
 ## 4. Diagram Types and Usage
 
@@ -31,19 +31,19 @@ Select the most appropriate Mermaid diagram type for the specific architectural 
 
 * **Flowcharts (`graph`):**
     * **Use For:** High-level module overviews, conceptual middleware pipelines, background job processing logic, simple decision flows within services, development workflows.
-    * **Key Syntax:** Nodes (`id[Label]`), Edges (`-->`, `-.->`), Subgraphs (`subgraph...end`), Direction (`TD`, `LR`, `RL`). [cite: Research Report Section 2]
+    * **Key Syntax:** Nodes (`id[Label]`), Edges (`-->`, `-.->`), Subgraphs (`subgraph...end`), Direction (`TD`, `LR`, `RL`).
 * **Sequence Diagrams (`sequenceDiagram`):**
     * **Use For:** Detailing time-ordered interactions for specific API requests (e.g., login, order creation), CQRS command/query flows, communication between services, external API calls. **Highly recommended for clarifying complex interactions.**
-    * **Key Syntax:** Participants (`participant Name as Alias`), Messages (`->>`, `->`, `-->`, `-x`), Activations (`activate`/`deactivate`, `+/-`), Fragments (`loop`, `alt`, `opt`). [cite: Research Report Section 2]
+    * **Key Syntax:** Participants (`participant Name as Alias`), Messages (`->>`, `->`, `-->`, `-x`), Activations (`activate`/`deactivate`, `+/-`), Fragments (`loop`, `alt`, `opt`).
 * **Class Diagrams (`classDiagram`):**
     * **Use For:** Modeling static structure and dependencies between key classes/interfaces within a module (e.g., Controller-Service-Repository relationships, DI dependencies, inheritance). Focus on interfaces and key components, avoid excessive detail.
-    * **Key Syntax:** Classes/Interfaces (`class`, `interface`, `<<Annotation>>`), Members (`+Name: type`), Relationships (`<|--`, `*--`, `o--`, `-->`, `..>`). [cite: Research Report Section 2]
+    * **Key Syntax:** Classes/Interfaces (`class`, `interface`, `<<Annotation>>`), Members (`+Name: type`), Relationships (`<|--`, `*--`, `o--`, `-->`, `..>`).
 * **Entity Relationship Diagrams (`erDiagram`):**
     * **Use For:** Visualizing the database schema (tables, columns, keys, relationships) relevant to a module, particularly for the main `UserDbContext`.
-    * **Key Syntax:** Entities (`ENTITY { type name [PK/FK] }`), Relationships (`||--o{`, etc.). [cite: Research Report Section 2]
+    * **Key Syntax:** Entities (`ENTITY { type name [PK/FK] }`), Relationships (`||--o{`, etc.).
 * **C4 Model Diagrams (`C4Context`, `C4Container`, `C4Component`):**
     * **Use For:** Providing standardized, hierarchical views of the system architecture (Context, Containers, Components). Useful for top-level documentation.
-    * **Key Syntax:** Specific elements (`Person`, `System`, `Container`, `Component`), `Rel`/`BiRel`. Be aware support is still evolving in Mermaid. [cite: Research Report Section 2]
+    * **Key Syntax:** Specific elements (`Person`, `System`, `Container`, `Component`), `Rel`/`BiRel`. Be aware support is still evolving in Mermaid.
 
 ## 5. Location and Naming
 
@@ -70,7 +70,7 @@ Consistent styling enhances readability and provides semantic meaning.
     classDef human fill:#cceeff,stroke:#007acc,stroke-width:1px;
     classDef aiPlanner fill:#e6f2ff,stroke:#004080,stroke-width:1px;
     classDef aiCoder fill:#e6ffe6,stroke:#006400,stroke-width:1px;
-    classDef process fill:#fff,stroke:#333,stroke-width:1px; 
+    classDef process fill:#fff,stroke:#333,stroke-width:1px;
     %% Shape applied directly or via style
     classDef document fill:#f5f5f5,stroke:#666,stroke-width:1px;
     classDef codebase fill:#f5deb3,stroke:#8b4513,stroke-width:1px;
@@ -117,7 +117,7 @@ Use specific line styles, arrowheads, and labels to convey interaction semantics
 * **Decomposition:** Break down large, complex systems into multiple, focused diagrams (see Section 4 - Diagram Types). Avoid monolithic diagrams.
 * **Layering:** Use different diagram types to show different layers of abstraction (e.g., C4 flow: Context -> Container -> Component; or Overview Flowchart -> Detailed Sequence Diagram).
 * **Linking:** Leverage the documentation platform (Markdown links in READMEs) to connect related diagrams (e.g., link from a component in an overview diagram to its detailed sequence diagram). Use consistent naming for linked diagrams.
-* **Subgraphs/Boundaries:** Use `subgraph` (Flowchart) or `Boundary` (C4) effectively to group related components visually. Avoid excessive nesting. Define nodes within their intended subgraphs *before* defining links separately to prevent layout issues caused by reordering. [cite: Research Report Section 3]
+* **Subgraphs/Boundaries:** Use `subgraph` (Flowchart) or `Boundary` (C4) effectively to group related components visually. Avoid excessive nesting. Define nodes within their intended subgraphs *before* defining links separately to prevent layout issues caused by reordering.
 
 ## 10. Syntax Notes & Common Pitfalls (**Mandatory Adherence**)
 
@@ -185,10 +185,9 @@ Based on practical experience and renderer limitations, follow these syntax rule
 ## 12. Maintenance (AI Coder Responsibility)
 
 * **Review Trigger:** Before implementing code changes, the AI Coder **MUST** review the relevant diagrams in the target module's README to understand the existing architecture and flow.
-* **Update Mandate:** As part of the standard AI Coder workflow [cite: Docs/Standards/CodingPlannerAssistant.md], if code changes impact the architecture, interactions, or flows depicted in a Mermaid diagram, the AI Coder **MUST**:
+* **Update Mandate:** As part of the standard AI Coder workflow, if code changes impact the architecture, interactions, or flows depicted in a Mermaid diagram, the AI Coder **MUST**:
     1.  Update the Mermaid diagram definition(s) to accurately reflect the changes.
     2.  Adhere strictly to the standards defined in *this* document (`DiagrammingStandards.md`), paying close attention to Section 10.
     3.  Ensure the updated diagram renders correctly (visual check if possible, rely on syntax correctness otherwise, validate against Live Editor if errors occur, simplify if necessary - see Section 10).
     4.  Update the `Last Updated:` date in the containing `README.md` file if the diagram was modified.
 * **Pruning:** Remove obsolete elements or diagrams if architectural changes render them invalid.
-
