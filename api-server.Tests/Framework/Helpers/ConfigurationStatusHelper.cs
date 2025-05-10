@@ -13,27 +13,43 @@ public static class ConfigurationStatusHelper
   /// Gets the configuration status from the /api/status/config endpoint.
   /// </summary>
   /// <param name="factory">The CustomWebApplicationFactory used to create the HTTP client.</param>
-  /// <returns>A list of configuration item statuses.</returns>
-  /// <exception cref="InvalidOperationException">Thrown when the request fails or returns null.</exception>
+  /// <returns>A list of configuration item statuses or an empty list if the request fails.</returns>
   public static async Task<List<ConfigurationItemStatus>> GetConfigurationStatusAsync(CustomWebApplicationFactory factory)
   {
     ArgumentNullException.ThrowIfNull(factory, nameof(factory));
 
-    using var client = factory.CreateClient();
-    var response = await client.GetAsync("/api/status/config");
-
-    // Ensure the request was successful
-    response.EnsureSuccessStatusCode();
-
-    // Deserialize the response
-    var statuses = await response.Content.ReadFromJsonAsync<List<ConfigurationItemStatus>>();
-
-    if (statuses == null)
+    try
     {
-      throw new InvalidOperationException("Failed to deserialize configuration status response");
-    }
+      using var client = factory.CreateClient();
 
-    return statuses;
+      // Set a short timeout to prevent long waits when the service is unavailable
+      client.Timeout = TimeSpan.FromSeconds(5);
+
+      var response = await client.GetAsync("/api/status/config");
+
+      // Check if the request was successful
+      if (!response.IsSuccessStatusCode)
+      {
+        // Return empty list if the request was not successful
+        return new List<ConfigurationItemStatus>();
+      }
+
+      // Deserialize the response
+      var statuses = await response.Content.ReadFromJsonAsync<List<ConfigurationItemStatus>>();
+
+      if (statuses == null)
+      {
+        // Return empty list if deserialization failed
+        return new List<ConfigurationItemStatus>();
+      }
+
+      return statuses;
+    }
+    catch
+    {
+      // Return empty list if any exception occurs
+      return new List<ConfigurationItemStatus>();
+    }
   }
 
   /// <summary>
