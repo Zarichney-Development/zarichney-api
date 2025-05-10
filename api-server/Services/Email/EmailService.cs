@@ -137,7 +137,7 @@ public class EmailService(
 
     logger.LogInformation("Validating email {Email}", email);
 
-    var client = new RestClient("https://mailcheck.p.rapidapi.com");
+    using var client = new RestClient("https://mailcheck.p.rapidapi.com");
     var request = new RestRequest($"/?domain={domain}");
     request.AddHeader("x-rapidapi-host", "mailcheck.p.rapidapi.com");
     request.AddHeader("x-rapidapi-key", config.MailCheckApiKey);

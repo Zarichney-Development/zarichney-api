@@ -223,6 +223,15 @@ public class BrowserService : IBrowserService, IAsyncDisposable
       {
         _browser.Disconnected -= Browser_Disconnect;
         await _browser.CloseAsync();
+        // IBrowser implements IAsyncDisposable, so we need to properly dispose it
+        if (_browser is IAsyncDisposable asyncDisposable)
+        {
+          await asyncDisposable.DisposeAsync();
+        }
+        else if (_browser is IDisposable disposable)
+        {
+          disposable.Dispose();
+        }
       }
 
       _playwright?.Dispose();
