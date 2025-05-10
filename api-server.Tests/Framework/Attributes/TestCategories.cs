@@ -42,10 +42,14 @@ public static class TestCategories
 
   // Dependencies
   public const string Database = "Database";
+  public const string Docker = "Docker";
   public const string ExternalStripe = "ExternalStripe";
   public const string ExternalOpenAI = "ExternalOpenAI";
   public const string ExternalGitHub = "ExternalGitHub";
   public const string ExternalMSGraph = "ExternalMSGraph";
+
+  // The following constants are used for categorizing tests that can run in an environment with no external dependencies
+  public const string NoExternalDependencies = "NoExternalDependencies";
 
   // Mutability (for filtering tests that can safely run against production-like environments)
   public const string ReadOnly = "ReadOnly";        // Tests that do not alter state

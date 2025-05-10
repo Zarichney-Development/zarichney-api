@@ -16,6 +16,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   private static readonly Dictionary<string, List<string>> _traitToConfigNamesMap = new()
   {
     { TestCategories.Database, ["Database Connection"] },
+    { TestCategories.Docker, ["Docker Availability"] },
     { TestCategories.ExternalStripe, ["Stripe Secret Key", "Stripe Webhook Secret"] },
     { TestCategories.ExternalOpenAI, ["OpenAI API Key"] },
     { TestCategories.ExternalGitHub, ["GitHub Access Token"] },
@@ -155,38 +156,66 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         return;
       }
 
-      // Fetch the actual configuration status
-      var statuses = await ConfigurationStatusHelper.GetConfigurationStatusAsync(Factory);
-
-      // Check if statuses is null or empty
-      if (statuses.Count == 0)
+      // Force skip for Docker-dependent tests if Docker is not available
+      if (requiredConfigs.Contains("Docker Availability") && !Factory.IsDockerAvailable)
       {
-        SetSkipReason("Unable to fetch configuration status.");
+        SetSkipReason("Docker is not available or misconfigured.");
         return;
       }
 
-      // Check if each required config is available
-      var missingConfigs = new List<string>();
-      foreach (var configName in requiredConfigs)
+      try
       {
-        bool isAvailable = ConfigurationStatusHelper.IsConfigurationAvailable(statuses, configName);
+        // Fetch the actual configuration status
+        var statuses = await ConfigurationStatusHelper.GetConfigurationStatusAsync(Factory);
 
-        if (!isAvailable)
+        // Check if statuses is null or empty
+        if (statuses == null || statuses.Count == 0)
         {
-          missingConfigs.Add(configName);
+          SetSkipReason("Unable to fetch configuration status, assuming dependencies are missing.");
+          return;
+        }
+
+        // Check if each required config is available
+        var missingConfigs = new List<string>();
+        foreach (var configName in requiredConfigs)
+        {
+          bool isAvailable = ConfigurationStatusHelper.IsConfigurationAvailable(statuses, configName);
+
+          if (!isAvailable)
+          {
+            missingConfigs.Add(configName);
+          }
+        }
+
+        // If there are missing configs, set SkipReason
+        if (missingConfigs.Any())
+        {
+          SetSkipReason($"Missing required configurations: {string.Join(", ", missingConfigs)}");
         }
       }
-
-      // If there are missing configs, set SkipReason
-      if (missingConfigs.Any())
+      catch
       {
-        SetSkipReason($"Missing required configurations: {string.Join(", ", missingConfigs)}");
+        // If we couldn't get configuration status, assume all external service dependencies are unavailable
+        var externalDependencies = dependencyTraits
+          .Where(t => t.Value.StartsWith("External"))
+          .Select(t => t.Value)
+          .ToList();
+
+        if (externalDependencies.Any())
+        {
+          SetSkipReason($"External services unavailable: {string.Join(", ", externalDependencies)}");
+        }
+        else
+        {
+          // For tests with no external dependencies, we still need configuration
+          SetSkipReason("Configuration status unavailable, skipping test.");
+        }
       }
     }
     catch (Exception ex)
     {
       // If we encounter an error checking configuration, assume dependencies are missing
-      SetSkipReason($"Error checking configuration: {ex.Message}");
+      SetSkipReason($"Error checking dependencies: {ex.Message}");
     }
   }
 
@@ -235,4 +264,5 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   /// </summary>
   /// <returns>A completed task.</returns>
   public Task DisposeAsync() => Task.CompletedTask;
+
 }

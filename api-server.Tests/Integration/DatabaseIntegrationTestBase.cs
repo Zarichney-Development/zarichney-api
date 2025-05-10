@@ -1,4 +1,3 @@
-using Xunit;
 using Zarichney.Tests.Framework.Fixtures;
 
 namespace Zarichney.Tests.Integration;
@@ -10,7 +9,7 @@ namespace Zarichney.Tests.Integration;
 /// </summary>
 public abstract class DatabaseIntegrationTestBase : IntegrationTestBase
 {
-  protected DatabaseFixture DatabaseFixture => _apiClientFixture.DatabaseFixture;
+  private DatabaseFixture DatabaseFixture => _apiClientFixture.DatabaseFixture;
   private readonly ApiClientFixture _apiClientFixture;
 
   /// <summary>

@@ -30,6 +30,50 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
   public bool IsDatabaseAvailable => _databaseFixture?.IsContainerAvailable ?? false;
 
   /// <summary>
+  /// Gets a value indicating whether Docker is available on the system.
+  /// </summary>
+  public bool IsDockerAvailable => CheckDockerAvailability();
+
+  /// <summary>
+  /// Checks if Docker is available and properly configured.
+  /// </summary>
+  private bool CheckDockerAvailability()
+  {
+    try
+    {
+      var psi = new System.Diagnostics.ProcessStartInfo("docker", "info")
+      {
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+        CreateNoWindow = true
+      };
+      using var proc = System.Diagnostics.Process.Start(psi);
+      if (proc == null) return false;
+
+      // Set a shorter timeout
+      if (!proc.WaitForExit(1000))
+      {
+        try
+        {
+          proc.Kill();
+        }
+        catch
+        {
+          // Ignore errors when killing the process
+        }
+        return false;
+      }
+
+      return proc.ExitCode == 0;
+    }
+    catch
+    {
+      return false;
+    }
+  }
+
+  /// <summary>
   /// Initializes a new instance of the <see cref="CustomWebApplicationFactory"/> class.
   /// </summary>
   public CustomWebApplicationFactory()

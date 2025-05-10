@@ -31,7 +31,7 @@ public class PublicControllerTests(ApiClientFixture apiClientFixture) : Integrat
     // ApiClient is obtained from IntegrationTestBase, represents unauthenticated Refit client
 
     // Act & Assert: calling Health should not throw and thus return 200 OK
-    Func<Task> act = () => ApiClient.Health();
+    var act = () => ApiClient.Health();
     await act.Should().NotThrowAsync<ApiException>(
       because: "health endpoint should always return OK status even without configuration");
   }

@@ -6,12 +6,27 @@ namespace Zarichney.Services.Email;
 
 public class EmailConfig : IConfig
 {
-  [Required] public required string AzureTenantId { get; init; }
-  [Required] public required string AzureAppId { get; init; }
-  [Required] public required string AzureAppSecret { get; init; }
-  [Required] public required string FromEmail { get; init; }
+  [Required]
+  [RequiresConfiguration("EmailConfig:AzureTenantId")]
+  public required string AzureTenantId { get; init; }
+
+  [Required]
+  [RequiresConfiguration("EmailConfig:AzureAppId")]
+  public required string AzureAppId { get; init; }
+
+  [Required]
+  [RequiresConfiguration("EmailConfig:AzureAppSecret")]
+  public required string AzureAppSecret { get; init; }
+
+  [Required]
+  [RequiresConfiguration("EmailConfig:FromEmail")]
+  public required string FromEmail { get; init; }
+
   public string TemplateDirectory { get; init; } = "/Services/Email/Templates";
-  [Required] public required string MailCheckApiKey { get; init; }
+
+  [Required]
+  [RequiresConfiguration("EmailConfig:MailCheckApiKey")]
+  public required string MailCheckApiKey { get; init; }
 }
 public enum InvalidEmailReason
 {

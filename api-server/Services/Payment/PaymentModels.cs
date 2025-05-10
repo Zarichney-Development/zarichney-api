@@ -10,9 +10,15 @@ public enum PaymentType
 
 public class PaymentConfig : IConfig
 {
+  [RequiresConfiguration("PaymentConfig:StripeSecretKey")]
   public string StripeSecretKey { get; init; } = string.Empty;
+
+  [RequiresConfiguration("PaymentConfig:StripePublishableKey")]
   public string StripePublishableKey { get; init; } = string.Empty;
+
+  [RequiresConfiguration("PaymentConfig:StripeWebhookSecret")]
   public string StripeWebhookSecret { get; init; } = string.Empty;
+
   public string SuccessUrl { get; init; } = "/order/success/{0}";
   public string CancelUrl { get; init; } = "/order/cancel/{0}";
   public decimal RecipePrice { get; init; } = 1.00m;

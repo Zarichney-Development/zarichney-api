@@ -29,7 +29,21 @@ namespace Zarichney.Tests.Framework.Attributes
         };
         using var proc = Process.Start(psi);
         if (proc == null) return false;
-        proc.WaitForExit(2000);
+
+        // Set a shorter timeout to avoid long waits
+        if (!proc.WaitForExit(1000))
+        {
+          try
+          {
+            proc.Kill();
+          }
+          catch
+          {
+            // Ignore errors when killing the process
+          }
+          return false;
+        }
+
         return proc.ExitCode == 0;
       }
       catch

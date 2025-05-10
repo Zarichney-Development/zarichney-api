@@ -1,6 +1,6 @@
 # Module/Directory: /Controllers
 
-**Last Updated:** [YYYY-MM-DD] > **Parent:** [`Server`](../README.md)
+**Last Updated:** 2025-05-10 > **Parent:** [`Server`](../README.md)
 
 ## 1. Purpose & Responsibility
 
@@ -43,7 +43,8 @@ graph TD
 
     subgraph ServiceLayer [Services & Modules]
         direction LR
-        StatusSvc["StatusService"]
+        StatusSvc["IConfigurationStatusService"]
+        ConfigSvc["IStatusService (for app config)"]
         EmailSvc["EmailService"]
         LlmSvc["LlmService"]
         TranscribeSvc["TranscribeService"]
@@ -69,6 +70,7 @@ graph TD
     ApiLayer -->|Uses| ErrorMw
 
     PublicCtrl --> StatusSvc
+    PublicCtrl --> ConfigSvc
     ApiCtrl --> EmailSvc
     ApiCtrl --> SessionMgr
 
@@ -106,13 +108,16 @@ graph TD
 
     class Client client;
     class PublicCtrl,ApiCtrl,AiCtrl,AuthCtrl,CookbookCtrl,PaymentCtrl controller;
-    class StatusSvc,EmailSvc,LlmSvc,TranscribeSvc,GithubSvc,SessionMgr,OrderService,CustomerSvc service;
+    class StatusSvc,ConfigSvc,EmailSvc,LlmSvc,TranscribeSvc,GithubSvc,SessionMgr,OrderService,CustomerSvc service;
     class AuthModule,CookbookModule,PaymentModule module;
     class AuthMw,ErrorMw middleware;
 
 ```
 * **PublicController:**
-    * Exposes `/api/status/config` (GET) — Returns a list of configuration item statuses for critical settings (API keys, secrets, connection strings). Useful for health checks and automation. Response: `List<ConfigurationItemStatus>` with `Name`, `Status`, and optional `Details` (never the secret value).
+    * Exposes `/api/status/config` (GET) — **DEPRECATED.** Functionality moved to `/api/config` and `/api/status`. This endpoint may be removed in a future version.
+    * Exposes `/api/health` (GET) — Returns a simple health check response with success status and current time.
+    * Exposes `/api/status` (GET) — Returns a dictionary mapping service names to their availability status based on configuration requirements. Each `ServiceStatusInfo` contains an availability flag and list of missing configurations. Useful for health checks, automation, and service availability monitoring. This was previously `/api/public/status`.
+    * Exposes `/api/config` (GET) — Returns a list of configuration item statuses for critical settings (API keys, secrets, connection strings). Useful for health checks and automation. Response: `List<ConfigurationItemStatus>` with `Name`, `Status`, and optional `Details` (never the secret value). This replaces the old `/api/status/config`.
 
 ## 3. Interface Contract & Assumptions
 
@@ -122,7 +127,19 @@ graph TD
     * **Service Availability:** Assumes that the services injected into the controllers are correctly registered in the DI container and are functional.
     * **Client Behavior:** Assumes clients send requests matching the expected content types (`application/json`, `multipart/form-data`) and structures. Assumes clients handle standard HTTP status codes appropriately (e.g., retrying on 5xx, handling 4xx client errors). Assumes clients handle authentication (e.g., sending cookies automatically).
 * **GET /api/status/config**
-    * **Purpose:** Returns the status of critical configuration values (API keys, secrets, connection strings) for health checks and diagnostics.
+    * **Purpose:** **DEPRECATED.** Returns the status of critical configuration values. Use `/api/config` instead.
+    * **Response:** `200 OK` with `List<ConfigurationItemStatus>`. Each item has `Name`, `Status` ("Configured" or "Missing/Invalid"), and optional `Details`.
+    * **Auth:** `[AllowAnonymous]` — no authentication required.
+* **GET /api/health**
+    * **Purpose:** Provides a simple health check endpoint to verify the API is running.
+    * **Response:** `200 OK` with `{ "Success": true, "Time": "YYYY-MM-DD HH:MM:SS" }`.
+    * **Auth:** `[AllowAnonymous]` — no authentication required.
+* **GET /api/status**
+    * **Purpose:** Returns the status of all services based on their configuration requirements. (Formerly `/api/public/status`)
+    * **Response:** `200 OK` with `Dictionary<string, ServiceStatusInfo>`. Each service entry has `IsAvailable` flag and `MissingConfigurations` list of missing config keys.
+    * **Auth:** `[AllowAnonymous]` — no authentication required.
+* **GET /api/config**
+    * **Purpose:** Returns the status of critical configuration values (API keys, secrets, connection strings) for health checks and diagnostics. Replaces the old `/api/status/config`.
     * **Response:** `200 OK` with `List<ConfigurationItemStatus>`. Each item has `Name`, `Status` ("Configured" or "Missing/Invalid"), and optional `Details`.
     * **Auth:** `[AllowAnonymous]` — no authentication required.
 
@@ -147,7 +164,7 @@ graph TD
 * **Internal Code Dependencies:** [List other key project directories/modules this code *consumes*. **Link to their READMEs.**]
     * [`/Services/Auth`](../Services/Auth/README.md) - Consumed by `AuthController` via MediatR and `[Authorize]` attributes.
     * [`/Cookbook`](../Cookbook/README.md) - Consumed by `CookbookController` via service interfaces.
-    * [`/Services`](../Services/README.md) - Various services consumed by different controllers (e.g., `ILlmService`, `IPaymentService`, `IEmailService`, `IStatusService`).
+    * [`/Services`](../Services/README.md) - Various services consumed by different controllers (e.g., `ILlmService`, `IPaymentService`, `IEmailService`, `IConfigurationStatusService`, `IStatusService`).
     * [`/Config`](../Config/README.md) - Uses `ApiErrorResult`, influenced by middleware configured here.
 * **External Library Dependencies:** [List key NuGet packages or external libraries used directly and their purpose (e.g., `Microsoft.AspNetCore.Mvc.Core`, `Swashbuckle.AspNetCore.Annotations`, `MediatR`).]
     * `Microsoft.AspNetCore.Mvc.Core`: Core ASP.NET Core MVC components.
@@ -163,6 +180,7 @@ graph TD
 * **Standard API Structure:** Follows conventional ASP.NET Core Web API practices for structuring controllers and actions.
 * **Separation of Concerns:** Controllers are intended as a thin layer responsible for HTTP concerns, separating this from the business logic implemented in services and command handlers.
 * **Swagger/OpenAPI:** Annotations and XML comments are used to facilitate automatic generation of API documentation, improving discoverability and usability for clients.
+* **PublicController Refactoring (May 2025):** The `PublicController` endpoints were refactored. `/api/public/status` was renamed to `/api/status`. A new endpoint `/api/config` was introduced to provide application configuration status, effectively replacing the older `/api/status/config` (which is now deprecated). This was done to clarify the purpose of each endpoint and align with a more consistent naming convention.
 
 ## 8. Known Issues & TODOs
 

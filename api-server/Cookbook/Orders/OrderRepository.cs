@@ -66,11 +66,13 @@ public interface IOrderRepository
 public class OrderFileRepository(
   OrderConfig config,
   IFileService fileService,
+  IFileWriteQueueService fileWriteQueueService, // Inject IFileWriteQueueService
   ILogger<OrderFileRepository> logger
 ) : IOrderRepository
 {
   public async Task<CookbookOrder?> GetOrder(string orderId)
   {
+    // Use fileService for reading
     var order = await fileService.ReadFromFile<CookbookOrder?>(
       Path.Combine(config.OutputDirectory, orderId),
       "Order"
@@ -81,7 +83,8 @@ public class OrderFileRepository(
 
   public void AddUpdateOrderAsync(CookbookOrder order)
   {
-    fileService.QueueWrite(
+    // Use fileWriteQueueService for writing
+    fileWriteQueueService.QueueWrite(
       Path.Combine(config.OutputDirectory, order.OrderId),
       "Order",
       order
@@ -90,7 +93,8 @@ public class OrderFileRepository(
 
   public void SaveRecipe(string orderId, string recipeTitle, string recipeMarkdown)
   {
-    fileService.QueueWrite(
+    // Use fileWriteQueueService for writing
+    fileWriteQueueService.QueueWrite(
       Path.Combine(config.OutputDirectory, orderId, "recipes"),
       recipeTitle,
       recipeMarkdown,
@@ -100,7 +104,8 @@ public class OrderFileRepository(
 
   public void SaveCookbook(string orderId, string cookbookMarkdown)
   {
-    fileService.QueueWrite(
+    // Use fileWriteQueueService for writing
+    fileWriteQueueService.QueueWrite(
       Path.Combine(config.OutputDirectory, orderId),
       "Cookbook",
       cookbookMarkdown,
@@ -110,6 +115,7 @@ public class OrderFileRepository(
 
   public async Task<byte[]?> GetCookbook(string orderId)
   {
+    // Use fileService for reading
     return await fileService.ReadFromFile<byte[]>(
       Path.Combine(config.OutputDirectory, orderId),
       "Cookbook",
@@ -119,8 +125,8 @@ public class OrderFileRepository(
 
   public async Task SaveCookbook(string orderId, byte[] pdf)
   {
-    // Waits for completion
-    await fileService.WriteToFileAndWait(
+    // Use fileWriteQueueService for writing and wait
+    await fileWriteQueueService.WriteToFileAndWaitAsync(
       Path.Combine(config.OutputDirectory, orderId),
       "Cookbook",
       pdf,
@@ -130,8 +136,8 @@ public class OrderFileRepository(
 
   public void SaveCookbookAsync(string orderId, byte[] pdf)
   {
-    // Send to background queue
-    fileService.QueueWrite(
+    // Use fileWriteQueueService for background writing
+    fileWriteQueueService.QueueWrite(
       Path.Combine(config.OutputDirectory, orderId),
       "Cookbook",
       pdf,
