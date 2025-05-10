@@ -137,14 +137,20 @@ public class ScopeContainer(
     return ServiceProvider.GetRequiredService<T>();
   }
 
-  public virtual void Dispose()
+  // Implemented IDisposable pattern with Dispose(bool)
+  protected virtual void Dispose(bool disposing)
   {
-    if (!_disposed)
+    if (!_disposed && disposing)
     {
       _ownedScope?.Dispose();
       _disposed = true;
-      GC.SuppressFinalize(this);
     }
+  }
+
+  public void Dispose()
+  {
+    Dispose(true);
+    GC.SuppressFinalize(this);
   }
 }
 
@@ -194,13 +200,14 @@ public class DisposableScopeContainer : ScopeContainer
     _ownedScope = scope;
   }
 
-  public override void Dispose()
+  protected override void Dispose(bool disposing)
   {
-    if (!_disposed)
+    if (!_disposed && disposing)
     {
       _ownedScope.Dispose();
       _disposed = true;
-      base.Dispose();
     }
+
+    base.Dispose(disposing);
   }
 }

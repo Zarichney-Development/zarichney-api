@@ -175,8 +175,20 @@ public class DatabaseFixture : IAsyncLifetime, IDisposable
   /// </summary>
   public void Dispose()
   {
-    _loggerFactory.Dispose();
+    Dispose(true);
     GC.SuppressFinalize(this);
+  }
+
+  /// <summary>
+  /// Disposes managed and unmanaged resources.
+  /// </summary>
+  /// <param name="disposing">True to dispose managed resources, false otherwise.</param>
+  protected virtual void Dispose(bool disposing)
+  {
+    if (disposing)
+    {
+      _loggerFactory.Dispose();
+    }
   }
 }
 
