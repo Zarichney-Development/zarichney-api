@@ -1102,7 +1102,7 @@ namespace Zarichney.Client
         [Get("/api/health")]
         Task Health();
 
-        /// <summary>Returns the status of critical configuration values (API keys, secrets, connection strings).</summary>
+        /// <summary>Returns the status of services based on their configuration availability.</summary>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">
         /// Thrown when the request returns a non-success status code:
@@ -1118,7 +1118,26 @@ namespace Zarichney.Client
         /// </list>
         /// </exception>
         [Headers("Accept: text/plain, application/json, text/json")]
-        [Get("/api/status/config")]
+        [Get("/api/status")]
+        Task<IDictionary<string, ServiceStatusInfo>> Status2();
+
+        /// <summary>Returns the configuration item status.</summary>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: text/plain, application/json, text/json")]
+        [Get("/api/config")]
         Task<ICollection<ConfigurationItemStatus>> Config();
 
 
@@ -2811,6 +2830,28 @@ namespace Zarichney.Client
         _1 = 1,
 
         _2 = 2,
+
+    }
+
+    /// <summary>
+    /// Represents the status of a service based on its configuration availability.
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ServiceStatusInfo
+    {
+        /// <summary>
+        /// Whether the service is available based on its configuration.
+        /// </summary>
+
+        [JsonPropertyName("isAvailable")]
+        public bool IsAvailable { get; set; }
+
+        /// <summary>
+        /// A list of missing configuration keys if the service is unavailable.
+        /// </summary>
+
+        [JsonPropertyName("missingConfigurations")]
+        public ICollection<string> MissingConfigurations { get; set; }
 
     }
 

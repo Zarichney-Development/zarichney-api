@@ -180,6 +180,10 @@ public class ServiceStartup
     services.AddSingleton<ITemplateService, TemplateService>();
     services.AddSingleton<IBrowserService, BrowserService>();
 
+    // Status Services
+    services.AddSingleton<IConfigurationStatusService, ConfigurationStatusService>();
+    services.AddScoped<IStatusService, StatusService>();
+
     // Repositories
     services.AddSingleton<ILlmRepository, LlmRepository>();
     services.AddSingleton<IRecipeRepository, RecipeFileRepository>();
@@ -197,7 +201,6 @@ public class ServiceStartup
     services.AddScoped<IAuthService, AuthService>();
     services.AddScoped<IApiKeyService, ApiKeyService>();
     services.AddScoped<IEmailService, EmailService>();
-    services.AddScoped<IStatusService, StatusService>();
     services.AddTransient<IRecipeService, RecipeService>();
     services.AddTransient<IOrderService, OrderService>();
     services.AddTransient<ICustomerService, CustomerService>();

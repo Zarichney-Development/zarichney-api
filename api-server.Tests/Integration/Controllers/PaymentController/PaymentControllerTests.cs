@@ -27,8 +27,6 @@ public class PaymentControllerTests(ApiClientFixture apiClientFixture)
   {
     // Arrange
     await ResetDatabaseAsync();
-    var userId = "user-" + GetRandom.String();
-    var roles = new[] { "User" };
     var apiClient = AuthenticatedApiClient;
     var requestDto = new PaymentIntentRequest
     {
@@ -73,8 +71,6 @@ public class PaymentControllerTests(ApiClientFixture apiClientFixture)
   {
     // Arrange
     await ResetDatabaseAsync();
-    var userId = "user-" + GetRandom.String();
-    var roles = new[] { "User" };
     var apiClient = AuthenticatedApiClient;
     var paymentId = "pi_test_" + GetRandom.String();
 
@@ -92,7 +88,7 @@ public class PaymentControllerTests(ApiClientFixture apiClientFixture)
       });
 
     // Act & Assert: call Status and ensure no exception is thrown (HTTP 2xx)
-    Func<Task> actStatus = () => apiClient.Status(paymentId);
+    var actStatus = () => apiClient.Status(paymentId);
     await actStatus.Should().NotThrowAsync<ApiException>(
       because: "valid payment ID should return payment status");
 
