@@ -33,7 +33,7 @@ public class CustomerFileRepository(
     var safeFileName = EmailService.MakeSafeFileName(customer.Email);
 
     // Use fileWriteQueueService for writing
-    fileWriteQueueService.QueueWrite( 
+    fileWriteQueueService.QueueWrite(
       Path.Combine(config.OutputDirectory),
       safeFileName,
       customer
