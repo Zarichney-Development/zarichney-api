@@ -11,8 +11,8 @@
     * Defining shared configuration models (e.g., `ServerConfig`, `ClientConfig`) identified by the `IConfig` interface. [cite: api-server/Config/ConfigModels.cs]
     * Providing core middleware for request/response logging and global error handling. [cite: api-server/Config/LoggingMiddleware.cs, api-server/Config/ErrorHandlingMiddleware.cs]
     * Providing custom utilities like JSON converters and exception types. [cite: api-server/Config/JsonConverter.cs, api-server/Config/NotExpectedException.cs, api-server/Config/ConfigurationMissingException.cs, api-server/Config/ServiceUnavailableException.cs]
-    * Supplying attributes for configuration requirement decoration (`RequiresConfigurationAttribute`). [cite: api-server/Config/RequiresConfigurationAttribute.cs]
-    * Supplying filters for external integrations like Swagger (`FormFileOperationFilter`). [cite: api-server/Config/FormFileOperationFilter.cs]
+    * Supplying attributes for configuration requirement decoration (`RequiresConfigurationAttribute`, `RequiresFeatureEnabledAttribute`). [cite: api-server/Config/RequiresConfigurationAttribute.cs, api-server/Config/RequiresFeatureEnabledAttribute.cs]
+    * Supplying filters for external integrations like Swagger (`FormFileOperationFilter`, `ServiceAvailabilityOperationFilter`). [cite: api-server/Config/FormFileOperationFilter.cs, api-server/Config/ServiceAvailabilityOperationFilter.cs]
     * Hosting static configuration files like `site_selectors.json`. [cite: api-server/Config/site_selectors.json]
 * **Why it exists:** To define shared configuration models, provide reusable cross-cutting concerns via middleware, and centralize utilities needed by multiple modules.
 
@@ -20,7 +20,9 @@
 
 * **Configuration Loading:** The actual loading and registration of configuration is now handled by the `/Startup/Configuration` module. This module focuses on defining the configuration models and the `IConfig` interface. [cite: api-server/Startup/Configuration/ConfigurationStartup.cs]
 * **Strongly-Typed Configuration:** Configuration is accessed via injected, strongly-typed `XConfig` objects (e.g., `LlmConfig`, `RecipeConfig`). [cite: api-server/Cookbook/Recipes/RecipeService.cs, api-server/Services/AI/LlmService.cs]
-* **Configuration Requirements:** Properties in configuration classes are now marked with `[RequiresConfiguration]` attribute to indicate specific configuration keys they depend on. This is used by `IConfigurationStatusService` to determine service availability. Service factories use this information to register proxies that throw `ServiceUnavailableException` when services are unavailable due to missing configuration. [cite: api-server/Config/RequiresConfigurationAttribute.cs, api-server/Services/Status/ConfigurationStatusService.cs]
+* **Configuration Requirements & Feature Availability:**
+   * Properties in configuration classes are now marked with `[RequiresConfiguration]` attribute to indicate specific configuration keys they depend on. This is used by `IConfigurationStatusService` to determine service availability. Service factories use this information to register proxies that throw `ServiceUnavailableException` when services are unavailable due to missing configuration. [cite: api-server/Config/RequiresConfigurationAttribute.cs, api-server/Services/Status/ConfigurationStatusService.cs]
+   * Controllers and actions can be marked with the `[RequiresFeatureEnabled]` attribute to indicate they depend on specific features that require proper configuration. The `ServiceAvailabilityOperationFilter` uses this information to update Swagger UI with visual indications when endpoints may be unavailable due to missing configuration. [cite: api-server/Config/RequiresFeatureEnabledAttribute.cs, api-server/Config/ServiceAvailabilityOperationFilter.cs]
 * **Middleware:** Standard ASP.NET Core middleware pattern is used for logging (`LoggingMiddleware`) and error handling (`ErrorHandlingMiddleware`). Their order of registration in the application pipeline is important. [cite: api-server/Startup/App/ApplicationStartup.cs, api-server/Config/LoggingMiddleware.cs, api-server/Config/ErrorHandlingMiddleware.cs]
 * **ErrorHandlingMiddleware:**
     * Global exception handler for all HTTP requests. Catches unhandled exceptions and returns a structured JSON error response.
@@ -36,6 +38,8 @@
     * `ConfigurationMissingException`: Exception type that services should throw when they detect missing required configuration at runtime. Has properties to identify the affected configuration section and specific key details.
     * `ServiceUnavailableException`: Exception type that indicates a service is unavailable due to missing configuration or other reasons. Contains a collection of specific reasons for unavailability.
     * `RequiresConfigurationAttribute`: Attribute to decorate properties in configuration classes that are required for a service to function. Specifies the configuration key path to check.
+    * `RequiresFeatureEnabledAttribute`: Attribute to decorate controllers and actions that depend on specific features that require proper configuration. Used by `ServiceAvailabilityOperationFilter` to update Swagger UI with visual indications when endpoints may be unavailable.
+    * `ServiceAvailabilityOperationFilter`: A Swagger filter that detects controllers and actions with the `[RequiresFeatureEnabled]` attribute and modifies their description in the Swagger UI to indicate when they may be unavailable due to missing configuration.
     * Middleware (`ErrorHandlingMiddleware`, `LoggingMiddleware`): Consumed implicitly via registration in the application pipeline. They alter the request pipeline behavior.
 * **Assumptions:**
     * **Configuration Registration:** Assumes configuration is registered via the `RegisterConfigurationServices` method in `/Startup/Configuration/ConfigurationStartup.cs`.
@@ -72,6 +76,12 @@
     * The `IConfigurationStatusService` is injected into service factories to check the status of services based on their configuration requirements.
     * Service factories use this to determine whether to register real client implementations or proxies that throw `ServiceUnavailableException` when their methods are invoked.
     * Service status can be accessed by clients via the `/api/status/config` endpoint which shows all services with their availability status and any missing configurations.
+* **Marking API Endpoints That Require Specific Features:**
+    * Use the `[RequiresFeatureEnabled]` attribute on controller classes or action methods to indicate they depend on specific features that require proper configuration.
+    * The attribute accepts one or more feature names that correspond to the keys used by `IConfigurationStatusService` (derived from config class names, e.g., "Llm", "Payments", "GitHub").
+    * Example at class level: `[RequiresFeatureEnabled("Payments")]`
+    * Example at method level with multiple features: `[RequiresFeatureEnabled("Llm", "GitHub")]`
+    * The `ServiceAvailabilityOperationFilter` automatically detects these attributes and updates the Swagger UI to show warnings when endpoints may be unavailable due to missing configuration.
 * **Testing:**
     * **Configuration:** Testing services that consume config usually involves creating mock `IOptions<T>` or directly instantiating config objects with test values.
     * **Middleware:** Often requires integration tests using `WebApplicationFactory` or specialized middleware testing harnesses to mock `HttpContext` and `RequestDelegate`.
@@ -82,7 +92,8 @@
 * **Internal Code Dependencies:**
     * [`/Startup/ConfigurationStartup.cs`](../Startup/ConfigurationStartup.cs) - For registration of configuration.
     * [`/Startup/AppplicationStartup.cs`](../Startup/ApplicationStartup.cs) - For registration of middleware.
-    * [`/Services/Status/IConfigurationStatusService.cs`](../Services/Status/IConfigurationStatusService.cs) - For checking service status based on configuration requirements.
+    * [`/Startup/ServiceStartup.cs`](../Startup/ServiceStartup.cs) - For registration of the ServiceAvailabilityOperationFilter in Swagger.
+    * [`/Services/Status/IConfigurationStatusService.cs`](../Services/Status/IConfigurationStatusService.cs) - For checking service status based on configuration requirements and feature availability.
 * **External Library Dependencies:**
     * `Microsoft.Extensions.Configuration.Abstractions`, `.Binder`, `.Json`: Core .NET configuration handling.
     * `Microsoft.Extensions.Options`: Used for the options pattern with configuration.
@@ -102,6 +113,7 @@
 * **`IConfig` Interface:** Used as a marker interface for automatic discovery and registration of configuration classes.
 * **Configuration Status Infrastructure:** The `RequiresConfigurationAttribute` and `ServiceUnavailableException` were added to support a more graceful handling of service unavailability due to missing configuration.
 * **Service Proxy Pattern:** Service factories now register proxy implementations of external clients that throw `ServiceUnavailableException` when their methods are invoked if required configuration is missing, rather than returning null. This provides clearer error messages and more consistent behavior when a service can't operate due to missing configuration.
+* **Swagger Integration for Feature Availability:** The `RequiresFeatureEnabledAttribute` and `ServiceAvailabilityOperationFilter` were added to provide a visual indication in the Swagger UI when API endpoints may be unavailable due to missing configuration. This complements the runtime exception handling by helping developers and API consumers understand which endpoints require specific features to be properly configured before they attempt to use them.
 * **Middleware for Cross-Cutting Concerns:** Logging and Error Handling are implemented as middleware to apply these concerns globally without cluttering individual controller actions or services.
 * **PromptBase Relocation:** The `PromptBase` class has been moved to `/Services/AI` where it more logically belongs with other AI-related functionality.
 
@@ -111,3 +123,5 @@
 * `site_selectors.json` parsing within `WebScraperService` could benefit from more robust error handling or schema validation upon loading.
 * Error Handling middleware provides a generic error response; could be enhanced to provide slightly more specific (but still safe) error details based on exception types in non-production environments.
 * Future improvements could include a centralized configuration validation service that runs at startup to provide more comprehensive validation of all required configurations.
+* Consider adding a visual indicator in the Swagger UI's endpoint list (not just in the expanded operations) for endpoints that may be unavailable.
+* Consider expanding the feature availability check to include more detailed information about the required configuration, such as links to documentation or examples of how to set up the required configuration.

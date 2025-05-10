@@ -331,10 +331,13 @@ public class ServiceStartup
         Title = "Zarichney API",
         Version = "v1",
         Description = "API for the Cookbook application and AI Service. " +
-                      "Authenticate using the 'Authorize' button and provide your API key."
+                      "Authenticate using the 'Authorize' button and provide your API key." +
+                      "\n\n**Note:** Endpoints marked with ⚠️ are currently unavailable due to missing configuration."
       });
 
+      // Register operation filters
       c.OperationFilter<FormFileOperationFilter>();
+      c.OperationFilter<ServiceAvailabilityOperationFilter>(); // Add our new filter
       c.EnableAnnotations();
 
       var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";

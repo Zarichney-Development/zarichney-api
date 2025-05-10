@@ -39,6 +39,7 @@ public static class TestCategories
   public const string Payment = "Payment";
   public const string Email = "Email";
   public const string AI = "AI";
+  public const string Swagger = "Swagger";
 
   // Dependencies
   public const string Database = "Database";

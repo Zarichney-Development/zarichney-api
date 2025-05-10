@@ -11,6 +11,7 @@
     * Checks the presence and validity of essential configuration values (API keys, secrets, connection strings) at runtime.
     * Exposes services (`IStatusService`, `IConfigurationStatusService`) and implementations (`StatusService`, `ConfigurationStatusService`) for status checks.
     * Reports service availability based on configuration requirements marked with `[RequiresConfiguration]` attributes.
+    * Provides synchronous access to feature availability status for the `ServiceAvailabilityOperationFilter` used in Swagger UI.
     * Enables health checks and automation to verify configuration without triggering runtime failures.
 * **Why it exists:** To allow both humans and automation to quickly verify the application's configuration health, service availability, and readiness, supporting operational monitoring and diagnostics.
 
@@ -39,6 +40,8 @@
     * `Task<List<ConfigurationItemStatus>> GetConfigurationStatusAsync();` — Returns a list of status objects for each critical configuration item. Does not expose secret values.
 * **IConfigurationStatusService:**
     * `Task<Dictionary<string, ServiceStatusInfo>> GetServiceStatusAsync();` — Returns a dictionary mapping service names to their status information. Each `ServiceStatusInfo` contains availability status and a list of missing configurations.
+    * `ServiceStatusInfo? GetFeatureStatus(string featureName);` — Returns status information for a specific feature, or null if the feature is not found. This synchronous method is primarily used by the `ServiceAvailabilityOperationFilter` for Swagger UI integration.
+    * `bool IsFeatureAvailable(string featureName);` — Returns whether a specific feature is available (properly configured). This synchronous method is primarily used by the `ServiceAvailabilityOperationFilter` for Swagger UI integration.
 * **Critical Assumptions:**
     * Assumes all required config objects are registered and injected.
     * Assumes placeholder value is "recommended to set in app secrets".
@@ -85,12 +88,14 @@
     * `System.Reflection` - Used by `ConfigurationStatusService` to discover `IConfig` implementations and their attributed properties.
 * **Dependents (Impact of Changes):**
     * [`/Controllers/PublicController.cs`](../../Controllers/PublicController.cs) - Consumes `IConfigurationStatusService` for the `/api/status` endpoint.
+    * [`/Config/ServiceAvailabilityOperationFilter.cs`](../../Config/ServiceAvailabilityOperationFilter.cs) - Uses `IConfigurationStatusService` to check feature availability for Swagger UI integration.
+    * [`/Config/RequiresFeatureEnabledAttribute.cs`](../../Config/RequiresFeatureEnabledAttribute.cs) - Works with `IConfigurationStatusService` to determine which API endpoints may be unavailable.
     * Any service that needs to check the availability of other services based on their configuration requirements.
 
 ## 7. Rationale & Key Historical Context
 
 * **StatusService** was originally created to support operational health checks and diagnostics after refactoring configuration validation to runtime.
-* **IConfigurationStatusService** was added as part of Epic #1 to provide a more structured approach to checking service availability based on configuration requirements. It enables a unified endpoint for service status and supports graceful service unavailability handling.
+* **IConfigurationStatusService** was added as part of Epic #1 to provide a more structured approach to checking service availability based on configuration requirements. It enables a unified endpoint for service status and supports graceful service unavailability handling. It was later extended with synchronous methods to support the Swagger UI integration via `ServiceAvailabilityOperationFilter`.
 * The new `[RequiresConfiguration]` approach provides a more declarative way to specify configuration dependencies, making it easier to maintain and extend.
 * **May 2025 Refactor (`ConfigurationStatusService`):** `ConfigurationStatusService` was refactored to discover `IConfig` implementations by scanning a specified `Assembly` (defaulting to the main application assembly) and then resolving these types via `IServiceProvider`. This replaced a previous mechanism that directly used `IServiceProvider.GetServices<IConfig>()`. A new constructor was added to allow injection of the `Assembly` to be scanned, significantly improving the testability of the service by allowing tests to provide a mock assembly with controlled `IConfig` types.
 
@@ -99,3 +104,5 @@
 * Consider extending to report additional runtime health checks (e.g., external service reachability, database connectivity).
 * As more service-specific configuration classes are added, expand the mapping between configuration types and logical service names in `ConfigurationStatusService`.
 * Phase out the legacy `IStatusService` once all dependents are migrated to `IConfigurationStatusService`.
+* Consider optimizing the caching mechanism in `ConfigurationStatusService` to better support high-concurrency scenarios where Swagger might be making multiple requests.
+* Consider adding a mechanism to manually refresh the configuration status cache when configuration changes are known to have occurred.

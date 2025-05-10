@@ -1,6 +1,7 @@
 using System.Reflection;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using Zarichney.Config;
@@ -20,12 +21,13 @@ public class ConfigurationStatusServiceTests
     _mockServiceProvider = new Mock<IServiceProvider>();
     _mockConfiguration = new Mock<IConfiguration>();
     _mockAssembly = new Mock<Assembly>(); // Mock the assembly
+    var mockLogger = new Mock<ILogger<ConfigurationStatusService>>();
 
     // Setup mock assembly to return our test config types
     _mockAssembly.Setup(asm => asm.GetTypes()).Returns([typeof(TestService1Config), typeof(TestService2Config)]);
 
     // Pass the mocked assembly directly to the service constructor
-    _service = new ConfigurationStatusService(_mockServiceProvider.Object, _mockConfiguration.Object, _mockAssembly.Object);
+    _service = new ConfigurationStatusService(_mockServiceProvider.Object, _mockConfiguration.Object, mockLogger.Object, _mockAssembly.Object);
   }
 
   [Trait("Category", "Unit")]

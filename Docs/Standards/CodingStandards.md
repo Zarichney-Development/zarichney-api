@@ -39,6 +39,7 @@
   * Register and bind configuration in `Program.cs` using `ConfigurationExtensions.RegisterConfigurationServices`.
   * Inject specific configuration classes (e.g., `RecipeConfig`, `JwtSettings`) via constructor DI where needed.
   * **Validation Strategy:** Missing required configuration values (marked `[Required]` or using the placeholder `recommended to set in app secrets`) will generate warnings during startup but **will not prevent the application from starting**. Services **MUST** check for null or placeholder values at runtime and throw `ConfigurationMissingException` if they attempt to use a required configuration that is missing or invalid. (*Future Enhancement:* This may evolve towards disabling services instead of throwing runtime exceptions).
+  * **API Endpoint Availability:** Controllers and actions that require specific features to be properly configured **SHOULD** be decorated with the `[RequiresFeatureEnabled]` attribute (e.g., `[RequiresFeatureEnabled("Llm")]`, `[RequiresFeatureEnabled("Payments")]`). This helps developers and API consumers understand which endpoints may be unavailable due to missing configuration by providing visual indications in the Swagger UI.
 
 ## 4. Asynchronous Programming
 

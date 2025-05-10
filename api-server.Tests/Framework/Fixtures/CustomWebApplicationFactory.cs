@@ -272,6 +272,25 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     return CreateRefitClient(client);
   }
 
+  /// <summary>
+  /// Replaces services in the service collection with custom implementations.
+  /// Useful for overriding specific services in integration tests.
+  /// </summary>
+  /// <param name="configureServices">An action to configure the service collection.</param>
+  /// <returns>A new WebApplicationFactory with the modified services.</returns>
+  public WebApplicationFactory<Program> ReplaceService(Action<IServiceCollection> configureServices)
+  {
+    // Create a new WebApplicationFactory with modified services
+    return WithWebHostBuilder(builder =>
+    {
+      builder.ConfigureTestServices(services =>
+      {
+        // Configure the services using the provided action
+        configureServices(services);
+      });
+    });
+  }
+
   /// <inheritdoc/>
   protected override void Dispose(bool disposing)
   {
