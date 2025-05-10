@@ -85,6 +85,10 @@
 * **Authentication (`TestAuthHandler`):** Use helper methods (e.g., `_authHelper.CreateAuthenticatedClient(userId, roles)` available through the base class) to obtain an `HttpClient` (and subsequently a Refit client) configured with simulated user claims/roles for testing authorization.
 * **Assertions (FluentAssertions):** Assert on API response status codes, DTO content (`Should().BeEquivalentTo()`), and expected side effects (e.g., database state changes verified via a separate DbContext instance obtained from the factory's services *after* the API call). Use `.Because("...")`.
 * **Dependency Skipping:** Use the `[DependencyFact]` attribute for tests requiring specific external configurations (as declared by `Dependency` traits). Use `[DockerAvailableFact]` for tests requiring the Docker runtime. These attributes leverage the `IntegrationTestBase` and framework helpers to automatically skip tests if prerequisites are unmet.
+  * **Purpose:** Ensures tests that require external dependencies (databases, APIs, Docker, etc.) are skipped rather than failing when those dependencies are unavailable in the test environment.
+  * **Implementation:** The `DependencyFact` attribute uses a custom test case discoverer (`SkipMissingDependencyDiscoverer`) that checks if required dependencies are available before running the test.
+  * **Configuration:** Tests must be properly categorized with appropriate `Trait` attributes (e.g., `[Trait("Category", "External:OpenAI")]`) to enable the dependency checking mechanism.
+  * **CI/CD Integration:** In CI environments, all dependencies should be properly configured or mocked to ensure comprehensive test coverage, while local development environments may skip tests based on available dependencies.
 
 ## 8. Test Data Standards
 
