@@ -295,8 +295,8 @@ public class OrderService(
     var newRecipesBag = new ConcurrentBag<SynthesizedRecipe>();
     var completedCount = 0;
     var maxParallelTasks = Math.Min(config.MaxParallelTasks, toProcessCount);
-    var cts = new CancellationTokenSource();
 
+    using var cts = new CancellationTokenSource();
     try
     {
       await sessionManager.ParallelForEachAsync(scope, pendingRecipes,

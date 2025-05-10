@@ -228,6 +228,7 @@ public class BrowserService : IBrowserService, IAsyncDisposable
       _playwright?.Dispose();
       _semaphore.Dispose();
       _disposed = true;
+      GC.SuppressFinalize(this);
     }
   }
 }

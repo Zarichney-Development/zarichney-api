@@ -115,7 +115,11 @@ public class PaymentController(
   [ProducesResponseType(StatusCodes.Status400BadRequest)]
   public async Task<IActionResult> HandleWebhook()
   {
-    var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+    string json;
+    using (var reader = new StreamReader(HttpContext.Request.Body))
+    {
+      json = await reader.ReadToEndAsync();
+    }
 
     try
     {
