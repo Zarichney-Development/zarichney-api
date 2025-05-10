@@ -1,6 +1,6 @@
 # Module/Directory: /Config
 
-**Last Updated:** 2025-05-04
+**Last Updated:** 2025-05-10
 
 > **Parent:** [`Server`](../README.md)
 
@@ -20,7 +20,7 @@
 
 * **Configuration Loading:** The actual loading and registration of configuration is now handled by the `/Startup/Configuration` module. This module focuses on defining the configuration models and the `IConfig` interface. [cite: api-server/Startup/Configuration/ConfigurationStartup.cs]
 * **Strongly-Typed Configuration:** Configuration is accessed via injected, strongly-typed `XConfig` objects (e.g., `LlmConfig`, `RecipeConfig`). [cite: api-server/Cookbook/Recipes/RecipeService.cs, api-server/Services/AI/LlmService.cs]
-* **Configuration Requirements:** Properties in configuration classes can be marked with `[RequiresConfiguration]` attribute to indicate specific configuration keys they depend on. This is used by `IConfigurationStatusService` to determine service availability. [cite: api-server/Config/RequiresConfigurationAttribute.cs]
+* **Configuration Requirements:** Properties in configuration classes are now marked with `[RequiresConfiguration]` attribute to indicate specific configuration keys they depend on. This is used by `IConfigurationStatusService` to determine service availability. Service factories use this information to register proxies that throw `ServiceUnavailableException` when services are unavailable due to missing configuration. [cite: api-server/Config/RequiresConfigurationAttribute.cs, api-server/Services/Status/ConfigurationStatusService.cs]
 * **Middleware:** Standard ASP.NET Core middleware pattern is used for logging (`LoggingMiddleware`) and error handling (`ErrorHandlingMiddleware`). Their order of registration in the application pipeline is important. [cite: api-server/Startup/App/ApplicationStartup.cs, api-server/Config/LoggingMiddleware.cs, api-server/Config/ErrorHandlingMiddleware.cs]
 * **ErrorHandlingMiddleware:**
     * Global exception handler for all HTTP requests. Catches unhandled exceptions and returns a structured JSON error response.
@@ -45,10 +45,10 @@
 ## 4. Local Conventions & Constraints (Beyond Global Standards)
 
 * **Configuration Class Naming:** Classes holding configuration sections must implement `IConfig` and typically end with the suffix `Config` (e.g., `RecipeConfig`). [cite: api-server/Config/ConfigModels.cs]
-* **Required Configuration:** 
-    * Properties in configuration classes can be marked with `[RequiresConfiguration("Section:Key")]` to specify the configuration key path they depend on.
-    * Services should check for null/placeholder values at runtime and throw `ServiceUnavailableException` when attempting to use a service that depends on missing configuration.
-    * The `IConfigurationStatusService` uses the `[RequiresConfiguration]` attribute to check the status of services based on their configuration requirements.
+* **Required Configuration:**
+    * Properties in configuration classes are marked with `[RequiresConfiguration("Section:Key")]` to specify the configuration key path they depend on.
+    * Services no longer need to explicitly check for null/placeholder values at runtime since service factories register proxies that throw `ServiceUnavailableException` when their methods are invoked if required configuration is missing.
+    * The `IConfigurationStatusService` uses the `[RequiresConfiguration]` attribute to check the status of services based on their configuration requirements and reports their availability to service factories.
 * **Middleware Order:** The order in which `LoggingMiddleware` and `ErrorHandlingMiddleware` are added in the application pipeline affects their behavior (e.g., whether errors are logged before the error handler formats the response). [cite: api-server/Startup/App/ApplicationStartup.cs]
 * **Static JSON Files:** Format and schema of `site_selectors.json` are specific to the needs of the `WebScraperService`.
 
@@ -69,8 +69,9 @@
     * The `ErrorHandlingMiddleware` will catch the exception and return a 503 Service Unavailable response with the list of missing configurations.
     * Example: `throw new ServiceUnavailableException("Email service is unavailable", new List<string> { "Missing API key", "Missing sender email" });`
 * **Configuration Status Checking:**
-    * The `IConfigurationStatusService` can be injected into a component to check the status of services based on their configuration requirements.
-    * Services can use this to determine if other services they depend on are available before attempting to use them.
+    * The `IConfigurationStatusService` is injected into service factories to check the status of services based on their configuration requirements.
+    * Service factories use this to determine whether to register real client implementations or proxies that throw `ServiceUnavailableException` when their methods are invoked.
+    * Service status can be accessed by clients via the `/api/status/config` endpoint which shows all services with their availability status and any missing configurations.
 * **Testing:**
     * **Configuration:** Testing services that consume config usually involves creating mock `IOptions<T>` or directly instantiating config objects with test values.
     * **Middleware:** Often requires integration tests using `WebApplicationFactory` or specialized middleware testing harnesses to mock `HttpContext` and `RequestDelegate`.
@@ -100,6 +101,7 @@
 * **Refactored Configuration Registration:** The configuration registration logic has been moved to the `/Startup/Configuration` module to centralize all startup-related code and improve the organization of the codebase.
 * **`IConfig` Interface:** Used as a marker interface for automatic discovery and registration of configuration classes.
 * **Configuration Status Infrastructure:** The `RequiresConfigurationAttribute` and `ServiceUnavailableException` were added to support a more graceful handling of service unavailability due to missing configuration.
+* **Service Proxy Pattern:** Service factories now register proxy implementations of external clients that throw `ServiceUnavailableException` when their methods are invoked if required configuration is missing, rather than returning null. This provides clearer error messages and more consistent behavior when a service can't operate due to missing configuration.
 * **Middleware for Cross-Cutting Concerns:** Logging and Error Handling are implemented as middleware to apply these concerns globally without cluttering individual controller actions or services.
 * **PromptBase Relocation:** The `PromptBase` class has been moved to `/Services/AI` where it more logically belongs with other AI-related functionality.
 

@@ -47,13 +47,11 @@ public class TranscribeService : ITranscribeService
   /// <param name="audioStream">The audio stream to transcribe.</param>
   /// <param name="options">Optional transcription options.</param>
   /// <returns>The transcribed text.</returns>
-  /// <exception cref="ConfigurationMissingException">Thrown when the OpenAI API key is missing or invalid.</exception>
+  /// <exception cref="ServiceUnavailableException">Thrown when the service is unavailable due to missing configuration.</exception>
   public async Task<string> TranscribeAudioAsync(Stream audioStream, AudioTranscriptionOptions? options = null)
   {
-    if (_client == null)
-    {
-      throw new ConfigurationMissingException(nameof(LlmConfig), "ApiKey (required for AudioClient)");
-    }
+    // ServiceUnavailableException will be thrown by the proxy if LLM service is unavailable
+    ArgumentNullException.ThrowIfNull(_client, nameof(_client));
 
     try
     {

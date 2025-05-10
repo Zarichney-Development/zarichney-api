@@ -65,20 +65,18 @@ public class ServiceStartup
     {
       var emailConfig = sp.GetRequiredService<EmailConfig>();
       var logger = sp.GetRequiredService<ILogger<ServiceStartup>>();
+      var statusService = sp.GetRequiredService<IConfigurationStatusService>();
 
-      // Check if the required configuration values are present
-      if (string.IsNullOrEmpty(emailConfig.AzureTenantId) ||
-          string.IsNullOrEmpty(emailConfig.AzureAppId) ||
-          string.IsNullOrEmpty(emailConfig.AzureAppSecret) ||
-          string.IsNullOrEmpty(emailConfig.FromEmail) ||
-          emailConfig.AzureTenantId == "recommended to set in app secrets" ||
-          emailConfig.AzureAppId == "recommended to set in app secrets" ||
-          emailConfig.AzureAppSecret == "recommended to set in app secrets" ||
-          emailConfig.FromEmail == "recommended to set in app secrets")
+      var serviceStatus = statusService.GetServiceStatusAsync().GetAwaiter().GetResult();
+      var emailServiceAvailable = serviceStatus.TryGetValue("Email", out var status) && status.IsAvailable;
+
+      if (!emailServiceAvailable)
       {
-        logger.LogWarning(
-          "Missing required configuration for GraphServiceClient. Email functionality will not be available. Required: AzureTenantId, AzureAppId, AzureAppSecret, FromEmail");
-        return null!;
+        logger.LogWarning("Email service is unavailable due to missing configuration: {MissingConfigs}",
+          status?.MissingConfigurations == null ? "unknown" : string.Join(", ", status.MissingConfigurations));
+
+        // Return a proxy that throws ServiceUnavailableException when methods are called
+        return new GraphServiceClientProxy(status?.MissingConfigurations?.ToList());
       }
 
       try
@@ -99,9 +97,43 @@ public class ServiceStartup
       catch (Exception ex)
       {
         logger.LogWarning(ex, "Failed to create GraphServiceClient. Email functionality will not be available.");
-        return null!;
+        var errorMessage = $"Failed to create GraphServiceClient: {ex.Message}";
+        var reasons = new List<string> { errorMessage };
+        return new GraphServiceClientProxy(reasons);
       }
     });
+  }
+
+  /// <summary>
+  /// Proxy implementation of GraphServiceClient that throws ServiceUnavailableException
+  /// when any of its methods are called.
+  /// </summary>
+  private class GraphServiceClientProxy : GraphServiceClient
+  {
+    private readonly List<string>? _reasons;
+
+    public GraphServiceClientProxy(List<string>? reasons = null)
+      : base(new HttpClient()) // Dummy base constructor call
+    {
+      _reasons = reasons;
+    }
+
+    public override IGraphServiceMeRequestBuilder Me => throw CreateException();
+
+    public override IGraphServiceUsersRequestBuilder Users => throw CreateException();
+
+    public override IGraphServiceRequestBuilder Request()
+    {
+      throw CreateException();
+    }
+
+    private ServiceUnavailableException CreateException()
+    {
+      return new ServiceUnavailableException(
+        "Email service is unavailable due to missing configuration",
+        _reasons
+      );
+    }
   }
 
   /// <summary>
@@ -114,13 +146,18 @@ public class ServiceStartup
     {
       var llmConfig = sp.GetRequiredService<LlmConfig>();
       var logger = sp.GetRequiredService<ILogger<ServiceStartup>>();
+      var statusService = sp.GetRequiredService<IConfigurationStatusService>();
 
-      // Check if the required API key is present and valid
-      if (string.IsNullOrEmpty(llmConfig.ApiKey) ||
-          llmConfig.ApiKey == "recommended to set in app secrets")
+      var serviceStatus = statusService.GetServiceStatusAsync().GetAwaiter().GetResult();
+      var llmServiceAvailable = serviceStatus.TryGetValue("Llm", out var status) && status.IsAvailable;
+
+      if (!llmServiceAvailable)
       {
-        logger.LogWarning("Missing required OpenAI API key configuration. LLM functionality will not be available.");
-        return null!;
+        logger.LogWarning("LLM service is unavailable due to missing configuration: {MissingConfigs}",
+          status?.MissingConfigurations == null ? "unknown" : string.Join(", ", status.MissingConfigurations));
+
+        // Return a proxy that throws ServiceUnavailableException when methods are called
+        return new OpenAIClientProxy(status?.MissingConfigurations?.ToList());
       }
 
       try
@@ -130,7 +167,9 @@ public class ServiceStartup
       catch (Exception ex)
       {
         logger.LogWarning(ex, "Failed to create OpenAIClient. LLM functionality will not be available.");
-        return null!;
+        var errorMessage = $"Failed to create OpenAIClient: {ex.Message}";
+        var reasons = new List<string> { errorMessage };
+        return new OpenAIClientProxy(reasons);
       }
     });
 
@@ -140,14 +179,18 @@ public class ServiceStartup
       var transcribeConfig = sp.GetRequiredService<TranscribeConfig>();
       var llmConfig = sp.GetRequiredService<LlmConfig>();
       var logger = sp.GetRequiredService<ILogger<ServiceStartup>>();
+      var statusService = sp.GetRequiredService<IConfigurationStatusService>();
 
-      // Check if the required API key is present and valid
-      if (string.IsNullOrEmpty(llmConfig.ApiKey) ||
-          llmConfig.ApiKey == "recommended to set in app secrets")
+      var serviceStatus = statusService.GetServiceStatusAsync().GetAwaiter().GetResult();
+      var llmServiceAvailable = serviceStatus.TryGetValue("Llm", out var status) && status.IsAvailable;
+
+      if (!llmServiceAvailable)
       {
-        logger.LogWarning(
-          "Missing required OpenAI API key configuration. Audio transcription functionality will not be available.");
-        return null!;
+        logger.LogWarning("Audio transcription service is unavailable due to missing configuration: {MissingConfigs}",
+          status?.MissingConfigurations == null ? "unknown" : string.Join(", ", status.MissingConfigurations));
+
+        // Return a proxy that throws ServiceUnavailableException when methods are called
+        return new AudioClientProxy(status?.MissingConfigurations?.ToList());
       }
 
       try
@@ -157,9 +200,85 @@ public class ServiceStartup
       catch (Exception ex)
       {
         logger.LogWarning(ex, "Failed to create AudioClient. Audio transcription functionality will not be available.");
-        return null!;
+        var errorMessage = $"Failed to create AudioClient: {ex.Message}";
+        var reasons = new List<string> { errorMessage };
+        return new AudioClientProxy(reasons);
       }
     });
+  }
+
+  /// <summary>
+  /// Proxy implementation of OpenAIClient that throws ServiceUnavailableException
+  /// when any of its methods are called.
+  /// </summary>
+  private class OpenAIClientProxy : OpenAIClient
+  {
+    private readonly List<string>? _reasons;
+
+    public OpenAIClientProxy(List<string>? reasons = null)
+      : base("dummy_key") // Dummy base constructor call
+    {
+      _reasons = reasons;
+    }
+
+    public override IOpenAIChatClient Chat => throw CreateException();
+
+    public override IOpenAICompletionsClient Completions => throw CreateException();
+
+    public override IOpenAIEmbeddingsClient Embeddings => throw CreateException();
+
+    public override IOpenAIImagesClient Images => throw CreateException();
+
+    public override IOpenAIFilesClient Files => throw CreateException();
+
+    public override IOpenAIAssistantsClient Assistants => throw CreateException();
+
+    public override IOpenAIThreadsClient Threads => throw CreateException();
+
+    private ServiceUnavailableException CreateException()
+    {
+      return new ServiceUnavailableException(
+        "LLM service is unavailable due to missing configuration",
+        _reasons
+      );
+    }
+  }
+
+  /// <summary>
+  /// Proxy implementation of AudioClient that throws ServiceUnavailableException
+  /// when any of its methods are called.
+  /// </summary>
+  private class AudioClientProxy : AudioClient
+  {
+    private readonly List<string>? _reasons;
+
+    public AudioClientProxy(List<string>? reasons = null)
+      : base("whisper-1", "dummy_key") // Dummy base constructor call
+    {
+      _reasons = reasons;
+    }
+
+    public override Task<AudioTranscriptionResponse> TranscribeAudioAsync(
+      Stream audioStream,
+      AudioTranscriptionOptions? options = null,
+      CancellationToken cancellationToken = default)
+    {
+      throw new ServiceUnavailableException(
+        "Audio transcription service is unavailable due to missing configuration",
+        _reasons
+      );
+    }
+
+    public override Task<AudioTranslationResponse> TranslateAudioAsync(
+      Stream audioStream,
+      AudioTranslationOptions? options = null,
+      CancellationToken cancellationToken = default)
+    {
+      throw new ServiceUnavailableException(
+        "Audio translation service is unavailable due to missing configuration",
+        _reasons
+      );
+    }
   }
 
   /// <summary>

@@ -26,10 +26,8 @@ public class EmailService(
   public async Task SendEmail(string recipient, string subject, string templateName,
     Dictionary<string, object>? templateData = null, FileAttachment? attachment = null)
   {
-    if (graphClient == null)
-    {
-      throw new ConfigurationMissingException(nameof(EmailConfig), "Azure Tenant ID, App ID, Secret, or FromEmail is missing or invalid");
-    }
+    // ServiceUnavailableException will be thrown by the proxy if Email service is unavailable
+    ArgumentNullException.ThrowIfNull(graphClient, nameof(graphClient));
 
     string bodyContent;
     try

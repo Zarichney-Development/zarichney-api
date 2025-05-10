@@ -9,10 +9,17 @@ namespace Zarichney.Services.GitHub;
 
 public class GitHubConfig : IConfig
 {
+  [RequiresConfiguration("GitHubConfig:RepositoryOwner")]
   public string RepositoryOwner { get; init; } = string.Empty;
+
+  [RequiresConfiguration("GitHubConfig:RepositoryName")]
   public string RepositoryName { get; init; } = string.Empty;
+
   public string BranchName { get; init; } = "main";
+
+  [RequiresConfiguration("GitHubConfig:AccessToken")]
   public string AccessToken { get; init; } = string.Empty;
+
   public int RetryAttempts { get; init; } = 5;
 }
 
@@ -113,24 +120,8 @@ public class GitHubService : BackgroundService, IGitHubService
 
   private async Task ProcessGitHubOperationAsync(GitHubOperation operation)
   {
-    // Validate configuration before attempting any GitHub operations
-    if (string.IsNullOrEmpty(_config.AccessToken) || _config.AccessToken == "recommended to set in app secrets")
-    {
-      _logger.LogError("GitHub access token is missing or invalid");
-      throw new ConfigurationMissingException(nameof(GitHubConfig), nameof(_config.AccessToken));
-    }
-
-    if (string.IsNullOrEmpty(_config.RepositoryOwner))
-    {
-      _logger.LogError("GitHub repository owner is missing");
-      throw new ConfigurationMissingException(nameof(GitHubConfig), nameof(_config.RepositoryOwner));
-    }
-
-    if (string.IsNullOrEmpty(_config.RepositoryName))
-    {
-      _logger.LogError("GitHub repository name is missing");
-      throw new ConfigurationMissingException(nameof(GitHubConfig), nameof(_config.RepositoryName));
-    }
+    // Configuration validation is now handled by IConfigurationStatusService
+    // These properties are marked with RequiresConfiguration attribute
 
     _logger.LogInformation("Processing GitHub commit for file {FilePath} in directory {Directory}",
       operation.FilePath, operation.Directory);

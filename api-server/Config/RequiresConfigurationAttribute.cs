@@ -7,23 +7,23 @@ namespace Zarichney.Config;
 [AttributeUsage(AttributeTargets.Property, Inherited = true, AllowMultiple = false)]
 public class RequiresConfigurationAttribute : Attribute
 {
-    /// <summary>
-    /// Gets the configuration key path (e.g., "Section:Key").
-    /// </summary>
-    public string ConfigurationKey { get; }
-    
-    /// <summary>
-    /// Initializes a new instance of the <see cref="RequiresConfigurationAttribute"/> class.
-    /// </summary>
-    /// <param name="configurationKey">The configuration key path (e.g., "Section:Key").</param>
-    /// <exception cref="ArgumentException">Thrown when configurationKey is null or whitespace.</exception>
-    public RequiresConfigurationAttribute(string configurationKey)
+  /// <summary>
+  /// Gets the configuration key path (e.g., "Section:Key").
+  /// </summary>
+  public string ConfigurationKey { get; }
+
+  /// <summary>
+  /// Initializes a new instance of the <see cref="RequiresConfigurationAttribute"/> class.
+  /// </summary>
+  /// <param name="configurationKey">The configuration key path (e.g., "Section:Key").</param>
+  /// <exception cref="ArgumentException">Thrown when configurationKey is null or whitespace.</exception>
+  public RequiresConfigurationAttribute(string configurationKey)
+  {
+    if (string.IsNullOrWhiteSpace(configurationKey))
     {
-        if (string.IsNullOrWhiteSpace(configurationKey))
-        {
-            throw new ArgumentException("Configuration key cannot be null or whitespace", nameof(configurationKey));
-        }
-        
-        ConfigurationKey = configurationKey;
+      throw new ArgumentException("Configuration key cannot be null or whitespace", nameof(configurationKey));
     }
+
+    ConfigurationKey = configurationKey;
+  }
 }
