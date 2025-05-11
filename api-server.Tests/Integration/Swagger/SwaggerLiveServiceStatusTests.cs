@@ -38,24 +38,24 @@ public class SwaggerLiveServiceStatusTests : IntegrationTestBase
     // Act - Step 1: Get the service status
     var statusResponse = await client.GetAsync(_statusUrl);
     statusResponse.EnsureSuccessStatusCode();
-    
+
     // Parse the status response to determine which services are unavailable
     var statusContent = await statusResponse.Content.ReadAsStringAsync();
     var statusResult = JsonSerializer.Deserialize<Dictionary<string, ServiceStatusInfo>>(statusContent);
-    
+
     // Find unavailable services
     var unavailableServices = statusResult?
         .Where(s => !s.Value.IsAvailable)
         .Select(s => s.Key)
         .ToList() ?? new List<string>();
-    
+
     // Skip test if no services are unavailable (unlikely in a test environment, but possible)
     if (!unavailableServices.Any())
     {
       Skip.If(true, "All services are available - nothing to test");
       return;
     }
-    
+
     // Act - Step 2: Get the Swagger JSON
     var swaggerResponse = await client.GetAsync(_swaggerJsonUrl);
     swaggerResponse.EnsureSuccessStatusCode();
@@ -96,36 +96,36 @@ public class SwaggerLiveServiceStatusTests : IntegrationTestBase
       serviceNameFound.Should().BeTrue($"Swagger JSON should mention the unavailable service '{serviceName}' or its variants");
     }
   }
-  
+
   [Fact]
   [Trait(TestCategories.Feature, TestCategories.Swagger)]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
   public async Task Swagger_UnavailableLlmEndpoints_AreProperlyMarkedWithWarnings()
   {
     // This test focuses specifically on LLM endpoints since they have clear API endpoints
-    
+
     // Arrange - Create an authenticated client
     using var client = Factory.CreateAuthenticatedClient("test-user", ["Admin"]);
 
     // Act - Step 1: Get the service status to check if LLM is available
     var statusResponse = await client.GetAsync(_statusUrl);
     statusResponse.EnsureSuccessStatusCode();
-    
+
     var statusContent = await statusResponse.Content.ReadAsStringAsync();
     var statusResult = JsonSerializer.Deserialize<Dictionary<string, ServiceStatusInfo>>(statusContent);
-    
+
     // Check if LLM service is unavailable
     bool llmUnavailable = statusResult != null &&
                          statusResult.TryGetValue("Llm", out var llmStatus) &&
                          !llmStatus.IsAvailable;
-    
+
     // Skip test if LLM service is available
     if (!llmUnavailable)
     {
       Skip.If(true, "LLM service is available - nothing to test");
       return;
     }
-    
+
     // Act - Step 2: Get the Swagger JSON
     var swaggerResponse = await client.GetAsync(_swaggerJsonUrl);
     swaggerResponse.EnsureSuccessStatusCode();
@@ -138,7 +138,7 @@ public class SwaggerLiveServiceStatusTests : IntegrationTestBase
       Skip.If(true, "Could not deserialize Swagger JSON - test cannot proceed");
       return;
     }
-    
+
     // Find the LLM-related endpoints (completion, transcribe)
     var llmEndpoints = swagger?.Paths
         ?.Where(p => p.Key.Contains("/api/completion") || p.Key.Contains("/api/transcribe"))
@@ -155,7 +155,7 @@ public class SwaggerLiveServiceStatusTests : IntegrationTestBase
     // Since this test is primarily checking that LLM endpoints exist in Swagger,
     // we'll skip the detailed warning checks which are already covered in other tests
   }
-  
+
   /// <summary>
   /// Determines if a service is an infrastructure service that doesn't have direct API endpoints.
   /// </summary>
@@ -170,7 +170,7 @@ public class SwaggerLiveServiceStatusTests : IntegrationTestBase
 
     return infrastructureServices.Contains(serviceName, StringComparer.OrdinalIgnoreCase);
   }
-  
+
   /// <summary>
   /// Response model for service status API
   /// </summary>
@@ -179,7 +179,7 @@ public class SwaggerLiveServiceStatusTests : IntegrationTestBase
     public bool IsAvailable { get; set; }
     public List<string> MissingConfigurations { get; set; } = new();
   }
-  
+
   /// <summary>
   /// Simple class to deserialize the Swagger JSON output for testing.
   /// </summary>
