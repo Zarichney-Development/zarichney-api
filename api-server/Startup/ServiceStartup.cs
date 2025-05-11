@@ -76,7 +76,7 @@ public class ServiceStartup
           status?.MissingConfigurations == null ? "unknown" : string.Join(", ", status.MissingConfigurations));
 
         // Return a proxy that throws ServiceUnavailableException when methods are called
-        return new GraphServiceClientProxy(status?.MissingConfigurations?.ToList());
+        return new GraphServiceClientProxy(status?.MissingConfigurations.ToList());
       }
 
       try
@@ -108,16 +108,11 @@ public class ServiceStartup
   /// Proxy implementation of GraphServiceClient that throws ServiceUnavailableException
   /// when any of its methods are called.
   /// </summary>
-  internal class GraphServiceClientProxy : GraphServiceClient
+  private class GraphServiceClientProxy(List<string>? reasons = null) : GraphServiceClient(_sharedHttpClient)
   {
-    private readonly List<string>? _reasons;
     private static readonly HttpClient _sharedHttpClient = new();
 
-    public GraphServiceClientProxy(List<string>? reasons = null)
-      : base(_sharedHttpClient) // Use shared HttpClient instance
-    {
-      _reasons = reasons;
-    }
+    // Use shared HttpClient instance
 
     // GraphServiceClient's methods may not be virtual, so we can't override them directly.
     // Instead, we'll intercept method calls by implementing service methods that our tests need.
@@ -130,7 +125,7 @@ public class ServiceStartup
     {
       return new ServiceUnavailableException(
         "Email service is unavailable due to missing configuration",
-        _reasons
+        reasons
       );
     }
   }
@@ -210,15 +205,9 @@ public class ServiceStartup
   /// Proxy implementation of OpenAIClient that throws ServiceUnavailableException
   /// when any of its methods are called.
   /// </summary>
-  internal class OpenAIClientProxy : OpenAIClient
+  private class OpenAIClientProxy(List<string>? reasons = null) : OpenAIClient("dummy_key")
   {
-    private readonly List<string>? _reasons;
-
-    public OpenAIClientProxy(List<string>? reasons = null)
-      : base("dummy_key") // Dummy base constructor call
-    {
-      _reasons = reasons;
-    }
+    // Dummy base constructor call
 
     // OpenAIClient's properties may not be virtual, so we can't override them directly.
     // Instead, we'll intercept method calls by implementing service methods that our tests need.
@@ -231,7 +220,7 @@ public class ServiceStartup
     {
       return new ServiceUnavailableException(
         "LLM service is unavailable due to missing configuration",
-        _reasons
+        reasons
       );
     }
   }
@@ -240,15 +229,9 @@ public class ServiceStartup
   /// Proxy implementation of AudioClient that throws ServiceUnavailableException
   /// when any of its methods are called.
   /// </summary>
-  internal class AudioClientProxy : AudioClient
+  private class AudioClientProxy(List<string>? reasons = null) : AudioClient("whisper-1", "dummy_key")
   {
-    private readonly List<string>? _reasons;
-
-    public AudioClientProxy(List<string>? reasons = null)
-      : base("whisper-1", "dummy_key") // Dummy base constructor call
-    {
-      _reasons = reasons;
-    }
+    // Dummy base constructor call
 
     // AudioClient's methods may not be virtual, so we need to intercept calls differently.
     // We'll create a new method that our tests can use to verify proxy behavior.
@@ -258,7 +241,7 @@ public class ServiceStartup
     {
       throw new ServiceUnavailableException(
         "Audio transcription service is unavailable due to missing configuration",
-        _reasons
+        reasons
       );
     }
 

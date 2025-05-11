@@ -242,7 +242,7 @@ public class ServiceAvailabilityOperationFilterTests
            .Should().NotThrow("The filter should handle null context gracefully");
   }
 
-  private static OperationFilterContext CreateOperationFilterContext(MethodInfo methodInfo)
+  private static OperationFilterContext? CreateOperationFilterContext(MethodInfo methodInfo)
   {
     // Simple mock of OperationFilterContext that contains the method info
     var apiDescription = new Mock<Microsoft.AspNetCore.Mvc.ApiExplorer.ApiDescription>();

@@ -114,8 +114,7 @@ public class ConfigurationStatusService : IConfigurationStatusService
       {
         // Resolve each config type from the service provider.
         // IConfig instances are registered as singletons.
-        var configInstance = _serviceProvider.GetService(configTypeItem) as IConfig;
-        if (configInstance != null)
+        if (_serviceProvider.GetService(configTypeItem) is IConfig configInstance)
         {
           configInstances.Add(configInstance);
         }

@@ -23,7 +23,7 @@ public static class ConfigurationStartup
 
     if (builder.Environment.IsDevelopment())
     {
-      builder.Configuration.AddUserSecrets<Program>(optional: true);
+      // builder.Configuration.AddUserSecrets<Program>(optional: true);
     }
 
     builder.Configuration.AddEnvironmentVariables();

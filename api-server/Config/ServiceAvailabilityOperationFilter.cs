@@ -21,15 +21,15 @@ public class ServiceAvailabilityOperationFilter : IOperationFilter
   /// <param name="statusService">The service that provides configuration status information.</param>
   /// <param name="logger">The logger.</param>
   public ServiceAvailabilityOperationFilter(
-      IConfigurationStatusService statusService,
-      ILogger<ServiceAvailabilityOperationFilter> logger)
+    IConfigurationStatusService statusService,
+    ILogger<ServiceAvailabilityOperationFilter> logger)
   {
     _statusService = statusService ?? throw new ArgumentNullException(nameof(statusService));
     _logger = logger ?? throw new ArgumentNullException(nameof(logger));
   }
 
   /// <inheritdoc />
-  public void Apply(OpenApiOperation operation, OperationFilterContext context)
+  public void Apply(OpenApiOperation? operation, OperationFilterContext? context)
   {
     if (operation == null || context == null)
     {
@@ -38,17 +38,17 @@ public class ServiceAvailabilityOperationFilter : IOperationFilter
 
     // Try to gather all RequiresFeatureEnabled attributes from both the method and its containing class
     var methodAttributes = context.MethodInfo
-        .GetCustomAttributes<RequiresFeatureEnabledAttribute>(inherit: true)
-        .ToList();
+      .GetCustomAttributes<RequiresFeatureEnabledAttribute>(inherit: true)
+      .ToList();
 
     var classAttributes = context.MethodInfo.DeclaringType?
-        .GetCustomAttributes<RequiresFeatureEnabledAttribute>(inherit: true)
-        .ToList() ?? new List<RequiresFeatureEnabledAttribute>();
+      .GetCustomAttributes<RequiresFeatureEnabledAttribute>(inherit: true)
+      .ToList() ?? [];
 
     // Combine all attributes
     var allAttributes = methodAttributes.Concat(classAttributes).ToList();
 
-    if (!allAttributes.Any())
+    if (allAttributes.Count == 0)
     {
       // No attributes found, so no modification needed
       return;
@@ -72,10 +72,10 @@ public class ServiceAvailabilityOperationFilter : IOperationFilter
         var statusInfo = _statusService.GetFeatureStatus(featureName);
 
         // If the status indicates the feature is unavailable, track it
-        if (statusInfo != null && !statusInfo.IsAvailable)
+        if (statusInfo is { IsAvailable: false })
         {
           _logger.LogDebug("API endpoint '{Method}' requires feature '{Feature}' which is unavailable",
-              context.MethodInfo.Name, featureName);
+            context.MethodInfo.Name, featureName);
           unavailableFeatures[featureName] = statusInfo;
         }
       }
@@ -87,29 +87,25 @@ public class ServiceAvailabilityOperationFilter : IOperationFilter
       var allReasons = new List<string>();
       foreach (var (feature, statusInfo) in unavailableFeatures)
       {
-        if (statusInfo.MissingConfigurations.Count > 0)
-        {
-          allReasons.Add($"{feature} (Missing: {string.Join(", ", statusInfo.MissingConfigurations)})");
-        }
-        else
-        {
-          allReasons.Add(feature);
-        }
+        allReasons.Add(statusInfo.MissingConfigurations.Count > 0
+          ? $"{feature} (Missing: {string.Join(", ", statusInfo.MissingConfigurations)})"
+          : feature);
       }
 
       var warningPrefix = $"⚠️ (Unavailable: {string.Join("; ", allReasons)}) ";
 
       // Prepend the warning to the summary
       operation.Summary = string.IsNullOrEmpty(operation.Summary)
-          ? warningPrefix.TrimEnd()
-          : warningPrefix + operation.Summary;
+        ? warningPrefix.TrimEnd()
+        : warningPrefix + operation.Summary;
 
       // Add more detailed explanation in the description
-      var warningDetail = $"**This endpoint is currently unavailable** due to missing configuration for: {string.Join("; ", allReasons)}";
+      var warningDetail =
+        $"**This endpoint is currently unavailable** due to missing configuration for: {string.Join("; ", allReasons)}";
 
       operation.Description = string.IsNullOrEmpty(operation.Description)
-          ? warningDetail
-          : warningDetail + Environment.NewLine + Environment.NewLine + operation.Description;
+        ? warningDetail
+        : warningDetail + Environment.NewLine + Environment.NewLine + operation.Description;
     }
   }
 }

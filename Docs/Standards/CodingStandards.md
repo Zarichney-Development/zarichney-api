@@ -26,6 +26,7 @@
   * Use `record` types for immutable data transfer objects (DTOs) or simple data carriers where appropriate.
   * Keep methods concise and focused on a single responsibility. Aim for methods that fit on one screen.
   * Adhere to standard C# formatting (indentation, spacing, braces) primarily enforced by the project's `.editorconfig` file.
+  * Prefer comparing 'Count' to 0 rather than using Any(). Instead of `if (!allAttributes.Any())` use `if (allAttributes.Count == 0)`
 
 ## 3. Architecture & Design
 

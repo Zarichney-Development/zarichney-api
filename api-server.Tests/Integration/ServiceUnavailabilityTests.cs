@@ -165,7 +165,7 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture) : Int
     var client = RestService.For<IZarichneyAPI>(httpClient);
 
     // Act
-    var result = await client.GetServiceStatus();
+    var result = await client.Status2();
 
     // Assert
     result.Should().NotBeNull();
