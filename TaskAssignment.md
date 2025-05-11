@@ -1,91 +1,96 @@
-**IMPORTANT:** You are a specialized, session-isolated AI Coder. You **lack memory** of prior tasks. This prompt contains **ALL** necessary context and instructions for the current task. Adhere strictly to the specified workflow and standards. You are working in an environment with no sensitive configuration or secrets, so it is expected that external services are not available.
+**IMPORTANT:** You are a specialized, session-isolated AI Coder focused on **improving automated test coverage**. You **lack memory** of prior tasks. This prompt contains **ALL** necessary context and instructions for the current testing task. Adhere strictly to the specified workflow and standards. Your primary goal is to add/update tests for existing code, **not** to change production code logic unless a minor change in production code is essential for testability and aligns with the overall refactoring goal.  You are working in an environment with no sensitive configuration or secrets, so it is expected that external services are not available.
 
 ## 1. Context Recap
 
-* **Overall Goal:** This task continues the refactoring of configuration handling for graceful service availability (Epic #1).
-    * Previous Task 1.1 (Core Infrastructure): Established `ServiceUnavailableException`, `[RequiresConfiguration]` attribute, `IConfigurationStatusService`, updated `/api/status` endpoint, and `ErrorHandlingMiddleware`.
-    * Previous Task 1.2 (Service/DI Adaptation): Adapted service DI registrations and `IConfig` classes.
-* **Immediate Task Goal:** Implement a Swagger UI visualization to indicate when API endpoints may be unavailable due to missing underlying configurations. This involves creating a custom attribute for controllers/actions and a Swagger Operation Filter that leverages `IConfigurationStatusService`.
-* **Session Context:** This task starts with a **fresh context**. Your starting point is the codebase *after* the changes from the Pull Requests for "Child Issue 1.1" and "Child Issue 1.2" have been merged into the `develop` branch (or the current main development branch). **You MUST review the changes in those PRs to understand the current state and the `IConfigurationStatusService` you will be using.**
+* **Overall Goal:** This task is the final part of Epic #1: "refactor: Improve Config Handling for Graceful Service Availability". It focuses on ensuring the testing framework and test suites are updated to reflect the new service availability mechanisms and that the new behaviors are thoroughly tested.
+* **Previous Tasks Summary:**
+    * Child Issue 1.1 (Core Infrastructure): Established `ServiceUnavailableException`, `[RequiresConfiguration]` attribute, `IConfigurationStatusService`, updated `/api/status` endpoint, and `ErrorHandlingMiddleware`.
+    * Child Issue 1.2 (Service/DI Adaptation): Adapted service DI registrations and `IConfig` classes to use the new infrastructure.
+    * Child Issue 1.3 (Swagger Integration): Implemented a Swagger Filter to visually indicate endpoint unavailability.
+* **Immediate Task Goal:**
+    1.  Update the test framework's `ConfigurationStatusHelper` to work with the new `/api/status` endpoint and its response structure (`Dictionary<string, ServiceStatusInfo>`).
+    2.  Ensure the `DependencyFactAttribute` correctly skips tests based on this updated helper and the service availability reported by `/api/status`.
+    3.  Add comprehensive unit tests for the new components and modified existing components related to the configuration refactor (e.g., `ConfigurationStatusService`, `ErrorHandlingMiddleware`, `ServiceAvailabilityOperationFilter`, DI factories in `ServiceStartup.cs`).
+    4.  Add integration tests to verify:
+        * Endpoints correctly return HTTP 503 with detailed error messages when dependent services are unavailable due to missing configuration.
+        * Endpoints not dependent on misconfigured services continue to function.
+        * The Swagger document accurately reflects endpoint unavailability warnings.
+        * The `/api/status` endpoint provides correct availability information.
+* **Session Context:** This task starts with a **fresh context**. Your starting point is the codebase *after* the changes from the Pull Requests for "Child Issue 1.1", "Child Issue 1.2", and "Child Issue 1.3" have been merged into the `develop` branch (or the current main development branch). **You MUST review the changes in those PRs to understand the current state and the new infrastructure you will be testing.**
 
 ## 2. Associated Task
 
 * **GitHub Epic:** [https://github.com/Zarichney-Development/zarichney-api/issues/1](https://github.com/Zarichney-Development/zarichney-api/issues/1)
 * **Previous Child Issue PRs (MUST REVIEW):**
-    * PR for Child Issue 1.1 (Core Infrastructure): {Orchestrator: Please provide the PR link for Child Issue 1.1}
-    * PR for Child Issue 1.2 (Service/DI Adaptation): {Orchestrator: Please provide the PR link for Child Issue 1.2}
-* **Current Child Task:** This prompt addresses Child Issue 1.3 (Swagger Integration) of Epic #1.
+    * PR for Child Issue 1.1 (Core Infrastructure): {Orchestrator: Please provide the PR link}
+    * PR for Child Issue 1.2 (Service/DI Adaptation): {Orchestrator: Please provide the PR link}
+    * PR for Child Issue 1.3 (Swagger Integration): {Orchestrator: Please provide the PR link}
+* **Current Child Task:** This prompt addresses Child Issue 1.4 (Testing Framework & Coverage) of Epic #1.
 
 ## 3. Relevant Documentation
 
 * **MUST REVIEW (Previous Task Context):**
-    * The Pull Requests for Child Issue 1.1 and 1.2.
+    * The Pull Requests for Child Issue 1.1, 1.2, and 1.3.
 * **MUST READ (Local Context & Contracts):**
-    * `/Services/Status/IConfigurationStatusService.cs` (and its implementation) - this is a key service you will use.
-    * `/Services/Status/README.md` ([View Content](content/zarichney-api/api-server/Services/Status/README.md))
-    * `/Startup/ServiceStartup.cs` ([View Content](content/zarichney-api/api-server/Startup/ServiceStartup.cs)) (for registering the filter)
-    * `/Startup/README.md` ([View Content](content/zarichney-api/api-server/Startup/README.md))
-    * Example controllers like `/Controllers/AiController.cs` ([View Content](content/zarichney-api/api-server/Controllers/AiController.cs)) and `/Controllers/PaymentController.cs` ([View Content](content/zarichney-api/api-server/Controllers/PaymentController.cs)) for applying the new attribute.
+    * `/api-server.Tests/Framework/Helpers/ConfigurationStatusHelper.cs` ([View Content](content/zarichney-api/api-server.Tests/Framework/Helpers/ConfigurationStatusHelper.cs))
+    * `/api-server.Tests/Framework/Attributes/DependencyFactAttribute.cs` ([View Content](content/zarichney-api/api-server.Tests/Framework/Attributes/DependencyFactAttribute.cs))
+    * `/api-server.Tests/Integration/IntegrationTestBase.cs` ([View Content](content/zarichney-api/api-server.Tests/Integration/IntegrationTestBase.cs))
+    * `/api-server/Services/Status/IConfigurationStatusService.cs` and its implementation.
+    * `/api-server/Config/ErrorHandlingMiddleware.cs` ([View Content](content/zarichney-api/api-server/Config/ErrorHandlingMiddleware.cs))
+    * The Swagger Filter implemented in Child Issue 1.3 (e.g., `ServiceAvailabilityOperationFilter.cs`).
+    * `/api-server/Startup/ServiceStartup.cs` ([View Content](content/zarichney-api/api-server/Startup/ServiceStartup.cs)) (DI factories).
+    * `/api-server/Controllers/PublicController.cs` ([View Content](content/zarichney-api/api-server/Controllers/PublicController.cs)) (for the `/api/status` endpoint).
 * **MUST CONSULT (Global Rules):**
+    * Testing Rules: **[`/Docs/Standards/TestingStandards.md`](content/zarichney-api/Docs/Standards/TestingStandards.md)** (*CRITICAL*)
     * Primary Code Rules: **[`/Docs/Standards/CodingStandards.md`](content/zarichney-api/Docs/Standards/CodingStandards.md)**
     * Task/Git Rules: **[`/Docs/Standards/TaskManagementStandards.md`](content/zarichney-api/Docs/Standards/TaskManagementStandards.md)**
     * README Update Rules: **[`/Docs/Standards/DocumentationStandards.md`](content/zarichney-api/Docs/Standards/DocumentationStandards.md)**
-    * Testing Rules: **[`/Docs/Standards/TestingStandards.md`](content/zarichney-api/Docs/Standards/TestingStandards.md)**
 * **KEY SECTIONS (Focus Areas):**
-    * `IConfigurationStatusService` interface and its expected `ServiceStatusInfo` return type.
-    * SwaggerGen options in `ServiceStartup.ConfigureSwagger`.
+    * `/Docs/Standards/TestingStandards.md`: Sections on Integration Testing, Mocking, Assertions, and Dependency Skipping.
+    * The implementation of `/api/status` endpoint and the structure of `ServiceStatusInfo`.
 
-## 4. Workflow & Task (Standard)
+## 4. Workflow & Task (Test Coverage Enhancement)
 
 You **MUST** execute the workflow detailed in the referenced file below. Follow the steps sequentially and precisely.
 
-* **Active Workflow Steps File:** **[`/Docs/Development/StandardWorkflow.md`](content/zarichney-api/Docs/Development/StandardWorkflow.md)**
+* **Active Workflow Steps File:** **[`/Docs/Development/TestCovergeWorkflow.md`](content/zarichney-api/Docs/Development/TestCovergeWorkflow.md)**
 
-## 5. Specific Coding Task
+## 5. Specific Testing Task
 
-1.  **Define `[RequiresFeatureEnabled]` Attribute:**
-    * Create a new C# attribute class named `RequiresFeatureEnabledAttribute.cs` (e.g., in a new directory like `/Filters/Attributes/` or within `/Config/` if more appropriate).
-    * This attribute should inherit from `System.Attribute`.
-    * It should be applicable to `AttributeTargets.Class` and `AttributeTargets.Method`.
-    * It should have a constructor that accepts one or more `string featureName` arguments (e.g., `public RequiresFeatureEnabledAttribute(params string[] featureNames)`).
-    * Store these feature names in a public property (e.g., `public string[] FeatureNames { get; }`). These feature names should correspond to the keys used by `IConfigurationStatusService` (e.g., "LLM", "EmailSending", "Payments").
-2.  **Implement `ServiceAvailabilityOperationFilter`:**
-    * Create a new C# class `ServiceAvailabilityOperationFilter.cs` (e.g., in `/Startup/` or `/Filters/`).
-    * Implement the `Swashbuckle.AspNetCore.SwaggerGen.IOperationFilter` interface.
-    * The constructor should inject `IConfigurationStatusService`.
-    * In the `Apply(OpenApiOperation operation, OperationFilterContext context)` method:
-        * Retrieve any `RequiresFeatureEnabledAttribute` instances applied to the controller action method (`context.MethodInfo`) or the controller class (`context.MethodInfo.DeclaringType`).
-        * If the attribute(s) are found, iterate through the `FeatureNames`.
-        * For each `featureName`, call `await _statusService.GetServiceStatusAsync()` (note: `GetServiceStatusAsync` is async, Swagger filters are sync. You might need to adapt `IConfigurationStatusService` or how it's consumed here. A synchronous `IsFeatureAvailable(string featureName)` and `GetUnavailableReasons(string featureName)` on `IConfigurationStatusService` might be better for filters. Alternatively, the status could be pre-loaded at startup and cached for the filter).
-            * **Self-correction for AI Coder:** Given Swagger filter limitations, the `IConfigurationStatusService` should ideally provide a synchronous way to check status, or status should be determined at startup and cached for the filter's use. For this task, let's assume `IConfigurationStatusService` can provide the necessary status information synchronously or from a cache. Adapt the implementation of `ConfigurationStatusService` if necessary to support this, or if too complex, the filter can fetch status once per Swagger generation. *Focus on getting the filter to work with the existing `IConfigurationStatusService` first.*
-        * If `statusService.GetServiceStatusAsync().Result` (or equivalent synchronous check) indicates a required feature is unavailable:
-            * Let `serviceStatusInfo = statusResult[featureName]`.
-            * If `!serviceStatusInfo.IsAvailable`, prepend a warning symbol and message to `operation.Summary` or `operation.Description`. Example: `operation.Summary = "⚠️ (Unavailable: Missing " + string.Join(", ", serviceStatusInfo.MissingConfigurations) + ") " + operation.Summary;`
-            * Ensure you handle multiple required features; if any one is unavailable, the endpoint should be marked. Concatenate reasons if multiple features are down.
-3.  **Register Swagger Filter:**
-    * In `/Startup/ServiceStartup.cs`, within the `ConfigureSwagger` method, add the new filter to SwaggerGen options: `c.OperationFilter<ServiceAvailabilityOperationFilter>();`.
-4.  **Apply `[RequiresFeatureEnabled]` Attribute (Examples):**
-    * Apply this attribute to a few diverse controller actions or entire controllers to demonstrate its usage. For example:
-        * In `AiController.cs`: `[RequiresFeatureEnabled("LLM")]` or `[RequiresFeatureEnabled("OpenAI")]` on `GetCompletion`.
-        * In `AiController.cs`: `[RequiresFeatureEnabled("Transcription")]` or `[RequiresFeatureEnabled("OpenAI")]` on `TranscribeAudio`.
-        * In `PaymentController.cs`: `[RequiresFeatureEnabled("Payments")]` on class level or specific actions like `CreateCheckoutSession`.
-        * Ensure the feature names used match the keys that `ConfigurationStatusService` will use/report on.
-5.  **Update Unit/Integration Tests:**
-    * Create unit tests for `ServiceAvailabilityOperationFilter`, mocking `IConfigurationStatusService` and `OperationFilterContext` to verify that `operation.Summary/Description` is modified correctly based on different availability statuses.
-    * If you modified `ConfigurationStatusService` for synchronous access, add tests for that.
-    * Add/modify integration tests (in `api-server.Tests`) that fetch the Swagger JSON (`/api/swagger/swagger.json`). These tests should:
-        * Set up the `CustomWebApplicationFactory` to simulate missing configurations for specific features (e.g., by providing an `IConfiguration` that makes `LlmConfig:ApiKey` missing).
-        * Fetch the Swagger JSON.
-        * Assert that the summaries/descriptions for the attributed endpoints now contain the "⚠️ (Unavailable...)" warning.
-6.  **Update Documentation:**
-    * Create a `README.md` in `/Filters/Attributes/` if you created `RequiresFeatureEnabledAttribute.cs` there, or update `/Config/README.md`. Document the attribute's purpose and usage.
-    * Update `/Startup/README.md` (or create `/Filters/README.md`) to document the `ServiceAvailabilityOperationFilter`.
-    * Update `/Docs/Standards/CodingStandards.md` to recommend using the `[RequiresFeatureEnabled]` attribute for controllers/actions dependent on configurable features.
-    * Update `/Services/Status/README.md` to mention its consumption by the Swagger filter.
+1.  **Update `ConfigurationStatusHelper.cs`:**
+    * Modify `GetConfigurationStatusAsync` to call the new `/api/status` endpoint.
+    * Update `IsConfigurationAvailable` (or create a new helper, e.g., `IsFeatureDependencyAvailable(string dependencyTraitValue)`) to parse the `Dictionary<string, ServiceStatusInfo>` response from `/api/status`.
+    * This method will need to map `TestCategories.Dependency` trait values (e.g., `TestCategories.ExternalOpenAI`) to the feature/service names returned by `/api/status` (e.g., "LLM", "OpenAI") to check `ServiceStatusInfo.IsAvailable`. Ensure this mapping is robust.
+2.  **Verify/Test `DependencyFactAttribute` & `IntegrationTestBase`:**
+    * Ensure `IntegrationTestBase.CheckDependenciesAsync` correctly uses the modified `ConfigurationStatusHelper` to set `SkipReason`.
+    * If possible, write a meta-test or an integration test that sets up a scenario where a dependency *is* missing (by configuring the test `WebApplicationFactory`), applies `[DependencyFact]` and the relevant trait, and asserts that the test is skipped with the correct reason.
+3.  **Add/Update Unit Tests for Production Code:**
+    * **`ConfigurationStatusService.cs`**: Ensure it's well-tested, covering how it identifies required configurations from attributes and checks against `IConfiguration`.
+    * **`ErrorHandlingMiddleware.cs`**: Add specific tests for the `catch (ServiceUnavailableException ex)` block, verifying the HTTP 503 status code and the detailed JSON error response body (including `ex.Reasons`).
+    * **`ServiceAvailabilityOperationFilter.cs`**: Add tests mocking `IConfigurationStatusService` to return various availability states and verify the `OpenApiOperation` summary/description is modified as expected (with "⚠️" and reasons).
+    * **DI Factories in `ServiceStartup.cs`**: For factories modified in Child Issue 1.2 (e.g., for `GraphServiceClient`, `OpenAIClient`), add unit tests. Mock `IConfigurationStatusService` to report services as unavailable, then try to resolve the client. Verify that invoking a method on the resolved client proxy throws `ServiceUnavailableException`.
+4.  **Add/Update Integration Tests (`api-server.Tests/Integration/`):**
+    * **Endpoint Availability Tests:**
+        * For features like "LLM" (OpenAI) and "EmailSending" (Graph):
+            * Create tests where `CustomWebApplicationFactory` is configured with *missing* essential API keys for these features.
+            * Call an endpoint that directly depends *only* on the misconfigured feature (e.g., an AI endpoint if LLM key is missing).
+            * Assert that the response is HTTP 503 and the body contains the `ServiceUnavailableException` details, including the specific missing config keys.
+            * Call an unrelated public endpoint (e.g., `/api/health`). Assert it still returns HTTP 200 OK, demonstrating partial functionality.
+    * **Swagger Document Tests:**
+        * Create tests where `CustomWebApplicationFactory` simulates missing configurations for features associated with `[RequiresFeatureEnabled]` attributes.
+        * Fetch the Swagger JSON document (`/api/swagger/swagger.json`).
+        * Deserialize the JSON and assert that the `summary` or `description` for the relevant operations (those decorated with `[RequiresFeatureEnabled]` for the "down" feature) contains the "⚠️ (Unavailable: Missing...)" warning.
+    * **`/api/status` Endpoint Tests:**
+        * Test the `/api/status` endpoint.
+        * Scenario 1: All configurations present. Assert all expected services/features are reported as `IsAvailable = true`.
+        * Scenario 2: Specific configuration (e.g., `LlmConfig:ApiKey`) is missing. Assert the relevant service/feature (e.g., "LLM") is reported as `IsAvailable = false` with the correct `MissingConfigurations` listed.
+5.  **Documentation Updates:**
+    * Update `/api-server.Tests/Framework/Helpers/README.md` to explain any significant changes to `ConfigurationStatusHelper` or the `DependencyFact` mechanism.
+    * If new testing patterns or utilities were created for testing unavailability, consider if `/Docs/Standards/TestingStandards.md` needs minor additions or examples.
 
 ## 6. Task Completion & Output
 
-* **Expected Output:** Provide the final commit hash on your feature branch (e.g., `refactor/issue-1-swagger-viz`) and the URL of the created Pull Request.
-* **Stopping Point:** Stop after completing all steps of the referenced Standard workflow, including creating the Pull Request for this specific child issue.
+* **Expected Output:** Provide the final commit hash on your feature branch (e.g., `test/issue-1-config-testing`) and the URL of the created Pull Request. List the names of any new test files created.
+* **Stopping Point:** Stop after completing all steps of the referenced Test Coverage workflow, including creating the Pull Request for this specific child issue.
 
 ---

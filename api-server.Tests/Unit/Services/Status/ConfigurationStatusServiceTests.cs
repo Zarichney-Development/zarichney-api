@@ -95,6 +95,106 @@ public class ConfigurationStatusServiceTests
     result["TestService1"].MissingConfigurations.Should().Contain("TestService1:ApiKey");
   }
 
+  [Trait("Category", "Unit")]
+  [Fact]
+  public async Task GetFeatureStatus_WithValidFeature_ReturnsCorrectStatus()
+  {
+    // Arrange
+    SetupServiceProviderWithTestConfigs();
+    SetupConfigurationWithValidValues();
+
+    // Act - Call GetServiceStatusAsync to populate cache first
+    await _service.GetServiceStatusAsync();
+    var result = _service.GetFeatureStatus("TestService1");
+
+    // Assert
+    result.Should().NotBeNull();
+    result!.IsAvailable.Should().BeTrue();
+    result.MissingConfigurations.Should().BeEmpty();
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public async Task GetFeatureStatus_WithInvalidFeature_ReturnsNull()
+  {
+    // Arrange
+    SetupServiceProviderWithTestConfigs();
+    SetupConfigurationWithValidValues();
+
+    // Act - Call GetServiceStatusAsync to populate cache first
+    await _service.GetServiceStatusAsync();
+    var result = _service.GetFeatureStatus("NonExistentFeature");
+
+    // Assert
+    result.Should().BeNull();
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public async Task GetFeatureStatus_WithUnavailableFeature_ReturnsCorrectStatus()
+  {
+    // Arrange
+    SetupServiceProviderWithTestConfigs();
+    SetupConfigurationWithMissingValues();
+
+    // Act - Call GetServiceStatusAsync to populate cache first
+    await _service.GetServiceStatusAsync();
+    var result = _service.GetFeatureStatus("TestService1");
+
+    // Assert
+    result.Should().NotBeNull();
+    result!.IsAvailable.Should().BeFalse();
+    result.MissingConfigurations.Should().Contain("TestService1:ApiKey");
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public async Task IsFeatureAvailable_WithAvailableFeature_ReturnsTrue()
+  {
+    // Arrange
+    SetupServiceProviderWithTestConfigs();
+    SetupConfigurationWithValidValues();
+
+    // Act - Call GetServiceStatusAsync to populate cache first
+    await _service.GetServiceStatusAsync();
+    var result = _service.IsFeatureAvailable("TestService1");
+
+    // Assert
+    result.Should().BeTrue();
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public async Task IsFeatureAvailable_WithUnavailableFeature_ReturnsFalse()
+  {
+    // Arrange
+    SetupServiceProviderWithTestConfigs();
+    SetupConfigurationWithMissingValues();
+
+    // Act - Call GetServiceStatusAsync to populate cache first
+    await _service.GetServiceStatusAsync();
+    var result = _service.IsFeatureAvailable("TestService1");
+
+    // Assert
+    result.Should().BeFalse();
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public async Task IsFeatureAvailable_WithNonExistentFeature_ReturnsFalse()
+  {
+    // Arrange
+    SetupServiceProviderWithTestConfigs();
+    SetupConfigurationWithValidValues();
+
+    // Act - Call GetServiceStatusAsync to populate cache first
+    await _service.GetServiceStatusAsync();
+    var result = _service.IsFeatureAvailable("NonExistentFeature");
+
+    // Assert
+    result.Should().BeFalse();
+  }
+
   private void SetupEmptyServiceProvider()
   {
     // Ensure GetTypes returns an empty array for this test case

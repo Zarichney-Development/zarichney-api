@@ -165,32 +165,47 @@ public abstract class IntegrationTestBase : IAsyncLifetime
 
       try
       {
-        // Fetch the actual configuration status
-        var statuses = await ConfigurationStatusHelper.GetConfigurationStatusAsync(Factory);
+        // Fetch the service statuses from the new endpoint
+        var serviceStatuses = await ConfigurationStatusHelper.GetServiceStatusAsync(Factory);
 
-        // Check if statuses is null or empty
-        if (statuses == null || statuses.Count == 0)
+        // Check if service statuses is null or empty
+        if (serviceStatuses == null || serviceStatuses.Count == 0)
         {
-          SetSkipReason("Unable to fetch configuration status, assuming dependencies are missing.");
+          SetSkipReason("Unable to fetch service status, assuming dependencies are missing.");
           return;
         }
 
-        // Check if each required config is available
-        var missingConfigs = new List<string>();
-        foreach (var configName in requiredConfigs)
-        {
-          bool isAvailable = ConfigurationStatusHelper.IsConfigurationAvailable(statuses, configName);
+        // Check each dependency trait to see if its corresponding features are available
+        var unavailableDependencies = new List<string>();
+        var allMissingConfigs = new List<string>();
 
-          if (!isAvailable)
+        foreach (var (_, dependencyTraitValue) in dependencyTraits)
+        {
+          // Skip Docker/Database dependencies as they are handled separately
+          if (dependencyTraitValue == TestCategories.Docker || dependencyTraitValue == TestCategories.Database)
           {
-            missingConfigs.Add(configName);
+            continue;
+          }
+
+          if (!ConfigurationStatusHelper.IsFeatureDependencyAvailable(serviceStatuses, dependencyTraitValue))
+          {
+            unavailableDependencies.Add(dependencyTraitValue);
+
+            // Get missing configurations for this dependency
+            var missingConfigs = ConfigurationStatusHelper.GetMissingConfigurationsForDependency(serviceStatuses, dependencyTraitValue);
+            allMissingConfigs.AddRange(missingConfigs);
           }
         }
 
-        // If there are missing configs, set SkipReason
-        if (missingConfigs.Any())
+        // If there are unavailable dependencies, set SkipReason
+        if (unavailableDependencies.Any())
         {
-          SetSkipReason($"Missing required configurations: {string.Join(", ", missingConfigs)}");
+          var reason = $"Dependencies unavailable: {string.Join(", ", unavailableDependencies)}";
+          if (allMissingConfigs.Any())
+          {
+            reason += $" (Missing configurations: {string.Join(", ", allMissingConfigs.Distinct())})";
+          }
+          SetSkipReason(reason);
         }
       }
       catch
