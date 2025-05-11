@@ -58,7 +58,7 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate the feature is available
-    _mockStatusService.Setup(s => s.GetFeatureStatus("TestFeature"))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(Feature.LLM))
         .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
     // Act
@@ -83,8 +83,8 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate the feature is unavailable
-    var missingConfigs = new List<string> { "TestFeature:ApiKey" };
-    _mockStatusService.Setup(s => s.GetFeatureStatus("TestFeature"))
+    var missingConfigs = new List<string> { "LlmConfig:ApiKey" };
+    _mockStatusService.Setup(s => s.GetFeatureStatus(Feature.LLM))
         .Returns(new ServiceStatusInfo(IsAvailable: false, missingConfigs));
 
     // Act
@@ -93,13 +93,13 @@ public class ServiceAvailabilityOperationFilterTests
     // Assert
     operation.Summary.Should().StartWith("⚠️", "Operation with unavailable feature should have a warning symbol in the summary");
     operation.Summary.Should().Contain("Original summary", "Original summary should still be present");
-    operation.Summary.Should().Contain("TestFeature", "Feature name should be in the warning");
-    operation.Summary.Should().Contain("TestFeature:ApiKey", "Missing configuration should be mentioned");
+    operation.Summary.Should().Contain("LLM", "Feature name should be in the warning");
+    operation.Summary.Should().Contain("LlmConfig:ApiKey", "Missing configuration should be mentioned");
 
     operation.Description.Should().Contain("**This endpoint is currently unavailable**", "Description should indicate endpoint is unavailable");
     operation.Description.Should().Contain("Original description", "Original description should still be present");
-    operation.Description.Should().Contain("TestFeature", "Feature name should be in the description");
-    operation.Description.Should().Contain("TestFeature:ApiKey", "Missing configuration should be mentioned");
+    operation.Description.Should().Contain("LLM", "Feature name should be in the description");
+    operation.Description.Should().Contain("LlmConfig:ApiKey", "Missing configuration should be mentioned");
   }
 
   [Fact]
@@ -116,21 +116,21 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate both features are unavailable
-    _mockStatusService.Setup(s => s.GetFeatureStatus("Feature1"))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, ["Feature1:ApiKey"]));
+    _mockStatusService.Setup(s => s.GetFeatureStatus(Feature.LLM))
+        .Returns(new ServiceStatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
 
-    _mockStatusService.Setup(s => s.GetFeatureStatus("Feature2"))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, ["Feature2:Secret"]));
+    _mockStatusService.Setup(s => s.GetFeatureStatus(Feature.Transcription))
+        .Returns(new ServiceStatusInfo(IsAvailable: false, ["TranscribeConfig:ModelName"]));
 
     // Act
     _filter.Apply(operation, context);
 
     // Assert
     operation.Summary.Should().StartWith("⚠️", "Operation with unavailable features should have a warning symbol");
-    operation.Summary.Should().Contain("Feature1", "First feature name should be in the warning");
-    operation.Summary.Should().Contain("Feature2", "Second feature name should be in the warning");
-    operation.Summary.Should().Contain("Feature1:ApiKey", "First missing config should be mentioned");
-    operation.Summary.Should().Contain("Feature2:Secret", "Second missing config should be mentioned");
+    operation.Summary.Should().Contain("LLM", "First feature name should be in the warning");
+    operation.Summary.Should().Contain("Transcription", "Second feature name should be in the warning");
+    operation.Summary.Should().Contain("LlmConfig:ApiKey", "First missing config should be mentioned");
+    operation.Summary.Should().Contain("TranscribeConfig:ModelName", "Second missing config should be mentioned");
   }
 
   [Fact]
@@ -147,20 +147,20 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate one feature is available and one is unavailable
-    _mockStatusService.Setup(s => s.GetFeatureStatus("Feature1"))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(Feature.LLM))
         .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
-    _mockStatusService.Setup(s => s.GetFeatureStatus("Feature2"))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, ["Feature2:Secret"]));
+    _mockStatusService.Setup(s => s.GetFeatureStatus(Feature.Transcription))
+        .Returns(new ServiceStatusInfo(IsAvailable: false, ["TranscribeConfig:ModelName"]));
 
     // Act
     _filter.Apply(operation, context);
 
     // Assert
     operation.Summary.Should().StartWith("⚠️", "Operation with unavailable feature should have a warning symbol");
-    operation.Summary.Should().NotContain("Feature1", "Available feature should not be in warning");
-    operation.Summary.Should().Contain("Feature2", "Unavailable feature should be in warning");
-    operation.Summary.Should().Contain("Feature2:Secret", "Missing config should be mentioned");
+    operation.Summary.Should().NotContain("LLM", "Available feature should not be in warning");
+    operation.Summary.Should().Contain("Transcription", "Unavailable feature should be in warning");
+    operation.Summary.Should().Contain("TranscribeConfig:ModelName", "Missing config should be mentioned");
   }
 
   [Fact]
@@ -177,15 +177,15 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate the feature is unavailable
-    _mockStatusService.Setup(s => s.GetFeatureStatus("ClassLevelFeature"))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, ["ClassLevelFeature:Setting"]));
+    _mockStatusService.Setup(s => s.GetFeatureStatus(Feature.Core))
+        .Returns(new ServiceStatusInfo(IsAvailable: false, ["ServerConfig:BaseUrl"]));
 
     // Act
     _filter.Apply(operation, context);
 
     // Assert
     operation.Summary.Should().StartWith("⚠️", "Operation with class-level unavailable feature should have a warning symbol");
-    operation.Summary.Should().Contain("ClassLevelFeature", "Class-level feature name should be in the warning");
+    operation.Summary.Should().Contain("Core", "Class-level feature name should be in the warning");
   }
 
   [Fact]
@@ -202,19 +202,19 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate both features are unavailable
-    _mockStatusService.Setup(s => s.GetFeatureStatus("ClassLevelFeature"))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, ["ClassLevelFeature:Setting"]));
+    _mockStatusService.Setup(s => s.GetFeatureStatus(Feature.Core))
+        .Returns(new ServiceStatusInfo(IsAvailable: false, ["ServerConfig:BaseUrl"]));
 
-    _mockStatusService.Setup(s => s.GetFeatureStatus("MethodLevelFeature"))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, ["MethodLevelFeature:ApiKey"]));
+    _mockStatusService.Setup(s => s.GetFeatureStatus(Feature.EmailSending))
+        .Returns(new ServiceStatusInfo(IsAvailable: false, ["EmailConfig:AzureAppId"]));
 
     // Act
     _filter.Apply(operation, context);
 
     // Assert
     operation.Summary.Should().StartWith("⚠️", "Operation with unavailable features should have a warning symbol");
-    operation.Summary.Should().Contain("ClassLevelFeature", "Class-level feature name should be in the warning");
-    operation.Summary.Should().Contain("MethodLevelFeature", "Method-level feature name should be in the warning");
+    operation.Summary.Should().Contain("Core", "Class-level feature name should be in the warning");
+    operation.Summary.Should().Contain("EmailSending", "Method-level feature name should be in the warning");
   }
 
   [Fact]
@@ -263,20 +263,20 @@ public class ServiceAvailabilityOperationFilterTests
   {
     public void MethodWithoutAttribute() { }
 
-    [RequiresFeatureEnabled("TestFeature")]
+    [RequiresFeatureEnabled(Feature.LLM)]
     public void MethodWithAttribute() { }
 
-    [RequiresFeatureEnabled("Feature1")]
-    [RequiresFeatureEnabled("Feature2")]
+    [RequiresFeatureEnabled(Feature.LLM)]
+    [RequiresFeatureEnabled(Feature.Transcription)]
     public void MethodWithMultipleAttributes() { }
   }
 
-  [RequiresFeatureEnabled("ClassLevelFeature")]
+  [RequiresFeatureEnabled(Feature.Core)]
   private class ClassWithAttribute
   {
     public void MethodWithoutAttribute() { }
 
-    [RequiresFeatureEnabled("MethodLevelFeature")]
+    [RequiresFeatureEnabled(Feature.EmailSending)]
     public void MethodWithAttribute() { }
   }
 }

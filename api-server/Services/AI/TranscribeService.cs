@@ -8,7 +8,7 @@ namespace Zarichney.Services.AI;
 
 public class TranscribeConfig : IConfig
 {
-  [RequiresConfiguration("TranscribeConfig:ModelName")]
+  [RequiresConfiguration(Feature.Transcription, Feature.AiServices)]
   public string ModelName { get; init; } = "whisper-1";
   public int RetryAttempts { get; init; } = 5;
 }

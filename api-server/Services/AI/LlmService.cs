@@ -32,7 +32,7 @@ public class LlmConfig : IConfig
 {
   public string ModelName { get; init; } = LlmModels.Gpt4Omini;
   public int RetryAttempts { get; init; } = 5;
-  [RequiresConfiguration("LlmConfig:ApiKey")]
+  [RequiresConfiguration(Feature.LLM, Feature.AiServices)]
   public string ApiKey { get; init; } = string.Empty;
 }
 

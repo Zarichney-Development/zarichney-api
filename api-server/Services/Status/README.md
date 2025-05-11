@@ -1,6 +1,6 @@
 # Module/Directory: /Services/Status
 
-**Last Updated:** 2025-05-10
+**Last Updated:** 2025-05-11
 
 > **Parent:** [`/Services/README.md`](../README.md)
 
@@ -40,15 +40,19 @@
     * `Task<List<ConfigurationItemStatus>> GetConfigurationStatusAsync();` — Returns a list of status objects for each critical configuration item. Does not expose secret values.
 * **IConfigurationStatusService:**
     * `Task<Dictionary<string, ServiceStatusInfo>> GetServiceStatusAsync();` — Returns a dictionary mapping service names to their status information. Each `ServiceStatusInfo` contains availability status and a list of missing configurations.
-    * `ServiceStatusInfo? GetFeatureStatus(string featureName);` — Returns status information for a specific feature, or null if the feature is not found. This synchronous method is primarily used by the `ServiceAvailabilityOperationFilter` for Swagger UI integration.
-    * `bool IsFeatureAvailable(string featureName);` — Returns whether a specific feature is available (properly configured). This synchronous method is primarily used by the `ServiceAvailabilityOperationFilter` for Swagger UI integration.
+    * `ServiceStatusInfo? GetFeatureStatus(Feature feature);` — Returns status information for a specific feature using the strongly-typed Feature enum, or null if the feature is not found. Primarily used by the `ServiceAvailabilityOperationFilter` for Swagger UI integration.
+    * `bool IsFeatureAvailable(Feature feature);` — Returns whether a specific feature is available (properly configured) using the strongly-typed Feature enum. Primarily used by the `ServiceAvailabilityOperationFilter` for Swagger UI integration.
+    * `ServiceStatusInfo? GetFeatureStatus(string featureName);` — String-based overload maintained for backward compatibility. Returns status information for a specific feature by name, or null if the feature is not found.
+    * `bool IsFeatureAvailable(string featureName);` — String-based overload maintained for backward compatibility. Returns whether a specific feature is available by name.
 * **Critical Assumptions:**
     * Assumes all required config objects are registered and injected.
     * Assumes placeholder value is "recommended to set in app secrets".
-    * Assumes properties requiring configuration are marked with the `[RequiresConfiguration]` attribute.
+    * Assumes properties requiring configuration are marked with the `[RequiresConfiguration]` attribute with appropriate Feature enum values.
+    * Assumes configuration property names are used to derive configuration keys (e.g., "ApiKey" property in "LlmConfig" class → "LlmConfig:ApiKey").
     * Assumes service names can be derived from config class names (e.g., "ServerConfig" → "Server" service).
     * Assumes `IConfig` instances are registered as singletons in the DI container for efficient resolution by `ConfigurationStatusService`.
     * Assumes the `Assembly` provided to (or defaulted by) `ConfigurationStatusService` contains all relevant `IConfig` implementations.
+    * Assumes all controller endpoints that require specific features are decorated with the `[RequiresFeatureEnabled]` attribute with appropriate Feature enum values.
 
 ## 4. Local Conventions & Constraints
 
@@ -59,8 +63,10 @@
     * Unit test `ConfigurationStatusService` by injecting a mock `Assembly` to control which `IConfig` types are "discovered", a mock `IServiceProvider` to control the resolution of these types, and a mock `IConfiguration` to control the reported configuration values.
     * Test the reflection logic for finding `[RequiresConfiguration]` attributes.
 * **Common Pitfalls / Gotchas:**
-    * Ensure new config keys are properly marked with `[RequiresConfiguration]` attributes.
+    * Ensure new config properties are properly marked with `[RequiresConfiguration]` attributes with appropriate Feature enum values.
     * Remember that service names in the status dictionary are derived from config class names, minus the "Config" suffix.
+    * When adding new features to the `Feature` enum, ensure all related configuration properties and controllers/actions are updated to use the new enum value instead of string literals.
+    * Configuration keys are now automatically derived from class and property names (e.g., "ApiKey" property in "LlmConfig" class → "LlmConfig:ApiKey"), so ensure naming is consistent.
 
 ## 5. How to Work With This Code
 
@@ -69,8 +75,9 @@
     * `IConfigurationStatusService` is used by the new `/api/status` endpoint.
     * `IStatusService` is maintained for backward compatibility but will be phased out.
 * **Marking Configuration Requirements:**
-    * Decorate properties in configuration classes with `[RequiresConfiguration("Section:Key")]` to indicate they are required for a service to function.
-    * Example: `[RequiresConfiguration("LlmService:ApiKey")] public string ApiKey { get; set; } = string.Empty;`
+    * Decorate properties in configuration classes with `[RequiresConfiguration(Feature.FeatureName)]` to indicate they are required for specific features to function.
+    * Example: `[RequiresConfiguration(Feature.LLM)] public string ApiKey { get; set; } = string.Empty;`
+    * You can specify multiple features if the property is required for more than one feature: `[RequiresConfiguration(Feature.LLM, Feature.AiServices)]`
 * **Checking Service Availability:**
     * Inject `IConfigurationStatusService` to check if services are available based on their configuration requirements.
     * Example: `var statuses = await _configurationStatusService.GetServiceStatusAsync(); bool isLlmAvailable = statuses["LlmService"].IsAvailable;`
@@ -98,6 +105,7 @@
 * **IConfigurationStatusService** was added as part of Epic #1 to provide a more structured approach to checking service availability based on configuration requirements. It enables a unified endpoint for service status and supports graceful service unavailability handling. It was later extended with synchronous methods to support the Swagger UI integration via `ServiceAvailabilityOperationFilter`.
 * The new `[RequiresConfiguration]` approach provides a more declarative way to specify configuration dependencies, making it easier to maintain and extend.
 * **May 2025 Refactor (`ConfigurationStatusService`):** `ConfigurationStatusService` was refactored to discover `IConfig` implementations by scanning a specified `Assembly` (defaulting to the main application assembly) and then resolving these types via `IServiceProvider`. This replaced a previous mechanism that directly used `IServiceProvider.GetServices<IConfig>()`. A new constructor was added to allow injection of the `Assembly` to be scanned, significantly improving the testability of the service by allowing tests to provide a mock assembly with controlled `IConfig` types.
+* **May 2025 Feature Enumeration Refactor:** The `Feature` enum was introduced to replace string-based feature names, improving type safety and making dependencies between configurations and features more explicit. The `[RequiresConfiguration]` attribute was updated to accept `Feature` enum values instead of string configuration keys, and configuration keys are now automatically derived from class and property names. The `IConfigurationStatusService` interface was extended with enum-based methods while maintaining backward compatibility with string-based methods.
 
 ## 8. Known Issues & TODOs
 

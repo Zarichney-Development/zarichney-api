@@ -15,12 +15,28 @@ public interface IConfigurationStatusService
   Task<Dictionary<string, ServiceStatusInfo>> GetServiceStatusAsync();
 
   /// <summary>
+  /// Gets the cached status of a specific feature by enum value.
+  /// This synchronous method is intended for use by Swagger filters.
+  /// </summary>
+  /// <param name="feature">The feature to check.</param>
+  /// <returns>The service status information, or null if the feature is not found.</returns>
+  ServiceStatusInfo? GetFeatureStatus(Feature feature);
+
+  /// <summary>
   /// Gets the cached status of a specific feature by name.
   /// This synchronous method is intended for use by Swagger filters.
   /// </summary>
   /// <param name="featureName">The name of the feature to check.</param>
   /// <returns>The service status information, or null if the feature is not found.</returns>
   ServiceStatusInfo? GetFeatureStatus(string featureName);
+
+  /// <summary>
+  /// Checks if a specific feature is available based on its configuration status.
+  /// This synchronous method is intended for use by Swagger filters.
+  /// </summary>
+  /// <param name="feature">The feature to check.</param>
+  /// <returns>True if the feature is properly configured and available; otherwise, false.</returns>
+  bool IsFeatureAvailable(Feature feature);
 
   /// <summary>
   /// Checks if a specific feature is available based on its configuration status.
@@ -43,6 +59,8 @@ public class ConfigurationStatusService : IConfigurationStatusService
 
   // Cache for service status to avoid rechecking configuration on every Swagger request
   private Dictionary<string, ServiceStatusInfo>? _cachedStatus;
+  // Additional mapping from Feature enum to service names
+  private Dictionary<Feature, string[]>? _featureServiceMap;
   private DateTime _cacheExpiration = DateTime.MinValue;
   private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(5);
   private readonly SemaphoreSlim _cacheLock = new(1, 1);
@@ -101,8 +119,9 @@ public class ConfigurationStatusService : IConfigurationStatusService
 
       _logger.LogInformation("Refreshing service configuration status cache");
 
-      // Create a dictionary to store results
+      // Create dictionaries to store results
       var results = new Dictionary<string, ServiceStatusInfo>();
+      var featureMap = new Dictionary<Feature, List<string>>();
 
       // Get all types implementing IConfig (excluding interfaces/abstract classes)
       var configTypes = _assemblyToScan // Use the injected assembly
@@ -132,15 +151,36 @@ public class ConfigurationStatusService : IConfigurationStatusService
         var configType = config.GetType();
         var serviceName = configType.Name.Replace("Config", "");
 
-        // Get missing configurations for this service
-        var missingConfigurations = await CheckConfigurationRequirementsAsync(configType);
+        // Get missing configurations and feature associations for this service
+        var (missingConfigurations, featureAssociations) = await CheckConfigurationRequirementsAsync(configType);
 
         // Add to results
         results[serviceName] = new ServiceStatusInfo(
             IsAvailable: missingConfigurations.Count == 0,
             MissingConfigurations: missingConfigurations
         );
+
+        // Update feature mapping
+        foreach (var (feature, properties) in featureAssociations)
+        {
+          if (!featureMap.TryGetValue(feature, out var services))
+          {
+            services = new List<string>();
+            featureMap[feature] = services;
+          }
+
+          if (!services.Contains(serviceName))
+          {
+            services.Add(serviceName);
+          }
+        }
       }
+
+      // Convert feature map to service array dictionary
+      _featureServiceMap = featureMap.ToDictionary(
+          kvp => kvp.Key,
+          kvp => kvp.Value.ToArray()
+      );
 
       // Update cache
       _cachedStatus = results;
@@ -155,28 +195,62 @@ public class ConfigurationStatusService : IConfigurationStatusService
   }
 
   /// <inheritdoc />
-  public ServiceStatusInfo? GetFeatureStatus(string featureName)
+  public ServiceStatusInfo? GetFeatureStatus(Feature feature)
   {
-    // Try to get from cache or refresh if needed
-    var statusTask = GetServiceStatusAsync();
-
-    // Wait for the task to complete (this is a synchronous method, so we need to block)
-    // Note: In a production environment with high concurrency, consider
-    // initializing the cache at startup and providing alternative non-blocking access
     try
     {
-      statusTask.Wait();
-      var status = statusTask.Result;
+      EnsureCacheIsValid();
 
-      // Check if the feature exists in our status dictionary
-      if (status.TryGetValue(featureName, out var featureStatus))
+      if (_featureServiceMap == null || !_featureServiceMap.TryGetValue(feature, out var serviceNames) || _cachedStatus == null)
       {
-        return featureStatus;
+        _logger.LogWarning("Feature status requested for feature: {Feature}, but no associated services found", feature);
+        return null;
       }
 
-      _logger.LogWarning("Feature status requested for unknown feature: {FeatureName}. Available services: {AvailableServices}",
-          featureName, string.Join(", ", status.Keys));
+      // Check if all required services are available
+      var missingConfigurations = new List<string>();
+      foreach (var serviceName in serviceNames)
+      {
+        if (_cachedStatus.TryGetValue(serviceName, out var serviceStatus) && !serviceStatus.IsAvailable)
+        {
+          missingConfigurations.AddRange(serviceStatus.MissingConfigurations);
+        }
+      }
+
+      return new ServiceStatusInfo(
+          IsAvailable: missingConfigurations.Count == 0,
+          MissingConfigurations: missingConfigurations
+      );
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Error getting feature status for {Feature}", feature);
       return null;
+    }
+  }
+
+  /// <inheritdoc />
+  public ServiceStatusInfo? GetFeatureStatus(string featureName)
+  {
+    try
+    {
+      // Try to parse the string as a Feature enum
+      if (Enum.TryParse<Feature>(featureName, true, out var feature))
+      {
+        return GetFeatureStatus(feature);
+      }
+
+      // Fall back to the old behavior of looking for a service with this name
+      EnsureCacheIsValid();
+
+      if (_cachedStatus == null || !_cachedStatus.TryGetValue(featureName, out var featureStatus))
+      {
+        _logger.LogWarning("Feature status requested for unknown feature: {FeatureName}. Available services: {AvailableServices}",
+            featureName, _cachedStatus != null ? string.Join(", ", _cachedStatus.Keys) : "none");
+        return null;
+      }
+
+      return featureStatus;
     }
     catch (Exception ex)
     {
@@ -186,15 +260,33 @@ public class ConfigurationStatusService : IConfigurationStatusService
   }
 
   /// <inheritdoc />
+  public bool IsFeatureAvailable(Feature feature)
+  {
+    var status = GetFeatureStatus(feature);
+    return status?.IsAvailable ?? false;
+  }
+
+  /// <inheritdoc />
   public bool IsFeatureAvailable(string featureName)
   {
     var status = GetFeatureStatus(featureName);
     return status?.IsAvailable ?? false;
   }
 
-  private Task<List<string>> CheckConfigurationRequirementsAsync(Type configType)
+  private void EnsureCacheIsValid()
+  {
+    // If cache is not valid, refresh it synchronously
+    if (_cachedStatus == null || DateTime.UtcNow >= _cacheExpiration)
+    {
+      GetServiceStatusAsync().Wait();
+    }
+  }
+
+  private async Task<(List<string> MissingConfigurations, Dictionary<Feature, List<string>> FeatureAssociations)>
+      CheckConfigurationRequirementsAsync(Type configType)
   {
     var missingConfigurations = new List<string>();
+    var featureAssociations = new Dictionary<Feature, List<string>>();
 
     // Find properties with RequiresConfiguration attribute
     var properties = configType.GetProperties()
@@ -205,17 +297,35 @@ public class ConfigurationStatusService : IConfigurationStatusService
       var attribute = property.GetCustomAttribute<RequiresConfigurationAttribute>();
       if (attribute == null) continue;
 
-      var configKey = attribute.ConfigurationKey;
+      // Derive configuration key from containing type and property name
+      var configKey = $"{configType.Name}:{property.Name}";
       var configValue = _configuration[configKey];
 
       // Check if config is missing, empty, or using placeholder value
-      if (string.IsNullOrWhiteSpace(configValue) ||
-          configValue == StatusService.PlaceholderMessage)
+      bool isConfigMissing = string.IsNullOrWhiteSpace(configValue) ||
+                             configValue == StatusService.PlaceholderMessage;
+
+      if (isConfigMissing)
       {
         missingConfigurations.Add(configKey);
       }
+
+      // Associate this property with its dependent features
+      foreach (var feature in attribute.Features)
+      {
+        if (!featureAssociations.TryGetValue(feature, out var propertyList))
+        {
+          propertyList = new List<string>();
+          featureAssociations[feature] = propertyList;
+        }
+
+        if (!propertyList.Contains(configKey))
+        {
+          propertyList.Add(configKey);
+        }
+      }
     }
 
-    return Task.FromResult(missingConfigurations);
+    return (missingConfigurations, featureAssociations);
   }
 }

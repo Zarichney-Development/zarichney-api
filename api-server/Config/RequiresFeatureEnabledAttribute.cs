@@ -9,32 +9,27 @@ namespace Zarichney.Config;
 public class RequiresFeatureEnabledAttribute : Attribute
 {
   /// <summary>
-  /// Gets the feature names that are required for this controller or action to function.
-  /// These names should correspond to the keys used in IConfigurationStatusService.
+  /// Gets the features that are required for this controller or action to function.
   /// </summary>
-  public string[] FeatureNames { get; }
+  public Feature[] Features { get; }
 
   /// <summary>
   /// Initializes a new instance of the <see cref="RequiresFeatureEnabledAttribute"/> class.
   /// </summary>
-  /// <param name="featureNames">One or more feature names that are required for this controller or action to function.</param>
-  /// <exception cref="ArgumentException">Thrown when no feature names are provided.</exception>
-  public RequiresFeatureEnabledAttribute(params string[] featureNames)
+  /// <param name="features">One or more features that are required for this controller or action to function.</param>
+  /// <exception cref="ArgumentException">Thrown when no features are provided.</exception>
+  public RequiresFeatureEnabledAttribute(params Feature[] features)
   {
-    if (featureNames == null || featureNames.Length == 0)
+    if (features == null || features.Length == 0)
     {
-      throw new ArgumentException("At least one feature name must be provided", nameof(featureNames));
+      throw new ArgumentException("At least one feature must be provided", nameof(features));
     }
 
-    // Check for null or empty strings in the array
-    for (var i = 0; i < featureNames.Length; i++)
-    {
-      if (string.IsNullOrWhiteSpace(featureNames[i]))
-      {
-        throw new ArgumentException($"Feature name at index {i} cannot be null or whitespace", nameof(featureNames));
-      }
-    }
-
-    FeatureNames = featureNames;
+    Features = features;
   }
+
+  /// <summary>
+  /// For backward compatibility and testing - gets feature names as strings.
+  /// </summary>
+  internal string[] FeatureNames => Features.Select(f => f.ToString()).ToArray();
 }

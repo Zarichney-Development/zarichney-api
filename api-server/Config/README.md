@@ -1,6 +1,6 @@
 # Module/Directory: /Config
 
-**Last Updated:** 2025-05-10
+**Last Updated:** 2025-05-11
 
 > **Parent:** [`Server`](../README.md)
 
@@ -21,8 +21,9 @@
 * **Configuration Loading:** The actual loading and registration of configuration is now handled by the `/Startup/Configuration` module. This module focuses on defining the configuration models and the `IConfig` interface. [cite: api-server/Startup/Configuration/ConfigurationStartup.cs]
 * **Strongly-Typed Configuration:** Configuration is accessed via injected, strongly-typed `XConfig` objects (e.g., `LlmConfig`, `RecipeConfig`). [cite: api-server/Cookbook/Recipes/RecipeService.cs, api-server/Services/AI/LlmService.cs]
 * **Configuration Requirements & Feature Availability:**
-   * Properties in configuration classes are now marked with `[RequiresConfiguration]` attribute to indicate specific configuration keys they depend on. This is used by `IConfigurationStatusService` to determine service availability. Service factories use this information to register proxies that throw `ServiceUnavailableException` when services are unavailable due to missing configuration. [cite: api-server/Config/RequiresConfigurationAttribute.cs, api-server/Services/Status/ConfigurationStatusService.cs]
-   * Controllers and actions can be marked with the `[RequiresFeatureEnabled]` attribute to indicate they depend on specific features that require proper configuration. The `ServiceAvailabilityOperationFilter` uses this information to update Swagger UI with visual indications when endpoints may be unavailable due to missing configuration. [cite: api-server/Config/RequiresFeatureEnabledAttribute.cs, api-server/Config/ServiceAvailabilityOperationFilter.cs]
+   * A strongly-typed `Feature` enum defines all features available in the application that can be enabled or disabled based on configuration availability (e.g., `LLM`, `Transcription`, `EmailSending`, etc.). [cite: api-server/Config/FeatureEnum.cs]
+   * Properties in configuration classes are now marked with `[RequiresConfiguration]` attribute to indicate which features depend on them (e.g., `[RequiresConfiguration(Feature.LLM, Feature.AiServices)]`). This is used by `IConfigurationStatusService` to determine feature availability. [cite: api-server/Config/RequiresConfigurationAttribute.cs, api-server/Services/Status/ConfigurationStatusService.cs]
+   * Controllers and actions can be marked with the `[RequiresFeatureEnabled]` attribute to indicate they depend on specific features that require proper configuration (e.g., `[RequiresFeatureEnabled(Feature.LLM)]`). The `ServiceAvailabilityOperationFilter` uses this information to update Swagger UI with visual indications when endpoints may be unavailable due to missing configuration. [cite: api-server/Config/RequiresFeatureEnabledAttribute.cs, api-server/Config/ServiceAvailabilityOperationFilter.cs]
 * **Middleware:** Standard ASP.NET Core middleware pattern is used for logging (`LoggingMiddleware`) and error handling (`ErrorHandlingMiddleware`). Their order of registration in the application pipeline is important. [cite: api-server/Startup/App/ApplicationStartup.cs, api-server/Config/LoggingMiddleware.cs, api-server/Config/ErrorHandlingMiddleware.cs]
 * **ErrorHandlingMiddleware:**
     * Global exception handler for all HTTP requests. Catches unhandled exceptions and returns a structured JSON error response.
@@ -37,8 +38,9 @@
     * `IConfig`: Marker interface for configuration classes automatically registered by the system.
     * `ConfigurationMissingException`: Exception type that services should throw when they detect missing required configuration at runtime. Has properties to identify the affected configuration section and specific key details.
     * `ServiceUnavailableException`: Exception type that indicates a service is unavailable due to missing configuration or other reasons. Contains a collection of specific reasons for unavailability.
-    * `RequiresConfigurationAttribute`: Attribute to decorate properties in configuration classes that are required for a service to function. Specifies the configuration key path to check.
-    * `RequiresFeatureEnabledAttribute`: Attribute to decorate controllers and actions that depend on specific features that require proper configuration. Used by `ServiceAvailabilityOperationFilter` to update Swagger UI with visual indications when endpoints may be unavailable.
+    * `Feature`: Enum defining all features available in the application that can be enabled or disabled based on configuration availability.
+    * `RequiresConfigurationAttribute`: Attribute to decorate properties in configuration classes that are required for specific features to function. Links a configuration property to one or more features that depend on it.
+    * `RequiresFeatureEnabledAttribute`: Attribute to decorate controllers and actions that depend on specific features that require proper configuration. Accepts one or more `Feature` enum values. Used by `ServiceAvailabilityOperationFilter` to update Swagger UI with visual indications when endpoints may be unavailable.
     * `ServiceAvailabilityOperationFilter`: A Swagger filter that detects controllers and actions with the `[RequiresFeatureEnabled]` attribute and modifies their description in the Swagger UI to indicate when they may be unavailable due to missing configuration.
     * Middleware (`ErrorHandlingMiddleware`, `LoggingMiddleware`): Consumed implicitly via registration in the application pipeline. They alter the request pipeline behavior.
 * **Assumptions:**
@@ -61,7 +63,7 @@
 * **Adding New Configuration:**
     1.  Create a new class `MyNewConfig : IConfig` in an appropriate module (or here if truly generic). [cite: api-server/Startup/Configuration/ConfigurationStartup.cs]
     2.  Add properties matching the desired configuration structure.
-    3.  Mark properties that are required for specific services to function with `[RequiresConfiguration("MyNewConfig:PropertyName")]`.
+    3.  Mark properties that are required for specific features to function with `[RequiresConfiguration(Feature.FeatureName)]`. You can specify multiple features if the property is required for more than one feature.
     4.  Add a corresponding section (e.g., `"MyNewConfig": { ... }`) to `appsettings.json` or other config sources.
     5.  The `RegisterConfigurationServices` extension in `/Startup/Configuration/ConfigurationStartup.cs` will automatically handle binding, validation, and DI registration.
     6.  Inject `MyNewConfig` via constructor DI where needed.
@@ -78,9 +80,9 @@
     * Service status can be accessed by clients via the `/api/status/config` endpoint which shows all services with their availability status and any missing configurations.
 * **Marking API Endpoints That Require Specific Features:**
     * Use the `[RequiresFeatureEnabled]` attribute on controller classes or action methods to indicate they depend on specific features that require proper configuration.
-    * The attribute accepts one or more feature names that correspond to the keys used by `IConfigurationStatusService` (derived from config class names, e.g., "Llm", "Payments", "GitHub").
-    * Example at class level: `[RequiresFeatureEnabled("Payments")]`
-    * Example at method level with multiple features: `[RequiresFeatureEnabled("Llm", "GitHub")]`
+    * The attribute accepts one or more `Feature` enum values.
+    * Example at class level: `[RequiresFeatureEnabled(Feature.Payments)]`
+    * Example at method level with multiple features: `[RequiresFeatureEnabled(Feature.LLM, Feature.GitHubAccess)]`
     * The `ServiceAvailabilityOperationFilter` automatically detects these attributes and updates the Swagger UI to show warnings when endpoints may be unavailable due to missing configuration.
 * **Testing:**
     * **Configuration:** Testing services that consume config usually involves creating mock `IOptions<T>` or directly instantiating config objects with test values.
@@ -125,3 +127,5 @@
 * Future improvements could include a centralized configuration validation service that runs at startup to provide more comprehensive validation of all required configurations.
 * Consider adding a visual indicator in the Swagger UI's endpoint list (not just in the expanded operations) for endpoints that may be unavailable.
 * Consider expanding the feature availability check to include more detailed information about the required configuration, such as links to documentation or examples of how to set up the required configuration.
+* Implement a code analyzer or static analysis tool to ensure configuration keys are always valid and match between `appsettings.json` and `[RequiresConfiguration]` attributes. This would help catch configuration issues at compile-time rather than runtime.
+* Create more granular feature enums based on specific capabilities to enable more precise feature flagging.

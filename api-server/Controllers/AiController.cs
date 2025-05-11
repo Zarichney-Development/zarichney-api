@@ -28,6 +28,7 @@ public class TranscribeAudioRequest
 [Route("api")]
 [Authorize] // Requires authentication for all endpoints in this controller
 [Produces("application/json")]
+[RequiresFeatureEnabled(Feature.AiServices)]
 public class AiController(
   IEmailService emailService,
   ITranscribeService transcribeService,
@@ -69,7 +70,7 @@ public class AiController(
   /// <returns>A JSON object containing the LLM's response, the source type (text/audio), and the transcribed prompt if applicable.</returns>
   [HttpPost("completion")]
   [Consumes("multipart/form-data")] // Crucial hint for Swagger regarding file uploads/form fields
-  [RequiresFeatureEnabled("Llm")]
+  [RequiresFeatureEnabled(Feature.LLM)]
   [SwaggerOperation(Summary = "Generates LLM completion from text or audio.",
     Description = "Accepts either textPrompt (form field) or audioPrompt (file upload) via multipart/form-data.")]
   [ProducesResponseType(typeof(object), StatusCodes.Status200OK)] // More specific type if possible
@@ -167,7 +168,7 @@ public class AiController(
   /// <returns>A JSON object containing the transcript, filenames, timestamp, and a success message.</returns>
   [HttpPost("transcribe")]
   [Consumes("multipart/form-data")] // Crucial hint for Swagger
-  [RequiresFeatureEnabled("Llm", "GitHub")] // Requires both LLM for transcription and GitHub for storage
+  [RequiresFeatureEnabled(Feature.Transcription, Feature.GitHubAccess)] // Requires both transcription and GitHub for storage
   [SwaggerOperation(Summary = "Transcribes an audio file.",
     Description =
       "Accepts an audio file via multipart/form-data (parameter name 'audioFile'), transcribes it, and optionally saves files.")]

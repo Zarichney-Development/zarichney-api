@@ -10,7 +10,7 @@ namespace Zarichney.Controllers;
 [ApiController]
 [Route("api/payments")]
 [Authorize]
-[RequiresFeatureEnabled("Payment")]
+[RequiresFeatureEnabled(Feature.Payments)]
 public class PaymentController(
   ILogger<PaymentController> logger,
   IPaymentService paymentService,

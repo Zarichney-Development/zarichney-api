@@ -75,7 +75,7 @@ public class ConfigurationStatusServiceTests
     // Assert
     result.Should().NotBeEmpty();
     result["TestService1"].IsAvailable.Should().BeFalse();
-    result["TestService1"].MissingConfigurations.Should().Contain("TestService1:ApiKey");
+    result["TestService1"].MissingConfigurations.Should().Contain("TestService1Config:ApiKey");
   }
 
   [Trait("Category", "Unit")]
@@ -92,7 +92,7 @@ public class ConfigurationStatusServiceTests
     // Assert
     result.Should().NotBeEmpty();
     result["TestService1"].IsAvailable.Should().BeFalse();
-    result["TestService1"].MissingConfigurations.Should().Contain("TestService1:ApiKey");
+    result["TestService1"].MissingConfigurations.Should().Contain("TestService1Config:ApiKey");
   }
 
   [Trait("Category", "Unit")]
@@ -105,7 +105,7 @@ public class ConfigurationStatusServiceTests
 
     // Act - Call GetServiceStatusAsync to populate cache first
     await _service.GetServiceStatusAsync();
-    var result = _service.GetFeatureStatus("TestService1");
+    var result = _service.GetFeatureStatus(Feature.LLM);
 
     // Assert
     result.Should().NotBeNull();
@@ -123,6 +123,7 @@ public class ConfigurationStatusServiceTests
 
     // Act - Call GetServiceStatusAsync to populate cache first
     await _service.GetServiceStatusAsync();
+    // Use string overload for non-existent feature
     var result = _service.GetFeatureStatus("NonExistentFeature");
 
     // Assert
@@ -139,12 +140,12 @@ public class ConfigurationStatusServiceTests
 
     // Act - Call GetServiceStatusAsync to populate cache first
     await _service.GetServiceStatusAsync();
-    var result = _service.GetFeatureStatus("TestService1");
+    var result = _service.GetFeatureStatus(Feature.LLM);
 
     // Assert
     result.Should().NotBeNull();
     result.IsAvailable.Should().BeFalse();
-    result.MissingConfigurations.Should().Contain("TestService1:ApiKey");
+    result.MissingConfigurations.Should().Contain("TestService1Config:ApiKey");
   }
 
   [Trait("Category", "Unit")]
@@ -157,7 +158,7 @@ public class ConfigurationStatusServiceTests
 
     // Act - Call GetServiceStatusAsync to populate cache first
     await _service.GetServiceStatusAsync();
-    var result = _service.IsFeatureAvailable("TestService1");
+    var result = _service.IsFeatureAvailable(Feature.LLM);
 
     // Assert
     result.Should().BeTrue();
@@ -173,7 +174,7 @@ public class ConfigurationStatusServiceTests
 
     // Act - Call GetServiceStatusAsync to populate cache first
     await _service.GetServiceStatusAsync();
-    var result = _service.IsFeatureAvailable("TestService1");
+    var result = _service.IsFeatureAvailable(Feature.LLM);
 
     // Assert
     result.Should().BeFalse();
@@ -189,6 +190,7 @@ public class ConfigurationStatusServiceTests
 
     // Act - Call GetServiceStatusAsync to populate cache first
     await _service.GetServiceStatusAsync();
+    // Use string overload for non-existent feature
     var result = _service.IsFeatureAvailable("NonExistentFeature");
 
     // Assert
@@ -217,34 +219,34 @@ public class ConfigurationStatusServiceTests
 
   private void SetupConfigurationWithValidValues()
   {
-    _mockConfiguration.Setup(c => c["TestService1:ApiKey"]).Returns("valid-api-key");
-    _mockConfiguration.Setup(c => c["TestService1:ApiSecret"]).Returns("valid-api-secret");
-    _mockConfiguration.Setup(c => c["TestService2:Setting"]).Returns("valid-setting");
+    _mockConfiguration.Setup(c => c["TestService1Config:ApiKey"]).Returns("valid-api-key");
+    _mockConfiguration.Setup(c => c["TestService1Config:ApiSecret"]).Returns("valid-api-secret");
+    _mockConfiguration.Setup(c => c["TestService2Config:Setting"]).Returns("valid-setting");
   }
 
   private void SetupConfigurationWithMissingValues()
   {
-    _mockConfiguration.Setup(c => c["TestService1:ApiKey"]).Returns((string?)null);
+    _mockConfiguration.Setup(c => c["TestService1Config:ApiKey"]).Returns((string?)null);
   }
 
   private void SetupConfigurationWithPlaceholderValues()
   {
-    _mockConfiguration.Setup(c => c["TestService1:ApiKey"]).Returns(StatusService.PlaceholderMessage);
+    _mockConfiguration.Setup(c => c["TestService1Config:ApiKey"]).Returns(StatusService.PlaceholderMessage);
   }
 
   // Test Config Classes
   private class TestService1Config : IConfig
   {
-    [RequiresConfiguration("TestService1:ApiKey")]
+    [RequiresConfiguration(Feature.LLM)]
     public string ApiKey { get; set; } = "valid_key"; // Default to valid for simplicity in some tests
 
-    [RequiresConfiguration("TestService1:ApiSecret")]
+    [RequiresConfiguration(Feature.LLM)]
     public string ApiSecret { get; set; } = "valid_secret";
   }
 
   private class TestService2Config : IConfig
   {
-    [RequiresConfiguration("TestService2:Setting")]
+    [RequiresConfiguration(Feature.Core)]
     public string Setting { get; set; } = "valid_setting";
   }
 }

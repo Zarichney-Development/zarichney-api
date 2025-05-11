@@ -7,71 +7,55 @@ namespace Zarichney.Tests.Unit.Config;
 public class RequiresFeatureEnabledAttributeTests
 {
   [Fact]
-  public void Constructor_ValidFeatureNames_InitializesCorrectly()
+  public void Constructor_ValidFeatures_InitializesCorrectly()
   {
     // Arrange & Act
-    var attribute = new RequiresFeatureEnabledAttribute("Feature1", "Feature2");
+    var attribute = new RequiresFeatureEnabledAttribute(Feature.LLM, Feature.Transcription);
 
     // Assert
-    attribute.FeatureNames.Should().HaveCount(2); // Two feature names were provided
-    attribute.FeatureNames.Should().Contain("Feature1").And.Contain("Feature2"); // Both provided feature names should be stored
+    attribute.Features.Should().HaveCount(2); // Two features were provided
+    attribute.Features.Should().Contain(Feature.LLM).And.Contain(Feature.Transcription); // Both provided features should be stored
   }
 
   [Fact]
-  public void Constructor_SingleFeatureName_InitializesCorrectly()
+  public void Constructor_SingleFeature_InitializesCorrectly()
   {
     // Arrange & Act
-    var attribute = new RequiresFeatureEnabledAttribute("Feature1");
+    var attribute = new RequiresFeatureEnabledAttribute(Feature.Core);
 
     // Assert
-    attribute.FeatureNames.Should().HaveCount(1); // One feature name was provided
-    attribute.FeatureNames.Should().Contain("Feature1"); // The provided feature name should be stored
+    attribute.Features.Should().HaveCount(1); // One feature was provided
+    attribute.Features.Should().Contain(Feature.Core); // The provided feature should be stored
   }
 
   [Fact]
-  public void Constructor_EmptyFeatureNamesArray_ThrowsArgumentException()
+  public void Constructor_EmptyFeaturesArray_ThrowsArgumentException()
   {
     // Arrange, Act & Assert
     Assert.Throws<ArgumentException>(() => new RequiresFeatureEnabledAttribute())
-        .Message.Should().Contain("At least one feature name must be provided");
-    // Empty feature names array is invalid
+        .Message.Should().Contain("At least one feature must be provided");
+    // Empty features array is invalid
   }
 
   [Fact]
-  public void Constructor_NullFeatureNamesArray_ThrowsArgumentException()
+  public void Constructor_NullFeaturesArray_ThrowsArgumentException()
   {
     // Arrange, Act & Assert
     // Note: Can't directly pass null to params array, this behavior is tested indirectly
     Assert.Throws<ArgumentException>(() => new RequiresFeatureEnabledAttribute())
-        .Message.Should().Contain("At least one feature name must be provided");
-    // Empty feature names array is invalid
+        .Message.Should().Contain("At least one feature must be provided");
+    // Empty features array is invalid
   }
 
   [Fact]
-  public void Constructor_EmptyFeatureName_ThrowsArgumentException()
+  public void FeatureNames_ConvertsFeaturesToStrings()
   {
-    // Arrange, Act & Assert
-    Assert.Throws<ArgumentException>(() => new RequiresFeatureEnabledAttribute(""))
-        .Message.Should().Contain("Feature name at index 0 cannot be null or whitespace");
-    // Empty feature name is invalid
-  }
+    // Arrange & Act
+    var attribute = new RequiresFeatureEnabledAttribute(Feature.LLM, Feature.Transcription);
 
-  [Fact]
-  public void Constructor_WhitespaceFeatureName_ThrowsArgumentException()
-  {
-    // Arrange, Act & Assert
-    Assert.Throws<ArgumentException>(() => new RequiresFeatureEnabledAttribute("   "))
-        .Message.Should().Contain("Feature name at index 0 cannot be null or whitespace");
-    // Whitespace feature name is invalid
-  }
-
-  [Fact]
-  public void Constructor_OneValidOneInvalidFeatureName_ThrowsArgumentException()
-  {
-    // Arrange, Act & Assert
-    Assert.Throws<ArgumentException>(() => new RequiresFeatureEnabledAttribute("Valid", ""))
-        .Message.Should().Contain("Feature name at index 1 cannot be null or whitespace");
-    // Second feature name is empty
+    // Assert - This tests the backward compatibility property
+    attribute.FeatureNames.Should().HaveCount(2);
+    attribute.FeatureNames.Should().Contain("LLM").And.Contain("Transcription");
   }
 
   [Fact]

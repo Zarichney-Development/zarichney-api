@@ -8,35 +8,35 @@ public class RequiresConfigurationAttributeTests
 {
   [Trait("Category", "Unit")]
   [Fact]
-  public void Constructor_WithConfigurationKey_SetsConfigurationKeyProperty()
+  public void Constructor_ValidFeatures_InitializesCorrectly()
   {
-    // Arrange
-    var configKey = "Section:Key";
-
-    // Act
-    var attribute = new RequiresConfigurationAttribute(configKey);
+    // Arrange & Act
+    var attribute = new RequiresConfigurationAttribute(Feature.LLM, Feature.Transcription);
 
     // Assert
-    attribute.ConfigurationKey.Should().Be(configKey);
+    attribute.Features.Should().HaveCount(2); // Two features were provided
+    attribute.Features.Should().Contain(Feature.LLM).And.Contain(Feature.Transcription);
   }
 
   [Trait("Category", "Unit")]
-  [Theory]
-  [InlineData(null)]
-  [InlineData("")]
-  [InlineData("   ")]
-  // Make the parameter nullable to resolve the xUnit warning
-  public void Constructor_WithInvalidConfigurationKey_ThrowsArgumentException(string? invalidKey)
+  [Fact]
+  public void Constructor_SingleFeature_InitializesCorrectly()
   {
     // Arrange & Act
-    // Add null-forgiving operator as the test expects non-null invalid strings too,
-    // and the constructor checks for null/whitespace.
-    var action = () => new RequiresConfigurationAttribute(invalidKey!);
+    var attribute = new RequiresConfigurationAttribute(Feature.Core);
 
     // Assert
-    action.Should().Throw<ArgumentException>()
-        .WithMessage("Configuration key cannot be null or whitespace*")
-        .WithParameterName("configurationKey");
+    attribute.Features.Should().HaveCount(1); // One feature was provided
+    attribute.Features.Should().Contain(Feature.Core);
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public void Constructor_EmptyFeaturesArray_ThrowsArgumentException()
+  {
+    // Arrange, Act & Assert
+    Assert.Throws<ArgumentException>(() => new RequiresConfigurationAttribute())
+        .Message.Should().Contain("At least one feature must be provided");
   }
 
   [Trait("Category", "Unit")]

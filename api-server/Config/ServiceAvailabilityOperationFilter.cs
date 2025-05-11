@@ -55,28 +55,28 @@ public class ServiceAvailabilityOperationFilter : IOperationFilter
     }
 
     // Track all unavailable features
-    var unavailableFeatures = new Dictionary<string, ServiceStatusInfo>();
+    var unavailableFeatures = new Dictionary<Feature, ServiceStatusInfo>();
 
-    // Check each feature name from all attributes
+    // Check each feature from all attributes
     foreach (var attribute in allAttributes)
     {
-      foreach (var featureName in attribute.FeatureNames)
+      foreach (var feature in attribute.Features)
       {
-        // Skip if we've already processed this feature name
-        if (unavailableFeatures.ContainsKey(featureName))
+        // Skip if we've already processed this feature
+        if (unavailableFeatures.ContainsKey(feature))
         {
           continue;
         }
 
         // Get status for this feature from the status service
-        var statusInfo = _statusService.GetFeatureStatus(featureName);
+        var statusInfo = _statusService.GetFeatureStatus(feature);
 
         // If the status indicates the feature is unavailable, track it
         if (statusInfo is { IsAvailable: false })
         {
           _logger.LogDebug("API endpoint '{Method}' requires feature '{Feature}' which is unavailable",
-            context.MethodInfo.Name, featureName);
-          unavailableFeatures[featureName] = statusInfo;
+            context.MethodInfo.Name, feature);
+          unavailableFeatures[feature] = statusInfo;
         }
       }
     }
@@ -89,7 +89,7 @@ public class ServiceAvailabilityOperationFilter : IOperationFilter
       {
         allReasons.Add(statusInfo.MissingConfigurations.Count > 0
           ? $"{feature} (Missing: {string.Join(", ", statusInfo.MissingConfigurations)})"
-          : feature);
+          : feature.ToString());
       }
 
       var warningPrefix = $"⚠️ (Unavailable: {string.Join("; ", allReasons)}) ";

@@ -2,11 +2,11 @@ namespace Zarichney.Config;
 
 public class ServerConfig : IConfig
 {
-  [RequiresConfiguration("ServerConfig:BaseUrl")]
+  [RequiresConfiguration(Feature.Core)]
   public string BaseUrl { get; init; } = string.Empty;
 }
 public class ClientConfig : IConfig
 {
-  [RequiresConfiguration("ClientConfig:BaseUrl")]
+  [RequiresConfiguration(Feature.Core)]
   public string BaseUrl { get; init; } = string.Empty;
 }
