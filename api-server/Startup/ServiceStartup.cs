@@ -320,7 +320,7 @@ public class ServiceStartup
 
       // Register operation filters
       c.OperationFilter<FormFileOperationFilter>();
-      c.OperationFilter<ServiceAvailabilityOperationFilter>(); // Add our new filter
+      c.OperationFilter<ServiceAvailabilityOperationFilter>();
       c.EnableAnnotations();
 
       var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";

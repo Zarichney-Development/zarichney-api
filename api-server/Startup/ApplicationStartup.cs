@@ -76,6 +76,9 @@ public static class ApplicationStartup
     application.UseMiddleware<RequestResponseLoggerMiddleware>();
     application.UseMiddleware<ErrorHandlingMiddleware>();
 
+    // Serve static files to make the custom CSS available - must come before UseSwagger
+    application.UseStaticFiles();
+
     application.UseForwardedHeaders(new ForwardedHeadersOptions
     {
       // This tells the app to trust proxy headers (like X-Forwarded-Proto set by CloudFront/ALB) indicating the original request was HTTPS
@@ -92,6 +95,46 @@ public static class ApplicationStartup
       {
         c.SwaggerEndpoint("/api/swagger/swagger.json", "Zarichney API");
         c.RoutePrefix = "api/swagger";
+
+        // Apply custom CSS for better warning visibility
+        c.InjectStylesheet("/api/swagger-ui/custom.css");
+
+        // Add custom JS to further enhance UI behavior
+        c.HeadContent = @"
+<style>
+  /* Style for unavailable endpoints */
+  .swagger-ui .opblock.unavailable {
+    background-color: rgba(255, 0, 0, 0.1);
+    border-color: rgba(255, 0, 0, 0.5) !important;
+  }
+
+  /* Make the warning emoji more noticeable */
+  .swagger-ui .opblock.unavailable .opblock-summary-method {
+    background-color: #ff6b6b;
+  }
+
+  /* Add a clear visual indicator */
+  .swagger-ui .opblock.unavailable .opblock-summary-description::before {
+    content: '⚠️ UNAVAILABLE: ';
+    font-weight: bold;
+    color: #d32f2f;
+  }
+</style>
+<script>
+  // Will run after Swagger UI is fully loaded
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      // Find all operation blocks that contain the warning emoji in their summary
+      const operations = document.querySelectorAll('.opblock-summary-description');
+      operations.forEach(function(op) {
+        if (op.textContent.includes('⚠️')) {
+          // Add the unavailable class to the parent .opblock element
+          op.closest('.opblock').classList.add('unavailable');
+        }
+      });
+    }, 500); // Small delay to ensure Swagger UI has rendered
+  });
+</script>";
       });
 
     // if (application.Environment.IsProduction())

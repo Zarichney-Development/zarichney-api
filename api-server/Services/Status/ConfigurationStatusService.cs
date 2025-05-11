@@ -174,7 +174,8 @@ public class ConfigurationStatusService : IConfigurationStatusService
         return featureStatus;
       }
 
-      _logger.LogWarning("Feature status requested for unknown feature: {FeatureName}", featureName);
+      _logger.LogWarning("Feature status requested for unknown feature: {FeatureName}. Available services: {AvailableServices}",
+          featureName, string.Join(", ", status.Keys));
       return null;
     }
     catch (Exception ex)
