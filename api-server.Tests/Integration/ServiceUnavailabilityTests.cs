@@ -2,9 +2,7 @@ using System.Net;
 using FluentAssertions;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Moq;
-using OpenAI.Chat;
 using Refit;
 using Xunit;
 using Zarichney.Client;
@@ -26,15 +24,10 @@ namespace Zarichney.Tests.Integration;
 /// </summary>
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Collection("Integration")]
-public class ServiceUnavailabilityTests : IntegrationTestBase
+public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture) : IntegrationTestBase(apiClientFixture)
 {
   private const string TestUserId = "test-user";
   private static readonly string[] TestUserRoles = ["User"];
-
-  public ServiceUnavailabilityTests(ApiClientFixture apiClientFixture)
-      : base(apiClientFixture)
-  {
-  }
 
   /// <summary>
   /// Tests that API endpoints return HTTP 503 when a required feature is unavailable.
@@ -53,63 +46,62 @@ public class ServiceUnavailabilityTests : IntegrationTestBase
 
     var mockStatusService = new Mock<IConfigurationStatusService>();
     mockStatusService.Setup(s => s.GetServiceStatusAsync())
-        .ReturnsAsync(new Dictionary<string, StatusInfo>
-        {
-                { "Llm", llmServiceStatus }
-        });
+      .ReturnsAsync(new Dictionary<string, StatusInfo> { { "Llm", llmServiceStatus } });
 
     mockStatusService.Setup(s => s.IsFeatureAvailable("Llm"))
-        .Returns(false);
+      .Returns(false);
 
     var customFactory = Factory as CustomWebApplicationFactory;
     var factoryWithServices = customFactory.WithWebHostBuilder(builder =>
     {
       builder.ConfigureTestServices(services =>
+      {
+        // Replace the real ConfigurationStatusService with our mock
+        services.AddSingleton(mockStatusService.Object);
+
+        // Replace the OpenAI client factory to throw ServiceUnavailableException
+        services.AddScoped<OpenAI.OpenAIClient>(sp =>
+        {
+          var exception = new ServiceUnavailableException(
+            "LLM service is unavailable due to missing configuration");
+          if (exception.Reasons != null)
           {
-            // Replace the real ConfigurationStatusService with our mock
-            services.AddSingleton(mockStatusService.Object);
+            exception.Reasons.Add("Llm:ApiKey");
+          }
 
-            // Replace the OpenAI client factory to throw ServiceUnavailableException
-            services.AddScoped<OpenAI.OpenAIClient>(sp =>
-                {
-                  var exception = new ServiceUnavailableException(
-                        "LLM service is unavailable due to missing configuration");
-                  if (exception.Reasons != null)
-                  {
-                    exception.Reasons.Add("Llm:ApiKey");
-                  }
-                  throw exception;
-                });
+          throw exception;
+        });
 
-            // Replace the LLM service to use the proxies
-            services.AddScoped<ILlmService>(sp =>
-                {
-                  var mockLlmService = new Mock<ILlmService>();
-                  var llmException = new ServiceUnavailableException(
-                        "LLM service is unavailable due to missing configuration");
-                  if (llmException.Reasons != null)
-                  {
-                    llmException.Reasons.Add("Llm:ApiKey");
-                  }
-                  // Use a callback approach to avoid expression tree limitations with It.IsAny<string>()
-                  mockLlmService.Setup(s => s.GetCompletionContent(
-                            Moq.It.IsAny<string>(),
-                            Moq.It.IsAny<string>(),
-                            null,
-                            null))
-                        .Callback<string, string?, OpenAI.Chat.ChatCompletionOptions?, int?>((prompt, convId, options, retry) =>
-                      {
-                        // The callback is empty, we just need to match the signature
-                      })
-                        .Throws(llmException);
-                  return mockLlmService.Object;
-                });
-          });
+        // Replace the LLM service to use the proxies
+        services.AddScoped<ILlmService>(sp =>
+        {
+          var mockLlmService = new Mock<ILlmService>();
+          var llmException = new ServiceUnavailableException(
+            "LLM service is unavailable due to missing configuration");
+          if (llmException.Reasons != null)
+          {
+            llmException.Reasons.Add("Llm:ApiKey");
+          }
+
+          // Use a callback approach to avoid expression tree limitations with It.IsAny<string>()
+          mockLlmService.Setup(s => s.GetCompletionContent(
+              It.IsAny<string>(),
+              It.IsAny<string>(),
+              null,
+              null))
+            .Callback<string, string?, OpenAI.Chat.ChatCompletionOptions?, int?>((prompt, convId, options, retry) =>
+            {
+              // The callback is empty, we just need to match the signature
+            })
+            .Throws(llmException);
+          return mockLlmService.Object;
+        });
+      });
     });
 
     // Create an authenticated client for testing
     using var httpClient = customFactory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
-    var client = Refit.RestService.For<IZarichneyAPI>(httpClient);
+    var client = RestService.For<IZarichneyAPI>(httpClient);
 
     // Prepare a request to the AI completion endpoint
     var textPrompt = "Test prompt";
@@ -152,25 +144,25 @@ public class ServiceUnavailabilityTests : IntegrationTestBase
     // Create a custom factory that indicates mixed service availability
     var mockStatusService = new Mock<IConfigurationStatusService>();
     mockStatusService.Setup(s => s.GetServiceStatusAsync())
-        .ReturnsAsync(new Dictionary<string, StatusInfo>
-        {
-                { "Llm", new StatusInfo(IsAvailable: false, new List<string> { "Llm:ApiKey" }) },
-                { "Email", new StatusInfo(IsAvailable: true, new List<string>()) },
-                { "Payment", new StatusInfo(IsAvailable: false, new List<string> { "Payment:StripeKey" }) }
-        });
+      .ReturnsAsync(new Dictionary<string, StatusInfo>
+      {
+        { "Llm", new StatusInfo(IsAvailable: false, ["Llm:ApiKey"]) },
+        { "Email", new StatusInfo(IsAvailable: true, []) },
+        { "Payment", new StatusInfo(IsAvailable: false, ["Payment:StripeKey"]) }
+      });
 
     var customFactory = Factory as CustomWebApplicationFactory;
     var factoryWithWebHostBuilder = customFactory.WithWebHostBuilder(builder =>
     {
       builder.ConfigureTestServices(services =>
-          {
-            // Replace the real ConfigurationStatusService with our mock
-            services.AddSingleton(mockStatusService.Object);
-          });
+      {
+        // Replace the real ConfigurationStatusService with our mock
+        services.AddSingleton(mockStatusService.Object);
+      });
     });
 
     using var httpClient = customFactory.CreateClient();
-    var client = Refit.RestService.For<IZarichneyAPI>(httpClient);
+    var client = RestService.For<IZarichneyAPI>(httpClient);
 
     // Act
     var result = await client.GetServiceStatus();
@@ -192,7 +184,7 @@ public class ServiceUnavailabilityTests : IntegrationTestBase
   }
 
   /// <summary>
-  /// Tests that Swagger documents correctly indicate which endpoints are unavailable 
+  /// Tests that Swagger documents correctly indicate which endpoints are unavailable
   /// due to missing configuration.
   /// </summary>
   [SkipSwaggerIntegrationFact]
@@ -204,27 +196,22 @@ public class ServiceUnavailabilityTests : IntegrationTestBase
     // Create a custom factory with a mock configuration status service
     var mockStatusService = new Mock<IConfigurationStatusService>();
     mockStatusService.Setup(s => s.GetServiceStatusAsync())
-        .ReturnsAsync(new Dictionary<string, StatusInfo>
-        {
-                { "Llm", new StatusInfo(IsAvailable: false, new List<string> { "Llm:ApiKey" }) }
-        });
+      .ReturnsAsync(
+        new Dictionary<string, StatusInfo> { { "Llm", new StatusInfo(IsAvailable: false, ["Llm:ApiKey"]) } });
 
     mockStatusService.Setup(s => s.GetFeatureStatus("Llm"))
-        .Returns(new StatusInfo(IsAvailable: false, new List<string> { "Llm:ApiKey" }));
+      .Returns(new StatusInfo(IsAvailable: false, ["Llm:ApiKey"]));
 
     mockStatusService.Setup(s => s.IsFeatureAvailable("Llm"))
-        .Returns(false);
+      .Returns(false);
 
     var customFactory = Factory as CustomWebApplicationFactory;
     var factoryWithWebHostBuilder = customFactory.WithWebHostBuilder(builder =>
     {
-      builder.ConfigureTestServices(services =>
-          {
-            services.AddSingleton(mockStatusService.Object);
-          });
+      builder.ConfigureTestServices(services => { services.AddSingleton(mockStatusService.Object); });
     });
 
-    using var client = customFactory.CreateAuthenticatedClient("admin-user", new[] { "Admin" });
+    using var client = customFactory.CreateAuthenticatedClient("admin-user", ["Admin"]);
 
     // Act
     var response = await client.GetAsync("/swagger/swagger.json");

@@ -84,9 +84,9 @@ public class RequiresFeatureEnabledAttributeTests
 
     // Assert
     attributeUsage.Should().NotBeNull(); // RequiresFeatureEnabledAttribute should have AttributeUsage defined
-    attributeUsage!.ValidOn.Should().HaveFlag(AttributeTargets.Class); // Attribute should be applicable to classes
-    attributeUsage!.ValidOn.Should().HaveFlag(AttributeTargets.Method); // Attribute should be applicable to methods
-    attributeUsage!.AllowMultiple.Should().BeTrue(); // Multiple RequiresFeatureEnabled attributes should be allowed
-    attributeUsage!.Inherited.Should().BeTrue(); // RequiresFeatureEnabled attributes should be inherited
+    attributeUsage.ValidOn.Should().HaveFlag(AttributeTargets.Class); // Attribute should be applicable to classes
+    attributeUsage.ValidOn.Should().HaveFlag(AttributeTargets.Method); // Attribute should be applicable to methods
+    attributeUsage.AllowMultiple.Should().BeTrue(); // Multiple RequiresFeatureEnabled attributes should be allowed
+    attributeUsage.Inherited.Should().BeTrue(); // RequiresFeatureEnabled attributes should be inherited
   }
 }

@@ -1,5 +1,4 @@
 using FluentAssertions;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
@@ -33,7 +32,7 @@ public class ServiceStartupTests
     var mockStatusService = new Mock<IConfigurationStatusService>();
     var statusDict = new Dictionary<string, ServiceStatusInfo>
         {
-            { "Email", new ServiceStatusInfo(true, new List<string>()) }
+            { "Email", new ServiceStatusInfo(true, []) }
         };
     mockStatusService.Setup(s => s.GetServiceStatusAsync())
         .ReturnsAsync(statusDict);
@@ -53,7 +52,7 @@ public class ServiceStartupTests
     // Act - Call the method under test via reflection since it's private
     var methodInfo = typeof(ServiceStartup).GetMethod("ConfigureEmailServices",
         System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-    methodInfo?.Invoke(null, new object[] { services });
+    methodInfo?.Invoke(null, [services]);
 
     // Assert
     var serviceProvider = services.BuildServiceProvider();
@@ -77,7 +76,7 @@ public class ServiceStartupTests
     var mockStatusService = new Mock<IConfigurationStatusService>();
     var statusDict = new Dictionary<string, ServiceStatusInfo>
         {
-            { "Email", new ServiceStatusInfo(false, new List<string> { "EmailConfig:AzureTenantId" }) }
+            { "Email", new ServiceStatusInfo(false, ["EmailConfig:AzureTenantId"]) }
         };
     mockStatusService.Setup(s => s.GetServiceStatusAsync())
         .ReturnsAsync(statusDict);
@@ -97,7 +96,7 @@ public class ServiceStartupTests
     // Act - Call the method under test via reflection since it's private
     var methodInfo = typeof(ServiceStartup).GetMethod("ConfigureEmailServices",
         System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-    methodInfo?.Invoke(null, new object[] { services });
+    methodInfo?.Invoke(null, [services]);
 
     // Assert
     var serviceProvider = services.BuildServiceProvider();
@@ -120,7 +119,7 @@ public class ServiceStartupTests
     var serviceException = exception.InnerException as ServiceUnavailableException;
 
     serviceException!.Message.Should().Contain("Email service is unavailable");
-    serviceException!.Reasons.Should().Contain("EmailConfig:AzureTenantId");
+    serviceException.Reasons.Should().Contain("EmailConfig:AzureTenantId");
   }
 
   [Trait("Category", "Unit")]
@@ -138,7 +137,7 @@ public class ServiceStartupTests
     var mockStatusService = new Mock<IConfigurationStatusService>();
     var statusDict = new Dictionary<string, ServiceStatusInfo>
         {
-            { "Llm", new ServiceStatusInfo(true, new List<string>()) }
+            { "Llm", new ServiceStatusInfo(true, []) }
         };
     mockStatusService.Setup(s => s.GetServiceStatusAsync())
         .ReturnsAsync(statusDict);
@@ -153,7 +152,7 @@ public class ServiceStartupTests
     // Act - Call the method under test via reflection since it's private
     var methodInfo = typeof(ServiceStartup).GetMethod("ConfigureOpenAiServices",
         System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-    methodInfo?.Invoke(null, new object[] { services });
+    methodInfo?.Invoke(null, [services]);
 
     // Assert
     var serviceProvider = services.BuildServiceProvider();
@@ -181,7 +180,7 @@ public class ServiceStartupTests
     var mockStatusService = new Mock<IConfigurationStatusService>();
     var statusDict = new Dictionary<string, ServiceStatusInfo>
         {
-            { "Llm", new ServiceStatusInfo(false, new List<string> { "LlmConfig:ApiKey" }) }
+            { "Llm", new ServiceStatusInfo(false, ["LlmConfig:ApiKey"]) }
         };
     mockStatusService.Setup(s => s.GetServiceStatusAsync())
         .ReturnsAsync(statusDict);
@@ -196,7 +195,7 @@ public class ServiceStartupTests
     // Act - Call the method under test via reflection since it's private
     var methodInfo = typeof(ServiceStartup).GetMethod("ConfigureOpenAiServices",
         System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-    methodInfo?.Invoke(null, new object[] { services });
+    methodInfo?.Invoke(null, [services]);
 
     // Assert
     var serviceProvider = services.BuildServiceProvider();
@@ -221,7 +220,7 @@ public class ServiceStartupTests
     var openAiServiceException = openAiException.InnerException as ServiceUnavailableException;
 
     openAiServiceException!.Message.Should().Contain("LLM service is unavailable");
-    openAiServiceException!.Reasons.Should().Contain("LlmConfig:ApiKey");
+    openAiServiceException.Reasons.Should().Contain("LlmConfig:ApiKey");
 
     // Verify AudioClient is a proxy by examining its type name
     audioClient.GetType().Name.Should().Be("AudioClientProxy");
@@ -232,18 +231,19 @@ public class ServiceStartupTests
     isThrowingProxy.Should().BeTrue();
 
     // Get our custom TranscribeAudioAsync method
-    var transcribeMethod = audioClient.GetType().GetMethod("TranscribeAudioAsync", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.DeclaredOnly, null, new[] { typeof(Stream) }, null);
+    var transcribeMethod = audioClient.GetType().GetMethod("TranscribeAudioAsync", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.DeclaredOnly, null,
+      [typeof(Stream)], null);
 
     // Verify calling the method throws ServiceUnavailableException wrapped in TargetInvocationException
     var audioStream = new MemoryStream();
     var audioException = Assert.Throws<System.Reflection.TargetInvocationException>(() =>
-        transcribeMethod?.Invoke(audioClient, new object[] { audioStream }));
+        transcribeMethod?.Invoke(audioClient, [audioStream]));
 
     // Verify the inner exception is our ServiceUnavailableException
     audioException.InnerException.Should().BeOfType<ServiceUnavailableException>();
     var audioServiceException = audioException.InnerException as ServiceUnavailableException;
 
     audioServiceException!.Message.Should().Contain("Audio transcription service is unavailable");
-    audioServiceException!.Reasons.Should().Contain("LlmConfig:ApiKey");
+    audioServiceException.Reasons.Should().Contain("LlmConfig:ApiKey");
   }
 }

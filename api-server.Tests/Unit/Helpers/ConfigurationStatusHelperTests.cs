@@ -193,7 +193,7 @@ public class ConfigurationStatusHelperTests
     // Arrange
     var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
     {
-      ["Llm"] = new ServiceStatusInfo(true, new List<string>())
+      ["Llm"] = new(true, [])
     };
 
     // Act
@@ -210,7 +210,7 @@ public class ConfigurationStatusHelperTests
     // Arrange
     var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
     {
-      ["Llm"] = new ServiceStatusInfo(false, new List<string> { "Llm:ApiKey" })
+      ["Llm"] = new(false, ["Llm:ApiKey"])
     };
 
     // Act
@@ -227,7 +227,7 @@ public class ConfigurationStatusHelperTests
     // Arrange
     var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
     {
-      ["Email"] = new ServiceStatusInfo(true, new List<string>())
+      ["Email"] = new(true, [])
       // Llm is missing from the dictionary
     };
 
@@ -244,7 +244,7 @@ public class ConfigurationStatusHelperTests
   {
     // Arrange
     var serviceStatuses = new Dictionary<string, ServiceStatusInfo>();
-    var unmappedDependency = "UnmappedDependency";
+    const string unmappedDependency = "UnmappedDependency";
 
     // Act
     var result = ConfigurationStatusHelper.IsFeatureDependencyAvailable(serviceStatuses, unmappedDependency);
@@ -290,7 +290,7 @@ public class ConfigurationStatusHelperTests
     // Arrange
     var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
     {
-      ["Llm"] = new ServiceStatusInfo(true, new List<string>())
+      ["Llm"] = new(true, [])
     };
 
     // Act
@@ -308,7 +308,7 @@ public class ConfigurationStatusHelperTests
     var missingConfigs = new List<string> { "Llm:ApiKey" };
     var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
     {
-      ["Llm"] = new ServiceStatusInfo(false, missingConfigs)
+      ["Llm"] = new(false, missingConfigs)
     };
 
     // Act
@@ -325,15 +325,15 @@ public class ConfigurationStatusHelperTests
     // Arrange
     var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
     {
-      ["Payment"] = new ServiceStatusInfo(false, new List<string> { "Payment:ApiKey" }),
-      ["Stripe"] = new ServiceStatusInfo(false, new List<string> { "Stripe:Secret" })
+      ["Payment"] = new(false, ["Payment:ApiKey"]),
+      ["Stripe"] = new(false, ["Stripe:Secret"])
     };
 
     // Act
     var result = ConfigurationStatusHelper.GetMissingConfigurationsForDependency(serviceStatuses, TestCategories.ExternalStripe);
 
     // Assert
-    result.Should().BeEquivalentTo(new[] { "Payment:ApiKey", "Stripe:Secret" },
+    result.Should().BeEquivalentTo(["Payment:ApiKey", "Stripe:Secret"],
         "Because both mapped features are unavailable and all missing configurations should be returned");
   }
 
@@ -343,7 +343,7 @@ public class ConfigurationStatusHelperTests
     // Arrange
     var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
     {
-      ["Email"] = new ServiceStatusInfo(true, new List<string>())
+      ["Email"] = new(true, [])
       // Llm is missing from the dictionary
     };
 

@@ -169,7 +169,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         var serviceStatuses = await ConfigurationStatusHelper.GetServiceStatusAsync(Factory);
 
         // Check if service statuses is null or empty
-        if (serviceStatuses == null || serviceStatuses.Count == 0)
+        if (serviceStatuses.Count == 0)
         {
           SetSkipReason("Unable to fetch service status, assuming dependencies are missing.");
           return;

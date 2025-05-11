@@ -1,11 +1,9 @@
 using System.Net.Http.Json;
 using FluentAssertions;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Xunit;
-using Zarichney.Config;
 using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
@@ -43,7 +41,7 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
     // Set up the mock to return available status for any feature
     mockStatusService
         .Setup(s => s.GetFeatureStatus(It.IsAny<string>()))
-        .Returns(new ServiceStatusInfo(IsAvailable: true, new List<string>()));
+        .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
     mockStatusService
         .Setup(s => s.IsFeatureAvailable(It.IsAny<string>()))
@@ -55,12 +53,12 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
       builder.ConfigureTestServices(services =>
           {
             // Replace the status service with our mock
-            services.AddSingleton<IConfigurationStatusService>(mockStatusService.Object);
+            services.AddSingleton(mockStatusService.Object);
           });
     });
 
     // Create an authenticated client with admin role to access Swagger
-    using var client = customFactory.CreateAuthenticatedClient("test-user", new[] { "Admin" });
+    using var client = customFactory.CreateAuthenticatedClient("test-user", ["Admin"]);
 
     // Act
     var response = await client.GetAsync(_swaggerJsonUrl);
@@ -72,7 +70,7 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
     swagger.Should().NotBeNull("Swagger JSON should be returned");
 
     // Check if any path's operations have a warning symbol in the summary
-    var operationsWithWarnings = swagger!.Paths
+    var operationsWithWarnings = swagger.Paths
         .SelectMany(path => path.Value.Operations)
         .Where(op => op.Value.Summary?.Contains("⚠️") == true)
         .ToList();
@@ -94,7 +92,7 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
         .Setup(s => s.GetFeatureStatus(It.Is<string>(name => name == "Llm")))
         .Returns(new ServiceStatusInfo(
             IsAvailable: false,
-            new List<string> { "Llm:ApiKey" }
+            ["Llm:ApiKey"]
         ));
 
     mockStatusService
@@ -104,7 +102,7 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
     // Other features are available
     mockStatusService
         .Setup(s => s.GetFeatureStatus(It.Is<string>(name => name != "Llm")))
-        .Returns(new ServiceStatusInfo(IsAvailable: true, new List<string>()));
+        .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
     mockStatusService
         .Setup(s => s.IsFeatureAvailable(It.Is<string>(name => name != "Llm")))
@@ -116,12 +114,12 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
       builder.ConfigureTestServices(services =>
           {
             // Replace the status service with our mock
-            services.AddSingleton<IConfigurationStatusService>(mockStatusService.Object);
+            services.AddSingleton(mockStatusService.Object);
           });
     });
 
     // Create an authenticated client with admin role to access Swagger
-    using var client = customFactory.CreateAuthenticatedClient("test-user", new[] { "Admin" });
+    using var client = customFactory.CreateAuthenticatedClient("test-user", ["Admin"]);
 
     // Act
     var response = await client.GetAsync(_swaggerJsonUrl);
@@ -133,7 +131,7 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
     swagger.Should().NotBeNull("Swagger JSON should be returned");
 
     // Find AI controller endpoints (completion and transcribe)
-    var aiEndpoints = swagger!.Paths
+    var aiEndpoints = swagger.Paths
         .Where(path => path.Key.StartsWith("/api/completion") || path.Key.StartsWith("/api/transcribe"))
         .SelectMany(path => path.Value.Operations)
         .ToList();
@@ -163,7 +161,7 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
         .Setup(s => s.GetFeatureStatus(It.Is<string>(name => name == "Payments")))
         .Returns(new ServiceStatusInfo(
             IsAvailable: false,
-            new List<string> { "Payments:StripeSecretKey", "Payments:StripeWebhookSecret" }
+            ["Payments:StripeSecretKey", "Payments:StripeWebhookSecret"]
         ));
 
     mockStatusService
@@ -173,7 +171,7 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
     // Other features are available
     mockStatusService
         .Setup(s => s.GetFeatureStatus(It.Is<string>(name => name != "Payments")))
-        .Returns(new ServiceStatusInfo(IsAvailable: true, new List<string>()));
+        .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
     mockStatusService
         .Setup(s => s.IsFeatureAvailable(It.Is<string>(name => name != "Payments")))
@@ -185,12 +183,12 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
       builder.ConfigureTestServices(services =>
           {
             // Replace the status service with our mock
-            services.AddSingleton<IConfigurationStatusService>(mockStatusService.Object);
+            services.AddSingleton(mockStatusService.Object);
           });
     });
 
     // Create an authenticated client with admin role to access Swagger
-    using var client = customFactory.CreateAuthenticatedClient("test-user", new[] { "Admin" });
+    using var client = customFactory.CreateAuthenticatedClient("test-user", ["Admin"]);
 
     // Act
     var response = await client.GetAsync(_swaggerJsonUrl);
@@ -202,7 +200,7 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
     swagger.Should().NotBeNull("Swagger JSON should be returned");
 
     // Find Payment controller endpoints
-    var paymentEndpoints = swagger!.Paths
+    var paymentEndpoints = swagger.Paths
         .Where(path => path.Key.StartsWith("/api/payments"))
         .SelectMany(path => path.Value.Operations)
         .ToList();
@@ -232,7 +230,7 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
         .Setup(s => s.GetFeatureStatus(It.Is<string>(name => name == "Llm")))
         .Returns(new ServiceStatusInfo(
             IsAvailable: false,
-            new List<string> { "Llm:ApiKey" }
+            ["Llm:ApiKey"]
         ));
 
     mockStatusService
@@ -243,7 +241,7 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
         .Setup(s => s.GetFeatureStatus(It.Is<string>(name => name == "GitHub")))
         .Returns(new ServiceStatusInfo(
             IsAvailable: false,
-            new List<string> { "GitHub:AccessToken" }
+            ["GitHub:AccessToken"]
         ));
 
     mockStatusService
@@ -254,7 +252,7 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
         .Setup(s => s.GetFeatureStatus(It.Is<string>(name => name == "Payments")))
         .Returns(new ServiceStatusInfo(
             IsAvailable: false,
-            new List<string> { "Payments:StripeSecretKey" }
+            ["Payments:StripeSecretKey"]
         ));
 
     mockStatusService
@@ -265,7 +263,7 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
     mockStatusService
         .Setup(s => s.GetFeatureStatus(It.Is<string>(name =>
             name != "Llm" && name != "GitHub" && name != "Payments")))
-        .Returns(new ServiceStatusInfo(IsAvailable: true, new List<string>()));
+        .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
     mockStatusService
         .Setup(s => s.IsFeatureAvailable(It.Is<string>(name =>
@@ -278,12 +276,12 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
       builder.ConfigureTestServices(services =>
           {
             // Replace the status service with our mock
-            services.AddSingleton<IConfigurationStatusService>(mockStatusService.Object);
+            services.AddSingleton(mockStatusService.Object);
           });
     });
 
     // Create an authenticated client with admin role to access Swagger
-    using var client = customFactory.CreateAuthenticatedClient("test-user", new[] { "Admin" });
+    using var client = customFactory.CreateAuthenticatedClient("test-user", ["Admin"]);
 
     // Act
     var response = await client.GetAsync(_swaggerJsonUrl);
@@ -295,19 +293,19 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
     swagger.Should().NotBeNull("Swagger JSON should be returned");
 
     // Find endpoints that require features
-    var aiEndpoints = swagger!.Paths
+    var aiEndpoints = swagger.Paths
         .Where(path => path.Key.StartsWith("/api/completion") || path.Key.StartsWith("/api/transcribe"))
         .SelectMany(path => path.Value.Operations)
         .ToList();
 
-    var paymentEndpoints = swagger!.Paths
+    var paymentEndpoints = swagger.Paths
         .Where(path => path.Key.StartsWith("/api/payments"))
         .SelectMany(path => path.Value.Operations)
         .ToList();
 
     // Check that AI controller endpoints have appropriate warnings
     // Transcribe endpoint should mention both LLM and GitHub in the warning
-    var transcribeEndpoint = swagger!.Paths
+    var transcribeEndpoint = swagger.Paths
         .Where(path => path.Key.StartsWith("/api/transcribe"))
         .SelectMany(path => path.Value.Operations)
         .FirstOrDefault();

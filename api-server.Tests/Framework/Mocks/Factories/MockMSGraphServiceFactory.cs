@@ -82,6 +82,6 @@ public interface IEmailService
 public class EmailAttachment
 {
   public string Name { get; set; } = string.Empty;
-  public byte[] Content { get; set; } = Array.Empty<byte>();
+  public byte[] Content { get; set; } = [];
   public string ContentType { get; set; } = "application/octet-stream";
 }

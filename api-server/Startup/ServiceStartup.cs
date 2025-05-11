@@ -111,7 +111,7 @@ public class ServiceStartup
   internal class GraphServiceClientProxy : GraphServiceClient
   {
     private readonly List<string>? _reasons;
-    private static readonly HttpClient _sharedHttpClient = new HttpClient();
+    private static readonly HttpClient _sharedHttpClient = new();
 
     public GraphServiceClientProxy(List<string>? reasons = null)
       : base(_sharedHttpClient) // Use shared HttpClient instance

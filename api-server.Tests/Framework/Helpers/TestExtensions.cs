@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
 using Zarichney.Tests.Framework.Fixtures;
 
 namespace Zarichney.Tests.Framework.Helpers;
@@ -16,7 +15,7 @@ public static class TestExtensions
   /// <param name="userId">The user ID to authenticate as.</param>
   /// <param name="roles">The roles to assign to the user.</param>
   /// <returns>An HttpClient with authentication.</returns>
-  public static System.Net.Http.HttpClient CreateAuthenticatedClient(
+  public static HttpClient CreateAuthenticatedClient(
       this WebApplicationFactory<Program> factory, string userId, string[] roles)
   {
     if (factory is CustomWebApplicationFactory customFactory)

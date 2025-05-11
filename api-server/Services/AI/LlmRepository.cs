@@ -63,7 +63,7 @@ public class LlmRepository(IGitHubService githubService) : ILlmRepository
   private static string FormatRequestContent(string request)
   {
     var lines = new List<string>();
-    var parts = request.Split(new[] { "```json", "```" }, StringSplitOptions.None);
+    var parts = request.Split(["```json", "```"], StringSplitOptions.None);
 
     for (var i = 0; i < parts.Length; i++)
     {

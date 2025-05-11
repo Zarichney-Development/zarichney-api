@@ -9,7 +9,7 @@ public class RequestResponseLoggerOptions
 {
   public bool LogRequests { get; set; } = true;
   public bool LogResponses { get; set; } = true;
-  public string[] SensitiveHeaders { get; set; } = { "Authorization", "Cookie" };
+  public string[] SensitiveHeaders { get; set; } = ["Authorization", "Cookie"];
   public Func<HttpContext, bool> RequestFilter { get; set; } = _ => true;
   public string LogDirectory { get; set; } = "Logs";
 }

@@ -109,7 +109,7 @@ public class ConfigurationStatusServiceTests
 
     // Assert
     result.Should().NotBeNull();
-    result!.IsAvailable.Should().BeTrue();
+    result.IsAvailable.Should().BeTrue();
     result.MissingConfigurations.Should().BeEmpty();
   }
 
@@ -143,7 +143,7 @@ public class ConfigurationStatusServiceTests
 
     // Assert
     result.Should().NotBeNull();
-    result!.IsAvailable.Should().BeFalse();
+    result.IsAvailable.Should().BeFalse();
     result.MissingConfigurations.Should().Contain("TestService1:ApiKey");
   }
 
@@ -207,7 +207,7 @@ public class ConfigurationStatusServiceTests
   private void SetupServiceProviderWithTestConfigs()
   {
     // Reset GetTypes to return test config types for other tests
-    _mockAssembly.Setup(asm => asm.GetTypes()).Returns(new[] { typeof(TestService1Config), typeof(TestService2Config) });
+    _mockAssembly.Setup(asm => asm.GetTypes()).Returns([typeof(TestService1Config), typeof(TestService2Config)]);
 
     _mockServiceProvider.Setup(p => p.GetService(typeof(TestService1Config)))
         .Returns(new TestService1Config());

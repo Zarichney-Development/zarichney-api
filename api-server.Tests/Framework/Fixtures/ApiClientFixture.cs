@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using Refit;
 using Xunit;
 using Zarichney.Client;
@@ -13,7 +12,6 @@ public class ApiClientFixture : IAsyncLifetime
 {
   private readonly DatabaseFixture _databaseFixture;
   private readonly CustomWebApplicationFactory _factory;
-  private IConfiguration? _configuration;
 
   /// <summary>
   /// Gets the unauthenticated API client.
@@ -54,10 +52,6 @@ public class ApiClientFixture : IAsyncLifetime
   {
     // Initialize the database fixture
     await _databaseFixture.InitializeAsync();
-
-    // Get configuration from the factory's service provider
-    var serviceProvider = _factory.Services;
-    _configuration = (IConfiguration)serviceProvider.GetService(typeof(IConfiguration))!;
 
     // Create HTTP client for unauthenticated calls
     var unauthHttpClient = _factory.CreateClient();

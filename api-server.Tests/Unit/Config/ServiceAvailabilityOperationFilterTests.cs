@@ -1,6 +1,5 @@
 using System.Reflection;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Moq;
@@ -60,7 +59,7 @@ public class ServiceAvailabilityOperationFilterTests
 
     // Setup status service to indicate the feature is available
     _mockStatusService.Setup(s => s.GetFeatureStatus("TestFeature"))
-        .Returns(new ServiceStatusInfo(IsAvailable: true, new List<string>()));
+        .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
     // Act
     _filter.Apply(operation, context);
@@ -118,10 +117,10 @@ public class ServiceAvailabilityOperationFilterTests
 
     // Setup status service to indicate both features are unavailable
     _mockStatusService.Setup(s => s.GetFeatureStatus("Feature1"))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, new List<string> { "Feature1:ApiKey" }));
+        .Returns(new ServiceStatusInfo(IsAvailable: false, ["Feature1:ApiKey"]));
 
     _mockStatusService.Setup(s => s.GetFeatureStatus("Feature2"))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, new List<string> { "Feature2:Secret" }));
+        .Returns(new ServiceStatusInfo(IsAvailable: false, ["Feature2:Secret"]));
 
     // Act
     _filter.Apply(operation, context);
@@ -149,10 +148,10 @@ public class ServiceAvailabilityOperationFilterTests
 
     // Setup status service to indicate one feature is available and one is unavailable
     _mockStatusService.Setup(s => s.GetFeatureStatus("Feature1"))
-        .Returns(new ServiceStatusInfo(IsAvailable: true, new List<string>()));
+        .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
     _mockStatusService.Setup(s => s.GetFeatureStatus("Feature2"))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, new List<string> { "Feature2:Secret" }));
+        .Returns(new ServiceStatusInfo(IsAvailable: false, ["Feature2:Secret"]));
 
     // Act
     _filter.Apply(operation, context);
@@ -179,7 +178,7 @@ public class ServiceAvailabilityOperationFilterTests
 
     // Setup status service to indicate the feature is unavailable
     _mockStatusService.Setup(s => s.GetFeatureStatus("ClassLevelFeature"))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, new List<string> { "ClassLevelFeature:Setting" }));
+        .Returns(new ServiceStatusInfo(IsAvailable: false, ["ClassLevelFeature:Setting"]));
 
     // Act
     _filter.Apply(operation, context);
@@ -207,7 +206,7 @@ public class ServiceAvailabilityOperationFilterTests
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["ClassLevelFeature:Setting"]));
 
     _mockStatusService.Setup(s => s.GetFeatureStatus("MethodLevelFeature"))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, new List<string> { "MethodLevelFeature:ApiKey" }));
+        .Returns(new ServiceStatusInfo(IsAvailable: false, ["MethodLevelFeature:ApiKey"]));
 
     // Act
     _filter.Apply(operation, context);
