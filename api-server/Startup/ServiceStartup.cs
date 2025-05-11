@@ -65,7 +65,7 @@ public class ServiceStartup
     {
       var emailConfig = sp.GetRequiredService<EmailConfig>();
       var logger = sp.GetRequiredService<ILogger<ServiceStartup>>();
-      var statusService = sp.GetRequiredService<IConfigurationStatusService>();
+      var statusService = sp.GetRequiredService<IStatusService>();
 
       var serviceStatus = statusService.GetServiceStatusAsync().GetAwaiter().GetResult();
       var emailServiceAvailable = serviceStatus.TryGetValue("Email", out var status) && status.IsAvailable;
@@ -140,7 +140,7 @@ public class ServiceStartup
     {
       var llmConfig = sp.GetRequiredService<LlmConfig>();
       var logger = sp.GetRequiredService<ILogger<ServiceStartup>>();
-      var statusService = sp.GetRequiredService<IConfigurationStatusService>();
+      var statusService = sp.GetRequiredService<IStatusService>();
 
       var serviceStatus = statusService.GetServiceStatusAsync().GetAwaiter().GetResult();
       var llmServiceAvailable = serviceStatus.TryGetValue("Llm", out var status) && status.IsAvailable;
@@ -173,7 +173,7 @@ public class ServiceStartup
       var transcribeConfig = sp.GetRequiredService<TranscribeConfig>();
       var llmConfig = sp.GetRequiredService<LlmConfig>();
       var logger = sp.GetRequiredService<ILogger<ServiceStartup>>();
-      var statusService = sp.GetRequiredService<IConfigurationStatusService>();
+      var statusService = sp.GetRequiredService<IStatusService>();
 
       var serviceStatus = statusService.GetServiceStatusAsync().GetAwaiter().GetResult();
       var llmServiceAvailable = serviceStatus.TryGetValue("Llm", out var status) && status.IsAvailable;
@@ -267,9 +267,8 @@ public class ServiceStartup
     services.AddSingleton<ITemplateService, TemplateService>();
     services.AddSingleton<IBrowserService, BrowserService>();
 
-    // Status Services
-    services.AddSingleton<IConfigurationStatusService, ConfigurationStatusService>();
-    services.AddScoped<IStatusService, StatusService>();
+    // Status Service - provides configuration and feature availability status
+    services.AddSingleton<IStatusService, StatusService>();
 
     // Repositories
     services.AddSingleton<ILlmRepository, LlmRepository>();
