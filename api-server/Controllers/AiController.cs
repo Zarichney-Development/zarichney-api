@@ -69,7 +69,7 @@ public class AiController(
   /// <returns>A JSON object containing the LLM's response, the source type (text/audio), and the transcribed prompt if applicable.</returns>
   [HttpPost("completion")]
   [Consumes("multipart/form-data")] // Crucial hint for Swagger regarding file uploads/form fields
-  [RequiresFeatureEnabled("Llm")] // Mark this endpoint as requiring LLM configuration
+  [RequiresFeatureEnabled("Llm")]
   [SwaggerOperation(Summary = "Generates LLM completion from text or audio.",
     Description = "Accepts either textPrompt (form field) or audioPrompt (file upload) via multipart/form-data.")]
   [ProducesResponseType(typeof(object), StatusCodes.Status200OK)] // More specific type if possible

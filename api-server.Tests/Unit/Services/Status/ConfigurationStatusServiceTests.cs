@@ -229,7 +229,7 @@ public class ConfigurationStatusServiceTests
 
   private void SetupConfigurationWithPlaceholderValues()
   {
-    _mockConfiguration.Setup(c => c["TestService1:ApiKey"]).Returns("recommended to set in app secrets");
+    _mockConfiguration.Setup(c => c["TestService1:ApiKey"]).Returns(StatusService.PlaceholderMessage);
   }
 
   // Test Config Classes

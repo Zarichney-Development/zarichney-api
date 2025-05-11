@@ -14,7 +14,6 @@ public class StatusServiceTests
 {
   private const string ValidApiKey = "valid-api-key";
   private const string ValidConnectionString = "valid-connection-string";
-  private const string MissingValue = "recommended to set in app secrets";
 
   private readonly Mock<IConfiguration> _mockConfiguration;
   private StatusService _statusService;
@@ -28,7 +27,7 @@ public class StatusServiceTests
     _mockConfiguration = new Mock<IConfiguration>();
 
     // Initialize configs with missing values
-    InitializeConfigs(MissingValue);
+    InitializeConfigs(StatusService.PlaceholderMessage);
 
     // Mock configuration to return connection string
     _mockConfiguration.Setup(c => c["ConnectionStrings:IdentityConnection"]).Returns(ValidConnectionString);
@@ -85,7 +84,7 @@ public class StatusServiceTests
   {
     // Arrange
     InitializeConfigs(ValidApiKey);
-    _llmConfig = new LlmConfig { ApiKey = MissingValue };
+    _llmConfig = new LlmConfig { ApiKey = StatusService.PlaceholderMessage };
     _statusService = new StatusService(_llmConfig, _emailConfig, _gitHubConfig, _paymentConfig, _mockConfiguration.Object);
 
     // Act

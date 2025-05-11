@@ -3,6 +3,7 @@ using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using RestSharp;
 using Zarichney.Config;
+using Zarichney.Services.Status;
 using SendMailPostRequestBody = Microsoft.Graph.Users.Item.SendMail.SendMailPostRequestBody;
 
 namespace Zarichney.Services.Email;
@@ -122,7 +123,7 @@ public class EmailService(
   public async Task<bool> ValidateEmail(string email)
   {
     if (string.IsNullOrEmpty(config.MailCheckApiKey) ||
-        config.MailCheckApiKey == "recommended to set in app secrets")
+        config.MailCheckApiKey == StatusService.PlaceholderMessage)
     {
       throw new ConfigurationMissingException(nameof(EmailConfig), nameof(config.MailCheckApiKey));
     }

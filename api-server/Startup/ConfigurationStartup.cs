@@ -3,6 +3,7 @@ using System.Reflection;
 using Serilog;
 using Zarichney.Config;
 using Zarichney.Services.AI;
+using Zarichney.Services.Status;
 
 namespace Zarichney.Startup;
 
@@ -73,7 +74,6 @@ public static class ConfigurationStartup
 
   #region Configuration Registration
 
-  private const string PlaceholderValue = "recommended to set in app secrets";
   private const string DataFolderName = "Data/";
 
   /// <summary>
@@ -207,7 +207,7 @@ public static class ConfigurationStartup
     {
       var value = property.GetValue(config);
 
-      if (property.GetCustomAttribute<RequiredAttribute>() == null || value is not (null or PlaceholderValue))
+      if (property.GetCustomAttribute<RequiredAttribute>() == null || value is not (null or StatusService.PlaceholderMessage))
       {
         continue;
       }
@@ -217,7 +217,7 @@ public static class ConfigurationStartup
       warningMessage += value switch
       {
         null => " is missing.",
-        PlaceholderValue => " has a placeholder value. Please set it in your user secrets.",
+        StatusService.PlaceholderMessage => " has a placeholder value. Please set it in your user secrets.",
         _ => string.Empty
       };
 

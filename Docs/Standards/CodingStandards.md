@@ -68,6 +68,7 @@
 * Use LINQ effectively for querying and manipulating collections where it enhances readability and conciseness.
 * Prefer returning interfaces like `IReadOnlyList<T>` or `IEnumerable<T>` from methods when the caller should not modify the returned collection. Return `List<T>` when modification is intended or necessary for performance.
 * Use thread-safe collections (`ConcurrentDictionary`, `ConcurrentBag`, `ConcurrentQueue`) when data structures are accessed or modified by multiple threads concurrently (e.g., `FileService._writeQueue`, `SessionManager.Sessions`, `RecipeIndexer._recipes`).
+* Prefer collection expressions. Use `["stringVal"]` instead of `new List<string> { "stringVal" }`.
 
 ## 8. Resource Management
 

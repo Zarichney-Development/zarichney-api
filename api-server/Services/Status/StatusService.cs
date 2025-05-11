@@ -18,11 +18,11 @@ public class StatusService(
     IConfiguration configuration)
     : IStatusService
 {
-  private const string Placeholder = "recommended to set in app secrets";
+  public const string PlaceholderMessage = "recommended to set in app secrets";
 
   private ConfigurationItemStatus CheckConfigurationItem(string itemName, string? itemValue, string propertyName)
   {
-    if (!string.IsNullOrWhiteSpace(itemValue) && itemValue != Placeholder)
+    if (!string.IsNullOrWhiteSpace(itemValue) && itemValue != PlaceholderMessage)
       return new ConfigurationItemStatus(itemName, "Configured");
 
     return new ConfigurationItemStatus(itemName, "Missing/Invalid", $"{propertyName} is missing or placeholder");

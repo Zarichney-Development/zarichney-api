@@ -204,7 +204,7 @@ public class ServiceAvailabilityOperationFilterTests
 
     // Setup status service to indicate both features are unavailable
     _mockStatusService.Setup(s => s.GetFeatureStatus("ClassLevelFeature"))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, new List<string> { "ClassLevelFeature:Setting" }));
+        .Returns(new ServiceStatusInfo(IsAvailable: false, ["ClassLevelFeature:Setting"]));
 
     _mockStatusService.Setup(s => s.GetFeatureStatus("MethodLevelFeature"))
         .Returns(new ServiceStatusInfo(IsAvailable: false, new List<string> { "MethodLevelFeature:ApiKey" }));

@@ -51,6 +51,7 @@ csharp_style_prefer_conditional_expression_over_assignment = true:suggestion
 csharp_style_prefer_conditional_expression_over_return = true:suggestion
 csharp_style_namespace_declarations = file_scoped:suggestion # Prefer file-scoped namespaces
 csharp_using_directive_placement = outside_namespace:suggestion # Place 'using' directives outside namespace
+csharp_style_prefer_collection_expression = true:warning # Prefer collection expressions
 
 # C# Code Style Settings: Code Analyzers (Examples - Enable more as needed)
 # Consider using a Code Analysis Rule Set (.ruleset) file for more complex configurations

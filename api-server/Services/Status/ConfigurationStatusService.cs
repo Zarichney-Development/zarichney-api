@@ -210,7 +210,7 @@ public class ConfigurationStatusService : IConfigurationStatusService
 
       // Check if config is missing, empty, or using placeholder value
       if (string.IsNullOrWhiteSpace(configValue) ||
-          configValue == "recommended to set in app secrets")
+          configValue == StatusService.PlaceholderMessage)
       {
         missingConfigurations.Add(configKey);
       }

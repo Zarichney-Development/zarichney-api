@@ -1,5 +1,3 @@
-using System;
-
 namespace Zarichney.Config;
 
 /// <summary>
@@ -7,7 +5,7 @@ namespace Zarichney.Config;
 /// When applied, this attribute is used by Swagger to mark endpoints that may be unavailable due to
 /// missing required configuration.
 /// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, Inherited = true, AllowMultiple = true)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
 public class RequiresFeatureEnabledAttribute : Attribute
 {
   /// <summary>
@@ -29,7 +27,7 @@ public class RequiresFeatureEnabledAttribute : Attribute
     }
 
     // Check for null or empty strings in the array
-    for (int i = 0; i < featureNames.Length; i++)
+    for (var i = 0; i < featureNames.Length; i++)
     {
       if (string.IsNullOrWhiteSpace(featureNames[i]))
       {
