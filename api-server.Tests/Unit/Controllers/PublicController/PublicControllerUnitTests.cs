@@ -1,3 +1,5 @@
+using Zarichney.Services.Status;
+
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Moq;

@@ -1,3 +1,5 @@
+using Zarichney.Services.Status;
+
 namespace Zarichney.Config;
 
 public class ServerConfig : IConfig

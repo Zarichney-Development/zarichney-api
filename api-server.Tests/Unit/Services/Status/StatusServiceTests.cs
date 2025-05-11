@@ -1,3 +1,5 @@
+using Zarichney.Services.Status;
+
 using System.Reflection;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;

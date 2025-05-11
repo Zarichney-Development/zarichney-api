@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using Zarichney.Services.Status;
 
 namespace Zarichney.Config;
 

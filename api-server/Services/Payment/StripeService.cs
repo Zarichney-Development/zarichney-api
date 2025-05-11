@@ -1,6 +1,7 @@
 using Stripe;
 using Stripe.Checkout;
 using Zarichney.Config;
+using Zarichney.Services.Status;
 
 namespace Zarichney.Services.Payment;
 

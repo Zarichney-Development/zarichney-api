@@ -86,19 +86,20 @@
 ## 6. Dependencies
 
 * **Internal Code Dependencies:**
-    * [`/Config`](../../Config/README.md) - Provides configuration models and the `RequiresConfigurationAttribute`.
-    * [`/Config/ServiceUnavailableException.cs`](../../Config/ServiceUnavailableException.cs) - Exception thrown when a service is unavailable due to missing configuration.
+    * [`/Config`](../../Config/README.md) - Provides configuration models.
     * [`/Services`](../README.md) - Parent module.
 * **External Library Dependencies:**
     * `Microsoft.Extensions.Configuration` - For reading connection strings and configuration values.
     * `Microsoft.Extensions.Logging` - For logging.
     * `Microsoft.Extensions.DependencyInjection` - For resolving registered `IConfig` instances via `IServiceProvider`.
     * `System.Reflection` - Used by `StatusService` to discover `IConfig` implementations and their attributed properties.
+    * `Microsoft.OpenApi.Models` - Used by `ServiceAvailabilityOperationFilter` for Swagger documentation integration.
+    * `Swashbuckle.AspNetCore.SwaggerGen` - Used by `ServiceAvailabilityOperationFilter` for Swagger documentation integration.
 * **Dependents (Impact of Changes):**
     * [`/Controllers/PublicController.cs`](../../Controllers/PublicController.cs) - Uses `IStatusService` for the `/api/status` and `/api/config` endpoints.
-    * [`/Config/ServiceAvailabilityOperationFilter.cs`](../../Config/ServiceAvailabilityOperationFilter.cs) - Uses `IStatusService` to check feature availability for Swagger UI integration.
-    * [`/Config/RequiresFeatureEnabledAttribute.cs`](../../Config/RequiresFeatureEnabledAttribute.cs) - Works with the feature availability methods of `IStatusService` to determine which API endpoints may be unavailable.
     * Any service that needs to check the availability of other services based on their configuration requirements.
+    * Controllers and actions that use the `[RequiresFeatureEnabled]` attribute.
+    * Configuration properties that use the `[RequiresConfiguration]` attribute.
 
 ## 7. Rationale & Key Historical Context
 
@@ -108,6 +109,7 @@
 * **May 2025 Refactor (`StatusService`):** `StatusService` was refactored to discover `IConfig` implementations by scanning a specified `Assembly` (defaulting to the main application assembly) and then resolving these types via `IServiceProvider`. A new constructor was added to allow injection of the `Assembly` to be scanned, significantly improving the testability of the service by allowing tests to provide a mock assembly with controlled `IConfig` types.
 * **May 2025 Feature Enumeration Refactor:** The `Feature` enum was introduced to replace string-based feature names, improving type safety and making dependencies between configurations and features more explicit. The `[RequiresConfiguration]` attribute was updated to accept `Feature` enum values instead of string configuration keys, and configuration keys are now automatically derived from class and property names.
 * **May 2025 Interface Consolidation:** The previously separate `IConfigurationStatusService` interface was merged into `IStatusService` to provide a unified API for all status-related functionality, simplifying service registration and usage.
+* **May 2025 Code Organization:** The service availability related files (`RequiresConfigurationAttribute`, `RequiresFeatureEnabledAttribute`, `ServiceUnavailableException`, and `ServiceAvailabilityOperationFilter`) were relocated from the `/Config` directory to the `/Services/Status` directory to better reflect their functional relationship with the status service functionality.
 
 ## 8. Known Issues & TODOs
 

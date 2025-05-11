@@ -1,9 +1,8 @@
 using System.Reflection;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using Zarichney.Services.Status;
 
-namespace Zarichney.Config;
+namespace Zarichney.Services.Status;
 
 /// <summary>
 /// Swagger operation filter that detects controllers and actions with the [RequiresFeatureEnabled]

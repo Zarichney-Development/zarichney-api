@@ -1,3 +1,5 @@
+using Zarichney.Services.Status;
+
 using FluentAssertions;
 using Xunit;
 using Zarichney.Services.Status;

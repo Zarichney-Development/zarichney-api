@@ -1,4 +1,4 @@
-namespace Zarichney.Config;
+namespace Zarichney.Services.Status;
 
 /// <summary>
 /// Attribute that indicates a controller or action requires specific feature(s) to be properly configured.

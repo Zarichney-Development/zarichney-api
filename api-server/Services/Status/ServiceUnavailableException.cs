@@ -1,4 +1,4 @@
-namespace Zarichney.Config;
+namespace Zarichney.Services.Status;
 
 /// <summary>
 /// Exception thrown when a service is unavailable due to missing configuration or other reasons.

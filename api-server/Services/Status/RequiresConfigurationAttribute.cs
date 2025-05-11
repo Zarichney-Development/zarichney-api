@@ -1,4 +1,4 @@
-namespace Zarichney.Config;
+namespace Zarichney.Services.Status;
 
 /// <summary>
 /// Attribute that indicates a configuration property is required for specific feature(s) to function.

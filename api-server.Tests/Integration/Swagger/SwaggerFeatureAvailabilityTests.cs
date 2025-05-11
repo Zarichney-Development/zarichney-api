@@ -1,3 +1,5 @@
+using Zarichney.Services.Status;
+
 using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.TestHost;
