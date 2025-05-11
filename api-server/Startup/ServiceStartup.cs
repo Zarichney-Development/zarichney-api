@@ -309,6 +309,7 @@ public class ServiceStartup
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(c =>
     {
+
       c.SwaggerDoc("swagger", new OpenApiInfo
       {
         Title = "Zarichney API",
@@ -318,13 +319,14 @@ public class ServiceStartup
                       "\n\n**Note:** Endpoints marked with ⚠️ are currently unavailable due to missing configuration."
       });
 
-      // Register operation filters
-      c.OperationFilter<FormFileOperationFilter>();
-      c.OperationFilter<ServiceAvailabilityOperationFilter>();
       c.EnableAnnotations();
 
       var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
       c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+
+      // Register operation filters
+      c.OperationFilter<FormFileOperationFilter>();
+      c.OperationFilter<ServiceAvailabilityOperationFilter>();
 
       c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
       {

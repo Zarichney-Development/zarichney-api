@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Xunit;
+using Zarichney.Config;
 using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
@@ -21,16 +22,11 @@ namespace Zarichney.Tests.Integration.Swagger;
 // These tests are skipped as they require a real environment to properly test the
 // ServiceAvailabilityOperationFilter in context of the Swagger UI.
 // The live service tests in SwaggerLiveServiceStatusTests.cs provide similar verification using real services.
-public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
+public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture) : IntegrationTestBase(apiClientFixture)
 {
-  private readonly string _swaggerJsonUrl = "/api/swagger/swagger.json";
+  private const string _swaggerJsonUrl = "/api/swagger/swagger.json";
 
-  public SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture)
-      : base(apiClientFixture)
-  {
-  }
-
-  [Fact(Skip = "Not reliable in current test environment")]
+  [Fact]
   [Trait(TestCategories.Feature, TestCategories.Swagger)]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
   public async Task SwaggerOperationFilter_WhenAllFeaturesAvailable_NoWarningsInSummary()
@@ -79,7 +75,7 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
     operationsWithWarnings.Should().BeEmpty("No operations should have warnings when all features are available");
   }
 
-  [Fact(Skip = "Not reliable in current test environment")]
+  [Fact]
   [Trait(TestCategories.Feature, TestCategories.Swagger)]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
   public async Task SwaggerOperationFilter_WhenLlmFeatureUnavailable_WarningsInAiControllerEndpoints()
@@ -148,7 +144,7 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
     }
   }
 
-  [Fact(Skip = "Not reliable in current test environment")]
+  [Fact]
   [Trait(TestCategories.Feature, TestCategories.Swagger)]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
   public async Task SwaggerOperationFilter_WhenPaymentsFeatureUnavailable_WarningsInPaymentControllerEndpoints()
@@ -202,7 +198,7 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
 
     // Find Payment controller endpoints
     var paymentEndpoints = swagger.Paths
-        .Where(path => path.Key.StartsWith("/api/payments"))
+        .Where(path => path.Key.StartsWith("/api/payment"))
         .SelectMany(path => path.Value.Operations)
         .ToList();
 
@@ -217,7 +213,7 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
     }
   }
 
-  [Fact(Skip = "Not reliable in current test environment")]
+  [Fact]
   [Trait(TestCategories.Feature, TestCategories.Swagger)]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
   public async Task SwaggerOperationFilter_WhenMultipleFeaturesUnavailable_AllRelevantEndpointsHaveWarnings()
@@ -293,14 +289,8 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
     // Assert
     swagger.Should().NotBeNull("Swagger JSON should be returned");
 
-    // Find endpoints that require features
-    var aiEndpoints = swagger.Paths
-        .Where(path => path.Key.StartsWith("/api/completion") || path.Key.StartsWith("/api/transcribe"))
-        .SelectMany(path => path.Value.Operations)
-        .ToList();
-
     var paymentEndpoints = swagger.Paths
-        .Where(path => path.Key.StartsWith("/api/payments"))
+        .Where(path => path.Key.StartsWith("/api/payment"))
         .SelectMany(path => path.Value.Operations)
         .ToList();
 
@@ -324,63 +314,5 @@ public class SwaggerFeatureAvailabilityTests : IntegrationTestBase
       endpoint.Value.Summary.Should().Contain("⚠️", "Payment endpoint should have warning");
       endpoint.Value.Summary.Should().Contain("Payment", "Warning should mention Payment");
     }
-  }
-
-  /// <summary>
-  /// Simple class to deserialize the Swagger JSON output for testing.
-  /// </summary>
-  private class SwaggerDocument
-  {
-    public string? OpenApi { get; set; }
-    public SwaggerInfo? Info { get; set; }
-    public Dictionary<string, SwaggerPathItem> Paths { get; set; } = new();
-  }
-
-  private class SwaggerInfo
-  {
-    public string? Title { get; set; }
-    public string? Version { get; set; }
-    public string? Description { get; set; }
-  }
-
-  private class SwaggerPathItem
-  {
-    public Dictionary<string, SwaggerOperation> Operations { get; set; } = new();
-
-    [System.Text.Json.Serialization.JsonPropertyName("get")]
-    public SwaggerOperation? Get
-    {
-      get => Operations.TryGetValue("get", out var op) ? op : null;
-      set { if (value != null) Operations["get"] = value; }
-    }
-
-    [System.Text.Json.Serialization.JsonPropertyName("post")]
-    public SwaggerOperation? Post
-    {
-      get => Operations.TryGetValue("post", out var op) ? op : null;
-      set { if (value != null) Operations["post"] = value; }
-    }
-
-    [System.Text.Json.Serialization.JsonPropertyName("put")]
-    public SwaggerOperation? Put
-    {
-      get => Operations.TryGetValue("put", out var op) ? op : null;
-      set { if (value != null) Operations["put"] = value; }
-    }
-
-    [System.Text.Json.Serialization.JsonPropertyName("delete")]
-    public SwaggerOperation? Delete
-    {
-      get => Operations.TryGetValue("delete", out var op) ? op : null;
-      set { if (value != null) Operations["delete"] = value; }
-    }
-  }
-
-  private class SwaggerOperation
-  {
-    public string? Summary { get; set; }
-    public string? Description { get; set; }
-    public object? Parameters { get; set; }
-    public Dictionary<string, object>? Responses { get; set; }
   }
 }
