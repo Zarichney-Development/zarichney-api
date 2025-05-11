@@ -8,7 +8,6 @@ namespace Zarichney.Controllers;
 [AllowAnonymous]
 [Route("api")]
 public class PublicController(
-  IConfigurationStatusService configurationStatusService,
   IStatusService statusService)
   : ControllerBase
 {
@@ -31,7 +30,7 @@ public class PublicController(
   [ProducesResponseType(500)]
   public async Task<IActionResult> GetServicesStatus()
   {
-    var result = await configurationStatusService.GetServiceStatusAsync();
+    var result = await statusService.GetServiceStatusAsync();
     return Ok(result);
   }
 

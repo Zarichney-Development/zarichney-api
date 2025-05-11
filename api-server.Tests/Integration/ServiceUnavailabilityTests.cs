@@ -45,7 +45,7 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture) : Int
     var missingConfigs = new List<string> { "Llm:ApiKey" };
     var llmServiceStatus = new StatusInfo(IsAvailable: false, missingConfigs);
 
-    var mockStatusService = new Mock<IConfigurationStatusService>();
+    var mockStatusService = new Mock<IStatusService>();
     mockStatusService.Setup(s => s.GetServiceStatusAsync())
       .ReturnsAsync(new Dictionary<string, StatusInfo> { { "Llm", llmServiceStatus } });
 
@@ -145,7 +145,7 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture) : Int
   {
     // Arrange
     // Create a custom factory that indicates mixed service availability
-    var mockStatusService = new Mock<IConfigurationStatusService>();
+    var mockStatusService = new Mock<IStatusService>();
     mockStatusService.Setup(s => s.GetServiceStatusAsync())
       .ReturnsAsync(new Dictionary<string, StatusInfo>
       {
@@ -199,7 +199,7 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture) : Int
   {
     // Arrange
     // Create a custom factory with a mock configuration status service
-    var mockStatusService = new Mock<IConfigurationStatusService>();
+    var mockStatusService = new Mock<IStatusService>();
     mockStatusService.Setup(s => s.GetServiceStatusAsync())
       .ReturnsAsync(
         new Dictionary<string, StatusInfo> { { "Llm", new StatusInfo(IsAvailable: false, ["Llm:ApiKey"]) } });

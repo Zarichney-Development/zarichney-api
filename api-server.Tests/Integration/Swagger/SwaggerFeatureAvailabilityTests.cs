@@ -33,7 +33,7 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture) 
   {
     // Arrange
     // Create a mock configuration status service that reports all features as available
-    var mockStatusService = new Mock<IConfigurationStatusService>();
+    var mockStatusService = new Mock<IStatusService>();
 
     // Set up the mock to return available status for any feature (enum-based)
     mockStatusService
@@ -91,7 +91,7 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture) 
   {
     // Arrange
     // Create a mock configuration status service that reports LLM and Transcription features as unavailable
-    var mockStatusService = new Mock<IConfigurationStatusService>();
+    var mockStatusService = new Mock<IStatusService>();
 
     // Set up the mock to return unavailable status for Transcription
     mockStatusService
@@ -251,7 +251,7 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture) 
   {
     // Arrange
     // Create a mock configuration status service that reports Payments feature as unavailable
-    var mockStatusService = new Mock<IConfigurationStatusService>();
+    var mockStatusService = new Mock<IStatusService>();
 
     // Set up the mock to return available status for all features except Payments
     mockStatusService
@@ -341,7 +341,7 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture) 
   {
     // Arrange
     // Create a mock configuration status service that reports multiple features as unavailable
-    var mockStatusService = new Mock<IConfigurationStatusService>();
+    var mockStatusService = new Mock<IStatusService>();
 
     // Set up the mock to return unavailable status for LLM, Transcription, GitHub, and Payments
     mockStatusService

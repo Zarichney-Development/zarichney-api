@@ -29,7 +29,7 @@ public class ServiceStartupTests
     services.AddSingleton(mockLogger.Object);
 
     // Mock configuration status service that reports Email service as available
-    var mockStatusService = new Mock<IConfigurationStatusService>();
+    var mockStatusService = new Mock<IStatusService>();
     var statusDict = new Dictionary<string, ServiceStatusInfo>
         {
             { "Email", new ServiceStatusInfo(true, []) }
@@ -73,7 +73,7 @@ public class ServiceStartupTests
     services.AddSingleton(mockLogger.Object);
 
     // Mock configuration status service that reports Email service as unavailable
-    var mockStatusService = new Mock<IConfigurationStatusService>();
+    var mockStatusService = new Mock<IStatusService>();
     var statusDict = new Dictionary<string, ServiceStatusInfo>
         {
             { "Email", new ServiceStatusInfo(false, ["EmailConfig:AzureTenantId"]) }
@@ -134,7 +134,7 @@ public class ServiceStartupTests
     services.AddSingleton(mockLogger.Object);
 
     // Mock configuration status service that reports LLM service as available
-    var mockStatusService = new Mock<IConfigurationStatusService>();
+    var mockStatusService = new Mock<IStatusService>();
     var statusDict = new Dictionary<string, ServiceStatusInfo>
         {
             { "Llm", new ServiceStatusInfo(true, []) }
@@ -177,7 +177,7 @@ public class ServiceStartupTests
     services.AddSingleton(mockLogger.Object);
 
     // Mock configuration status service that reports LLM service as unavailable
-    var mockStatusService = new Mock<IConfigurationStatusService>();
+    var mockStatusService = new Mock<IStatusService>();
     var statusDict = new Dictionary<string, ServiceStatusInfo>
         {
             { "Llm", new ServiceStatusInfo(false, ["LlmConfig:ApiKey"]) }

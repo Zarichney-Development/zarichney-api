@@ -12,7 +12,7 @@ namespace Zarichney.Config;
 /// </summary>
 public class ServiceAvailabilityOperationFilter : IOperationFilter
 {
-  private readonly IConfigurationStatusService _statusService;
+  private readonly IStatusService _statusService;
   private readonly ILogger<ServiceAvailabilityOperationFilter> _logger;
 
   /// <summary>
@@ -21,7 +21,7 @@ public class ServiceAvailabilityOperationFilter : IOperationFilter
   /// <param name="statusService">The service that provides configuration status information.</param>
   /// <param name="logger">The logger.</param>
   public ServiceAvailabilityOperationFilter(
-    IConfigurationStatusService statusService,
+    IStatusService statusService,
     ILogger<ServiceAvailabilityOperationFilter> logger)
   {
     _statusService = statusService ?? throw new ArgumentNullException(nameof(statusService));

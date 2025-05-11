@@ -12,13 +12,13 @@ namespace Zarichney.Tests.Unit.Config;
 
 public class ServiceAvailabilityOperationFilterTests
 {
-  private readonly Mock<IConfigurationStatusService> _mockStatusService;
+  private readonly Mock<IStatusService> _mockStatusService;
   private readonly Mock<ILogger<ServiceAvailabilityOperationFilter>> _mockLogger;
   private readonly ServiceAvailabilityOperationFilter _filter;
 
   public ServiceAvailabilityOperationFilterTests()
   {
-    _mockStatusService = new Mock<IConfigurationStatusService>();
+    _mockStatusService = new Mock<IStatusService>();
     _mockLogger = new Mock<ILogger<ServiceAvailabilityOperationFilter>>();
     _filter = new ServiceAvailabilityOperationFilter(_mockStatusService.Object, _mockLogger.Object);
   }

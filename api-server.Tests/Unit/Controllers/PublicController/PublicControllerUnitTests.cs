@@ -15,15 +15,13 @@ namespace Zarichney.Tests.Unit.Controllers.PublicController;
 [Trait(TestCategories.Component, TestCategories.Controller)]
 public class PublicControllerUnitTests
 {
-  private readonly Mock<IConfigurationStatusService> _mockConfigStatusService;
   private readonly Mock<IStatusService> _mockStatusService;
   private readonly Zarichney.Controllers.PublicController _controller;
 
   public PublicControllerUnitTests()
   {
-    _mockConfigStatusService = new Mock<IConfigurationStatusService>();
     _mockStatusService = new Mock<IStatusService>();
-    _controller = new Zarichney.Controllers.PublicController(_mockConfigStatusService.Object, _mockStatusService.Object);
+    _controller = new Zarichney.Controllers.PublicController(_mockStatusService.Object);
   }
 
   /// <summary>
@@ -60,11 +58,11 @@ public class PublicControllerUnitTests
   }
 
   /// <summary>
-  /// Verifies that GetStatus returns an OK result with the status dictionary
-  /// when the IConfigurationStatusService succeeds.
+  /// Verifies that GetServicesStatus returns an OK result with the status dictionary
+  /// when the IStatusService succeeds.
   /// </summary>
   [Fact]
-  public async Task GetStatus_WhenServiceSucceeds_ReturnsOkWithStatusDictionary()
+  public async Task GetServicesStatus_WhenServiceSucceeds_ReturnsOkWithStatusDictionary()
   {
     // Arrange
     var expectedStatusDict = new Dictionary<string, ServiceStatusInfo>
@@ -72,7 +70,7 @@ public class PublicControllerUnitTests
       { "ServiceA", new ServiceStatusInfo(true, []) },
       { "ServiceB", new ServiceStatusInfo(false, ["ConfigKey1"]) }
     };
-    _mockConfigStatusService
+    _mockStatusService
       .Setup(s => s.GetServiceStatusAsync())
       .ReturnsAsync(expectedStatusDict)
       .Verifiable();
@@ -88,18 +86,18 @@ public class PublicControllerUnitTests
     okResult.Value.Should().BeEquivalentTo(expectedStatusDict,
       because: "the returned value should match the dictionary from the service");
 
-    _mockConfigStatusService.Verify();
+    _mockStatusService.Verify();
   }
 
   /// <summary>
-  /// Verifies that GetStatus propagates exceptions thrown by the IConfigurationStatusService.
+  /// Verifies that GetServicesStatus propagates exceptions thrown by the IStatusService.
   /// </summary>
   [Fact]
-  public async Task GetStatus_WhenServiceThrows_ThrowsException()
+  public async Task GetServicesStatus_WhenServiceThrows_ThrowsException()
   {
     // Arrange
     var expectedException = new InvalidOperationException("Service failure simulation");
-    _mockConfigStatusService
+    _mockStatusService
       .Setup(s => s.GetServiceStatusAsync())
       .ThrowsAsync(expectedException)
       .Verifiable();
@@ -111,6 +109,6 @@ public class PublicControllerUnitTests
     await act.Should().ThrowAsync<InvalidOperationException>(because: "exceptions from the service should propagate")
       .WithMessage(expectedException.Message);
 
-    _mockConfigStatusService.Verify();
+    _mockStatusService.Verify();
   }
 }
