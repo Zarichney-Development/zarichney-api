@@ -75,6 +75,7 @@ public class StatusService : IStatusService
 
   // Cache for service status to avoid rechecking configuration on every Swagger request
   private Dictionary<string, ServiceStatusInfo>? _cachedStatus;
+
   // Additional mapping from Feature enum to service names
   private Dictionary<Feature, string[]>? _featureServiceMap;
   private DateTime _cacheExpiration = DateTime.MinValue;
@@ -92,14 +93,15 @@ public class StatusService : IStatusService
   /// <param name="serviceProvider">The service provider to resolve IConfig instances.</param>
   /// <param name="logger">The logger.</param>
   public StatusService(
-      LlmConfig llmConfig,
-      EmailConfig emailConfig,
-      GitHubConfig gitHubConfig,
-      PaymentConfig paymentConfig,
-      IConfiguration configuration,
-      IServiceProvider serviceProvider,
-      ILogger<StatusService> logger)
-      : this(llmConfig, emailConfig, gitHubConfig, paymentConfig, configuration, serviceProvider, logger, Assembly.GetAssembly(typeof(Program))!) // Assuming Program is in the main assembly
+    LlmConfig llmConfig,
+    EmailConfig emailConfig,
+    GitHubConfig gitHubConfig,
+    PaymentConfig paymentConfig,
+    IConfiguration configuration,
+    IServiceProvider serviceProvider,
+    ILogger<StatusService> logger)
+    : this(llmConfig, emailConfig, gitHubConfig, paymentConfig, configuration, serviceProvider, logger,
+      Assembly.GetAssembly(typeof(Program))!) // Assuming Program is in the main assembly
   {
   }
 
@@ -115,14 +117,14 @@ public class StatusService : IStatusService
   /// <param name="logger">The logger.</param>
   /// <param name="assemblyToScan">The assembly to scan for IConfig implementations.</param>
   public StatusService(
-      LlmConfig llmConfig,
-      EmailConfig emailConfig,
-      GitHubConfig gitHubConfig,
-      PaymentConfig paymentConfig,
-      IConfiguration configuration,
-      IServiceProvider serviceProvider,
-      ILogger<StatusService> logger,
-      Assembly assemblyToScan)
+    LlmConfig llmConfig,
+    EmailConfig emailConfig,
+    GitHubConfig gitHubConfig,
+    PaymentConfig paymentConfig,
+    IConfiguration configuration,
+    IServiceProvider serviceProvider,
+    ILogger<StatusService> logger,
+    Assembly assemblyToScan)
   {
     _llmConfig = llmConfig ?? throw new ArgumentNullException(nameof(llmConfig));
     _emailConfig = emailConfig ?? throw new ArgumentNullException(nameof(emailConfig));
@@ -162,17 +164,21 @@ public class StatusService : IStatusService
       CheckConfigurationItem("Email AzureAppId", _emailConfig.AzureAppId, nameof(_emailConfig.AzureAppId)),
       CheckConfigurationItem("Email AzureAppSecret", _emailConfig.AzureAppSecret, nameof(_emailConfig.AzureAppSecret)),
       CheckConfigurationItem("Email FromEmail", _emailConfig.FromEmail, nameof(_emailConfig.FromEmail)),
-      CheckConfigurationItem("Email MailCheckApiKey", _emailConfig.MailCheckApiKey, nameof(_emailConfig.MailCheckApiKey)),
+      CheckConfigurationItem("Email MailCheckApiKey", _emailConfig.MailCheckApiKey,
+        nameof(_emailConfig.MailCheckApiKey)),
 
       // GitHub
       CheckConfigurationItem("GitHub Access Token", _gitHubConfig.AccessToken, nameof(_gitHubConfig.AccessToken)),
 
       // Stripe
-      CheckConfigurationItem("Stripe Secret Key", _paymentConfig.StripeSecretKey, nameof(_paymentConfig.StripeSecretKey)),
-      CheckConfigurationItem("Stripe Webhook Secret", _paymentConfig.StripeWebhookSecret, nameof(_paymentConfig.StripeWebhookSecret)),
+      CheckConfigurationItem("Stripe Secret Key", _paymentConfig.StripeSecretKey,
+        nameof(_paymentConfig.StripeSecretKey)),
+      CheckConfigurationItem("Stripe Webhook Secret", _paymentConfig.StripeWebhookSecret,
+        nameof(_paymentConfig.StripeWebhookSecret)),
 
       // Database Connection
-      CheckConfigurationItem("Database Connection", _configuration["ConnectionStrings:IdentityConnection"], "IdentityConnection")
+      CheckConfigurationItem("Database Connection", _configuration["ConnectionStrings:IdentityConnection"],
+        "IdentityConnection")
     };
 
     return Task.FromResult(statusList);
@@ -205,8 +211,8 @@ public class StatusService : IStatusService
 
       // Get all types implementing IConfig (excluding interfaces/abstract classes)
       var configTypes = _assemblyToScan // Use the injected assembly
-          .GetTypes()
-          .Where(t => typeof(IConfig).IsAssignableFrom(t) && t is { IsInterface: false, IsAbstract: false });
+        .GetTypes()
+        .Where(t => typeof(IConfig).IsAssignableFrom(t) && t is { IsInterface: false, IsAbstract: false });
 
       var configInstances = new List<IConfig>();
       foreach (var configTypeItem in configTypes)
@@ -236,16 +242,16 @@ public class StatusService : IStatusService
 
         // Add to results
         results[serviceName] = new ServiceStatusInfo(
-            IsAvailable: missingConfigurations.Count == 0,
-            MissingConfigurations: missingConfigurations
+          IsAvailable: missingConfigurations.Count == 0,
+          MissingConfigurations: missingConfigurations
         );
 
         // Update feature mapping
-        foreach (var (feature, properties) in featureAssociations)
+        foreach (var (feature, _) in featureAssociations)
         {
           if (!featureMap.TryGetValue(feature, out var services))
           {
-            services = new List<string>();
+            services = [];
             featureMap[feature] = services;
           }
 
@@ -258,8 +264,8 @@ public class StatusService : IStatusService
 
       // Convert feature map to service array dictionary
       _featureServiceMap = featureMap.ToDictionary(
-          kvp => kvp.Key,
-          kvp => kvp.Value.ToArray()
+        kvp => kvp.Key,
+        kvp => kvp.Value.ToArray()
       );
 
       // Update cache
@@ -281,9 +287,11 @@ public class StatusService : IStatusService
     {
       EnsureCacheIsValid();
 
-      if (_featureServiceMap == null || !_featureServiceMap.TryGetValue(feature, out var serviceNames) || _cachedStatus == null)
+      if (_featureServiceMap == null || !_featureServiceMap.TryGetValue(feature, out var serviceNames) ||
+          _cachedStatus == null)
       {
-        _logger.LogWarning("Feature status requested for feature: {Feature}, but no associated services found", feature);
+        _logger.LogWarning("Feature status requested for feature: {Feature}, but no associated services found",
+          feature);
         return null;
       }
 
@@ -298,8 +306,8 @@ public class StatusService : IStatusService
       }
 
       return new ServiceStatusInfo(
-          IsAvailable: missingConfigurations.Count == 0,
-          MissingConfigurations: missingConfigurations
+        IsAvailable: missingConfigurations.Count == 0,
+        MissingConfigurations: missingConfigurations
       );
     }
     catch (Exception ex)
@@ -325,8 +333,9 @@ public class StatusService : IStatusService
 
       if (_cachedStatus == null || !_cachedStatus.TryGetValue(featureName, out var featureStatus))
       {
-        _logger.LogWarning("Feature status requested for unknown feature: {FeatureName}. Available services: {AvailableServices}",
-            featureName, _cachedStatus != null ? string.Join(", ", _cachedStatus.Keys) : "none");
+        _logger.LogWarning(
+          "Feature status requested for unknown feature: {FeatureName}. Available services: {AvailableServices}",
+          featureName, _cachedStatus != null ? string.Join(", ", _cachedStatus.Keys) : "none");
         return null;
       }
 
@@ -362,15 +371,15 @@ public class StatusService : IStatusService
     }
   }
 
-  private async Task<(List<string> MissingConfigurations, Dictionary<Feature, List<string>> FeatureAssociations)>
-      CheckConfigurationRequirementsAsync(Type configType)
+  private Task<(List<string> MissingConfigurations, Dictionary<Feature, List<string>> FeatureAssociations)>
+    CheckConfigurationRequirementsAsync(Type configType)
   {
     var missingConfigurations = new List<string>();
     var featureAssociations = new Dictionary<Feature, List<string>>();
 
     // Find properties with RequiresConfiguration attribute
     var properties = configType.GetProperties()
-        .Where(p => Attribute.IsDefined(p, typeof(RequiresConfigurationAttribute)));
+      .Where(p => Attribute.IsDefined(p, typeof(RequiresConfigurationAttribute)));
 
     foreach (var property in properties)
     {
@@ -382,8 +391,7 @@ public class StatusService : IStatusService
       var configValue = _configuration[configKey];
 
       // Check if config is missing, empty, or using placeholder value
-      bool isConfigMissing = string.IsNullOrWhiteSpace(configValue) ||
-                             configValue == StatusService.PlaceholderMessage;
+      var isConfigMissing = string.IsNullOrWhiteSpace(configValue) || configValue == PlaceholderMessage;
 
       if (isConfigMissing)
       {
@@ -406,6 +414,6 @@ public class StatusService : IStatusService
       }
     }
 
-    return (missingConfigurations, featureAssociations);
+    return Task.FromResult((missingConfigurations, featureAssociations));
   }
 }

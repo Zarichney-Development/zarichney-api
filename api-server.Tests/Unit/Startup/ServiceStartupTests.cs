@@ -1,5 +1,4 @@
 using Zarichney.Services.Status;
-
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -8,10 +7,8 @@ using Moq;
 using OpenAI;
 using OpenAI.Audio;
 using Xunit;
-using Zarichney.Config;
 using Zarichney.Services.AI;
 using Zarichney.Services.Email;
-using Zarichney.Services.Status;
 using Zarichney.Startup;
 
 namespace Zarichney.Tests.Unit.Startup;
@@ -40,7 +37,7 @@ public class ServiceStartupTests
         .ReturnsAsync(statusDict);
     services.AddSingleton(mockStatusService.Object);
 
-    // Add a valid EmailConfig 
+    // Add a valid EmailConfig
     var emailConfig = new EmailConfig
     {
       AzureTenantId = "tenant-id",

@@ -1,5 +1,3 @@
-using Zarichney.Services.Status;
-
 using FluentAssertions;
 using Refit;
 using Xunit;

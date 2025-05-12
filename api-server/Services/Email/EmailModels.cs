@@ -1,6 +1,4 @@
 using Zarichney.Services.Status;
-
-using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Zarichney.Config;
 

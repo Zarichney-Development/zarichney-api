@@ -1,10 +1,8 @@
 using Zarichney.Services.Status;
-
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using Zarichney.Config;
 using Zarichney.Services.AI;
 using Zarichney.Services.Email;
 using Zarichney.Services.GitHub;

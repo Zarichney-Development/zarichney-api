@@ -1,5 +1,4 @@
 using Zarichney.Services.Status;
-
 using System.Reflection;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
@@ -11,7 +10,6 @@ using Zarichney.Services.AI;
 using Zarichney.Services.Email;
 using Zarichney.Services.GitHub;
 using Zarichney.Services.Payment;
-using Zarichney.Services.Status;
 
 namespace Zarichney.Tests.Unit.Services.Status;
 

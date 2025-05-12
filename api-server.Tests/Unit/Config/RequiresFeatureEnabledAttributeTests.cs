@@ -1,8 +1,6 @@
 using Zarichney.Services.Status;
-
 using FluentAssertions;
 using Xunit;
-using Zarichney.Config;
 
 namespace Zarichney.Tests.Unit.Config;
 

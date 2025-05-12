@@ -1,8 +1,6 @@
 using Zarichney.Services.Status;
-
 using FluentAssertions;
 using Xunit;
-using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Helpers;
 

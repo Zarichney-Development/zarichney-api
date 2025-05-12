@@ -1,5 +1,4 @@
 using Zarichney.Services.Status;
-
 using OpenAI.Audio;
 using Polly;
 using Polly.Retry;

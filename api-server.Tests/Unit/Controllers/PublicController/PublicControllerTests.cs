@@ -1,15 +1,9 @@
 using Zarichney.Services.Status;
-
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
-using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
-// Added for List
-// Added for DateTime, InvalidOperationException
-
-// Added for Task
 
 namespace Zarichney.Tests.Unit.Controllers.PublicController;
 

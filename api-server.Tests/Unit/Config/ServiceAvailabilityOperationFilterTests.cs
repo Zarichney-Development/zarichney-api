@@ -1,5 +1,4 @@
 using Zarichney.Services.Status;
-
 using System.Reflection;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
@@ -7,8 +6,6 @@ using Microsoft.OpenApi.Models;
 using Moq;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Xunit;
-using Zarichney.Config;
-using Zarichney.Services.Status;
 
 namespace Zarichney.Tests.Unit.Config;
 

@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Serilog;
 using Zarichney.Config;
 using Zarichney.Cookbook.Recipes;
-using Zarichney.Services.Status;
 
 namespace Zarichney.Startup;
 

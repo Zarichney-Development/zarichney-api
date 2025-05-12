@@ -1,5 +1,4 @@
 using Zarichney.Services.Status;
-
 using System.Text.Json;
 using AutoMapper;
 using OpenAI;

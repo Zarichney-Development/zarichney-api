@@ -1,7 +1,5 @@
 using Zarichney.Services.Status;
-
 using System.Net.Http.Json;
-using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 

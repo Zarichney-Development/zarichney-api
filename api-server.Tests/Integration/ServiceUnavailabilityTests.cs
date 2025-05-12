@@ -1,5 +1,4 @@
 using Zarichney.Services.Status;
-
 using System.Net;
 using FluentAssertions;
 using Microsoft.AspNetCore.TestHost;
@@ -8,9 +7,7 @@ using Moq;
 using Refit;
 using Xunit;
 using Zarichney.Client;
-using Zarichney.Config;
 using Zarichney.Services.AI;
-using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 
