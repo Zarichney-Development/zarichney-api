@@ -4,1142 +4,1150 @@
 
 
 using Refit;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 #nullable enable annotations
 
 namespace Zarichney.Client
 {
-  [System.CodeDom.Compiler.GeneratedCode("Refitter", "1.5.3.0")]
-  public partial interface IZarichneyAPI
-  {
-    /// <summary>Gets a completion from the configured Language Model (LLM) based on either text or audio input.</summary>
-    /// <remarks>
-    /// This endpoint accepts a `multipart/form-data` request. You must provide *either* a `textPrompt` (as a form field) *or* an `audioPrompt` (as a file upload).
-    /// If `audioPrompt` is provided, it will be transcribed first, and the resulting text will be used as the prompt for the LLM.
-    /// Requires authentication. The session ID might be included in the response headers.
-    /// </remarks>
-    /// <param name="textPrompt">The text prompt to send to the LLM. Use this OR audioPrompt.</param>
-    /// <param name="audioPrompt">
-    /// The audio prompt (e.g., WAV, MP3, WEBM) to be transcribed and then sent to the LLM. Use this OR textPrompt.
-    /// The request must use multipart/form-data encoding.
-    /// </param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Multipart]
-    [Headers("Accept: application/json", "Content-Type: multipart/form-data")]
-    [Post("/api/completion")]
-    Task<object> Completion(string textPrompt, StreamPart audioPrompt);
+    [System.CodeDom.Compiler.GeneratedCode("Refitter", "1.5.3.0")]
+    public partial interface IZarichneyAPI
+    {
+        /// <summary>Gets a completion from the configured Language Model (LLM) based on either text or audio input.</summary>
+        /// <remarks>
+        /// This endpoint accepts a `multipart/form-data` request. You must provide *either* a `textPrompt` (as a form field) *or* an `audioPrompt` (as a file upload).
+        /// If `audioPrompt` is provided, it will be transcribed first, and the resulting text will be used as the prompt for the LLM.
+        /// Requires authentication. The session ID might be included in the response headers.
+        /// </remarks>
+        /// <param name="textPrompt">The text prompt to send to the LLM. Use this OR audioPrompt.</param>
+        /// <param name="audioPrompt">
+        /// The audio prompt (e.g., WAV, MP3, WEBM) to be transcribed and then sent to the LLM. Use this OR textPrompt.
+        /// The request must use multipart/form-data encoding.
+        /// </param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Multipart]
+        [Headers("Accept: application/json", "Content-Type: multipart/form-data")]
+        [Post("/api/completion")]
+        Task<object> Completion([AliasAs("TextPrompt")] string textPrompt);
 
-    /// <summary>Transcribes the provided audio file.</summary>
-    /// <remarks>
-    /// This endpoint accepts a `multipart/form-data` request containing a single audio file.
-    /// The form field containing the file *must* be named 'audioFile'.
-    /// It transcribes the audio, saves the original audio and the resulting transcript (e.g., to GitHub via `IGitHubService`), and returns the transcript along with file metadata.
-    /// Requires authentication.
-    /// </remarks>
-    /// <param name="audioFile">
-    /// The audio file (e.g., WAV, MP3, WEBM) to transcribe.
-    /// The parameter name in the form data must be 'AudioFile'.
-    /// </param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Multipart]
-    [Headers("Accept: application/json", "Content-Type: multipart/form-data")]
-    [Post("/api/transcribe")]
-    Task<object> Transcribe(StreamPart audioFile);
+        /// <summary>Transcribes the provided audio file.</summary>
+        /// <remarks>
+        /// This endpoint accepts a `multipart/form-data` request containing a single audio file.
+        /// The form field containing the file *must* be named 'audioFile'.
+        /// It transcribes the audio, saves the original audio and the resulting transcript (e.g., to GitHub via `IGitHubService`), and returns the transcript along with file metadata.
+        /// Requires authentication.
+        /// </remarks>
+        /// <param name="audioFile">
+        /// The audio file (e.g., WAV, MP3, WEBM) to transcribe.
+        /// The parameter name in the form data must be 'AudioFile'.
+        /// </param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Multipart]
+        [Headers("Accept: application/json", "Content-Type: multipart/form-data")]
+        [Post("/api/transcribe")]
+        Task<object> Transcribe(StreamPart audioFile);
 
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: text/plain, application/json, text/json")]
-    [Post("/api/email/validate")]
-    Task<string> Validate([Query] string email);
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: text/plain, application/json, text/json")]
+        [Post("/api/email/validate")]
+        Task<string> Validate([Query] string email);
 
-    /// <returns>A <see cref="Task"/> that completes when the request is finished.</returns>
-    /// <exception cref="ApiException">Thrown when the request returns a non-success status code.</exception>
-    [Get("/api/health/secure")]
-    Task Secure();
+        /// <returns>A <see cref="Task"/> that completes when the request is finished.</returns>
+        /// <exception cref="ApiException">Thrown when the request returns a non-success status code.</exception>
+        [Get("/api/health/secure")]
+        Task Secure();
 
-    /// <returns>A <see cref="Task"/> that completes when the request is finished.</returns>
-    /// <exception cref="ApiException">Thrown when the request returns a non-success status code.</exception>
-    [Get("/api/test-auth")]
-    Task TestAuth();
+        /// <returns>A <see cref="Task"/> that completes when the request is finished.</returns>
+        /// <exception cref="ApiException">Thrown when the request returns a non-success status code.</exception>
+        [Get("/api/test-auth")]
+        Task TestAuth();
 
-    /// <summary>Registers a new user account.</summary>
-    /// <remarks>
-    /// Creates a new user with the provided email and password.
-    /// Requires email confirmation before the user can log in. An email with a confirmation link will be sent to the provided address.
-    /// </remarks>
-    /// <param name="body">The registration details containing email and password.</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json", "Content-Type: application/json")]
-    [Post("/api/auth/register")]
-    Task<AuthResponse> Register([Body] RegisterRequest body);
+        /// <summary>Registers a new user account.</summary>
+        /// <remarks>
+        /// Creates a new user with the provided email and password.
+        /// Requires email confirmation before the user can log in. An email with a confirmation link will be sent to the provided address.
+        /// </remarks>
+        /// <param name="body">The registration details containing email and password.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json", "Content-Type: application/json")]
+        [Post("/api/auth/register")]
+        Task<AuthResponse> Register([Body] RegisterRequest body);
 
-    /// <summary>Logs in a user and sets authentication cookies.</summary>
-    /// <remarks>
-    /// Authenticates the user with the provided email and password.
-    /// If successful, sets HttpOnly `access_token` and `refresh_token` cookies in the response.
-    /// The response body only contains success status and a message, not the tokens themselves.
-    /// Requires the user's email to be confirmed first.
-    /// </remarks>
-    /// <param name="body">The login credentials.</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json", "Content-Type: application/json")]
-    [Post("/api/auth/login")]
-    Task<AuthResponse> Login([Body] LoginRequest body);
+        /// <summary>Logs in a user and sets authentication cookies.</summary>
+        /// <remarks>
+        /// Authenticates the user with the provided email and password.
+        /// If successful, sets HttpOnly `access_token` and `refresh_token` cookies in the response.
+        /// The response body only contains success status and a message, not the tokens themselves.
+        /// Requires the user's email to be confirmed first.
+        /// </remarks>
+        /// <param name="body">The login credentials.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json", "Content-Type: application/json")]
+        [Post("/api/auth/login")]
+        Task<AuthResponse> Login([Body] LoginRequest body);
 
-    /// <summary>Refreshes the access token using the refresh token cookie.</summary>
-    /// <remarks>
-    /// Uses the `refresh_token` cookie (sent automatically by the browser) to obtain a new `access_token` and potentially a new `refresh_token`.
-    /// Updates the respective HttpOnly cookies in the response if successful.
-    /// This should be called by the front-end when an API request returns a 401 Unauthorized status, indicating the access token has expired.
-    /// If the refresh token is invalid or expired, the user will need to log in again.
-    /// </remarks>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>401</term>
-    /// <description>Unauthorized</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json")]
-    [Post("/api/auth/refresh")]
-    Task<AuthResponse> Refresh();
+        /// <summary>Refreshes the access token using the refresh token cookie.</summary>
+        /// <remarks>
+        /// Uses the `refresh_token` cookie (sent automatically by the browser) to obtain a new `access_token` and potentially a new `refresh_token`.
+        /// Updates the respective HttpOnly cookies in the response if successful.
+        /// This should be called by the front-end when an API request returns a 401 Unauthorized status, indicating the access token has expired.
+        /// If the refresh token is invalid or expired, the user will need to log in again.
+        /// </remarks>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>401</term>
+        /// <description>Unauthorized</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json")]
+        [Post("/api/auth/refresh")]
+        Task<AuthResponse> Refresh();
 
-    /// <summary>Revokes the current refresh token associated with the session.</summary>
-    /// <remarks>
-    /// Invalidates the refresh token stored in the `refresh_token` cookie. This effectively logs the user out on that device the next time a refresh is attempted.
-    /// Requires the user to be authenticated (valid `access_token` cookie).
-    /// Clears the authentication cookies (`access_token`, `refresh_token`) upon successful revocation.
-    /// This is typically used for a "log out everywhere else" feature or if a token is suspected to be compromised. Use the `logout` endpoint for a standard logout.
-    /// </remarks>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>401</term>
-    /// <description>Unauthorized</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json")]
-    [Post("/api/auth/revoke")]
-    Task<AuthResponse> Revoke();
+        /// <summary>Revokes the current refresh token associated with the session.</summary>
+        /// <remarks>
+        /// Invalidates the refresh token stored in the `refresh_token` cookie. This effectively logs the user out on that device the next time a refresh is attempted.
+        /// Requires the user to be authenticated (valid `access_token` cookie).
+        /// Clears the authentication cookies (`access_token`, `refresh_token`) upon successful revocation.
+        /// This is typically used for a "log out everywhere else" feature or if a token is suspected to be compromised. Use the `logout` endpoint for a standard logout.
+        /// </remarks>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>401</term>
+        /// <description>Unauthorized</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json")]
+        [Post("/api/auth/revoke")]
+        Task<AuthResponse> Revoke();
 
-    /// <summary>Initiates the password reset process for a given email address.</summary>
-    /// <remarks>
-    /// Sends an email containing a password reset link (with a token) to the specified user, if the email exists.
-    /// Always returns a success response to prevent email enumeration attacks, even if the email is not found.
-    /// </remarks>
-    /// <param name="body">The request containing the user's email.</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json", "Content-Type: application/json")]
-    [Post("/api/auth/email-forgot-password")]
-    Task<AuthResponse> EmailForgotPassword([Body] ForgotPasswordRequest body);
+        /// <summary>Initiates the password reset process for a given email address.</summary>
+        /// <remarks>
+        /// Sends an email containing a password reset link (with a token) to the specified user, if the email exists.
+        /// Always returns a success response to prevent email enumeration attacks, even if the email is not found.
+        /// </remarks>
+        /// <param name="body">The request containing the user's email.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json", "Content-Type: application/json")]
+        [Post("/api/auth/email-forgot-password")]
+        Task<AuthResponse> EmailForgotPassword([Body] ForgotPasswordRequest body);
 
-    /// <summary>Resets the user's password using a token received via email.</summary>
-    /// <remarks>Sets a new password using the email, a valid reset token, and the new password.</remarks>
-    /// <param name="body">The request containing the email, reset token, and new password.</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json", "Content-Type: application/json")]
-    [Post("/api/auth/reset-password")]
-    Task<AuthResponse> ResetPassword([Body] ResetPasswordRequest body);
+        /// <summary>Resets the user's password using a token received via email.</summary>
+        /// <remarks>Sets a new password using the email, a valid reset token, and the new password.</remarks>
+        /// <param name="body">The request containing the email, reset token, and new password.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json", "Content-Type: application/json")]
+        [Post("/api/auth/reset-password")]
+        Task<AuthResponse> ResetPassword([Body] ResetPasswordRequest body);
 
-    /// <summary>Confirms a user's email address using a token sent via email.</summary>
-    /// <remarks>
-    /// This endpoint is typically accessed via a link clicked by the user in a confirmation email.
-    /// Validates the user ID and token. If successful, marks the user's email as confirmed.
-    /// Upon successful confirmation, it may automatically log the user in by setting authentication cookies (`access_token`, `refresh_token`).
-    /// It might redirect the user to a specific front-end URL (e.g., login page or dashboard) or return a success message.
-    /// </remarks>
-    /// <param name="userId">The unique identifier of the user confirming their email.</param>
-    /// <param name="token">The email confirmation token.</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// <item>
-    /// <term>302</term>
-    /// <description>Found</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json")]
-    [Get("/api/auth/confirm-email")]
-    Task<AuthResponse> ConfirmEmail([Query, AliasAs("UserId")] string userId, [Query, AliasAs("Token")] string token);
+        /// <summary>Confirms a user's email address using a token sent via email.</summary>
+        /// <remarks>
+        /// This endpoint is typically accessed via a link clicked by the user in a confirmation email.
+        /// Validates the user ID and token. If successful, marks the user's email as confirmed.
+        /// Upon successful confirmation, it may automatically log the user in by setting authentication cookies (`access_token`, `refresh_token`).
+        /// It might redirect the user to a specific front-end URL (e.g., login page or dashboard) or return a success message.
+        /// </remarks>
+        /// <param name="userId">The unique identifier of the user confirming their email.</param>
+        /// <param name="token">The email confirmation token.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// <item>
+        /// <term>302</term>
+        /// <description>Found</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json")]
+        [Get("/api/auth/confirm-email")]
+        Task<AuthResponse> ConfirmEmail([Query, AliasAs("UserId")] string userId, [Query, AliasAs("Token")] string token);
 
-    /// <summary>Resends the email confirmation link to the specified email address.</summary>
-    /// <remarks>
-    /// Useful if the user didn't receive the initial confirmation email or it expired.
-    /// Finds the user by email and sends a new confirmation link.
-    /// Always returns a success response to prevent email enumeration, even if the email doesn't exist or is already confirmed.
-    /// </remarks>
-    /// <param name="body">The request containing the user's email.</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json", "Content-Type: application/json")]
-    [Post("/api/auth/resend-confirmation")]
-    Task<AuthResponse> ResendConfirmation([Body] ResendConfirmationRequest body);
+        /// <summary>Resends the email confirmation link to the specified email address.</summary>
+        /// <remarks>
+        /// Useful if the user didn't receive the initial confirmation email or it expired.
+        /// Finds the user by email and sends a new confirmation link.
+        /// Always returns a success response to prevent email enumeration, even if the email doesn't exist or is already confirmed.
+        /// </remarks>
+        /// <param name="body">The request containing the user's email.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json", "Content-Type: application/json")]
+        [Post("/api/auth/resend-confirmation")]
+        Task<AuthResponse> ResendConfirmation([Body] ResendConfirmationRequest body);
 
-    /// <summary>Logs the current user out by clearing authentication cookies.</summary>
-    /// <remarks>
-    /// Requires the user to be authenticated (valid `access_token` cookie).
-    /// Clears the `access_token` and `refresh_token` cookies, effectively ending the user's session on the current browser.
-    /// Note: This does not invalidate the refresh token itself (use the `revoke` endpoint for that). If the refresh token cookie were somehow obtained by an attacker *before* logout, it could potentially still be used until it expires or is revoked.
-    /// </remarks>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>401</term>
-    /// <description>Unauthorized</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json")]
-    [Post("/api/auth/logout")]
-    Task<AuthResponse> Logout();
+        /// <summary>Logs the current user out by clearing authentication cookies.</summary>
+        /// <remarks>
+        /// Requires the user to be authenticated (valid `access_token` cookie).
+        /// Clears the `access_token` and `refresh_token` cookies, effectively ending the user's session on the current browser.
+        /// Note: This does not invalidate the refresh token itself (use the `revoke` endpoint for that). If the refresh token cookie were somehow obtained by an attacker *before* logout, it could potentially still be used until it expires or is revoked.
+        /// </remarks>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>401</term>
+        /// <description>Unauthorized</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json")]
+        [Post("/api/auth/logout")]
+        Task<AuthResponse> Logout();
 
-    /// <summary>Creates a new API key (Admin only).</summary>
-    /// <remarks>
-    /// Generates an API key that can be used for non-interactive authentication, typically for server-to-server communication or specific client integrations.
-    /// Requires the user performing this action to have the 'admin' role.
-    /// Authentication using the generated key is handled by separate middleware, typically expecting an `Authorization: ApiKey YOUR_API_KEY` header.
-    /// The generated key is returned in the response **only once** upon creation and is not stored in plain text. Store it securely immediately.
-    /// </remarks>
-    /// <param name="body">Command containing details for the API key (e.g., description, expiry).</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>401</term>
-    /// <description>Unauthorized</description>
-    /// </item>
-    /// <item>
-    /// <term>403</term>
-    /// <description>Forbidden</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json", "Content-Type: application/json")]
-    [Post("/api/auth/api-keys")]
-    Task<ApiKeyResponse> ApiKeysPOST([Body] CreateApiKeyCommand body);
+        /// <summary>Creates a new API key (Admin only).</summary>
+        /// <remarks>
+        /// Generates an API key that can be used for non-interactive authentication, typically for server-to-server communication or specific client integrations.
+        /// Requires the user performing this action to have the 'admin' role.
+        /// Authentication using the generated key is handled by separate middleware, typically expecting an `Authorization: ApiKey YOUR_API_KEY` header.
+        /// The generated key is returned in the response **only once** upon creation and is not stored in plain text. Store it securely immediately.
+        /// </remarks>
+        /// <param name="body">Command containing details for the API key (e.g., description, expiry).</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>401</term>
+        /// <description>Unauthorized</description>
+        /// </item>
+        /// <item>
+        /// <term>403</term>
+        /// <description>Forbidden</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json", "Content-Type: application/json")]
+        [Post("/api/auth/api-keys")]
+        Task<ApiKeyResponse> ApiKeysPOST([Body] CreateApiKeyCommand body);
 
-    /// <summary>Retrieves a list of all active API keys (Admin only).</summary>
-    /// <remarks>
-    /// Returns metadata about existing API keys (ID, description, creation/expiry dates), but **does not** return the key values themselves for security reasons.
-    /// Requires the user performing this action to have the 'admin' role.
-    /// </remarks>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>401</term>
-    /// <description>Unauthorized</description>
-    /// </item>
-    /// <item>
-    /// <term>403</term>
-    /// <description>Forbidden</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json")]
-    [Get("/api/auth/api-keys")]
-    Task<ICollection<ApiKeyResponse>> ApiKeysAll();
+        /// <summary>Retrieves a list of all active API keys (Admin only).</summary>
+        /// <remarks>
+        /// Returns metadata about existing API keys (ID, description, creation/expiry dates), but **does not** return the key values themselves for security reasons.
+        /// Requires the user performing this action to have the 'admin' role.
+        /// </remarks>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>401</term>
+        /// <description>Unauthorized</description>
+        /// </item>
+        /// <item>
+        /// <term>403</term>
+        /// <description>Forbidden</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json")]
+        [Get("/api/auth/api-keys")]
+        Task<ICollection<ApiKeyResponse>> ApiKeysAll();
 
-    /// <summary>Retrieves metadata for a specific API key by ID (Admin only).</summary>
-    /// <remarks>
-    /// Returns metadata (ID, description, dates) for a single API key. **Does not** return the key value.
-    /// Requires the user performing this action to have the 'admin' role.
-    /// </remarks>
-    /// <param name="id">The unique identifier of the API key.</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>404</term>
-    /// <description>Not Found</description>
-    /// </item>
-    /// <item>
-    /// <term>401</term>
-    /// <description>Unauthorized</description>
-    /// </item>
-    /// <item>
-    /// <term>403</term>
-    /// <description>Forbidden</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json")]
-    [Get("/api/auth/api-keys/{id}")]
-    Task<ApiKeyResponse> ApiKeysGET(int id);
+        /// <summary>Retrieves metadata for a specific API key by ID (Admin only).</summary>
+        /// <remarks>
+        /// Returns metadata (ID, description, dates) for a single API key. **Does not** return the key value.
+        /// Requires the user performing this action to have the 'admin' role.
+        /// </remarks>
+        /// <param name="id">The unique identifier of the API key.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>404</term>
+        /// <description>Not Found</description>
+        /// </item>
+        /// <item>
+        /// <term>401</term>
+        /// <description>Unauthorized</description>
+        /// </item>
+        /// <item>
+        /// <term>403</term>
+        /// <description>Forbidden</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json")]
+        [Get("/api/auth/api-keys/{id}")]
+        Task<ApiKeyResponse> ApiKeysGET(int id);
 
-    /// <summary>Revokes (deactivates) an existing API key (Admin or Key Owner - adjust as needed).</summary>
-    /// <remarks>
-    /// Marks the specified API key as inactive, preventing it from being used for authentication. This is generally irreversible.
-    /// Requires appropriate authorization (e.g., 'admin' role, or potentially the user associated with the key if applicable). The current implementation uses `[Authorize]` which implies any authenticated user can revoke *any* key by ID - this should likely be restricted further, perhaps to Admins or the key's creator if tracked. **Current setup allows any logged-in user to revoke any key.**
-    /// </remarks>
-    /// <param name="id">The unique identifier of the API key to revoke.</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>404</term>
-    /// <description>Not Found</description>
-    /// </item>
-    /// <item>
-    /// <term>401</term>
-    /// <description>Unauthorized</description>
-    /// </item>
-    /// <item>
-    /// <term>403</term>
-    /// <description>Forbidden</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json")]
-    [Delete("/api/auth/api-keys/{id}")]
-    Task<object> ApiKeysDELETE(int id);
+        /// <summary>Revokes (deactivates) an existing API key (Admin or Key Owner - adjust as needed).</summary>
+        /// <remarks>
+        /// Marks the specified API key as inactive, preventing it from being used for authentication. This is generally irreversible.
+        /// Requires appropriate authorization (e.g., 'admin' role, or potentially the user associated with the key if applicable). The current implementation uses `[Authorize]` which implies any authenticated user can revoke *any* key by ID - this should likely be restricted further, perhaps to Admins or the key's creator if tracked. **Current setup allows any logged-in user to revoke any key.**
+        /// </remarks>
+        /// <param name="id">The unique identifier of the API key to revoke.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>404</term>
+        /// <description>Not Found</description>
+        /// </item>
+        /// <item>
+        /// <term>401</term>
+        /// <description>Unauthorized</description>
+        /// </item>
+        /// <item>
+        /// <term>403</term>
+        /// <description>Forbidden</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json")]
+        [Delete("/api/auth/api-keys/{id}")]
+        Task<object> ApiKeysDELETE(int id);
 
-    /// <summary>Assigns a specified role to a user (Admin only).</summary>
-    /// <remarks>
-    /// Requires the user performing this action to have the 'admin' role.
-    /// Adds the user to the role if they are not already in it.
-    /// </remarks>
-    /// <param name="body">The request containing the UserId and RoleName.</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>401</term>
-    /// <description>Unauthorized</description>
-    /// </item>
-    /// <item>
-    /// <term>403</term>
-    /// <description>Forbidden</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json", "Content-Type: application/json")]
-    [Post("/api/auth/roles/add")]
-    Task<RoleCommandResult> Add([Body] RoleRequest body);
+        /// <summary>Assigns a specified role to a user (Admin only).</summary>
+        /// <remarks>
+        /// Requires the user performing this action to have the 'admin' role.
+        /// Adds the user to the role if they are not already in it.
+        /// </remarks>
+        /// <param name="body">The request containing the UserId and RoleName.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>401</term>
+        /// <description>Unauthorized</description>
+        /// </item>
+        /// <item>
+        /// <term>403</term>
+        /// <description>Forbidden</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json", "Content-Type: application/json")]
+        [Post("/api/auth/roles/add")]
+        Task<RoleCommandResult> Add([Body] RoleRequest body);
 
-    /// <summary>Removes a specified role from a user (Admin only).</summary>
-    /// <remarks>
-    /// Requires the user performing this action to have the 'admin' role.
-    /// Removes the user from the role if they are currently in it.
-    /// </remarks>
-    /// <param name="body">The request containing the UserId and RoleName.</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>401</term>
-    /// <description>Unauthorized</description>
-    /// </item>
-    /// <item>
-    /// <term>403</term>
-    /// <description>Forbidden</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json", "Content-Type: application/json")]
-    [Post("/api/auth/roles/remove")]
-    Task<RoleCommandResult> Remove([Body] RoleRequest body);
+        /// <summary>Removes a specified role from a user (Admin only).</summary>
+        /// <remarks>
+        /// Requires the user performing this action to have the 'admin' role.
+        /// Removes the user from the role if they are currently in it.
+        /// </remarks>
+        /// <param name="body">The request containing the UserId and RoleName.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>401</term>
+        /// <description>Unauthorized</description>
+        /// </item>
+        /// <item>
+        /// <term>403</term>
+        /// <description>Forbidden</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json", "Content-Type: application/json")]
+        [Post("/api/auth/roles/remove")]
+        Task<RoleCommandResult> Remove([Body] RoleRequest body);
 
-    /// <summary>Gets all roles assigned to a specific user (Admin only).</summary>
-    /// <remarks>
-    /// Requires the user performing this action to have the 'admin' role.
-    /// The user can be identified either by their ID or email address.
-    /// </remarks>
-    /// <param name="identifier">The unique identifier of the user (can be user ID or email address).</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>401</term>
-    /// <description>Unauthorized</description>
-    /// </item>
-    /// <item>
-    /// <term>403</term>
-    /// <description>Forbidden</description>
-    /// </item>
-    /// <item>
-    /// <term>404</term>
-    /// <description>Not Found</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json")]
-    [Get("/api/auth/roles/user/{identifier}")]
-    Task<RoleCommandResult> User(string identifier);
+        /// <summary>Gets all roles assigned to a specific user (Admin only).</summary>
+        /// <remarks>
+        /// Requires the user performing this action to have the 'admin' role.
+        /// The user can be identified either by their ID or email address.
+        /// </remarks>
+        /// <param name="identifier">The unique identifier of the user (can be user ID or email address).</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>401</term>
+        /// <description>Unauthorized</description>
+        /// </item>
+        /// <item>
+        /// <term>403</term>
+        /// <description>Forbidden</description>
+        /// </item>
+        /// <item>
+        /// <term>404</term>
+        /// <description>Not Found</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json")]
+        [Get("/api/auth/roles/user/{identifier}")]
+        Task<RoleCommandResult> User(string identifier);
 
-    /// <summary>Gets all users assigned to a specific role (Admin only).</summary>
-    /// <remarks>Requires the user performing this action to have the 'admin' role.</remarks>
-    /// <param name="roleName">The name of the role.</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>401</term>
-    /// <description>Unauthorized</description>
-    /// </item>
-    /// <item>
-    /// <term>403</term>
-    /// <description>Forbidden</description>
-    /// </item>
-    /// <item>
-    /// <term>404</term>
-    /// <description>Not Found</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json")]
-    [Get("/api/auth/roles/{roleName}/users")]
-    Task<ICollection<UserRoleInfo>> Users(string roleName);
+        /// <summary>Gets all users assigned to a specific role (Admin only).</summary>
+        /// <remarks>Requires the user performing this action to have the 'admin' role.</remarks>
+        /// <param name="roleName">The name of the role.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>401</term>
+        /// <description>Unauthorized</description>
+        /// </item>
+        /// <item>
+        /// <term>403</term>
+        /// <description>Forbidden</description>
+        /// </item>
+        /// <item>
+        /// <term>404</term>
+        /// <description>Not Found</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json")]
+        [Get("/api/auth/roles/{roleName}/users")]
+        Task<ICollection<UserRoleInfo>> Users(string roleName);
 
-    /// <summary>Refreshes the claims included in the user's access token. (Requires Authentication)</summary>
-    /// <remarks>
-    /// Use this endpoint if user details relevant to claims (like roles, email, or other profile information) have been updated externally, and you want the current session's access token to reflect these changes without requiring a full logout/login.
-    /// It takes the existing valid authentication context (from the `access_token` cookie), fetches the latest user data, generates new access and refresh tokens with updated claims, and replaces the existing `access_token` and `refresh_token` cookies.
-    /// Requires the user to be currently authenticated via a valid `access_token` cookie.
-    /// </remarks>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>401</term>
-    /// <description>Unauthorized</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json")]
-    [Post("/api/auth/refresh-claims")]
-    Task<AuthResponse> RefreshClaims();
+        /// <summary>Refreshes the claims included in the user's access token. (Requires Authentication)</summary>
+        /// <remarks>
+        /// Use this endpoint if user details relevant to claims (like roles, email, or other profile information) have been updated externally, and you want the current session's access token to reflect these changes without requiring a full logout/login.
+        /// It takes the existing valid authentication context (from the `access_token` cookie), fetches the latest user data, generates new access and refresh tokens with updated claims, and replaces the existing `access_token` and `refresh_token` cookies.
+        /// Requires the user to be currently authenticated via a valid `access_token` cookie.
+        /// </remarks>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>401</term>
+        /// <description>Unauthorized</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json")]
+        [Post("/api/auth/refresh-claims")]
+        Task<AuthResponse> RefreshClaims();
 
-    /// <summary>Checks the authentication status and basic claims of the current user. (Requires Authentication)</summary>
-    /// <remarks>
-    /// Provides a simple way for the front-end to verify if the user is currently authenticated (based on the presence and validity of the `access_token` cookie) and retrieve basic information like User ID and roles directly from the validated token claims.
-    /// Useful for initializing UI state after page load or confirming session validity.
-    /// Requires the user to be currently authenticated. If the access token is missing or invalid, this endpoint will return a 401 Unauthorized status.
-    /// </remarks>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>401</term>
-    /// <description>Unauthorized</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json")]
-    [Get("/api/auth/check-authentication")]
-    Task<IDictionary<string, object>> CheckAuthentication();
+        /// <summary>Checks the authentication status and basic claims of the current user. (Requires Authentication)</summary>
+        /// <remarks>
+        /// Provides a simple way for the front-end to verify if the user is currently authenticated (based on the presence and validity of the `access_token` cookie) and retrieve basic information like User ID and roles directly from the validated token claims.
+        /// Useful for initializing UI state after page load or confirming session validity.
+        /// Requires the user to be currently authenticated. If the access token is missing or invalid, this endpoint will return a 401 Unauthorized status.
+        /// </remarks>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>401</term>
+        /// <description>Unauthorized</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json")]
+        [Get("/api/auth/check-authentication")]
+        Task<IDictionary<string, object>> CheckAuthentication();
 
-    /// <summary>Provides a sample cookbook order submission structure.</summary>
-    /// <remarks>
-    /// Useful for front-end development to understand the expected format for creating a cookbook order.
-    /// Returns a predefined `CookbookOrderSubmission` object.
-    /// Does not actually create an order.
-    /// </remarks>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json")]
-    [Post("/api/cookbook/sample")]
-    Task<CookbookOrderSubmission> Sample();
+        /// <summary>Provides a sample cookbook order submission structure.</summary>
+        /// <remarks>
+        /// Useful for front-end development to understand the expected format for creating a cookbook order.
+        /// Returns a predefined `CookbookOrderSubmission` object.
+        /// Does not actually create an order.
+        /// </remarks>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json")]
+        [Post("/api/cookbook/sample")]
+        Task<CookbookOrderSubmission> Sample();
 
-    /// <summary>Creates a new cookbook order based on user submission.</summary>
-    /// <remarks>
-    /// Receives the user's cookbook specifications, validates the email address,
-    /// and initiates the order processing.
-    /// The actual cookbook generation (finding recipes, compiling PDF) can be processed immediately or deferred
-    /// based on the `processOrder` query parameter.
-    /// </remarks>
-    /// <param name="processOrder">If true (default), the order processing (e.g., recipe fetching, PDF generation) starts immediately (potentially in the background). If false, only the order record is created.</param>
-    /// <param name="body">The details for the cookbook order, including email and recipe preferences.</param>
-    /// <returns>Created</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json", "Content-Type: application/json")]
-    [Post("/api/cookbook")]
-    Task<CookbookOrder> Cookbook([Query] bool? processOrder, [Body] CookbookOrderSubmission body);
+        /// <summary>Creates a new cookbook order based on user submission.</summary>
+        /// <remarks>
+        /// Receives the user's cookbook specifications, validates the email address,
+        /// and initiates the order processing.
+        /// The actual cookbook generation (finding recipes, compiling PDF) can be processed immediately or deferred
+        /// based on the `processOrder` query parameter.
+        /// </remarks>
+        /// <param name="processOrder">If true (default), the order processing (e.g., recipe fetching, PDF generation) starts immediately (potentially in the background). If false, only the order record is created.</param>
+        /// <param name="body">The details for the cookbook order, including email and recipe preferences.</param>
+        /// <returns>Created</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json", "Content-Type: application/json")]
+        [Post("/api/cookbook")]
+        Task<CookbookOrder> Cookbook([Query] bool? processOrder, [Body] CookbookOrderSubmission body);
 
-    /// <summary>Retrieves the details of a specific cookbook order.</summary>
-    /// <remarks>
-    /// Fetches the `CookbookOrder` by its unique ID.
-    /// Also attempts to establish or retrieve a session associated with this order, setting an `X-Session-Id` header in the response.
-    /// </remarks>
-    /// <param name="orderId">The unique identifier of the cookbook order.</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>404</term>
-    /// <description>Not Found</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json")]
-    [Get("/api/cookbook/order/{orderId}")]
-    Task<CookbookOrder> OrderGET(string orderId);
+        /// <summary>Retrieves the details of a specific cookbook order.</summary>
+        /// <remarks>
+        /// Fetches the `CookbookOrder` by its unique ID.
+        /// Also attempts to establish or retrieve a session associated with this order, setting an `X-Session-Id` header in the response.
+        /// </remarks>
+        /// <param name="orderId">The unique identifier of the cookbook order.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>404</term>
+        /// <description>Not Found</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json")]
+        [Get("/api/cookbook/order/{orderId}")]
+        Task<CookbookOrder> OrderGET(string orderId);
 
-    /// <summary>Triggers reprocessing for an existing cookbook order.</summary>
-    /// <remarks>
-    /// Re-queues the generation or processing steps for a given order ID.
-    /// Useful if the initial processing failed or needs to be redone.
-    /// The actual processing happens in a background task.
-    /// The endpoint returns quickly after queuing the task.
-    /// </remarks>
-    /// <param name="orderId">The unique identifier of the cookbook order to reprocess.</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>404</term>
-    /// <description>Not Found</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json")]
-    [Post("/api/cookbook/order/{orderId}")]
-    Task<CookbookOrder> OrderPOST(string orderId);
+        /// <summary>Triggers reprocessing for an existing cookbook order.</summary>
+        /// <remarks>
+        /// Re-queues the generation or processing steps for a given order ID.
+        /// Useful if the initial processing failed or needs to be redone.
+        /// The actual processing happens in a background task.
+        /// The endpoint returns quickly after queuing the task.
+        /// </remarks>
+        /// <param name="orderId">The unique identifier of the cookbook order to reprocess.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>404</term>
+        /// <description>Not Found</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json")]
+        [Post("/api/cookbook/order/{orderId}")]
+        Task<CookbookOrder> OrderPOST(string orderId);
 
-    /// <summary>Retrieves the generated cookbook PDF for a specific order.</summary>
-    /// <remarks>
-    /// Fetches the PDF file associated with the order.
-    /// Optionally allows forcing a rebuild of the PDF before retrieval.
-    /// Optionally allows emailing the PDF to the order's recipient after retrieval/rebuild.
-    /// </remarks>
-    /// <param name="orderId">The unique identifier of the cookbook order.</param>
-    /// <param name="rebuild">If true, forces the PDF compilation process to run again before returning the file.</param>
-    /// <param name="email">If true, sends the generated or retrieved PDF via email to the address associated with the order.</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>404</term>
-    /// <description>Not Found</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json")]
-    [Get("/api/cookbook/order/{orderId}/pdf")]
-    Task<FileResponse> Pdf(string orderId, [Query] bool? rebuild, [Query] bool? email);
+        /// <summary>Retrieves the generated cookbook PDF for a specific order.</summary>
+        /// <remarks>
+        /// Fetches the PDF file associated with the order.
+        /// Optionally allows forcing a rebuild of the PDF before retrieval.
+        /// Optionally allows emailing the PDF to the order's recipient after retrieval/rebuild.
+        /// </remarks>
+        /// <param name="orderId">The unique identifier of the cookbook order.</param>
+        /// <param name="rebuild">If true, forces the PDF compilation process to run again before returning the file.</param>
+        /// <param name="email">If true, sends the generated or retrieved PDF via email to the address associated with the order.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>404</term>
+        /// <description>Not Found</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json")]
+        [Get("/api/cookbook/order/{orderId}/pdf")]
+        Task<FileResponse> Pdf(string orderId, [Query] bool? rebuild, [Query] bool? email);
 
-    /// <summary>Resends the cookbook PDF via email for a specific order.</summary>
-    /// <remarks>
-    /// Triggers the email service to send the cookbook PDF associated with the given order ID
-    /// to the recipient email address stored in the order details. Assumes the PDF already exists.
-    /// </remarks>
-    /// <param name="orderId">The unique identifier of the cookbook order.</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>404</term>
-    /// <description>Not Found</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json")]
-    [Post("/api/cookbook/order/{orderId}/email")]
-    Task<string> Email(string orderId);
+        /// <summary>Resends the cookbook PDF via email for a specific order.</summary>
+        /// <remarks>
+        /// Triggers the email service to send the cookbook PDF associated with the given order ID
+        /// to the recipient email address stored in the order details. Assumes the PDF already exists.
+        /// </remarks>
+        /// <param name="orderId">The unique identifier of the cookbook order.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>404</term>
+        /// <description>Not Found</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json")]
+        [Post("/api/cookbook/order/{orderId}/email")]
+        Task<string> Email(string orderId);
 
-    /// <summary>Searches for recipes based on a query string.</summary>
-    /// <remarks>
-    /// Queries the existing recipe database. Optionally, can trigger a web scrape if no suitable recipes are found locally.
-    /// Allows specifying criteria like minimum score and desired number of recipes.
-    /// </remarks>
-    /// <param name="query">The search term for recipes (e.g., "chicken soup", "vegan chocolate cake").</param>
-    /// <param name="scrape">If true, performs a web scrape if the initial database search yields insufficient results based on other parameters.</param>
-    /// <param name="acceptableScore">Optional minimum score threshold for recipes to be considered acceptable.</param>
-    /// <param name="requiredCount">Optional desired number of recipes to return.</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>404</term>
-    /// <description>Not Found</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json")]
-    [Get("/api/recipe")]
-    Task<ICollection<Recipe>> Recipe([Query] string query, [Query] bool? scrape, [Query] int? acceptableScore, [Query] int? requiredCount);
+        /// <summary>Searches for recipes based on a query string.</summary>
+        /// <remarks>
+        /// Queries the existing recipe database. Optionally, can trigger a web scrape if no suitable recipes are found locally.
+        /// Allows specifying criteria like minimum score and desired number of recipes.
+        /// </remarks>
+        /// <param name="query">The search term for recipes (e.g., "chicken soup", "vegan chocolate cake").</param>
+        /// <param name="scrape">If true, performs a web scrape if the initial database search yields insufficient results based on other parameters.</param>
+        /// <param name="acceptableScore">Optional minimum score threshold for recipes to be considered acceptable.</param>
+        /// <param name="requiredCount">Optional desired number of recipes to return.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>404</term>
+        /// <description>Not Found</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json")]
+        [Get("/api/recipe")]
+        Task<ICollection<Recipe>> Recipe([Query] string query, [Query] bool? scrape, [Query] int? acceptableScore, [Query] int? requiredCount);
 
-    /// <summary>Scrapes web sources for recipes based on a query.</summary>
-    /// <remarks>
-    /// Directly initiates a web scraping process to find recipes matching the query.
-    /// Can optionally filter by a specific website, set score thresholds, and specify the number needed.
-    /// Optionally stores the found and ranked recipes in the repository.
-    /// </remarks>
-    /// <param name="query">The search term for recipes.</param>
-    /// <param name="site">Optional: Restrict scraping to a specific domain (e.g., "allrecipes.com").</param>
-    /// <param name="acceptableScore">Optional minimum score threshold for scraped recipes.</param>
-    /// <param name="recipesNeeded">Optional target number of recipes to find.</param>
-    /// <param name="store">If true, ranks and stores the newly scraped recipes in the database asynchronously.</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>404</term>
-    /// <description>Not Found</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: application/json")]
-    [Get("/api/recipe/scrape")]
-    Task<ICollection<Recipe>> Scrape([Query] string query, [Query] string site, [Query] int? acceptableScore, [Query] int? recipesNeeded, [Query] bool? store);
+        /// <summary>Scrapes web sources for recipes based on a query.</summary>
+        /// <remarks>
+        /// Directly initiates a web scraping process to find recipes matching the query.
+        /// Can optionally filter by a specific website, set score thresholds, and specify the number needed.
+        /// Optionally stores the found and ranked recipes in the repository.
+        /// </remarks>
+        /// <param name="query">The search term for recipes.</param>
+        /// <param name="site">Optional: Restrict scraping to a specific domain (e.g., "allrecipes.com").</param>
+        /// <param name="acceptableScore">Optional minimum score threshold for scraped recipes.</param>
+        /// <param name="recipesNeeded">Optional target number of recipes to find.</param>
+        /// <param name="store">If true, ranks and stores the newly scraped recipes in the database asynchronously.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>404</term>
+        /// <description>Not Found</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: application/json")]
+        [Get("/api/recipe/scrape")]
+        Task<ICollection<Recipe>> Scrape([Query] string query, [Query] string site, [Query] int? acceptableScore, [Query] int? recipesNeeded, [Query] bool? store);
 
-    /// <summary>Creates a Stripe checkout session for the specified order</summary>
-    /// <param name="orderId">Order identifier</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>404</term>
-    /// <description>Not Found</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: text/plain, application/json, text/json")]
-    [Post("/api/payments/create-checkout-session/{orderId}")]
-    Task<CheckoutUrlResponse> CreateCheckoutSession(string orderId);
+        /// <summary>⚠️ (Unavailable: Payments (Missing: PaymentConfig:StripeWebhookSecret)) Creates a Stripe checkout session for the specified order</summary>
+        /// <remarks>**This endpoint is currently unavailable** due to missing configuration for: Payments (Missing: PaymentConfig:StripeWebhookSecret)</remarks>
+        /// <param name="orderId">Order identifier</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>404</term>
+        /// <description>Not Found</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: text/plain, application/json, text/json")]
+        [Post("/api/payments/create-checkout-session/{orderId}")]
+        Task<CheckoutUrlResponse> CreateCheckoutSession(string orderId);
 
-    /// <summary>Creates a Stripe checkout session for purchasing recipe credits</summary>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: text/plain, application/json, text/json", "Content-Type: application/json")]
-    [Post("/api/payments/create-credit-session")]
-    Task<CheckoutUrlResponse> CreateCreditSession([Body] RecipeCreditRequest body);
+        /// <summary>⚠️ (Unavailable: Payments (Missing: PaymentConfig:StripeWebhookSecret)) Creates a Stripe checkout session for purchasing recipe credits</summary>
+        /// <remarks>**This endpoint is currently unavailable** due to missing configuration for: Payments (Missing: PaymentConfig:StripeWebhookSecret)</remarks>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: text/plain, application/json, text/json", "Content-Type: application/json")]
+        [Post("/api/payments/create-credit-session")]
+        Task<CheckoutUrlResponse> CreateCreditSession([Body] RecipeCreditRequest body);
 
-    /// <summary>Handles Stripe webhook events</summary>
-    /// <returns>A <see cref="Task"/> that completes when the request is finished.</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: text/plain, application/json, text/json")]
-    [Post("/api/payments/webhook")]
-    Task Webhook();
+        /// <summary>⚠️ (Unavailable: Payments (Missing: PaymentConfig:StripeWebhookSecret)) Handles Stripe webhook events</summary>
+        /// <remarks>**This endpoint is currently unavailable** due to missing configuration for: Payments (Missing: PaymentConfig:StripeWebhookSecret)</remarks>
+        /// <returns>A <see cref="Task"/> that completes when the request is finished.</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: text/plain, application/json, text/json")]
+        [Post("/api/payments/webhook")]
+        Task Webhook();
 
-    /// <summary>Gets information about a checkout session</summary>
-    /// <param name="sessionId">The Stripe checkout session ID</param>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>404</term>
-    /// <description>Not Found</description>
-    /// </item>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: text/plain, application/json, text/json")]
-    [Get("/api/payments/session/{sessionId}")]
-    Task<CheckoutSessionInfo> Session(string sessionId);
+        /// <summary>⚠️ (Unavailable: Payments (Missing: PaymentConfig:StripeWebhookSecret)) Gets information about a checkout session</summary>
+        /// <remarks>**This endpoint is currently unavailable** due to missing configuration for: Payments (Missing: PaymentConfig:StripeWebhookSecret)</remarks>
+        /// <param name="sessionId">The Stripe checkout session ID</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>404</term>
+        /// <description>Not Found</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: text/plain, application/json, text/json")]
+        [Get("/api/payments/session/{sessionId}")]
+        Task<CheckoutSessionInfo> Session(string sessionId);
 
-    /// <summary>Creates a Stripe payment intent directly.</summary>
-    /// <returns>A <see cref="Task"/> that completes when the request is finished.</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>400</term>
-    /// <description>Bad Request</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: text/plain, application/json, text/json", "Content-Type: application/json")]
-    [Post("/api/payments/create-intent")]
-    Task CreateIntent([Body] PaymentIntentRequest body);
+        /// <summary>⚠️ (Unavailable: Payments (Missing: PaymentConfig:StripeWebhookSecret)) Creates a Stripe payment intent directly.</summary>
+        /// <remarks>**This endpoint is currently unavailable** due to missing configuration for: Payments (Missing: PaymentConfig:StripeWebhookSecret)</remarks>
+        /// <returns>A <see cref="Task"/> that completes when the request is finished.</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>400</term>
+        /// <description>Bad Request</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: text/plain, application/json, text/json", "Content-Type: application/json")]
+        [Post("/api/payments/create-intent")]
+        Task CreateIntent([Body] PaymentIntentRequest body);
 
-    /// <summary>Gets status of a Stripe payment intent.</summary>
-    /// <returns>A <see cref="Task"/> that completes when the request is finished.</returns>
-    /// <exception cref="ApiException">Thrown when the request returns a non-success status code.</exception>
-    [Get("/api/payments/status/{paymentId}")]
-    Task Status(string paymentId);
+        /// <summary>⚠️ (Unavailable: Payments (Missing: PaymentConfig:StripeWebhookSecret)) Gets status of a Stripe payment intent.</summary>
+        /// <remarks>**This endpoint is currently unavailable** due to missing configuration for: Payments (Missing: PaymentConfig:StripeWebhookSecret)</remarks>
+        /// <returns>A <see cref="Task"/> that completes when the request is finished.</returns>
+        /// <exception cref="ApiException">Thrown when the request returns a non-success status code.</exception>
+        [Get("/api/payments/status/{paymentId}")]
+        Task Status(string paymentId);
 
-    /// <returns>A <see cref="Task"/> that completes when the request is finished.</returns>
-    /// <exception cref="ApiException">Thrown when the request returns a non-success status code.</exception>
-    [Get("/api/health")]
-    Task Health();
+        /// <returns>A <see cref="Task"/> that completes when the request is finished.</returns>
+        /// <exception cref="ApiException">Thrown when the request returns a non-success status code.</exception>
+        [Get("/api/health")]
+        Task Health();
 
-    /// <summary>Returns the status of services based on their configuration availability.</summary>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: text/plain, application/json, text/json")]
-    [Get("/api/status")]
-    Task<IDictionary<string, ServiceStatusInfo>> Status2();
+        /// <summary>Returns the status of services based on their configuration availability.</summary>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: text/plain, application/json, text/json")]
+        [Get("/api/status")]
+        Task<IDictionary<string, ServiceStatusInfo>> Status2();
 
-    /// <summary>Returns the configuration item status.</summary>
-    /// <returns>OK</returns>
-    /// <exception cref="ApiException">
-    /// Thrown when the request returns a non-success status code:
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Status</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>500</term>
-    /// <description>Internal Server Error</description>
-    /// </item>
-    /// </list>
-    /// </exception>
-    [Headers("Accept: text/plain, application/json, text/json")]
-    [Get("/api/config")]
-    Task<ICollection<ConfigurationItemStatus>> Config();
+        /// <summary>Returns the configuration item status.</summary>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: text/plain, application/json, text/json")]
+        [Get("/api/config")]
+        Task<ICollection<ConfigurationItemStatus>> Config();
 
 
-  }
+    }
 
 }
 
@@ -1167,2417 +1175,2440 @@ namespace Zarichney.Client
 
 namespace Zarichney.Client
 {
-  using System = global::System;
+    using System = global::System;
 
 
 
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class ApiErrorResult
-  {
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class ApiKeyResponse
-  {
-
-    [JsonPropertyName("id")]
-    public int Id { get; set; }
-
-    [JsonPropertyName("keyValue")]
-    public string KeyValue { get; set; }
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; }
-
-    [JsonPropertyName("createdAt")]
-    public System.DateTimeOffset CreatedAt { get; set; }
-
-    [JsonPropertyName("expiresAt")]
-    public System.DateTimeOffset? ExpiresAt { get; set; }
-
-    [JsonPropertyName("isActive")]
-    public bool IsActive { get; set; }
-
-    [JsonPropertyName("description")]
-    public string Description { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class Assembly
-  {
-
-    [JsonPropertyName("definedTypes")]
-    public ICollection<TypeInfo> DefinedTypes { get; set; }
-
-    [JsonPropertyName("exportedTypes")]
-    public ICollection<Type> ExportedTypes { get; set; }
-
-    [JsonPropertyName("codeBase")]
-    [System.Obsolete]
-    public string CodeBase { get; set; }
-
-    [JsonPropertyName("entryPoint")]
-    public MethodInfo EntryPoint { get; set; }
-
-    [JsonPropertyName("fullName")]
-    public string FullName { get; set; }
-
-    [JsonPropertyName("imageRuntimeVersion")]
-    public string ImageRuntimeVersion { get; set; }
-
-    [JsonPropertyName("isDynamic")]
-    public bool IsDynamic { get; set; }
-
-    [JsonPropertyName("location")]
-    public string Location { get; set; }
-
-    [JsonPropertyName("reflectionOnly")]
-    public bool ReflectionOnly { get; set; }
-
-    [JsonPropertyName("isCollectible")]
-    public bool IsCollectible { get; set; }
-
-    [JsonPropertyName("isFullyTrusted")]
-    public bool IsFullyTrusted { get; set; }
-
-    [JsonPropertyName("customAttributes")]
-    public ICollection<CustomAttributeData> CustomAttributes { get; set; }
-
-    [JsonPropertyName("escapedCodeBase")]
-    [System.Obsolete]
-    public string EscapedCodeBase { get; set; }
-
-    [JsonPropertyName("manifestModule")]
-    public Module ManifestModule { get; set; }
-
-    [JsonPropertyName("modules")]
-    public ICollection<Module> Modules { get; set; }
-
-    [JsonPropertyName("globalAssemblyCache")]
-    [System.Obsolete]
-    public bool GlobalAssemblyCache { get; set; }
-
-    [JsonPropertyName("hostContext")]
-    public long HostContext { get; set; }
-
-    [JsonPropertyName("securityRuleSet")]
-    public SecurityRuleSet SecurityRuleSet { get; set; }
-
-  }
-
-  /// <summary>
-  /// Standard response model for authentication operations.
-  /// </summary>
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class AuthResponse
-  {
-    /// <summary>
-    /// Indicates whether the operation was successful.
-    /// </summary>
-
-    [JsonPropertyName("success")]
-    public bool Success { get; set; }
-
-    /// <summary>
-    /// A message describing the outcome of the operation.
-    /// </summary>
-
-    [JsonPropertyName("message")]
-    public string Message { get; set; }
-
-    /// <summary>
-    /// The email address associated with the operation, if applicable.
-    /// </summary>
-
-    [JsonPropertyName("email")]
-    public string Email { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class BadRequestObjectResult
-  {
-
-    [JsonPropertyName("value")]
-    public object Value { get; set; }
-
-    [JsonPropertyName("formatters")]
-    public ICollection<IOutputFormatter> Formatters { get; set; }
-
-    [JsonPropertyName("contentTypes")]
-    public ICollection<string> ContentTypes { get; set; }
-
-    [JsonPropertyName("declaredType")]
-    public Type DeclaredType { get; set; }
-
-    [JsonPropertyName("statusCode")]
-    public int? StatusCode { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public enum CallingConventions
-  {
-
-    _1 = 1,
-
-    _2 = 2,
-
-    _3 = 3,
-
-    _32 = 32,
-
-    _64 = 64,
-
-  }
-
-  /// <summary>
-  /// Information about a checkout session that can be shared with clients
-  /// </summary>
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class CheckoutSessionInfo
-  {
-
-    [JsonPropertyName("id")]
-    public string Id { get; set; }
-
-    [JsonPropertyName("status")]
-    public string Status { get; set; }
-
-    [JsonPropertyName("customerEmail")]
-    public string CustomerEmail { get; set; }
-
-    [JsonPropertyName("amountTotal")]
-    public double? AmountTotal { get; set; }
-
-    [JsonPropertyName("currency")]
-    public string Currency { get; set; }
-
-    [JsonPropertyName("paymentStatus")]
-    public string PaymentStatus { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class CheckoutUrlResponse
-  {
-
-    [JsonPropertyName("checkoutUrl")]
-    public string CheckoutUrl { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class ConfigurationItemStatus
-  {
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; }
-
-    [JsonPropertyName("status")]
-    public string Status { get; set; }
-
-    [JsonPropertyName("details")]
-    public string Details { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class ConstructorInfo
-  {
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; }
-
-    [JsonPropertyName("declaringType")]
-    public Type DeclaringType { get; set; }
-
-    [JsonPropertyName("reflectedType")]
-    public Type ReflectedType { get; set; }
-
-    [JsonPropertyName("module")]
-    public Module Module { get; set; }
-
-    [JsonPropertyName("customAttributes")]
-    public ICollection<CustomAttributeData> CustomAttributes { get; set; }
-
-    [JsonPropertyName("isCollectible")]
-    public bool IsCollectible { get; set; }
-
-    [JsonPropertyName("metadataToken")]
-    public int MetadataToken { get; set; }
-
-    [JsonPropertyName("attributes")]
-    public MethodAttributes Attributes { get; set; }
-
-    [JsonPropertyName("methodImplementationFlags")]
-    public MethodImplAttributes MethodImplementationFlags { get; set; }
-
-    [JsonPropertyName("callingConvention")]
-    public CallingConventions CallingConvention { get; set; }
-
-    [JsonPropertyName("isAbstract")]
-    public bool IsAbstract { get; set; }
-
-    [JsonPropertyName("isConstructor")]
-    public bool IsConstructor { get; set; }
-
-    [JsonPropertyName("isFinal")]
-    public bool IsFinal { get; set; }
-
-    [JsonPropertyName("isHideBySig")]
-    public bool IsHideBySig { get; set; }
-
-    [JsonPropertyName("isSpecialName")]
-    public bool IsSpecialName { get; set; }
-
-    [JsonPropertyName("isStatic")]
-    public bool IsStatic { get; set; }
-
-    [JsonPropertyName("isVirtual")]
-    public bool IsVirtual { get; set; }
-
-    [JsonPropertyName("isAssembly")]
-    public bool IsAssembly { get; set; }
-
-    [JsonPropertyName("isFamily")]
-    public bool IsFamily { get; set; }
-
-    [JsonPropertyName("isFamilyAndAssembly")]
-    public bool IsFamilyAndAssembly { get; set; }
-
-    [JsonPropertyName("isFamilyOrAssembly")]
-    public bool IsFamilyOrAssembly { get; set; }
-
-    [JsonPropertyName("isPrivate")]
-    public bool IsPrivate { get; set; }
-
-    [JsonPropertyName("isPublic")]
-    public bool IsPublic { get; set; }
-
-    [JsonPropertyName("isConstructedGenericMethod")]
-    public bool IsConstructedGenericMethod { get; set; }
-
-    [JsonPropertyName("isGenericMethod")]
-    public bool IsGenericMethod { get; set; }
-
-    [JsonPropertyName("isGenericMethodDefinition")]
-    public bool IsGenericMethodDefinition { get; set; }
-
-    [JsonPropertyName("containsGenericParameters")]
-    public bool ContainsGenericParameters { get; set; }
-
-    [JsonPropertyName("methodHandle")]
-    public RuntimeMethodHandle MethodHandle { get; set; }
-
-    [JsonPropertyName("isSecurityCritical")]
-    public bool IsSecurityCritical { get; set; }
-
-    [JsonPropertyName("isSecuritySafeCritical")]
-    public bool IsSecuritySafeCritical { get; set; }
-
-    [JsonPropertyName("isSecurityTransparent")]
-    public bool IsSecurityTransparent { get; set; }
-
-    [JsonPropertyName("memberType")]
-    public MemberTypes MemberType { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class CookbookContent
-  {
-
-    [JsonPropertyName("recipeSpecificationType")]
-    public string RecipeSpecificationType { get; set; }
-
-    [JsonPropertyName("specificRecipes")]
-    public ICollection<string> SpecificRecipes { get; set; }
-
-    [JsonPropertyName("generalMealTypes")]
-    public ICollection<string> GeneralMealTypes { get; set; }
-
-    [JsonPropertyName("expectedRecipeCount")]
-    public int ExpectedRecipeCount { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class CookbookDetails
-  {
-
-    [JsonPropertyName("theme")]
-    public string Theme { get; set; }
-
-    [JsonPropertyName("primaryPurpose")]
-    public string PrimaryPurpose { get; set; }
-
-    [JsonPropertyName("desiredCuisines")]
-    public ICollection<string> DesiredCuisines { get; set; }
-
-    [JsonPropertyName("culturalExploration")]
-    public string CulturalExploration { get; set; }
-
-    [JsonPropertyName("nutritionalGuidance")]
-    public string NutritionalGuidance { get; set; }
-
-    [JsonPropertyName("recipeModification")]
-    public string RecipeModification { get; set; }
-
-    [JsonPropertyName("ingredientFlexibility")]
-    public string IngredientFlexibility { get; set; }
-
-    [JsonPropertyName("overallStyle")]
-    public string OverallStyle { get; set; }
-
-    [JsonPropertyName("organization")]
-    public string Organization { get; set; }
-
-    [JsonPropertyName("specialSections")]
-    public ICollection<string> SpecialSections { get; set; }
-
-    [JsonPropertyName("storytelling")]
-    public string Storytelling { get; set; }
-
-    [JsonPropertyName("educationalContent")]
-    public ICollection<string> EducationalContent { get; set; }
-
-    [JsonPropertyName("practicalFeatures")]
-    public ICollection<string> PracticalFeatures { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class CookbookOrder
-  {
-
-    [JsonPropertyName("email")]
-    public string Email { get; set; }
-
-    [JsonPropertyName("cookbookContent")]
-    public CookbookContent CookbookContent { get; set; }
-
-    [JsonPropertyName("cookbookDetails")]
-    public CookbookDetails CookbookDetails { get; set; }
-
-    [JsonPropertyName("userDetails")]
-    public UserDetails UserDetails { get; set; }
-
-    [JsonPropertyName("orderId")]
-    public string OrderId { get; set; }
-
-    [JsonPropertyName("recipeList")]
-    public ICollection<string> RecipeList { get; set; }
-
-    [JsonPropertyName("synthesizedRecipes")]
-    public ICollection<SynthesizedRecipe> SynthesizedRecipes { get; set; }
-
-    [JsonPropertyName("status")]
-    public OrderStatus Status { get; set; }
-
-    [JsonPropertyName("requiresPayment")]
-    public bool RequiresPayment { get; set; }
-
-    [JsonPropertyName("customer")]
-    public Customer Customer { get; set; }
-
-    [JsonPropertyName("llmConversationId")]
-    public string LlmConversationId { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class CookbookOrderSubmission
-  {
-
-    [JsonPropertyName("email")]
-    public string Email { get; set; }
-
-    [JsonPropertyName("cookbookContent")]
-    public CookbookContent CookbookContent { get; set; }
-
-    [JsonPropertyName("cookbookDetails")]
-    public CookbookDetails CookbookDetails { get; set; }
-
-    [JsonPropertyName("userDetails")]
-    public UserDetails UserDetails { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class CreateApiKeyCommand
-  {
-
-    [JsonPropertyName("name")]
-    [System.ComponentModel.DataAnnotations.Required]
-    [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
-    public string Name { get; set; }
-
-    [JsonPropertyName("description")]
-    [System.ComponentModel.DataAnnotations.StringLength(255)]
-    public string Description { get; set; }
-
-    [JsonPropertyName("expiresAt")]
-    public System.DateTimeOffset? ExpiresAt { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class CustomAttributeData
-  {
-
-    [JsonPropertyName("attributeType")]
-    public Type AttributeType { get; set; }
-
-    [JsonPropertyName("constructor")]
-    public ConstructorInfo Constructor { get; set; }
-
-    [JsonPropertyName("constructorArguments")]
-    public ICollection<CustomAttributeTypedArgument> ConstructorArguments { get; set; }
-
-    [JsonPropertyName("namedArguments")]
-    public ICollection<CustomAttributeNamedArgument> NamedArguments { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class CustomAttributeNamedArgument
-  {
-
-    [JsonPropertyName("memberInfo")]
-    public MemberInfo MemberInfo { get; set; }
-
-    [JsonPropertyName("typedValue")]
-    public CustomAttributeTypedArgument TypedValue { get; set; }
-
-    [JsonPropertyName("memberName")]
-    public string MemberName { get; set; }
-
-    [JsonPropertyName("isField")]
-    public bool IsField { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class CustomAttributeTypedArgument
-  {
-
-    [JsonPropertyName("argumentType")]
-    public Type ArgumentType { get; set; }
-
-    [JsonPropertyName("value")]
-    public object Value { get; set; }
-
-  }
-
-  /// <summary>
-  /// Represents a user/customer of the Cookbook service.
-  /// <br/>Tracks how many recipe credits they have available (for free usage or otherwise).
-  /// </summary>
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class Customer
-  {
-    /// <summary>
-    /// Unique key for identifying the customer.
-    /// <br/>Currently, using email as the primary key.
-    /// </summary>
-
-    [JsonPropertyName("email")]
-    public string Email { get; set; }
-
-    /// <summary>
-    /// How many recipes the user can still generate without paying (e.g. free allotment or purchased credits).
-    /// </summary>
-
-    [JsonPropertyName("availableRecipes")]
-    public int AvailableRecipes { get; set; }
-
-    /// <summary>
-    /// Total number of recipes that have been synthesized for this user across all orders (historical).
-    /// </summary>
-
-    [JsonPropertyName("lifetimeRecipesUsed")]
-    public int LifetimeRecipesUsed { get; set; }
-
-    /// <summary>
-    /// Total number of recipes that have been purchased by this user (historical).
-    /// </summary>
-
-    [JsonPropertyName("lifetimePurchasedRecipes")]
-    public int LifetimePurchasedRecipes { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public enum EventAttributes
-  {
-
-    _0 = 0,
-
-    _512 = 512,
-
-    _1024 = 1024,
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class EventInfo
-  {
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; }
-
-    [JsonPropertyName("declaringType")]
-    public Type DeclaringType { get; set; }
-
-    [JsonPropertyName("reflectedType")]
-    public Type ReflectedType { get; set; }
-
-    [JsonPropertyName("module")]
-    public Module Module { get; set; }
-
-    [JsonPropertyName("customAttributes")]
-    public ICollection<CustomAttributeData> CustomAttributes { get; set; }
-
-    [JsonPropertyName("isCollectible")]
-    public bool IsCollectible { get; set; }
-
-    [JsonPropertyName("metadataToken")]
-    public int MetadataToken { get; set; }
-
-    [JsonPropertyName("memberType")]
-    public MemberTypes MemberType { get; set; }
-
-    [JsonPropertyName("attributes")]
-    public EventAttributes Attributes { get; set; }
-
-    [JsonPropertyName("isSpecialName")]
-    public bool IsSpecialName { get; set; }
-
-    [JsonPropertyName("addMethod")]
-    public MethodInfo AddMethod { get; set; }
-
-    [JsonPropertyName("removeMethod")]
-    public MethodInfo RemoveMethod { get; set; }
-
-    [JsonPropertyName("raiseMethod")]
-    public MethodInfo RaiseMethod { get; set; }
-
-    [JsonPropertyName("isMulticast")]
-    public bool IsMulticast { get; set; }
-
-    [JsonPropertyName("eventHandlerType")]
-    public Type EventHandlerType { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public enum FieldAttributes
-  {
-
-    _0 = 0,
-
-    _1 = 1,
-
-    _2 = 2,
-
-    _3 = 3,
-
-    _4 = 4,
-
-    _5 = 5,
-
-    _6 = 6,
-
-    _7 = 7,
-
-    _16 = 16,
-
-    _32 = 32,
-
-    _64 = 64,
-
-    _128 = 128,
-
-    _256 = 256,
-
-    _512 = 512,
-
-    _1024 = 1024,
-
-    _4096 = 4096,
-
-    _8192 = 8192,
-
-    _32768 = 32768,
-
-    _38144 = 38144,
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class FieldInfo
-  {
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; }
-
-    [JsonPropertyName("declaringType")]
-    public Type DeclaringType { get; set; }
-
-    [JsonPropertyName("reflectedType")]
-    public Type ReflectedType { get; set; }
-
-    [JsonPropertyName("module")]
-    public Module Module { get; set; }
-
-    [JsonPropertyName("customAttributes")]
-    public ICollection<CustomAttributeData> CustomAttributes { get; set; }
-
-    [JsonPropertyName("isCollectible")]
-    public bool IsCollectible { get; set; }
-
-    [JsonPropertyName("metadataToken")]
-    public int MetadataToken { get; set; }
-
-    [JsonPropertyName("memberType")]
-    public MemberTypes MemberType { get; set; }
-
-    [JsonPropertyName("attributes")]
-    public FieldAttributes Attributes { get; set; }
-
-    [JsonPropertyName("fieldType")]
-    public Type FieldType { get; set; }
-
-    [JsonPropertyName("isInitOnly")]
-    public bool IsInitOnly { get; set; }
-
-    [JsonPropertyName("isLiteral")]
-    public bool IsLiteral { get; set; }
-
-    [JsonPropertyName("isNotSerialized")]
-    [System.Obsolete]
-    public bool IsNotSerialized { get; set; }
-
-    [JsonPropertyName("isPinvokeImpl")]
-    public bool IsPinvokeImpl { get; set; }
-
-    [JsonPropertyName("isSpecialName")]
-    public bool IsSpecialName { get; set; }
-
-    [JsonPropertyName("isStatic")]
-    public bool IsStatic { get; set; }
-
-    [JsonPropertyName("isAssembly")]
-    public bool IsAssembly { get; set; }
-
-    [JsonPropertyName("isFamily")]
-    public bool IsFamily { get; set; }
-
-    [JsonPropertyName("isFamilyAndAssembly")]
-    public bool IsFamilyAndAssembly { get; set; }
-
-    [JsonPropertyName("isFamilyOrAssembly")]
-    public bool IsFamilyOrAssembly { get; set; }
-
-    [JsonPropertyName("isPrivate")]
-    public bool IsPrivate { get; set; }
-
-    [JsonPropertyName("isPublic")]
-    public bool IsPublic { get; set; }
-
-    [JsonPropertyName("isSecurityCritical")]
-    public bool IsSecurityCritical { get; set; }
-
-    [JsonPropertyName("isSecuritySafeCritical")]
-    public bool IsSecuritySafeCritical { get; set; }
-
-    [JsonPropertyName("isSecurityTransparent")]
-    public bool IsSecurityTransparent { get; set; }
-
-    [JsonPropertyName("fieldHandle")]
-    public RuntimeFieldHandle FieldHandle { get; set; }
-
-  }
-
-  /// <summary>
-  /// Request model to initiate the forgot password process.
-  /// </summary>
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class ForgotPasswordRequest
-  {
-    /// <summary>
-    /// The email address of the user who forgot their password.
-    /// </summary>
-
-    [JsonPropertyName("email")]
-    public string Email { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public enum GenericParameterAttributes
-  {
-
-    _0 = 0,
-
-    _1 = 1,
-
-    _2 = 2,
-
-    _3 = 3,
-
-    _4 = 4,
-
-    _8 = 8,
-
-    _16 = 16,
-
-    _28 = 28,
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class ICustomAttributeProvider
-  {
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class IOutputFormatter
-  {
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class IntPtr
-  {
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public enum LayoutKind
-  {
-
-    _0 = 0,
-
-    _2 = 2,
-
-    _3 = 3,
-
-  }
-
-  /// <summary>
-  /// Request model for user login.
-  /// </summary>
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class LoginRequest
-  {
-    /// <summary>
-    /// The user's registered email address.
-    /// </summary>
-
-    [JsonPropertyName("email")]
-    public string Email { get; set; }
-
-    /// <summary>
-    /// The user's password.
-    /// </summary>
-
-    [JsonPropertyName("password")]
-    public string Password { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class MemberInfo
-  {
-
-    [JsonPropertyName("memberType")]
-    public MemberTypes MemberType { get; set; }
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; }
-
-    [JsonPropertyName("declaringType")]
-    public Type DeclaringType { get; set; }
-
-    [JsonPropertyName("reflectedType")]
-    public Type ReflectedType { get; set; }
-
-    [JsonPropertyName("module")]
-    public Module Module { get; set; }
-
-    [JsonPropertyName("customAttributes")]
-    public ICollection<CustomAttributeData> CustomAttributes { get; set; }
-
-    [JsonPropertyName("isCollectible")]
-    public bool IsCollectible { get; set; }
-
-    [JsonPropertyName("metadataToken")]
-    public int MetadataToken { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public enum MemberTypes
-  {
-
-    _1 = 1,
-
-    _2 = 2,
-
-    _4 = 4,
-
-    _8 = 8,
-
-    _16 = 16,
-
-    _32 = 32,
-
-    _64 = 64,
-
-    _128 = 128,
-
-    _191 = 191,
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public enum MethodAttributes
-  {
-
-    _0 = 0,
-
-    _1 = 1,
-
-    _2 = 2,
-
-    _3 = 3,
-
-    _4 = 4,
-
-    _5 = 5,
-
-    _6 = 6,
-
-    _7 = 7,
-
-    _8 = 8,
-
-    _16 = 16,
-
-    _32 = 32,
-
-    _64 = 64,
-
-    _128 = 128,
-
-    _256 = 256,
-
-    _512 = 512,
-
-    _1024 = 1024,
-
-    _2048 = 2048,
-
-    _4096 = 4096,
-
-    _8192 = 8192,
-
-    _16384 = 16384,
-
-    _32768 = 32768,
-
-    _53248 = 53248,
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class MethodBase
-  {
-
-    [JsonPropertyName("memberType")]
-    public MemberTypes MemberType { get; set; }
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; }
-
-    [JsonPropertyName("declaringType")]
-    public Type DeclaringType { get; set; }
-
-    [JsonPropertyName("reflectedType")]
-    public Type ReflectedType { get; set; }
-
-    [JsonPropertyName("module")]
-    public Module Module { get; set; }
-
-    [JsonPropertyName("customAttributes")]
-    public ICollection<CustomAttributeData> CustomAttributes { get; set; }
-
-    [JsonPropertyName("isCollectible")]
-    public bool IsCollectible { get; set; }
-
-    [JsonPropertyName("metadataToken")]
-    public int MetadataToken { get; set; }
-
-    [JsonPropertyName("attributes")]
-    public MethodAttributes Attributes { get; set; }
-
-    [JsonPropertyName("methodImplementationFlags")]
-    public MethodImplAttributes MethodImplementationFlags { get; set; }
-
-    [JsonPropertyName("callingConvention")]
-    public CallingConventions CallingConvention { get; set; }
-
-    [JsonPropertyName("isAbstract")]
-    public bool IsAbstract { get; set; }
-
-    [JsonPropertyName("isConstructor")]
-    public bool IsConstructor { get; set; }
-
-    [JsonPropertyName("isFinal")]
-    public bool IsFinal { get; set; }
-
-    [JsonPropertyName("isHideBySig")]
-    public bool IsHideBySig { get; set; }
-
-    [JsonPropertyName("isSpecialName")]
-    public bool IsSpecialName { get; set; }
-
-    [JsonPropertyName("isStatic")]
-    public bool IsStatic { get; set; }
-
-    [JsonPropertyName("isVirtual")]
-    public bool IsVirtual { get; set; }
-
-    [JsonPropertyName("isAssembly")]
-    public bool IsAssembly { get; set; }
-
-    [JsonPropertyName("isFamily")]
-    public bool IsFamily { get; set; }
-
-    [JsonPropertyName("isFamilyAndAssembly")]
-    public bool IsFamilyAndAssembly { get; set; }
-
-    [JsonPropertyName("isFamilyOrAssembly")]
-    public bool IsFamilyOrAssembly { get; set; }
-
-    [JsonPropertyName("isPrivate")]
-    public bool IsPrivate { get; set; }
-
-    [JsonPropertyName("isPublic")]
-    public bool IsPublic { get; set; }
-
-    [JsonPropertyName("isConstructedGenericMethod")]
-    public bool IsConstructedGenericMethod { get; set; }
-
-    [JsonPropertyName("isGenericMethod")]
-    public bool IsGenericMethod { get; set; }
-
-    [JsonPropertyName("isGenericMethodDefinition")]
-    public bool IsGenericMethodDefinition { get; set; }
-
-    [JsonPropertyName("containsGenericParameters")]
-    public bool ContainsGenericParameters { get; set; }
-
-    [JsonPropertyName("methodHandle")]
-    public RuntimeMethodHandle MethodHandle { get; set; }
-
-    [JsonPropertyName("isSecurityCritical")]
-    public bool IsSecurityCritical { get; set; }
-
-    [JsonPropertyName("isSecuritySafeCritical")]
-    public bool IsSecuritySafeCritical { get; set; }
-
-    [JsonPropertyName("isSecurityTransparent")]
-    public bool IsSecurityTransparent { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public enum MethodImplAttributes
-  {
-
-    _0 = 0,
-
-    _1 = 1,
-
-    _2 = 2,
-
-    _3 = 3,
-
-    _4 = 4,
-
-    _8 = 8,
-
-    _16 = 16,
-
-    _32 = 32,
-
-    _64 = 64,
-
-    _128 = 128,
-
-    _256 = 256,
-
-    _512 = 512,
-
-    _4096 = 4096,
-
-    _65535 = 65535,
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class MethodInfo
-  {
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; }
-
-    [JsonPropertyName("declaringType")]
-    public Type DeclaringType { get; set; }
-
-    [JsonPropertyName("reflectedType")]
-    public Type ReflectedType { get; set; }
-
-    [JsonPropertyName("module")]
-    public Module Module { get; set; }
-
-    [JsonPropertyName("customAttributes")]
-    public ICollection<CustomAttributeData> CustomAttributes { get; set; }
-
-    [JsonPropertyName("isCollectible")]
-    public bool IsCollectible { get; set; }
-
-    [JsonPropertyName("metadataToken")]
-    public int MetadataToken { get; set; }
-
-    [JsonPropertyName("attributes")]
-    public MethodAttributes Attributes { get; set; }
-
-    [JsonPropertyName("methodImplementationFlags")]
-    public MethodImplAttributes MethodImplementationFlags { get; set; }
-
-    [JsonPropertyName("callingConvention")]
-    public CallingConventions CallingConvention { get; set; }
-
-    [JsonPropertyName("isAbstract")]
-    public bool IsAbstract { get; set; }
-
-    [JsonPropertyName("isConstructor")]
-    public bool IsConstructor { get; set; }
-
-    [JsonPropertyName("isFinal")]
-    public bool IsFinal { get; set; }
-
-    [JsonPropertyName("isHideBySig")]
-    public bool IsHideBySig { get; set; }
-
-    [JsonPropertyName("isSpecialName")]
-    public bool IsSpecialName { get; set; }
-
-    [JsonPropertyName("isStatic")]
-    public bool IsStatic { get; set; }
-
-    [JsonPropertyName("isVirtual")]
-    public bool IsVirtual { get; set; }
-
-    [JsonPropertyName("isAssembly")]
-    public bool IsAssembly { get; set; }
-
-    [JsonPropertyName("isFamily")]
-    public bool IsFamily { get; set; }
-
-    [JsonPropertyName("isFamilyAndAssembly")]
-    public bool IsFamilyAndAssembly { get; set; }
-
-    [JsonPropertyName("isFamilyOrAssembly")]
-    public bool IsFamilyOrAssembly { get; set; }
-
-    [JsonPropertyName("isPrivate")]
-    public bool IsPrivate { get; set; }
-
-    [JsonPropertyName("isPublic")]
-    public bool IsPublic { get; set; }
-
-    [JsonPropertyName("isConstructedGenericMethod")]
-    public bool IsConstructedGenericMethod { get; set; }
-
-    [JsonPropertyName("isGenericMethod")]
-    public bool IsGenericMethod { get; set; }
-
-    [JsonPropertyName("isGenericMethodDefinition")]
-    public bool IsGenericMethodDefinition { get; set; }
-
-    [JsonPropertyName("containsGenericParameters")]
-    public bool ContainsGenericParameters { get; set; }
-
-    [JsonPropertyName("methodHandle")]
-    public RuntimeMethodHandle MethodHandle { get; set; }
-
-    [JsonPropertyName("isSecurityCritical")]
-    public bool IsSecurityCritical { get; set; }
-
-    [JsonPropertyName("isSecuritySafeCritical")]
-    public bool IsSecuritySafeCritical { get; set; }
-
-    [JsonPropertyName("isSecurityTransparent")]
-    public bool IsSecurityTransparent { get; set; }
-
-    [JsonPropertyName("memberType")]
-    public MemberTypes MemberType { get; set; }
-
-    [JsonPropertyName("returnParameter")]
-    public ParameterInfo ReturnParameter { get; set; }
-
-    [JsonPropertyName("returnType")]
-    public Type ReturnType { get; set; }
-
-    [JsonPropertyName("returnTypeCustomAttributes")]
-    public ICustomAttributeProvider ReturnTypeCustomAttributes { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class Module
-  {
-
-    [JsonPropertyName("assembly")]
-    public Assembly Assembly { get; set; }
-
-    [JsonPropertyName("fullyQualifiedName")]
-    public string FullyQualifiedName { get; set; }
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; }
-
-    [JsonPropertyName("mdStreamVersion")]
-    public int MdStreamVersion { get; set; }
-
-    [JsonPropertyName("moduleVersionId")]
-    public System.Guid ModuleVersionId { get; set; }
-
-    [JsonPropertyName("scopeName")]
-    public string ScopeName { get; set; }
-
-    [JsonPropertyName("moduleHandle")]
-    public ModuleHandle ModuleHandle { get; set; }
-
-    [JsonPropertyName("customAttributes")]
-    public ICollection<CustomAttributeData> CustomAttributes { get; set; }
-
-    [JsonPropertyName("metadataToken")]
-    public int MetadataToken { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class ModuleHandle
-  {
-
-    [JsonPropertyName("mdStreamVersion")]
-    public int MdStreamVersion { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class NotFoundResult
-  {
-
-    [JsonPropertyName("statusCode")]
-    public int StatusCode { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public enum OrderStatus
-  {
-
-    _0 = 0,
-
-    _1 = 1,
-
-    _2 = 2,
-
-    _3 = 3,
-
-    _4 = 4,
-
-    _5 = 5,
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public enum ParameterAttributes
-  {
-
-    _0 = 0,
-
-    _1 = 1,
-
-    _2 = 2,
-
-    _4 = 4,
-
-    _8 = 8,
-
-    _16 = 16,
-
-    _4096 = 4096,
-
-    _8192 = 8192,
-
-    _16384 = 16384,
-
-    _32768 = 32768,
-
-    _61440 = 61440,
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class ParameterInfo
-  {
-
-    [JsonPropertyName("attributes")]
-    public ParameterAttributes Attributes { get; set; }
-
-    [JsonPropertyName("member")]
-    public MemberInfo Member { get; set; }
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; }
-
-    [JsonPropertyName("parameterType")]
-    public Type ParameterType { get; set; }
-
-    [JsonPropertyName("position")]
-    public int Position { get; set; }
-
-    [JsonPropertyName("isIn")]
-    public bool IsIn { get; set; }
-
-    [JsonPropertyName("isLcid")]
-    public bool IsLcid { get; set; }
-
-    [JsonPropertyName("isOptional")]
-    public bool IsOptional { get; set; }
-
-    [JsonPropertyName("isOut")]
-    public bool IsOut { get; set; }
-
-    [JsonPropertyName("isRetval")]
-    public bool IsRetval { get; set; }
-
-    [JsonPropertyName("defaultValue")]
-    public object DefaultValue { get; set; }
-
-    [JsonPropertyName("rawDefaultValue")]
-    public object RawDefaultValue { get; set; }
-
-    [JsonPropertyName("hasDefaultValue")]
-    public bool HasDefaultValue { get; set; }
-
-    [JsonPropertyName("customAttributes")]
-    public ICollection<CustomAttributeData> CustomAttributes { get; set; }
-
-    [JsonPropertyName("metadataToken")]
-    public int MetadataToken { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class PaymentIntentRequest
-  {
-
-    [JsonPropertyName("amount")]
-    public long Amount { get; set; }
-
-    [JsonPropertyName("currency")]
-    public string Currency { get; set; }
-
-    [JsonPropertyName("description")]
-    public string Description { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class ProblemDetails
-  {
-
-    [JsonPropertyName("type")]
-    public string Type { get; set; }
-
-    [JsonPropertyName("title")]
-    public string Title { get; set; }
-
-    [JsonPropertyName("status")]
-    public int? Status { get; set; }
-
-    [JsonPropertyName("detail")]
-    public string Detail { get; set; }
-
-    [JsonPropertyName("instance")]
-    public string Instance { get; set; }
-
-    private IDictionary<string, object> _additionalProperties;
-
-    [JsonExtensionData]
-    public IDictionary<string, object> AdditionalProperties
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ApiErrorResult
     {
-      get { return _additionalProperties ?? (_additionalProperties = new Dictionary<string, object>()); }
-      set { _additionalProperties = value; }
+
     }
 
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public enum PropertyAttributes
-  {
-
-    _0 = 0,
-
-    _512 = 512,
-
-    _1024 = 1024,
-
-    _4096 = 4096,
-
-    _8192 = 8192,
-
-    _16384 = 16384,
-
-    _32768 = 32768,
-
-    _62464 = 62464,
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class PropertyInfo
-  {
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; }
-
-    [JsonPropertyName("declaringType")]
-    public Type DeclaringType { get; set; }
-
-    [JsonPropertyName("reflectedType")]
-    public Type ReflectedType { get; set; }
-
-    [JsonPropertyName("module")]
-    public Module Module { get; set; }
-
-    [JsonPropertyName("customAttributes")]
-    public ICollection<CustomAttributeData> CustomAttributes { get; set; }
-
-    [JsonPropertyName("isCollectible")]
-    public bool IsCollectible { get; set; }
-
-    [JsonPropertyName("metadataToken")]
-    public int MetadataToken { get; set; }
-
-    [JsonPropertyName("memberType")]
-    public MemberTypes MemberType { get; set; }
-
-    [JsonPropertyName("propertyType")]
-    public Type PropertyType { get; set; }
-
-    [JsonPropertyName("attributes")]
-    public PropertyAttributes Attributes { get; set; }
-
-    [JsonPropertyName("isSpecialName")]
-    public bool IsSpecialName { get; set; }
-
-    [JsonPropertyName("canRead")]
-    public bool CanRead { get; set; }
-
-    [JsonPropertyName("canWrite")]
-    public bool CanWrite { get; set; }
-
-    [JsonPropertyName("getMethod")]
-    public MethodInfo GetMethod { get; set; }
-
-    [JsonPropertyName("setMethod")]
-    public MethodInfo SetMethod { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class Recipe
-  {
-
-    [JsonPropertyName("id")]
-    public string Id { get; set; }
-
-    [JsonPropertyName("title")]
-    public string Title { get; set; }
-
-    [JsonPropertyName("description")]
-    public string Description { get; set; }
-
-    [JsonPropertyName("servings")]
-    public string Servings { get; set; }
-
-    [JsonPropertyName("prepTime")]
-    public string PrepTime { get; set; }
-
-    [JsonPropertyName("cookTime")]
-    public string CookTime { get; set; }
-
-    [JsonPropertyName("totalTime")]
-    public string TotalTime { get; set; }
-
-    [JsonPropertyName("ingredients")]
-    public ICollection<string> Ingredients { get; set; }
-
-    [JsonPropertyName("directions")]
-    public ICollection<string> Directions { get; set; }
-
-    [JsonPropertyName("notes")]
-    public string Notes { get; set; }
-
-    [JsonPropertyName("cleaned")]
-    public bool Cleaned { get; set; }
-
-    [JsonPropertyName("recipeUrl")]
-    public string RecipeUrl { get; set; }
-
-    [JsonPropertyName("imageUrl")]
-    public string ImageUrl { get; set; }
-
-    [JsonPropertyName("aliases")]
-    public ICollection<string> Aliases { get; set; }
-
-    [JsonPropertyName("indexTitle")]
-    public string IndexTitle { get; set; }
-
-    [JsonPropertyName("relevancy")]
-    public IDictionary<string, RelevancyResult> Relevancy { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class RecipeCreditRequest
-  {
-
-    [JsonPropertyName("email")]
-    public string Email { get; set; }
-
-    [JsonPropertyName("recipeCount")]
-    public int RecipeCount { get; set; }
-
-  }
-
-  /// <summary>
-  /// Request model for user registration.
-  /// </summary>
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class RegisterRequest
-  {
-    /// <summary>
-    /// The user's desired email address. Must be unique.
-    /// </summary>
-
-    [JsonPropertyName("email")]
-    public string Email { get; set; }
-
-    /// <summary>
-    /// The user's chosen password. Minimum length and complexity requirements may apply (defined server-side).
-    /// </summary>
-
-    [JsonPropertyName("password")]
-    public string Password { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class RelevancyResult
-  {
-
-    [JsonPropertyName("query")]
-    public string Query { get; set; }
-
-    [JsonPropertyName("score")]
-    public int Score { get; set; }
-
-    [JsonPropertyName("reasoning")]
-    public string Reasoning { get; set; }
-
-  }
-
-  /// <summary>
-  /// Request model for resending the email confirmation link.
-  /// </summary>
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class ResendConfirmationRequest
-  {
-    /// <summary>
-    /// The email address to resend the confirmation link to.
-    /// </summary>
-
-    [JsonPropertyName("email")]
-    public string Email { get; set; }
-
-  }
-
-  /// <summary>
-  /// Request model to reset the password using a token.
-  /// </summary>
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class ResetPasswordRequest
-  {
-    /// <summary>
-    /// The email address of the user resetting their password.
-    /// </summary>
-
-    [JsonPropertyName("email")]
-    public string Email { get; set; }
-
-    /// <summary>
-    /// The password reset token received via email.
-    /// </summary>
-
-    [JsonPropertyName("token")]
-    public string Token { get; set; }
-
-    /// <summary>
-    /// The user's desired new password.
-    /// </summary>
-
-    [JsonPropertyName("newPassword")]
-    public string NewPassword { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class RoleCommandResult
-  {
-
-    [JsonPropertyName("success")]
-    public bool Success { get; set; }
-
-    [JsonPropertyName("message")]
-    public string Message { get; set; }
-
-    [JsonPropertyName("roles")]
-    public ICollection<string> Roles { get; set; }
-
-  }
-
-  /// <summary>
-  /// Request model for assigning or removing user roles.
-  /// </summary>
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class RoleRequest
-  {
-    /// <summary>
-    /// The unique identifier of the target user (user ID or email address).
-    /// </summary>
-
-    [JsonPropertyName("identifier")]
-    public string Identifier { get; set; }
-
-    /// <summary>
-    /// The name of the role to add or remove (e.g., "admin", "editor"). Case sensitivity depends on the underlying store.
-    /// </summary>
-
-    [JsonPropertyName("roleName")]
-    public string RoleName { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class RuntimeFieldHandle
-  {
-
-    [JsonPropertyName("value")]
-    public IntPtr Value { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class RuntimeMethodHandle
-  {
-
-    [JsonPropertyName("value")]
-    public IntPtr Value { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class RuntimeTypeHandle
-  {
-
-    [JsonPropertyName("value")]
-    public IntPtr Value { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public enum SecurityRuleSet
-  {
-
-    _0 = 0,
-
-    _1 = 1,
-
-    _2 = 2,
-
-  }
-
-  /// <summary>
-  /// Represents the status of a service based on its configuration availability.
-  /// </summary>
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class ServiceStatusInfo
-  {
-    /// <summary>
-    /// Whether the service is available based on its configuration.
-    /// </summary>
-
-    [JsonPropertyName("isAvailable")]
-    public bool IsAvailable { get; set; }
-
-    /// <summary>
-    /// A list of missing configuration keys if the service is unavailable.
-    /// </summary>
-
-    [JsonPropertyName("missingConfigurations")]
-    public ICollection<string> MissingConfigurations { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class StructLayoutAttribute
-  {
-
-    [JsonPropertyName("typeId")]
-    public object TypeId { get; set; }
-
-    [JsonPropertyName("value")]
-    public LayoutKind Value { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class SynthesizedRecipe
-  {
-
-    [JsonPropertyName("title")]
-    public string Title { get; set; }
-
-    [JsonPropertyName("description")]
-    public string Description { get; set; }
-
-    [JsonPropertyName("servings")]
-    public string Servings { get; set; }
-
-    [JsonPropertyName("prepTime")]
-    public string PrepTime { get; set; }
-
-    [JsonPropertyName("cookTime")]
-    public string CookTime { get; set; }
-
-    [JsonPropertyName("totalTime")]
-    public string TotalTime { get; set; }
-
-    [JsonPropertyName("ingredients")]
-    public ICollection<string> Ingredients { get; set; }
-
-    [JsonPropertyName("directions")]
-    public ICollection<string> Directions { get; set; }
-
-    [JsonPropertyName("notes")]
-    public string Notes { get; set; }
-
-    [JsonPropertyName("inspiredBy")]
-    public ICollection<string> InspiredBy { get; set; }
-
-    [JsonPropertyName("imageUrls")]
-    public ICollection<string> ImageUrls { get; set; }
-
-    [JsonPropertyName("sourceRecipes")]
-    public ICollection<Recipe> SourceRecipes { get; set; }
-
-    [JsonPropertyName("qualityScore")]
-    public int? QualityScore { get; set; }
-
-    [JsonPropertyName("analysis")]
-    public string Analysis { get; set; }
-
-    [JsonPropertyName("suggestions")]
-    public string Suggestions { get; set; }
-
-    [JsonPropertyName("attemptCount")]
-    public int AttemptCount { get; set; }
-
-    [JsonPropertyName("revisions")]
-    public ICollection<SynthesizedRecipe> Revisions { get; set; }
-
-    [JsonPropertyName("isAnalyzed")]
-    public bool IsAnalyzed { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class Type
-  {
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; }
-
-    [JsonPropertyName("customAttributes")]
-    public ICollection<CustomAttributeData> CustomAttributes { get; set; }
-
-    [JsonPropertyName("isCollectible")]
-    public bool IsCollectible { get; set; }
-
-    [JsonPropertyName("metadataToken")]
-    public int MetadataToken { get; set; }
-
-    [JsonPropertyName("isInterface")]
-    public bool IsInterface { get; set; }
-
-    [JsonPropertyName("memberType")]
-    public MemberTypes MemberType { get; set; }
-
-    [JsonPropertyName("namespace")]
-    public string Namespace { get; set; }
-
-    [JsonPropertyName("assemblyQualifiedName")]
-    public string AssemblyQualifiedName { get; set; }
-
-    [JsonPropertyName("fullName")]
-    public string FullName { get; set; }
-
-    [JsonPropertyName("assembly")]
-    public Assembly Assembly { get; set; }
-
-    [JsonPropertyName("module")]
-    public Module Module { get; set; }
-
-    [JsonPropertyName("isNested")]
-    public bool IsNested { get; set; }
-
-    [JsonPropertyName("declaringType")]
-    public Type DeclaringType { get; set; }
-
-    [JsonPropertyName("declaringMethod")]
-    public MethodBase DeclaringMethod { get; set; }
-
-    [JsonPropertyName("reflectedType")]
-    public Type ReflectedType { get; set; }
-
-    [JsonPropertyName("underlyingSystemType")]
-    public Type UnderlyingSystemType { get; set; }
-
-    [JsonPropertyName("isTypeDefinition")]
-    public bool IsTypeDefinition { get; set; }
-
-    [JsonPropertyName("isArray")]
-    public bool IsArray { get; set; }
-
-    [JsonPropertyName("isByRef")]
-    public bool IsByRef { get; set; }
-
-    [JsonPropertyName("isPointer")]
-    public bool IsPointer { get; set; }
-
-    [JsonPropertyName("isConstructedGenericType")]
-    public bool IsConstructedGenericType { get; set; }
-
-    [JsonPropertyName("isGenericParameter")]
-    public bool IsGenericParameter { get; set; }
-
-    [JsonPropertyName("isGenericTypeParameter")]
-    public bool IsGenericTypeParameter { get; set; }
-
-    [JsonPropertyName("isGenericMethodParameter")]
-    public bool IsGenericMethodParameter { get; set; }
-
-    [JsonPropertyName("isGenericType")]
-    public bool IsGenericType { get; set; }
-
-    [JsonPropertyName("isGenericTypeDefinition")]
-    public bool IsGenericTypeDefinition { get; set; }
-
-    [JsonPropertyName("isSZArray")]
-    public bool IsSZArray { get; set; }
-
-    [JsonPropertyName("isVariableBoundArray")]
-    public bool IsVariableBoundArray { get; set; }
-
-    [JsonPropertyName("isByRefLike")]
-    public bool IsByRefLike { get; set; }
-
-    [JsonPropertyName("isFunctionPointer")]
-    public bool IsFunctionPointer { get; set; }
-
-    [JsonPropertyName("isUnmanagedFunctionPointer")]
-    public bool IsUnmanagedFunctionPointer { get; set; }
-
-    [JsonPropertyName("hasElementType")]
-    public bool HasElementType { get; set; }
-
-    [JsonPropertyName("genericTypeArguments")]
-    public ICollection<Type> GenericTypeArguments { get; set; }
-
-    [JsonPropertyName("genericParameterPosition")]
-    public int GenericParameterPosition { get; set; }
-
-    [JsonPropertyName("genericParameterAttributes")]
-    public GenericParameterAttributes GenericParameterAttributes { get; set; }
-
-    [JsonPropertyName("attributes")]
-    public TypeAttributes Attributes { get; set; }
-
-    [JsonPropertyName("isAbstract")]
-    public bool IsAbstract { get; set; }
-
-    [JsonPropertyName("isImport")]
-    public bool IsImport { get; set; }
-
-    [JsonPropertyName("isSealed")]
-    public bool IsSealed { get; set; }
-
-    [JsonPropertyName("isSpecialName")]
-    public bool IsSpecialName { get; set; }
-
-    [JsonPropertyName("isClass")]
-    public bool IsClass { get; set; }
-
-    [JsonPropertyName("isNestedAssembly")]
-    public bool IsNestedAssembly { get; set; }
-
-    [JsonPropertyName("isNestedFamANDAssem")]
-    public bool IsNestedFamANDAssem { get; set; }
-
-    [JsonPropertyName("isNestedFamily")]
-    public bool IsNestedFamily { get; set; }
-
-    [JsonPropertyName("isNestedFamORAssem")]
-    public bool IsNestedFamORAssem { get; set; }
-
-    [JsonPropertyName("isNestedPrivate")]
-    public bool IsNestedPrivate { get; set; }
-
-    [JsonPropertyName("isNestedPublic")]
-    public bool IsNestedPublic { get; set; }
-
-    [JsonPropertyName("isNotPublic")]
-    public bool IsNotPublic { get; set; }
-
-    [JsonPropertyName("isPublic")]
-    public bool IsPublic { get; set; }
-
-    [JsonPropertyName("isAutoLayout")]
-    public bool IsAutoLayout { get; set; }
-
-    [JsonPropertyName("isExplicitLayout")]
-    public bool IsExplicitLayout { get; set; }
-
-    [JsonPropertyName("isLayoutSequential")]
-    public bool IsLayoutSequential { get; set; }
-
-    [JsonPropertyName("isAnsiClass")]
-    public bool IsAnsiClass { get; set; }
-
-    [JsonPropertyName("isAutoClass")]
-    public bool IsAutoClass { get; set; }
-
-    [JsonPropertyName("isUnicodeClass")]
-    public bool IsUnicodeClass { get; set; }
-
-    [JsonPropertyName("isCOMObject")]
-    public bool IsCOMObject { get; set; }
-
-    [JsonPropertyName("isContextful")]
-    public bool IsContextful { get; set; }
-
-    [JsonPropertyName("isEnum")]
-    public bool IsEnum { get; set; }
-
-    [JsonPropertyName("isMarshalByRef")]
-    public bool IsMarshalByRef { get; set; }
-
-    [JsonPropertyName("isPrimitive")]
-    public bool IsPrimitive { get; set; }
-
-    [JsonPropertyName("isValueType")]
-    public bool IsValueType { get; set; }
-
-    [JsonPropertyName("isSignatureType")]
-    public bool IsSignatureType { get; set; }
-
-    [JsonPropertyName("isSecurityCritical")]
-    public bool IsSecurityCritical { get; set; }
-
-    [JsonPropertyName("isSecuritySafeCritical")]
-    public bool IsSecuritySafeCritical { get; set; }
-
-    [JsonPropertyName("isSecurityTransparent")]
-    public bool IsSecurityTransparent { get; set; }
-
-    [JsonPropertyName("structLayoutAttribute")]
-    public StructLayoutAttribute StructLayoutAttribute { get; set; }
-
-    [JsonPropertyName("typeInitializer")]
-    public ConstructorInfo TypeInitializer { get; set; }
-
-    [JsonPropertyName("typeHandle")]
-    public RuntimeTypeHandle TypeHandle { get; set; }
-
-    [JsonPropertyName("guid")]
-    public System.Guid Guid { get; set; }
-
-    [JsonPropertyName("baseType")]
-    public Type BaseType { get; set; }
-
-    [JsonPropertyName("isSerializable")]
-    [System.Obsolete]
-    public bool IsSerializable { get; set; }
-
-    [JsonPropertyName("containsGenericParameters")]
-    public bool ContainsGenericParameters { get; set; }
-
-    [JsonPropertyName("isVisible")]
-    public bool IsVisible { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public enum TypeAttributes
-  {
-
-    _0 = 0,
-
-    _1 = 1,
-
-    _2 = 2,
-
-    _3 = 3,
-
-    _4 = 4,
-
-    _5 = 5,
-
-    _6 = 6,
-
-    _7 = 7,
-
-    _8 = 8,
-
-    _16 = 16,
-
-    _24 = 24,
-
-    _32 = 32,
-
-    _128 = 128,
-
-    _256 = 256,
-
-    _1024 = 1024,
-
-    _2048 = 2048,
-
-    _4096 = 4096,
-
-    _8192 = 8192,
-
-    _16384 = 16384,
-
-    _65536 = 65536,
-
-    _131072 = 131072,
-
-    _196608 = 196608,
-
-    _262144 = 262144,
-
-    _264192 = 264192,
-
-    _1048576 = 1048576,
-
-    _12582912 = 12582912,
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class TypeInfo
-  {
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; }
-
-    [JsonPropertyName("customAttributes")]
-    public ICollection<CustomAttributeData> CustomAttributes { get; set; }
-
-    [JsonPropertyName("isCollectible")]
-    public bool IsCollectible { get; set; }
-
-    [JsonPropertyName("metadataToken")]
-    public int MetadataToken { get; set; }
-
-    [JsonPropertyName("isInterface")]
-    public bool IsInterface { get; set; }
-
-    [JsonPropertyName("memberType")]
-    public MemberTypes MemberType { get; set; }
-
-    [JsonPropertyName("namespace")]
-    public string Namespace { get; set; }
-
-    [JsonPropertyName("assemblyQualifiedName")]
-    public string AssemblyQualifiedName { get; set; }
-
-    [JsonPropertyName("fullName")]
-    public string FullName { get; set; }
-
-    [JsonPropertyName("assembly")]
-    public Assembly Assembly { get; set; }
-
-    [JsonPropertyName("module")]
-    public Module Module { get; set; }
-
-    [JsonPropertyName("isNested")]
-    public bool IsNested { get; set; }
-
-    [JsonPropertyName("declaringType")]
-    public Type DeclaringType { get; set; }
-
-    [JsonPropertyName("declaringMethod")]
-    public MethodBase DeclaringMethod { get; set; }
-
-    [JsonPropertyName("reflectedType")]
-    public Type ReflectedType { get; set; }
-
-    [JsonPropertyName("underlyingSystemType")]
-    public Type UnderlyingSystemType { get; set; }
-
-    [JsonPropertyName("isTypeDefinition")]
-    public bool IsTypeDefinition { get; set; }
-
-    [JsonPropertyName("isArray")]
-    public bool IsArray { get; set; }
-
-    [JsonPropertyName("isByRef")]
-    public bool IsByRef { get; set; }
-
-    [JsonPropertyName("isPointer")]
-    public bool IsPointer { get; set; }
-
-    [JsonPropertyName("isConstructedGenericType")]
-    public bool IsConstructedGenericType { get; set; }
-
-    [JsonPropertyName("isGenericParameter")]
-    public bool IsGenericParameter { get; set; }
-
-    [JsonPropertyName("isGenericTypeParameter")]
-    public bool IsGenericTypeParameter { get; set; }
-
-    [JsonPropertyName("isGenericMethodParameter")]
-    public bool IsGenericMethodParameter { get; set; }
-
-    [JsonPropertyName("isGenericType")]
-    public bool IsGenericType { get; set; }
-
-    [JsonPropertyName("isGenericTypeDefinition")]
-    public bool IsGenericTypeDefinition { get; set; }
-
-    [JsonPropertyName("isSZArray")]
-    public bool IsSZArray { get; set; }
-
-    [JsonPropertyName("isVariableBoundArray")]
-    public bool IsVariableBoundArray { get; set; }
-
-    [JsonPropertyName("isByRefLike")]
-    public bool IsByRefLike { get; set; }
-
-    [JsonPropertyName("isFunctionPointer")]
-    public bool IsFunctionPointer { get; set; }
-
-    [JsonPropertyName("isUnmanagedFunctionPointer")]
-    public bool IsUnmanagedFunctionPointer { get; set; }
-
-    [JsonPropertyName("hasElementType")]
-    public bool HasElementType { get; set; }
-
-    [JsonPropertyName("genericTypeArguments")]
-    public ICollection<Type> GenericTypeArguments { get; set; }
-
-    [JsonPropertyName("genericParameterPosition")]
-    public int GenericParameterPosition { get; set; }
-
-    [JsonPropertyName("genericParameterAttributes")]
-    public GenericParameterAttributes GenericParameterAttributes { get; set; }
-
-    [JsonPropertyName("attributes")]
-    public TypeAttributes Attributes { get; set; }
-
-    [JsonPropertyName("isAbstract")]
-    public bool IsAbstract { get; set; }
-
-    [JsonPropertyName("isImport")]
-    public bool IsImport { get; set; }
-
-    [JsonPropertyName("isSealed")]
-    public bool IsSealed { get; set; }
-
-    [JsonPropertyName("isSpecialName")]
-    public bool IsSpecialName { get; set; }
-
-    [JsonPropertyName("isClass")]
-    public bool IsClass { get; set; }
-
-    [JsonPropertyName("isNestedAssembly")]
-    public bool IsNestedAssembly { get; set; }
-
-    [JsonPropertyName("isNestedFamANDAssem")]
-    public bool IsNestedFamANDAssem { get; set; }
-
-    [JsonPropertyName("isNestedFamily")]
-    public bool IsNestedFamily { get; set; }
-
-    [JsonPropertyName("isNestedFamORAssem")]
-    public bool IsNestedFamORAssem { get; set; }
-
-    [JsonPropertyName("isNestedPrivate")]
-    public bool IsNestedPrivate { get; set; }
-
-    [JsonPropertyName("isNestedPublic")]
-    public bool IsNestedPublic { get; set; }
-
-    [JsonPropertyName("isNotPublic")]
-    public bool IsNotPublic { get; set; }
-
-    [JsonPropertyName("isPublic")]
-    public bool IsPublic { get; set; }
-
-    [JsonPropertyName("isAutoLayout")]
-    public bool IsAutoLayout { get; set; }
-
-    [JsonPropertyName("isExplicitLayout")]
-    public bool IsExplicitLayout { get; set; }
-
-    [JsonPropertyName("isLayoutSequential")]
-    public bool IsLayoutSequential { get; set; }
-
-    [JsonPropertyName("isAnsiClass")]
-    public bool IsAnsiClass { get; set; }
-
-    [JsonPropertyName("isAutoClass")]
-    public bool IsAutoClass { get; set; }
-
-    [JsonPropertyName("isUnicodeClass")]
-    public bool IsUnicodeClass { get; set; }
-
-    [JsonPropertyName("isCOMObject")]
-    public bool IsCOMObject { get; set; }
-
-    [JsonPropertyName("isContextful")]
-    public bool IsContextful { get; set; }
-
-    [JsonPropertyName("isEnum")]
-    public bool IsEnum { get; set; }
-
-    [JsonPropertyName("isMarshalByRef")]
-    public bool IsMarshalByRef { get; set; }
-
-    [JsonPropertyName("isPrimitive")]
-    public bool IsPrimitive { get; set; }
-
-    [JsonPropertyName("isValueType")]
-    public bool IsValueType { get; set; }
-
-    [JsonPropertyName("isSignatureType")]
-    public bool IsSignatureType { get; set; }
-
-    [JsonPropertyName("isSecurityCritical")]
-    public bool IsSecurityCritical { get; set; }
-
-    [JsonPropertyName("isSecuritySafeCritical")]
-    public bool IsSecuritySafeCritical { get; set; }
-
-    [JsonPropertyName("isSecurityTransparent")]
-    public bool IsSecurityTransparent { get; set; }
-
-    [JsonPropertyName("structLayoutAttribute")]
-    public StructLayoutAttribute StructLayoutAttribute { get; set; }
-
-    [JsonPropertyName("typeInitializer")]
-    public ConstructorInfo TypeInitializer { get; set; }
-
-    [JsonPropertyName("typeHandle")]
-    public RuntimeTypeHandle TypeHandle { get; set; }
-
-    [JsonPropertyName("guid")]
-    public System.Guid Guid { get; set; }
-
-    [JsonPropertyName("baseType")]
-    public Type BaseType { get; set; }
-
-    [JsonPropertyName("isSerializable")]
-    [System.Obsolete]
-    public bool IsSerializable { get; set; }
-
-    [JsonPropertyName("containsGenericParameters")]
-    public bool ContainsGenericParameters { get; set; }
-
-    [JsonPropertyName("isVisible")]
-    public bool IsVisible { get; set; }
-
-    [JsonPropertyName("genericTypeParameters")]
-    public ICollection<Type> GenericTypeParameters { get; set; }
-
-    [JsonPropertyName("declaredConstructors")]
-    public ICollection<ConstructorInfo> DeclaredConstructors { get; set; }
-
-    [JsonPropertyName("declaredEvents")]
-    public ICollection<EventInfo> DeclaredEvents { get; set; }
-
-    [JsonPropertyName("declaredFields")]
-    public ICollection<FieldInfo> DeclaredFields { get; set; }
-
-    [JsonPropertyName("declaredMembers")]
-    public ICollection<MemberInfo> DeclaredMembers { get; set; }
-
-    [JsonPropertyName("declaredMethods")]
-    public ICollection<MethodInfo> DeclaredMethods { get; set; }
-
-    [JsonPropertyName("declaredNestedTypes")]
-    public ICollection<TypeInfo> DeclaredNestedTypes { get; set; }
-
-    [JsonPropertyName("declaredProperties")]
-    public ICollection<PropertyInfo> DeclaredProperties { get; set; }
-
-    [JsonPropertyName("implementedInterfaces")]
-    public ICollection<Type> ImplementedInterfaces { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class UserDetails
-  {
-
-    [JsonPropertyName("dietaryRestrictions")]
-    public ICollection<string> DietaryRestrictions { get; set; }
-
-    [JsonPropertyName("allergies")]
-    public ICollection<string> Allergies { get; set; }
-
-    [JsonPropertyName("skillLevel")]
-    public string SkillLevel { get; set; }
-
-    [JsonPropertyName("cookingGoals")]
-    public ICollection<string> CookingGoals { get; set; }
-
-    [JsonPropertyName("timeConstraints")]
-    public string TimeConstraints { get; set; }
-
-    [JsonPropertyName("healthFocus")]
-    public string HealthFocus { get; set; }
-
-    [JsonPropertyName("familyConsiderations")]
-    public string FamilyConsiderations { get; set; }
-
-    [JsonPropertyName("servingSize")]
-    public int ServingSize { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class UserRoleInfo
-  {
-
-    [JsonPropertyName("userId")]
-    public string UserId { get; set; }
-
-    [JsonPropertyName("userName")]
-    public string UserName { get; set; }
-
-    [JsonPropertyName("email")]
-    public string Email { get; set; }
-
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class FileParameter
-  {
-    public FileParameter(System.IO.Stream data)
-        : this(data, null, null)
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ApiKeyResponse
     {
+
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
+
+        [JsonPropertyName("keyValue")]
+        public string KeyValue { get; set; }
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+
+        [JsonPropertyName("createdAt")]
+        public System.DateTimeOffset CreatedAt { get; set; }
+
+        [JsonPropertyName("expiresAt")]
+        public System.DateTimeOffset? ExpiresAt { get; set; }
+
+        [JsonPropertyName("isActive")]
+        public bool IsActive { get; set; }
+
+        [JsonPropertyName("description")]
+        public string Description { get; set; }
+
     }
 
-    public FileParameter(System.IO.Stream data, string fileName)
-        : this(data, fileName, null)
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class Assembly
     {
+
+        [JsonPropertyName("definedTypes")]
+        public ICollection<TypeInfo> DefinedTypes { get; set; }
+
+        [JsonPropertyName("exportedTypes")]
+        public ICollection<Type> ExportedTypes { get; set; }
+
+        [JsonPropertyName("codeBase")]
+        [System.Obsolete]
+        public string CodeBase { get; set; }
+
+        [JsonPropertyName("entryPoint")]
+        public MethodInfo EntryPoint { get; set; }
+
+        [JsonPropertyName("fullName")]
+        public string FullName { get; set; }
+
+        [JsonPropertyName("imageRuntimeVersion")]
+        public string ImageRuntimeVersion { get; set; }
+
+        [JsonPropertyName("isDynamic")]
+        public bool IsDynamic { get; set; }
+
+        [JsonPropertyName("location")]
+        public string Location { get; set; }
+
+        [JsonPropertyName("reflectionOnly")]
+        public bool ReflectionOnly { get; set; }
+
+        [JsonPropertyName("isCollectible")]
+        public bool IsCollectible { get; set; }
+
+        [JsonPropertyName("isFullyTrusted")]
+        public bool IsFullyTrusted { get; set; }
+
+        [JsonPropertyName("customAttributes")]
+        public ICollection<CustomAttributeData> CustomAttributes { get; set; }
+
+        [JsonPropertyName("escapedCodeBase")]
+        [System.Obsolete]
+        public string EscapedCodeBase { get; set; }
+
+        [JsonPropertyName("manifestModule")]
+        public Module ManifestModule { get; set; }
+
+        [JsonPropertyName("modules")]
+        public ICollection<Module> Modules { get; set; }
+
+        [JsonPropertyName("globalAssemblyCache")]
+        [System.Obsolete]
+        public bool GlobalAssemblyCache { get; set; }
+
+        [JsonPropertyName("hostContext")]
+        public long HostContext { get; set; }
+
+        [JsonPropertyName("securityRuleSet")]
+        public SecurityRuleSet SecurityRuleSet { get; set; }
+
     }
 
-    public FileParameter(System.IO.Stream data, string fileName, string contentType)
+    /// <summary>
+    /// Standard response model for authentication operations.
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class AuthResponse
     {
-      Data = data;
-      FileName = fileName;
-      ContentType = contentType;
+        /// <summary>
+        /// Indicates whether the operation was successful.
+        /// </summary>
+
+        [JsonPropertyName("success")]
+        public bool Success { get; set; }
+
+        /// <summary>
+        /// A message describing the outcome of the operation.
+        /// </summary>
+
+        [JsonPropertyName("message")]
+        public string Message { get; set; }
+
+        /// <summary>
+        /// The email address associated with the operation, if applicable.
+        /// </summary>
+
+        [JsonPropertyName("email")]
+        public string Email { get; set; }
+
     }
 
-    public System.IO.Stream Data { get; private set; }
-
-    public string FileName { get; private set; }
-
-    public string ContentType { get; private set; }
-  }
-
-  [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-  public partial class FileResponse : System.IDisposable
-  {
-    private System.IDisposable _client;
-    private System.IDisposable _response;
-
-    public int StatusCode { get; private set; }
-
-    public IReadOnlyDictionary<string, IEnumerable<string>> Headers { get; private set; }
-
-    public System.IO.Stream Stream { get; private set; }
-
-    public bool IsPartial
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class BadRequestObjectResult
     {
-      get { return StatusCode == 206; }
+
+        [JsonPropertyName("value")]
+        public object Value { get; set; }
+
+        [JsonPropertyName("formatters")]
+        public ICollection<IOutputFormatter> Formatters { get; set; }
+
+        [JsonPropertyName("contentTypes")]
+        public ICollection<string> ContentTypes { get; set; }
+
+        [JsonPropertyName("declaredType")]
+        public Type DeclaredType { get; set; }
+
+        [JsonPropertyName("statusCode")]
+        public int? StatusCode { get; set; }
+
     }
 
-    public FileResponse(int statusCode, IReadOnlyDictionary<string, IEnumerable<string>> headers, System.IO.Stream stream, System.IDisposable client, System.IDisposable response)
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum CallingConventions
     {
-      StatusCode = statusCode;
-      Headers = headers;
-      Stream = stream;
-      _client = client;
-      _response = response;
+
+        _1 = 1,
+
+        _2 = 2,
+
+        _3 = 3,
+
+        _32 = 32,
+
+        _64 = 64,
+
     }
 
-    public void Dispose()
+    /// <summary>
+    /// Information about a checkout session that can be shared with clients
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class CheckoutSessionInfo
     {
-      Stream.Dispose();
-      if (_response != null)
-        _response.Dispose();
-      if (_client != null)
-        _client.Dispose();
+
+        [JsonPropertyName("id")]
+        public string Id { get; set; }
+
+        [JsonPropertyName("status")]
+        public string Status { get; set; }
+
+        [JsonPropertyName("customerEmail")]
+        public string CustomerEmail { get; set; }
+
+        [JsonPropertyName("amountTotal")]
+        public double? AmountTotal { get; set; }
+
+        [JsonPropertyName("currency")]
+        public string Currency { get; set; }
+
+        [JsonPropertyName("paymentStatus")]
+        public string PaymentStatus { get; set; }
+
     }
-  }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class CheckoutUrlResponse
+    {
+
+        [JsonPropertyName("checkoutUrl")]
+        public string CheckoutUrl { get; set; }
+
+    }
+
+    /// <summary>
+    /// Request model for the completion endpoint, accepting either text or audio input.
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class CompletionRequest
+    {
+        /// <summary>
+        /// The text prompt to send to the LLM. Use this OR audioPrompt.
+        /// </summary>
+
+        [JsonPropertyName("textPrompt")]
+        public string TextPrompt { get; set; }
+
+        /// <summary>
+        /// The audio prompt (e.g., WAV, MP3, WEBM) to be transcribed and then sent to the LLM. Use this OR textPrompt.
+        /// <br/>The request must use multipart/form-data encoding.
+        /// </summary>
+
+        [JsonPropertyName("audioPrompt")]
+        public byte[] AudioPrompt { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ConfigurationItemStatus
+    {
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+
+        [JsonPropertyName("status")]
+        public string Status { get; set; }
+
+        [JsonPropertyName("details")]
+        public string Details { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ConstructorInfo
+    {
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+
+        [JsonPropertyName("declaringType")]
+        public Type DeclaringType { get; set; }
+
+        [JsonPropertyName("reflectedType")]
+        public Type ReflectedType { get; set; }
+
+        [JsonPropertyName("module")]
+        public Module Module { get; set; }
+
+        [JsonPropertyName("customAttributes")]
+        public ICollection<CustomAttributeData> CustomAttributes { get; set; }
+
+        [JsonPropertyName("isCollectible")]
+        public bool IsCollectible { get; set; }
+
+        [JsonPropertyName("metadataToken")]
+        public int MetadataToken { get; set; }
+
+        [JsonPropertyName("attributes")]
+        public MethodAttributes Attributes { get; set; }
+
+        [JsonPropertyName("methodImplementationFlags")]
+        public MethodImplAttributes MethodImplementationFlags { get; set; }
+
+        [JsonPropertyName("callingConvention")]
+        public CallingConventions CallingConvention { get; set; }
+
+        [JsonPropertyName("isAbstract")]
+        public bool IsAbstract { get; set; }
+
+        [JsonPropertyName("isConstructor")]
+        public bool IsConstructor { get; set; }
+
+        [JsonPropertyName("isFinal")]
+        public bool IsFinal { get; set; }
+
+        [JsonPropertyName("isHideBySig")]
+        public bool IsHideBySig { get; set; }
+
+        [JsonPropertyName("isSpecialName")]
+        public bool IsSpecialName { get; set; }
+
+        [JsonPropertyName("isStatic")]
+        public bool IsStatic { get; set; }
+
+        [JsonPropertyName("isVirtual")]
+        public bool IsVirtual { get; set; }
+
+        [JsonPropertyName("isAssembly")]
+        public bool IsAssembly { get; set; }
+
+        [JsonPropertyName("isFamily")]
+        public bool IsFamily { get; set; }
+
+        [JsonPropertyName("isFamilyAndAssembly")]
+        public bool IsFamilyAndAssembly { get; set; }
+
+        [JsonPropertyName("isFamilyOrAssembly")]
+        public bool IsFamilyOrAssembly { get; set; }
+
+        [JsonPropertyName("isPrivate")]
+        public bool IsPrivate { get; set; }
+
+        [JsonPropertyName("isPublic")]
+        public bool IsPublic { get; set; }
+
+        [JsonPropertyName("isConstructedGenericMethod")]
+        public bool IsConstructedGenericMethod { get; set; }
+
+        [JsonPropertyName("isGenericMethod")]
+        public bool IsGenericMethod { get; set; }
+
+        [JsonPropertyName("isGenericMethodDefinition")]
+        public bool IsGenericMethodDefinition { get; set; }
+
+        [JsonPropertyName("containsGenericParameters")]
+        public bool ContainsGenericParameters { get; set; }
+
+        [JsonPropertyName("methodHandle")]
+        public RuntimeMethodHandle MethodHandle { get; set; }
+
+        [JsonPropertyName("isSecurityCritical")]
+        public bool IsSecurityCritical { get; set; }
+
+        [JsonPropertyName("isSecuritySafeCritical")]
+        public bool IsSecuritySafeCritical { get; set; }
+
+        [JsonPropertyName("isSecurityTransparent")]
+        public bool IsSecurityTransparent { get; set; }
+
+        [JsonPropertyName("memberType")]
+        public MemberTypes MemberType { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class CookbookContent
+    {
+
+        [JsonPropertyName("recipeSpecificationType")]
+        public string RecipeSpecificationType { get; set; }
+
+        [JsonPropertyName("specificRecipes")]
+        public ICollection<string> SpecificRecipes { get; set; }
+
+        [JsonPropertyName("generalMealTypes")]
+        public ICollection<string> GeneralMealTypes { get; set; }
+
+        [JsonPropertyName("expectedRecipeCount")]
+        public int ExpectedRecipeCount { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class CookbookDetails
+    {
+
+        [JsonPropertyName("theme")]
+        public string Theme { get; set; }
+
+        [JsonPropertyName("primaryPurpose")]
+        public string PrimaryPurpose { get; set; }
+
+        [JsonPropertyName("desiredCuisines")]
+        public ICollection<string> DesiredCuisines { get; set; }
+
+        [JsonPropertyName("culturalExploration")]
+        public string CulturalExploration { get; set; }
+
+        [JsonPropertyName("nutritionalGuidance")]
+        public string NutritionalGuidance { get; set; }
+
+        [JsonPropertyName("recipeModification")]
+        public string RecipeModification { get; set; }
+
+        [JsonPropertyName("ingredientFlexibility")]
+        public string IngredientFlexibility { get; set; }
+
+        [JsonPropertyName("overallStyle")]
+        public string OverallStyle { get; set; }
+
+        [JsonPropertyName("organization")]
+        public string Organization { get; set; }
+
+        [JsonPropertyName("specialSections")]
+        public ICollection<string> SpecialSections { get; set; }
+
+        [JsonPropertyName("storytelling")]
+        public string Storytelling { get; set; }
+
+        [JsonPropertyName("educationalContent")]
+        public ICollection<string> EducationalContent { get; set; }
+
+        [JsonPropertyName("practicalFeatures")]
+        public ICollection<string> PracticalFeatures { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class CookbookOrder
+    {
+
+        [JsonPropertyName("email")]
+        public string Email { get; set; }
+
+        [JsonPropertyName("cookbookContent")]
+        public CookbookContent CookbookContent { get; set; }
+
+        [JsonPropertyName("cookbookDetails")]
+        public CookbookDetails CookbookDetails { get; set; }
+
+        [JsonPropertyName("userDetails")]
+        public UserDetails UserDetails { get; set; }
+
+        [JsonPropertyName("orderId")]
+        public string OrderId { get; set; }
+
+        [JsonPropertyName("recipeList")]
+        public ICollection<string> RecipeList { get; set; }
+
+        [JsonPropertyName("synthesizedRecipes")]
+        public ICollection<SynthesizedRecipe> SynthesizedRecipes { get; set; }
+
+        [JsonPropertyName("status")]
+        public OrderStatus Status { get; set; }
+
+        [JsonPropertyName("requiresPayment")]
+        public bool RequiresPayment { get; set; }
+
+        [JsonPropertyName("customer")]
+        public Customer Customer { get; set; }
+
+        [JsonPropertyName("llmConversationId")]
+        public string LlmConversationId { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class CookbookOrderSubmission
+    {
+
+        [JsonPropertyName("email")]
+        public string Email { get; set; }
+
+        [JsonPropertyName("cookbookContent")]
+        public CookbookContent CookbookContent { get; set; }
+
+        [JsonPropertyName("cookbookDetails")]
+        public CookbookDetails CookbookDetails { get; set; }
+
+        [JsonPropertyName("userDetails")]
+        public UserDetails UserDetails { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class CreateApiKeyCommand
+    {
+
+        [JsonPropertyName("name")]
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 1)]
+        public string Name { get; set; }
+
+        [JsonPropertyName("description")]
+        [System.ComponentModel.DataAnnotations.StringLength(255)]
+        public string Description { get; set; }
+
+        [JsonPropertyName("expiresAt")]
+        public System.DateTimeOffset? ExpiresAt { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class CustomAttributeData
+    {
+
+        [JsonPropertyName("attributeType")]
+        public Type AttributeType { get; set; }
+
+        [JsonPropertyName("constructor")]
+        public ConstructorInfo Constructor { get; set; }
+
+        [JsonPropertyName("constructorArguments")]
+        public ICollection<CustomAttributeTypedArgument> ConstructorArguments { get; set; }
+
+        [JsonPropertyName("namedArguments")]
+        public ICollection<CustomAttributeNamedArgument> NamedArguments { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class CustomAttributeNamedArgument
+    {
+
+        [JsonPropertyName("memberInfo")]
+        public MemberInfo MemberInfo { get; set; }
+
+        [JsonPropertyName("typedValue")]
+        public CustomAttributeTypedArgument TypedValue { get; set; }
+
+        [JsonPropertyName("memberName")]
+        public string MemberName { get; set; }
+
+        [JsonPropertyName("isField")]
+        public bool IsField { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class CustomAttributeTypedArgument
+    {
+
+        [JsonPropertyName("argumentType")]
+        public Type ArgumentType { get; set; }
+
+        [JsonPropertyName("value")]
+        public object Value { get; set; }
+
+    }
+
+    /// <summary>
+    /// Represents a user/customer of the Cookbook service.
+    /// <br/>Tracks how many recipe credits they have available (for free usage or otherwise).
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class Customer
+    {
+        /// <summary>
+        /// Unique key for identifying the customer.
+        /// <br/>Currently, using email as the primary key.
+        /// </summary>
+
+        [JsonPropertyName("email")]
+        public string Email { get; set; }
+
+        /// <summary>
+        /// How many recipes the user can still generate without paying (e.g. free allotment or purchased credits).
+        /// </summary>
+
+        [JsonPropertyName("availableRecipes")]
+        public int AvailableRecipes { get; set; }
+
+        /// <summary>
+        /// Total number of recipes that have been synthesized for this user across all orders (historical).
+        /// </summary>
+
+        [JsonPropertyName("lifetimeRecipesUsed")]
+        public int LifetimeRecipesUsed { get; set; }
+
+        /// <summary>
+        /// Total number of recipes that have been purchased by this user (historical).
+        /// </summary>
+
+        [JsonPropertyName("lifetimePurchasedRecipes")]
+        public int LifetimePurchasedRecipes { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum EventAttributes
+    {
+
+        _0 = 0,
+
+        _512 = 512,
+
+        _1024 = 1024,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class EventInfo
+    {
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+
+        [JsonPropertyName("declaringType")]
+        public Type DeclaringType { get; set; }
+
+        [JsonPropertyName("reflectedType")]
+        public Type ReflectedType { get; set; }
+
+        [JsonPropertyName("module")]
+        public Module Module { get; set; }
+
+        [JsonPropertyName("customAttributes")]
+        public ICollection<CustomAttributeData> CustomAttributes { get; set; }
+
+        [JsonPropertyName("isCollectible")]
+        public bool IsCollectible { get; set; }
+
+        [JsonPropertyName("metadataToken")]
+        public int MetadataToken { get; set; }
+
+        [JsonPropertyName("memberType")]
+        public MemberTypes MemberType { get; set; }
+
+        [JsonPropertyName("attributes")]
+        public EventAttributes Attributes { get; set; }
+
+        [JsonPropertyName("isSpecialName")]
+        public bool IsSpecialName { get; set; }
+
+        [JsonPropertyName("addMethod")]
+        public MethodInfo AddMethod { get; set; }
+
+        [JsonPropertyName("removeMethod")]
+        public MethodInfo RemoveMethod { get; set; }
+
+        [JsonPropertyName("raiseMethod")]
+        public MethodInfo RaiseMethod { get; set; }
+
+        [JsonPropertyName("isMulticast")]
+        public bool IsMulticast { get; set; }
+
+        [JsonPropertyName("eventHandlerType")]
+        public Type EventHandlerType { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum FieldAttributes
+    {
+
+        _0 = 0,
+
+        _1 = 1,
+
+        _2 = 2,
+
+        _3 = 3,
+
+        _4 = 4,
+
+        _5 = 5,
+
+        _6 = 6,
+
+        _7 = 7,
+
+        _16 = 16,
+
+        _32 = 32,
+
+        _64 = 64,
+
+        _128 = 128,
+
+        _256 = 256,
+
+        _512 = 512,
+
+        _1024 = 1024,
+
+        _4096 = 4096,
+
+        _8192 = 8192,
+
+        _32768 = 32768,
+
+        _38144 = 38144,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class FieldInfo
+    {
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+
+        [JsonPropertyName("declaringType")]
+        public Type DeclaringType { get; set; }
+
+        [JsonPropertyName("reflectedType")]
+        public Type ReflectedType { get; set; }
+
+        [JsonPropertyName("module")]
+        public Module Module { get; set; }
+
+        [JsonPropertyName("customAttributes")]
+        public ICollection<CustomAttributeData> CustomAttributes { get; set; }
+
+        [JsonPropertyName("isCollectible")]
+        public bool IsCollectible { get; set; }
+
+        [JsonPropertyName("metadataToken")]
+        public int MetadataToken { get; set; }
+
+        [JsonPropertyName("memberType")]
+        public MemberTypes MemberType { get; set; }
+
+        [JsonPropertyName("attributes")]
+        public FieldAttributes Attributes { get; set; }
+
+        [JsonPropertyName("fieldType")]
+        public Type FieldType { get; set; }
+
+        [JsonPropertyName("isInitOnly")]
+        public bool IsInitOnly { get; set; }
+
+        [JsonPropertyName("isLiteral")]
+        public bool IsLiteral { get; set; }
+
+        [JsonPropertyName("isNotSerialized")]
+        [System.Obsolete]
+        public bool IsNotSerialized { get; set; }
+
+        [JsonPropertyName("isPinvokeImpl")]
+        public bool IsPinvokeImpl { get; set; }
+
+        [JsonPropertyName("isSpecialName")]
+        public bool IsSpecialName { get; set; }
+
+        [JsonPropertyName("isStatic")]
+        public bool IsStatic { get; set; }
+
+        [JsonPropertyName("isAssembly")]
+        public bool IsAssembly { get; set; }
+
+        [JsonPropertyName("isFamily")]
+        public bool IsFamily { get; set; }
+
+        [JsonPropertyName("isFamilyAndAssembly")]
+        public bool IsFamilyAndAssembly { get; set; }
+
+        [JsonPropertyName("isFamilyOrAssembly")]
+        public bool IsFamilyOrAssembly { get; set; }
+
+        [JsonPropertyName("isPrivate")]
+        public bool IsPrivate { get; set; }
+
+        [JsonPropertyName("isPublic")]
+        public bool IsPublic { get; set; }
+
+        [JsonPropertyName("isSecurityCritical")]
+        public bool IsSecurityCritical { get; set; }
+
+        [JsonPropertyName("isSecuritySafeCritical")]
+        public bool IsSecuritySafeCritical { get; set; }
+
+        [JsonPropertyName("isSecurityTransparent")]
+        public bool IsSecurityTransparent { get; set; }
+
+        [JsonPropertyName("fieldHandle")]
+        public RuntimeFieldHandle FieldHandle { get; set; }
+
+    }
+
+    /// <summary>
+    /// Request model to initiate the forgot password process.
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ForgotPasswordRequest
+    {
+        /// <summary>
+        /// The email address of the user who forgot their password.
+        /// </summary>
+
+        [JsonPropertyName("email")]
+        public string Email { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum GenericParameterAttributes
+    {
+
+        _0 = 0,
+
+        _1 = 1,
+
+        _2 = 2,
+
+        _3 = 3,
+
+        _4 = 4,
+
+        _8 = 8,
+
+        _16 = 16,
+
+        _28 = 28,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ICustomAttributeProvider
+    {
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class IOutputFormatter
+    {
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class IntPtr
+    {
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum LayoutKind
+    {
+
+        _0 = 0,
+
+        _2 = 2,
+
+        _3 = 3,
+
+    }
+
+    /// <summary>
+    /// Request model for user login.
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class LoginRequest
+    {
+        /// <summary>
+        /// The user's registered email address.
+        /// </summary>
+
+        [JsonPropertyName("email")]
+        public string Email { get; set; }
+
+        /// <summary>
+        /// The user's password.
+        /// </summary>
+
+        [JsonPropertyName("password")]
+        public string Password { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class MemberInfo
+    {
+
+        [JsonPropertyName("memberType")]
+        public MemberTypes MemberType { get; set; }
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+
+        [JsonPropertyName("declaringType")]
+        public Type DeclaringType { get; set; }
+
+        [JsonPropertyName("reflectedType")]
+        public Type ReflectedType { get; set; }
+
+        [JsonPropertyName("module")]
+        public Module Module { get; set; }
+
+        [JsonPropertyName("customAttributes")]
+        public ICollection<CustomAttributeData> CustomAttributes { get; set; }
+
+        [JsonPropertyName("isCollectible")]
+        public bool IsCollectible { get; set; }
+
+        [JsonPropertyName("metadataToken")]
+        public int MetadataToken { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum MemberTypes
+    {
+
+        _1 = 1,
+
+        _2 = 2,
+
+        _4 = 4,
+
+        _8 = 8,
+
+        _16 = 16,
+
+        _32 = 32,
+
+        _64 = 64,
+
+        _128 = 128,
+
+        _191 = 191,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum MethodAttributes
+    {
+
+        _0 = 0,
+
+        _1 = 1,
+
+        _2 = 2,
+
+        _3 = 3,
+
+        _4 = 4,
+
+        _5 = 5,
+
+        _6 = 6,
+
+        _7 = 7,
+
+        _8 = 8,
+
+        _16 = 16,
+
+        _32 = 32,
+
+        _64 = 64,
+
+        _128 = 128,
+
+        _256 = 256,
+
+        _512 = 512,
+
+        _1024 = 1024,
+
+        _2048 = 2048,
+
+        _4096 = 4096,
+
+        _8192 = 8192,
+
+        _16384 = 16384,
+
+        _32768 = 32768,
+
+        _53248 = 53248,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class MethodBase
+    {
+
+        [JsonPropertyName("memberType")]
+        public MemberTypes MemberType { get; set; }
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+
+        [JsonPropertyName("declaringType")]
+        public Type DeclaringType { get; set; }
+
+        [JsonPropertyName("reflectedType")]
+        public Type ReflectedType { get; set; }
+
+        [JsonPropertyName("module")]
+        public Module Module { get; set; }
+
+        [JsonPropertyName("customAttributes")]
+        public ICollection<CustomAttributeData> CustomAttributes { get; set; }
+
+        [JsonPropertyName("isCollectible")]
+        public bool IsCollectible { get; set; }
+
+        [JsonPropertyName("metadataToken")]
+        public int MetadataToken { get; set; }
+
+        [JsonPropertyName("attributes")]
+        public MethodAttributes Attributes { get; set; }
+
+        [JsonPropertyName("methodImplementationFlags")]
+        public MethodImplAttributes MethodImplementationFlags { get; set; }
+
+        [JsonPropertyName("callingConvention")]
+        public CallingConventions CallingConvention { get; set; }
+
+        [JsonPropertyName("isAbstract")]
+        public bool IsAbstract { get; set; }
+
+        [JsonPropertyName("isConstructor")]
+        public bool IsConstructor { get; set; }
+
+        [JsonPropertyName("isFinal")]
+        public bool IsFinal { get; set; }
+
+        [JsonPropertyName("isHideBySig")]
+        public bool IsHideBySig { get; set; }
+
+        [JsonPropertyName("isSpecialName")]
+        public bool IsSpecialName { get; set; }
+
+        [JsonPropertyName("isStatic")]
+        public bool IsStatic { get; set; }
+
+        [JsonPropertyName("isVirtual")]
+        public bool IsVirtual { get; set; }
+
+        [JsonPropertyName("isAssembly")]
+        public bool IsAssembly { get; set; }
+
+        [JsonPropertyName("isFamily")]
+        public bool IsFamily { get; set; }
+
+        [JsonPropertyName("isFamilyAndAssembly")]
+        public bool IsFamilyAndAssembly { get; set; }
+
+        [JsonPropertyName("isFamilyOrAssembly")]
+        public bool IsFamilyOrAssembly { get; set; }
+
+        [JsonPropertyName("isPrivate")]
+        public bool IsPrivate { get; set; }
+
+        [JsonPropertyName("isPublic")]
+        public bool IsPublic { get; set; }
+
+        [JsonPropertyName("isConstructedGenericMethod")]
+        public bool IsConstructedGenericMethod { get; set; }
+
+        [JsonPropertyName("isGenericMethod")]
+        public bool IsGenericMethod { get; set; }
+
+        [JsonPropertyName("isGenericMethodDefinition")]
+        public bool IsGenericMethodDefinition { get; set; }
+
+        [JsonPropertyName("containsGenericParameters")]
+        public bool ContainsGenericParameters { get; set; }
+
+        [JsonPropertyName("methodHandle")]
+        public RuntimeMethodHandle MethodHandle { get; set; }
+
+        [JsonPropertyName("isSecurityCritical")]
+        public bool IsSecurityCritical { get; set; }
+
+        [JsonPropertyName("isSecuritySafeCritical")]
+        public bool IsSecuritySafeCritical { get; set; }
+
+        [JsonPropertyName("isSecurityTransparent")]
+        public bool IsSecurityTransparent { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum MethodImplAttributes
+    {
+
+        _0 = 0,
+
+        _1 = 1,
+
+        _2 = 2,
+
+        _3 = 3,
+
+        _4 = 4,
+
+        _8 = 8,
+
+        _16 = 16,
+
+        _32 = 32,
+
+        _64 = 64,
+
+        _128 = 128,
+
+        _256 = 256,
+
+        _512 = 512,
+
+        _4096 = 4096,
+
+        _65535 = 65535,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class MethodInfo
+    {
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+
+        [JsonPropertyName("declaringType")]
+        public Type DeclaringType { get; set; }
+
+        [JsonPropertyName("reflectedType")]
+        public Type ReflectedType { get; set; }
+
+        [JsonPropertyName("module")]
+        public Module Module { get; set; }
+
+        [JsonPropertyName("customAttributes")]
+        public ICollection<CustomAttributeData> CustomAttributes { get; set; }
+
+        [JsonPropertyName("isCollectible")]
+        public bool IsCollectible { get; set; }
+
+        [JsonPropertyName("metadataToken")]
+        public int MetadataToken { get; set; }
+
+        [JsonPropertyName("attributes")]
+        public MethodAttributes Attributes { get; set; }
+
+        [JsonPropertyName("methodImplementationFlags")]
+        public MethodImplAttributes MethodImplementationFlags { get; set; }
+
+        [JsonPropertyName("callingConvention")]
+        public CallingConventions CallingConvention { get; set; }
+
+        [JsonPropertyName("isAbstract")]
+        public bool IsAbstract { get; set; }
+
+        [JsonPropertyName("isConstructor")]
+        public bool IsConstructor { get; set; }
+
+        [JsonPropertyName("isFinal")]
+        public bool IsFinal { get; set; }
+
+        [JsonPropertyName("isHideBySig")]
+        public bool IsHideBySig { get; set; }
+
+        [JsonPropertyName("isSpecialName")]
+        public bool IsSpecialName { get; set; }
+
+        [JsonPropertyName("isStatic")]
+        public bool IsStatic { get; set; }
+
+        [JsonPropertyName("isVirtual")]
+        public bool IsVirtual { get; set; }
+
+        [JsonPropertyName("isAssembly")]
+        public bool IsAssembly { get; set; }
+
+        [JsonPropertyName("isFamily")]
+        public bool IsFamily { get; set; }
+
+        [JsonPropertyName("isFamilyAndAssembly")]
+        public bool IsFamilyAndAssembly { get; set; }
+
+        [JsonPropertyName("isFamilyOrAssembly")]
+        public bool IsFamilyOrAssembly { get; set; }
+
+        [JsonPropertyName("isPrivate")]
+        public bool IsPrivate { get; set; }
+
+        [JsonPropertyName("isPublic")]
+        public bool IsPublic { get; set; }
+
+        [JsonPropertyName("isConstructedGenericMethod")]
+        public bool IsConstructedGenericMethod { get; set; }
+
+        [JsonPropertyName("isGenericMethod")]
+        public bool IsGenericMethod { get; set; }
+
+        [JsonPropertyName("isGenericMethodDefinition")]
+        public bool IsGenericMethodDefinition { get; set; }
+
+        [JsonPropertyName("containsGenericParameters")]
+        public bool ContainsGenericParameters { get; set; }
+
+        [JsonPropertyName("methodHandle")]
+        public RuntimeMethodHandle MethodHandle { get; set; }
+
+        [JsonPropertyName("isSecurityCritical")]
+        public bool IsSecurityCritical { get; set; }
+
+        [JsonPropertyName("isSecuritySafeCritical")]
+        public bool IsSecuritySafeCritical { get; set; }
+
+        [JsonPropertyName("isSecurityTransparent")]
+        public bool IsSecurityTransparent { get; set; }
+
+        [JsonPropertyName("memberType")]
+        public MemberTypes MemberType { get; set; }
+
+        [JsonPropertyName("returnParameter")]
+        public ParameterInfo ReturnParameter { get; set; }
+
+        [JsonPropertyName("returnType")]
+        public Type ReturnType { get; set; }
+
+        [JsonPropertyName("returnTypeCustomAttributes")]
+        public ICustomAttributeProvider ReturnTypeCustomAttributes { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class Module
+    {
+
+        [JsonPropertyName("assembly")]
+        public Assembly Assembly { get; set; }
+
+        [JsonPropertyName("fullyQualifiedName")]
+        public string FullyQualifiedName { get; set; }
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+
+        [JsonPropertyName("mdStreamVersion")]
+        public int MdStreamVersion { get; set; }
+
+        [JsonPropertyName("moduleVersionId")]
+        public System.Guid ModuleVersionId { get; set; }
+
+        [JsonPropertyName("scopeName")]
+        public string ScopeName { get; set; }
+
+        [JsonPropertyName("moduleHandle")]
+        public ModuleHandle ModuleHandle { get; set; }
+
+        [JsonPropertyName("customAttributes")]
+        public ICollection<CustomAttributeData> CustomAttributes { get; set; }
+
+        [JsonPropertyName("metadataToken")]
+        public int MetadataToken { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ModuleHandle
+    {
+
+        [JsonPropertyName("mdStreamVersion")]
+        public int MdStreamVersion { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class NotFoundResult
+    {
+
+        [JsonPropertyName("statusCode")]
+        public int StatusCode { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum OrderStatus
+    {
+
+        _0 = 0,
+
+        _1 = 1,
+
+        _2 = 2,
+
+        _3 = 3,
+
+        _4 = 4,
+
+        _5 = 5,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum ParameterAttributes
+    {
+
+        _0 = 0,
+
+        _1 = 1,
+
+        _2 = 2,
+
+        _4 = 4,
+
+        _8 = 8,
+
+        _16 = 16,
+
+        _4096 = 4096,
+
+        _8192 = 8192,
+
+        _16384 = 16384,
+
+        _32768 = 32768,
+
+        _61440 = 61440,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ParameterInfo
+    {
+
+        [JsonPropertyName("attributes")]
+        public ParameterAttributes Attributes { get; set; }
+
+        [JsonPropertyName("member")]
+        public MemberInfo Member { get; set; }
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+
+        [JsonPropertyName("parameterType")]
+        public Type ParameterType { get; set; }
+
+        [JsonPropertyName("position")]
+        public int Position { get; set; }
+
+        [JsonPropertyName("isIn")]
+        public bool IsIn { get; set; }
+
+        [JsonPropertyName("isLcid")]
+        public bool IsLcid { get; set; }
+
+        [JsonPropertyName("isOptional")]
+        public bool IsOptional { get; set; }
+
+        [JsonPropertyName("isOut")]
+        public bool IsOut { get; set; }
+
+        [JsonPropertyName("isRetval")]
+        public bool IsRetval { get; set; }
+
+        [JsonPropertyName("defaultValue")]
+        public object DefaultValue { get; set; }
+
+        [JsonPropertyName("rawDefaultValue")]
+        public object RawDefaultValue { get; set; }
+
+        [JsonPropertyName("hasDefaultValue")]
+        public bool HasDefaultValue { get; set; }
+
+        [JsonPropertyName("customAttributes")]
+        public ICollection<CustomAttributeData> CustomAttributes { get; set; }
+
+        [JsonPropertyName("metadataToken")]
+        public int MetadataToken { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class PaymentIntentRequest
+    {
+
+        [JsonPropertyName("amount")]
+        public long Amount { get; set; }
+
+        [JsonPropertyName("currency")]
+        public string Currency { get; set; }
+
+        [JsonPropertyName("description")]
+        public string Description { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ProblemDetails
+    {
+
+        [JsonPropertyName("type")]
+        public string Type { get; set; }
+
+        [JsonPropertyName("title")]
+        public string Title { get; set; }
+
+        [JsonPropertyName("status")]
+        public int? Status { get; set; }
+
+        [JsonPropertyName("detail")]
+        public string Detail { get; set; }
+
+        [JsonPropertyName("instance")]
+        public string Instance { get; set; }
+
+        private IDictionary<string, object> _additionalProperties;
+
+        [JsonExtensionData]
+        public IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties ?? (_additionalProperties = new Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum PropertyAttributes
+    {
+
+        _0 = 0,
+
+        _512 = 512,
+
+        _1024 = 1024,
+
+        _4096 = 4096,
+
+        _8192 = 8192,
+
+        _16384 = 16384,
+
+        _32768 = 32768,
+
+        _62464 = 62464,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class PropertyInfo
+    {
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+
+        [JsonPropertyName("declaringType")]
+        public Type DeclaringType { get; set; }
+
+        [JsonPropertyName("reflectedType")]
+        public Type ReflectedType { get; set; }
+
+        [JsonPropertyName("module")]
+        public Module Module { get; set; }
+
+        [JsonPropertyName("customAttributes")]
+        public ICollection<CustomAttributeData> CustomAttributes { get; set; }
+
+        [JsonPropertyName("isCollectible")]
+        public bool IsCollectible { get; set; }
+
+        [JsonPropertyName("metadataToken")]
+        public int MetadataToken { get; set; }
+
+        [JsonPropertyName("memberType")]
+        public MemberTypes MemberType { get; set; }
+
+        [JsonPropertyName("propertyType")]
+        public Type PropertyType { get; set; }
+
+        [JsonPropertyName("attributes")]
+        public PropertyAttributes Attributes { get; set; }
+
+        [JsonPropertyName("isSpecialName")]
+        public bool IsSpecialName { get; set; }
+
+        [JsonPropertyName("canRead")]
+        public bool CanRead { get; set; }
+
+        [JsonPropertyName("canWrite")]
+        public bool CanWrite { get; set; }
+
+        [JsonPropertyName("getMethod")]
+        public MethodInfo GetMethod { get; set; }
+
+        [JsonPropertyName("setMethod")]
+        public MethodInfo SetMethod { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class Recipe
+    {
+
+        [JsonPropertyName("id")]
+        public string Id { get; set; }
+
+        [JsonPropertyName("title")]
+        public string Title { get; set; }
+
+        [JsonPropertyName("description")]
+        public string Description { get; set; }
+
+        [JsonPropertyName("servings")]
+        public string Servings { get; set; }
+
+        [JsonPropertyName("prepTime")]
+        public string PrepTime { get; set; }
+
+        [JsonPropertyName("cookTime")]
+        public string CookTime { get; set; }
+
+        [JsonPropertyName("totalTime")]
+        public string TotalTime { get; set; }
+
+        [JsonPropertyName("ingredients")]
+        public ICollection<string> Ingredients { get; set; }
+
+        [JsonPropertyName("directions")]
+        public ICollection<string> Directions { get; set; }
+
+        [JsonPropertyName("notes")]
+        public string Notes { get; set; }
+
+        [JsonPropertyName("cleaned")]
+        public bool Cleaned { get; set; }
+
+        [JsonPropertyName("recipeUrl")]
+        public string RecipeUrl { get; set; }
+
+        [JsonPropertyName("imageUrl")]
+        public string ImageUrl { get; set; }
+
+        [JsonPropertyName("aliases")]
+        public ICollection<string> Aliases { get; set; }
+
+        [JsonPropertyName("indexTitle")]
+        public string IndexTitle { get; set; }
+
+        [JsonPropertyName("relevancy")]
+        public IDictionary<string, RelevancyResult> Relevancy { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class RecipeCreditRequest
+    {
+
+        [JsonPropertyName("email")]
+        public string Email { get; set; }
+
+        [JsonPropertyName("recipeCount")]
+        public int RecipeCount { get; set; }
+
+    }
+
+    /// <summary>
+    /// Request model for user registration.
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class RegisterRequest
+    {
+        /// <summary>
+        /// The user's desired email address. Must be unique.
+        /// </summary>
+
+        [JsonPropertyName("email")]
+        public string Email { get; set; }
+
+        /// <summary>
+        /// The user's chosen password. Minimum length and complexity requirements may apply (defined server-side).
+        /// </summary>
+
+        [JsonPropertyName("password")]
+        public string Password { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class RelevancyResult
+    {
+
+        [JsonPropertyName("query")]
+        public string Query { get; set; }
+
+        [JsonPropertyName("score")]
+        public int Score { get; set; }
+
+        [JsonPropertyName("reasoning")]
+        public string Reasoning { get; set; }
+
+    }
+
+    /// <summary>
+    /// Request model for resending the email confirmation link.
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ResendConfirmationRequest
+    {
+        /// <summary>
+        /// The email address to resend the confirmation link to.
+        /// </summary>
+
+        [JsonPropertyName("email")]
+        public string Email { get; set; }
+
+    }
+
+    /// <summary>
+    /// Request model to reset the password using a token.
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ResetPasswordRequest
+    {
+        /// <summary>
+        /// The email address of the user resetting their password.
+        /// </summary>
+
+        [JsonPropertyName("email")]
+        public string Email { get; set; }
+
+        /// <summary>
+        /// The password reset token received via email.
+        /// </summary>
+
+        [JsonPropertyName("token")]
+        public string Token { get; set; }
+
+        /// <summary>
+        /// The user's desired new password.
+        /// </summary>
+
+        [JsonPropertyName("newPassword")]
+        public string NewPassword { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class RoleCommandResult
+    {
+
+        [JsonPropertyName("success")]
+        public bool Success { get; set; }
+
+        [JsonPropertyName("message")]
+        public string Message { get; set; }
+
+        [JsonPropertyName("roles")]
+        public ICollection<string> Roles { get; set; }
+
+    }
+
+    /// <summary>
+    /// Request model for assigning or removing user roles.
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class RoleRequest
+    {
+        /// <summary>
+        /// The unique identifier of the target user (user ID or email address).
+        /// </summary>
+
+        [JsonPropertyName("identifier")]
+        public string Identifier { get; set; }
+
+        /// <summary>
+        /// The name of the role to add or remove (e.g., "admin", "editor"). Case sensitivity depends on the underlying store.
+        /// </summary>
+
+        [JsonPropertyName("roleName")]
+        public string RoleName { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class RuntimeFieldHandle
+    {
+
+        [JsonPropertyName("value")]
+        public IntPtr Value { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class RuntimeMethodHandle
+    {
+
+        [JsonPropertyName("value")]
+        public IntPtr Value { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class RuntimeTypeHandle
+    {
+
+        [JsonPropertyName("value")]
+        public IntPtr Value { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum SecurityRuleSet
+    {
+
+        _0 = 0,
+
+        _1 = 1,
+
+        _2 = 2,
+
+    }
+
+    /// <summary>
+    /// Represents the status of a service based on its configuration availability.
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ServiceStatusInfo
+    {
+        /// <summary>
+        /// Whether the service is available based on its configuration.
+        /// </summary>
+
+        [JsonPropertyName("isAvailable")]
+        public bool IsAvailable { get; set; }
+
+        /// <summary>
+        /// A list of missing configuration keys if the service is unavailable.
+        /// </summary>
+
+        [JsonPropertyName("missingConfigurations")]
+        public ICollection<string> MissingConfigurations { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class StructLayoutAttribute
+    {
+
+        [JsonPropertyName("typeId")]
+        public object TypeId { get; set; }
+
+        [JsonPropertyName("value")]
+        public LayoutKind Value { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class SynthesizedRecipe
+    {
+
+        [JsonPropertyName("title")]
+        public string Title { get; set; }
+
+        [JsonPropertyName("description")]
+        public string Description { get; set; }
+
+        [JsonPropertyName("servings")]
+        public string Servings { get; set; }
+
+        [JsonPropertyName("prepTime")]
+        public string PrepTime { get; set; }
+
+        [JsonPropertyName("cookTime")]
+        public string CookTime { get; set; }
+
+        [JsonPropertyName("totalTime")]
+        public string TotalTime { get; set; }
+
+        [JsonPropertyName("ingredients")]
+        public ICollection<string> Ingredients { get; set; }
+
+        [JsonPropertyName("directions")]
+        public ICollection<string> Directions { get; set; }
+
+        [JsonPropertyName("notes")]
+        public string Notes { get; set; }
+
+        [JsonPropertyName("inspiredBy")]
+        public ICollection<string> InspiredBy { get; set; }
+
+        [JsonPropertyName("imageUrls")]
+        public ICollection<string> ImageUrls { get; set; }
+
+        [JsonPropertyName("sourceRecipes")]
+        public ICollection<Recipe> SourceRecipes { get; set; }
+
+        [JsonPropertyName("qualityScore")]
+        public int? QualityScore { get; set; }
+
+        [JsonPropertyName("analysis")]
+        public string Analysis { get; set; }
+
+        [JsonPropertyName("suggestions")]
+        public string Suggestions { get; set; }
+
+        [JsonPropertyName("attemptCount")]
+        public int AttemptCount { get; set; }
+
+        [JsonPropertyName("revisions")]
+        public ICollection<SynthesizedRecipe> Revisions { get; set; }
+
+        [JsonPropertyName("isAnalyzed")]
+        public bool IsAnalyzed { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class Type
+    {
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+
+        [JsonPropertyName("customAttributes")]
+        public ICollection<CustomAttributeData> CustomAttributes { get; set; }
+
+        [JsonPropertyName("isCollectible")]
+        public bool IsCollectible { get; set; }
+
+        [JsonPropertyName("metadataToken")]
+        public int MetadataToken { get; set; }
+
+        [JsonPropertyName("isInterface")]
+        public bool IsInterface { get; set; }
+
+        [JsonPropertyName("memberType")]
+        public MemberTypes MemberType { get; set; }
+
+        [JsonPropertyName("namespace")]
+        public string Namespace { get; set; }
+
+        [JsonPropertyName("assemblyQualifiedName")]
+        public string AssemblyQualifiedName { get; set; }
+
+        [JsonPropertyName("fullName")]
+        public string FullName { get; set; }
+
+        [JsonPropertyName("assembly")]
+        public Assembly Assembly { get; set; }
+
+        [JsonPropertyName("module")]
+        public Module Module { get; set; }
+
+        [JsonPropertyName("isNested")]
+        public bool IsNested { get; set; }
+
+        [JsonPropertyName("declaringType")]
+        public Type DeclaringType { get; set; }
+
+        [JsonPropertyName("declaringMethod")]
+        public MethodBase DeclaringMethod { get; set; }
+
+        [JsonPropertyName("reflectedType")]
+        public Type ReflectedType { get; set; }
+
+        [JsonPropertyName("underlyingSystemType")]
+        public Type UnderlyingSystemType { get; set; }
+
+        [JsonPropertyName("isTypeDefinition")]
+        public bool IsTypeDefinition { get; set; }
+
+        [JsonPropertyName("isArray")]
+        public bool IsArray { get; set; }
+
+        [JsonPropertyName("isByRef")]
+        public bool IsByRef { get; set; }
+
+        [JsonPropertyName("isPointer")]
+        public bool IsPointer { get; set; }
+
+        [JsonPropertyName("isConstructedGenericType")]
+        public bool IsConstructedGenericType { get; set; }
+
+        [JsonPropertyName("isGenericParameter")]
+        public bool IsGenericParameter { get; set; }
+
+        [JsonPropertyName("isGenericTypeParameter")]
+        public bool IsGenericTypeParameter { get; set; }
+
+        [JsonPropertyName("isGenericMethodParameter")]
+        public bool IsGenericMethodParameter { get; set; }
+
+        [JsonPropertyName("isGenericType")]
+        public bool IsGenericType { get; set; }
+
+        [JsonPropertyName("isGenericTypeDefinition")]
+        public bool IsGenericTypeDefinition { get; set; }
+
+        [JsonPropertyName("isSZArray")]
+        public bool IsSZArray { get; set; }
+
+        [JsonPropertyName("isVariableBoundArray")]
+        public bool IsVariableBoundArray { get; set; }
+
+        [JsonPropertyName("isByRefLike")]
+        public bool IsByRefLike { get; set; }
+
+        [JsonPropertyName("isFunctionPointer")]
+        public bool IsFunctionPointer { get; set; }
+
+        [JsonPropertyName("isUnmanagedFunctionPointer")]
+        public bool IsUnmanagedFunctionPointer { get; set; }
+
+        [JsonPropertyName("hasElementType")]
+        public bool HasElementType { get; set; }
+
+        [JsonPropertyName("genericTypeArguments")]
+        public ICollection<Type> GenericTypeArguments { get; set; }
+
+        [JsonPropertyName("genericParameterPosition")]
+        public int GenericParameterPosition { get; set; }
+
+        [JsonPropertyName("genericParameterAttributes")]
+        public GenericParameterAttributes GenericParameterAttributes { get; set; }
+
+        [JsonPropertyName("attributes")]
+        public TypeAttributes Attributes { get; set; }
+
+        [JsonPropertyName("isAbstract")]
+        public bool IsAbstract { get; set; }
+
+        [JsonPropertyName("isImport")]
+        public bool IsImport { get; set; }
+
+        [JsonPropertyName("isSealed")]
+        public bool IsSealed { get; set; }
+
+        [JsonPropertyName("isSpecialName")]
+        public bool IsSpecialName { get; set; }
+
+        [JsonPropertyName("isClass")]
+        public bool IsClass { get; set; }
+
+        [JsonPropertyName("isNestedAssembly")]
+        public bool IsNestedAssembly { get; set; }
+
+        [JsonPropertyName("isNestedFamANDAssem")]
+        public bool IsNestedFamANDAssem { get; set; }
+
+        [JsonPropertyName("isNestedFamily")]
+        public bool IsNestedFamily { get; set; }
+
+        [JsonPropertyName("isNestedFamORAssem")]
+        public bool IsNestedFamORAssem { get; set; }
+
+        [JsonPropertyName("isNestedPrivate")]
+        public bool IsNestedPrivate { get; set; }
+
+        [JsonPropertyName("isNestedPublic")]
+        public bool IsNestedPublic { get; set; }
+
+        [JsonPropertyName("isNotPublic")]
+        public bool IsNotPublic { get; set; }
+
+        [JsonPropertyName("isPublic")]
+        public bool IsPublic { get; set; }
+
+        [JsonPropertyName("isAutoLayout")]
+        public bool IsAutoLayout { get; set; }
+
+        [JsonPropertyName("isExplicitLayout")]
+        public bool IsExplicitLayout { get; set; }
+
+        [JsonPropertyName("isLayoutSequential")]
+        public bool IsLayoutSequential { get; set; }
+
+        [JsonPropertyName("isAnsiClass")]
+        public bool IsAnsiClass { get; set; }
+
+        [JsonPropertyName("isAutoClass")]
+        public bool IsAutoClass { get; set; }
+
+        [JsonPropertyName("isUnicodeClass")]
+        public bool IsUnicodeClass { get; set; }
+
+        [JsonPropertyName("isCOMObject")]
+        public bool IsCOMObject { get; set; }
+
+        [JsonPropertyName("isContextful")]
+        public bool IsContextful { get; set; }
+
+        [JsonPropertyName("isEnum")]
+        public bool IsEnum { get; set; }
+
+        [JsonPropertyName("isMarshalByRef")]
+        public bool IsMarshalByRef { get; set; }
+
+        [JsonPropertyName("isPrimitive")]
+        public bool IsPrimitive { get; set; }
+
+        [JsonPropertyName("isValueType")]
+        public bool IsValueType { get; set; }
+
+        [JsonPropertyName("isSignatureType")]
+        public bool IsSignatureType { get; set; }
+
+        [JsonPropertyName("isSecurityCritical")]
+        public bool IsSecurityCritical { get; set; }
+
+        [JsonPropertyName("isSecuritySafeCritical")]
+        public bool IsSecuritySafeCritical { get; set; }
+
+        [JsonPropertyName("isSecurityTransparent")]
+        public bool IsSecurityTransparent { get; set; }
+
+        [JsonPropertyName("structLayoutAttribute")]
+        public StructLayoutAttribute StructLayoutAttribute { get; set; }
+
+        [JsonPropertyName("typeInitializer")]
+        public ConstructorInfo TypeInitializer { get; set; }
+
+        [JsonPropertyName("typeHandle")]
+        public RuntimeTypeHandle TypeHandle { get; set; }
+
+        [JsonPropertyName("guid")]
+        public System.Guid Guid { get; set; }
+
+        [JsonPropertyName("baseType")]
+        public Type BaseType { get; set; }
+
+        [JsonPropertyName("isSerializable")]
+        [System.Obsolete]
+        public bool IsSerializable { get; set; }
+
+        [JsonPropertyName("containsGenericParameters")]
+        public bool ContainsGenericParameters { get; set; }
+
+        [JsonPropertyName("isVisible")]
+        public bool IsVisible { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum TypeAttributes
+    {
+
+        _0 = 0,
+
+        _1 = 1,
+
+        _2 = 2,
+
+        _3 = 3,
+
+        _4 = 4,
+
+        _5 = 5,
+
+        _6 = 6,
+
+        _7 = 7,
+
+        _8 = 8,
+
+        _16 = 16,
+
+        _24 = 24,
+
+        _32 = 32,
+
+        _128 = 128,
+
+        _256 = 256,
+
+        _1024 = 1024,
+
+        _2048 = 2048,
+
+        _4096 = 4096,
+
+        _8192 = 8192,
+
+        _16384 = 16384,
+
+        _65536 = 65536,
+
+        _131072 = 131072,
+
+        _196608 = 196608,
+
+        _262144 = 262144,
+
+        _264192 = 264192,
+
+        _1048576 = 1048576,
+
+        _12582912 = 12582912,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class TypeInfo
+    {
+
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+
+        [JsonPropertyName("customAttributes")]
+        public ICollection<CustomAttributeData> CustomAttributes { get; set; }
+
+        [JsonPropertyName("isCollectible")]
+        public bool IsCollectible { get; set; }
+
+        [JsonPropertyName("metadataToken")]
+        public int MetadataToken { get; set; }
+
+        [JsonPropertyName("isInterface")]
+        public bool IsInterface { get; set; }
+
+        [JsonPropertyName("memberType")]
+        public MemberTypes MemberType { get; set; }
+
+        [JsonPropertyName("namespace")]
+        public string Namespace { get; set; }
+
+        [JsonPropertyName("assemblyQualifiedName")]
+        public string AssemblyQualifiedName { get; set; }
+
+        [JsonPropertyName("fullName")]
+        public string FullName { get; set; }
+
+        [JsonPropertyName("assembly")]
+        public Assembly Assembly { get; set; }
+
+        [JsonPropertyName("module")]
+        public Module Module { get; set; }
+
+        [JsonPropertyName("isNested")]
+        public bool IsNested { get; set; }
+
+        [JsonPropertyName("declaringType")]
+        public Type DeclaringType { get; set; }
+
+        [JsonPropertyName("declaringMethod")]
+        public MethodBase DeclaringMethod { get; set; }
+
+        [JsonPropertyName("reflectedType")]
+        public Type ReflectedType { get; set; }
+
+        [JsonPropertyName("underlyingSystemType")]
+        public Type UnderlyingSystemType { get; set; }
+
+        [JsonPropertyName("isTypeDefinition")]
+        public bool IsTypeDefinition { get; set; }
+
+        [JsonPropertyName("isArray")]
+        public bool IsArray { get; set; }
+
+        [JsonPropertyName("isByRef")]
+        public bool IsByRef { get; set; }
+
+        [JsonPropertyName("isPointer")]
+        public bool IsPointer { get; set; }
+
+        [JsonPropertyName("isConstructedGenericType")]
+        public bool IsConstructedGenericType { get; set; }
+
+        [JsonPropertyName("isGenericParameter")]
+        public bool IsGenericParameter { get; set; }
+
+        [JsonPropertyName("isGenericTypeParameter")]
+        public bool IsGenericTypeParameter { get; set; }
+
+        [JsonPropertyName("isGenericMethodParameter")]
+        public bool IsGenericMethodParameter { get; set; }
+
+        [JsonPropertyName("isGenericType")]
+        public bool IsGenericType { get; set; }
+
+        [JsonPropertyName("isGenericTypeDefinition")]
+        public bool IsGenericTypeDefinition { get; set; }
+
+        [JsonPropertyName("isSZArray")]
+        public bool IsSZArray { get; set; }
+
+        [JsonPropertyName("isVariableBoundArray")]
+        public bool IsVariableBoundArray { get; set; }
+
+        [JsonPropertyName("isByRefLike")]
+        public bool IsByRefLike { get; set; }
+
+        [JsonPropertyName("isFunctionPointer")]
+        public bool IsFunctionPointer { get; set; }
+
+        [JsonPropertyName("isUnmanagedFunctionPointer")]
+        public bool IsUnmanagedFunctionPointer { get; set; }
+
+        [JsonPropertyName("hasElementType")]
+        public bool HasElementType { get; set; }
+
+        [JsonPropertyName("genericTypeArguments")]
+        public ICollection<Type> GenericTypeArguments { get; set; }
+
+        [JsonPropertyName("genericParameterPosition")]
+        public int GenericParameterPosition { get; set; }
+
+        [JsonPropertyName("genericParameterAttributes")]
+        public GenericParameterAttributes GenericParameterAttributes { get; set; }
+
+        [JsonPropertyName("attributes")]
+        public TypeAttributes Attributes { get; set; }
+
+        [JsonPropertyName("isAbstract")]
+        public bool IsAbstract { get; set; }
+
+        [JsonPropertyName("isImport")]
+        public bool IsImport { get; set; }
+
+        [JsonPropertyName("isSealed")]
+        public bool IsSealed { get; set; }
+
+        [JsonPropertyName("isSpecialName")]
+        public bool IsSpecialName { get; set; }
+
+        [JsonPropertyName("isClass")]
+        public bool IsClass { get; set; }
+
+        [JsonPropertyName("isNestedAssembly")]
+        public bool IsNestedAssembly { get; set; }
+
+        [JsonPropertyName("isNestedFamANDAssem")]
+        public bool IsNestedFamANDAssem { get; set; }
+
+        [JsonPropertyName("isNestedFamily")]
+        public bool IsNestedFamily { get; set; }
+
+        [JsonPropertyName("isNestedFamORAssem")]
+        public bool IsNestedFamORAssem { get; set; }
+
+        [JsonPropertyName("isNestedPrivate")]
+        public bool IsNestedPrivate { get; set; }
+
+        [JsonPropertyName("isNestedPublic")]
+        public bool IsNestedPublic { get; set; }
+
+        [JsonPropertyName("isNotPublic")]
+        public bool IsNotPublic { get; set; }
+
+        [JsonPropertyName("isPublic")]
+        public bool IsPublic { get; set; }
+
+        [JsonPropertyName("isAutoLayout")]
+        public bool IsAutoLayout { get; set; }
+
+        [JsonPropertyName("isExplicitLayout")]
+        public bool IsExplicitLayout { get; set; }
+
+        [JsonPropertyName("isLayoutSequential")]
+        public bool IsLayoutSequential { get; set; }
+
+        [JsonPropertyName("isAnsiClass")]
+        public bool IsAnsiClass { get; set; }
+
+        [JsonPropertyName("isAutoClass")]
+        public bool IsAutoClass { get; set; }
+
+        [JsonPropertyName("isUnicodeClass")]
+        public bool IsUnicodeClass { get; set; }
+
+        [JsonPropertyName("isCOMObject")]
+        public bool IsCOMObject { get; set; }
+
+        [JsonPropertyName("isContextful")]
+        public bool IsContextful { get; set; }
+
+        [JsonPropertyName("isEnum")]
+        public bool IsEnum { get; set; }
+
+        [JsonPropertyName("isMarshalByRef")]
+        public bool IsMarshalByRef { get; set; }
+
+        [JsonPropertyName("isPrimitive")]
+        public bool IsPrimitive { get; set; }
+
+        [JsonPropertyName("isValueType")]
+        public bool IsValueType { get; set; }
+
+        [JsonPropertyName("isSignatureType")]
+        public bool IsSignatureType { get; set; }
+
+        [JsonPropertyName("isSecurityCritical")]
+        public bool IsSecurityCritical { get; set; }
+
+        [JsonPropertyName("isSecuritySafeCritical")]
+        public bool IsSecuritySafeCritical { get; set; }
+
+        [JsonPropertyName("isSecurityTransparent")]
+        public bool IsSecurityTransparent { get; set; }
+
+        [JsonPropertyName("structLayoutAttribute")]
+        public StructLayoutAttribute StructLayoutAttribute { get; set; }
+
+        [JsonPropertyName("typeInitializer")]
+        public ConstructorInfo TypeInitializer { get; set; }
+
+        [JsonPropertyName("typeHandle")]
+        public RuntimeTypeHandle TypeHandle { get; set; }
+
+        [JsonPropertyName("guid")]
+        public System.Guid Guid { get; set; }
+
+        [JsonPropertyName("baseType")]
+        public Type BaseType { get; set; }
+
+        [JsonPropertyName("isSerializable")]
+        [System.Obsolete]
+        public bool IsSerializable { get; set; }
+
+        [JsonPropertyName("containsGenericParameters")]
+        public bool ContainsGenericParameters { get; set; }
+
+        [JsonPropertyName("isVisible")]
+        public bool IsVisible { get; set; }
+
+        [JsonPropertyName("genericTypeParameters")]
+        public ICollection<Type> GenericTypeParameters { get; set; }
+
+        [JsonPropertyName("declaredConstructors")]
+        public ICollection<ConstructorInfo> DeclaredConstructors { get; set; }
+
+        [JsonPropertyName("declaredEvents")]
+        public ICollection<EventInfo> DeclaredEvents { get; set; }
+
+        [JsonPropertyName("declaredFields")]
+        public ICollection<FieldInfo> DeclaredFields { get; set; }
+
+        [JsonPropertyName("declaredMembers")]
+        public ICollection<MemberInfo> DeclaredMembers { get; set; }
+
+        [JsonPropertyName("declaredMethods")]
+        public ICollection<MethodInfo> DeclaredMethods { get; set; }
+
+        [JsonPropertyName("declaredNestedTypes")]
+        public ICollection<TypeInfo> DeclaredNestedTypes { get; set; }
+
+        [JsonPropertyName("declaredProperties")]
+        public ICollection<PropertyInfo> DeclaredProperties { get; set; }
+
+        [JsonPropertyName("implementedInterfaces")]
+        public ICollection<Type> ImplementedInterfaces { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class UserDetails
+    {
+
+        [JsonPropertyName("dietaryRestrictions")]
+        public ICollection<string> DietaryRestrictions { get; set; }
+
+        [JsonPropertyName("allergies")]
+        public ICollection<string> Allergies { get; set; }
+
+        [JsonPropertyName("skillLevel")]
+        public string SkillLevel { get; set; }
+
+        [JsonPropertyName("cookingGoals")]
+        public ICollection<string> CookingGoals { get; set; }
+
+        [JsonPropertyName("timeConstraints")]
+        public string TimeConstraints { get; set; }
+
+        [JsonPropertyName("healthFocus")]
+        public string HealthFocus { get; set; }
+
+        [JsonPropertyName("familyConsiderations")]
+        public string FamilyConsiderations { get; set; }
+
+        [JsonPropertyName("servingSize")]
+        public int ServingSize { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class UserRoleInfo
+    {
+
+        [JsonPropertyName("userId")]
+        public string UserId { get; set; }
+
+        [JsonPropertyName("userName")]
+        public string UserName { get; set; }
+
+        [JsonPropertyName("email")]
+        public string Email { get; set; }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class FileParameter
+    {
+        public FileParameter(System.IO.Stream data)
+            : this (data, null, null)
+        {
+        }
+
+        public FileParameter(System.IO.Stream data, string fileName)
+            : this (data, fileName, null)
+        {
+        }
+
+        public FileParameter(System.IO.Stream data, string fileName, string contentType)
+        {
+            Data = data;
+            FileName = fileName;
+            ContentType = contentType;
+        }
+
+        public System.IO.Stream Data { get; private set; }
+
+        public string FileName { get; private set; }
+
+        public string ContentType { get; private set; }
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class FileResponse : System.IDisposable
+    {
+        private System.IDisposable _client;
+        private System.IDisposable _response;
+
+        public int StatusCode { get; private set; }
+
+        public IReadOnlyDictionary<string, IEnumerable<string>> Headers { get; private set; }
+
+        public System.IO.Stream Stream { get; private set; }
+
+        public bool IsPartial
+        {
+            get { return StatusCode == 206; }
+        }
+
+        public FileResponse(int statusCode, IReadOnlyDictionary<string, IEnumerable<string>> headers, System.IO.Stream stream, System.IDisposable client, System.IDisposable response)
+        {
+            StatusCode = statusCode;
+            Headers = headers;
+            Stream = stream;
+            _client = client;
+            _response = response;
+        }
+
+        public void Dispose()
+        {
+            Stream.Dispose();
+            if (_response != null)
+                _response.Dispose();
+            if (_client != null)
+                _client.Dispose();
+        }
+    }
 
 
 
 }
 
-#pragma warning restore 108
-#pragma warning restore 114
-#pragma warning restore 472
-#pragma warning restore 612
+#pragma warning restore  108
+#pragma warning restore  114
+#pragma warning restore  472
+#pragma warning restore  612
 #pragma warning restore 1573
 #pragma warning restore 1591
 #pragma warning restore 8073

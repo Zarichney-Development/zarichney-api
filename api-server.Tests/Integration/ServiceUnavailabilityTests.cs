@@ -6,10 +6,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Refit;
 using Xunit;
+using Xunit.Abstractions;
 using Zarichney.Client;
-using Zarichney.Services.AI;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.Tests.Framework.Helpers;
 
 // Import the ServiceStatusInfo from Status namespace with alias
 using StatusInfo = Zarichney.Services.Status.ServiceStatusInfo;
@@ -23,97 +24,33 @@ namespace Zarichney.Tests.Integration;
 /// </summary>
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Collection("Integration")]
-public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture) : IntegrationTestBase(apiClientFixture)
+public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper) : IntegrationTestBase(apiClientFixture, testOutputHelper)
 {
-  private const string TestUserId = "test-user";
-  private static readonly string[] TestUserRoles = ["User"];
-
   /// <summary>
   /// Tests that API endpoints return HTTP 503 when a required feature is unavailable.
   /// This test configures a custom WebApplicationFactory that simulates LLM service
   /// being unavailable due to missing configuration.
   /// </summary>
-  [Fact(Skip = "The test is currently unstable due to HTTP 400 instead of 503 response")]
+  // [Fact(Skip = "The test is currently unstable due to HTTP 400 instead of 503 response")]
+  [Fact]
   // TODO: fix this
   [Trait(TestCategories.Feature, TestCategories.AI)]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
   public async Task Endpoint_WhenRequiredFeatureIsUnavailable_Returns503WithErrorDetails()
   {
     // Arrange
-    // Create a custom factory that indicates the LLM service is unavailable
-    var missingConfigs = new List<string> { "Llm:ApiKey" };
-    var llmServiceStatus = new StatusInfo(IsAvailable: false, missingConfigs);
-
-    var mockStatusService = new Mock<IStatusService>();
-    mockStatusService.Setup(s => s.GetServiceStatusAsync())
-      .ReturnsAsync(new Dictionary<string, StatusInfo> { { "Llm", llmServiceStatus } });
-
-    mockStatusService.Setup(s => s.IsFeatureAvailable("Llm"))
-      .Returns(false);
-
-    var customFactory = Factory as CustomWebApplicationFactory;
-    var factoryWithServices = customFactory.WithWebHostBuilder(builder =>
-    {
-      builder.ConfigureTestServices(services =>
-      {
-        // Replace the real ConfigurationStatusService with our mock
-        services.AddSingleton(mockStatusService.Object);
-
-        // Replace the OpenAI client factory to throw ServiceUnavailableException
-        services.AddScoped<OpenAI.OpenAIClient>(sp =>
-        {
-          var exception = new ServiceUnavailableException(
-            "LLM service is unavailable due to missing configuration");
-          if (exception.Reasons != null)
-          {
-            exception.Reasons.Add("Llm:ApiKey");
-          }
-
-          throw exception;
-        });
-
-        // Replace the LLM service to use the proxies
-        services.AddScoped<ILlmService>(sp =>
-        {
-          var mockLlmService = new Mock<ILlmService>();
-          var llmException = new ServiceUnavailableException(
-            "LLM service is unavailable due to missing configuration");
-          if (llmException.Reasons != null)
-          {
-            llmException.Reasons.Add("Llm:ApiKey");
-          }
-
-          // Use a callback approach to avoid expression tree limitations with It.IsAny<string>()
-          mockLlmService.Setup(s => s.GetCompletionContent(
-              It.IsAny<string>(),
-              It.IsAny<string>(),
-              null,
-              null))
-            .Callback<string, string?, OpenAI.Chat.ChatCompletionOptions?, int?>((prompt, convId, options, retry) =>
-            {
-              // The callback is empty, we just need to match the signature
-            })
-            .Throws(llmException);
-          return mockLlmService.Object;
-        });
-      });
-    });
-
-    // Create an authenticated client for testing
-    using var httpClient = customFactory.CreateAuthenticatedClient(TestUserId, TestUserRoles);
-    var client = RestService.For<IZarichneyAPI>(httpClient);
-
     // Prepare a request to the AI completion endpoint
-    var textPrompt = "Test prompt";
+    var textPrompt = GetRandom.String();
 
-    // Act & Assert
-    // Call the AI completion endpoint that requires LLM service
-    var action = async () => await client.Completion(textPrompt, null!);
+    // Act
     // Test that the action throws an ApiException
     ApiException? exception = null;
     try
     {
-      await action();
+      // should be triggering the logging sink output and succeeding
+      await AuthenticatedApiClient.Health();
+      // todo: troubleshoot whats wrong with client to trigger a 400 on request call, not hitting the endpoint handler
+      await AuthenticatedApiClient.Completion(textPrompt);
       Assert.Fail("Expected ApiException was not thrown");
     }
     catch (ApiException ex)
@@ -126,10 +63,10 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture) : Int
     exception.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
     var errorContent = exception.Content;
     errorContent.Should().Contain("Service Temporarily Unavailable");
-    errorContent.Should().Contain("Llm:ApiKey");
+    errorContent.Should().Contain("LlmConfig:ApiKey");
 
     // Verify that a public endpoint is still available
-    await client.Health(); // The extension method will throw if there's an error
+    await ApiClient.Health(); // The extension method will throw if there's an error
   }
 
   /// <summary>
@@ -191,7 +128,6 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture) : Int
   /// </summary>
   [Fact(Skip = "need to address this")]
   // TODO: fix this
-
   [Trait(TestCategories.Feature, TestCategories.Swagger)]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
   public async Task SwaggerDocument_WhenFeaturesUnavailable_IncludesWarningsInOperations()

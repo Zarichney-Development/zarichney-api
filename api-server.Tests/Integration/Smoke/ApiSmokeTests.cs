@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Refit;
 using Xunit;
+using Xunit.Abstractions;
 using Zarichney.Client;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
@@ -16,9 +17,9 @@ namespace Zarichney.Tests.Integration.Smoke;
 [Trait(TestCategories.Dependency, TestCategories.Docker)]
 [Trait(TestCategories.Dependency, TestCategories.ExternalStripe)]
 [Collection("Integration")]
-public class ApiSmokeTests(ApiClientFixture apiClientFixture) : IntegrationTestBase(apiClientFixture)
+public class ApiSmokeTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper) : IntegrationTestBase(apiClientFixture, testOutputHelper)
 {
-  [Fact(Skip = "Smoke test depends on external services - run with proper configuration")]
+  [DependencyFact]
   [Trait(TestCategories.Feature, TestCategories.Auth)]
   public async Task AuthFlow_Smoke_LoginAndLogout()
   {
@@ -46,7 +47,7 @@ public class ApiSmokeTests(ApiClientFixture apiClientFixture) : IntegrationTestB
     Assert.True(logoutResult.Success);
   }
 
-  [Fact(Skip = "Smoke test depends on external services - run with proper configuration")]
+  [Fact(Skip = "Skipping to keep runtime time low. TODO: remove after support test specific data")]
   [Trait(TestCategories.Feature, TestCategories.Cookbook)]
   public async Task Cookbook_Smoke_GetRecipes()
   {
@@ -63,7 +64,7 @@ public class ApiSmokeTests(ApiClientFixture apiClientFixture) : IntegrationTestB
     Assert.NotNull(recipes);
   }
 
-  [Fact(Skip = "Smoke test depends on external services - run with proper configuration")]
+  [DependencyFact]
   [Trait(TestCategories.Feature, TestCategories.Payment)]
   public async Task Payment_Smoke_ApiEndpointsAvailable()
   {
@@ -77,7 +78,7 @@ public class ApiSmokeTests(ApiClientFixture apiClientFixture) : IntegrationTestB
     var apiClient = AuthenticatedApiClient;
 
     // Act & Assert - Secure endpoint should be accessible
-    Func<Task> act = () => apiClient.Secure();
+    var act = () => apiClient.Secure();
     await act.Should().NotThrowAsync<ApiException>(
       because: "secure endpoint should be accessible");
   }

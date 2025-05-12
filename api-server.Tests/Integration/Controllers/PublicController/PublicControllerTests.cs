@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Refit;
 using Xunit;
+using Xunit.Abstractions;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 
@@ -16,7 +17,7 @@ namespace Zarichney.Tests.Integration.Controllers.PublicController;
 [Trait(TestCategories.Component, TestCategories.Controller)]
 [Trait(TestCategories.Feature, "Public")]
 [Collection("Integration")]
-public class PublicControllerTests(ApiClientFixture apiClientFixture) : IntegrationTestBase(apiClientFixture)
+public class PublicControllerTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper) : IntegrationTestBase(apiClientFixture, testOutputHelper)
 {
   /// <summary>
   /// Tests that the health check endpoint returns an OK result with the expected structure.

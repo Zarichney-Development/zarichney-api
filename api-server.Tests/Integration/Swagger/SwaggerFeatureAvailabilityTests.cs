@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 using Zarichney.Config;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
@@ -22,7 +23,7 @@ namespace Zarichney.Tests.Integration.Swagger;
 // These tests are skipped as they require a real environment to properly test the
 // ServiceAvailabilityOperationFilter in context of the Swagger UI.
 // The live service tests in SwaggerLiveServiceStatusTests.cs provide similar verification using real services.
-public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture) : IntegrationTestBase(apiClientFixture)
+public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper) : IntegrationTestBase(apiClientFixture, testOutputHelper)
 {
   private const string _swaggerJsonUrl = "/api/swagger/swagger.json";
 

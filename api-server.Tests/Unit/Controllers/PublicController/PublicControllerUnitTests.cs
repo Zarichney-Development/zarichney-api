@@ -1,6 +1,7 @@
 using Zarichney.Services.Status;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using Zarichney.Tests.Framework.Attributes;
@@ -21,7 +22,8 @@ public class PublicControllerUnitTests
   public PublicControllerUnitTests()
   {
     _mockStatusService = new Mock<IStatusService>();
-    _controller = new Zarichney.Controllers.PublicController(_mockStatusService.Object);
+    Mock<ILogger<Zarichney.Controllers.PublicController>> mockLogging = new();
+    _controller = new Zarichney.Controllers.PublicController(_mockStatusService.Object, mockLogging.Object);
   }
 
   /// <summary>

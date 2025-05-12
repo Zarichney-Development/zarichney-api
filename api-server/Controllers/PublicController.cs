@@ -8,12 +8,14 @@ namespace Zarichney.Controllers;
 [AllowAnonymous]
 [Route("api")]
 public class PublicController(
-  IStatusService statusService)
+  IStatusService statusService,
+  ILogger<PublicController> logger)
   : ControllerBase
 {
   [HttpGet("health")]
   public IActionResult HealthCheck()
   {
+    logger.LogError("testing log sink for automation test suite execution. This should be part of the test execution output window");
     return Ok(new
     {
       Success = true,

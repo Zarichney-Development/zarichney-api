@@ -14,7 +14,7 @@ public class IntegrationTestBaseTests
   {
     // Use reflection to access the private static field in IntegrationTestBase
     var traitToConfigNamesMapField = typeof(IntegrationTestBase)
-        .GetField("_traitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
+        .GetField("TraitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
 
     var traitToConfigNamesMap = traitToConfigNamesMapField?.GetValue(null)
         as Dictionary<string, List<string>>;
@@ -32,7 +32,7 @@ public class IntegrationTestBaseTests
   public void GetTraitToConfigNamesMap_WhenAccessingDatabaseCategory_ContainsDatabaseConnectionConfig()
   {
     var traitToConfigNamesMapField = typeof(IntegrationTestBase)
-        .GetField("_traitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
+        .GetField("TraitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
 
     var traitToConfigNamesMap = traitToConfigNamesMapField?.GetValue(null)
         as Dictionary<string, List<string>>;
@@ -47,7 +47,7 @@ public class IntegrationTestBaseTests
   public void GetTraitToConfigNamesMap_WhenAccessingOpenAICategory_ContainsApiKeyConfig()
   {
     var traitToConfigNamesMapField = typeof(IntegrationTestBase)
-        .GetField("_traitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
+        .GetField("TraitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
 
     var traitToConfigNamesMap = traitToConfigNamesMapField?.GetValue(null)
         as Dictionary<string, List<string>>;
@@ -62,7 +62,7 @@ public class IntegrationTestBaseTests
   public void GetTraitToConfigNamesMap_WhenAccessingStripeCategory_ContainsSecretAndWebhookConfigs()
   {
     var traitToConfigNamesMapField = typeof(IntegrationTestBase)
-        .GetField("_traitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
+        .GetField("TraitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
 
     var traitToConfigNamesMap = traitToConfigNamesMapField?.GetValue(null)
         as Dictionary<string, List<string>>;
@@ -78,7 +78,7 @@ public class IntegrationTestBaseTests
   public void GetTraitToConfigNamesMap_WhenAccessingGitHubCategory_ContainsAccessTokenConfig()
   {
     var traitToConfigNamesMapField = typeof(IntegrationTestBase)
-        .GetField("_traitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
+        .GetField("TraitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
 
     var traitToConfigNamesMap = traitToConfigNamesMapField?.GetValue(null)
         as Dictionary<string, List<string>>;
@@ -93,7 +93,7 @@ public class IntegrationTestBaseTests
   public void GetTraitToConfigNamesMap_WhenAccessingMSGraphCategory_ContainsAllEmailConfigs()
   {
     var traitToConfigNamesMapField = typeof(IntegrationTestBase)
-        .GetField("_traitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
+        .GetField("TraitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
 
     var traitToConfigNamesMap = traitToConfigNamesMapField?.GetValue(null)
         as Dictionary<string, List<string>>;

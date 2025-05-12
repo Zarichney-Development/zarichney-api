@@ -1,5 +1,6 @@
 using Refit;
 using Xunit;
+using Xunit.Abstractions;
 using Zarichney.Client;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
@@ -10,8 +11,8 @@ namespace Zarichney.Tests.Integration.Controllers.AuthController;
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Feature, TestCategories.Auth)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
-public class LoginEndpointsTests(ApiClientFixture apiClientFixture)
-    : DatabaseIntegrationTestBase(apiClientFixture)
+public class LoginEndpointsTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper)
+    : DatabaseIntegrationTestBase(apiClientFixture, testOutputHelper)
 {
   [DependencyFact]
   public async Task Login_WithValidCredentials_ShouldSucceed()

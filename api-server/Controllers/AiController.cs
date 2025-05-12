@@ -21,6 +21,25 @@ public class TranscribeAudioRequest
   public IFormFile? AudioFile { get; set; }
 }
 
+
+/// <summary>
+/// Request model for the completion endpoint, accepting either text or audio input.
+/// </summary>
+public class CompletionRequest
+{
+  /// <summary>
+  /// The text prompt to send to the LLM. Use this OR audioPrompt.
+  /// </summary>
+  /// <example>Write a short story about a robot learning to cook.</example>
+  public string? TextPrompt { get; set; }
+
+  /// <summary>
+  /// The audio prompt (e.g., WAV, MP3, WEBM) to be transcribed and then sent to the LLM. Use this OR textPrompt.
+  /// The request must use multipart/form-data encoding.
+  /// </summary>
+  public IFormFile? AudioPrompt { get; set; }
+}
+
 /// <summary>
 /// Controller for handling AI-related operations like text completion and audio transcription.
 /// </summary>
@@ -40,23 +59,6 @@ public class AiController(
   IScopeContainer scope
 ) : ControllerBase
 {
-  /// <summary>
-  /// Request model for the completion endpoint, accepting either text or audio input.
-  /// </summary>
-  public class CompletionRequest
-  {
-    /// <summary>
-    /// The text prompt to send to the LLM. Use this OR audioPrompt.
-    /// </summary>
-    /// <example>Write a short story about a robot learning to cook.</example>
-    public string? TextPrompt { get; set; }
-
-    /// <summary>
-    /// The audio prompt (e.g., WAV, MP3, WEBM) to be transcribed and then sent to the LLM. Use this OR textPrompt.
-    /// The request must use multipart/form-data encoding.
-    /// </summary>
-    public IFormFile? AudioPrompt { get; set; }
-  }
 
   /// <summary>
   /// Gets a completion from the configured Language Model (LLM) based on either text or audio input.

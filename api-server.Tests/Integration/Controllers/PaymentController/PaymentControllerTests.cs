@@ -7,6 +7,7 @@ using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 using Zarichney.Tests.Framework.Helpers;
 using Refit;
+using Xunit.Abstractions;
 using Zarichney.Client;
 
 namespace Zarichney.Tests.Integration.Controllers.PaymentController;
@@ -19,8 +20,8 @@ namespace Zarichney.Tests.Integration.Controllers.PaymentController;
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
 [Trait(TestCategories.Dependency, TestCategories.ExternalStripe)]
-public class PaymentControllerTests(ApiClientFixture apiClientFixture)
-  : DatabaseIntegrationTestBase(apiClientFixture)
+public class PaymentControllerTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper)
+  : DatabaseIntegrationTestBase(apiClientFixture, testOutputHelper)
 {
   [DependencyFact]
   public async Task CreatePaymentIntent_ValidOrder_ReturnsPaymentIntent()

@@ -53,13 +53,14 @@ public class SkipMissingDependencyTestCase : XunitTestCase
           var test = new XunitTest(this, DisplayName);
 
           if (!messageBus.QueueMessage(new TestStarting(test)))
-            cancellationTokenSource.Cancel();
+            await cancellationTokenSource.CancelAsync();
 
-          if (!messageBus.QueueMessage(new TestSkipped(test, $"Test initialization failed, likely due to missing dependencies: {ex.Message}")))
-            cancellationTokenSource.Cancel();
+          if (!messageBus.QueueMessage(new TestSkipped(test,
+                $"Test initialization failed, likely due to missing dependencies: {ex.Message}")))
+            await cancellationTokenSource.CancelAsync();
 
           if (!messageBus.QueueMessage(new TestFinished(test, 0, test.TestCase.TestMethod.Method.ToString())))
-            cancellationTokenSource.Cancel();
+            await cancellationTokenSource.CancelAsync();
 
           return new RunSummary { Total = 1, Skipped = 1 };
         }
@@ -67,10 +68,10 @@ public class SkipMissingDependencyTestCase : XunitTestCase
 
       // Check if the test class has a ShouldSkip property
       var shouldSkipProperty = testClass.GetProperty("ShouldSkip",
-          BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
       var skipReasonProperty = testClass.GetProperty("SkipReason",
-          BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
       var shouldSkip = false;
       string? skipReason = null;
@@ -94,21 +95,22 @@ public class SkipMissingDependencyTestCase : XunitTestCase
 
         // Send test starting message
         if (!messageBus.QueueMessage(new TestStarting(test)))
-          cancellationTokenSource.Cancel();
+          await cancellationTokenSource.CancelAsync();
 
         // Send skip message
         if (!messageBus.QueueMessage(new TestSkipped(test, skipReason)))
-          cancellationTokenSource.Cancel();
+          await cancellationTokenSource.CancelAsync();
 
         // Send test finished message with the correct parameter order
         if (!messageBus.QueueMessage(new TestFinished(test, 0, test.TestCase.TestMethod.Method.ToString())))
-          cancellationTokenSource.Cancel();
+          await cancellationTokenSource.CancelAsync();
 
         return new RunSummary { Total = 1, Skipped = 1 };
       }
 
-      // Run the test normally if not skipped
-      return await base.RunAsync(diagnosticMessageSink, messageBus, constructorArguments, aggregator, cancellationTokenSource);
+      // Run the test normally if not skipped during class init
+      return  await base.RunAsync(diagnosticMessageSink, messageBus, constructorArguments, aggregator,
+        cancellationTokenSource);
     }
     catch (Exception ex)
     {
@@ -116,13 +118,13 @@ public class SkipMissingDependencyTestCase : XunitTestCase
       var test = new XunitTest(this, DisplayName);
 
       if (!messageBus.QueueMessage(new TestStarting(test)))
-        cancellationTokenSource.Cancel();
+        await cancellationTokenSource.CancelAsync();
 
       if (!messageBus.QueueMessage(new TestSkipped(test, $"Test setup failed, likely due to missing dependencies: {ex.Message}")))
-        cancellationTokenSource.Cancel();
+        await cancellationTokenSource.CancelAsync();
 
       if (!messageBus.QueueMessage(new TestFinished(test, 0, test.TestCase.TestMethod.Method.ToString())))
-        cancellationTokenSource.Cancel();
+        await cancellationTokenSource.CancelAsync();
 
       return new RunSummary { Total = 1, Skipped = 1 };
     }

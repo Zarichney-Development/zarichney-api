@@ -1,6 +1,7 @@
 using Zarichney.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using Xunit.Abstractions;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 using Zarichney.Tests.Framework.Helpers;
@@ -13,7 +14,7 @@ namespace Zarichney.Tests.Integration;
 /// </summary>
 public abstract class IntegrationTestBase : IAsyncLifetime
 {
-  private static readonly Dictionary<string, List<string>> _traitToConfigNamesMap = new()
+  private static readonly Dictionary<string, List<string>> TraitToConfigNamesMap = new()
   {
     { TestCategories.Database, ["Database Connection"] },
     { TestCategories.Docker, ["Docker Availability"] },
@@ -54,9 +55,11 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   /// Initializes a new instance of the <see cref="IntegrationTestBase"/> class.
   /// </summary>
   /// <param name="apiClientFixture">The API client fixture.</param>
-  protected IntegrationTestBase(ApiClientFixture apiClientFixture)
+  /// <param name="testOutputHelper"></param>
+  protected IntegrationTestBase(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper)
   {
     _apiClientFixture = apiClientFixture;
+    apiClientFixture.AttachToSerilog(testOutputHelper);
     // Database availability will be checked based on dependency traits during InitializeAsync
   }
 
@@ -123,7 +126,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
       .ToList();
 
     // If there are no dependency traits, return (no dependencies to check)
-    if (!dependencyTraits.Any())
+    if (dependencyTraits.Count == 0)
     {
       return;
     }
@@ -132,7 +135,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     var requiredConfigs = new HashSet<string>();
     foreach (var (_, value) in dependencyTraits)
     {
-      if (_traitToConfigNamesMap.TryGetValue(value, out var configNames))
+      if (TraitToConfigNamesMap.TryGetValue(value, out var configNames))
       {
         foreach (var configName in configNames)
         {
@@ -142,7 +145,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     }
 
     // If there are no required configs after mapping, return
-    if (!requiredConfigs.Any())
+    if (requiredConfigs.Count == 0)
     {
       return;
     }
@@ -192,19 +195,21 @@ public abstract class IntegrationTestBase : IAsyncLifetime
             unavailableDependencies.Add(dependencyTraitValue);
 
             // Get missing configurations for this dependency
-            var missingConfigs = ConfigurationStatusHelper.GetMissingConfigurationsForDependency(serviceStatuses, dependencyTraitValue);
+            var missingConfigs =
+              ConfigurationStatusHelper.GetMissingConfigurationsForDependency(serviceStatuses, dependencyTraitValue);
             allMissingConfigs.AddRange(missingConfigs);
           }
         }
 
         // If there are unavailable dependencies, set SkipReason
-        if (unavailableDependencies.Any())
+        if (unavailableDependencies.Count != 0)
         {
           var reason = $"Dependencies unavailable: {string.Join(", ", unavailableDependencies)}";
-          if (allMissingConfigs.Any())
+          if (allMissingConfigs.Count != 0)
           {
             reason += $" (Missing configurations: {string.Join(", ", allMissingConfigs.Distinct())})";
           }
+
           SetSkipReason(reason);
         }
       }
@@ -216,15 +221,10 @@ public abstract class IntegrationTestBase : IAsyncLifetime
           .Select(t => t.Value)
           .ToList();
 
-        if (externalDependencies.Any())
-        {
-          SetSkipReason($"External services unavailable: {string.Join(", ", externalDependencies)}");
-        }
-        else
-        {
+        SetSkipReason(externalDependencies.Count != 0
+          ? $"External services unavailable: {string.Join(", ", externalDependencies)}"
           // For tests with no external dependencies, we still need configuration
-          SetSkipReason("Configuration status unavailable, skipping test.");
-        }
+          : "Configuration status unavailable, skipping test.");
       }
     }
     catch (Exception ex)
@@ -279,5 +279,4 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   /// </summary>
   /// <returns>A completed task.</returns>
   public Task DisposeAsync() => Task.CompletedTask;
-
 }

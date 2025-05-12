@@ -9,6 +9,4 @@ namespace Zarichney.Tests.Framework.Attributes;
 /// skips tests when the test class indicates dependencies are missing.
 /// </summary>
 [XunitTestCaseDiscoverer("Zarichney.Tests.Framework.Helpers.SkipMissingDependencyDiscoverer", "Zarichney.Tests")]
-public class DependencyFactAttribute : FactAttribute
-{
-}
+public sealed class DependencyFactAttribute : FactAttribute;

@@ -1,5 +1,8 @@
+using Microsoft.Extensions.DependencyInjection;
 using Refit;
+using Serilog.Sinks.XUnit.Injectable;
 using Xunit;
+using Xunit.Abstractions;
 using Zarichney.Client;
 
 namespace Zarichney.Tests.Framework.Fixtures;
@@ -12,6 +15,9 @@ public class ApiClientFixture : IAsyncLifetime
 {
   private readonly DatabaseFixture _databaseFixture;
   private readonly CustomWebApplicationFactory _factory;
+
+  private TService GetSingletonService<TService>() where TService : notnull =>
+    _factory.Services.GetRequiredService<TService>();
 
   /// <summary>
   /// Gets the unauthenticated API client.
@@ -58,7 +64,7 @@ public class ApiClientFixture : IAsyncLifetime
     UnauthenticatedClient = RestService.For<IZarichneyAPI>(unauthHttpClient);
 
     // Create authenticated HTTP client using TestAuthHandler
-    var userId = "test-user-id";
+    const string userId = "test-user-id";
     var roles = new[] { "User", "Admin" };
     var authHttpClient = _factory.CreateAuthenticatedClient(userId, roles);
     AuthenticatedClient = RestService.For<IZarichneyAPI>(authHttpClient);
@@ -71,5 +77,11 @@ public class ApiClientFixture : IAsyncLifetime
   {
     await _factory.DisposeAsync();
     await _databaseFixture.DisposeAsync();
+  }
+
+  public void AttachToSerilog(ITestOutputHelper testOutputHelper)
+  {
+    var outputSink = GetSingletonService<InjectableTestOutputSink>();
+    outputSink.Inject(testOutputHelper);
   }
 }

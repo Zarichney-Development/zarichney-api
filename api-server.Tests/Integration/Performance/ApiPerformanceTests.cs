@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Xunit;
+using Xunit.Abstractions;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 
@@ -13,7 +14,7 @@ namespace Zarichney.Tests.Integration.Performance;
 [Trait(TestCategories.Feature, TestCategories.Cookbook)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
 [Trait(TestCategories.Dependency, TestCategories.Docker)]
-public class ApiPerformanceTests(ApiClientFixture apiClientFixture) : IntegrationTestBase(apiClientFixture)
+public class ApiPerformanceTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper) : IntegrationTestBase(apiClientFixture, testOutputHelper)
 {
   [Fact(Skip = "Performance test depends on external services - run with proper configuration")]
   public async Task GetRecipes_Performance_CompletesWithinTimeLimit()

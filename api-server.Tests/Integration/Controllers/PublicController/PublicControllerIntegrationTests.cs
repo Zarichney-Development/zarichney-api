@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Refit;
 using Xunit;
+using Xunit.Abstractions;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 
@@ -15,7 +16,8 @@ namespace Zarichney.Tests.Integration.Controllers.PublicController;
 [Trait(TestCategories.Component, TestCategories.Controller)]
 [Trait(TestCategories.Feature, "Public")]
 [Collection("Integration")]
-public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture) : IntegrationTestBase(apiClientFixture)
+public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper)
+  : IntegrationTestBase(apiClientFixture, testOutputHelper)
 {
   /// <summary>
   /// Tests that the health check endpoint returns an OK result with the expected structure.
@@ -31,7 +33,7 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture)
     // Act & Assert: calling Health should not throw and thus return 200 OK
     var act = () => ApiClient.Health();
     await act.Should().NotThrowAsync<ApiException>(
-        because: "health endpoint should always return OK status even without configuration");
+      because: "health endpoint should always return OK status even without configuration");
   }
 
   /// <summary>
@@ -40,42 +42,44 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture)
   /// </summary>
   [Fact]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
-  public async Task GetServiceStatus_WhenCalled_ReturnsServiceStatusInfo() // Renamed from GetStatus_WhenCalled_ReturnsServiceStatusInfo
+  public async Task
+    GetServiceStatus_WhenCalled_ReturnsServiceStatusInfo() // Renamed from GetStatus_WhenCalled_ReturnsServiceStatusInfo
   {
     // Arrange
     var expectedServices = new[]
     {
-          // TODO: get this list from the source of truth rather than being hardcoded here
-          "Session", "PdfCompiler", "Payment", "GitHub", "Email", "Llm", "Transcribe", "Recipe", "Webscraper", "Order", "Customer", "Server", "Client"
-        };
+      // TODO: get this list from the source of truth rather than being hardcoded here
+      "Session", "PdfCompiler", "Payment", "GitHub", "Email", "Llm", "Transcribe", "Recipe", "Webscraper", "Order",
+      "Customer", "Server", "Client"
+    };
 
     // Act
     var serviceStatus = await ApiClient.Status2();
 
     // Assert
     serviceStatus.Should().NotBeNull(
-        because: "response should contain service status information");
+      because: "response should contain service status information");
 
     serviceStatus.Should().NotBeEmpty(
-        because: "response should contain at least some service status information");
+      because: "response should contain at least some service status information");
 
     serviceStatus.Keys.Should().Contain(expectedServices,
-        because: "the response should contain status for all critical services");
+      because: "the response should contain status for all critical services");
 
     foreach (var (service, status) in serviceStatus)
     {
       status.Should().NotBeNull(
-          because: $"status for {service} should not be null");
+        because: $"status for {service} should not be null");
 
       if (!status.IsAvailable)
       {
         status.MissingConfigurations.Should().NotBeEmpty(
-            because: $"unavailable service {service} should have missing configurations");
+          because: $"unavailable service {service} should have missing configurations");
       }
       else
       {
         status.MissingConfigurations.Should().BeEmpty(
-            because: $"available service {service} should not have missing configurations");
+          because: $"available service {service} should not have missing configurations");
       }
     }
   }
@@ -97,12 +101,12 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture)
 
     // Assert
     configStatus.Should().NotBeNull(
-        because: "response should contain configuration item status information");
+      because: "response should contain configuration item status information");
 
     // This assertion might be too strict if the list can be legitimately empty.
     // For now, assuming it should return some items if the service is working.
     configStatus.Should().NotBeEmpty(
-        because: "response should contain at least some configuration item status information");
+      because: "response should contain at least some configuration item status information");
 
     foreach (var item in configStatus)
     {

@@ -1,29 +1,24 @@
 using System.Net.Http.Json;
-using System.Text.Json;
 using FluentAssertions;
 using Xunit;
+using Xunit.Abstractions;
+using Zarichney.Config;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 
 namespace Zarichney.Tests.Integration.Swagger;
 
 /// <summary>
-/// Tests that verify the real-world scenario of fetching the service status and 
+/// Tests that verify the real-world scenario of fetching the service status and
 /// checking that unavailable services are correctly marked in the Swagger UI.
 /// </summary>
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Collection("Integration")]
-public class SwaggerLiveServiceStatusTests : IntegrationTestBase
+public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper) : IntegrationTestBase(apiClientFixture, testOutputHelper)
 {
-  private readonly string _swaggerJsonUrl = "/api/swagger/swagger.json";
-  private readonly string _statusUrl = "/api/status";
+  private const string _swaggerJsonUrl = "/api/swagger/swagger.json";
 
-  public SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture)
-      : base(apiClientFixture)
-  {
-  }
-
-  [Fact]
+  [SkippableFact]
   [Trait(TestCategories.Feature, TestCategories.Swagger)]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
   public async Task Swagger_UnavailableServices_AreProperlyMarkedInJson()
@@ -32,21 +27,16 @@ public class SwaggerLiveServiceStatusTests : IntegrationTestBase
     using var client = Factory.CreateAuthenticatedClient("test-user", ["Admin"]);
 
     // Act - Step 1: Get the service status
-    var statusResponse = await client.GetAsync(_statusUrl);
-    statusResponse.EnsureSuccessStatusCode();
-
-    // Parse the status response to determine which services are unavailable
-    var statusContent = await statusResponse.Content.ReadAsStringAsync();
-    var statusResult = JsonSerializer.Deserialize<Dictionary<string, ServiceStatusInfo>>(statusContent);
+    var statusResult = await ApiClient.Status2();
 
     // Find unavailable services
-    var unavailableServices = statusResult?
-        .Where(s => !s.Value.IsAvailable)
-        .Select(s => s.Key)
-        .ToList() ?? new List<string>();
+    var unavailableServices = statusResult
+      .Where(s => !s.Value.IsAvailable)
+      .Select(s => s.Key)
+      .ToList();
 
     // Skip test if no services are unavailable (unlikely in a test environment, but possible)
-    if (!unavailableServices.Any())
+    if (unavailableServices.Count == 0)
     {
       Skip.If(true, "All services are available - nothing to test");
       return;
@@ -66,11 +56,11 @@ public class SwaggerLiveServiceStatusTests : IntegrationTestBase
 
     // Assert - Basic check: The Swagger JSON should have a description mentioning unavailability
     swaggerContent.Should().Contain("unavailable",
-        "Swagger documentation should mention unavailable endpoints");
+      "Swagger documentation should mention unavailable endpoints");
 
     // The warning emoji should be present if there are unavailable services
     swaggerContent.Should().Contain("⚠️",
-        "Swagger JSON should contain the warning emoji for unavailable services");
+      "Swagger JSON should contain the warning emoji for unavailable services");
 
     // Check that each unavailable service has at least one mention in the Swagger JSON
     foreach (var serviceName in unavailableServices)
@@ -85,15 +75,16 @@ public class SwaggerLiveServiceStatusTests : IntegrationTestBase
       // appears somewhere in the swagger content - this is a simple verification that
       // the service information is being surfaced in the API documentation
       // For controller-level services, we also check for pluralized names (e.g. "Payment" might appear as "Payments" in endpoints)
-      bool serviceNameFound = swaggerContent.Contains(serviceName) ||
-                             swaggerContent.Contains($"{serviceName}s") ||   // Check pluralized version
-                             swaggerContent.Contains(serviceName.ToLowerInvariant());  // Check lowercase
+      var serviceNameFound = swaggerContent.Contains(serviceName) ||
+                             swaggerContent.Contains($"{serviceName}s") || // Check pluralized version
+                             swaggerContent.Contains(serviceName.ToLowerInvariant()); // Check lowercase
 
-      serviceNameFound.Should().BeTrue($"Swagger JSON should mention the unavailable service '{serviceName}' or its variants");
+      serviceNameFound.Should()
+        .BeTrue($"Swagger JSON should mention the unavailable service '{serviceName}' or its variants");
     }
   }
 
-  [Fact]
+  [SkippableFact]
   [Trait(TestCategories.Feature, TestCategories.Swagger)]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
   public async Task Swagger_UnavailableLlmEndpoints_AreProperlyMarkedWithWarnings()
@@ -104,15 +95,10 @@ public class SwaggerLiveServiceStatusTests : IntegrationTestBase
     using var client = Factory.CreateAuthenticatedClient("test-user", ["Admin"]);
 
     // Act - Step 1: Get the service status to check if LLM is available
-    var statusResponse = await client.GetAsync(_statusUrl);
-    statusResponse.EnsureSuccessStatusCode();
-
-    var statusContent = await statusResponse.Content.ReadAsStringAsync();
-    var statusResult = JsonSerializer.Deserialize<Dictionary<string, ServiceStatusInfo>>(statusContent);
+    var statusResult = await ApiClient.Status2();
 
     // Check if LLM service is unavailable
-    bool llmUnavailable = statusResult != null &&
-                         statusResult.TryGetValue("Llm", out var llmStatus) &&
+    var llmUnavailable = statusResult.TryGetValue("Llm", out var llmStatus) &&
                          !llmStatus.IsAvailable;
 
     // Skip test if LLM service is available
@@ -136,9 +122,9 @@ public class SwaggerLiveServiceStatusTests : IntegrationTestBase
     }
 
     // Find the LLM-related endpoints (completion, transcribe)
-    var llmEndpoints = swagger?.Paths
-        ?.Where(p => p.Key.Contains("/api/completion") || p.Key.Contains("/api/transcribe"))
-        ?.ToList() ?? new List<KeyValuePair<string, SwaggerPathItem>>();
+    var llmEndpoints = swagger.Paths
+      .Where(p => p.Key.Contains("/api/completion") || p.Key.Contains("/api/transcribe"))
+      .ToList();
 
     // Assert: We should just verify the key LLM endpoints are present in Swagger
     // We don't check for warnings here since they might be controlled by configuration
@@ -146,7 +132,7 @@ public class SwaggerLiveServiceStatusTests : IntegrationTestBase
 
     // Make sure we find the expected LLM endpoints
     llmEndpoints.Select(e => e.Key).Should().Contain(e => e.Contains("/api/completion"),
-        "The /api/completion endpoint should be defined in Swagger");
+      "The /api/completion endpoint should be defined in Swagger");
 
     // Since this test is primarily checking that LLM endpoints exist in Swagger,
     // we'll skip the detailed warning checks which are already covered in other tests
@@ -155,7 +141,7 @@ public class SwaggerLiveServiceStatusTests : IntegrationTestBase
   /// <summary>
   /// Determines if a service is an infrastructure service that doesn't have direct API endpoints.
   /// </summary>
-  private bool IsInfrastructureService(string serviceName)
+  private static bool IsInfrastructureService(string serviceName)
   {
     // These services typically don't have direct API endpoints
     var infrastructureServices = new[]
@@ -165,72 +151,5 @@ public class SwaggerLiveServiceStatusTests : IntegrationTestBase
     };
 
     return infrastructureServices.Contains(serviceName, StringComparer.OrdinalIgnoreCase);
-  }
-
-  /// <summary>
-  /// Response model for service status API
-  /// </summary>
-  private class ServiceStatusInfo
-  {
-    public bool IsAvailable { get; set; }
-    public List<string> MissingConfigurations { get; set; } = new();
-  }
-
-  /// <summary>
-  /// Simple class to deserialize the Swagger JSON output for testing.
-  /// </summary>
-  private class SwaggerDocument
-  {
-    public string? OpenApi { get; set; }
-    public SwaggerInfo? Info { get; set; }
-    public Dictionary<string, SwaggerPathItem> Paths { get; set; } = new();
-  }
-
-  private class SwaggerInfo
-  {
-    public string? Title { get; set; }
-    public string? Version { get; set; }
-    public string? Description { get; set; }
-  }
-
-  private class SwaggerPathItem
-  {
-    public Dictionary<string, SwaggerOperation> Operations { get; set; } = new();
-
-    [System.Text.Json.Serialization.JsonPropertyName("get")]
-    public SwaggerOperation? Get
-    {
-      get => Operations.TryGetValue("get", out var op) ? op : null;
-      set { if (value != null) Operations["get"] = value; }
-    }
-
-    [System.Text.Json.Serialization.JsonPropertyName("post")]
-    public SwaggerOperation? Post
-    {
-      get => Operations.TryGetValue("post", out var op) ? op : null;
-      set { if (value != null) Operations["post"] = value; }
-    }
-
-    [System.Text.Json.Serialization.JsonPropertyName("put")]
-    public SwaggerOperation? Put
-    {
-      get => Operations.TryGetValue("put", out var op) ? op : null;
-      set { if (value != null) Operations["put"] = value; }
-    }
-
-    [System.Text.Json.Serialization.JsonPropertyName("delete")]
-    public SwaggerOperation? Delete
-    {
-      get => Operations.TryGetValue("delete", out var op) ? op : null;
-      set { if (value != null) Operations["delete"] = value; }
-    }
-  }
-
-  private class SwaggerOperation
-  {
-    public string? Summary { get; set; }
-    public string? Description { get; set; }
-    public object? Parameters { get; set; }
-    public Dictionary<string, object>? Responses { get; set; }
   }
 }
