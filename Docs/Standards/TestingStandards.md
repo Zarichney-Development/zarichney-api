@@ -1,7 +1,7 @@
 # Automation Testing Standards
 
 **Version:** 1.4
-**Last Updated:** 2025-05-12
+**Last Updated:** 2025-05-13
 
 ## 1. Introduction
 
@@ -87,9 +87,10 @@
 * **Dependency Skipping:** Use the `[DependencyFact]` attribute for tests requiring specific external features or configurations. Use `[DockerAvailableFact]` for tests requiring the Docker runtime. These attributes leverage the `IntegrationTestBase` and framework helpers to automatically skip tests if prerequisites are unmet.
   * **Purpose:** Ensures tests that require external dependencies (databases, APIs, Docker, etc.) are skipped rather than failing when those dependencies are unavailable in the test environment.
   * **Implementation:** The `DependencyFact` attribute can be used in two ways:
-    1. **With ApiFeature enum** (preferred): `[DependencyFact(ApiFeature.LLM, ApiFeature.GitHubAccess)]` - This directly checks if the specified features are available using the `IStatusService`.
+    1. **With ApiFeature enum** (preferred): `[DependencyFact(ApiFeature.LLM, ApiFeature.GitHubAccess)]` - This directly checks if the specified features are available using the `IStatusService`. It also automatically maps each ApiFeature to the appropriate dependency trait for filtering and reporting purposes.
     2. **With string-based trait dependencies** (legacy): `[DependencyFact]` combined with `[Trait(TestCategories.Dependency, TestCategories.ExternalOpenAI)]` - This uses the `ConfigurationStatusHelper` and is maintained for backward compatibility.
-  * **Configuration:** For the legacy approach, tests must be properly categorized with appropriate `Trait` attributes (e.g., `[Trait(TestCategories.Dependency, TestCategories.ExternalOpenAI)]`) to enable the dependency checking mechanism.
+  * **ApiFeature-to-Trait Mapping:** For the preferred approach using ApiFeature, there is a built-in mapping from each ApiFeature to the appropriate TestCategories.Dependency trait value (e.g., ApiFeature.LLM maps to TestCategories.ExternalOpenAI). This mapping ensures that tests can still be filtered by dependency traits even when using the ApiFeature approach.
+  * **Configuration:** Tests using either approach will be properly skipped when the required dependencies are unavailable, with detailed skip reasons that include which features are unavailable and what configurations are missing.
   * **CI/CD Integration:** In CI environments, all dependencies should be properly configured or mocked to ensure comprehensive test coverage, while local development environments may skip tests based on available dependencies.
 
 ## 8. Test Data Standards
