@@ -1,6 +1,8 @@
 using System.Reflection;
 using FluentAssertions;
+using Moq;
 using Xunit;
+using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Integration;
 
@@ -107,4 +109,66 @@ public class IntegrationTestBaseTests
     msGraphConfigs.Should().Contain("Email FromEmail");
     msGraphConfigs.Should().Contain("Email MailCheckApiKey");
   }
+
+  [Fact]
+  public void GetRequiredFeaturesFromTestClass_WhenMethodHasDependencyFactWithFeatures_ReturnsFeatures()
+  {
+    // Arrange
+    var testMethodInfo = typeof(DummyTestClassWithApiFeatures).GetMethod(nameof(DummyTestClassWithApiFeatures.TestWithLlmDependency));
+    testMethodInfo.Should().NotBeNull();
+
+    // Act - Use reflection to invoke private method GetRequiredFeaturesFromTestClass
+    var getRequiredFeaturesMethod = typeof(IntegrationTestBase)
+        .GetMethod("GetRequiredFeaturesFromTestClass", BindingFlags.Instance | BindingFlags.NonPublic);
+
+    // Create an instance of IntegrationTestBase using dummy arguments
+    var mockFixture = new Mock<object>().Object;
+    var mockOutputHelper = new Mock<ITestOutputHelper>().Object;
+
+    var constructorInfo = typeof(IntegrationTestBase).GetConstructors().First();
+    var testBaseInstance = constructorInfo.Invoke(new[] { mockFixture, mockOutputHelper });
+
+    var result = getRequiredFeaturesMethod?.Invoke(testBaseInstance, new object[] { typeof(DummyTestClassWithApiFeatures) }) as ApiFeature[];
+
+    // Assert
+    result.Should().NotBeNull();
+    result.Should().Contain(ApiFeature.LLM);
+  }
+
+  [Fact]
+  public void GetRequiredFeaturesFromTestClass_WhenMethodHasEmptyDependencyFact_ReturnsNull()
+  {
+    // Arrange
+    var testMethodInfo = typeof(DummyTestClassWithoutApiFeatures).GetMethod(nameof(DummyTestClassWithoutApiFeatures.TestWithoutApiFeatureDependency));
+    testMethodInfo.Should().NotBeNull();
+
+    // Act - Use reflection to invoke private method GetRequiredFeaturesFromTestClass
+    var getRequiredFeaturesMethod = typeof(IntegrationTestBase)
+        .GetMethod("GetRequiredFeaturesFromTestClass", BindingFlags.Instance | BindingFlags.NonPublic);
+
+    var mockFixture = new Mock<object>().Object;
+    var mockOutputHelper = new Mock<ITestOutputHelper>().Object;
+
+    var constructorInfo = typeof(IntegrationTestBase).GetConstructors().First();
+    var testBaseInstance = constructorInfo.Invoke(new[] { mockFixture, mockOutputHelper });
+
+    var result = getRequiredFeaturesMethod?.Invoke(testBaseInstance, new object[] { typeof(DummyTestClassWithoutApiFeatures) }) as ApiFeature[];
+
+    // Assert
+    result.Should().BeNull();
+  }
+}
+
+// Helper classes for testing the GetRequiredFeaturesFromTestClass method
+public class DummyTestClassWithApiFeatures
+{
+  [DependencyFact(ApiFeature.LLM)]
+  public void TestWithLlmDependency() { }
+}
+
+public class DummyTestClassWithoutApiFeatures
+{
+  [DependencyFact]
+  [Trait(TestCategories.Dependency, TestCategories.ExternalOpenAI)]
+  public void TestWithoutApiFeatureDependency() { }
 }

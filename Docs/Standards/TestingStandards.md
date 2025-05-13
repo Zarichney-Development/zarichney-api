@@ -1,7 +1,7 @@
 # Automation Testing Standards
 
-**Version:** 1.3
-**Last Updated:** 2025-05-03
+**Version:** 1.4
+**Last Updated:** 2025-05-12
 
 ## 1. Introduction
 
@@ -84,10 +84,12 @@
   * **Live external API calls are strictly forbidden.**
 * **Authentication (`TestAuthHandler`):** Use helper methods (e.g., `_authHelper.CreateAuthenticatedClient(userId, roles)` available through the base class) to obtain an `HttpClient` (and subsequently a Refit client) configured with simulated user claims/roles for testing authorization.
 * **Assertions (FluentAssertions):** Assert on API response status codes, DTO content (`Should().BeEquivalentTo()`), and expected side effects (e.g., database state changes verified via a separate DbContext instance obtained from the factory's services *after* the API call). Use `.Because("...")`.
-* **Dependency Skipping:** Use the `[DependencyFact]` attribute for tests requiring specific external configurations (as declared by `Dependency` traits). Use `[DockerAvailableFact]` for tests requiring the Docker runtime. These attributes leverage the `IntegrationTestBase` and framework helpers to automatically skip tests if prerequisites are unmet.
+* **Dependency Skipping:** Use the `[DependencyFact]` attribute for tests requiring specific external features or configurations. Use `[DockerAvailableFact]` for tests requiring the Docker runtime. These attributes leverage the `IntegrationTestBase` and framework helpers to automatically skip tests if prerequisites are unmet.
   * **Purpose:** Ensures tests that require external dependencies (databases, APIs, Docker, etc.) are skipped rather than failing when those dependencies are unavailable in the test environment.
-  * **Implementation:** The `DependencyFact` attribute uses a custom test case discoverer (`SkipMissingDependencyDiscoverer`) that checks if required dependencies are available before running the test.
-  * **Configuration:** Tests must be properly categorized with appropriate `Trait` attributes (e.g., `[Trait("Category", "External:OpenAI")]`) to enable the dependency checking mechanism.
+  * **Implementation:** The `DependencyFact` attribute can be used in two ways:
+    1. **With ApiFeature enum** (preferred): `[DependencyFact(ApiFeature.LLM, ApiFeature.GitHubAccess)]` - This directly checks if the specified features are available using the `IStatusService`.
+    2. **With string-based trait dependencies** (legacy): `[DependencyFact]` combined with `[Trait(TestCategories.Dependency, TestCategories.ExternalOpenAI)]` - This uses the `ConfigurationStatusHelper` and is maintained for backward compatibility.
+  * **Configuration:** For the legacy approach, tests must be properly categorized with appropriate `Trait` attributes (e.g., `[Trait(TestCategories.Dependency, TestCategories.ExternalOpenAI)]`) to enable the dependency checking mechanism.
   * **CI/CD Integration:** In CI environments, all dependencies should be properly configured or mocked to ensure comprehensive test coverage, while local development environments may skip tests based on available dependencies.
 
 ## 8. Test Data Standards

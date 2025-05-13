@@ -1,7 +1,9 @@
 using Zarichney.Client;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 using Xunit;
 using Xunit.Abstractions;
+using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 using Zarichney.Tests.Framework.Helpers;
@@ -110,6 +112,9 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     // Get the type of the current test class
     var testClassType = GetType();
 
+    // Check if there are ApiFeature dependencies specified in DependencyFactAttribute
+    var requiredFeatures = GetRequiredFeaturesFromTestClass(testClassType);
+
     // Get all traits defined on the test class via reflection
     var traits = GetTraitsForTestClass(testClassType);
 
@@ -120,6 +125,57 @@ public abstract class IntegrationTestBase : IAsyncLifetime
       return;
     }
 
+    // APPROACH 1: Check ApiFeature dependencies if specified in DependencyFactAttribute
+    if (requiredFeatures != null && requiredFeatures.Length > 0)
+    {
+      try
+      {
+        // Get IStatusService from the factory
+        using var scope = Factory.Services.CreateScope();
+        var statusService = scope.ServiceProvider.GetRequiredService<IStatusService>();
+
+        // Check each required feature
+        var unavailableFeatures = new List<ApiFeature>();
+        var allMissingConfigs = new List<string>();
+
+        foreach (var feature in requiredFeatures)
+        {
+          var featureStatus = statusService.GetFeatureStatus(feature);
+          if (featureStatus == null || !featureStatus.IsAvailable)
+          {
+            unavailableFeatures.Add(feature);
+            if (featureStatus != null)
+            {
+              allMissingConfigs.AddRange(featureStatus.MissingConfigurations);
+            }
+          }
+        }
+
+        // If there are unavailable features, set SkipReason
+        if (unavailableFeatures.Count > 0)
+        {
+          var reason = $"Required ApiFeatures unavailable: {string.Join(", ", unavailableFeatures)}";
+          if (allMissingConfigs.Count > 0)
+          {
+            reason += $" (Missing configurations: {string.Join(", ", allMissingConfigs.Distinct())})";
+          }
+
+          SetSkipReason(reason);
+          return;
+        }
+
+        // If all ApiFeature dependencies are available, we're done
+        return;
+      }
+      catch (Exception ex)
+      {
+        // If we encounter an error checking ApiFeature dependencies, set SkipReason
+        SetSkipReason($"Error checking ApiFeature dependencies: {ex.Message}");
+        return;
+      }
+    }
+
+    // APPROACH 2: Fall back to string-based trait dependencies if no ApiFeature dependencies specified
     // Filter the traits to only include dependency traits
     var dependencyTraits = traits
       .Where(t => t.Name == TestCategories.Dependency)
@@ -232,6 +288,26 @@ public abstract class IntegrationTestBase : IAsyncLifetime
       // If we encounter an error checking configuration, assume dependencies are missing
       SetSkipReason($"Error checking dependencies: {ex.Message}");
     }
+  }
+
+  /// <summary>
+  /// Gets the required ApiFeature values from a test class decorated with DependencyFactAttribute.
+  /// </summary>
+  /// <param name="testClassType">The test class type to check.</param>
+  /// <returns>Array of required ApiFeature values, or null if none specified.</returns>
+  private ApiFeature[]? GetRequiredFeaturesFromTestClass(Type testClassType)
+  {
+    // Check test methods for DependencyFactAttribute with RequiredFeatures
+    foreach (var method in testClassType.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+    {
+      var factAttr = method.GetCustomAttribute<DependencyFactAttribute>();
+      if (factAttr != null && factAttr.RequiredFeatures != null && factAttr.RequiredFeatures.Length > 0)
+      {
+        return factAttr.RequiredFeatures;
+      }
+    }
+
+    return null;
   }
 
   /// <summary>

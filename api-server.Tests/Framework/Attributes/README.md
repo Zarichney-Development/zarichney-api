@@ -19,18 +19,31 @@ This directory contains **custom xUnit attributes** (classes deriving from `Fact
 This directory houses attributes that modify xUnit's test execution behavior:
 
 * **`DockerAvailableFactAttribute.cs`:** An attribute (likely deriving from `FactAttribute`) that checks if the Docker daemon/engine is running on the test execution machine. If Docker is not available, tests decorated with this attribute are skipped, typically with an informative message.
-* **`DependencyFactAttribute.cs`:** An attribute (likely deriving from `FactAttribute` or `TheoryAttribute` and possibly using `ITestCaseDiscoverer`) that checks for the presence and validity of specific configuration settings or external dependencies (e.g., API keys, connection strings) needed for a test to run successfully. It likely uses helpers (like `ConfigurationStatusHelper`) internally. If the dependency is missing or invalid, the test is skipped.
+* **`DependencyFactAttribute.cs`:** An attribute that derives from `FactAttribute` and works with custom test case discoverer/executer to check for the presence and validity of specific configuration settings or external dependencies needed for a test to run successfully. It can be used in two ways:
+  1. **With ApiFeature enum values:** `[DependencyFact(ApiFeature.LLM, ApiFeature.Transcription)]` - This preferred approach directly checks if the specified features are available using the `IStatusService`. It provides a type-safe way to declare dependencies.
+  2. **With string-based trait dependencies:** `[DependencyFact]` combined with `[Trait(TestCategories.Dependency, TestCategories.ExternalOpenAI)]` - This approach uses the `ConfigurationStatusHelper` and is maintained for backward compatibility.
 * **`SkipMissingDependencyDiscoverer.cs` / `SkipMissingDependencyTestCase.cs`:** Supporting classes for `DependencyFactAttribute` that implement xUnit's test discovery and execution extensibility points to enable the conditional skipping logic.
 
 ## 3. Test Environment Setup
 
 * **Usage:** These attributes are applied directly to test methods within `/Unit` or `/Integration` test classes, replacing standard `[Fact]` or `[Theory]` attributes where conditional execution is needed.
     ```csharp
+    // Check if Docker is available
     [DockerAvailableFact]
     public async Task MyIntegrationTest_RequiresDocker_RunsSuccessfully() { /* ... */ }
 
-    [DependencyFact(DependencyToCheck.StripeApiKey)]
-    public void MyStripeTest_RequiresApiKey_RunsSuccessfully() { /* ... */ }
+    // Using ApiFeature enum (preferred approach)
+    [DependencyFact(ApiFeature.Payments)]
+    public void MyStripeTest_RequiresPaymentFeature_RunsSuccessfully() { /* ... */ }
+
+    // Backward compatible string-based traits approach
+    [DependencyFact]
+    [Trait(TestCategories.Dependency, TestCategories.ExternalStripe)]
+    public void MyLegacyTest_RequiresStripe_RunsSuccessfully() { /* ... */ }
+
+    // Multiple ApiFeature dependencies
+    [DependencyFact(ApiFeature.LLM, ApiFeature.GitHubAccess)]
+    public void MyAiAndGitHubTest_RunsSuccessfully() { /* ... */ }
     ```
 * **Dependencies:** Relies heavily on the xUnit.net testing framework's extensibility features (`FactAttribute`, `TheoryAttribute`, `ITestCaseDiscoverer`, `IXunitTestCase`).
 
@@ -46,5 +59,6 @@ This directory houses attributes that modify xUnit's test execution behavior:
 
 ## 6. Changelog
 
+* **2025-05-12:** Enhanced DependencyFactAttribute to support ApiFeature-based dependencies. Added dual approach with backward compatibility for string-based traits. (#1)
 * **2025-04-18:** Initial creation - Moved custom attributes from Helpers. Defined purpose and scope. (Gemini)
 

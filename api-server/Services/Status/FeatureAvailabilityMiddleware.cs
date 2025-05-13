@@ -102,7 +102,7 @@ public class FeatureAvailabilityMiddleware
     throw new ServiceUnavailableException(
       $"This API endpoint requires features that are unavailable: {string.Join(", ", unavailableFeaturesList)}",
       missingConfigurations);
-    
+
   }
 
   /// <summary>
