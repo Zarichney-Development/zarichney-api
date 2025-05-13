@@ -22,6 +22,25 @@ public static class ConfigurationStatusHelper
     // Add other mappings as needed
   };
 
+  // Map ApiFeature to service names in the status API (used as reference, actual mapping is now in IntegrationTestBase)
+  private static readonly Dictionary<ApiFeature, string[]> _apiFeatureToServiceMap = new()
+  {
+    { ApiFeature.LLM, ["Llm"] },
+    { ApiFeature.Transcription, ["Llm"] },
+    { ApiFeature.EmailSending, ["Email"] },
+    { ApiFeature.Payments, ["Payment", "Stripe"] },
+    { ApiFeature.GitHubAccess, ["GitHub"] },
+    { ApiFeature.AiServices, ["Llm"] }
+    // Core feature doesn't map to a specific service
+  };
+  
+  // Map InfrastructureDependency to configuration names (used as reference, actual checking is now in IntegrationTestBase)
+  private static readonly Dictionary<InfrastructureDependency, string[]> _infrastructureDependencyToConfigMap = new()
+  {
+    { InfrastructureDependency.Database, ["Database Connection"] },
+    { InfrastructureDependency.Docker, ["Docker Availability"] }
+  };
+
   /// <summary>
   /// Gets the service status information from the /api/status endpoint.
   /// </summary>
@@ -110,6 +129,8 @@ public static class ConfigurationStatusHelper
 
   /// <summary>
   /// Checks if a specific feature dependency is available based on its dependency trait value.
+  /// This method is used primarily with string-based trait dependencies (legacy approach).
+  /// For ApiFeature and InfrastructureDependency enums, IntegrationTestBase now handles them directly.
   /// </summary>
   /// <param name="serviceStatuses">The dictionary of service status information.</param>
   /// <param name="dependencyTraitValue">The dependency trait value (e.g., TestCategories.ExternalOpenAI).</param>
@@ -120,9 +141,10 @@ public static class ConfigurationStatusHelper
     ArgumentException.ThrowIfNullOrWhiteSpace(dependencyTraitValue, nameof(dependencyTraitValue));
 
     // Special cases for Docker and Database that might be checked directly in CustomWebApplicationFactory
-    if (dependencyTraitValue == TestCategories.Docker)
+    if (dependencyTraitValue == TestCategories.Docker || dependencyTraitValue == TestCategories.Database)
     {
-      // Docker availability might be checked differently, this is just for the mapping
+      // Infrastructure dependencies are now checked directly in IntegrationTestBase
+      // This branch is kept for backward compatibility with string-based traits
       return true;
     }
 
@@ -154,6 +176,7 @@ public static class ConfigurationStatusHelper
 
   /// <summary>
   /// Gets a list of missing configuration items for a dependency trait value.
+  /// This method is used primarily with string-based trait dependencies (legacy approach).
   /// </summary>
   /// <param name="serviceStatuses">The dictionary of service status information.</param>
   /// <param name="dependencyTraitValue">The dependency trait value (e.g., TestCategories.ExternalOpenAI).</param>
@@ -196,5 +219,19 @@ public static class ConfigurationStatusHelper
 
     var item = statuses.FirstOrDefault(s => s.Name == configName);
     return item is { Status: "Configured" };
+  }
+  
+  /// <summary>
+  /// Gets a list of configuration items that are required for an InfrastructureDependency.
+  /// This is primarily for reference/documentation, as infrastructure checks are now handled directly
+  /// in IntegrationTestBase.
+  /// </summary>
+  /// <param name="dependency">The InfrastructureDependency enum value.</param>
+  /// <returns>A list of configuration item names required for this dependency.</returns>
+  public static List<string> GetRequiredConfigurationsForInfrastructure(InfrastructureDependency dependency)
+  {
+    return _infrastructureDependencyToConfigMap.TryGetValue(dependency, out var configNames)
+      ? configNames.ToList()
+      : new List<string>();
   }
 }

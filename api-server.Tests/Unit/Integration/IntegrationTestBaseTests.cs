@@ -48,71 +48,6 @@ public class IntegrationTestBaseTests
   }
 
   [Fact]
-  public void GetTraitToConfigNamesMap_WhenAccessingOpenAICategory_ContainsApiKeyConfig()
-  {
-    var traitToConfigNamesMapField = typeof(IntegrationTestBase)
-        .GetField("TraitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
-
-    var traitToConfigNamesMap = traitToConfigNamesMapField?.GetValue(null)
-        as Dictionary<string, List<string>>;
-
-    // Assert
-    var openAiConfigs = traitToConfigNamesMap?[TestCategories.ExternalOpenAI];
-    openAiConfigs.Should().NotBeNull();
-    openAiConfigs.Should().Contain("OpenAI API Key");
-  }
-
-  [Fact]
-  public void GetTraitToConfigNamesMap_WhenAccessingStripeCategory_ContainsSecretAndWebhookConfigs()
-  {
-    var traitToConfigNamesMapField = typeof(IntegrationTestBase)
-        .GetField("TraitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
-
-    var traitToConfigNamesMap = traitToConfigNamesMapField?.GetValue(null)
-        as Dictionary<string, List<string>>;
-
-    // Assert
-    var stripeConfigs = traitToConfigNamesMap?[TestCategories.ExternalStripe];
-    stripeConfigs.Should().NotBeNull();
-    stripeConfigs.Should().Contain("Stripe Secret Key");
-    stripeConfigs.Should().Contain("Stripe Webhook Secret");
-  }
-
-  [Fact]
-  public void GetTraitToConfigNamesMap_WhenAccessingGitHubCategory_ContainsAccessTokenConfig()
-  {
-    var traitToConfigNamesMapField = typeof(IntegrationTestBase)
-        .GetField("TraitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
-
-    var traitToConfigNamesMap = traitToConfigNamesMapField?.GetValue(null)
-        as Dictionary<string, List<string>>;
-
-    // Assert
-    var gitHubConfigs = traitToConfigNamesMap?[TestCategories.ExternalGitHub];
-    gitHubConfigs.Should().NotBeNull();
-    gitHubConfigs.Should().Contain("GitHub Access Token");
-  }
-
-  [Fact]
-  public void GetTraitToConfigNamesMap_WhenAccessingMSGraphCategory_ContainsAllEmailConfigs()
-  {
-    var traitToConfigNamesMapField = typeof(IntegrationTestBase)
-        .GetField("TraitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
-
-    var traitToConfigNamesMap = traitToConfigNamesMapField?.GetValue(null)
-        as Dictionary<string, List<string>>;
-
-    // Assert
-    var msGraphConfigs = traitToConfigNamesMap?[TestCategories.ExternalMSGraph];
-    msGraphConfigs.Should().NotBeNull();
-    msGraphConfigs.Should().Contain("Email AzureTenantId");
-    msGraphConfigs.Should().Contain("Email AzureAppId");
-    msGraphConfigs.Should().Contain("Email AzureAppSecret");
-    msGraphConfigs.Should().Contain("Email FromEmail");
-    msGraphConfigs.Should().Contain("Email MailCheckApiKey");
-  }
-
-  [Fact]
   public void GetRequiredFeaturesFromTestClass_WhenMethodHasDependencyFactWithFeatures_ReturnsFeatures()
   {
     // Arrange
@@ -136,41 +71,42 @@ public class IntegrationTestBaseTests
     result.Should().NotBeNull();
     result.Should().Contain(ApiFeature.LLM);
   }
-
+  
   [Fact]
-  public void GetRequiredFeaturesFromTestClass_WhenMethodHasEmptyDependencyFact_ReturnsNull()
+  public void GetDependencyFactAttributeFromTestClass_WithInfrastructureDependency_ReturnsAttributeWithInfrastructure()
   {
     // Arrange
-    var testMethodInfo = typeof(DummyTestClassWithoutApiFeatures).GetMethod(nameof(DummyTestClassWithoutApiFeatures.TestWithoutApiFeatureDependency));
-    testMethodInfo.Should().NotBeNull();
-
-    // Act - Use reflection to invoke private method GetRequiredFeaturesFromTestClass
-    var getRequiredFeaturesMethod = typeof(IntegrationTestBase)
-        .GetMethod("GetRequiredFeaturesFromTestClass", BindingFlags.Instance | BindingFlags.NonPublic);
-
     var mockFixture = new Mock<ApiClientFixture>().Object;
     var mockOutputHelper = new Mock<ITestOutputHelper>().Object;
-
+    
     // Create an instance of IntegrationTestBase using a mock fixture
     var mockIntegrationTestBase = new Mock<IntegrationTestBase>(mockFixture, mockOutputHelper) { CallBase = true }.Object;
-
-    var result = getRequiredFeaturesMethod?.Invoke(mockIntegrationTestBase, new object[] { typeof(DummyTestClassWithoutApiFeatures) }) as ApiFeature[];
-
+    
+    // Use reflection to invoke the private method
+    var getDependencyFactAttributeMethod = typeof(IntegrationTestBase)
+        .GetMethod("GetDependencyFactAttributeFromTestClass", BindingFlags.Instance | BindingFlags.NonPublic);
+        
+    // Act
+    var result = getDependencyFactAttributeMethod?.Invoke(mockIntegrationTestBase, 
+        new object[] { typeof(DummyTestClassWithInfrastructureDependency) }) as DependencyFactAttribute;
+    
     // Assert
-    result.Should().BeNull();
+    result.Should().NotBeNull();
+    result.RequiredInfrastructure.Should().NotBeNull();
+    result.RequiredInfrastructure.Should().Contain(InfrastructureDependency.Database);
+    result.RequiredFeatures.Should().BeNull();
   }
 }
 
-// Helper classes for testing the GetRequiredFeaturesFromTestClass method
+// Helper classes for testing
 public class DummyTestClassWithApiFeatures
 {
   [DependencyFact(ApiFeature.LLM)]
   public void TestWithLlmDependency() { }
 }
 
-public class DummyTestClassWithoutApiFeatures
+public class DummyTestClassWithInfrastructureDependency
 {
-  [DependencyFact]
-  [Trait(TestCategories.Dependency, TestCategories.ExternalOpenAI)]
-  public void TestWithoutApiFeatureDependency() { }
+  [DependencyFact(InfrastructureDependency.Database)]
+  public void TestWithDatabaseDependency() { }
 }

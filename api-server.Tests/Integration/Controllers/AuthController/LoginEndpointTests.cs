@@ -10,11 +10,13 @@ namespace Zarichney.Tests.Integration.Controllers.AuthController;
 [Collection("Integration")]
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Feature, TestCategories.Auth)]
+// Using the infrastructure trait for XUnit test filtering - DependencyFact will check the actual dependency
 [Trait(TestCategories.Dependency, TestCategories.Database)]
 public class LoginEndpointsTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper)
     : DatabaseIntegrationTestBase(apiClientFixture, testOutputHelper)
 {
-  [DependencyFact]
+  // Using the new InfrastructureDependency enum instead of Trait + empty DependencyFact
+  [DependencyFact(InfrastructureDependency.Database)]
   public async Task Login_WithValidCredentials_ShouldSucceed()
   {
     // Arrange
@@ -34,7 +36,7 @@ public class LoginEndpointsTests(ApiClientFixture apiClientFixture, ITestOutputH
     Assert.NotEmpty(result.Email);
   }
 
-  [DependencyFact]
+  [DependencyFact(InfrastructureDependency.Database)]
   public async Task Login_WithInvalidCredentials_ShouldFail()
   {
     // Arrange
@@ -49,7 +51,7 @@ public class LoginEndpointsTests(ApiClientFixture apiClientFixture, ITestOutputH
     await Assert.ThrowsAsync<ApiException>(() => client.Login(request));
   }
 
-  [DependencyFact]
+  [DependencyFact(InfrastructureDependency.Database)]
   public async Task Login_WithEmptyEmail_ShouldFail()
   {
     // Arrange
