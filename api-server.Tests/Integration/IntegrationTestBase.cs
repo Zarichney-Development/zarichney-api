@@ -112,70 +112,90 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     // Get the type of the current test class
     var testClassType = GetType();
 
-    // Check if there are ApiFeature dependencies specified in DependencyFactAttribute
-    var requiredFeatures = GetRequiredFeaturesFromTestClass(testClassType);
-
     // Get all traits defined on the test class via reflection
     var traits = GetTraitsForTestClass(testClassType);
 
-    // Check if this is a minimal functionality test (which should run even without config)
+    // Skip dependency checks for minimal functionality tests
     if (traits.Any(t => t is { Name: TestCategories.Category, Value: TestCategories.MinimalFunctionality }))
     {
-      // Skip dependency checks for minimal functionality tests
       return;
     }
 
-    // APPROACH 1: Check ApiFeature dependencies if specified in DependencyFactAttribute
+    // Check dependencies in the following order:
+    // 1. First try using ApiFeature enum-based dependencies (preferred approach)
+    // 2. Fall back to string-based trait dependencies if no ApiFeature dependencies are specified
+
+    // Get ApiFeature dependencies specified in DependencyFactAttribute
+    var requiredFeatures = GetRequiredFeaturesFromTestClass(testClassType);
+    
+    // Check if there are explicit ApiFeature dependencies
     if (requiredFeatures != null && requiredFeatures.Length > 0)
     {
-      try
+      await CheckApiFeatureDependenciesAsync(requiredFeatures);
+    }
+    // Otherwise, check string-based trait dependencies (legacy approach)
+    else
+    {
+      await CheckLegacyTraitDependenciesAsync(traits);
+    }
+  }
+
+  /// <summary>
+  /// Checks ApiFeature-based dependencies using IStatusService.
+  /// This is the preferred approach for dependency checking.
+  /// </summary>
+  /// <param name="requiredFeatures">Array of required ApiFeature values.</param>
+  private async Task CheckApiFeatureDependenciesAsync(ApiFeature[] requiredFeatures)
+  {
+    try
+    {
+      // Get IStatusService from the factory
+      using var scope = Factory.Services.CreateScope();
+      var statusService = scope.ServiceProvider.GetRequiredService<IStatusService>();
+
+      // Check each required feature
+      var unavailableFeatures = new List<ApiFeature>();
+      var allMissingConfigs = new List<string>();
+
+      foreach (var feature in requiredFeatures)
       {
-        // Get IStatusService from the factory
-        using var scope = Factory.Services.CreateScope();
-        var statusService = scope.ServiceProvider.GetRequiredService<IStatusService>();
-
-        // Check each required feature
-        var unavailableFeatures = new List<ApiFeature>();
-        var allMissingConfigs = new List<string>();
-
-        foreach (var feature in requiredFeatures)
+        var featureStatus = statusService.GetFeatureStatus(feature);
+        if (featureStatus == null || !featureStatus.IsAvailable)
         {
-          var featureStatus = statusService.GetFeatureStatus(feature);
-          if (featureStatus == null || !featureStatus.IsAvailable)
+          unavailableFeatures.Add(feature);
+          if (featureStatus != null)
           {
-            unavailableFeatures.Add(feature);
-            if (featureStatus != null)
-            {
-              allMissingConfigs.AddRange(featureStatus.MissingConfigurations);
-            }
+            allMissingConfigs.AddRange(featureStatus.MissingConfigurations);
           }
         }
-
-        // If there are unavailable features, set SkipReason
-        if (unavailableFeatures.Count > 0)
-        {
-          var reason = $"Required ApiFeatures unavailable: {string.Join(", ", unavailableFeatures)}";
-          if (allMissingConfigs.Count > 0)
-          {
-            reason += $" (Missing configurations: {string.Join(", ", allMissingConfigs.Distinct())})";
-          }
-
-          SetSkipReason(reason);
-          return;
-        }
-
-        // If all ApiFeature dependencies are available, we're done
-        return;
       }
-      catch (Exception ex)
+
+      // If there are unavailable features, set SkipReason
+      if (unavailableFeatures.Count > 0)
       {
-        // If we encounter an error checking ApiFeature dependencies, set SkipReason
-        SetSkipReason($"Error checking ApiFeature dependencies: {ex.Message}");
-        return;
+        var reason = $"Required ApiFeatures unavailable: {string.Join(", ", unavailableFeatures)}";
+        if (allMissingConfigs.Count > 0)
+        {
+          reason += $" (Missing configurations: {string.Join(", ", allMissingConfigs.Distinct())})";
+        }
+
+        SetSkipReason(reason);
       }
     }
+    catch (Exception ex)
+    {
+      // If we encounter an error checking ApiFeature dependencies, set SkipReason
+      SetSkipReason($"Error checking ApiFeature dependencies: {ex.Message}");
+    }
+  }
 
-    // APPROACH 2: Fall back to string-based trait dependencies if no ApiFeature dependencies specified
+  /// <summary>
+  /// Checks string-based trait dependencies using trait values and ConfigurationStatusHelper.
+  /// This is the legacy approach for dependency checking, maintained for backward compatibility.
+  /// </summary>
+  /// <param name="traits">Collection of trait name/value pairs.</param>
+  private async Task CheckLegacyTraitDependenciesAsync(List<(string Name, string Value)> traits)
+  {
     // Filter the traits to only include dependency traits
     var dependencyTraits = traits
       .Where(t => t.Name == TestCategories.Dependency)

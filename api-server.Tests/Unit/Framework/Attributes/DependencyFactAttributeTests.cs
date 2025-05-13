@@ -51,4 +51,38 @@ public class DependencyFactAttributeTests
     // Assert
     attribute.RequiredFeatures.Should().BeNull();
   }
+  
+  [Fact]
+  public void Constructor_WithFeatures_CreatesTraitMappings()
+  {
+    // Arrange & Act
+    var attribute = new DependencyFactAttribute(ApiFeature.LLM, ApiFeature.GitHubAccess);
+    
+    // Assert - Check the dependency trait mappings
+    var traitMappings = attribute.GetDependencyTraits();
+    
+    traitMappings.Should().NotBeNull();
+    traitMappings.Should().HaveCount(2, "because each ApiFeature should map to a dependency trait");
+    
+    // Verify each ApiFeature maps to the expected trait value
+    traitMappings.Should().Contain(t => t.Name == TestCategories.Dependency && 
+                                       t.Value == TestCategories.ExternalOpenAI,
+                                  "because LLM maps to ExternalOpenAI trait");
+    traitMappings.Should().Contain(t => t.Name == TestCategories.Dependency && 
+                                       t.Value == TestCategories.ExternalGitHub,
+                                  "because GitHubAccess maps to ExternalGitHub trait");
+  }
+  
+  [Fact]
+  public void GetDependencyTraits_NoFeatures_ReturnsEmptyCollection()
+  {
+    // Arrange
+    var attribute = new DependencyFactAttribute();
+    
+    // Act
+    var traits = attribute.GetDependencyTraits();
+    
+    // Assert
+    traits.Should().BeEmpty("because no ApiFeatures were provided");
+  }
 }
