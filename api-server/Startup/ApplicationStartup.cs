@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Serilog;
 using Zarichney.Config;
 using Zarichney.Cookbook.Recipes;
+using Zarichney.Services.Status;
 
 namespace Zarichney.Startup;
 
@@ -150,6 +151,10 @@ public static class ApplicationStartup
     application.UseCors("AllowSpecificOrigin");
     application.UseCustomAuthentication();
     application.UseSessionManagement(); // Session's user detection requires authentication, must be after
+
+    // Check feature availability before executing endpoints
+    application.UseFeatureAvailability();
+
     application.MapControllers();
 
     if (application.Environment.IsProduction())

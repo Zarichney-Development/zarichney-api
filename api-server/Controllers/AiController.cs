@@ -16,8 +16,7 @@ public class TranscribeAudioRequest
   /// The audio file (e.g., WAV, MP3, WEBM) to transcribe.
   /// The parameter name in the form data must be 'AudioFile'.
   /// </summary>
-  [FromForm(Name =
-    "audioFile")] // Explicitly match the expected form field name if needed, otherwise name matching works
+  [FromForm(Name = "audioFile")]
   public IFormFile? AudioFile { get; set; }
 }
 
@@ -45,7 +44,7 @@ public class CompletionRequest
 /// </summary>
 [ApiController]
 [Route("api")]
-[Authorize] // Requires authentication for all endpoints in this controller
+[Authorize]
 [Produces("application/json")]
 [RequiresFeatureEnabled(Feature.AiServices)]
 public class AiController(

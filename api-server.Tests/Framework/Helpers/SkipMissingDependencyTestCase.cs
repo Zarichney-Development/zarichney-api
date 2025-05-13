@@ -109,7 +109,7 @@ public class SkipMissingDependencyTestCase : XunitTestCase
       }
 
       // Run the test normally if not skipped during class init
-      return  await base.RunAsync(diagnosticMessageSink, messageBus, constructorArguments, aggregator,
+      return await base.RunAsync(diagnosticMessageSink, messageBus, constructorArguments, aggregator,
         cancellationTokenSource);
     }
     catch (Exception ex)

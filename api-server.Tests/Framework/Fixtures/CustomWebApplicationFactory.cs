@@ -45,7 +45,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     {
       var psi = new System.Diagnostics.ProcessStartInfo("docker", "info")
       {
-        RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+        CreateNoWindow = true
       };
       using var proc = System.Diagnostics.Process.Start(psi);
       if (proc == null) return false;

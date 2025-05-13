@@ -47,7 +47,7 @@ namespace Zarichney.Client
         [Multipart]
         [Headers("Accept: application/json", "Content-Type: multipart/form-data")]
         [Post("/api/completion")]
-        Task<object> Completion([AliasAs("TextPrompt")] string textPrompt);
+        Task<object> Completion(string textPrompt, StreamPart audioPrompt);
 
         /// <summary>Transcribes the provided audio file.</summary>
         /// <remarks>
@@ -1177,7 +1177,7 @@ namespace Zarichney.Client
 {
     using System = global::System;
 
-
+    
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class ApiErrorResult
@@ -1374,29 +1374,6 @@ namespace Zarichney.Client
 
         [JsonPropertyName("checkoutUrl")]
         public string CheckoutUrl { get; set; }
-
-    }
-
-    /// <summary>
-    /// Request model for the completion endpoint, accepting either text or audio input.
-    /// </summary>
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class CompletionRequest
-    {
-        /// <summary>
-        /// The text prompt to send to the LLM. Use this OR audioPrompt.
-        /// </summary>
-
-        [JsonPropertyName("textPrompt")]
-        public string TextPrompt { get; set; }
-
-        /// <summary>
-        /// The audio prompt (e.g., WAV, MP3, WEBM) to be transcribed and then sent to the LLM. Use this OR textPrompt.
-        /// <br/>The request must use multipart/form-data encoding.
-        /// </summary>
-
-        [JsonPropertyName("audioPrompt")]
-        public byte[] AudioPrompt { get; set; }
 
     }
 

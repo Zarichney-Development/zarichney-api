@@ -24,12 +24,17 @@
    * A strongly-typed `Feature` enum defines all features available in the application that can be enabled or disabled based on configuration availability (e.g., `LLM`, `Transcription`, `EmailSending`, etc.). [cite: api-server/Config/FeatureEnum.cs]
    * Properties in configuration classes are now marked with `[RequiresConfiguration]` attribute to indicate which features depend on them (e.g., `[RequiresConfiguration(Feature.LLM, Feature.AiServices)]`). This is used by `IConfigurationStatusService` to determine feature availability. [cite: api-server/Config/RequiresConfigurationAttribute.cs, api-server/Services/Status/ConfigurationStatusService.cs]
    * Controllers and actions can be marked with the `[RequiresFeatureEnabled]` attribute to indicate they depend on specific features that require proper configuration (e.g., `[RequiresFeatureEnabled(Feature.LLM)]`). The `ServiceAvailabilityOperationFilter` uses this information to update Swagger UI with visual indications when endpoints may be unavailable due to missing configuration. [cite: api-server/Config/RequiresFeatureEnabledAttribute.cs, api-server/Config/ServiceAvailabilityOperationFilter.cs]
-* **Middleware:** Standard ASP.NET Core middleware pattern is used for logging (`LoggingMiddleware`) and error handling (`ErrorHandlingMiddleware`). Their order of registration in the application pipeline is important. [cite: api-server/Startup/App/ApplicationStartup.cs, api-server/Config/LoggingMiddleware.cs, api-server/Config/ErrorHandlingMiddleware.cs]
+* **Middleware:** Standard ASP.NET Core middleware pattern is used for logging (`LoggingMiddleware`), error handling (`ErrorHandlingMiddleware`), and feature availability checking (`FeatureAvailabilityMiddleware`). Their order of registration in the application pipeline is important. [cite: api-server/Startup/App/ApplicationStartup.cs, api-server/Config/LoggingMiddleware.cs, api-server/Config/ErrorHandlingMiddleware.cs, api-server/Services/Status/FeatureAvailabilityMiddleware.cs]
 * **ErrorHandlingMiddleware:**
     * Global exception handler for all HTTP requests. Catches unhandled exceptions and returns a structured JSON error response.
     * **Now specifically catches `ConfigurationMissingException` and `ServiceUnavailableException` to return a 503 Service Unavailable response** with a user-friendly message if a required configuration is missing at runtime or a service is unavailable (see Section 5 for details).
     * Logs all exceptions using the injected logger, including request method and path for traceability.
     * For all other exceptions, returns a 500 Internal Server Error with a generic error message and trace ID.
+* **FeatureAvailabilityMiddleware:**
+    * Examines each incoming request to check if the target endpoint has been decorated with `[RequiresFeatureEnabled]` attribute(s).
+    * Uses `IStatusService` to determine if all required features are currently available.
+    * If any required feature is unavailable, throws a `ServiceUnavailableException` with detailed information about which configurations are missing.
+    * Properly handles both controller-level and action-level attributes, aggregating all required features.
 * **Static Configuration Files:** Files like `site_selectors.json` contain data loaded and used by specific services (`WebScraperService`), although the file itself resides within this config directory for organization. [cite: api-server/Config/site_selectors.json, api-server/Cookbook/Recipes/WebScraperService.cs]
 
 ## 3. Interface Contract & Assumptions
@@ -69,7 +74,9 @@
     6.  Inject `MyNewConfig` via constructor DI where needed.
 * **Adding New Middleware:**
     1.  Create a new middleware class following the ASP.NET Core pattern (constructor with `RequestDelegate`, `InvokeAsync` method).
-    2.  Register the middleware using `app.UseMiddleware<MyNewMiddleware>()` in `/Startup/App/ApplicationStartup.cs` at the appropriate stage in the request pipeline.
+    2.  Consider adding an extension method for cleaner registration (e.g., `app.UseMyNewMiddleware()`).
+    3.  Register the middleware using `app.UseMiddleware<MyNewMiddleware>()` or your extension method in `/Startup/App/ApplicationStartup.cs` at the appropriate stage in the request pipeline.
+    4.  Be careful with ordering - some middleware (like `FeatureAvailabilityMiddleware`) must be registered after routing but before endpoint execution.
 * **Error Handling for Service Unavailability:**
     * When a service can't operate due to missing configuration, throw a `ServiceUnavailableException` with one or more specific reasons for unavailability.
     * The `ErrorHandlingMiddleware` will catch the exception and return a 503 Service Unavailable response with the list of missing configurations.
@@ -83,7 +90,9 @@
     * The attribute accepts one or more `Feature` enum values.
     * Example at class level: `[RequiresFeatureEnabled(Feature.Payments)]`
     * Example at method level with multiple features: `[RequiresFeatureEnabled(Feature.LLM, Feature.GitHubAccess)]`
-    * The `ServiceAvailabilityOperationFilter` automatically detects these attributes and updates the Swagger UI to show warnings when endpoints may be unavailable due to missing configuration.
+    * Two complementary systems work with this attribute:
+        1. The `ServiceAvailabilityOperationFilter` automatically detects these attributes and updates the Swagger UI to show warnings when endpoints may be unavailable due to missing configuration.
+        2. The `FeatureAvailabilityMiddleware` checks these attributes at runtime and prevents access to endpoints whose required features are unavailable, returning a 503 Service Unavailable response with detailed information about which configurations are missing.
 * **Testing:**
     * **Configuration:** Testing services that consume config usually involves creating mock `IOptions<T>` or directly instantiating config objects with test values.
     * **Middleware:** Often requires integration tests using `WebApplicationFactory` or specialized middleware testing harnesses to mock `HttpContext` and `RequestDelegate`.
@@ -115,7 +124,9 @@
 * **`IConfig` Interface:** Used as a marker interface for automatic discovery and registration of configuration classes.
 * **Configuration Status Infrastructure:** The `RequiresConfigurationAttribute` and `ServiceUnavailableException` were added to support a more graceful handling of service unavailability due to missing configuration.
 * **Service Proxy Pattern:** Service factories now register proxy implementations of external clients that throw `ServiceUnavailableException` when their methods are invoked if required configuration is missing, rather than returning null. This provides clearer error messages and more consistent behavior when a service can't operate due to missing configuration.
-* **Swagger Integration for Feature Availability:** The `RequiresFeatureEnabledAttribute` and `ServiceAvailabilityOperationFilter` were added to provide a visual indication in the Swagger UI when API endpoints may be unavailable due to missing configuration. This complements the runtime exception handling by helping developers and API consumers understand which endpoints require specific features to be properly configured before they attempt to use them.
+* **Feature Availability Infrastructure:**
+    * The `RequiresFeatureEnabledAttribute` and `ServiceAvailabilityOperationFilter` were added to provide a visual indication in the Swagger UI when API endpoints may be unavailable due to missing configuration. This helps developers and API consumers understand which endpoints require specific features to be properly configured before they attempt to use them.
+    * The `FeatureAvailabilityMiddleware` complements this by actively checking feature availability at runtime and preventing access to endpoints whose required features are unavailable. This provides immediate feedback to API consumers rather than letting them discover errors further down the request pipeline.
 * **Middleware for Cross-Cutting Concerns:** Logging and Error Handling are implemented as middleware to apply these concerns globally without cluttering individual controller actions or services.
 * **PromptBase Relocation:** The `PromptBase` class has been moved to `/Services/AI` where it more logically belongs with other AI-related functionality.
 
@@ -128,4 +139,6 @@
 * Consider adding a visual indicator in the Swagger UI's endpoint list (not just in the expanded operations) for endpoints that may be unavailable.
 * Consider expanding the feature availability check to include more detailed information about the required configuration, such as links to documentation or examples of how to set up the required configuration.
 * Implement a code analyzer or static analysis tool to ensure configuration keys are always valid and match between `appsettings.json` and `[RequiresConfiguration]` attributes. This would help catch configuration issues at compile-time rather than runtime.
+* Explore caching optimization for `FeatureAvailabilityMiddleware` to reduce the overhead of feature availability checks on high-traffic endpoints.
+* Add monitoring and metrics for feature availability to help identify configuration issues in production environments.
 * Create more granular feature enums based on specific capabilities to enable more precise feature flagging.
