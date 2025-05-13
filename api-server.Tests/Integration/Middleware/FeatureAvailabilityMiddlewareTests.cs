@@ -33,14 +33,14 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     var mockStatusService = new Mock<IStatusService>();
 
     // Configure the mock to return specific statuses for different features
-    mockStatusService.Setup(s => s.GetFeatureStatus(Feature.LLM))
+    mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.LLM))
         .Returns(new StatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
 
-    mockStatusService.Setup(s => s.IsFeatureAvailable(Feature.LLM))
+    mockStatusService.Setup(s => s.IsFeatureAvailable(ApiFeature.LLM))
         .Returns(false);
 
     // Use a WebHostBuilder to replace the service with our mock
-    var customFactory = Factory as CustomWebApplicationFactory;
+    var customFactory = Factory;
     var factoryWithMockStatus = customFactory.WithWebHostBuilder(builder =>
     {
       builder.ConfigureTestServices(services =>
@@ -70,7 +70,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     content.Should().Contain("Service Temporarily Unavailable");
     content.Should().Contain("LlmConfig:ApiKey");
 
-    mockStatusService.Verify(s => s.GetFeatureStatus(Feature.LLM), Times.AtLeastOnce);
+    mockStatusService.Verify(s => s.GetFeatureStatus(ApiFeature.LLM), Times.AtLeastOnce);
   }
 
   /// <summary>
@@ -86,7 +86,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     var mockStatusService = new Mock<IStatusService>();
 
     // Configure all features to be unavailable
-    foreach (Feature feature in Enum.GetValues(typeof(Feature)))
+    foreach (ApiFeature feature in Enum.GetValues(typeof(ApiFeature)))
     {
       mockStatusService.Setup(s => s.GetFeatureStatus(feature))
           .Returns(new StatusInfo(IsAvailable: false, [$"{feature}Config:MissingKey"]));
@@ -96,7 +96,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     }
 
     // Use a WebHostBuilder to replace the service with our mock
-    var customFactory = Factory as CustomWebApplicationFactory;
+    var customFactory = Factory;
     var factoryWithMockStatus = customFactory.WithWebHostBuilder(builder =>
     {
       builder.ConfigureTestServices(services =>
@@ -134,20 +134,20 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     var mockStatusService = new Mock<IStatusService>();
 
     // Configure the mock to return specific statuses for different features
-    mockStatusService.Setup(s => s.GetFeatureStatus(Feature.LLM))
+    mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.LLM))
         .Returns(new StatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
 
-    mockStatusService.Setup(s => s.GetFeatureStatus(Feature.EmailSending))
+    mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.EmailSending))
         .Returns(new StatusInfo(IsAvailable: false, ["EmailConfig:FromEmail"]));
 
-    mockStatusService.Setup(s => s.GetFeatureStatus(Feature.AiServices))
+    mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.AiServices))
         .Returns(new StatusInfo(IsAvailable: false, ["AiConfig:ApiKey"]));
 
-    mockStatusService.Setup(s => s.IsFeatureAvailable(It.IsAny<Feature>()))
-        .Returns<Feature>(f => f != Feature.LLM && f != Feature.Transcription && f != Feature.AiServices);
+    mockStatusService.Setup(s => s.IsFeatureAvailable(It.IsAny<ApiFeature>()))
+        .Returns<ApiFeature>(f => f != ApiFeature.LLM && f != ApiFeature.Transcription && f != ApiFeature.AiServices);
 
     // Use a WebHostBuilder to replace the service with our mock
-    var customFactory = Factory as CustomWebApplicationFactory;
+    var customFactory = Factory;
     var factoryWithMockStatus = customFactory.WithWebHostBuilder(builder =>
     {
       builder.ConfigureTestServices(services =>

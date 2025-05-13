@@ -11,11 +11,11 @@ public class RequiresConfigurationAttributeTests
   public void Constructor_ValidFeatures_InitializesCorrectly()
   {
     // Arrange & Act
-    var attribute = new RequiresConfigurationAttribute(Feature.LLM, Feature.Transcription);
+    var attribute = new RequiresConfigurationAttribute(ApiFeature.LLM, ApiFeature.Transcription);
 
     // Assert
     attribute.Features.Should().HaveCount(2); // Two features were provided
-    attribute.Features.Should().Contain(Feature.LLM).And.Contain(Feature.Transcription);
+    attribute.Features.Should().Contain(ApiFeature.LLM).And.Contain(ApiFeature.Transcription);
   }
 
   [Trait("Category", "Unit")]
@@ -23,11 +23,11 @@ public class RequiresConfigurationAttributeTests
   public void Constructor_SingleFeature_InitializesCorrectly()
   {
     // Arrange & Act
-    var attribute = new RequiresConfigurationAttribute(Feature.Core);
+    var attribute = new RequiresConfigurationAttribute(ApiFeature.Core);
 
     // Assert
     attribute.Features.Should().HaveCount(1); // One feature was provided
-    attribute.Features.Should().Contain(Feature.Core);
+    attribute.Features.Should().Contain(ApiFeature.Core);
   }
 
   [Trait("Category", "Unit")]

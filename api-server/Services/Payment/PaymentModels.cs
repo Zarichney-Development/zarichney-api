@@ -11,13 +11,13 @@ public enum PaymentType
 
 public class PaymentConfig : IConfig
 {
-  [RequiresConfiguration(Feature.Payments)]
+  [RequiresConfiguration(ApiFeature.Payments)]
   public string StripeSecretKey { get; init; } = string.Empty;
 
-  [RequiresConfiguration(Feature.Payments)]
+  [RequiresConfiguration(ApiFeature.Payments)]
   public string StripePublishableKey { get; init; } = string.Empty;
 
-  [RequiresConfiguration(Feature.Payments)]
+  [RequiresConfiguration(ApiFeature.Payments)]
   public string StripeWebhookSecret { get; init; } = string.Empty;
 
   public string SuccessUrl { get; init; } = "/order/success/{0}";

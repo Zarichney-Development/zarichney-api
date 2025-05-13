@@ -57,7 +57,7 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate the feature is available
-    _mockStatusService.Setup(s => s.GetFeatureStatus(Feature.LLM))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.LLM))
         .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
     // Act
@@ -83,7 +83,7 @@ public class ServiceAvailabilityOperationFilterTests
 
     // Setup status service to indicate the feature is unavailable
     var missingConfigs = new List<string> { "LlmConfig:ApiKey" };
-    _mockStatusService.Setup(s => s.GetFeatureStatus(Feature.LLM))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.LLM))
         .Returns(new ServiceStatusInfo(IsAvailable: false, missingConfigs));
 
     // Act
@@ -115,10 +115,10 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate both features are unavailable
-    _mockStatusService.Setup(s => s.GetFeatureStatus(Feature.LLM))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.LLM))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
 
-    _mockStatusService.Setup(s => s.GetFeatureStatus(Feature.Transcription))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.Transcription))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["TranscribeConfig:ModelName"]));
 
     // Act
@@ -146,10 +146,10 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate one feature is available and one is unavailable
-    _mockStatusService.Setup(s => s.GetFeatureStatus(Feature.LLM))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.LLM))
         .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
-    _mockStatusService.Setup(s => s.GetFeatureStatus(Feature.Transcription))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.Transcription))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["TranscribeConfig:ModelName"]));
 
     // Act
@@ -176,7 +176,7 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate the feature is unavailable
-    _mockStatusService.Setup(s => s.GetFeatureStatus(Feature.Core))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.Core))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["ServerConfig:BaseUrl"]));
 
     // Act
@@ -201,10 +201,10 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate both features are unavailable
-    _mockStatusService.Setup(s => s.GetFeatureStatus(Feature.Core))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.Core))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["ServerConfig:BaseUrl"]));
 
-    _mockStatusService.Setup(s => s.GetFeatureStatus(Feature.EmailSending))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.EmailSending))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["EmailConfig:AzureAppId"]));
 
     // Act
@@ -262,20 +262,20 @@ public class ServiceAvailabilityOperationFilterTests
   {
     public void MethodWithoutAttribute() { }
 
-    [RequiresFeatureEnabled(Feature.LLM)]
+    [RequiresFeatureEnabled(ApiFeature.LLM)]
     public void MethodWithAttribute() { }
 
-    [RequiresFeatureEnabled(Feature.LLM)]
-    [RequiresFeatureEnabled(Feature.Transcription)]
+    [RequiresFeatureEnabled(ApiFeature.LLM)]
+    [RequiresFeatureEnabled(ApiFeature.Transcription)]
     public void MethodWithMultipleAttributes() { }
   }
 
-  [RequiresFeatureEnabled(Feature.Core)]
+  [RequiresFeatureEnabled(ApiFeature.Core)]
   private class ClassWithAttribute
   {
     public void MethodWithoutAttribute() { }
 
-    [RequiresFeatureEnabled(Feature.EmailSending)]
+    [RequiresFeatureEnabled(ApiFeature.EmailSending)]
     public void MethodWithAttribute() { }
   }
 }

@@ -38,11 +38,11 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
 
     // Set up the mock to return available status for any feature (enum-based)
     mockStatusService
-        .Setup(s => s.GetFeatureStatus(It.IsAny<Feature>()))
+        .Setup(s => s.GetFeatureStatus(It.IsAny<ApiFeature>()))
         .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
     mockStatusService
-        .Setup(s => s.IsFeatureAvailable(It.IsAny<Feature>()))
+        .Setup(s => s.IsFeatureAvailable(It.IsAny<ApiFeature>()))
         .Returns(true);
 
     // For backward compatibility, support string-based lookups too
@@ -96,38 +96,38 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
 
     // Set up the mock to return unavailable status for Transcription
     mockStatusService
-        .Setup(s => s.GetFeatureStatus(Feature.Transcription))
+        .Setup(s => s.GetFeatureStatus(ApiFeature.Transcription))
         .Returns(new ServiceStatusInfo(
             IsAvailable: false,
             ["TranscribeConfig:ModelName"]
         ));
 
     mockStatusService
-        .Setup(s => s.IsFeatureAvailable(Feature.Transcription))
+        .Setup(s => s.IsFeatureAvailable(ApiFeature.Transcription))
         .Returns(false);
 
     // Also make LLM unavailable
     mockStatusService
-        .Setup(s => s.GetFeatureStatus(Feature.LLM))
+        .Setup(s => s.GetFeatureStatus(ApiFeature.LLM))
         .Returns(new ServiceStatusInfo(
             IsAvailable: false,
             ["LlmConfig:ApiKey"]
         ));
 
     mockStatusService
-        .Setup(s => s.IsFeatureAvailable(Feature.LLM))
+        .Setup(s => s.IsFeatureAvailable(ApiFeature.LLM))
         .Returns(false);
 
     // Make GitHub access unavailable (needed for transcribe endpoint)
     mockStatusService
-        .Setup(s => s.GetFeatureStatus(Feature.GitHubAccess))
+        .Setup(s => s.GetFeatureStatus(ApiFeature.GitHubAccess))
         .Returns(new ServiceStatusInfo(
             IsAvailable: false,
             ["GitHubConfig:AccessToken"]
         ));
 
     mockStatusService
-        .Setup(s => s.IsFeatureAvailable(Feature.GitHubAccess))
+        .Setup(s => s.IsFeatureAvailable(ApiFeature.GitHubAccess))
         .Returns(false);
 
     // For backward compatibility, support string-based lookups too
@@ -166,13 +166,13 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
 
     // Other features are available - catch-all for any other Feature enum value
     mockStatusService
-        .Setup(s => s.GetFeatureStatus(It.Is<Feature>(f =>
-            f != Feature.LLM && f != Feature.Transcription && f != Feature.GitHubAccess)))
+        .Setup(s => s.GetFeatureStatus(It.Is<ApiFeature>(f =>
+            f != ApiFeature.LLM && f != ApiFeature.Transcription && f != ApiFeature.GitHubAccess)))
         .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
     mockStatusService
-        .Setup(s => s.IsFeatureAvailable(It.Is<Feature>(f =>
-            f != Feature.LLM && f != Feature.Transcription && f != Feature.GitHubAccess)))
+        .Setup(s => s.IsFeatureAvailable(It.Is<ApiFeature>(f =>
+            f != ApiFeature.LLM && f != ApiFeature.Transcription && f != ApiFeature.GitHubAccess)))
         .Returns(true);
 
     // Also catch-all for any other string-based feature name
@@ -256,14 +256,14 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
 
     // Set up the mock to return available status for all features except Payments
     mockStatusService
-        .Setup(s => s.GetFeatureStatus(Feature.Payments))
+        .Setup(s => s.GetFeatureStatus(ApiFeature.Payments))
         .Returns(new ServiceStatusInfo(
             IsAvailable: false,
             ["PaymentConfig:StripeSecretKey", "PaymentConfig:StripeWebhookSecret"]
         ));
 
     mockStatusService
-        .Setup(s => s.IsFeatureAvailable(Feature.Payments))
+        .Setup(s => s.IsFeatureAvailable(ApiFeature.Payments))
         .Returns(false);
 
     // For backward compatibility, support string-based lookups too
@@ -280,11 +280,11 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
 
     // Other features are available - catch-all for any other Feature enum value
     mockStatusService
-        .Setup(s => s.GetFeatureStatus(It.Is<Feature>(f => f != Feature.Payments)))
+        .Setup(s => s.GetFeatureStatus(It.Is<ApiFeature>(f => f != ApiFeature.Payments)))
         .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
     mockStatusService
-        .Setup(s => s.IsFeatureAvailable(It.Is<Feature>(f => f != Feature.Payments)))
+        .Setup(s => s.IsFeatureAvailable(It.Is<ApiFeature>(f => f != ApiFeature.Payments)))
         .Returns(true);
 
     // Also catch-all for any other string-based feature name
@@ -346,47 +346,47 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
 
     // Set up the mock to return unavailable status for LLM, Transcription, GitHub, and Payments
     mockStatusService
-        .Setup(s => s.GetFeatureStatus(Feature.LLM))
+        .Setup(s => s.GetFeatureStatus(ApiFeature.LLM))
         .Returns(new ServiceStatusInfo(
             IsAvailable: false,
             ["LlmConfig:ApiKey"]
         ));
 
     mockStatusService
-        .Setup(s => s.IsFeatureAvailable(Feature.LLM))
+        .Setup(s => s.IsFeatureAvailable(ApiFeature.LLM))
         .Returns(false);
 
     mockStatusService
-        .Setup(s => s.GetFeatureStatus(Feature.Transcription))
+        .Setup(s => s.GetFeatureStatus(ApiFeature.Transcription))
         .Returns(new ServiceStatusInfo(
             IsAvailable: false,
             ["TranscribeConfig:ModelName"]
         ));
 
     mockStatusService
-        .Setup(s => s.IsFeatureAvailable(Feature.Transcription))
+        .Setup(s => s.IsFeatureAvailable(ApiFeature.Transcription))
         .Returns(false);
 
     mockStatusService
-        .Setup(s => s.GetFeatureStatus(Feature.GitHubAccess))
+        .Setup(s => s.GetFeatureStatus(ApiFeature.GitHubAccess))
         .Returns(new ServiceStatusInfo(
             IsAvailable: false,
             ["GitHubConfig:AccessToken"]
         ));
 
     mockStatusService
-        .Setup(s => s.IsFeatureAvailable(Feature.GitHubAccess))
+        .Setup(s => s.IsFeatureAvailable(ApiFeature.GitHubAccess))
         .Returns(false);
 
     mockStatusService
-        .Setup(s => s.GetFeatureStatus(Feature.Payments))
+        .Setup(s => s.GetFeatureStatus(ApiFeature.Payments))
         .Returns(new ServiceStatusInfo(
             IsAvailable: false,
             ["PaymentConfig:StripeSecretKey"]
         ));
 
     mockStatusService
-        .Setup(s => s.IsFeatureAvailable(Feature.Payments))
+        .Setup(s => s.IsFeatureAvailable(ApiFeature.Payments))
         .Returns(false);
 
     // For backward compatibility, support string-based lookups too
@@ -436,13 +436,13 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
 
     // Other features are available - catch-all for any other Feature enum value
     mockStatusService
-        .Setup(s => s.GetFeatureStatus(It.Is<Feature>(f =>
-            f != Feature.LLM && f != Feature.Transcription && f != Feature.GitHubAccess && f != Feature.Payments)))
+        .Setup(s => s.GetFeatureStatus(It.Is<ApiFeature>(f =>
+            f != ApiFeature.LLM && f != ApiFeature.Transcription && f != ApiFeature.GitHubAccess && f != ApiFeature.Payments)))
         .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
     mockStatusService
-        .Setup(s => s.IsFeatureAvailable(It.Is<Feature>(f =>
-            f != Feature.LLM && f != Feature.Transcription && f != Feature.GitHubAccess && f != Feature.Payments)))
+        .Setup(s => s.IsFeatureAvailable(It.Is<ApiFeature>(f =>
+            f != ApiFeature.LLM && f != ApiFeature.Transcription && f != ApiFeature.GitHubAccess && f != ApiFeature.Payments)))
         .Returns(true);
 
     // Also catch-all for any other string-based feature name

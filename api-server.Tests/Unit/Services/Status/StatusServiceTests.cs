@@ -205,7 +205,7 @@ public class StatusServiceTests
 
     // Act - Call GetServiceStatusAsync to populate cache first
     await _statusService.GetServiceStatusAsync();
-    var result = _statusService.GetFeatureStatus(Feature.LLM);
+    var result = _statusService.GetFeatureStatus(ApiFeature.LLM);
 
     // Assert
     result.Should().NotBeNull();
@@ -240,7 +240,7 @@ public class StatusServiceTests
 
     // Act - Call GetServiceStatusAsync to populate cache first
     await _statusService.GetServiceStatusAsync();
-    var result = _statusService.GetFeatureStatus(Feature.LLM);
+    var result = _statusService.GetFeatureStatus(ApiFeature.LLM);
 
     // Assert
     result.Should().NotBeNull();
@@ -258,7 +258,7 @@ public class StatusServiceTests
 
     // Act - Call GetServiceStatusAsync to populate cache first
     await _statusService.GetServiceStatusAsync();
-    var result = _statusService.IsFeatureAvailable(Feature.LLM);
+    var result = _statusService.IsFeatureAvailable(ApiFeature.LLM);
 
     // Assert
     result.Should().BeTrue();
@@ -274,7 +274,7 @@ public class StatusServiceTests
 
     // Act - Call GetServiceStatusAsync to populate cache first
     await _statusService.GetServiceStatusAsync();
-    var result = _statusService.IsFeatureAvailable(Feature.LLM);
+    var result = _statusService.IsFeatureAvailable(ApiFeature.LLM);
 
     // Assert
     result.Should().BeFalse();
@@ -356,16 +356,16 @@ public class StatusServiceTests
   // Test Config Classes
   private class TestService1Config : IConfig
   {
-    [RequiresConfiguration(Feature.LLM)]
+    [RequiresConfiguration(ApiFeature.LLM)]
     public string ApiKey { get; set; } = "valid_key"; // Default to valid for simplicity in some tests
 
-    [RequiresConfiguration(Feature.LLM)]
+    [RequiresConfiguration(ApiFeature.LLM)]
     public string ApiSecret { get; set; } = "valid_secret";
   }
 
   private class TestService2Config : IConfig
   {
-    [RequiresConfiguration(Feature.Core)]
+    [RequiresConfiguration(ApiFeature.Core)]
     public string Setting { get; set; } = "valid_setting";
   }
 }

@@ -39,6 +39,7 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
   public async Task Endpoint_WhenRequiredFeatureIsUnavailable_Returns503WithErrorDetails()
   {
     // Arrange
+    var textPrompt = GetRandom.String();
     // todo: consider adding an inline test for each service types and hitting each endpoint that is expected to throw 504. skip test when everything is operational
 
     // Act
@@ -47,7 +48,7 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
     try
     {
       // todo: fix refitter/refit client to properly supply form data
-      // await AuthenticatedApiClient.Completion(textPrompt);
+      await AuthenticatedApiClient.Completion(textPrompt, null!);
       Assert.Fail("Expected ApiException was not thrown");
     }
     catch (ApiException ex)

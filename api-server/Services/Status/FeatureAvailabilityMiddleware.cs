@@ -15,7 +15,7 @@ public class FeatureAvailabilityMiddleware
   private readonly IStatusService _statusService;
 
   // Cache to avoid repeatedly extracting attributes for the same route
-  private static readonly ConcurrentDictionary<string, List<Feature>> AttributeCache = new();
+  private static readonly ConcurrentDictionary<string, List<ApiFeature>> AttributeCache = new();
 
   /// <summary>
   /// Initializes a new instance of the <see cref="FeatureAvailabilityMiddleware"/> class.
@@ -62,7 +62,7 @@ public class FeatureAvailabilityMiddleware
     }
 
     // Check each required feature's availability
-    var unavailableFeatures = new Dictionary<Feature, ServiceStatusInfo>();
+    var unavailableFeatures = new Dictionary<ApiFeature, ServiceStatusInfo>();
     foreach (var feature in requiredFeatures)
     {
       var featureStatus = _statusService.GetFeatureStatus(feature);
@@ -119,7 +119,7 @@ public class FeatureAvailabilityMiddleware
   /// <param name="endpoint">The endpoint to check.</param>
   /// <param name="cacheKey">A key to use for caching the results.</param>
   /// <returns>A list of all required features for the endpoint.</returns>
-  private List<Feature> GetRequiredFeatures(Endpoint endpoint, string cacheKey)
+  private List<ApiFeature> GetRequiredFeatures(Endpoint endpoint, string cacheKey)
   {
     // Check if we have cached the attributes for this endpoint
     if (AttributeCache.TryGetValue(cacheKey, out var cachedFeatures))
@@ -127,7 +127,7 @@ public class FeatureAvailabilityMiddleware
       return cachedFeatures;
     }
 
-    var features = new List<Feature>();
+    var features = new List<ApiFeature>();
 
     // Get the endpoint metadata collection
     var metadata = endpoint.Metadata;

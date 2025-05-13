@@ -10,22 +10,22 @@ public class RequiresFeatureEnabledAttributeTests
   public void Constructor_ValidFeatures_InitializesCorrectly()
   {
     // Arrange & Act
-    var attribute = new RequiresFeatureEnabledAttribute(Feature.LLM, Feature.Transcription);
+    var attribute = new RequiresFeatureEnabledAttribute(ApiFeature.LLM, ApiFeature.Transcription);
 
     // Assert
     attribute.Features.Should().HaveCount(2); // Two features were provided
-    attribute.Features.Should().Contain(Feature.LLM).And.Contain(Feature.Transcription); // Both provided features should be stored
+    attribute.Features.Should().Contain(ApiFeature.LLM).And.Contain(ApiFeature.Transcription); // Both provided features should be stored
   }
 
   [Fact]
   public void Constructor_SingleFeature_InitializesCorrectly()
   {
     // Arrange & Act
-    var attribute = new RequiresFeatureEnabledAttribute(Feature.Core);
+    var attribute = new RequiresFeatureEnabledAttribute(ApiFeature.Core);
 
     // Assert
     attribute.Features.Should().HaveCount(1); // One feature was provided
-    attribute.Features.Should().Contain(Feature.Core); // The provided feature should be stored
+    attribute.Features.Should().Contain(ApiFeature.Core); // The provided feature should be stored
   }
 
   [Fact]
@@ -51,7 +51,7 @@ public class RequiresFeatureEnabledAttributeTests
   public void FeatureNames_ConvertsFeaturesToStrings()
   {
     // Arrange & Act
-    var attribute = new RequiresFeatureEnabledAttribute(Feature.LLM, Feature.Transcription);
+    var attribute = new RequiresFeatureEnabledAttribute(ApiFeature.LLM, ApiFeature.Transcription);
 
     // Assert - This tests the backward compatibility property
     attribute.FeatureNames.Should().HaveCount(2);

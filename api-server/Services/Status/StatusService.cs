@@ -28,9 +28,9 @@ public interface IStatusService
   /// Gets the cached status of a specific feature by enum value.
   /// This synchronous method is intended for use by Swagger filters.
   /// </summary>
-  /// <param name="feature">The feature to check.</param>
+  /// <param name="apiFeature">The feature to check.</param>
   /// <returns>The service status information, or null if the feature is not found.</returns>
-  ServiceStatusInfo? GetFeatureStatus(Feature feature);
+  ServiceStatusInfo? GetFeatureStatus(ApiFeature apiFeature);
 
   /// <summary>
   /// Gets the cached status of a specific feature by name.
@@ -44,9 +44,9 @@ public interface IStatusService
   /// Checks if a specific feature is available based on its configuration status.
   /// This synchronous method is intended for use by Swagger filters.
   /// </summary>
-  /// <param name="feature">The feature to check.</param>
+  /// <param name="apiFeature">The feature to check.</param>
   /// <returns>True if the feature is properly configured and available; otherwise, false.</returns>
-  bool IsFeatureAvailable(Feature feature);
+  bool IsFeatureAvailable(ApiFeature apiFeature);
 
   /// <summary>
   /// Checks if a specific feature is available based on its configuration status.
@@ -77,7 +77,7 @@ public class StatusService : IStatusService
   private Dictionary<string, ServiceStatusInfo>? _cachedStatus;
 
   // Additional mapping from Feature enum to service names
-  private Dictionary<Feature, string[]>? _featureServiceMap;
+  private Dictionary<ApiFeature, string[]>? _featureServiceMap;
   private DateTime _cacheExpiration = DateTime.MinValue;
   private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(5);
   private readonly SemaphoreSlim _cacheLock = new(1, 1);
@@ -207,7 +207,7 @@ public class StatusService : IStatusService
 
       // Create dictionaries to store results
       var results = new Dictionary<string, ServiceStatusInfo>();
-      var featureMap = new Dictionary<Feature, List<string>>();
+      var featureMap = new Dictionary<ApiFeature, List<string>>();
 
       // Get all types implementing IConfig (excluding interfaces/abstract classes)
       var configTypes = _assemblyToScan // Use the injected assembly
@@ -281,17 +281,17 @@ public class StatusService : IStatusService
   }
 
   /// <inheritdoc />
-  public ServiceStatusInfo? GetFeatureStatus(Feature feature)
+  public ServiceStatusInfo? GetFeatureStatus(ApiFeature apiFeature)
   {
     try
     {
       EnsureCacheIsValid();
 
-      if (_featureServiceMap == null || !_featureServiceMap.TryGetValue(feature, out var serviceNames) ||
+      if (_featureServiceMap == null || !_featureServiceMap.TryGetValue(apiFeature, out var serviceNames) ||
           _cachedStatus == null)
       {
         _logger.LogWarning("Feature status requested for feature: {Feature}, but no associated services found",
-          feature);
+          apiFeature);
         return null;
       }
 
@@ -312,7 +312,7 @@ public class StatusService : IStatusService
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, "Error getting feature status for {Feature}", feature);
+      _logger.LogError(ex, "Error getting feature status for {Feature}", apiFeature);
       return null;
     }
   }
@@ -323,7 +323,7 @@ public class StatusService : IStatusService
     try
     {
       // Try to parse the string as a Feature enum
-      if (Enum.TryParse<Feature>(featureName, true, out var feature))
+      if (Enum.TryParse<ApiFeature>(featureName, true, out var feature))
       {
         return GetFeatureStatus(feature);
       }
@@ -349,9 +349,9 @@ public class StatusService : IStatusService
   }
 
   /// <inheritdoc />
-  public bool IsFeatureAvailable(Feature feature)
+  public bool IsFeatureAvailable(ApiFeature apiFeature)
   {
-    var status = GetFeatureStatus(feature);
+    var status = GetFeatureStatus(apiFeature);
     return status?.IsAvailable ?? false;
   }
 
@@ -371,11 +371,11 @@ public class StatusService : IStatusService
     }
   }
 
-  private Task<(List<string> MissingConfigurations, Dictionary<Feature, List<string>> FeatureAssociations)>
+  private Task<(List<string> MissingConfigurations, Dictionary<ApiFeature, List<string>> FeatureAssociations)>
     CheckConfigurationRequirementsAsync(Type configType)
   {
     var missingConfigurations = new List<string>();
-    var featureAssociations = new Dictionary<Feature, List<string>>();
+    var featureAssociations = new Dictionary<ApiFeature, List<string>>();
 
     // Find properties with RequiresConfiguration attribute
     var properties = configType.GetProperties()

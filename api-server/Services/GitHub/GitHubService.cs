@@ -10,15 +10,15 @@ namespace Zarichney.Services.GitHub;
 
 public class GitHubConfig : IConfig
 {
-  [RequiresConfiguration(Feature.GitHubAccess)]
+  [RequiresConfiguration(ApiFeature.GitHubAccess)]
   public string RepositoryOwner { get; init; } = string.Empty;
 
-  [RequiresConfiguration(Feature.GitHubAccess)]
+  [RequiresConfiguration(ApiFeature.GitHubAccess)]
   public string RepositoryName { get; init; } = string.Empty;
 
   public string BranchName { get; init; } = "main";
 
-  [RequiresConfiguration(Feature.GitHubAccess)]
+  [RequiresConfiguration(ApiFeature.GitHubAccess)]
   public string AccessToken { get; init; } = string.Empty;
 
   public int RetryAttempts { get; init; } = 5;

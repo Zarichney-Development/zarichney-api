@@ -15,7 +15,7 @@ public class FeatureTestController : ControllerBase
     /// </summary>
     /// <returns>A simple message.</returns>
     [HttpGet("llm")]
-    [RequiresFeatureEnabled(Feature.LLM)]
+    [RequiresFeatureEnabled(ApiFeature.LLM)]
     public IActionResult LlmEndpoint()
     {
         return Ok("LLM feature is available");
@@ -26,7 +26,7 @@ public class FeatureTestController : ControllerBase
     /// </summary>
     /// <returns>A simple message.</returns>
     [HttpGet("email")]
-    [RequiresFeatureEnabled(Feature.EmailSending)]
+    [RequiresFeatureEnabled(ApiFeature.EmailSending)]
     public IActionResult EmailEndpoint()
     {
         return Ok("Email feature is available");
@@ -37,7 +37,7 @@ public class FeatureTestController : ControllerBase
     /// </summary>
     /// <returns>A simple message.</returns>
     [HttpGet("multi")]
-    [RequiresFeatureEnabled(Feature.LLM, Feature.EmailSending, Feature.AiServices)]
+    [RequiresFeatureEnabled(ApiFeature.LLM, ApiFeature.EmailSending, ApiFeature.AiServices)]
     public IActionResult MultiFeatureEndpoint()
     {
         return Ok("All required features are available");

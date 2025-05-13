@@ -15,7 +15,6 @@ public class PublicController(
   [HttpGet("health")]
   public IActionResult HealthCheck()
   {
-    logger.LogError("testing log sink for automation test suite execution. This should be part of the test execution output window");
     return Ok(new
     {
       Success = true,

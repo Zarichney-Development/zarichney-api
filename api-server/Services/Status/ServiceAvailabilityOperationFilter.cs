@@ -54,7 +54,7 @@ public class ServiceAvailabilityOperationFilter : IOperationFilter
     }
 
     // Track all unavailable features
-    var unavailableFeatures = new Dictionary<Feature, ServiceStatusInfo>();
+    var unavailableFeatures = new Dictionary<ApiFeature, ServiceStatusInfo>();
 
     // Check each feature from all attributes
     foreach (var attribute in allAttributes)

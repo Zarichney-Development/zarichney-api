@@ -9,7 +9,7 @@ namespace Zarichney.Services.AI;
 
 public class TranscribeConfig : IConfig
 {
-  [RequiresConfiguration(Feature.Transcription, Feature.AiServices)]
+  [RequiresConfiguration(ApiFeature.Transcription, ApiFeature.AiServices)]
   public string ModelName { get; init; } = "whisper-1";
   public int RetryAttempts { get; init; } = 5;
 }
