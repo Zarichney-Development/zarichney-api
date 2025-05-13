@@ -295,7 +295,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   /// </summary>
   /// <param name="testClassType">The test class type to check.</param>
   /// <returns>Array of required ApiFeature values, or null if none specified.</returns>
-  private ApiFeature[]? GetRequiredFeaturesFromTestClass(Type testClassType)
+  private ApiFeature[]? GetRequiredFeaturesFromTestClass(System.Type testClassType)
   {
     // Check test methods for DependencyFactAttribute with RequiredFeatures
     foreach (var method in testClassType.GetMethods(BindingFlags.Public | BindingFlags.Instance))

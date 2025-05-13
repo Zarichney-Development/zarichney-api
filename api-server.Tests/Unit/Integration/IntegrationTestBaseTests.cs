@@ -2,8 +2,10 @@ using System.Reflection;
 using FluentAssertions;
 using Moq;
 using Xunit;
+using Xunit.Abstractions;
 using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Fixtures;
 using Zarichney.Tests.Integration;
 
 namespace Zarichney.Tests.Unit.Integration;
@@ -122,13 +124,13 @@ public class IntegrationTestBaseTests
         .GetMethod("GetRequiredFeaturesFromTestClass", BindingFlags.Instance | BindingFlags.NonPublic);
 
     // Create an instance of IntegrationTestBase using dummy arguments
-    var mockFixture = new Mock<object>().Object;
+    var mockFixture = new Mock<ApiClientFixture>().Object;
     var mockOutputHelper = new Mock<ITestOutputHelper>().Object;
 
-    var constructorInfo = typeof(IntegrationTestBase).GetConstructors().First();
-    var testBaseInstance = constructorInfo.Invoke(new[] { mockFixture, mockOutputHelper });
+    // Create an instance of IntegrationTestBase using a mock fixture
+    var mockIntegrationTestBase = new Mock<IntegrationTestBase>(mockFixture, mockOutputHelper) { CallBase = true }.Object;
 
-    var result = getRequiredFeaturesMethod?.Invoke(testBaseInstance, new object[] { typeof(DummyTestClassWithApiFeatures) }) as ApiFeature[];
+    var result = getRequiredFeaturesMethod?.Invoke(mockIntegrationTestBase, new object[] { typeof(DummyTestClassWithApiFeatures) }) as ApiFeature[];
 
     // Assert
     result.Should().NotBeNull();
@@ -146,13 +148,13 @@ public class IntegrationTestBaseTests
     var getRequiredFeaturesMethod = typeof(IntegrationTestBase)
         .GetMethod("GetRequiredFeaturesFromTestClass", BindingFlags.Instance | BindingFlags.NonPublic);
 
-    var mockFixture = new Mock<object>().Object;
+    var mockFixture = new Mock<ApiClientFixture>().Object;
     var mockOutputHelper = new Mock<ITestOutputHelper>().Object;
 
-    var constructorInfo = typeof(IntegrationTestBase).GetConstructors().First();
-    var testBaseInstance = constructorInfo.Invoke(new[] { mockFixture, mockOutputHelper });
+    // Create an instance of IntegrationTestBase using a mock fixture
+    var mockIntegrationTestBase = new Mock<IntegrationTestBase>(mockFixture, mockOutputHelper) { CallBase = true }.Object;
 
-    var result = getRequiredFeaturesMethod?.Invoke(testBaseInstance, new object[] { typeof(DummyTestClassWithoutApiFeatures) }) as ApiFeature[];
+    var result = getRequiredFeaturesMethod?.Invoke(mockIntegrationTestBase, new object[] { typeof(DummyTestClassWithoutApiFeatures) }) as ApiFeature[];
 
     // Assert
     result.Should().BeNull();

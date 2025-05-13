@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using Zarichney.Services.Status;
+using Zarichney.Tests.Framework.Attributes;
 using StatusInfo = Zarichney.Services.Status.ServiceStatusInfo;
 
 namespace Zarichney.Tests.Unit.Middleware;
@@ -18,7 +19,7 @@ namespace Zarichney.Tests.Unit.Middleware;
 /// <summary>
 /// Tests for the <see cref="FeatureAvailabilityMiddleware"/> class.
 /// </summary>
-[Trait(Framework.Attributes.TestCategories.Category, Framework.Attributes.TestCategories.Unit)]
+[Trait(TestCategories.Category, TestCategories.Unit)]
 public class FeatureAvailabilityMiddlewareTests
 {
   /// <summary>
