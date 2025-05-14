@@ -29,11 +29,20 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
     // Act - Step 1: Get the service status
     var statusResult = await ApiClient.Status2();
 
-    // Find unavailable services
+    // Find unavailable services - include both legacy names and enum-based names
     var unavailableServices = statusResult
       .Where(s => !s.Value.IsAvailable)
       .Select(s => s.Key)
       .ToList();
+      
+    // Also include the enum names for completeness (in case we have services that are only represented by enum names)
+    foreach (string enumName in Enum.GetNames(typeof(Zarichney.Services.Status.ExternalServices)))
+    {
+      if (statusResult.TryGetValue(enumName, out var status) && !status.IsAvailable && !unavailableServices.Contains(enumName))
+      {
+        unavailableServices.Add(enumName);
+      }
+    }
 
     // Skip test if no services are unavailable (unlikely in a test environment, but possible)
     if (unavailableServices.Count == 0)
@@ -97,9 +106,9 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
     // Act - Step 1: Get the service status to check if LLM is available
     var statusResult = await ApiClient.Status2();
 
-    // Check if LLM service is unavailable
-    var llmUnavailable = statusResult.TryGetValue("Llm", out var llmStatus) &&
-                         !llmStatus.IsAvailable;
+    // Check if LLM service is unavailable - check both "Llm" and "LLM" since we now use enum names
+    var llmUnavailable = (statusResult.TryGetValue("Llm", out var llmStatus) && !llmStatus.IsAvailable) ||
+                         (statusResult.TryGetValue("LLM", out var llmEnumStatus) && !llmEnumStatus.IsAvailable);
 
     // Skip test if LLM service is available
     if (!llmUnavailable)
@@ -147,7 +156,9 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
     var infrastructureServices = new[]
     {
       "Server", "Client", "Session", "Recipe", "Customer", "Order", "PdfCompiler", "FileSystem",
-      "ConfigurationStatus", "Webscraper", "WebScraper", "RecipeIndexer", "RecipeSearcher", "Email"
+      "ConfigurationStatus", "Webscraper", "WebScraper", "RecipeIndexer", "RecipeSearcher", "Email",
+      // Include External Services enum names
+      "FrontEnd", "LLM", "Transcription", "EmailSending", "Payments", "GitHubAccess", "AiServices", "EmailValidation"
     };
 
     return infrastructureServices.Contains(serviceName, StringComparer.OrdinalIgnoreCase);

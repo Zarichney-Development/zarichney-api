@@ -1,4 +1,5 @@
 using Azure.Identity;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Graph;
 using Microsoft.OpenApi.Models;
 using OpenAI;

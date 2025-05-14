@@ -1,6 +1,6 @@
 # Module/Directory: /Services/Status
 
-**Last Updated:** 2025-05-12
+**Last Updated:** 2025-05-14
 
 > **Parent:** [`/Services/README.md`](../README.md)
 
@@ -28,7 +28,8 @@
         * For each discovered `IConfig` type, it resolves an instance from the `IServiceProvider`.
         * It then inspects properties marked with `[RequiresConfiguration]` attributes in these `IConfig` instances.
         * Determines service availability based on the presence and validity of required configuration values.
-        * Returns a dictionary mapping service names to their status information using `ServiceStatusInfo` records.
+        * Returns a dictionary mapping `ExternalServices` enum names to their status information using `ServiceStatusInfo` records.
+        * Also maintains backward compatibility by including config-derived service names in the status dictionary.
         * Provides synchronous access to feature availability status for the `ServiceAvailabilityOperationFilter` used in Swagger UI.
         * Includes a constructor that accepts an `Assembly` instance, allowing the assembly to be scanned for `IConfig` types to be specified (primarily for testability).
 * **FeatureAvailabilityMiddleware:**
@@ -55,7 +56,7 @@
     * Assumes placeholder value is "recommended to set in app secrets".
     * Assumes properties requiring configuration are marked with the `[RequiresConfiguration]` attribute with appropriate Feature enum values.
     * Assumes configuration property names are used to derive configuration keys (e.g., "ApiKey" property in "LlmConfig" class → "LlmConfig:ApiKey").
-    * Assumes service names can be derived from config class names (e.g., "ServerConfig" → "Server" service).
+    * Uses `ExternalServices` enum values from `[RequiresConfiguration]` attributes to derive service names. Also maintains backward compatibility by keeping service names derived from config class names (e.g., "ServerConfig" → "Server" service).
     * Assumes `IConfig` instances are registered as singletons in the DI container for efficient resolution by `StatusService`.
     * Assumes the `Assembly` provided to (or defaulted by) `StatusService` contains all relevant `IConfig` implementations.
     * Assumes all controller endpoints that require specific features are decorated with the `[DependsOnService]` attribute with appropriate Feature enum values.
@@ -71,7 +72,7 @@
     * Test the reflection logic for finding `[RequiresConfiguration]` attributes.
 * **Common Pitfalls / Gotchas:**
     * Ensure new config properties are properly marked with `[RequiresConfiguration]` attributes with appropriate Feature enum values.
-    * Remember that service names in the status dictionary are derived from config class names, minus the "Config" suffix.
+    * Service names in the status dictionary are now primarily derived from the `ExternalServices` enum values in `[RequiresConfiguration]` attributes, while maintaining backward compatibility with names derived from config class names (minus the "Config" suffix).
     * When adding new features to the `Feature` enum, ensure all related configuration properties and controllers/actions are updated to use the new enum value instead of string literals.
     * Configuration keys are now automatically derived from class and property names (e.g., "ApiKey" property in "LlmConfig" class → "LlmConfig:ApiKey"), so ensure naming is consistent.
 
@@ -92,7 +93,8 @@
     * The middleware will automatically prevent access to these endpoints if any of the required features are unavailable.
 * **Checking Service Availability:**
     * Inject `IStatusService` to check if services are available based on their configuration requirements.
-    * Example: `var statuses = await _statusService.GetServiceStatusAsync(); bool isLlmAvailable = statuses["Llm"].IsAvailable;`
+    * Example with enum name: `var statuses = await _statusService.GetServiceStatusAsync(); bool isLlmAvailable = statuses["LLM"].IsAvailable;`
+    * Example with legacy name (for backward compatibility): `var statuses = await _statusService.GetServiceStatusAsync(); bool isLlmAvailable = statuses["Llm"].IsAvailable;`
 
 ## 6. Dependencies
 

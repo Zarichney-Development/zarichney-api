@@ -20,7 +20,7 @@ public class EmailConfig : IConfig
 
   public string TemplateDirectory { get; init; } = "/Services/Email/Templates";
 
-  [RequiresConfiguration(ExternalServices.EmailSending)]
+  [RequiresConfiguration(ExternalServices.EmailValidation)]
   public required string MailCheckApiKey { get; init; }
 }
 public enum InvalidEmailReason

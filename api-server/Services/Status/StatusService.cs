@@ -232,23 +232,53 @@ public class StatusService : IStatusService
       // Process each config instance
       foreach (var config in configInstances)
       {
-        // Determine service name from config class name
-        // E.g., "ServerConfig" becomes "Server"
         var configType = config.GetType();
-        var serviceName = configType.Name.Replace("Config", "");
-
+        
         // Get missing configurations and feature associations for this service
         var (missingConfigurations, featureAssociations) = await CheckConfigurationRequirementsAsync(configType);
-
-        // Add to results
-        results[serviceName] = new ServiceStatusInfo(
+        
+        // Legacy service name from config class name (for backward compatibility with tests)
+        var legacyServiceName = configType.Name.Replace("Config", "");
+        
+        // Add the legacy service name entry to maintain backward compatibility with tests
+        results[legacyServiceName] = new ServiceStatusInfo(
           IsAvailable: missingConfigurations.Count == 0,
           MissingConfigurations: missingConfigurations
         );
-
-        // Update feature mapping
-        foreach (var (feature, _) in featureAssociations)
+        
+        // Group configurations by feature from the ExternalServicesEnum
+        foreach (var (feature, properties) in featureAssociations)
         {
+          // Use the enum name as the service name
+          var serviceName = feature.ToString();
+          
+          // Determine if this feature's required configurations are available
+          var featureMissingConfigs = properties
+            .Where(prop => missingConfigurations.Contains(prop))
+            .ToList();
+            
+          // Add or update this feature's status in results
+          if (results.TryGetValue(serviceName, out var existingStatus))
+          {
+            // If we already have an entry for this feature, merge the missing configurations
+            var combinedMissing = existingStatus.MissingConfigurations.ToList();
+            combinedMissing.AddRange(featureMissingConfigs);
+            
+            results[serviceName] = new ServiceStatusInfo(
+              IsAvailable: combinedMissing.Count == 0,
+              MissingConfigurations: combinedMissing.Distinct().ToList()
+            );
+          }
+          else
+          {
+            // First entry for this feature
+            results[serviceName] = new ServiceStatusInfo(
+              IsAvailable: featureMissingConfigs.Count == 0,
+              MissingConfigurations: featureMissingConfigs
+            );
+          }
+          
+          // Update feature mapping
           if (!featureMap.TryGetValue(feature, out var services))
           {
             services = [];
@@ -258,6 +288,12 @@ public class StatusService : IStatusService
           if (!services.Contains(serviceName))
           {
             services.Add(serviceName);
+          }
+          
+          // For backward compatibility with tests, also map the feature to the legacy service name
+          if (!services.Contains(legacyServiceName))
+          {
+            services.Add(legacyServiceName);
           }
         }
       }
