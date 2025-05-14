@@ -16,6 +16,7 @@ using Zarichney.Services.GitHub;
 using Zarichney.Services.Payment;
 using Zarichney.Services.PdfGeneration;
 using Zarichney.Services.Status;
+using Zarichney.Services.Status.Proxies;
 using Zarichney.Services.Web;
 
 namespace Zarichney.Startup;
@@ -105,32 +106,6 @@ public class ServiceStartup
   }
 
   /// <summary>
-  /// Proxy implementation of GraphServiceClient that throws ServiceUnavailableException
-  /// when any of its methods are called.
-  /// </summary>
-  private class GraphServiceClientProxy(List<string>? reasons = null) : GraphServiceClient(_sharedHttpClient)
-  {
-    private static readonly HttpClient _sharedHttpClient = new();
-
-    // Use shared HttpClient instance
-
-    // GraphServiceClient's methods may not be virtual, so we can't override them directly.
-    // Instead, we'll intercept method calls by implementing service methods that our tests need.
-    // In a test context, when Me, Users, or other properties are accessed, the exception will be thrown.
-
-    // Method used by tests to verify proxy behavior
-    public new object Me => throw CreateException();
-
-    private ServiceUnavailableException CreateException()
-    {
-      return new ServiceUnavailableException(
-        "Email service is unavailable due to missing configuration",
-        reasons
-      );
-    }
-  }
-
-  /// <summary>
   /// Configures OpenAI services and dependencies
   /// </summary>
   private static void ConfigureOpenAiServices(IServiceCollection services)
@@ -151,7 +126,7 @@ public class ServiceStartup
           status?.MissingConfigurations == null ? "unknown" : string.Join(", ", status.MissingConfigurations));
 
         // Return a proxy that throws ServiceUnavailableException when methods are called
-        return new OpenAIClientProxy(status?.MissingConfigurations?.ToList());
+        return new OpenAIClientProxy(status?.MissingConfigurations.ToList());
       }
 
       try
@@ -184,7 +159,7 @@ public class ServiceStartup
           status?.MissingConfigurations == null ? "unknown" : string.Join(", ", status.MissingConfigurations));
 
         // Return a proxy that throws ServiceUnavailableException when methods are called
-        return new AudioClientProxy(status?.MissingConfigurations?.ToList());
+        return new AudioClientProxy(status?.MissingConfigurations.ToList());
       }
 
       try
@@ -199,54 +174,6 @@ public class ServiceStartup
         return new AudioClientProxy(reasons);
       }
     });
-  }
-
-  /// <summary>
-  /// Proxy implementation of OpenAIClient that throws ServiceUnavailableException
-  /// when any of its methods are called.
-  /// </summary>
-  private class OpenAIClientProxy(List<string>? reasons = null) : OpenAIClient("dummy_key")
-  {
-    // Dummy base constructor call
-
-    // OpenAIClient's properties may not be virtual, so we can't override them directly.
-    // Instead, we'll intercept method calls by implementing service methods that our tests need.
-    // In a test context, when Chat, Completions, etc. are accessed, the exception will be thrown.
-
-    // Method used by tests to verify proxy behavior
-    public new object Chat => throw CreateException();
-
-    private ServiceUnavailableException CreateException()
-    {
-      return new ServiceUnavailableException(
-        "LLM service is unavailable due to missing configuration",
-        reasons
-      );
-    }
-  }
-
-  /// <summary>
-  /// Proxy implementation of AudioClient that throws ServiceUnavailableException
-  /// when any of its methods are called.
-  /// </summary>
-  private class AudioClientProxy(List<string>? reasons = null) : AudioClient("whisper-1", "dummy_key")
-  {
-    // Dummy base constructor call
-
-    // AudioClient's methods may not be virtual, so we need to intercept calls differently.
-    // We'll create a new method that our tests can use to verify proxy behavior.
-
-    // When clients call TranscribeAudioAsync, we'll throw our exception for testing purposes
-    public Task<Stream> TranscribeAudioAsync(Stream audioStream)
-    {
-      throw new ServiceUnavailableException(
-        "Audio transcription service is unavailable due to missing configuration",
-        reasons
-      );
-    }
-
-    // This property can be used by tests if they directly check the proxy implementation
-    public bool IsThrowingProxy => true;
   }
 
   /// <summary>
