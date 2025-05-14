@@ -157,8 +157,8 @@ public class StatusServiceTests
 
     // Assert
     result.Should().NotBeEmpty();
-    result["TestService1"].IsAvailable.Should().BeTrue();
-    result["TestService1"].MissingConfigurations.Should().BeEmpty();
+    result["LLM"].IsAvailable.Should().BeTrue();
+    result["LLM"].MissingConfigurations.Should().BeEmpty();
   }
 
   [Trait("Category", "Unit")]
@@ -174,8 +174,8 @@ public class StatusServiceTests
 
     // Assert
     result.Should().NotBeEmpty();
-    result["TestService1"].IsAvailable.Should().BeFalse();
-    result["TestService1"].MissingConfigurations.Should().Contain("TestService1Config:ApiKey");
+    result["LLM"].IsAvailable.Should().BeFalse();
+    result["LLM"].MissingConfigurations.Should().Contain("TestService1Config:ApiKey");
   }
 
   [Trait("Category", "Unit")]
@@ -191,8 +191,8 @@ public class StatusServiceTests
 
     // Assert
     result.Should().NotBeEmpty();
-    result["TestService1"].IsAvailable.Should().BeFalse();
-    result["TestService1"].MissingConfigurations.Should().Contain("TestService1Config:ApiKey");
+    result["LLM"].IsAvailable.Should().BeFalse();
+    result["LLM"].MissingConfigurations.Should().Contain("TestService1Config:ApiKey");
   }
 
   [Trait("Category", "Unit")]

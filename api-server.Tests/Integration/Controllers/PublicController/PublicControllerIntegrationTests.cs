@@ -1,7 +1,10 @@
 using FluentAssertions;
 using Refit;
+using System;
+using System.Linq;
 using Xunit;
 using Xunit.Abstractions;
+using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 
@@ -46,12 +49,11 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture,
     GetServiceStatus_WhenCalled_ReturnsServiceStatusInfo() // Renamed from GetStatus_WhenCalled_ReturnsServiceStatusInfo
   {
     // Arrange
-    var expectedServices = new[]
-    {
-      // TODO: get this list from the source of truth rather than being hardcoded here
-      "Session", "PdfCompiler", "Payment", "GitHub", "Email", "Llm", "Transcribe", "Recipe", "Webscraper", "Order",
-      "Customer", "Server", "Client"
-    };
+    // Get all enum values as strings to avoid hard-coding service names
+    var expectedServices = Enum.GetValues(typeof(ExternalServices))
+                               .Cast<ExternalServices>()
+                               .Select(e => e.ToString())
+                               .ToArray();
 
     // Act
     var serviceStatus = await ApiClient.Status2();

@@ -237,15 +237,6 @@ public class StatusService : IStatusService
         // Get missing configurations and feature associations for this service
         var (missingConfigurations, featureAssociations) = await CheckConfigurationRequirementsAsync(configType);
         
-        // Legacy service name from config class name (for backward compatibility with tests)
-        var legacyServiceName = configType.Name.Replace("Config", "");
-        
-        // Add the legacy service name entry to maintain backward compatibility with tests
-        results[legacyServiceName] = new ServiceStatusInfo(
-          IsAvailable: missingConfigurations.Count == 0,
-          MissingConfigurations: missingConfigurations
-        );
-        
         // Group configurations by feature from the ExternalServicesEnum
         foreach (var (feature, properties) in featureAssociations)
         {
@@ -288,12 +279,6 @@ public class StatusService : IStatusService
           if (!services.Contains(serviceName))
           {
             services.Add(serviceName);
-          }
-          
-          // For backward compatibility with tests, also map the feature to the legacy service name
-          if (!services.Contains(legacyServiceName))
-          {
-            services.Add(legacyServiceName);
           }
         }
       }
