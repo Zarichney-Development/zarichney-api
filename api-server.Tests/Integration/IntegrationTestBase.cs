@@ -122,16 +122,16 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     }
 
     // Check dependencies in the following order:
-    // 1. First try using ApiFeature enum-based dependencies (preferred approach)
-    // 2. Fall back to string-based trait dependencies if no ApiFeature dependencies are specified
+    // 1. First try using ExternalServices enum-based dependencies (preferred approach)
+    // 2. Fall back to string-based trait dependencies if no ExternalServices dependencies are specified
 
-    // Get ApiFeature dependencies specified in DependencyFactAttribute
+    // Get ExternalServices dependencies specified in DependencyFactAttribute
     var requiredFeatures = GetRequiredFeaturesFromTestClass(testClassType);
-    
-    // Check if there are explicit ApiFeature dependencies
+
+    // Check if there are explicit ExternalServices dependencies
     if (requiredFeatures != null && requiredFeatures.Length > 0)
     {
-      await CheckApiFeatureDependenciesAsync(requiredFeatures);
+      await CheckExternalServicesDependenciesAsync(requiredFeatures);
     }
     // Otherwise, check string-based trait dependencies (legacy approach)
     else
@@ -141,11 +141,11 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   }
 
   /// <summary>
-  /// Checks ApiFeature-based dependencies using IStatusService.
+  /// Checks ExternalServices-based dependencies using IStatusService.
   /// This is the preferred approach for dependency checking.
   /// </summary>
-  /// <param name="requiredFeatures">Array of required ApiFeature values.</param>
-  private async Task CheckApiFeatureDependenciesAsync(ApiFeature[] requiredFeatures)
+  /// <param name="requiredFeatures">Array of required ExternalServices values.</param>
+  private async Task CheckExternalServicesDependenciesAsync(ExternalServices[] requiredFeatures)
   {
     try
     {
@@ -154,7 +154,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
       var statusService = scope.ServiceProvider.GetRequiredService<IStatusService>();
 
       // Check each required feature
-      var unavailableFeatures = new List<ApiFeature>();
+      var unavailableFeatures = new List<ExternalServices>();
       var allMissingConfigs = new List<string>();
 
       foreach (var feature in requiredFeatures)
@@ -173,7 +173,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
       // If there are unavailable features, set SkipReason
       if (unavailableFeatures.Count > 0)
       {
-        var reason = $"Required ApiFeatures unavailable: {string.Join(", ", unavailableFeatures)}";
+        var reason = $"Required ExternalServicess unavailable: {string.Join(", ", unavailableFeatures)}";
         if (allMissingConfigs.Count > 0)
         {
           reason += $" (Missing configurations: {string.Join(", ", allMissingConfigs.Distinct())})";
@@ -184,8 +184,8 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     }
     catch (Exception ex)
     {
-      // If we encounter an error checking ApiFeature dependencies, set SkipReason
-      SetSkipReason($"Error checking ApiFeature dependencies: {ex.Message}");
+      // If we encounter an error checking ExternalServices dependencies, set SkipReason
+      SetSkipReason($"Error checking ExternalServices dependencies: {ex.Message}");
     }
   }
 
@@ -311,11 +311,11 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   }
 
   /// <summary>
-  /// Gets the required ApiFeature values from a test class decorated with DependencyFactAttribute.
+  /// Gets the required ExternalServices values from a test class decorated with DependencyFactAttribute.
   /// </summary>
   /// <param name="testClassType">The test class type to check.</param>
-  /// <returns>Array of required ApiFeature values, or null if none specified.</returns>
-  private ApiFeature[]? GetRequiredFeaturesFromTestClass(System.Type testClassType)
+  /// <returns>Array of required ExternalServices values, or null if none specified.</returns>
+  private ExternalServices[]? GetRequiredFeaturesFromTestClass(System.Type testClassType)
   {
     // Check test methods for DependencyFactAttribute with RequiredFeatures
     foreach (var method in testClassType.GetMethods(BindingFlags.Public | BindingFlags.Instance))

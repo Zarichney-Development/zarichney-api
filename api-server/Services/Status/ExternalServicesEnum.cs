@@ -4,7 +4,7 @@ namespace Zarichney.Services.Status;
 /// Defines all the features available in the application that can be enabled or disabled
 /// based on configuration availability.
 /// </summary>
-public enum ApiFeature
+public enum ExternalServices
 {
   /// <summary>
   /// Core functionality required by the application.

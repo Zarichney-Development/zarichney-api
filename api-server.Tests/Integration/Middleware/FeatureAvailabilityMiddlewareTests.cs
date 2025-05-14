@@ -33,10 +33,10 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     var mockStatusService = new Mock<IStatusService>();
 
     // Configure the mock to return specific statuses for different features
-    mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.LLM))
+    mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
         .Returns(new StatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
 
-    mockStatusService.Setup(s => s.IsFeatureAvailable(ApiFeature.LLM))
+    mockStatusService.Setup(s => s.IsFeatureAvailable(ExternalServices.LLM))
         .Returns(false);
 
     // Use a WebHostBuilder to replace the service with our mock
@@ -70,7 +70,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     content.Should().Contain("Service Temporarily Unavailable");
     content.Should().Contain("LlmConfig:ApiKey");
 
-    mockStatusService.Verify(s => s.GetFeatureStatus(ApiFeature.LLM), Times.AtLeastOnce);
+    mockStatusService.Verify(s => s.GetFeatureStatus(ExternalServices.LLM), Times.AtLeastOnce);
   }
 
   /// <summary>
@@ -86,7 +86,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     var mockStatusService = new Mock<IStatusService>();
 
     // Configure all features to be unavailable
-    foreach (ApiFeature feature in Enum.GetValues(typeof(ApiFeature)))
+    foreach (ExternalServices feature in Enum.GetValues(typeof(ExternalServices)))
     {
       mockStatusService.Setup(s => s.GetFeatureStatus(feature))
           .Returns(new StatusInfo(IsAvailable: false, [$"{feature}Config:MissingKey"]));
@@ -134,17 +134,17 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     var mockStatusService = new Mock<IStatusService>();
 
     // Configure the mock to return specific statuses for different features
-    mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.LLM))
+    mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
         .Returns(new StatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
 
-    mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.EmailSending))
+    mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.EmailSending))
         .Returns(new StatusInfo(IsAvailable: false, ["EmailConfig:FromEmail"]));
 
-    mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.AiServices))
+    mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.AiServices))
         .Returns(new StatusInfo(IsAvailable: false, ["AiConfig:ApiKey"]));
 
-    mockStatusService.Setup(s => s.IsFeatureAvailable(It.IsAny<ApiFeature>()))
-        .Returns<ApiFeature>(f => f != ApiFeature.LLM && f != ApiFeature.Transcription && f != ApiFeature.AiServices);
+    mockStatusService.Setup(s => s.IsFeatureAvailable(It.IsAny<ExternalServices>()))
+        .Returns<ExternalServices>(f => f != ExternalServices.LLM && f != ExternalServices.Transcription && f != ExternalServices.AiServices);
 
     // Use a WebHostBuilder to replace the service with our mock
     var customFactory = Factory;

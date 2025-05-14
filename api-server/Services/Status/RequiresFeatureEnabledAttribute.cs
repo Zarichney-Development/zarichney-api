@@ -11,14 +11,14 @@ public class RequiresFeatureEnabledAttribute : Attribute
   /// <summary>
   /// Gets the features that are required for this controller or action to function.
   /// </summary>
-  public ApiFeature[] Features { get; }
+  public ExternalServices[] Features { get; }
 
   /// <summary>
   /// Initializes a new instance of the <see cref="RequiresFeatureEnabledAttribute"/> class.
   /// </summary>
   /// <param name="features">One or more features that are required for this controller or action to function.</param>
   /// <exception cref="ArgumentException">Thrown when no features are provided.</exception>
-  public RequiresFeatureEnabledAttribute(params ApiFeature[] features)
+  public RequiresFeatureEnabledAttribute(params ExternalServices[] features)
   {
     if (features == null || features.Length == 0)
     {

@@ -11,14 +11,14 @@ public class RequiresConfigurationAttribute : Attribute
   /// <summary>
   /// Gets the features that depend on this configuration property.
   /// </summary>
-  public ApiFeature[] Features { get; }
+  public ExternalServices[] Features { get; }
 
   /// <summary>
   /// Initializes a new instance of the <see cref="RequiresConfigurationAttribute"/> class.
   /// </summary>
   /// <param name="features">One or more features that depend on this configuration property.</param>
   /// <exception cref="ArgumentException">Thrown when no features are provided.</exception>
-  public RequiresConfigurationAttribute(params ApiFeature[] features)
+  public RequiresConfigurationAttribute(params ExternalServices[] features)
   {
     if (features == null || features.Length == 0)
     {

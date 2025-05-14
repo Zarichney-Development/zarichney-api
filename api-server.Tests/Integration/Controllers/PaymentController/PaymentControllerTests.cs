@@ -20,13 +20,13 @@ namespace Zarichney.Tests.Integration.Controllers.PaymentController;
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
 // Note: we're keeping the old trait for backward compatibility and demonstration, but we'll
-// primarily rely on the ApiFeature-based dependency checking via the DependencyFact attribute
+// primarily rely on the ExternalServices-based dependency checking via the DependencyFact attribute
 [Trait(TestCategories.Dependency, TestCategories.ExternalStripe)]
 public class PaymentControllerTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper)
   : DatabaseIntegrationTestBase(apiClientFixture, testOutputHelper)
 {
-  // Using the new ApiFeature-based dependency checking approach
-  [DependencyFact(Services.Status.ApiFeature.Payments)]
+  // Using the new ExternalServices-based dependency checking approach
+  [DependencyFact(Services.Status.ExternalServices.Payments)]
   public async Task CreatePaymentIntent_ValidOrder_ReturnsPaymentIntent()
   {
     // Arrange

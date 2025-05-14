@@ -11,7 +11,7 @@ namespace Zarichney.Tests.Framework.Attributes;
 /// skips tests when the test class indicates dependencies are missing.
 ///
 /// The attribute can be used in two ways:
-/// 1. With specific ApiFeature enums: [DependencyFact(ApiFeature.LLM, ApiFeature.Transcription)]
+/// 1. With specific ExternalServices enums: [DependencyFact(ExternalServices.LLM, ExternalServices.Transcription)]
 ///    This automatically maps to the appropriate dependency traits for filtering/reporting.
 /// 2. Without parameters, relying on string-based trait dependencies: [DependencyFact]
 ///    combined with [Trait(TestCategories.Dependency, TestCategories.Database)]
@@ -19,15 +19,15 @@ namespace Zarichney.Tests.Framework.Attributes;
 [XunitTestCaseDiscoverer("Zarichney.Tests.Framework.Helpers.SkipMissingDependencyDiscoverer", "Zarichney.Tests")]
 public sealed class DependencyFactAttribute : FactAttribute
 {
-  // Maps ApiFeature enums to TestCategories.Dependency trait values
-  private static readonly Dictionary<ApiFeature, string> ApiFeatureToTraitMap = new()
+  // Maps ExternalServices enums to TestCategories.Dependency trait values
+  private static readonly Dictionary<ExternalServices, string> ExternalServicesToTraitMap = new()
   {
-    { ApiFeature.LLM, TestCategories.ExternalOpenAI },
-    { ApiFeature.Transcription, TestCategories.ExternalOpenAI },
-    { ApiFeature.EmailSending, TestCategories.ExternalMSGraph },
-    { ApiFeature.Payments, TestCategories.ExternalStripe },
-    { ApiFeature.GitHubAccess, TestCategories.ExternalGitHub },
-    { ApiFeature.AiServices, TestCategories.ExternalOpenAI },
+    { ExternalServices.LLM, TestCategories.ExternalOpenAI },
+    { ExternalServices.Transcription, TestCategories.ExternalOpenAI },
+    { ExternalServices.EmailSending, TestCategories.ExternalMSGraph },
+    { ExternalServices.Payments, TestCategories.ExternalStripe },
+    { ExternalServices.GitHubAccess, TestCategories.ExternalGitHub },
+    { ExternalServices.AiServices, TestCategories.ExternalOpenAI },
     // Core feature doesn't map to a specific external dependency
   };
 
@@ -35,14 +35,14 @@ public sealed class DependencyFactAttribute : FactAttribute
   private readonly List<(string Name, string Value)> _dependencyTraits = new();
 
   /// <summary>
-  /// Gets the array of required ApiFeature values that must be available for the test to run.
-  /// Will be null if the attribute was created without specifying ApiFeature dependencies.
+  /// Gets the array of required ExternalServices values that must be available for the test to run.
+  /// Will be null if the attribute was created without specifying ExternalServices dependencies.
   /// </summary>
-  public ApiFeature[]? RequiredFeatures { get; }
+  public ExternalServices[]? RequiredFeatures { get; }
 
   /// <summary>
   /// Initializes a new instance of the <see cref="DependencyFactAttribute"/> class.
-  /// This constructor is used when no specific ApiFeature dependencies are specified.
+  /// This constructor is used when no specific ExternalServices dependencies are specified.
   /// The test will rely on string-based trait dependencies using [Trait(TestCategories.Dependency, ...)]
   /// </summary>
   public DependencyFactAttribute()
@@ -52,20 +52,20 @@ public sealed class DependencyFactAttribute : FactAttribute
 
   /// <summary>
   /// Initializes a new instance of the <see cref="DependencyFactAttribute"/> class with specific
-  /// ApiFeature dependencies that must be available for the test to run.
+  /// ExternalServices dependencies that must be available for the test to run.
   /// Maps to appropriate TestCategories.Dependency traits for filtering/reporting.
   /// </summary>
-  /// <param name="requiredFeatures">One or more ApiFeature enum values that must be available.</param>
-  public DependencyFactAttribute(params ApiFeature[] requiredFeatures)
+  /// <param name="requiredFeatures">One or more ExternalServices enum values that must be available.</param>
+  public DependencyFactAttribute(params ExternalServices[] requiredFeatures)
   {
     RequiredFeatures = requiredFeatures?.Length > 0 ? requiredFeatures : null;
-    
+
     // If RequiredFeatures is set, generate trait mappings for each feature
     if (RequiredFeatures != null)
     {
       foreach (var feature in RequiredFeatures)
       {
-        if (ApiFeatureToTraitMap.TryGetValue(feature, out var traitValue))
+        if (ExternalServicesToTraitMap.TryGetValue(feature, out var traitValue))
         {
           // Store the trait mapping information
           _dependencyTraits.Add((TestCategories.Dependency, traitValue));
@@ -75,7 +75,7 @@ public sealed class DependencyFactAttribute : FactAttribute
   }
 
   /// <summary>
-  /// Gets the collection of dependency traits that correspond to the ApiFeature values.
+  /// Gets the collection of dependency traits that correspond to the ExternalServices values.
   /// This is used both for testing and to allow the test discoverer to see the trait mappings.
   /// </summary>
   /// <returns>Collection of trait name/value pairs.</returns>

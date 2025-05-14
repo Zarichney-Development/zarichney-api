@@ -11,11 +11,11 @@ public class RequiresConfigurationAttributeTests
   public void Constructor_ValidFeatures_InitializesCorrectly()
   {
     // Arrange & Act
-    var attribute = new RequiresConfigurationAttribute(ApiFeature.LLM, ApiFeature.Transcription);
+    var attribute = new RequiresConfigurationAttribute(ExternalServices.LLM, ExternalServices.Transcription);
 
     // Assert
     attribute.Features.Should().HaveCount(2); // Two features were provided
-    attribute.Features.Should().Contain(ApiFeature.LLM).And.Contain(ApiFeature.Transcription);
+    attribute.Features.Should().Contain(ExternalServices.LLM).And.Contain(ExternalServices.Transcription);
   }
 
   [Trait("Category", "Unit")]
@@ -23,11 +23,11 @@ public class RequiresConfigurationAttributeTests
   public void Constructor_SingleFeature_InitializesCorrectly()
   {
     // Arrange & Act
-    var attribute = new RequiresConfigurationAttribute(ApiFeature.Core);
+    var attribute = new RequiresConfigurationAttribute(ExternalServices.Core);
 
     // Assert
     attribute.Features.Should().HaveCount(1); // One feature was provided
-    attribute.Features.Should().Contain(ApiFeature.Core);
+    attribute.Features.Should().Contain(ExternalServices.Core);
   }
 
   [Trait("Category", "Unit")]

@@ -57,7 +57,7 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate the feature is available
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.LLM))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
         .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
     // Act
@@ -83,7 +83,7 @@ public class ServiceAvailabilityOperationFilterTests
 
     // Setup status service to indicate the feature is unavailable
     var missingConfigs = new List<string> { "LlmConfig:ApiKey" };
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.LLM))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
         .Returns(new ServiceStatusInfo(IsAvailable: false, missingConfigs));
 
     // Act
@@ -115,10 +115,10 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate both features are unavailable
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.LLM))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
 
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.Transcription))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.Transcription))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["TranscribeConfig:ModelName"]));
 
     // Act
@@ -146,10 +146,10 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate one feature is available and one is unavailable
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.LLM))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
         .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.Transcription))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.Transcription))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["TranscribeConfig:ModelName"]));
 
     // Act
@@ -176,7 +176,7 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate the feature is unavailable
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.Core))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.Core))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["ServerConfig:BaseUrl"]));
 
     // Act
@@ -201,10 +201,10 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate both features are unavailable
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.Core))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.Core))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["ServerConfig:BaseUrl"]));
 
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ApiFeature.EmailSending))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.EmailSending))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["EmailConfig:AzureAppId"]));
 
     // Act
@@ -262,20 +262,20 @@ public class ServiceAvailabilityOperationFilterTests
   {
     public void MethodWithoutAttribute() { }
 
-    [RequiresFeatureEnabled(ApiFeature.LLM)]
+    [RequiresFeatureEnabled(ExternalServices.LLM)]
     public void MethodWithAttribute() { }
 
-    [RequiresFeatureEnabled(ApiFeature.LLM)]
-    [RequiresFeatureEnabled(ApiFeature.Transcription)]
+    [RequiresFeatureEnabled(ExternalServices.LLM)]
+    [RequiresFeatureEnabled(ExternalServices.Transcription)]
     public void MethodWithMultipleAttributes() { }
   }
 
-  [RequiresFeatureEnabled(ApiFeature.Core)]
+  [RequiresFeatureEnabled(ExternalServices.Core)]
   private class ClassWithAttribute
   {
     public void MethodWithoutAttribute() { }
 
-    [RequiresFeatureEnabled(ApiFeature.EmailSending)]
+    [RequiresFeatureEnabled(ExternalServices.EmailSending)]
     public void MethodWithAttribute() { }
   }
 }

@@ -31,7 +31,7 @@ public class FeatureAvailabilityMiddlewareTests
     // Arrange
     var statusService = new Mock<IStatusService>();
     // Setup mock to handle any unexpected calls
-    statusService.Setup(s => s.GetFeatureStatus(It.IsAny<ApiFeature>()))
+    statusService.Setup(s => s.GetFeatureStatus(It.IsAny<ExternalServices>()))
         .Returns(new StatusInfo(IsAvailable: true, new List<string>()));
 
     var nextInvoked = false;
@@ -61,7 +61,7 @@ public class FeatureAvailabilityMiddlewareTests
   {
     // Arrange
     var statusService = new Mock<IStatusService>();
-    statusService.Setup(s => s.GetFeatureStatus(ApiFeature.LLM))
+    statusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
         .Returns(new StatusInfo(IsAvailable: true, []));
 
     var nextInvoked = false;
@@ -74,7 +74,7 @@ public class FeatureAvailabilityMiddlewareTests
     var context = new DefaultHttpContext();
     var metadata = new EndpointMetadataCollection(new object[]
     {
-            new RequiresFeatureEnabledAttribute(ApiFeature.LLM)
+            new RequiresFeatureEnabledAttribute(ExternalServices.LLM)
     });
     var endpoint = new Endpoint(_ => Task.CompletedTask, metadata, "Test Endpoint");
     context.SetEndpoint(endpoint);
@@ -84,7 +84,7 @@ public class FeatureAvailabilityMiddlewareTests
 
     // Assert
     Assert.True(nextInvoked, "The next middleware delegate should have been invoked.");
-    statusService.Verify(s => s.GetFeatureStatus(ApiFeature.LLM), Times.Once);
+    statusService.Verify(s => s.GetFeatureStatus(ExternalServices.LLM), Times.Once);
   }
 
   /// <summary>
@@ -95,7 +95,7 @@ public class FeatureAvailabilityMiddlewareTests
   {
     // Arrange
     var statusService = new Mock<IStatusService>();
-    statusService.Setup(s => s.GetFeatureStatus(ApiFeature.LLM))
+    statusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
         .Returns(new StatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
 
     var middleware = new FeatureAvailabilityMiddleware(
@@ -106,7 +106,7 @@ public class FeatureAvailabilityMiddlewareTests
     var context = new DefaultHttpContext();
     var metadata = new EndpointMetadataCollection(new object[]
     {
-            new RequiresFeatureEnabledAttribute(ApiFeature.LLM)
+            new RequiresFeatureEnabledAttribute(ExternalServices.LLM)
     });
     var endpoint = new Endpoint(_ => Task.CompletedTask, metadata, "Test Endpoint");
     context.SetEndpoint(endpoint);
@@ -117,7 +117,7 @@ public class FeatureAvailabilityMiddlewareTests
 
     Assert.Contains("LlmConfig:ApiKey", exception.Reasons);
     Assert.Contains("LLM", exception.Message);
-    statusService.Verify(s => s.GetFeatureStatus(ApiFeature.LLM), Times.Once);
+    statusService.Verify(s => s.GetFeatureStatus(ExternalServices.LLM), Times.Once);
   }
 
   /// <summary>
@@ -133,11 +133,11 @@ public class FeatureAvailabilityMiddlewareTests
     var emailMissingConfigs = new List<string> { "EmailConfig:FromEmail" };
     var emptyConfigs = new List<string>();
 
-    statusService.Setup(s => s.GetFeatureStatus(ApiFeature.LLM))
+    statusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
         .Returns(new StatusInfo(IsAvailable: false, llmMissingConfigs));
-    statusService.Setup(s => s.GetFeatureStatus(ApiFeature.EmailSending))
+    statusService.Setup(s => s.GetFeatureStatus(ExternalServices.EmailSending))
         .Returns(new StatusInfo(IsAvailable: false, emailMissingConfigs));
-    statusService.Setup(s => s.GetFeatureStatus(ApiFeature.Payments))
+    statusService.Setup(s => s.GetFeatureStatus(ExternalServices.Payments))
         .Returns(new StatusInfo(IsAvailable: true, emptyConfigs));
 
     var middleware = new FeatureAvailabilityMiddleware(
@@ -148,7 +148,7 @@ public class FeatureAvailabilityMiddlewareTests
     var context = new DefaultHttpContext();
     var metadata = new EndpointMetadataCollection(new object[]
     {
-            new RequiresFeatureEnabledAttribute(ApiFeature.LLM, ApiFeature.EmailSending, ApiFeature.Payments)
+            new RequiresFeatureEnabledAttribute(ExternalServices.LLM, ExternalServices.EmailSending, ExternalServices.Payments)
     });
     var endpoint = new Endpoint(_ => Task.CompletedTask, metadata, "Test Endpoint");
     context.SetEndpoint(endpoint);
@@ -193,7 +193,7 @@ public class FeatureAvailabilityMiddlewareTests
   {
     // Arrange
     var statusService = new Mock<IStatusService>();
-    statusService.Setup(s => s.GetFeatureStatus(ApiFeature.LLM))
+    statusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
         .Returns(new StatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
 
     var hostBuilder = new HostBuilder()
@@ -220,7 +220,7 @@ public class FeatureAvailabilityMiddlewareTests
                 app.UseFeatureAvailability();
                 app.UseEndpoints(endpoints =>
                     {
-                      endpoints.MapGet("/api/test", [RequiresFeatureEnabled(ApiFeature.LLM)] () => "Hello World");
+                      endpoints.MapGet("/api/test", [RequiresFeatureEnabled(ExternalServices.LLM)] () => "Hello World");
                       endpoints.MapGet("/api/available", () => "Available");
                     });
               });

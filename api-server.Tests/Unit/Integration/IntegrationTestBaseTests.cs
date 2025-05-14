@@ -116,7 +116,7 @@ public class IntegrationTestBaseTests
   public void GetRequiredFeaturesFromTestClass_WhenMethodHasDependencyFactWithFeatures_ReturnsFeatures()
   {
     // Arrange
-    var testMethodInfo = typeof(DummyTestClassWithApiFeatures).GetMethod(nameof(DummyTestClassWithApiFeatures.TestWithLlmDependency));
+    var testMethodInfo = typeof(DummyTestClassWithExternalServicess).GetMethod(nameof(DummyTestClassWithExternalServicess.TestWithLlmDependency));
     testMethodInfo.Should().NotBeNull();
 
     // Act - Use reflection to invoke private method GetRequiredFeaturesFromTestClass
@@ -130,18 +130,18 @@ public class IntegrationTestBaseTests
     // Create an instance of IntegrationTestBase using a mock fixture
     var mockIntegrationTestBase = new Mock<IntegrationTestBase>(mockFixture, mockOutputHelper) { CallBase = true }.Object;
 
-    var result = getRequiredFeaturesMethod?.Invoke(mockIntegrationTestBase, new object[] { typeof(DummyTestClassWithApiFeatures) }) as ApiFeature[];
+    var result = getRequiredFeaturesMethod?.Invoke(mockIntegrationTestBase, new object[] { typeof(DummyTestClassWithExternalServicess) }) as ExternalServices[];
 
     // Assert
     result.Should().NotBeNull();
-    result.Should().Contain(ApiFeature.LLM);
+    result.Should().Contain(ExternalServices.LLM);
   }
 
   [Fact]
   public void GetRequiredFeaturesFromTestClass_WhenMethodHasEmptyDependencyFact_ReturnsNull()
   {
     // Arrange
-    var testMethodInfo = typeof(DummyTestClassWithoutApiFeatures).GetMethod(nameof(DummyTestClassWithoutApiFeatures.TestWithoutApiFeatureDependency));
+    var testMethodInfo = typeof(DummyTestClassWithoutExternalServicess).GetMethod(nameof(DummyTestClassWithoutExternalServicess.TestWithoutExternalServicesDependency));
     testMethodInfo.Should().NotBeNull();
 
     // Act - Use reflection to invoke private method GetRequiredFeaturesFromTestClass
@@ -154,7 +154,7 @@ public class IntegrationTestBaseTests
     // Create an instance of IntegrationTestBase using a mock fixture
     var mockIntegrationTestBase = new Mock<IntegrationTestBase>(mockFixture, mockOutputHelper) { CallBase = true }.Object;
 
-    var result = getRequiredFeaturesMethod?.Invoke(mockIntegrationTestBase, new object[] { typeof(DummyTestClassWithoutApiFeatures) }) as ApiFeature[];
+    var result = getRequiredFeaturesMethod?.Invoke(mockIntegrationTestBase, new object[] { typeof(DummyTestClassWithoutExternalServicess) }) as ExternalServices[];
 
     // Assert
     result.Should().BeNull();
@@ -162,15 +162,15 @@ public class IntegrationTestBaseTests
 }
 
 // Helper classes for testing the GetRequiredFeaturesFromTestClass method
-public class DummyTestClassWithApiFeatures
+public class DummyTestClassWithExternalServicess
 {
-  [DependencyFact(ApiFeature.LLM)]
+  [DependencyFact(ExternalServices.LLM)]
   public void TestWithLlmDependency() { }
 }
 
-public class DummyTestClassWithoutApiFeatures
+public class DummyTestClassWithoutExternalServicess
 {
   [DependencyFact]
   [Trait(TestCategories.Dependency, TestCategories.ExternalOpenAI)]
-  public void TestWithoutApiFeatureDependency() { }
+  public void TestWithoutExternalServicesDependency() { }
 }
