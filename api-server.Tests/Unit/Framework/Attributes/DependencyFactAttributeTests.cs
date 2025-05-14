@@ -47,7 +47,7 @@ public class DependencyFactAttributeTests
   public void Constructor_WhenNullExternalServicesArrayProvided_RequiredFeaturesIsNull()
   {
     // Arrange & Act
-    ExternalServices[] nullArray = null!;
+    ExternalServices[] nullArray = [];
     var attribute = new DependencyFactAttribute(nullArray);
 
     // Assert
