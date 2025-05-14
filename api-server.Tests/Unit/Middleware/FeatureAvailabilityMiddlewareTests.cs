@@ -74,7 +74,7 @@ public class FeatureAvailabilityMiddlewareTests
     var context = new DefaultHttpContext();
     var metadata = new EndpointMetadataCollection(new object[]
     {
-            new RequiresFeatureEnabledAttribute(ExternalServices.LLM)
+            new DependsOnService(ExternalServices.LLM)
     });
     var endpoint = new Endpoint(_ => Task.CompletedTask, metadata, "Test Endpoint");
     context.SetEndpoint(endpoint);
@@ -106,7 +106,7 @@ public class FeatureAvailabilityMiddlewareTests
     var context = new DefaultHttpContext();
     var metadata = new EndpointMetadataCollection(new object[]
     {
-            new RequiresFeatureEnabledAttribute(ExternalServices.LLM)
+            new DependsOnService(ExternalServices.LLM)
     });
     var endpoint = new Endpoint(_ => Task.CompletedTask, metadata, "Test Endpoint");
     context.SetEndpoint(endpoint);
@@ -148,7 +148,7 @@ public class FeatureAvailabilityMiddlewareTests
     var context = new DefaultHttpContext();
     var metadata = new EndpointMetadataCollection(new object[]
     {
-            new RequiresFeatureEnabledAttribute(ExternalServices.LLM, ExternalServices.EmailSending, ExternalServices.Payments)
+            new DependsOnService(ExternalServices.LLM, ExternalServices.EmailSending, ExternalServices.Payments)
     });
     var endpoint = new Endpoint(_ => Task.CompletedTask, metadata, "Test Endpoint");
     context.SetEndpoint(endpoint);
@@ -220,7 +220,7 @@ public class FeatureAvailabilityMiddlewareTests
                 app.UseFeatureAvailability();
                 app.UseEndpoints(endpoints =>
                     {
-                      endpoints.MapGet("/api/test", [RequiresFeatureEnabled(ExternalServices.LLM)] () => "Hello World");
+                      endpoints.MapGet("/api/test", [DependsOnService(ExternalServices.LLM)] () => "Hello World");
                       endpoints.MapGet("/api/available", () => "Available");
                     });
               });

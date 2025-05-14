@@ -23,7 +23,7 @@ public class ServiceAvailabilityOperationFilterTests
   }
 
   [Fact]
-  public void Apply_NoRequiresFeatureEnabledAttribute_NoChangesToOperation()
+  public void Apply_NoDependsOnServiceAttribute_NoChangesToOperation()
   {
     // Arrange
     var operation = new OpenApiOperation
@@ -39,12 +39,12 @@ public class ServiceAvailabilityOperationFilterTests
     _filter.Apply(operation, context);
 
     // Assert
-    operation.Summary.Should().Be("Original summary", "Operation without RequiresFeatureEnabled attribute should not have its summary modified");
-    operation.Description.Should().Be("Original description", "Operation without RequiresFeatureEnabled attribute should not have its description modified");
+    operation.Summary.Should().Be("Original summary", "Operation without DependsOnService attribute should not have its summary modified");
+    operation.Description.Should().Be("Original description", "Operation without DependsOnService attribute should not have its description modified");
   }
 
   [Fact]
-  public void Apply_RequiresFeatureEnabledAttributeButFeatureAvailable_NoChangesToOperation()
+  public void Apply_DependsOnServiceAttributeButFeatureAvailable_NoChangesToOperation()
   {
     // Arrange
     var operation = new OpenApiOperation
@@ -69,7 +69,7 @@ public class ServiceAvailabilityOperationFilterTests
   }
 
   [Fact]
-  public void Apply_RequiresFeatureEnabledAttributeFeatureUnavailable_ModifiesOperation()
+  public void Apply_DependsOnServiceAttributeFeatureUnavailable_ModifiesOperation()
   {
     // Arrange
     var operation = new OpenApiOperation
@@ -176,7 +176,7 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate the feature is unavailable
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.Core))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.FrontEnd))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["ServerConfig:BaseUrl"]));
 
     // Act
@@ -201,7 +201,7 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate both features are unavailable
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.Core))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.FrontEnd))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["ServerConfig:BaseUrl"]));
 
     _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.EmailSending))
@@ -262,20 +262,20 @@ public class ServiceAvailabilityOperationFilterTests
   {
     public void MethodWithoutAttribute() { }
 
-    [RequiresFeatureEnabled(ExternalServices.LLM)]
+    [DependsOnService(ExternalServices.LLM)]
     public void MethodWithAttribute() { }
 
-    [RequiresFeatureEnabled(ExternalServices.LLM)]
-    [RequiresFeatureEnabled(ExternalServices.Transcription)]
+    [DependsOnService(ExternalServices.LLM)]
+    [DependsOnService(ExternalServices.Transcription)]
     public void MethodWithMultipleAttributes() { }
   }
 
-  [RequiresFeatureEnabled(ExternalServices.Core)]
+  [DependsOnService(ExternalServices.FrontEnd)]
   private class ClassWithAttribute
   {
     public void MethodWithoutAttribute() { }
 
-    [RequiresFeatureEnabled(ExternalServices.EmailSending)]
+    [DependsOnService(ExternalServices.EmailSending)]
     public void MethodWithAttribute() { }
   }
 }

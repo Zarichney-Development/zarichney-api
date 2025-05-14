@@ -11,7 +11,7 @@
     * Defining shared configuration models (e.g., `ServerConfig`, `ClientConfig`) identified by the `IConfig` interface. [cite: api-server/Config/ConfigModels.cs]
     * Providing core middleware for request/response logging and global error handling. [cite: api-server/Config/LoggingMiddleware.cs, api-server/Config/ErrorHandlingMiddleware.cs]
     * Providing custom utilities like JSON converters and exception types. [cite: api-server/Config/JsonConverter.cs, api-server/Config/NotExpectedException.cs, api-server/Config/ConfigurationMissingException.cs, api-server/Config/ServiceUnavailableException.cs]
-    * Supplying attributes for configuration requirement decoration (`RequiresConfigurationAttribute`, `RequiresFeatureEnabledAttribute`). [cite: api-server/Config/RequiresConfigurationAttribute.cs, api-server/Config/RequiresFeatureEnabledAttribute.cs]
+    * Supplying attributes for configuration requirement decoration (`RequiresConfigurationAttribute`, `DependsOnServiceAttribute`). [cite: api-server/Config/RequiresConfigurationAttribute.cs, api-server/Config/DependsOnServiceAttribute.cs]
     * Supplying filters for external integrations like Swagger (`FormFileOperationFilter`, `ServiceAvailabilityOperationFilter`). [cite: api-server/Config/FormFileOperationFilter.cs, api-server/Config/ServiceAvailabilityOperationFilter.cs]
     * Hosting static configuration files like `site_selectors.json`. [cite: api-server/Config/site_selectors.json]
 * **Why it exists:** To define shared configuration models, provide reusable cross-cutting concerns via middleware, and centralize utilities needed by multiple modules.
@@ -23,7 +23,7 @@
 * **Configuration Requirements & Feature Availability:**
    * A strongly-typed `Feature` enum defines all features available in the application that can be enabled or disabled based on configuration availability (e.g., `LLM`, `Transcription`, `EmailSending`, etc.). [cite: api-server/Config/FeatureEnum.cs]
    * Properties in configuration classes are now marked with `[RequiresConfiguration]` attribute to indicate which features depend on them (e.g., `[RequiresConfiguration(Feature.LLM, Feature.AiServices)]`). This is used by `IConfigurationStatusService` to determine feature availability. [cite: api-server/Config/RequiresConfigurationAttribute.cs, api-server/Services/Status/ConfigurationStatusService.cs]
-   * Controllers and actions can be marked with the `[RequiresFeatureEnabled]` attribute to indicate they depend on specific features that require proper configuration (e.g., `[RequiresFeatureEnabled(Feature.LLM)]`). The `ServiceAvailabilityOperationFilter` uses this information to update Swagger UI with visual indications when endpoints may be unavailable due to missing configuration. [cite: api-server/Config/RequiresFeatureEnabledAttribute.cs, api-server/Config/ServiceAvailabilityOperationFilter.cs]
+   * Controllers and actions can be marked with the `[DependsOnService]` attribute to indicate they depend on specific features that require proper configuration (e.g., `[DependsOnService(Feature.LLM)]`). The `ServiceAvailabilityOperationFilter` uses this information to update Swagger UI with visual indications when endpoints may be unavailable due to missing configuration. [cite: api-server/Config/DependsOnServiceAttribute.cs, api-server/Config/ServiceAvailabilityOperationFilter.cs]
 * **Middleware:** Standard ASP.NET Core middleware pattern is used for logging (`LoggingMiddleware`), error handling (`ErrorHandlingMiddleware`), and feature availability checking (`FeatureAvailabilityMiddleware`). Their order of registration in the application pipeline is important. [cite: api-server/Startup/App/ApplicationStartup.cs, api-server/Config/LoggingMiddleware.cs, api-server/Config/ErrorHandlingMiddleware.cs, api-server/Services/Status/FeatureAvailabilityMiddleware.cs]
 * **ErrorHandlingMiddleware:**
     * Global exception handler for all HTTP requests. Catches unhandled exceptions and returns a structured JSON error response.
@@ -31,7 +31,7 @@
     * Logs all exceptions using the injected logger, including request method and path for traceability.
     * For all other exceptions, returns a 500 Internal Server Error with a generic error message and trace ID.
 * **FeatureAvailabilityMiddleware:**
-    * Examines each incoming request to check if the target endpoint has been decorated with `[RequiresFeatureEnabled]` attribute(s).
+    * Examines each incoming request to check if the target endpoint has been decorated with `[DependsOnService]` attribute(s).
     * Uses `IStatusService` to determine if all required features are currently available.
     * If any required feature is unavailable, throws a `ServiceUnavailableException` with detailed information about which configurations are missing.
     * Properly handles both controller-level and action-level attributes, aggregating all required features.
@@ -45,8 +45,8 @@
     * `ServiceUnavailableException`: Exception type that indicates a service is unavailable due to missing configuration or other reasons. Contains a collection of specific reasons for unavailability.
     * `Feature`: Enum defining all features available in the application that can be enabled or disabled based on configuration availability.
     * `RequiresConfigurationAttribute`: Attribute to decorate properties in configuration classes that are required for specific features to function. Links a configuration property to one or more features that depend on it.
-    * `RequiresFeatureEnabledAttribute`: Attribute to decorate controllers and actions that depend on specific features that require proper configuration. Accepts one or more `Feature` enum values. Used by `ServiceAvailabilityOperationFilter` to update Swagger UI with visual indications when endpoints may be unavailable.
-    * `ServiceAvailabilityOperationFilter`: A Swagger filter that detects controllers and actions with the `[RequiresFeatureEnabled]` attribute and modifies their description in the Swagger UI to indicate when they may be unavailable due to missing configuration.
+    * `DependsOnServiceAttribute`: Attribute to decorate controllers and actions that depend on specific features that require proper configuration. Accepts one or more `Feature` enum values. Used by `ServiceAvailabilityOperationFilter` to update Swagger UI with visual indications when endpoints may be unavailable.
+    * `ServiceAvailabilityOperationFilter`: A Swagger filter that detects controllers and actions with the `[DependsOnService]` attribute and modifies their description in the Swagger UI to indicate when they may be unavailable due to missing configuration.
     * Middleware (`ErrorHandlingMiddleware`, `LoggingMiddleware`): Consumed implicitly via registration in the application pipeline. They alter the request pipeline behavior.
 * **Assumptions:**
     * **Configuration Registration:** Assumes configuration is registered via the `RegisterConfigurationServices` method in `/Startup/Configuration/ConfigurationStartup.cs`.
@@ -86,10 +86,10 @@
     * Service factories use this to determine whether to register real client implementations or proxies that throw `ServiceUnavailableException` when their methods are invoked.
     * Service status can be accessed by clients via the `/api/status/config` endpoint which shows all services with their availability status and any missing configurations.
 * **Marking API Endpoints That Require Specific Features:**
-    * Use the `[RequiresFeatureEnabled]` attribute on controller classes or action methods to indicate they depend on specific features that require proper configuration.
+    * Use the `[DependsOnService]` attribute on controller classes or action methods to indicate they depend on specific features that require proper configuration.
     * The attribute accepts one or more `Feature` enum values.
-    * Example at class level: `[RequiresFeatureEnabled(Feature.Payments)]`
-    * Example at method level with multiple features: `[RequiresFeatureEnabled(Feature.LLM, Feature.GitHubAccess)]`
+    * Example at class level: `[DependsOnService(Feature.Payments)]`
+    * Example at method level with multiple features: `[DependsOnService(Feature.LLM, Feature.GitHubAccess)]`
     * Two complementary systems work with this attribute:
         1. The `ServiceAvailabilityOperationFilter` automatically detects these attributes and updates the Swagger UI to show warnings when endpoints may be unavailable due to missing configuration.
         2. The `FeatureAvailabilityMiddleware` checks these attributes at runtime and prevents access to endpoints whose required features are unavailable, returning a 503 Service Unavailable response with detailed information about which configurations are missing.
@@ -125,7 +125,7 @@
 * **Configuration Status Infrastructure:** The `RequiresConfigurationAttribute` and `ServiceUnavailableException` were added to support a more graceful handling of service unavailability due to missing configuration.
 * **Service Proxy Pattern:** Service factories now register proxy implementations of external clients that throw `ServiceUnavailableException` when their methods are invoked if required configuration is missing, rather than returning null. This provides clearer error messages and more consistent behavior when a service can't operate due to missing configuration.
 * **Feature Availability Infrastructure:**
-    * The `RequiresFeatureEnabledAttribute` and `ServiceAvailabilityOperationFilter` were added to provide a visual indication in the Swagger UI when API endpoints may be unavailable due to missing configuration. This helps developers and API consumers understand which endpoints require specific features to be properly configured before they attempt to use them.
+    * The `DependsOnServiceAttribute` and `ServiceAvailabilityOperationFilter` were added to provide a visual indication in the Swagger UI when API endpoints may be unavailable due to missing configuration. This helps developers and API consumers understand which endpoints require specific features to be properly configured before they attempt to use them.
     * The `FeatureAvailabilityMiddleware` complements this by actively checking feature availability at runtime and preventing access to endpoints whose required features are unavailable. This provides immediate feedback to API consumers rather than letting them discover errors further down the request pipeline.
 * **Middleware for Cross-Cutting Concerns:** Logging and Error Handling are implemented as middleware to apply these concerns globally without cluttering individual controller actions or services.
 * **PromptBase Relocation:** The `PromptBase` class has been moved to `/Services/AI` where it more logically belongs with other AI-related functionality.

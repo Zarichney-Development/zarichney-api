@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Zarichney.Services.Email;
+using Zarichney.Services.Status;
 
 namespace Zarichney.Controllers;
 
@@ -18,6 +19,7 @@ public class ApiController(
   [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(BadRequestObjectResult), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+  [DependsOnService(ExternalServices.EmailValidation)]
   public async Task<IActionResult> ValidateEmail([FromQuery] string email)
   {
     try

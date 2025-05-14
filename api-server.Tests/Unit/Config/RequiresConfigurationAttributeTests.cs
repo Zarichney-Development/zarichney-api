@@ -23,11 +23,11 @@ public class RequiresConfigurationAttributeTests
   public void Constructor_SingleFeature_InitializesCorrectly()
   {
     // Arrange & Act
-    var attribute = new RequiresConfigurationAttribute(ExternalServices.Core);
+    var attribute = new RequiresConfigurationAttribute(ExternalServices.FrontEnd);
 
     // Assert
     attribute.Features.Should().HaveCount(1); // One feature was provided
-    attribute.Features.Should().Contain(ExternalServices.Core);
+    attribute.Features.Should().Contain(ExternalServices.FrontEnd);
   }
 
   [Trait("Category", "Unit")]

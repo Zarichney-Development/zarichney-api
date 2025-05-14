@@ -5,7 +5,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 namespace Zarichney.Services.Status;
 
 /// <summary>
-/// Swagger operation filter that detects controllers and actions with the [RequiresFeatureEnabled]
+/// Swagger operation filter that detects controllers and actions with the [DependsOnService]
 /// attribute and modifies their summary and description to indicate when they may be unavailable
 /// due to missing configuration.
 /// </summary>
@@ -35,13 +35,13 @@ public class ServiceAvailabilityOperationFilter : IOperationFilter
       return;
     }
 
-    // Try to gather all RequiresFeatureEnabled attributes from both the method and its containing class
+    // Try to gather all DependsOnService attributes from both the method and its containing class
     var methodAttributes = context.MethodInfo
-      .GetCustomAttributes<RequiresFeatureEnabledAttribute>(inherit: true)
+      .GetCustomAttributes<DependsOnService>(inherit: true)
       .ToList();
 
     var classAttributes = context.MethodInfo.DeclaringType?
-      .GetCustomAttributes<RequiresFeatureEnabledAttribute>(inherit: true)
+      .GetCustomAttributes<DependsOnService>(inherit: true)
       .ToList() ?? [];
 
     // Combine all attributes

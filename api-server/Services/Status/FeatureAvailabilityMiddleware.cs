@@ -138,8 +138,8 @@ public class FeatureAvailabilityMiddleware
       return features;
     }
 
-    // Extract all RequiresFeatureEnabled attributes from the endpoint metadata
-    var featureAttributes = metadata.GetOrderedMetadata<RequiresFeatureEnabledAttribute>();
+    // Extract all DependsOnService attributes from the endpoint metadata
+    var featureAttributes = metadata.GetOrderedMetadata<DependsOnService>();
     if (featureAttributes != null && featureAttributes.Any())
     {
       foreach (var attribute in featureAttributes)

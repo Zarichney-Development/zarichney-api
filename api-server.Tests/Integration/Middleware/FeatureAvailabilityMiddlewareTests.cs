@@ -22,12 +22,12 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     : IntegrationTestBase(apiClientFixture, testOutputHelper)
 {
   /// <summary>
-  /// Tests that endpoints with RequiresFeatureEnabled attribute return 503 when required features are unavailable.
+  /// Tests that endpoints with DependsOnService attribute return 503 when required features are unavailable.
   /// </summary>
   [Fact]
   [Trait(TestCategories.Feature, "Middleware")]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
-  public async Task Endpoint_WithRequiresFeatureEnabledAttribute_WhenFeatureUnavailable_Returns503()
+  public async Task Endpoint_WithDependsOnServiceAttribute_WhenFeatureUnavailable_Returns503()
   {
     // Arrange
     var mockStatusService = new Mock<IStatusService>();
@@ -74,13 +74,13 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
   }
 
   /// <summary>
-  /// Tests that endpoints without RequiresFeatureEnabled attribute remain accessible
+  /// Tests that endpoints without DependsOnService attribute remain accessible
   /// even when some features are unavailable.
   /// </summary>
   [Fact]
   [Trait(TestCategories.Feature, "Middleware")]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
-  public async Task Endpoint_WithoutRequiresFeatureEnabledAttribute_WhenFeaturesUnavailable_RemainsAccessible()
+  public async Task Endpoint_WithoutDependsOnServiceAttribute_WhenFeaturesUnavailable_RemainsAccessible()
   {
     // Arrange
     var mockStatusService = new Mock<IStatusService>();

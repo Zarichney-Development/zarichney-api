@@ -32,7 +32,7 @@
         * Provides synchronous access to feature availability status for the `ServiceAvailabilityOperationFilter` used in Swagger UI.
         * Includes a constructor that accepts an `Assembly` instance, allowing the assembly to be scanned for `IConfig` types to be specified (primarily for testability).
 * **FeatureAvailabilityMiddleware:**
-    * Inspects endpoints for `[RequiresFeatureEnabled]` attributes at both controller and action levels.
+    * Inspects endpoints for `[DependsOnService]` attributes at both controller and action levels.
     * Uses `IStatusService` to check if all required features are available.
     * If any required feature is unavailable, throws a `ServiceUnavailableException` with details about missing configurations.
     * Implements middleware caching to improve performance.
@@ -58,7 +58,7 @@
     * Assumes service names can be derived from config class names (e.g., "ServerConfig" → "Server" service).
     * Assumes `IConfig` instances are registered as singletons in the DI container for efficient resolution by `StatusService`.
     * Assumes the `Assembly` provided to (or defaulted by) `StatusService` contains all relevant `IConfig` implementations.
-    * Assumes all controller endpoints that require specific features are decorated with the `[RequiresFeatureEnabled]` attribute with appropriate Feature enum values.
+    * Assumes all controller endpoints that require specific features are decorated with the `[DependsOnService]` attribute with appropriate Feature enum values.
     * Assumes the `FeatureAvailabilityMiddleware` is registered in the pipeline after routing but before the endpoint is executed.
 
 ## 4. Local Conventions & Constraints
@@ -87,8 +87,8 @@
     * Example: `[RequiresConfiguration(Feature.LLM)] public string ApiKey { get; set; } = string.Empty;`
     * You can specify multiple features if the property is required for more than one feature: `[RequiresConfiguration(Feature.LLM, Feature.AiServices)]`
 * **Marking Feature Dependencies:**
-    * Decorate controllers or action methods with `[RequiresFeatureEnabled(Feature.FeatureName)]` to indicate which features are required for them to function.
-    * Example: `[RequiresFeatureEnabled(Feature.LLM)] public async Task<ActionResult> Completion([FromBody] string prompt) { ... }`
+    * Decorate controllers or action methods with `[DependsOnService(Feature.FeatureName)]` to indicate which features are required for them to function.
+    * Example: `[DependsOnService(Feature.LLM)] public async Task<ActionResult> Completion([FromBody] string prompt) { ... }`
     * The middleware will automatically prevent access to these endpoints if any of the required features are unavailable.
 * **Checking Service Availability:**
     * Inject `IStatusService` to check if services are available based on their configuration requirements.
@@ -109,7 +109,7 @@
 * **Dependents (Impact of Changes):**
     * [`/Controllers/PublicController.cs`](../../Controllers/PublicController.cs) - Uses `IStatusService` for the `/api/status` and `/api/config` endpoints.
     * Any service that needs to check the availability of other services based on their configuration requirements.
-    * Controllers and actions that use the `[RequiresFeatureEnabled]` attribute.
+    * Controllers and actions that use the `[DependsOnService]` attribute.
     * Configuration properties that use the `[RequiresConfiguration]` attribute.
     * [`/Startup/ApplicationStartup.cs`](../../Startup/ApplicationStartup.cs) - Registers the `FeatureAvailabilityMiddleware` in the request pipeline.
 
@@ -121,7 +121,7 @@
 * **May 2025 Refactor (`StatusService`):** `StatusService` was refactored to discover `IConfig` implementations by scanning a specified `Assembly` (defaulting to the main application assembly) and then resolving these types via `IServiceProvider`. A new constructor was added to allow injection of the `Assembly` to be scanned, significantly improving the testability of the service by allowing tests to provide a mock assembly with controlled `IConfig` types.
 * **May 2025 Feature Enumeration Refactor:** The `Feature` enum was introduced to replace string-based feature names, improving type safety and making dependencies between configurations and features more explicit. The `[RequiresConfiguration]` attribute was updated to accept `Feature` enum values instead of string configuration keys, and configuration keys are now automatically derived from class and property names.
 * **May 2025 Interface Consolidation:** The previously separate `IConfigurationStatusService` interface was merged into `IStatusService` to provide a unified API for all status-related functionality, simplifying service registration and usage.
-* **May 2025 Code Organization:** The service availability related files (`RequiresConfigurationAttribute`, `RequiresFeatureEnabledAttribute`, `ServiceUnavailableException`, and `ServiceAvailabilityOperationFilter`) were relocated from the `/Config` directory to the `/Services/Status` directory to better reflect their functional relationship with the status service functionality.
+* **May 2025 Code Organization:** The service availability related files (`RequiresConfigurationAttribute`, `DependsOnServiceAttribute`, `ServiceUnavailableException`, and `ServiceAvailabilityOperationFilter`) were relocated from the `/Config` directory to the `/Services/Status` directory to better reflect their functional relationship with the status service functionality.
 * **May 2025 Feature Availability Middleware:** The `FeatureAvailabilityMiddleware` was added to proactively enforce feature availability at runtime, preventing API consumers from accessing endpoints that can't function due to missing configurations. This provides a cleaner user experience by returning explicit 503 responses with detailed reasons, rather than allowing requests to proceed and fail with less specific errors.
 
 ## 8. Known Issues & TODOs

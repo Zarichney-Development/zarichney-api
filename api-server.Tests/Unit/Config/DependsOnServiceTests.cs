@@ -4,13 +4,13 @@ using Xunit;
 
 namespace Zarichney.Tests.Unit.Config;
 
-public class RequiresFeatureEnabledAttributeTests
+public class DependsOnServiceTests
 {
   [Fact]
   public void Constructor_ValidFeatures_InitializesCorrectly()
   {
     // Arrange & Act
-    var attribute = new RequiresFeatureEnabledAttribute(ExternalServices.LLM, ExternalServices.Transcription);
+    var attribute = new DependsOnService(ExternalServices.LLM, ExternalServices.Transcription);
 
     // Assert
     attribute.Features.Should().HaveCount(2); // Two features were provided
@@ -21,18 +21,18 @@ public class RequiresFeatureEnabledAttributeTests
   public void Constructor_SingleFeature_InitializesCorrectly()
   {
     // Arrange & Act
-    var attribute = new RequiresFeatureEnabledAttribute(ExternalServices.Core);
+    var attribute = new DependsOnService(ExternalServices.FrontEnd);
 
     // Assert
     attribute.Features.Should().HaveCount(1); // One feature was provided
-    attribute.Features.Should().Contain(ExternalServices.Core); // The provided feature should be stored
+    attribute.Features.Should().Contain(ExternalServices.FrontEnd); // The provided feature should be stored
   }
 
   [Fact]
   public void Constructor_EmptyFeaturesArray_ThrowsArgumentException()
   {
     // Arrange, Act & Assert
-    Assert.Throws<ArgumentException>(() => new RequiresFeatureEnabledAttribute())
+    Assert.Throws<ArgumentException>(() => new DependsOnService())
         .Message.Should().Contain("At least one feature must be provided");
     // Empty features array is invalid
   }
@@ -42,7 +42,7 @@ public class RequiresFeatureEnabledAttributeTests
   {
     // Arrange, Act & Assert
     // Note: Can't directly pass null to params array, this behavior is tested indirectly
-    Assert.Throws<ArgumentException>(() => new RequiresFeatureEnabledAttribute())
+    Assert.Throws<ArgumentException>(() => new DependsOnService())
         .Message.Should().Contain("At least one feature must be provided");
     // Empty features array is invalid
   }
@@ -51,7 +51,7 @@ public class RequiresFeatureEnabledAttributeTests
   public void FeatureNames_ConvertsFeaturesToStrings()
   {
     // Arrange & Act
-    var attribute = new RequiresFeatureEnabledAttribute(ExternalServices.LLM, ExternalServices.Transcription);
+    var attribute = new DependsOnService(ExternalServices.LLM, ExternalServices.Transcription);
 
     // Assert - This tests the backward compatibility property
     attribute.FeatureNames.Should().HaveCount(2);
@@ -62,15 +62,15 @@ public class RequiresFeatureEnabledAttributeTests
   public void AttributeUsage_ClassTargetAndMethodTarget_AllowsMultiple()
   {
     // Arrange & Act
-    var attributeUsage = typeof(RequiresFeatureEnabledAttribute).GetCustomAttributes(typeof(AttributeUsageAttribute), false)
+    var attributeUsage = typeof(DependsOnService).GetCustomAttributes(typeof(AttributeUsageAttribute), false)
         .OfType<AttributeUsageAttribute>()
         .FirstOrDefault();
 
     // Assert
-    attributeUsage.Should().NotBeNull(); // RequiresFeatureEnabledAttribute should have AttributeUsage defined
+    attributeUsage.Should().NotBeNull(); // DependsOnService should have AttributeUsage defined
     attributeUsage.ValidOn.Should().HaveFlag(AttributeTargets.Class); // Attribute should be applicable to classes
     attributeUsage.ValidOn.Should().HaveFlag(AttributeTargets.Method); // Attribute should be applicable to methods
-    attributeUsage.AllowMultiple.Should().BeTrue(); // Multiple RequiresFeatureEnabled attributes should be allowed
-    attributeUsage.Inherited.Should().BeTrue(); // RequiresFeatureEnabled attributes should be inherited
+    attributeUsage.AllowMultiple.Should().BeTrue(); // Multiple DependsOnService attributes should be allowed
+    attributeUsage.Inherited.Should().BeTrue(); // DependsOnService attributes should be inherited
   }
 }

@@ -7,9 +7,9 @@ namespace Zarichney.Services.Status;
 public enum ExternalServices
 {
   /// <summary>
-  /// Core functionality required by the application.
+  /// Functionality required by the front-end website (https://zarichney.com).
   /// </summary>
-  Core,
+  FrontEnd,
 
   /// <summary>
   /// Language Model services for text generation and completions.
@@ -39,5 +39,10 @@ public enum ExternalServices
   /// <summary>
   /// AI-related services (combines LLM, Transcription, etc.)
   /// </summary>
-  AiServices
+  AiServices,
+
+  /// <summary>
+  /// A service to ensure a given email is legitimate
+  /// </summary>
+  EmailValidation
 }

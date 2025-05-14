@@ -6,7 +6,7 @@ namespace Zarichney.Services.Status;
 /// missing required configuration.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
-public class RequiresFeatureEnabledAttribute : Attribute
+public class DependsOnService : Attribute
 {
   /// <summary>
   /// Gets the features that are required for this controller or action to function.
@@ -14,11 +14,11 @@ public class RequiresFeatureEnabledAttribute : Attribute
   public ExternalServices[] Features { get; }
 
   /// <summary>
-  /// Initializes a new instance of the <see cref="RequiresFeatureEnabledAttribute"/> class.
+  /// Initializes a new instance of the <see cref="DependsOnService"/> class.
   /// </summary>
   /// <param name="features">One or more features that are required for this controller or action to function.</param>
   /// <exception cref="ArgumentException">Thrown when no features are provided.</exception>
-  public RequiresFeatureEnabledAttribute(params ExternalServices[] features)
+  public DependsOnService(params ExternalServices[] features)
   {
     if (features == null || features.Length == 0)
     {

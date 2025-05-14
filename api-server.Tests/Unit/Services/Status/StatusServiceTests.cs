@@ -365,7 +365,7 @@ public class StatusServiceTests
 
   private class TestService2Config : IConfig
   {
-    [RequiresConfiguration(ExternalServices.Core)]
+    [RequiresConfiguration(ExternalServices.FrontEnd)]
     public string Setting { get; set; } = "valid_setting";
   }
 }
