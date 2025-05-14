@@ -184,7 +184,8 @@ public class ServiceAvailabilityOperationFilterTests
 
     // Assert
     operation.Summary.Should().StartWith("⚠️", "Operation with class-level unavailable feature should have a warning symbol");
-    operation.Summary.Should().Contain("Core", "Class-level feature name should be in the warning");
+    // todo update to not be so brittle, refer to enum ExternalServices
+    operation.Summary.Should().Contain("FrontEnd", "Class-level feature name should be in the warning");
   }
 
   [Fact]
@@ -212,7 +213,8 @@ public class ServiceAvailabilityOperationFilterTests
 
     // Assert
     operation.Summary.Should().StartWith("⚠️", "Operation with unavailable features should have a warning symbol");
-    operation.Summary.Should().Contain("Core", "Class-level feature name should be in the warning");
+    // todo update to not be so brittle, refer to enum ExternalServices
+    operation.Summary.Should().Contain("FrontEnd", "Class-level feature name should be in the warning");
     operation.Summary.Should().Contain("EmailSending", "Method-level feature name should be in the warning");
   }
 

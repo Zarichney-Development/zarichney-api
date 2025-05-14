@@ -22,12 +22,20 @@ public static class ConfigurationStatusHelper
     // Add other mappings as needed
   };
 
+  // Map InfrastructureDependency to configuration names (used as reference, actual checking is now in IntegrationTestBase)
+  private static readonly Dictionary<InfrastructureDependency, string[]> _infrastructureDependencyToConfigMap = new()
+  {
+    { InfrastructureDependency.Database, ["Database Connection"] },
+    { InfrastructureDependency.Docker, ["Docker Availability"] }
+  };
+
   /// <summary>
   /// Gets the service status information from the /api/status endpoint.
   /// </summary>
   /// <param name="factory">The CustomWebApplicationFactory used to create the HTTP client.</param>
   /// <returns>A dictionary mapping service names to their status info, or an empty dictionary if the request fails.</returns>
-  public static async Task<Dictionary<string, ServiceStatusInfo>> GetServiceStatusAsync(CustomWebApplicationFactory factory)
+  public static async Task<Dictionary<string, ServiceStatusInfo>> GetServiceStatusAsync(
+    CustomWebApplicationFactory factory)
   {
     ArgumentNullException.ThrowIfNull(factory, nameof(factory));
 
@@ -70,7 +78,8 @@ public static class ConfigurationStatusHelper
   /// </summary>
   /// <param name="factory">The CustomWebApplicationFactory used to create the HTTP client.</param>
   /// <returns>A list of configuration item statuses or an empty list if the request fails.</returns>
-  public static async Task<List<ConfigurationItemStatus>> GetConfigurationStatusAsync(CustomWebApplicationFactory factory)
+  public static async Task<List<ConfigurationItemStatus>> GetConfigurationStatusAsync(
+    CustomWebApplicationFactory factory)
   {
     ArgumentNullException.ThrowIfNull(factory, nameof(factory));
 
@@ -110,19 +119,23 @@ public static class ConfigurationStatusHelper
 
   /// <summary>
   /// Checks if a specific feature dependency is available based on its dependency trait value.
+  /// This method is used primarily with string-based trait dependencies (legacy approach).
+  /// For ExternalServices and InfrastructureDependency enums, IntegrationTestBase now handles them directly.
   /// </summary>
   /// <param name="serviceStatuses">The dictionary of service status information.</param>
   /// <param name="dependencyTraitValue">The dependency trait value (e.g., TestCategories.ExternalOpenAI).</param>
   /// <returns>True if the dependency is available; otherwise, false.</returns>
-  public static bool IsFeatureDependencyAvailable(Dictionary<string, ServiceStatusInfo> serviceStatuses, string dependencyTraitValue)
+  public static bool IsFeatureDependencyAvailable(Dictionary<string, ServiceStatusInfo> serviceStatuses,
+    string dependencyTraitValue)
   {
     ArgumentNullException.ThrowIfNull(serviceStatuses, nameof(serviceStatuses));
     ArgumentException.ThrowIfNullOrWhiteSpace(dependencyTraitValue, nameof(dependencyTraitValue));
 
     // Special cases for Docker and Database that might be checked directly in CustomWebApplicationFactory
-    if (dependencyTraitValue == TestCategories.Docker)
+    if (dependencyTraitValue == TestCategories.Docker || dependencyTraitValue == TestCategories.Database)
     {
-      // Docker availability might be checked differently, this is just for the mapping
+      // Infrastructure dependencies are now checked directly in IntegrationTestBase
+      // This branch is kept for backward compatibility with string-based traits
       return true;
     }
 
@@ -154,11 +167,13 @@ public static class ConfigurationStatusHelper
 
   /// <summary>
   /// Gets a list of missing configuration items for a dependency trait value.
+  /// This method is used primarily with string-based trait dependencies (legacy approach).
   /// </summary>
   /// <param name="serviceStatuses">The dictionary of service status information.</param>
   /// <param name="dependencyTraitValue">The dependency trait value (e.g., TestCategories.ExternalOpenAI).</param>
   /// <returns>A list of missing configuration items, or an empty list if none are missing.</returns>
-  public static List<string> GetMissingConfigurationsForDependency(Dictionary<string, ServiceStatusInfo> serviceStatuses, string dependencyTraitValue)
+  public static List<string> GetMissingConfigurationsForDependency(
+    Dictionary<string, ServiceStatusInfo> serviceStatuses, string dependencyTraitValue)
   {
     ArgumentNullException.ThrowIfNull(serviceStatuses, nameof(serviceStatuses));
     ArgumentException.ThrowIfNullOrWhiteSpace(dependencyTraitValue, nameof(dependencyTraitValue));
@@ -196,5 +211,19 @@ public static class ConfigurationStatusHelper
 
     var item = statuses.FirstOrDefault(s => s.Name == configName);
     return item is { Status: "Configured" };
+  }
+
+  /// <summary>
+  /// Gets a list of configuration items that are required for an InfrastructureDependency.
+  /// This is primarily for reference/documentation, as infrastructure checks are now handled directly
+  /// in IntegrationTestBase.
+  /// </summary>
+  /// <param name="dependency">The InfrastructureDependency enum value.</param>
+  /// <returns>A list of configuration item names required for this dependency.</returns>
+  public static List<string> GetRequiredConfigurationsForInfrastructure(InfrastructureDependency dependency)
+  {
+    return _infrastructureDependencyToConfigMap.TryGetValue(dependency, out var configNames)
+      ? configNames.ToList()
+      : [];
   }
 }

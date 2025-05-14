@@ -122,30 +122,62 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     }
 
     // Check dependencies in the following order:
-    // 1. First try using ExternalServices enum-based dependencies (preferred approach)
-    // 2. Fall back to string-based trait dependencies if no ExternalServices dependencies are specified
+    // 1. First try using ApiFeature enum-based dependencies
+    // 2. Then check InfrastructureDependency enum-based dependencies
+    // 3. Fall back to string-based trait dependencies if no enum-based dependencies are specified
 
-    // Get ExternalServices dependencies specified in DependencyFactAttribute
-    var requiredFeatures = GetRequiredFeaturesFromTestClass(testClassType);
+    // Get dependencies specified in DependencyFactAttribute
+    var factAttribute = GetDependencyFactAttributeFromTestClass(testClassType);
 
-    // Check if there are explicit ExternalServices dependencies
-    if (requiredFeatures != null && requiredFeatures.Length > 0)
+    if (factAttribute != null)
     {
-      await CheckExternalServicesDependenciesAsync(requiredFeatures);
+      // Process ApiFeature dependencies if present
+      var requiredFeatures = factAttribute.RequiredExternalServices;
+      if (requiredFeatures is { Length: > 0 })
+      {
+        await CheckExternalServicesDependenciesAsync(requiredFeatures);
+
+        // If any ApiFeature check failed and set a skip reason, don't continue with other checks
+        if (ShouldSkip)
+        {
+          return;
+        }
+      }
+
+      // Process InfrastructureDependency if present
+      var requiredInfrastructure = factAttribute.RequiredInfrastructure;
+      if (requiredInfrastructure is { Length: > 0 })
+      {
+        CheckInfrastructureDependencies(requiredInfrastructure);
+
+        // If any InfrastructureDependency check failed and set a skip reason, don't continue with other checks
+        if (ShouldSkip)
+        {
+          return;
+        }
+      }
+
+      // If neither enum-based dependency was specified but we have a DependencyFactAttribute,
+      // fall back to string-based traits if available
+      if ((requiredFeatures == null || requiredFeatures.Length == 0) &&
+          (requiredInfrastructure == null || requiredInfrastructure.Length == 0))
+      {
+        await CheckLegacyTraitDependenciesAsync(traits);
+      }
     }
-    // Otherwise, check string-based trait dependencies (legacy approach)
     else
     {
+      // No DependencyFactAttribute found, use traits-based approach as fallback
       await CheckLegacyTraitDependenciesAsync(traits);
     }
   }
 
   /// <summary>
   /// Checks ExternalServices-based dependencies using IStatusService.
-  /// This is the preferred approach for dependency checking.
+  /// This is the preferred approach for API feature dependency checking.
   /// </summary>
   /// <param name="requiredFeatures">Array of required ExternalServices values.</param>
-  private async Task CheckExternalServicesDependenciesAsync(ExternalServices[] requiredFeatures)
+  private Task CheckExternalServicesDependenciesAsync(ExternalServices[] requiredFeatures)
   {
     try
     {
@@ -186,6 +218,51 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     {
       // If we encounter an error checking ExternalServices dependencies, set SkipReason
       SetSkipReason($"Error checking ExternalServices dependencies: {ex.Message}");
+    }
+
+    return Task.CompletedTask;
+  }
+
+  /// <summary>
+  /// Checks InfrastructureDependency-based dependencies by directly querying the Factory properties.
+  /// This is the preferred approach for infrastructure dependency checking.
+  /// </summary>
+  /// <param name="requiredInfrastructure">Array of required InfrastructureDependency values.</param>
+  private void CheckInfrastructureDependencies(InfrastructureDependency[] requiredInfrastructure)
+  {
+    try
+    {
+      foreach (var dependency in requiredInfrastructure)
+      {
+        switch (dependency)
+        {
+          case InfrastructureDependency.Database:
+            if (!Factory.IsDatabaseAvailable)
+            {
+              SetSkipReason("Database is not available.");
+              return;
+            }
+            break;
+
+          case InfrastructureDependency.Docker:
+            if (!Factory.IsDockerAvailable)
+            {
+              SetSkipReason("Docker is not available or misconfigured.");
+              return;
+            }
+            break;
+
+          default:
+            // Unknown infrastructure dependency
+            SetSkipReason($"Unknown infrastructure dependency: {dependency}");
+            return;
+        }
+      }
+    }
+    catch (Exception ex)
+    {
+      // If we encounter an error checking infrastructure dependencies, set SkipReason
+      SetSkipReason($"Error checking infrastructure dependencies: {ex.Message}");
     }
   }
 
@@ -311,19 +388,20 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   }
 
   /// <summary>
-  /// Gets the required ExternalServices values from a test class decorated with DependencyFactAttribute.
+  /// Gets the DependencyFactAttribute from a test class.
   /// </summary>
   /// <param name="testClassType">The test class type to check.</param>
-  /// <returns>Array of required ExternalServices values, or null if none specified.</returns>
-  private ExternalServices[]? GetRequiredFeaturesFromTestClass(System.Type testClassType)
+  /// <returns>The DependencyFactAttribute if found, or null if not present.</returns>
+  private DependencyFactAttribute? GetDependencyFactAttributeFromTestClass(System.Type testClassType)
   {
-    // Check test methods for DependencyFactAttribute with RequiredFeatures
-    foreach (var method in testClassType.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+    // Check test methods for DependencyFactAttribute
+    for (var index = 0; index < testClassType.GetMethods(BindingFlags.Public | BindingFlags.Instance).Length; index++)
     {
+      var method = testClassType.GetMethods(BindingFlags.Public | BindingFlags.Instance)[index];
       var factAttr = method.GetCustomAttribute<DependencyFactAttribute>();
-      if (factAttr != null && factAttr.RequiredFeatures != null && factAttr.RequiredFeatures.Length > 0)
+      if (factAttr != null)
       {
-        return factAttr.RequiredFeatures;
+        return factAttr;
       }
     }
 

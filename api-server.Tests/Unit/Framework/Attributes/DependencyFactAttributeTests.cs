@@ -9,13 +9,14 @@ namespace Zarichney.Tests.Unit.Framework.Attributes;
 public class DependencyFactAttributeTests
 {
   [Fact]
-  public void Constructor_WhenNoParametersProvided_RequiredFeaturesIsNull()
+  public void Constructor_WhenNoParametersProvided_RequiredFeaturesAndInfrastructureAreNull()
   {
     // Arrange & Act
     var attribute = new DependencyFactAttribute();
 
     // Assert
-    attribute.RequiredFeatures.Should().BeNull();
+    attribute.RequiredExternalServices.Should().BeNull();
+    attribute.RequiredInfrastructure.Should().BeNull();
   }
 
   [Fact]
@@ -25,10 +26,11 @@ public class DependencyFactAttributeTests
     var attribute = new DependencyFactAttribute(ExternalServices.LLM, ExternalServices.Transcription);
 
     // Assert
-    attribute.RequiredFeatures.Should().NotBeNull();
-    attribute.RequiredFeatures.Should().HaveCount(2);
-    attribute.RequiredFeatures.Should().Contain(ExternalServices.LLM);
-    attribute.RequiredFeatures.Should().Contain(ExternalServices.Transcription);
+    attribute.RequiredExternalServices.Should().NotBeNull();
+    attribute.RequiredExternalServices.Should().HaveCount(2);
+    attribute.RequiredExternalServices.Should().Contain(ExternalServices.LLM);
+    attribute.RequiredExternalServices.Should().Contain(ExternalServices.Transcription);
+    attribute.RequiredInfrastructure.Should().BeNull();
   }
 
   [Fact]
@@ -38,18 +40,18 @@ public class DependencyFactAttributeTests
     var attribute = new DependencyFactAttribute(Array.Empty<ExternalServices>());
 
     // Assert
-    attribute.RequiredFeatures.Should().BeNull();
+    attribute.RequiredExternalServices.Should().BeNull();
   }
 
   [Fact]
   public void Constructor_WhenNullExternalServicesArrayProvided_RequiredFeaturesIsNull()
   {
     // Arrange & Act
-    ExternalServices[] nullArray = null;
+    ExternalServices[] nullArray = null!;
     var attribute = new DependencyFactAttribute(nullArray);
 
     // Assert
-    attribute.RequiredFeatures.Should().BeNull();
+    attribute.RequiredExternalServices.Should().BeNull();
   }
 
   [Fact]
@@ -84,5 +86,84 @@ public class DependencyFactAttributeTests
 
     // Assert
     traits.Should().BeEmpty("because no ExternalServicess were provided");
+  }
+
+  [Fact]
+  public void Constructor_WhenInfrastructureDependencyProvided_RequiredInfrastructureContainsThatDependency()
+  {
+    // Arrange & Act
+    var attribute = new DependencyFactAttribute(InfrastructureDependency.Database);
+
+    // Assert
+    attribute.RequiredInfrastructure.Should().NotBeNull();
+    attribute.RequiredInfrastructure.Should().HaveCount(1);
+    attribute.RequiredInfrastructure.Should().Contain(InfrastructureDependency.Database);
+    attribute.RequiredExternalServices.Should().BeNull();
+  }
+
+  [Fact]
+  public void Constructor_WithMultipleInfrastructureDependencies_RequiredInfrastructureContainsAllDependencies()
+  {
+    // Arrange & Act
+    var attribute = new DependencyFactAttribute(
+      InfrastructureDependency.Database,
+      InfrastructureDependency.Docker);
+
+    // Assert
+    attribute.RequiredInfrastructure.Should().NotBeNull();
+    attribute.RequiredInfrastructure.Should().HaveCount(2);
+    attribute.RequiredInfrastructure.Should().Contain(InfrastructureDependency.Database);
+    attribute.RequiredInfrastructure.Should().Contain(InfrastructureDependency.Docker);
+    attribute.RequiredExternalServices.Should().BeNull();
+  }
+
+  [Fact]
+  public void Constructor_WithInfrastructureDependencies_CreatesTraitMappings()
+  {
+    // Arrange & Act
+    var attribute = new DependencyFactAttribute(
+      InfrastructureDependency.Database,
+      InfrastructureDependency.Docker);
+
+    // Assert - Check the dependency trait mappings
+    var traitMappings = attribute.GetDependencyTraits();
+
+    traitMappings.Should().NotBeNull();
+    traitMappings.Should().HaveCount(2, "because each InfrastructureDependency should map to a dependency trait");
+
+    // Verify each InfrastructureDependency maps to the expected trait value
+    traitMappings.Should().Contain(t => t.Name == TestCategories.Dependency &&
+                                       t.Value == TestCategories.Database,
+                                  "because Database maps to Database trait");
+    traitMappings.Should().Contain(t => t.Name == TestCategories.Dependency &&
+                                       t.Value == TestCategories.Docker,
+                                  "because Docker maps to Docker trait");
+  }
+
+  [Fact]
+  public void Constructor_WithApiFeatureAndInfrastructureDependency_SetsPropertiesAndTraitMappingsCorrectly()
+  {
+    // Arrange & Act
+    var attribute = new DependencyFactAttribute(ExternalServices.LLM, InfrastructureDependency.Database);
+
+    // Assert
+    attribute.RequiredExternalServices.Should().NotBeNull();
+    attribute.RequiredExternalServices.Should().HaveCount(1);
+    attribute.RequiredExternalServices.Should().Contain(ExternalServices.LLM);
+
+    attribute.RequiredInfrastructure.Should().NotBeNull();
+    attribute.RequiredInfrastructure.Should().HaveCount(1);
+    attribute.RequiredInfrastructure.Should().Contain(InfrastructureDependency.Database);
+
+    // Check trait mappings
+    var traitMappings = attribute.GetDependencyTraits();
+    traitMappings.Should().HaveCount(2, "because both dependencies should map to a trait");
+
+    traitMappings.Should().Contain(t => t.Name == TestCategories.Dependency &&
+                                       t.Value == TestCategories.ExternalOpenAI,
+                                  "because LLM maps to ExternalOpenAI trait");
+    traitMappings.Should().Contain(t => t.Name == TestCategories.Dependency &&
+                                       t.Value == TestCategories.Database,
+                                  "because Database maps to Database trait");
   }
 }
