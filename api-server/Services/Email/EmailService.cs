@@ -1,9 +1,6 @@
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
-using RestSharp;
 using Zarichney.Config;
-using Zarichney.Services.Status;
 using SendMailPostRequestBody = Microsoft.Graph.Users.Item.SendMail.SendMailPostRequestBody;
 
 namespace Zarichney.Services.Email;
@@ -20,10 +17,12 @@ public class EmailService(
   GraphServiceClient graphClient,
   EmailConfig config,
   ITemplateService templateService,
-  IMemoryCache cache,
+  IMailCheckClient mailCheckClient,
   ILogger<EmailService> logger)
   : IEmailService
 {
+  private const int HighRiskThreshold = 70;
+  
   public async Task SendEmail(string recipient, string subject, string templateName,
     Dictionary<string, object>? templateData = null, FileAttachment? attachment = null)
   {
@@ -114,57 +113,23 @@ public class EmailService(
   }
 
   /// <summary>
-  /// Uses the MailCheck API to validate an email address and cache the result.
+  /// Uses the MailCheck API to validate an email address and checks the result against validation criteria.
   /// </summary>
-  /// <param name="email"></param>
-  /// <returns></returns>
-  /// <exception cref="InvalidOperationException"></exception>
-  /// <exception cref="ConfigurationMissingException">Thrown when the MailCheck API key is missing or invalid.</exception>
+  /// <param name="email">The email address to validate</param>
+  /// <returns>True if the email is valid, otherwise an exception is thrown</returns>
+  /// <exception cref="InvalidOperationException">Thrown when the API returns unexpected results</exception>
+  /// <exception cref="ConfigurationMissingException">Thrown when the MailCheck API key is missing or invalid</exception>
+  /// <exception cref="InvalidEmailException">Thrown when the email fails validation criteria</exception>
   public async Task<bool> ValidateEmail(string email)
   {
-    if (string.IsNullOrEmpty(config.MailCheckApiKey) ||
-        config.MailCheckApiKey == StatusService.PlaceholderMessage)
-    {
-      throw new ConfigurationMissingException(nameof(EmailConfig), nameof(config.MailCheckApiKey));
-    }
-
     var domain = email.Split('@').Last();
-
-    // Check cache first
-    if (cache.TryGetValue(domain, out EmailValidationResponse? cachedResult))
-    {
-      return ValidateWithCachedResult(email, cachedResult!);
-    }
-
-    logger.LogInformation("Validating email {Email}", email);
-
-    using var client = new RestClient("https://mailcheck.p.rapidapi.com");
-    var request = new RestRequest($"/?domain={domain}");
-    request.AddHeader("x-rapidapi-host", "mailcheck.p.rapidapi.com");
-    request.AddHeader("x-rapidapi-key", config.MailCheckApiKey);
-    var response = await client.ExecuteAsync(request);
-
-    if (response.StatusCode != System.Net.HttpStatusCode.OK)
-    {
-      logger.LogError("Email validation service returned non-success status code: {StatusCode}", response.StatusCode);
-      throw new InvalidOperationException("Email validation service error");
-    }
-
-    var result = Utils.Deserialize<EmailValidationResponse>(response.Content!);
-
-    if (result == null)
-    {
-      logger.LogError("Failed to deserialize email validation response");
-      throw new InvalidOperationException("Email validation response deserialization error");
-    }
-
-    // Cache the result
-    cache.Set(domain, result, TimeSpan.FromHours(24));
-
-    return ValidateWithCachedResult(email, result);
+    
+    var result = await mailCheckClient.GetValidationData(domain);
+    
+    return ValidateWithResult(email, result);
   }
-
-  private bool ValidateWithCachedResult(string email, EmailValidationResponse result)
+  
+  private bool ValidateWithResult(string email, EmailValidationResponse result)
   {
     try
     {
@@ -183,7 +148,7 @@ public class EmailService(
         ThrowInvalidEmailException("Disposable email detected", email, InvalidEmailReason.DisposableEmail);
       }
 
-      if (result.Risk > 70) // Adjust this threshold as needed
+      if (result.Risk > HighRiskThreshold)
       {
         ThrowInvalidEmailException($"High risk email detected. Risk score: {result.Risk}", email,
           InvalidEmailReason.InvalidDomain);

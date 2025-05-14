@@ -62,6 +62,28 @@ public class ServiceStartup
   /// </summary>
   private static void ConfigureEmailServices(IServiceCollection services)
   {
+    // Register MailCheckClient
+    services.AddScoped<IMailCheckClient>(sp =>
+    {
+      var emailConfig = sp.GetRequiredService<EmailConfig>();
+      var logger = sp.GetRequiredService<ILogger<ServiceStartup>>();
+      var statusService = sp.GetRequiredService<IStatusService>();
+      
+      // Check if MailCheck API key is available
+      if (string.IsNullOrEmpty(emailConfig.MailCheckApiKey) || 
+          emailConfig.MailCheckApiKey == StatusService.PlaceholderMessage)
+      {
+        logger.LogWarning("Email validation service is unavailable due to missing MailCheck API key");
+        var reasons = new List<string> { "Missing MailCheck API key" };
+        // Return a proxy that throws ServiceUnavailableException when methods are called
+        return new MailCheckClientProxy(reasons);
+      }
+      
+      return new MailCheckClient(emailConfig, sp.GetRequiredService<IMemoryCache>(), 
+        sp.GetRequiredService<ILogger<MailCheckClient>>());
+    });
+    
+    // Register GraphServiceClient
     services.AddScoped<GraphServiceClient>(sp =>
     {
       var emailConfig = sp.GetRequiredService<EmailConfig>();

@@ -1,6 +1,6 @@
 # Module/Directory: /Services/Email
 
-**Last Updated:** 2025-04-14
+**Last Updated:** 2025-05-14
 
 > **Parent:** [`/Services`](../README.md)
 
@@ -9,8 +9,8 @@
 * **What it is:** This module handles all email-related operations for the application, including composing emails from templates, sending them via Microsoft Graph, and validating email addresses.
 * **Key Responsibilities:**
     * Defining configuration (`EmailConfig`) and models (`EmailValidationResponse`, `InvalidEmailException`) related to email services. [cite: api-server/Services/Email/EmailModels.cs]
-    * Providing a service (`IEmailService`) for sending emails, potentially with attachments, using Microsoft Graph API. [cite: api-server/Services/Email/EmailService.cs]
-    * Providing a service (`IEmailService`) for validating email address syntax and deliverability using the external MailCheck API. [cite: api-server/Services/Email/EmailService.cs]
+    * Providing a service (`IEmailService`) for sending emails, potentially with attachments, using Microsoft Graph API, and validating email addresses using data from the MailCheck API. [cite: api-server/Services/Email/EmailService.cs]
+    * Providing a client (`IMailCheckClient`) for interacting with the external MailCheck API to fetch validation data. [cite: api-server/Services/Email/MailCheckClient.cs]
     * Providing a service (`ITemplateService`) for loading HTML email templates (from the `Templates/` directory) and rendering them using Handlebars.Net templating engine. [cite: api-server/Services/Email/TemplateService.cs]
 * **Why it exists:** To centralize email functionality, abstracting the details of template rendering, email sending (via MS Graph), and validation away from the core business logic modules (like Auth or Cookbook).
 
@@ -18,7 +18,8 @@
 
 * **Email Sending:** `EmailService` utilizes the `Microsoft.Graph.GraphServiceClient` SDK to authenticate and send emails via the Microsoft Graph API, using credentials specified in `EmailConfig`. [cite: api-server/Services/Email/EmailService.cs, api-server/Program.cs]
 * **Template Rendering:** `TemplateService` uses `Handlebars.Net` to process `.html` files located in the directory specified by `EmailConfig.TemplateDirectory`. It compiles a base template (`base.html`) and specific content templates (e.g., `email-verification.html`), merging provided data context before returning the final HTML content. [cite: api-server/Services/Email/TemplateService.cs, api-server/Services/Email/Templates/base.html]
-* **Email Validation:** `EmailService` uses `RestSharp` to make requests to the external MailCheck API (`mailcheck.p.rapidapi.com`) using the API key from `EmailConfig`. It caches validation results per domain using `IMemoryCache` to reduce redundant API calls. It throws an `InvalidEmailException` if validation fails certain criteria (invalid, blocked, disposable, high risk). [cite: api-server/Services/Email/EmailService.cs, api-server/Services/Email/EmailModels.cs]
+* **Email Validation:** `EmailService` validates email addresses by using the `MailCheckClient` to fetch validation data from the MailCheck API, then applies business logic to determine if an email is valid based on criteria like syntax, domain validity, disposable status, and risk score. It throws an `InvalidEmailException` if validation fails these criteria. [cite: api-server/Services/Email/EmailService.cs, api-server/Services/Email/EmailModels.cs]
+* **MailCheck API Integration:** `MailCheckClient` uses `RestSharp` to make requests to the external MailCheck API (`mailcheck.p.rapidapi.com`) using the API key from `EmailConfig`. It caches validation results per domain using `IMemoryCache` to reduce redundant API calls. [cite: api-server/Services/Email/MailCheckClient.cs]
 * **Configuration:** `EmailConfig` (registered via `IConfig`) holds Azure App credentials, the sending email address (`FromEmail`), the MailCheck API key, and the template directory path. [cite: api-server/Services/Email/EmailModels.cs, api-server/appsettings.json]
 * **Diagram:**
 ```mermaid
@@ -27,6 +28,7 @@ graph TD
     subgraph EmailServiceModule ["Services/Email Module"]
         direction LR
         EmailSvc["EmailService (IEmailService)"]
+        MailCheckClient["MailCheckClient (IMailCheckClient)"]
         TemplateSvc["TemplateService (ITemplateService)"]
         EmailConfig["EmailConfig"]
         EmailModels["EmailModels (e.g., InvalidEmailException)"]
@@ -40,7 +42,7 @@ graph TD
 
     subgraph CoreServices ["Core Services / External APIs"]
         GraphClient["Microsoft Graph SDK (GraphServiceClient)"]
-        RestClient["RestSharp Client (for MailCheck)"]
+        RestClient["RestSharp Client"]
         FileSvc["FileService (IFileService)"]
         MemoryCache["IMemoryCache"]
         Handlebars["Handlebars.Net"]
@@ -58,10 +60,14 @@ graph TD
     %% Interactions
     ExternalConsumers --> EmailSvc
     EmailSvc --> GraphClient
-    EmailSvc --> RestClient
+    EmailSvc --> MailCheckClient
     EmailSvc --> TemplateSvc
-    EmailSvc --> MemoryCache
     EmailSvc -- Uses --> EmailConfig
+    
+    MailCheckClient --> RestClient
+    MailCheckClient --> MemoryCache
+    MailCheckClient -- Uses --> EmailConfig
+    RestClient --> MailCheckAPI
 
     TemplateSvc --> Handlebars
     TemplateSvc --> FileSvc
@@ -69,7 +75,6 @@ graph TD
     TemplateSvc -- Uses --> EmailConfig
 
     GraphClient --> MSGraphAPI
-    RestClient --> MailCheckAPI
 
     %% Styling
     classDef service fill:#ccf,stroke:#333,stroke-width:2px;
@@ -80,7 +85,7 @@ graph TD
     classDef template fill:#fff0b3,stroke:#cca300,stroke-width:1px;
     classDef api fill:#f5f5f5,stroke:#666,stroke-width:1px,shape:cylinder;
 
-    class EmailSvc,TemplateSvc service;
+    class EmailSvc,TemplateSvc,MailCheckClient service;
     class AuthCmdHandlers,OrderSvc,ApiController consumer;
     class GraphClient,RestClient,FileSvc,MemoryCache,Handlebars external;
     class EmailConfig config;
@@ -93,10 +98,11 @@ graph TD
 
 * **Key Public Interfaces:**
     * `IEmailService`: Defines `SendEmail` and `ValidateEmail` methods. [cite: api-server/Services/Email/EmailService.cs]
+    * `IMailCheckClient`: Defines `GetValidationData` method that returns validation data from the MailCheck API. [cite: api-server/Services/Email/MailCheckClient.cs]
     * `ITemplateService`: Defines `ApplyTemplate` method. [cite: api-server/Services/Email/TemplateService.cs]
 * **Runtime Configuration Exceptions:**
     * `EmailService.SendEmail()` will throw `ConfigurationMissingException` if the `GraphServiceClient` is null due to missing Azure credentials (Tenant ID, App ID, App Secret, or FromEmail).
-    * `EmailService.ValidateEmail()` will throw `ConfigurationMissingException` if the `MailCheckApiKey` is missing or invalid.
+    * `EmailService.ValidateEmail()` will throw `ConfigurationMissingException` through `MailCheckClient.GetValidationData()` if the `MailCheckApiKey` is missing or invalid.
     * These exceptions are thrown at runtime when the methods are called, rather than at startup, allowing the application to start with partial functionality even when some configuration is missing.
 * **Assumptions:**
     * **Configuration:** Assumes `EmailConfig` contains valid and functional credentials for Microsoft Graph (Azure Tenant/App ID/Secret) and the MailCheck API key. Assumes `FromEmail` is a valid address authorized to send via the configured Graph App. Assumes `TemplateDirectory` path is correct relative to the application root. [cite: api-server/Services/Email/EmailModels.cs]
@@ -137,9 +143,9 @@ graph TD
     * [`/Services/FileSystem`](../FileSystem/README.md): Consumed by `TemplateService` (via injected `IFileService`).
 * **External Library Dependencies:**
     * `Microsoft.Graph`: SDK for Microsoft Graph API interactions.
-    * `RestSharp`: Used for making HTTP requests to the MailCheck API.
+    * `RestSharp`: Used by `MailCheckClient` for making HTTP requests to the MailCheck API.
     * `Handlebars.Net`: Templating engine for HTML emails.
-    * `Microsoft.Extensions.Caching.Memory`: For caching email validation results.
+    * `Microsoft.Extensions.Caching.Memory`: For caching email validation results in `MailCheckClient`.
     * `Azure.Identity`: Used for authenticating `GraphServiceClient`. [cite: api-server/Program.cs]
 * **Dependents (Impact of Changes):**
     * [`/Auth`](../Auth/README.md): Various command handlers (Register, ForgotPassword, ResetPassword, ResendConfirmation) consume `IEmailService`.
