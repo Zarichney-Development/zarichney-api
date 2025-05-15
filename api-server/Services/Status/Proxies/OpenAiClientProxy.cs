@@ -16,7 +16,7 @@ internal class OpenAIClientProxy(List<string>? reasons = null) : OpenAIClient("d
   // In a test context, when Chat, Completions, etc. are accessed, the exception will be thrown.
 
   // Method used by tests to verify proxy behavior
-  public new object Chat => throw CreateException();
+  public object Chat => throw CreateException();
 
   private ServiceUnavailableException CreateException()
   {
