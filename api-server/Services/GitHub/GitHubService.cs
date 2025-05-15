@@ -36,6 +36,16 @@ public class GitHubOperation
 public interface IGitHubService
 {
   Task EnqueueCommitAsync(string filePath, byte[] content, string directory, string commitMessage);
+
+  /// <summary>
+  /// Stores audio files and their transcripts in GitHub repository.
+  /// </summary>
+  /// <param name="audioFileName">The name of the audio file.</param>
+  /// <param name="audioData">The binary content of the audio file.</param>
+  /// <param name="transcriptFileName">The name of the transcript file.</param>
+  /// <param name="transcriptText">The text content of the transcript.</param>
+  /// <returns>Task representing the asynchronous operation.</returns>
+  Task StoreAudioAndTranscriptAsync(string audioFileName, byte[] audioData, string transcriptFileName, string transcriptText);
 }
 
 public class GitHubService : BackgroundService, IGitHubService
@@ -89,6 +99,39 @@ public class GitHubService : BackgroundService, IGitHubService
 
     await _operationChannel.Writer.WriteAsync(operation);
     await operation.CompletionSource.Task; // Wait for completion without blocking the channel
+  }
+
+  /// <summary>
+  /// Stores audio files and their transcripts in GitHub repository.
+  /// </summary>
+  /// <param name="audioFileName">The name of the audio file.</param>
+  /// <param name="audioData">The binary content of the audio file.</param>
+  /// <param name="transcriptFileName">The name of the transcript file.</param>
+  /// <param name="transcriptText">The text content of the transcript.</param>
+  /// <returns>Task representing the asynchronous operation.</returns>
+  public async Task StoreAudioAndTranscriptAsync(string audioFileName, byte[] audioData, string transcriptFileName, string transcriptText)
+  {
+    _logger.LogInformation("Storing audio and transcript files: {AudioFile}, {TranscriptFile}",
+      audioFileName, transcriptFileName);
+
+    // Use Task.WhenAll to enqueue both operations in parallel
+    await Task.WhenAll(
+      EnqueueCommitAsync(
+        audioFileName,
+        audioData,
+        "recordings",
+        $"Add audio recording: {audioFileName}"
+      ),
+      EnqueueCommitAsync(
+        transcriptFileName,
+        System.Text.Encoding.UTF8.GetBytes(transcriptText),
+        "transcripts",
+        $"Add transcript: {transcriptFileName}"
+      )
+    );
+
+    _logger.LogInformation("Successfully stored audio and transcript files: {AudioFile}, {TranscriptFile}",
+      audioFileName, transcriptFileName);
   }
 
   protected override async Task ExecuteAsync(CancellationToken stoppingToken)

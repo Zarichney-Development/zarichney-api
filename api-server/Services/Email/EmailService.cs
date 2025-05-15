@@ -11,6 +11,16 @@ public interface IEmailService
     Dictionary<string, object>? templateData = null, FileAttachment? attachment = null);
 
   Task<bool> ValidateEmail(string email);
+
+  /// <summary>
+  /// Sends an error notification email with details about an exception.
+  /// </summary>
+  /// <param name="stage">The processing stage where the error occurred.</param>
+  /// <param name="ex">The exception that was thrown.</param>
+  /// <param name="serviceName">The name of the service reporting the error.</param>
+  /// <param name="additionalContext">Optional dictionary with additional contextual information about the error.</param>
+  /// <returns>A task representing the asynchronous operation.</returns>
+  Task SendErrorNotification(string stage, Exception ex, string serviceName, Dictionary<string, string>? additionalContext = null);
 }
 
 public class EmailService(
@@ -22,7 +32,7 @@ public class EmailService(
   : IEmailService
 {
   private const int HighRiskThreshold = 70;
-  
+
   public async Task SendEmail(string recipient, string subject, string templateName,
     Dictionary<string, object>? templateData = null, FileAttachment? attachment = null)
   {
@@ -123,12 +133,12 @@ public class EmailService(
   public async Task<bool> ValidateEmail(string email)
   {
     var domain = email.Split('@').Last();
-    
+
     var result = await mailCheckClient.GetValidationData(domain);
-    
+
     return ValidateWithResult(email, result);
   }
-  
+
   private bool ValidateWithResult(string email, EmailValidationResponse result)
   {
     try
@@ -185,4 +195,55 @@ public class EmailService(
       .Replace(" ", "_")
       .Replace(":", "_")
       .Replace(";", "_");
+
+  /// <summary>
+  /// Sends an error notification email with details about an exception.
+  /// </summary>
+  /// <param name="stage">The processing stage where the error occurred.</param>
+  /// <param name="ex">The exception that was thrown.</param>
+  /// <param name="serviceName">The name of the service reporting the error.</param>
+  /// <param name="additionalContext">Optional dictionary with additional contextual information about the error.</param>
+  /// <returns>A task representing the asynchronous operation.</returns>
+  public async Task SendErrorNotification(string stage, Exception ex, string serviceName, Dictionary<string, string>? additionalContext = null)
+  {
+    try // Prevent email sending from crashing the calling code
+    {
+      var templateData = TemplateService.GetErrorTemplateData(ex);
+      templateData["stage"] = stage;
+      templateData["serviceName"] = serviceName;
+
+      // Add additional context if provided
+      if (additionalContext != null)
+      {
+        // Ensure additionalContext exists in templateData before adding to it
+        if (!templateData.TryGetValue("additionalContext", out var value) ||
+            value is not Dictionary<string, string> existingContext)
+        {
+          existingContext = new Dictionary<string, string>();
+          templateData["additionalContext"] = existingContext;
+        }
+
+        // Add all provided context items
+        foreach (var item in additionalContext)
+        {
+          ((Dictionary<string, string>)templateData["additionalContext"])[item.Key] = item.Value;
+        }
+      }
+
+      await SendEmail(
+        config.FromEmail, // Send to the configured From email (self notification)
+        $"{serviceName} Error - {stage}",
+        "error-log", // Template name
+        templateData
+      );
+
+      logger.LogInformation("Error notification email sent for service: {ServiceName}, stage: {Stage}", serviceName, stage);
+    }
+    catch (Exception emailEx)
+    {
+      logger.LogError(emailEx, "Failed to send error notification email for service: {ServiceName}, stage: {Stage}",
+        serviceName, stage);
+      // Intentionally swallow the exception to prevent it from bubbling up
+    }
+  }
 }

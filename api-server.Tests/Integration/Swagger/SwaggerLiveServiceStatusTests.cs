@@ -34,7 +34,7 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
       .Where(s => !s.Value.IsAvailable)
       .Select(s => s.Key)
       .ToList();
-      
+
     // Also include the enum names for completeness (in case we have services that are only represented by enum names)
     foreach (string enumName in Enum.GetNames(typeof(Zarichney.Services.Status.ExternalServices)))
     {

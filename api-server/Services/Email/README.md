@@ -97,9 +97,12 @@ graph TD
 ## 3. Interface Contract & Assumptions
 
 * **Key Public Interfaces:**
-    * `IEmailService`: Defines `SendEmail` and `ValidateEmail` methods. [cite: api-server/Services/Email/EmailService.cs]
+    * `IEmailService`: Defines methods for email operations:
+      * `SendEmail`: Sends emails with templated content and optional attachments.
+      * `ValidateEmail`: Validates email addresses using the MailCheck API.
+      * `SendErrorNotification`: Sends detailed error notifications with context for system errors.
     * `IMailCheckClient`: Defines `GetValidationData` method that returns validation data from the MailCheck API. [cite: api-server/Services/Email/MailCheckClient.cs]
-    * `ITemplateService`: Defines `ApplyTemplate` method. [cite: api-server/Services/Email/TemplateService.cs]
+    * `ITemplateService`: Defines `ApplyTemplate` method for rendering Handlebars templates. [cite: api-server/Services/Email/TemplateService.cs]
 * **Runtime Configuration Exceptions:**
     * `EmailService.SendEmail()` will throw `ConfigurationMissingException` if the `GraphServiceClient` is null due to missing Azure credentials (Tenant ID, App ID, App Secret, or FromEmail).
     * `EmailService.ValidateEmail()` will throw `ConfigurationMissingException` through `MailCheckClient.GetValidationData()` if the `MailCheckApiKey` is missing or invalid.
@@ -150,6 +153,8 @@ graph TD
 * **Dependents (Impact of Changes):**
     * [`/Auth`](../Auth/README.md): Various command handlers (Register, ForgotPassword, ResetPassword, ResendConfirmation) consume `IEmailService`.
     * [`/Cookbook/Orders`](../../Cookbook/Orders/README.md): `OrderService` consumes `IEmailService` to send notifications and the final cookbook.
+    * [`/Services/AI/TranscribeService.cs`](../AI/TranscribeService.cs): Uses `IEmailService.SendErrorNotification` to report transcription errors.
+    * [`/Controllers/AiController.cs`](../../Controllers/AiController.cs): Uses `IEmailService.SendErrorNotification` to report errors in LLM completion and audio processing workflows.
     * [`/Controllers/ApiController.cs`](../../Controllers/ApiController.cs): Consumes `IEmailService` for the `email/validate` endpoint.
     * `Program.cs`: Registers `EmailService`, `TemplateService`, `GraphServiceClient`.
 
@@ -166,4 +171,5 @@ graph TD
 * The dependency on the external MailCheck API for validation introduces potential costs, rate limits, and reliance on a third-party service's availability and accuracy.
 * Email deliverability is highly dependent on external factors like sender reputation, DNS records (SPF, DKIM, DMARC), and recipient server policies, which are outside the scope of this module's code.
 * Error handling for specific `Microsoft.Graph.Models.ODataErrors.ODataError` exceptions could be more granular in `EmailService`.
+* The `SendErrorNotification` method provides a standardized approach to sending error notifications across services, but there's no policy enforcement mechanism to ensure consistent use. Consider implementing a more formalized error handling and notification strategy, possibly with additional configuration options.
 * Consider adding integration tests that use a mock SMTP server or a dedicated test email service account.
