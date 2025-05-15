@@ -233,28 +233,28 @@ public class StatusService : IStatusService
       foreach (var config in configInstances)
       {
         var configType = config.GetType();
-        
+
         // Get missing configurations and feature associations for this service
         var (missingConfigurations, featureAssociations) = await CheckConfigurationRequirementsAsync(configType);
-        
+
         // Group configurations by feature from the ExternalServicesEnum
         foreach (var (feature, properties) in featureAssociations)
         {
           // Use the enum name as the service name
           var serviceName = feature.ToString();
-          
+
           // Determine if this feature's required configurations are available
           var featureMissingConfigs = properties
             .Where(prop => missingConfigurations.Contains(prop))
             .ToList();
-            
+
           // Add or update this feature's status in results
           if (results.TryGetValue(serviceName, out var existingStatus))
           {
             // If we already have an entry for this feature, merge the missing configurations
             var combinedMissing = existingStatus.MissingConfigurations.ToList();
             combinedMissing.AddRange(featureMissingConfigs);
-            
+
             results[serviceName] = new ServiceStatusInfo(
               IsAvailable: combinedMissing.Count == 0,
               MissingConfigurations: combinedMissing.Distinct().ToList()
@@ -268,7 +268,7 @@ public class StatusService : IStatusService
               MissingConfigurations: featureMissingConfigs
             );
           }
-          
+
           // Update feature mapping
           if (!featureMap.TryGetValue(feature, out var services))
           {
