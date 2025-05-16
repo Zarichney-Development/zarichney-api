@@ -157,8 +157,8 @@ public class StatusServiceTests
 
     // Assert
     result.Should().NotBeEmpty();
-    result["LLM"].IsAvailable.Should().BeTrue();
-    result["LLM"].MissingConfigurations.Should().BeEmpty();
+    result["OpenAiApi"].IsAvailable.Should().BeTrue();
+    result["OpenAiApi"].MissingConfigurations.Should().BeEmpty();
   }
 
   [Trait("Category", "Unit")]
@@ -174,8 +174,8 @@ public class StatusServiceTests
 
     // Assert
     result.Should().NotBeEmpty();
-    result["LLM"].IsAvailable.Should().BeFalse();
-    result["LLM"].MissingConfigurations.Should().Contain("TestService1Config:ApiKey");
+    result["OpenAiApi"].IsAvailable.Should().BeFalse();
+    result["OpenAiApi"].MissingConfigurations.Should().Contain("TestService1Config:ApiKey");
   }
 
   [Trait("Category", "Unit")]
@@ -191,8 +191,8 @@ public class StatusServiceTests
 
     // Assert
     result.Should().NotBeEmpty();
-    result["LLM"].IsAvailable.Should().BeFalse();
-    result["LLM"].MissingConfigurations.Should().Contain("TestService1Config:ApiKey");
+    result["OpenAiApi"].IsAvailable.Should().BeFalse();
+    result["OpenAiApi"].MissingConfigurations.Should().Contain("TestService1Config:ApiKey");
   }
 
   [Trait("Category", "Unit")]
@@ -205,7 +205,7 @@ public class StatusServiceTests
 
     // Act - Call GetServiceStatusAsync to populate cache first
     await _statusService.GetServiceStatusAsync();
-    var result = _statusService.GetFeatureStatus(ExternalServices.LLM);
+    var result = _statusService.GetFeatureStatus(ExternalServices.OpenAiApi);
 
     // Assert
     result.Should().NotBeNull();
@@ -240,7 +240,7 @@ public class StatusServiceTests
 
     // Act - Call GetServiceStatusAsync to populate cache first
     await _statusService.GetServiceStatusAsync();
-    var result = _statusService.GetFeatureStatus(ExternalServices.LLM);
+    var result = _statusService.GetFeatureStatus(ExternalServices.OpenAiApi);
 
     // Assert
     result.Should().NotBeNull();
@@ -258,7 +258,7 @@ public class StatusServiceTests
 
     // Act - Call GetServiceStatusAsync to populate cache first
     await _statusService.GetServiceStatusAsync();
-    var result = _statusService.IsFeatureAvailable(ExternalServices.LLM);
+    var result = _statusService.IsFeatureAvailable(ExternalServices.OpenAiApi);
 
     // Assert
     result.Should().BeTrue();
@@ -274,7 +274,7 @@ public class StatusServiceTests
 
     // Act - Call GetServiceStatusAsync to populate cache first
     await _statusService.GetServiceStatusAsync();
-    var result = _statusService.IsFeatureAvailable(ExternalServices.LLM);
+    var result = _statusService.IsFeatureAvailable(ExternalServices.OpenAiApi);
 
     // Assert
     result.Should().BeFalse();
@@ -356,10 +356,10 @@ public class StatusServiceTests
   // Test Config Classes
   private class TestService1Config : IConfig
   {
-    [RequiresConfiguration(ExternalServices.LLM)]
+    [RequiresConfiguration(ExternalServices.OpenAiApi)]
     public string ApiKey { get; set; } = "valid_key"; // Default to valid for simplicity in some tests
 
-    [RequiresConfiguration(ExternalServices.LLM)]
+    [RequiresConfiguration(ExternalServices.OpenAiApi)]
     public string ApiSecret { get; set; } = "valid_secret";
   }
 

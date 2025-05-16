@@ -23,13 +23,13 @@ public class DependencyFactAttributeTests
   public void Constructor_WhenExternalServicesParametersProvided_RequiredFeaturesContainsThoseFeatures()
   {
     // Arrange & Act
-    var attribute = new DependencyFactAttribute(ExternalServices.LLM, ExternalServices.Transcription);
+    var attribute = new DependencyFactAttribute(ExternalServices.OpenAiApi, ExternalServices.EmailValidation);
 
     // Assert
     attribute.RequiredExternalServices.Should().NotBeNull();
     attribute.RequiredExternalServices.Should().HaveCount(2);
-    attribute.RequiredExternalServices.Should().Contain(ExternalServices.LLM);
-    attribute.RequiredExternalServices.Should().Contain(ExternalServices.Transcription);
+    attribute.RequiredExternalServices.Should().Contain(ExternalServices.OpenAiApi);
+    attribute.RequiredExternalServices.Should().Contain(ExternalServices.EmailValidation);
     attribute.RequiredInfrastructure.Should().BeNull();
   }
 
@@ -58,7 +58,7 @@ public class DependencyFactAttributeTests
   public void Constructor_WithFeatures_CreatesTraitMappings()
   {
     // Arrange & Act
-    var attribute = new DependencyFactAttribute(ExternalServices.LLM, ExternalServices.GitHubAccess);
+    var attribute = new DependencyFactAttribute(ExternalServices.OpenAiApi, ExternalServices.GitHubAccess);
 
     // Assert - Check the dependency trait mappings
     var traitMappings = attribute.GetDependencyTraits();
@@ -144,12 +144,12 @@ public class DependencyFactAttributeTests
   public void Constructor_WithApiFeatureAndInfrastructureDependency_SetsPropertiesAndTraitMappingsCorrectly()
   {
     // Arrange & Act
-    var attribute = new DependencyFactAttribute(ExternalServices.LLM, InfrastructureDependency.Database);
+    var attribute = new DependencyFactAttribute(ExternalServices.OpenAiApi, InfrastructureDependency.Database);
 
     // Assert
     attribute.RequiredExternalServices.Should().NotBeNull();
     attribute.RequiredExternalServices.Should().HaveCount(1);
-    attribute.RequiredExternalServices.Should().Contain(ExternalServices.LLM);
+    attribute.RequiredExternalServices.Should().Contain(ExternalServices.OpenAiApi);
 
     attribute.RequiredInfrastructure.Should().NotBeNull();
     attribute.RequiredInfrastructure.Should().HaveCount(1);

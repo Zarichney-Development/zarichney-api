@@ -70,7 +70,7 @@ public class IntegrationTestBaseTests
 
     // Assert
     result.Should().NotBeNull();
-    result.RequiredExternalServices.Should().Contain(ExternalServices.LLM);
+    result.RequiredExternalServices.Should().Contain(ExternalServices.OpenAiApi);
   }
 
   [Fact]
@@ -102,7 +102,7 @@ public class IntegrationTestBaseTests
 // Helper classes for testing
 public class DummyTestClassWithExternalServices
 {
-  [DependencyFact(ExternalServices.LLM)]
+  [DependencyFact(ExternalServices.OpenAiApi)]
   public void TestWithLlmDependency() { }
 }
 

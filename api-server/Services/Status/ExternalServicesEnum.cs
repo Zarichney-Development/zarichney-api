@@ -12,14 +12,9 @@ public enum ExternalServices
   FrontEnd,
 
   /// <summary>
-  /// Language Model services for text generation and completions.
-  /// </summary>
-  LLM,
-
-  /// <summary>
   /// Audio transcription services.
   /// </summary>
-  Transcription,
+  OpenAiApi,
 
   /// <summary>
   /// Email sending capabilities.
@@ -35,11 +30,6 @@ public enum ExternalServices
   /// GitHub integration for code storage and retrieval.
   /// </summary>
   GitHubAccess,
-
-  /// <summary>
-  /// AI-related services (combines LLM, Transcription, etc.)
-  /// </summary>
-  AiServices,
 
   /// <summary>
   /// A service to ensure a given email is legitimate

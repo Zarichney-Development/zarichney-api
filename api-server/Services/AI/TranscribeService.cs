@@ -3,7 +3,6 @@ using OpenAI.Audio;
 using Polly;
 using Polly.Retry;
 using Zarichney.Config;
-using Microsoft.AspNetCore.Http;
 using Zarichney.Services.Email;
 using ILogger = Serilog.ILogger;
 
@@ -11,7 +10,6 @@ namespace Zarichney.Services.AI;
 
 public class TranscribeConfig : IConfig
 {
-  [RequiresConfiguration(ExternalServices.Transcription, ExternalServices.AiServices)]
   public string ModelName { get; init; } = "whisper-1";
   public int RetryAttempts { get; init; } = 5;
 }

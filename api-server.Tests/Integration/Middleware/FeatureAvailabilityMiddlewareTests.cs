@@ -33,11 +33,8 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     var mockStatusService = new Mock<IStatusService>();
 
     // Configure the mock to return specific statuses for different features
-    mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
+    mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
         .Returns(new StatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
-
-    mockStatusService.Setup(s => s.IsFeatureAvailable(ExternalServices.LLM))
-        .Returns(false);
 
     // Use a WebHostBuilder to replace the service with our mock
     var customFactory = Factory;
@@ -70,7 +67,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     content.Should().Contain("Service Temporarily Unavailable");
     content.Should().Contain("LlmConfig:ApiKey");
 
-    mockStatusService.Verify(s => s.GetFeatureStatus(ExternalServices.LLM), Times.AtLeastOnce);
+    mockStatusService.Verify(s => s.GetFeatureStatus(ExternalServices.OpenAiApi), Times.AtLeastOnce);
   }
 
   /// <summary>
@@ -134,17 +131,14 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     var mockStatusService = new Mock<IStatusService>();
 
     // Configure the mock to return specific statuses for different features
-    mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
+    mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
         .Returns(new StatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
 
     mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.EmailSending))
         .Returns(new StatusInfo(IsAvailable: false, ["EmailConfig:FromEmail"]));
 
-    mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.AiServices))
-        .Returns(new StatusInfo(IsAvailable: false, ["AiConfig:ApiKey"]));
-
     mockStatusService.Setup(s => s.IsFeatureAvailable(It.IsAny<ExternalServices>()))
-        .Returns<ExternalServices>(f => f != ExternalServices.LLM && f != ExternalServices.Transcription && f != ExternalServices.AiServices);
+        .Returns<ExternalServices>(f => f != ExternalServices.OpenAiApi);
 
     // Use a WebHostBuilder to replace the service with our mock
     var customFactory = Factory;
@@ -179,6 +173,5 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     // Should contain all missing configurations
     content.Should().Contain("LlmConfig:ApiKey");
     content.Should().Contain("EmailConfig:FromEmail");
-    content.Should().Contain("AiConfig:ApiKey");
   }
 }

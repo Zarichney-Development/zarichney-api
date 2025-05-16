@@ -42,7 +42,7 @@ public class CompletionRequest
 [Route("api")]
 [Authorize]
 [Produces("application/json")]
-[DependsOnService(ExternalServices.AiServices)]
+[DependsOnService(ExternalServices.OpenAiApi)]
 public class AiController(
   IAiService aiService,
   ILogger<AiController> logger
@@ -61,7 +61,6 @@ public class AiController(
   /// <returns>A JSON object containing the LLM's response, the source type (text/audio), and the transcribed prompt if applicable.</returns>
   [HttpPost("completion")]
   [Consumes("multipart/form-data")] // Crucial hint for Swagger regarding file uploads/form fields
-  [DependsOnService(ExternalServices.LLM)]
   [SwaggerOperation(Summary = "Generates LLM completion from text or audio.",
     Description = "Accepts either textPrompt (form field) or audioPrompt (file upload) via multipart/form-data.")]
   [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
@@ -126,7 +125,7 @@ public class AiController(
   /// <returns>A JSON object containing the transcript, filenames, timestamp, and a success message.</returns>
   [HttpPost("transcribe")]
   [Consumes("multipart/form-data")] // Crucial hint for Swagger
-  [DependsOnService(ExternalServices.Transcription, ExternalServices.GitHubAccess)] // Requires both transcription and GitHub for storage
+  [DependsOnService(ExternalServices.GitHubAccess)] // TODO: evaluate whether this can be skipped instead of being a hard dependency on endpoint capability
   [SwaggerOperation(Summary = "Transcribes an audio file.",
     Description =
       "Accepts an audio file via multipart/form-data (parameter name 'audioFile'), transcribes it, and optionally saves files.")]
@@ -159,7 +158,7 @@ public class AiController(
       // Process the audio file through the service
       try
       {
-        var result = await aiService.ProcessAudioTranscriptionAsync(audioFile);
+        var result = await aiService.ProcessAudioTranscriptionAsync(audioFile!);
 
         // Return the result
         return Ok(new

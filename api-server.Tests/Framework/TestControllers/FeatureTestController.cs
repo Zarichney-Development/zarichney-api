@@ -15,7 +15,7 @@ public class FeatureTestController : ControllerBase
   /// </summary>
   /// <returns>A simple message.</returns>
   [HttpGet("llm")]
-  [DependsOnService(ExternalServices.LLM)]
+  [DependsOnService(ExternalServices.OpenAiApi)]
   public IActionResult LlmEndpoint()
   {
     return Ok("LLM feature is available");
@@ -37,7 +37,7 @@ public class FeatureTestController : ControllerBase
   /// </summary>
   /// <returns>A simple message.</returns>
   [HttpGet("multi")]
-  [DependsOnService(ExternalServices.LLM, ExternalServices.EmailSending, ExternalServices.AiServices)]
+  [DependsOnService(ExternalServices.OpenAiApi, ExternalServices.EmailSending)]
   public IActionResult MultiFeatureEndpoint()
   {
     return Ok("All required features are available");

@@ -33,7 +33,7 @@ public class LlmConfig : IConfig
 {
   public string ModelName { get; init; } = LlmModels.Gpt4Omini;
   public int RetryAttempts { get; init; } = 5;
-  [RequiresConfiguration(ExternalServices.LLM, ExternalServices.AiServices)]
+  [RequiresConfiguration(ExternalServices.OpenAiApi)]
   public string ApiKey { get; init; } = string.Empty;
 }
 

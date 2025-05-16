@@ -1,6 +1,4 @@
 using Zarichney.Services.Status;
-using System.Text;
-using Microsoft.AspNetCore.Http;
 using Zarichney.Services.Email;
 using Zarichney.Services.GitHub;
 using Zarichney.Services.Sessions;
@@ -73,12 +71,12 @@ public class CompletionPrompt
   /// <summary>
   /// The text prompt to send to the LLM.
   /// </summary>
-  public string? TextPrompt { get; set; }
+  public string? TextPrompt { get; init; }
 
   /// <summary>
   /// The audio file to be transcribed and then sent to the LLM.
   /// </summary>
-  public IFormFile? AudioFile { get; set; }
+  public IFormFile? AudioFile { get; init; }
 }
 
 /// <summary>
@@ -105,34 +103,19 @@ public interface IAiService
 }
 
 /// <summary>
-/// Implementation of the IAiService interface that coordinates the 
+/// Implementation of the IAiService interface that coordinates the
 /// transcription, storage, and LLM completion workflows.
 /// </summary>
-public class AiService : IAiService
+public class AiService(
+  ILlmService llmService,
+  ITranscribeService transcribeService,
+  IGitHubService githubService,
+  IEmailService emailService,
+  ISessionManager sessionManager,
+  IScopeContainer scope)
+  : IAiService
 {
   private static readonly ILogger Log = Serilog.Log.ForContext<AiService>();
-  private readonly ILlmService _llmService;
-  private readonly ITranscribeService _transcribeService;
-  private readonly IGitHubService _githubService;
-  private readonly IEmailService _emailService;
-  private readonly ISessionManager _sessionManager;
-  private readonly IScopeContainer _scope;
-
-  public AiService(
-      ILlmService llmService,
-      ITranscribeService transcribeService,
-      IGitHubService githubService,
-      IEmailService emailService,
-      ISessionManager sessionManager,
-      IScopeContainer scope)
-  {
-    _llmService = llmService;
-    _transcribeService = transcribeService;
-    _githubService = githubService;
-    _emailService = emailService;
-    _sessionManager = sessionManager;
-    _scope = scope;
-  }
 
   /// <inheritdoc />
   public async Task<AudioTranscriptionResult> ProcessAudioTranscriptionAsync(IFormFile audioFile)
@@ -140,51 +123,23 @@ public class AiService : IAiService
     ArgumentNullException.ThrowIfNull(audioFile, nameof(audioFile));
 
     // Validate the audio file
-    var (isValid, errorMessage) = _transcribeService.ValidateAudioFile(audioFile);
+    var (isValid, errorMessage) = transcribeService.ValidateAudioFile(audioFile);
     if (!isValid)
     {
       throw new ArgumentException(errorMessage, nameof(audioFile));
     }
 
     Log.Information(
-        "Processing audio file for transcription. ContentType: {ContentType}, FileName: {FileName}, Length: {Length}",
-        audioFile.ContentType,
-        audioFile.FileName,
-        audioFile.Length);
+      "Processing audio file for transcription. ContentType: {ContentType}, FileName: {FileName}, Length: {Length}",
+      audioFile.ContentType,
+      audioFile.FileName,
+      audioFile.Length);
 
     // Process the audio file (validation, transcription)
-    var result = await _transcribeService.ProcessAudioFileAsync(audioFile);
+    var result = await transcribeService.ProcessAudioFileAsync(audioFile);
 
     // Store audio and transcript in GitHub
-    try
-    {
-      // Read the audio file into memory
-      using var ms = new MemoryStream();
-      await audioFile.CopyToAsync(ms);
-      var audioData = ms.ToArray();
-
-      // Store files
-      await _githubService.StoreAudioAndTranscriptAsync(
-          result.AudioFileName,
-          audioData,
-          result.TranscriptFileName,
-          result.Transcript
-      );
-    }
-    catch (Exception ex)
-    {
-      Log.Error(ex, "Failed to store audio and transcript files to GitHub");
-      await _emailService.SendErrorNotification(
-          "GitHub Storage",
-          ex,
-          "AiService",
-          new Dictionary<string, string> {
-                    { "audioFileName", result.AudioFileName },
-                    { "transcriptFileName", result.TranscriptFileName }
-          }
-      );
-      throw; // Re-throw to allow caller to handle the error
-    }
+    await StoreAudioAndTranscript(result, audioFile);
 
     // Return the result
     return new AudioTranscriptionResult
@@ -200,20 +155,20 @@ public class AiService : IAiService
   public async Task<CompletionResult> GetCompletionAsync(CompletionPrompt prompt)
   {
     string promptText;
-    string sourceType = "text";
+    var sourceType = "text";
     string? transcribedPrompt = null;
 
     // Handle audio input
     if (prompt.AudioFile != null)
     {
       Log.Information(
-          "Processing audio prompt. ContentType: {ContentType}, FileName: {FileName}, Length: {Length}",
-          prompt.AudioFile.ContentType,
-          prompt.AudioFile.FileName,
-          prompt.AudioFile.Length);
+        "Processing audio prompt. ContentType: {ContentType}, FileName: {FileName}, Length: {Length}",
+        prompt.AudioFile.ContentType,
+        prompt.AudioFile.FileName,
+        prompt.AudioFile.Length);
 
       // Validate audio file
-      var (isValid, errorMessage) = _transcribeService.ValidateAudioFile(prompt.AudioFile);
+      var (isValid, errorMessage) = transcribeService.ValidateAudioFile(prompt.AudioFile);
       if (!isValid)
       {
         throw new ArgumentException(errorMessage, nameof(prompt));
@@ -226,7 +181,7 @@ public class AiService : IAiService
 
       try
       {
-        promptText = await _transcribeService.TranscribeAudioAsync(ms);
+        promptText = await transcribeService.TranscribeAudioAsync(ms);
         transcribedPrompt = promptText;
         sourceType = "audio";
         Log.Information("Successfully transcribed audio prompt");
@@ -236,13 +191,10 @@ public class AiService : IAiService
         Log.Error(ex, "Failed to transcribe audio prompt");
 
         // Send error notification
-        await _emailService.SendErrorNotification(
-            "LLM Audio Transcription",
-            ex,
-            "AiService",
-            new Dictionary<string, string> {
-                        { "fileName", prompt.AudioFile.FileName ?? "unknown" }
-            }
+        await SendErrorNotification(
+          "LLM Audio Transcription",
+          ex,
+          new Dictionary<string, string> { { "fileName", prompt.AudioFile.FileName } }
         );
 
         throw new InvalidOperationException("Failed to transcribe the provided audio prompt.", ex);
@@ -263,17 +215,14 @@ public class AiService : IAiService
     // Get completion from LLM
     try
     {
-      var response = await _llmService.GetCompletionContent(promptText);
+      var response = await llmService.GetCompletionContent(promptText);
 
       // Get session information
-      var session = await _sessionManager.GetSessionByScope(_scope.Id);
+      var session = await sessionManager.GetSessionByScope(scope.Id);
 
       return new CompletionResult
       {
-        Response = response,
-        SourceType = sourceType,
-        TranscribedPrompt = transcribedPrompt,
-        SessionId = session.Id
+        Response = response, SourceType = sourceType, TranscribedPrompt = transcribedPrompt, SessionId = session.Id
       };
     }
     catch (Exception ex)
@@ -281,16 +230,68 @@ public class AiService : IAiService
       Log.Error(ex, "Failed to get LLM completion");
 
       // Send error notification for LLM completion errors
-      await _emailService.SendErrorNotification(
-          "LLM Completion",
-          ex,
-          "AiService",
-          new Dictionary<string, string> {
-                    { "sourceType", sourceType },
-                    { "fileName", prompt.AudioFile?.FileName ?? "N/A" }
-          }
+      await SendErrorNotification(
+        "LLM Completion",
+        ex,
+        new Dictionary<string, string>
+        {
+          { "sourceType", sourceType }, { "fileName", prompt.AudioFile?.FileName ?? "N/A" }
+        }
       );
 
+      throw; // Re-throw to allow caller to handle the error
+    }
+  }
+
+  private async Task SendErrorNotification(string stage, Exception ex, Dictionary<string, string> additionalContext)
+  {
+    try
+    {
+      await emailService.SendErrorNotification(stage, ex, "AiService", additionalContext);
+    }
+    catch (ServiceUnavailableException e)
+    {
+      Log.Error(e, "Unable to send email as email service is unavailable");
+    }
+    catch (Exception e)
+    {
+      Log.Error(e, "Unable to send email as email service failed");
+      throw;
+    }
+  }
+
+  private async Task StoreAudioAndTranscript(TranscriptionResult transcription, IFormFile audioFile)
+  {
+    try
+    {
+      // Read the audio file into memory
+      using var ms = new MemoryStream();
+      await audioFile.CopyToAsync(ms);
+      var audioData = ms.ToArray();
+
+      // Store files
+      await githubService.StoreAudioAndTranscriptAsync(
+        transcription.AudioFileName,
+        audioData,
+        transcription.TranscriptFileName,
+        transcription.Transcript
+      );
+    }
+    catch (ServiceUnavailableException e)
+    {
+      Log.Error(e, "Unable to store to github as service is unavailable");
+    }
+    catch (Exception ex)
+    {
+      Log.Error(ex, "Failed to store audio and transcript files to GitHub");
+      await SendErrorNotification(
+        "GitHub Storage",
+        ex,
+        new Dictionary<string, string>
+        {
+          { "audioFileName", transcription.AudioFileName }, { "transcriptFileName", transcription.TranscriptFileName }
+        }
+      );
       throw; // Re-throw to allow caller to handle the error
     }
   }

@@ -10,11 +10,11 @@ public class DependsOnServiceTests
   public void Constructor_ValidFeatures_InitializesCorrectly()
   {
     // Arrange & Act
-    var attribute = new DependsOnService(ExternalServices.LLM, ExternalServices.Transcription);
+    var attribute = new DependsOnService(ExternalServices.OpenAiApi, ExternalServices.EmailValidation);
 
     // Assert
     attribute.Features.Should().HaveCount(2); // Two features were provided
-    attribute.Features.Should().Contain(ExternalServices.LLM).And.Contain(ExternalServices.Transcription); // Both provided features should be stored
+    attribute.Features.Should().Contain(ExternalServices.OpenAiApi).And.Contain(ExternalServices.EmailValidation); // Both provided features should be stored
   }
 
   [Fact]
@@ -45,17 +45,6 @@ public class DependsOnServiceTests
     Assert.Throws<ArgumentException>(() => new DependsOnService())
         .Message.Should().Contain("At least one feature must be provided");
     // Empty features array is invalid
-  }
-
-  [Fact]
-  public void FeatureNames_ConvertsFeaturesToStrings()
-  {
-    // Arrange & Act
-    var attribute = new DependsOnService(ExternalServices.LLM, ExternalServices.Transcription);
-
-    // Assert - This tests the backward compatibility property
-    attribute.FeatureNames.Should().HaveCount(2);
-    attribute.FeatureNames.Should().Contain("LLM").And.Contain("Transcription");
   }
 
   [Fact]

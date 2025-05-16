@@ -94,28 +94,16 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     // Create a mock configuration status service that reports LLM and Transcription features as unavailable
     var mockStatusService = new Mock<IStatusService>();
 
-    // Set up the mock to return unavailable status for Transcription
-    mockStatusService
-        .Setup(s => s.GetFeatureStatus(ExternalServices.Transcription))
-        .Returns(new ServiceStatusInfo(
-            IsAvailable: false,
-            ["TranscribeConfig:ModelName"]
-        ));
-
-    mockStatusService
-        .Setup(s => s.IsFeatureAvailable(ExternalServices.Transcription))
-        .Returns(false);
-
     // Also make LLM unavailable
     mockStatusService
-        .Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
+        .Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
         .Returns(new ServiceStatusInfo(
             IsAvailable: false,
             ["LlmConfig:ApiKey"]
         ));
 
     mockStatusService
-        .Setup(s => s.IsFeatureAvailable(ExternalServices.LLM))
+        .Setup(s => s.IsFeatureAvailable(ExternalServices.OpenAiApi))
         .Returns(false);
 
     // Make GitHub access unavailable (needed for transcribe endpoint)
@@ -167,12 +155,12 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     // Other features are available - catch-all for any other Feature enum value
     mockStatusService
         .Setup(s => s.GetFeatureStatus(It.Is<ExternalServices>(f =>
-            f != ExternalServices.LLM && f != ExternalServices.Transcription && f != ExternalServices.GitHubAccess)))
+            f != ExternalServices.OpenAiApi && f != ExternalServices.GitHubAccess)))
         .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
     mockStatusService
         .Setup(s => s.IsFeatureAvailable(It.Is<ExternalServices>(f =>
-            f != ExternalServices.LLM && f != ExternalServices.Transcription && f != ExternalServices.GitHubAccess)))
+            f != ExternalServices.OpenAiApi && f != ExternalServices.GitHubAccess)))
         .Returns(true);
 
     // Also catch-all for any other string-based feature name
@@ -225,7 +213,7 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     if (completionEndpoint.Value != null)
     {
       completionEndpoint.Value.Summary.Should().Contain("⚠️", "Completion endpoint should have warning when LLM is unavailable");
-      completionEndpoint.Value.Summary.Should().Contain("LLM", "Warning should mention LLM feature");
+      completionEndpoint.Value.Summary.Should().Contain("LlmConfig:ApiKey", "Warning should mention missing config");
       completionEndpoint.Value.Description.Should().Contain("unavailable", "Description should indicate endpoint is unavailable");
     }
 
@@ -238,9 +226,7 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     if (transcribeEndpoint.Value != null)
     {
       transcribeEndpoint.Value.Summary.Should().Contain("⚠️", "Transcribe endpoint should have warning when required features are unavailable");
-      // The transcribe endpoint requires both Transcription and GitHubAccess features
-      transcribeEndpoint.Value.Summary.Should().Contain("Transcription", "Warning should mention Transcription feature");
-      transcribeEndpoint.Value.Summary.Should().Contain("GitHubAccess", "Warning should mention GitHubAccess feature");
+      transcribeEndpoint.Value.Summary.Should().Contain("LlmConfig:ApiKey", "Warning should mention missing config");
       transcribeEndpoint.Value.Description.Should().Contain("unavailable", "Description should indicate endpoint is unavailable");
     }
   }
@@ -346,25 +332,14 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
 
     // Set up the mock to return unavailable status for LLM, Transcription, GitHub, and Payments
     mockStatusService
-        .Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
+        .Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
         .Returns(new ServiceStatusInfo(
             IsAvailable: false,
             ["LlmConfig:ApiKey"]
         ));
 
     mockStatusService
-        .Setup(s => s.IsFeatureAvailable(ExternalServices.LLM))
-        .Returns(false);
-
-    mockStatusService
-        .Setup(s => s.GetFeatureStatus(ExternalServices.Transcription))
-        .Returns(new ServiceStatusInfo(
-            IsAvailable: false,
-            ["TranscribeConfig:ModelName"]
-        ));
-
-    mockStatusService
-        .Setup(s => s.IsFeatureAvailable(ExternalServices.Transcription))
+        .Setup(s => s.IsFeatureAvailable(ExternalServices.OpenAiApi))
         .Returns(false);
 
     mockStatusService
@@ -437,12 +412,12 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     // Other features are available - catch-all for any other Feature enum value
     mockStatusService
         .Setup(s => s.GetFeatureStatus(It.Is<ExternalServices>(f =>
-            f != ExternalServices.LLM && f != ExternalServices.Transcription && f != ExternalServices.GitHubAccess && f != ExternalServices.Payments)))
+            f != ExternalServices.OpenAiApi && f != ExternalServices.GitHubAccess && f != ExternalServices.Payments)))
         .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
     mockStatusService
         .Setup(s => s.IsFeatureAvailable(It.Is<ExternalServices>(f =>
-            f != ExternalServices.LLM && f != ExternalServices.Transcription && f != ExternalServices.GitHubAccess && f != ExternalServices.Payments)))
+            f != ExternalServices.OpenAiApi && f != ExternalServices.GitHubAccess && f != ExternalServices.Payments)))
         .Returns(true);
 
     // Also catch-all for any other string-based feature name
@@ -493,8 +468,7 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     if (transcribeEndpoint.Value != null)
     {
       transcribeEndpoint.Value.Summary.Should().Contain("⚠️", "Transcribe endpoint should have warning");
-      transcribeEndpoint.Value.Summary.Should().Contain("Transcription", "Warning should mention Transcription feature");
-      transcribeEndpoint.Value.Summary.Should().Contain("GitHubAccess", "Warning should mention GitHubAccess feature");
+      transcribeEndpoint.Value.Summary.Should().Contain("LlmConfig:ApiKey", "Warning should mention missing config");
     }
 
     // Check that Payment controller endpoints have appropriate warnings

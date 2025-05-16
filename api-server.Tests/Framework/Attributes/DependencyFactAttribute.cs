@@ -10,7 +10,7 @@ namespace Zarichney.Tests.Framework.Attributes;
 /// skips tests when the test class indicates dependencies are missing.
 ///
 /// The attribute can be used in these ways:
-/// 1. With specific ExternalServices enums: [DependencyFact(ExternalServices.LLM, ExternalServices.Transcription)]
+/// 1. With specific ExternalServices enums: [DependencyFact(ExternalServices.OpenAiApi, ExternalServices.Transcription)]
 ///    This automatically maps to the appropriate dependency traits for filtering/reporting.
 /// 2. With InfrastructureDependency enums: [DependencyFact(InfrastructureDependency.Database)]
 ///    This explicitly indicates infrastructure-level dependencies like Database or Docker.
@@ -26,12 +26,10 @@ public sealed class DependencyFactAttribute : FactAttribute
   // Maps ExternalServices enums to TestCategories.Dependency trait values
   private static readonly Dictionary<ExternalServices, string> ExternalServicesToTraitMap = new()
   {
-    { ExternalServices.LLM, TestCategories.ExternalOpenAI },
-    { ExternalServices.Transcription, TestCategories.ExternalOpenAI },
+    { ExternalServices.OpenAiApi, TestCategories.ExternalOpenAI },
     { ExternalServices.EmailSending, TestCategories.ExternalMSGraph },
     { ExternalServices.Payments, TestCategories.ExternalStripe },
     { ExternalServices.GitHubAccess, TestCategories.ExternalGitHub },
-    { ExternalServices.AiServices, TestCategories.ExternalOpenAI },
     // Core feature doesn't map to a specific external dependency
   };
 

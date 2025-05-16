@@ -68,7 +68,6 @@ public class ServiceStartup
     {
       var emailConfig = sp.GetRequiredService<EmailConfig>();
       var logger = sp.GetRequiredService<ILogger<ServiceStartup>>();
-      var statusService = sp.GetRequiredService<IStatusService>();
 
       // Check if MailCheck API key is available
       if (string.IsNullOrEmpty(emailConfig.MailCheckApiKey) ||
@@ -234,6 +233,7 @@ public class ServiceStartup
     // Scoped and Transient Services
     services.AddScoped<ICookieAuthManager, CookieAuthManager>();
     services.AddScoped<ILlmService, LlmService>();
+    services.AddScoped<IAiService, AiService>();
     services.AddScoped<IAuthService, AuthService>();
     services.AddScoped<IApiKeyService, ApiKeyService>();
     services.AddScoped<IEmailService, EmailService>();

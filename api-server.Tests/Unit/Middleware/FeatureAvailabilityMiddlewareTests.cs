@@ -61,7 +61,7 @@ public class FeatureAvailabilityMiddlewareTests
   {
     // Arrange
     var statusService = new Mock<IStatusService>();
-    statusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
+    statusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
         .Returns(new StatusInfo(IsAvailable: true, []));
 
     var nextInvoked = false;
@@ -74,7 +74,7 @@ public class FeatureAvailabilityMiddlewareTests
     var context = new DefaultHttpContext();
     var metadata = new EndpointMetadataCollection(new object[]
     {
-            new DependsOnService(ExternalServices.LLM)
+            new DependsOnService(ExternalServices.OpenAiApi)
     });
     var endpoint = new Endpoint(_ => Task.CompletedTask, metadata, "Test Endpoint");
     context.SetEndpoint(endpoint);
@@ -84,7 +84,7 @@ public class FeatureAvailabilityMiddlewareTests
 
     // Assert
     Assert.True(nextInvoked, "The next middleware delegate should have been invoked.");
-    statusService.Verify(s => s.GetFeatureStatus(ExternalServices.LLM), Times.Once);
+    statusService.Verify(s => s.GetFeatureStatus(ExternalServices.OpenAiApi), Times.Once);
   }
 
   /// <summary>
@@ -95,7 +95,7 @@ public class FeatureAvailabilityMiddlewareTests
   {
     // Arrange
     var statusService = new Mock<IStatusService>();
-    statusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
+    statusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
         .Returns(new StatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
 
     var middleware = new FeatureAvailabilityMiddleware(
@@ -106,7 +106,7 @@ public class FeatureAvailabilityMiddlewareTests
     var context = new DefaultHttpContext();
     var metadata = new EndpointMetadataCollection(new object[]
     {
-            new DependsOnService(ExternalServices.LLM)
+            new DependsOnService(ExternalServices.OpenAiApi)
     });
     var endpoint = new Endpoint(_ => Task.CompletedTask, metadata, "Test Endpoint");
     context.SetEndpoint(endpoint);
@@ -115,13 +115,13 @@ public class FeatureAvailabilityMiddlewareTests
     var exception = await Assert.ThrowsAsync<ServiceUnavailableException>(
         () => middleware.InvokeAsync(context));
 
-    Assert.Contains("LlmConfig:ApiKey", exception.Reasons);
-    Assert.Contains("LLM", exception.Message);
-    statusService.Verify(s => s.GetFeatureStatus(ExternalServices.LLM), Times.Once);
+    Assert.Contains("LlmConfig:ApiKey", exception.Reasons!);
+    Assert.Contains("OpenAiApi", exception.Message);
+    statusService.Verify(s => s.GetFeatureStatus(ExternalServices.OpenAiApi), Times.Once);
   }
 
   /// <summary>
-  /// Tests that when multiple features are required and some are unavailable, the middleware throws 
+  /// Tests that when multiple features are required and some are unavailable, the middleware throws
   /// a ServiceUnavailableException with all missing configurations.
   /// </summary>
   [Fact]
@@ -133,7 +133,7 @@ public class FeatureAvailabilityMiddlewareTests
     var emailMissingConfigs = new List<string> { "EmailConfig:FromEmail" };
     var emptyConfigs = new List<string>();
 
-    statusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
+    statusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
         .Returns(new StatusInfo(IsAvailable: false, llmMissingConfigs));
     statusService.Setup(s => s.GetFeatureStatus(ExternalServices.EmailSending))
         .Returns(new StatusInfo(IsAvailable: false, emailMissingConfigs));
@@ -148,7 +148,7 @@ public class FeatureAvailabilityMiddlewareTests
     var context = new DefaultHttpContext();
     var metadata = new EndpointMetadataCollection(new object[]
     {
-            new DependsOnService(ExternalServices.LLM, ExternalServices.EmailSending, ExternalServices.Payments)
+            new DependsOnService(ExternalServices.OpenAiApi, ExternalServices.EmailSending, ExternalServices.Payments)
     });
     var endpoint = new Endpoint(_ => Task.CompletedTask, metadata, "Test Endpoint");
     context.SetEndpoint(endpoint);
@@ -193,7 +193,7 @@ public class FeatureAvailabilityMiddlewareTests
   {
     // Arrange
     var statusService = new Mock<IStatusService>();
-    statusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
+    statusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
         .Returns(new StatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
 
     var hostBuilder = new HostBuilder()
@@ -220,7 +220,7 @@ public class FeatureAvailabilityMiddlewareTests
                 app.UseFeatureAvailability();
                 app.UseEndpoints(endpoints =>
                     {
-                      endpoints.MapGet("/api/test", [DependsOnService(ExternalServices.LLM)] () => "Hello World");
+                      endpoints.MapGet("/api/test", [DependsOnService(ExternalServices.OpenAiApi)] () => "Hello World");
                       endpoints.MapGet("/api/available", () => "Available");
                     });
               });

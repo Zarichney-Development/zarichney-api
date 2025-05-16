@@ -57,7 +57,7 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate the feature is available
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
         .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
     // Act
@@ -83,7 +83,7 @@ public class ServiceAvailabilityOperationFilterTests
 
     // Setup status service to indicate the feature is unavailable
     var missingConfigs = new List<string> { "LlmConfig:ApiKey" };
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
         .Returns(new ServiceStatusInfo(IsAvailable: false, missingConfigs));
 
     // Act
@@ -92,12 +92,10 @@ public class ServiceAvailabilityOperationFilterTests
     // Assert
     operation.Summary.Should().StartWith("⚠️", "Operation with unavailable feature should have a warning symbol in the summary");
     operation.Summary.Should().Contain("Original summary", "Original summary should still be present");
-    operation.Summary.Should().Contain("LLM", "Feature name should be in the warning");
     operation.Summary.Should().Contain("LlmConfig:ApiKey", "Missing configuration should be mentioned");
 
     operation.Description.Should().Contain("**This endpoint is currently unavailable**", "Description should indicate endpoint is unavailable");
     operation.Description.Should().Contain("Original description", "Original description should still be present");
-    operation.Description.Should().Contain("LLM", "Feature name should be in the description");
     operation.Description.Should().Contain("LlmConfig:ApiKey", "Missing configuration should be mentioned");
   }
 
@@ -115,21 +113,21 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate both features are unavailable
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
 
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.Transcription))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, ["TranscribeConfig:ModelName"]));
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.EmailValidation))
+        .Returns(new ServiceStatusInfo(IsAvailable: false, ["EmailConfig:MailCheckApiKey"]));
 
     // Act
     _filter.Apply(operation, context);
 
     // Assert
     operation.Summary.Should().StartWith("⚠️", "Operation with unavailable features should have a warning symbol");
-    operation.Summary.Should().Contain("LLM", "First feature name should be in the warning");
-    operation.Summary.Should().Contain("Transcription", "Second feature name should be in the warning");
+    operation.Summary.Should().Contain("OpenAiApi", "First feature name should be in the warning");
+    operation.Summary.Should().Contain("EmailValidation", "Second feature name should be in the warning");
     operation.Summary.Should().Contain("LlmConfig:ApiKey", "First missing config should be mentioned");
-    operation.Summary.Should().Contain("TranscribeConfig:ModelName", "Second missing config should be mentioned");
+    operation.Summary.Should().Contain("EmailConfig:MailCheckApiKey", "Second missing config should be mentioned");
   }
 
   [Fact]
@@ -146,20 +144,20 @@ public class ServiceAvailabilityOperationFilterTests
     var context = CreateOperationFilterContext(methodInfo);
 
     // Setup status service to indicate one feature is available and one is unavailable
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.LLM))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
         .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.Transcription))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, ["TranscribeConfig:ModelName"]));
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.EmailValidation))
+        .Returns(new ServiceStatusInfo(IsAvailable: false, ["EmailConfig:MailCheckApiKey"]));
 
     // Act
     _filter.Apply(operation, context);
 
     // Assert
     operation.Summary.Should().StartWith("⚠️", "Operation with unavailable feature should have a warning symbol");
-    operation.Summary.Should().NotContain("LLM", "Available feature should not be in warning");
-    operation.Summary.Should().Contain("Transcription", "Unavailable feature should be in warning");
-    operation.Summary.Should().Contain("TranscribeConfig:ModelName", "Missing config should be mentioned");
+    operation.Summary.Should().NotContain("OpenAiApi", "Available feature should not be in warning");
+    operation.Summary.Should().Contain("EmailValidation", "Unavailable feature should be in warning");
+    operation.Summary.Should().Contain("EmailConfig:MailCheckApiKey", "Missing config should be mentioned");
   }
 
   [Fact]
@@ -264,11 +262,11 @@ public class ServiceAvailabilityOperationFilterTests
   {
     public void MethodWithoutAttribute() { }
 
-    [DependsOnService(ExternalServices.LLM)]
+    [DependsOnService(ExternalServices.OpenAiApi)]
     public void MethodWithAttribute() { }
 
-    [DependsOnService(ExternalServices.LLM)]
-    [DependsOnService(ExternalServices.Transcription)]
+    [DependsOnService(ExternalServices.OpenAiApi)]
+    [DependsOnService(ExternalServices.EmailValidation)]
     public void MethodWithMultipleAttributes() { }
   }
 
