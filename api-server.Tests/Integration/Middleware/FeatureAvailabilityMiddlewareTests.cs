@@ -34,7 +34,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
 
     // Configure the mock to return specific statuses for different features
     mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
-        .Returns(new StatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
+        .Returns(new StatusInfo(ExternalServices.OpenAiApi, false, ["LlmConfig:ApiKey"]));
 
     // Use a WebHostBuilder to replace the service with our mock
     var customFactory = Factory;
@@ -86,7 +86,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     foreach (ExternalServices feature in Enum.GetValues(typeof(ExternalServices)))
     {
       mockStatusService.Setup(s => s.GetFeatureStatus(feature))
-          .Returns(new StatusInfo(IsAvailable: false, [$"{feature}Config:MissingKey"]));
+          .Returns(new StatusInfo(feature, false, [$"{feature}Config:MissingKey"]));
 
       mockStatusService.Setup(s => s.IsFeatureAvailable(feature))
           .Returns(false);
@@ -132,10 +132,10 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
 
     // Configure the mock to return specific statuses for different features
     mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
-        .Returns(new StatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
+        .Returns(new StatusInfo(ExternalServices.OpenAiApi, false, ["LlmConfig:ApiKey"]));
 
     mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.MsGraph))
-        .Returns(new StatusInfo(IsAvailable: false, ["EmailConfig:FromEmail"]));
+        .Returns(new StatusInfo(ExternalServices.MsGraph, false, ["EmailConfig:FromEmail"]));
 
     mockStatusService.Setup(s => s.IsFeatureAvailable(It.IsAny<ExternalServices>()))
         .Returns<ExternalServices>(f => f != ExternalServices.OpenAiApi);

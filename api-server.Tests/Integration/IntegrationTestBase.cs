@@ -177,7 +177,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   /// This is the preferred approach for API feature dependency checking.
   /// </summary>
   /// <param name="requiredFeatures">Array of required ExternalServices values.</param>
-  private Task CheckExternalServicesDependenciesAsync(ExternalServices[] requiredFeatures)
+  private Task CheckExternalServicesDependenciesAsync(Zarichney.Services.Status.ExternalServices[] requiredFeatures)
   {
     try
     {
@@ -186,7 +186,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
       var statusService = scope.ServiceProvider.GetRequiredService<IStatusService>();
 
       // Check each required feature
-      var unavailableFeatures = new List<ExternalServices>();
+      var unavailableFeatures = new List<Zarichney.Services.Status.ExternalServices>();
       var allMissingConfigs = new List<string>();
 
       foreach (var feature in requiredFeatures)
@@ -205,7 +205,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
       // If there are unavailable features, set SkipReason
       if (unavailableFeatures.Count > 0)
       {
-        var reason = $"Required ExternalServicess unavailable: {string.Join(", ", unavailableFeatures)}";
+        var reason = $"Required ExternalServices unavailable: {string.Join(", ", unavailableFeatures)}";
         if (allMissingConfigs.Count > 0)
         {
           reason += $" (Missing configurations: {string.Join(", ", allMissingConfigs.Distinct())})";

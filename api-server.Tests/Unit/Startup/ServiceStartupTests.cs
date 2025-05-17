@@ -29,9 +29,9 @@ public class ServiceStartupTests
 
     // Mock configuration status service that reports Email service as available
     var mockStatusService = new Mock<IStatusService>();
-    var statusDict = new Dictionary<string, ServiceStatusInfo>
+    var statusDict = new Dictionary<ExternalServices, ServiceStatusInfo>
         {
-            { "Email", new ServiceStatusInfo(true, []) }
+            { ExternalServices.MsGraph, new ServiceStatusInfo(ExternalServices.MsGraph, true, []) }
         };
     mockStatusService.Setup(s => s.GetServiceStatusAsync())
         .ReturnsAsync(statusDict);
@@ -73,9 +73,9 @@ public class ServiceStartupTests
 
     // Mock configuration status service that reports Email service as unavailable
     var mockStatusService = new Mock<IStatusService>();
-    var statusDict = new Dictionary<string, ServiceStatusInfo>
+    var statusDict = new Dictionary<ExternalServices, ServiceStatusInfo>
         {
-            { "Email", new ServiceStatusInfo(false, ["EmailConfig:AzureTenantId"]) }
+            { ExternalServices.MsGraph, new ServiceStatusInfo(ExternalServices.MsGraph, false, ["EmailConfig:AzureTenantId"]) }
         };
     mockStatusService.Setup(s => s.GetServiceStatusAsync())
         .ReturnsAsync(statusDict);
@@ -134,9 +134,9 @@ public class ServiceStartupTests
 
     // Mock configuration status service that reports LLM service as available
     var mockStatusService = new Mock<IStatusService>();
-    var statusDict = new Dictionary<string, ServiceStatusInfo>
+    var statusDict = new Dictionary<ExternalServices, ServiceStatusInfo>
         {
-            { "Llm", new ServiceStatusInfo(true, []) }
+            { ExternalServices.OpenAiApi, new ServiceStatusInfo(ExternalServices.OpenAiApi, true, []) }
         };
     mockStatusService.Setup(s => s.GetServiceStatusAsync())
         .ReturnsAsync(statusDict);
@@ -177,9 +177,9 @@ public class ServiceStartupTests
 
     // Mock configuration status service that reports LLM service as unavailable
     var mockStatusService = new Mock<IStatusService>();
-    var statusDict = new Dictionary<string, ServiceStatusInfo>
+    var statusDict = new Dictionary<ExternalServices, ServiceStatusInfo>
         {
-            { "Llm", new ServiceStatusInfo(false, ["LlmConfig:ApiKey"]) }
+            { ExternalServices.OpenAiApi, new ServiceStatusInfo(ExternalServices.OpenAiApi, false, ["LlmConfig:ApiKey"]) }
         };
     mockStatusService.Setup(s => s.GetServiceStatusAsync())
         .ReturnsAsync(statusDict);

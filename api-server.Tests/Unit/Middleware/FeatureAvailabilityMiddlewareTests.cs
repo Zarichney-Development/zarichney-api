@@ -30,7 +30,7 @@ public class FeatureAvailabilityMiddlewareTests
     var statusService = new Mock<IStatusService>();
     // Setup mock to handle any unexpected calls
     statusService.Setup(s => s.GetFeatureStatus(It.IsAny<ExternalServices>()))
-        .Returns(new StatusInfo(IsAvailable: true, new List<string>()));
+        .Returns((ExternalServices service) => new StatusInfo(service, true, new List<string>()));
 
     var nextInvoked = false;
 
@@ -60,7 +60,7 @@ public class FeatureAvailabilityMiddlewareTests
     // Arrange
     var statusService = new Mock<IStatusService>();
     statusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
-        .Returns(new StatusInfo(IsAvailable: true, []));
+        .Returns(new StatusInfo(ExternalServices.OpenAiApi, true, []));
 
     var nextInvoked = false;
 
@@ -91,7 +91,7 @@ public class FeatureAvailabilityMiddlewareTests
     // Arrange
     var statusService = new Mock<IStatusService>();
     statusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
-        .Returns(new StatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
+        .Returns(new StatusInfo(ExternalServices.OpenAiApi, false, ["LlmConfig:ApiKey"]));
 
     var middleware = new FeatureAvailabilityMiddleware(
         _ => Task.CompletedTask,
@@ -126,11 +126,11 @@ public class FeatureAvailabilityMiddlewareTests
     var emptyConfigs = new List<string>();
 
     statusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
-        .Returns(new StatusInfo(IsAvailable: false, llmMissingConfigs));
+        .Returns(new StatusInfo(ExternalServices.OpenAiApi, false, llmMissingConfigs));
     statusService.Setup(s => s.GetFeatureStatus(ExternalServices.MsGraph))
-        .Returns(new StatusInfo(IsAvailable: false, emailMissingConfigs));
+        .Returns(new StatusInfo(ExternalServices.MsGraph, false, emailMissingConfigs));
     statusService.Setup(s => s.GetFeatureStatus(ExternalServices.Stripe))
-        .Returns(new StatusInfo(IsAvailable: true, emptyConfigs));
+        .Returns(new StatusInfo(ExternalServices.Stripe, true, emptyConfigs));
 
     var middleware = new FeatureAvailabilityMiddleware(
         _ => Task.CompletedTask,
@@ -183,7 +183,7 @@ public class FeatureAvailabilityMiddlewareTests
     // Arrange
     var statusService = new Mock<IStatusService>();
     statusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
-        .Returns(new StatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
+        .Returns(new StatusInfo(ExternalServices.OpenAiApi, false, ["LlmConfig:ApiKey"]));
 
     var hostBuilder = new HostBuilder()
         .ConfigureWebHost(webHost =>

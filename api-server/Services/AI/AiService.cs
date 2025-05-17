@@ -222,7 +222,10 @@ public class AiService(
 
       return new CompletionResult
       {
-        Response = response, SourceType = sourceType, TranscribedPrompt = transcribedPrompt, SessionId = session.Id
+        Response = response,
+        SourceType = sourceType,
+        TranscribedPrompt = transcribedPrompt,
+        SessionId = session.Id
       };
     }
     catch (Exception ex)

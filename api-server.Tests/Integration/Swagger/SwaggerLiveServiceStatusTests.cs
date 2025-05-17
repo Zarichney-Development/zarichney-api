@@ -29,20 +29,11 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
     // Act - Step 1: Get the service status
     var statusResult = await ApiClient.StatusAll();
 
-    // Find unavailable services - include both legacy names and enum-based names
+    // Find unavailable services - we now expect a list of ServiceStatusInfo objects
     var unavailableServices = statusResult
-      .Where(s => !s.Value.IsAvailable)
-      .Select(s => s.Key)
+      .Where(s => !s.IsAvailable)
+      .Select(s => s.ServiceName.ToString())
       .ToList();
-
-    // Also include the enum names for completeness (in case we have services that are only represented by enum names)
-    foreach (var enumName in Enum.GetNames(typeof(Zarichney.Services.Status.ExternalServices)))
-    {
-      if (statusResult.TryGetValue(enumName, out var status) && !status.IsAvailable && !unavailableServices.Contains(enumName))
-      {
-        unavailableServices.Add(enumName);
-      }
-    }
 
     // Skip test if no services are unavailable (unlikely in a test environment, but possible)
     if (unavailableServices.Count == 0)
@@ -106,9 +97,8 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
     // Act - Step 1: Get the service status to check if LLM is available
     var statusResult = await ApiClient.StatusAll();
 
-    // Check if LLM service is unavailable - check both "Llm" and "LLM" since we now use enum names
-    var llmUnavailable = (statusResult.TryGetValue("Llm", out var llmStatus) && !llmStatus.IsAvailable) ||
-                         (statusResult.TryGetValue("LLM", out var llmEnumStatus) && !llmEnumStatus.IsAvailable);
+    // Check if LLM service is unavailable - we now have a list of ServiceStatusInfo objects
+    var llmUnavailable = statusResult.Any(s => Equals(s.ServiceName, Zarichney.Services.Status.ExternalServices.OpenAiApi) && !s.IsAvailable);
 
     // Skip test if LLM service is available
     if (!llmUnavailable)

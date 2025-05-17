@@ -56,11 +56,11 @@ public class PublicControllerTests
   }
 
   /// <summary>
-  /// Verifies that GetServicesStatus returns an OK result with the service status
+  /// Verifies that GetServicesStatus returns an OK result with the service status list
   /// when the IStatusService succeeds.
   /// </summary>
   [Fact]
-  public async Task GetServicesStatus_WhenServiceSucceeds_ReturnsOkWithServiceStatus()
+  public async Task GetServicesStatus_WhenServiceSucceeds_ReturnsOkWithServiceStatusList()
   {
     // Arrange
     var expectedServiceStatus = new Dictionary<ExternalServices, ServiceStatusInfo>
@@ -69,21 +69,23 @@ public class PublicControllerTests
       [ExternalServices.MailCheck] = new(ExternalServices.MailCheck, false, ["EmailConfig:ApiKey"])
     };
 
+    var expectedList = expectedServiceStatus.Values.ToList();
+
     _mockStatusService
         .Setup(s => s.GetServiceStatusAsync())
         .ReturnsAsync(expectedServiceStatus)
         .Verifiable();
 
     // Act
-    var result = await _controller.GetServicesStatus(); // Changed from GetStatus()
+    var result = await _controller.GetServicesStatus();
 
     // Assert
     result.Should()
         .BeOfType<OkObjectResult>(because: "a successful service call should return an OK status with content");
     var okResult = result as OkObjectResult;
     okResult.Should().NotBeNull();
-    okResult.Value.Should().BeEquivalentTo(expectedServiceStatus,
-        because: "the returned value should match the service status from the service");
+    okResult.Value.Should().BeEquivalentTo(expectedList,
+        because: "the returned value should match the list of service statuses from the service");
 
     _mockStatusService.Verify();
   }

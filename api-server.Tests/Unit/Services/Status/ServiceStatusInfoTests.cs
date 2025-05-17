@@ -12,10 +12,12 @@ public class ServiceStatusInfoTests
   {
     // Arrange & Act
     var statusInfo = new ServiceStatusInfo(
+        serviceName: ExternalServices.OpenAiApi,
         IsAvailable: true,
         MissingConfigurations: new List<string>());
 
     // Assert
+    statusInfo.serviceName.Should().Be(ExternalServices.OpenAiApi);
     statusInfo.IsAvailable.Should().BeTrue();
     statusInfo.MissingConfigurations.Should().BeEmpty();
   }
@@ -29,10 +31,12 @@ public class ServiceStatusInfoTests
 
     // Act
     var statusInfo = new ServiceStatusInfo(
+        serviceName: ExternalServices.MsGraph,
         IsAvailable: false,
         MissingConfigurations: missingConfigs);
 
     // Assert
+    statusInfo.serviceName.Should().Be(ExternalServices.MsGraph);
     statusInfo.IsAvailable.Should().BeFalse();
     statusInfo.MissingConfigurations.Should().BeEquivalentTo(missingConfigs);
   }
@@ -43,12 +47,14 @@ public class ServiceStatusInfoTests
   {
     // Arrange
     var missingConfigs = new List<string> { "Config1", "Config2" };
-    var statusInfo1 = new ServiceStatusInfo(false, missingConfigs);
-    var statusInfo2 = new ServiceStatusInfo(false, missingConfigs);
-    var statusInfo3 = new ServiceStatusInfo(true, new List<string>());
+    var statusInfo1 = new ServiceStatusInfo(ExternalServices.Stripe, false, missingConfigs);
+    var statusInfo2 = new ServiceStatusInfo(ExternalServices.Stripe, false, missingConfigs);
+    var statusInfo3 = new ServiceStatusInfo(ExternalServices.FrontEnd, true, new List<string>());
+    var statusInfo4 = new ServiceStatusInfo(ExternalServices.GitHubAccess, false, missingConfigs);
 
     // Act & Assert
     statusInfo1.Should().Be(statusInfo2);
     statusInfo1.Should().NotBe(statusInfo3);
+    statusInfo1.Should().NotBe(statusInfo4); // Different service names should not be equal
   }
 }

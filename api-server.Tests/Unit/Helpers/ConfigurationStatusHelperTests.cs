@@ -193,7 +193,7 @@ public class ConfigurationStatusHelperTests
     // Arrange
     var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
     {
-      ["Llm"] = new(true, [])
+      ["Llm"] = new(ExternalServices.OpenAiApi, true, [])
     };
 
     // Act
@@ -210,7 +210,7 @@ public class ConfigurationStatusHelperTests
     // Arrange
     var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
     {
-      ["Llm"] = new(false, ["Llm:ApiKey"])
+      ["Llm"] = new(ExternalServices.OpenAiApi, false, ["Llm:ApiKey"])
     };
 
     // Act
@@ -227,7 +227,7 @@ public class ConfigurationStatusHelperTests
     // Arrange
     var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
     {
-      ["Email"] = new(true, [])
+      ["Email"] = new(ExternalServices.MsGraph, true, [])
       // Llm is missing from the dictionary
     };
 
@@ -290,7 +290,7 @@ public class ConfigurationStatusHelperTests
     // Arrange
     var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
     {
-      ["Llm"] = new(true, [])
+      ["Llm"] = new(ExternalServices.OpenAiApi, true, [])
     };
 
     // Act
@@ -308,7 +308,7 @@ public class ConfigurationStatusHelperTests
     var missingConfigs = new List<string> { "Llm:ApiKey" };
     var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
     {
-      ["Llm"] = new(false, missingConfigs)
+      ["Llm"] = new(ExternalServices.OpenAiApi, false, missingConfigs)
     };
 
     // Act
@@ -325,8 +325,8 @@ public class ConfigurationStatusHelperTests
     // Arrange
     var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
     {
-      ["Payment"] = new(false, ["Payment:ApiKey"]),
-      ["Stripe"] = new(false, ["Stripe:Secret"])
+      ["Payment"] = new(ExternalServices.Stripe, false, ["Payment:ApiKey"]),
+      ["Stripe"] = new(ExternalServices.Stripe, false, ["Stripe:Secret"])
     };
 
     // Act
@@ -343,7 +343,7 @@ public class ConfigurationStatusHelperTests
     // Arrange
     var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
     {
-      ["Email"] = new(true, [])
+      ["Email"] = new(ExternalServices.MsGraph, true, [])
       // Llm is missing from the dictionary
     };
 

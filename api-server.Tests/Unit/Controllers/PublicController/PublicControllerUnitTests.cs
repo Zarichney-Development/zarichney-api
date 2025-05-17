@@ -59,18 +59,24 @@ public class PublicControllerUnitTests
   }
 
   /// <summary>
-  /// Verifies that GetServicesStatus returns an OK result with the status dictionary
+  /// Verifies that GetServicesStatus returns an OK result with the status list
   /// when the IStatusService succeeds.
   /// </summary>
   [Fact]
-  public async Task GetServicesStatus_WhenServiceSucceeds_ReturnsOkWithStatusDictionary()
+  public async Task GetServicesStatus_WhenServiceSucceeds_ReturnsOkWithStatusList()
   {
     // Arrange
+    var service1 = ExternalServices.OpenAiApi;
+    var service2 = ExternalServices.MsGraph;
+
     var expectedStatusDict = new Dictionary<ExternalServices, ServiceStatusInfo>
     {
-      { GetRandom.Enum<ExternalServices>(), new ServiceStatusInfo(GetRandom.Enum<ExternalServices>(), true, []) },
-      { GetRandom.Enum<ExternalServices>(), new ServiceStatusInfo(GetRandom.Enum<ExternalServices>(), false, [GetRandom.String()]) }
+      { service1, new ServiceStatusInfo(service1, true, []) },
+      { service2, new ServiceStatusInfo(service2, false, [GetRandom.String()]) }
     };
+
+    var expectedList = expectedStatusDict.Values.ToList();
+
     _mockStatusService
       .Setup(s => s.GetServiceStatusAsync())
       .ReturnsAsync(expectedStatusDict)
@@ -84,8 +90,8 @@ public class PublicControllerUnitTests
       .BeOfType<OkObjectResult>(because: "a successful service call should return an OK status with content");
     var okResult = result as OkObjectResult;
     okResult.Should().NotBeNull();
-    okResult.Value.Should().BeEquivalentTo(expectedStatusDict,
-      because: "the returned value should match the dictionary from the service");
+    okResult.Value.Should().BeEquivalentTo(expectedList,
+      because: "the returned value should match the list of service statuses from the service");
 
     _mockStatusService.Verify();
   }

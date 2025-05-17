@@ -58,7 +58,7 @@ public class ServiceAvailabilityOperationFilterTests
 
     // Setup status service to indicate the feature is available
     _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
-        .Returns(new ServiceStatusInfo(IsAvailable: true, []));
+        .Returns(new ServiceStatusInfo(ExternalServices.OpenAiApi, true, []));
 
     // Act
     _filter.Apply(operation, context);
@@ -84,7 +84,7 @@ public class ServiceAvailabilityOperationFilterTests
     // Setup status service to indicate the feature is unavailable
     var missingConfigs = new List<string> { "LlmConfig:ApiKey" };
     _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, missingConfigs));
+        .Returns(new ServiceStatusInfo(ExternalServices.OpenAiApi, false, missingConfigs));
 
     // Act
     _filter.Apply(operation, context);
@@ -114,10 +114,10 @@ public class ServiceAvailabilityOperationFilterTests
 
     // Setup status service to indicate both features are unavailable
     _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
+        .Returns(new ServiceStatusInfo(ExternalServices.OpenAiApi, false, ["LlmConfig:ApiKey"]));
 
     _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.MailCheck))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, ["EmailConfig:MailCheckApiKey"]));
+        .Returns(new ServiceStatusInfo(ExternalServices.MailCheck, false, ["EmailConfig:MailCheckApiKey"]));
 
     // Act
     _filter.Apply(operation, context);
@@ -145,10 +145,10 @@ public class ServiceAvailabilityOperationFilterTests
 
     // Setup status service to indicate one feature is available and one is unavailable
     _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
-        .Returns(new ServiceStatusInfo(IsAvailable: true, []));
+        .Returns(new ServiceStatusInfo(ExternalServices.OpenAiApi, true, []));
 
     _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.MailCheck))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, ["EmailConfig:MailCheckApiKey"]));
+        .Returns(new ServiceStatusInfo(ExternalServices.MailCheck, false, ["EmailConfig:MailCheckApiKey"]));
 
     // Act
     _filter.Apply(operation, context);
@@ -175,7 +175,7 @@ public class ServiceAvailabilityOperationFilterTests
 
     // Setup status service to indicate the feature is unavailable
     _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.FrontEnd))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, ["ServerConfig:BaseUrl"]));
+        .Returns(new ServiceStatusInfo(ExternalServices.FrontEnd, false, ["ServerConfig:BaseUrl"]));
 
     // Act
     _filter.Apply(operation, context);
@@ -201,10 +201,10 @@ public class ServiceAvailabilityOperationFilterTests
 
     // Setup status service to indicate both features are unavailable
     _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.FrontEnd))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, ["ServerConfig:BaseUrl"]));
+        .Returns(new ServiceStatusInfo(ExternalServices.FrontEnd, false, ["ServerConfig:BaseUrl"]));
 
     _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.MsGraph))
-        .Returns(new ServiceStatusInfo(IsAvailable: false, ["EmailConfig:AzureAppId"]));
+        .Returns(new ServiceStatusInfo(ExternalServices.MsGraph, false, ["EmailConfig:AzureAppId"]));
 
     // Act
     _filter.Apply(operation, context);

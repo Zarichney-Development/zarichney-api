@@ -63,23 +63,25 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture,
     serviceStatus.Should().NotBeEmpty(
       because: "response should contain at least some service status information");
 
-    serviceStatus.Keys.Should().Contain(expectedServices,
+    // Check that all the expected service enums are present in the response
+    var serviceNames = serviceStatus.Select(s => s.ServiceName.ToString()).ToList();
+    serviceNames.Should().Contain(expectedServices,
       because: "the response should contain status for all critical services");
 
-    foreach (var (service, status) in serviceStatus)
+    foreach (var status in serviceStatus)
     {
       status.Should().NotBeNull(
-        because: $"status for {service} should not be null");
+        because: $"status for {status.ServiceName} should not be null");
 
       if (!status.IsAvailable)
       {
         status.MissingConfigurations.Should().NotBeEmpty(
-          because: $"unavailable service {service} should have missing configurations");
+          because: $"unavailable service {status.ServiceName} should have missing configurations");
       }
       else
       {
         status.MissingConfigurations.Should().BeEmpty(
-          because: $"available service {service} should not have missing configurations");
+          because: $"available service {status.ServiceName} should not have missing configurations");
       }
     }
   }
