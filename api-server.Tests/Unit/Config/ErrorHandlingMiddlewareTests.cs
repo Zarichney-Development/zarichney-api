@@ -43,7 +43,7 @@ public class ErrorHandlingMiddlewareTests
     _httpContext.Response.StatusCode.Should().Be((int)HttpStatusCode.OK);
   }
 
-  [Fact(Skip = "Test needs to be updated to match new response format")]
+  [Fact]
   public async Task Invoke_WithServiceUnavailableException_Returns503WithErrorResponse()
   {
     // Arrange
@@ -73,14 +73,23 @@ public class ErrorHandlingMiddlewareTests
     });
 
     response.Should().NotBeNull();
-    response.Should().ContainKey("error").WhoseValue.Should().BeEquivalentTo("Service Temporarily Unavailable");
-    response.Should().ContainKey("message").WhoseValue.Should().BeEquivalentTo("Service is unavailable due to missing configuration.");
-    response.Should().ContainKey("missingConfigurations").WhoseValue.Should().BeOfType<JsonElement>()
-        .Which.EnumerateArray().Select(e => e.GetString()).Should().BeEquivalentTo(missingConfigs);
-    response.Should().ContainKey("traceId").WhoseValue.Should().BeEquivalentTo("test-trace-id");
+    response.Should().ContainKey("error");
+    ((JsonElement)response["error"]).GetString().Should().Be("Service Temporarily Unavailable");
+    response.Should().ContainKey("message");
+    ((JsonElement)response["message"]).GetString().Should().Be("Service is unavailable due to missing configuration.");
+    response.Should().ContainKey("missingConfigurations");
+    var missingConfigsElement = (JsonElement)response["missingConfigurations"];
+    var extractedConfigs = new List<string>();
+    foreach (var element in missingConfigsElement.EnumerateArray())
+    {
+      extractedConfigs.Add(element.GetString() ?? string.Empty);
+    }
+    extractedConfigs.Should().BeEquivalentTo(missingConfigs);
+    response.Should().ContainKey("traceId");
+    ((JsonElement)response["traceId"]).GetString().Should().Be("test-trace-id");
   }
 
-  [Fact(Skip = "Test needs to be updated to match new response format")]
+  [Fact]
   public async Task Invoke_WithConfigurationMissingException_Returns503WithErrorResponse()
   {
     // Arrange
@@ -109,12 +118,15 @@ public class ErrorHandlingMiddlewareTests
     });
 
     response.Should().NotBeNull();
-    response.Should().ContainKey("error").WhoseValue.Should().BeEquivalentTo("Service Temporarily Unavailable");
-    response.Should().ContainKey("message").WhoseValue.Should().BeEquivalentTo("A required configuration for a service is missing or invalid. Please contact the administrator. Section: LlmConfig");
-    response.Should().ContainKey("traceId").WhoseValue.Should().BeEquivalentTo("test-trace-id");
+    response.Should().ContainKey("error");
+    ((JsonElement)response["error"]).GetString().Should().Be("Service Temporarily Unavailable");
+    response.Should().ContainKey("message");
+    ((JsonElement)response["message"]).GetString().Should().Be("A required configuration for a service is missing or invalid. Please contact the administrator. Section: LlmConfig");
+    response.Should().ContainKey("traceId");
+    ((JsonElement)response["traceId"]).GetString().Should().Be("test-trace-id");
   }
 
-  [Fact(Skip = "Test needs to be updated to match new response format")]
+  [Fact]
   public async Task Invoke_WithGenericException_Returns500WithErrorResponse()
   {
     // Arrange
@@ -143,11 +155,13 @@ public class ErrorHandlingMiddlewareTests
     });
 
     response.Should().NotBeNull();
-    response.Should().ContainKey("error").WhoseValue.Should().BeOfType<JsonElement>();
-    JsonElement errorElement = (JsonElement)response["error"];
-    errorElement.GetProperty("message").GetString().Should().BeEquivalentTo("An unexpected error occurred");
-    errorElement.GetProperty("type").GetString().Should().BeEquivalentTo("InvalidOperationException");
-    response.Should().ContainKey("traceId").WhoseValue.Should().BeEquivalentTo("test-trace-id");
+    response.Should().ContainKey("error");
+    var errorElement = (JsonElement)response["error"];
+    errorElement.GetProperty("message").GetString().Should().Be("An unexpected error occurred");
+    errorElement.GetProperty("type").GetString().Should().Be("InvalidOperationException");
+    response.Should().ContainKey("request");
+    response.Should().ContainKey("traceId");
+    ((JsonElement)response["traceId"]).GetString().Should().Be("test-trace-id");
   }
 
   [Fact]
