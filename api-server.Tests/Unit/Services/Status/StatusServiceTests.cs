@@ -156,9 +156,16 @@ public class StatusServiceTests
     var result = await _statusService.GetServiceStatusAsync();
 
     // Assert
-    result.Should().NotBeEmpty();
-    result["OpenAiApi"].IsAvailable.Should().BeTrue();
-    result["OpenAiApi"].MissingConfigurations.Should().BeEmpty();
+    result.Should().NotBeEmpty("service status result should contain entries");
+
+    // More resilient approach using dictionary lookups that handles structure changes better
+    result.Should().ContainKey(ExternalServices.OpenAiApi, "OpenAI API should be included in the results");
+
+    var openAiStatus = result[ExternalServices.OpenAiApi];
+    openAiStatus.Should().NotBeNull("OpenAI status should be available");
+    openAiStatus.serviceName.Should().Be(ExternalServices.OpenAiApi, "service name should match the key");
+    openAiStatus.IsAvailable.Should().BeTrue("OpenAI API should be available with valid configuration");
+    openAiStatus.MissingConfigurations.Should().BeEmpty("no missing configurations should be reported");
   }
 
   [Trait("Category", "Unit")]
@@ -174,8 +181,9 @@ public class StatusServiceTests
 
     // Assert
     result.Should().NotBeEmpty();
-    result["OpenAiApi"].IsAvailable.Should().BeFalse();
-    result["OpenAiApi"].MissingConfigurations.Should().Contain("TestService1Config:ApiKey");
+    result.Should().ContainKey(ExternalServices.OpenAiApi);
+    result[ExternalServices.OpenAiApi].IsAvailable.Should().BeFalse();
+    result[ExternalServices.OpenAiApi].MissingConfigurations.Should().Contain("TestService1Config:ApiKey");
   }
 
   [Trait("Category", "Unit")]
@@ -191,8 +199,9 @@ public class StatusServiceTests
 
     // Assert
     result.Should().NotBeEmpty();
-    result["OpenAiApi"].IsAvailable.Should().BeFalse();
-    result["OpenAiApi"].MissingConfigurations.Should().Contain("TestService1Config:ApiKey");
+    result.Should().ContainKey(ExternalServices.OpenAiApi);
+    result[ExternalServices.OpenAiApi].IsAvailable.Should().BeFalse();
+    result[ExternalServices.OpenAiApi].MissingConfigurations.Should().Contain("TestService1Config:ApiKey");
   }
 
   [Trait("Category", "Unit")]
@@ -223,8 +232,8 @@ public class StatusServiceTests
 
     // Act - Call GetServiceStatusAsync to populate cache first
     await _statusService.GetServiceStatusAsync();
-    // Use string overload for non-existent feature
-    var result = _statusService.GetFeatureStatus("NonExistentFeature");
+    // Use a value that doesn't exist in our test data
+    var result = _statusService.GetFeatureStatus(ExternalServices.MsGraph);
 
     // Assert
     result.Should().BeNull();
@@ -290,8 +299,8 @@ public class StatusServiceTests
 
     // Act - Call GetServiceStatusAsync to populate cache first
     await _statusService.GetServiceStatusAsync();
-    // Use string overload for non-existent feature
-    var result = _statusService.IsFeatureAvailable("NonExistentFeature");
+    // Use a value that doesn't exist in our test data
+    var result = _statusService.IsFeatureAvailable(ExternalServices.MsGraph);
 
     // Assert
     result.Should().BeFalse();

@@ -1,6 +1,6 @@
 # Module/Directory: /Services/Status
 
-**Last Updated:** 2025-05-14
+**Last Updated:** 2025-05-16
 
 > **Parent:** [`/Services/README.md`](../README.md)
 
@@ -39,17 +39,17 @@
 * **ConfigurationItemStatus:**
     * Record type with `Name`, `Status` ("Configured" or "Missing/Invalid"), and optional `Details` (never the secret value).
 * **ServiceStatusInfo:**
-    * Record type with `IsAvailable` flag and `MissingConfigurations` list, providing detailed status information about a service.
+    * Record type with `ServiceName` (`ExternalServices` enum), `IsAvailable` flag, and `MissingConfigurations` list, providing detailed status information about a service.
+    * Used both internally (as dictionary values) and externally (in API responses as list items).
 
 ## 3. Interface Contract & Assumptions
 
 * **IStatusService:**
     * `Task<List<ConfigurationItemStatus>> GetConfigurationStatusAsync();` — Returns a list of status objects for each critical configuration item. Does not expose secret values.
-    * `Task<Dictionary<string, ServiceStatusInfo>> GetServiceStatusAsync();` — Returns a dictionary mapping service names to their status information. Each `ServiceStatusInfo` contains availability status and a list of missing configurations.
-    * `ServiceStatusInfo? GetFeatureStatus(Feature feature);` — Returns status information for a specific feature using the strongly-typed Feature enum, or null if the feature is not found. Primarily used by the `ServiceAvailabilityOperationFilter` for Swagger UI integration.
-    * `bool IsFeatureAvailable(Feature feature);` — Returns whether a specific feature is available (properly configured) using the strongly-typed Feature enum. Primarily used by the `ServiceAvailabilityOperationFilter` for Swagger UI integration.
-    * `ServiceStatusInfo? GetFeatureStatus(string featureName);` — String-based overload maintained for backward compatibility. Returns status information for a specific feature by name, or null if the feature is not found.
-    * `bool IsFeatureAvailable(string featureName);` — String-based overload maintained for backward compatibility. Returns whether a specific feature is available by name.
+    * `Task<Dictionary<ExternalServices, ServiceStatusInfo>> GetServiceStatusAsync();` — Returns a dictionary mapping `ExternalServices` enum values to their status information. Each `ServiceStatusInfo` contains the service name, availability status, and a list of missing configurations.
+    * `ServiceStatusInfo? GetFeatureStatus(ExternalServices service);` — Returns status information for a specific service using the strongly-typed `ExternalServices` enum, or null if the service is not found. Primarily used by the `ServiceAvailabilityOperationFilter` for Swagger UI integration.
+    * `bool IsFeatureAvailable(ExternalServices service);` — Returns whether a specific service is available (properly configured) using the strongly-typed `ExternalServices` enum. Primarily used by the `ServiceAvailabilityOperationFilter` for Swagger UI integration.
+    * Note: All string-based overloads have been removed as part of the enum refactoring.
 * **Critical Assumptions:**
     * Assumes all required config objects are registered and injected.
     * Assumes placeholder value is "recommended to set in app secrets".
@@ -83,16 +83,16 @@
     * `GetConfigurationStatusAsync()` is used by the `/api/config` endpoint to report specific configuration status.
     * The `FeatureAvailabilityMiddleware` is registered in the request pipeline in `ApplicationStartup.cs` using the extension method `UseFeatureAvailability()`.
 * **Marking Configuration Requirements:**
-    * Decorate properties in configuration classes with `[RequiresConfiguration(Feature.FeatureName)]` to indicate they are required for specific features to function.
-    * Example: `[RequiresConfiguration(Feature.LLM)] public string ApiKey { get; set; } = string.Empty;`
-    * You can specify multiple features if the property is required for more than one feature: `[RequiresConfiguration(Feature.LLM, Feature.AiServices)]`
+    * Decorate properties in configuration classes with `[RequiresConfiguration(ExternalServices.ServiceName)]` to indicate they are required for specific services to function.
+    * Example: `[RequiresConfiguration(ExternalServices.OpenAiApi)] public string ApiKey { get; set; } = string.Empty;`
+    * You can specify multiple services if the property is required for more than one service: `[RequiresConfiguration(ExternalServices.OpenAiApi, ExternalServices.GitHubAccess)]`
 * **Marking Feature Dependencies:**
-    * Decorate controllers or action methods with `[DependsOnService(Feature.FeatureName)]` to indicate which features are required for them to function.
-    * Example: `[DependsOnService(Feature.LLM)] public async Task<ActionResult> Completion([FromBody] string prompt) { ... }`
-    * The middleware will automatically prevent access to these endpoints if any of the required features are unavailable.
+    * Decorate controllers or action methods with `[DependsOnService(ExternalServices.ServiceName)]` to indicate which services are required for them to function.
+    * Example: `[DependsOnService(ExternalServices.OpenAiApi)] public async Task<ActionResult> Completion([FromBody] string prompt) { ... }`
+    * The middleware will automatically prevent access to these endpoints if any of the required services are unavailable.
 * **Checking Service Availability:**
     * Inject `IStatusService` to check if services are available based on their configuration requirements.
-    * Example: `var statuses = await _statusService.GetServiceStatusAsync(); bool isLlmAvailable = statuses["LLM"].IsAvailable;`
+    * Example: `var statuses = await _statusService.GetServiceStatusAsync(); bool isLlmAvailable = statuses[ExternalServices.OpenAiApi].IsAvailable;`
 
 ## 6. Dependencies
 
@@ -119,8 +119,9 @@
 * The service architecture was refactored to provide a consolidated interface (`IStatusService`) that handles both direct configuration status and service/feature availability, simplifying the API and reducing confusion.
 * The new `[RequiresConfiguration]` approach provides a more declarative way to specify configuration dependencies, making it easier to maintain and extend.
 * **May 2025 Refactor (`StatusService`):** `StatusService` was refactored to discover `IConfig` implementations by scanning a specified `Assembly` (defaulting to the main application assembly) and then resolving these types via `IServiceProvider`. A new constructor was added to allow injection of the `Assembly` to be scanned, significantly improving the testability of the service by allowing tests to provide a mock assembly with controlled `IConfig` types.
-* **May 2025 Feature Enumeration Refactor:** The `Feature` enum was introduced to replace string-based feature names, improving type safety and making dependencies between configurations and features more explicit. The `[RequiresConfiguration]` attribute was updated to accept `Feature` enum values instead of string configuration keys, and configuration keys are now automatically derived from class and property names.
+* **May 2025 Enum-Based Service Refactor:** The `ExternalServices` enum was used to replace string-based service names, improving type safety and making dependencies between configurations and services more explicit. The `[RequiresConfiguration]` attribute was updated to accept `ExternalServices` enum values instead of string configuration keys, and configuration keys are now automatically derived from class and property names. This allows for more reliable static analysis and compile-time checking of service dependencies.
 * **May 2025 Interface Consolidation:** The previously separate `IConfigurationStatusService` interface was merged into `IStatusService` to provide a unified API for all status-related functionality, simplifying service registration and usage.
+* **May 2025 API Response Format:** The external API response format for `/api/status` was changed from a Dictionary to a List of `ServiceStatusInfo` objects to better align with RESTful API practices and improve client usability. The internal API (`IStatusService.GetServiceStatusAsync()`) still returns a Dictionary for efficient lookups within the application code.
 * **May 2025 Code Organization:** The service availability related files (`RequiresConfigurationAttribute`, `DependsOnServiceAttribute`, `ServiceUnavailableException`, and `ServiceAvailabilityOperationFilter`) were relocated from the `/Config` directory to the `/Services/Status` directory to better reflect their functional relationship with the status service functionality.
 * **May 2025 Feature Availability Middleware:** The `FeatureAvailabilityMiddleware` was added to proactively enforce feature availability at runtime, preventing API consumers from accessing endpoints that can't function due to missing configurations. This provides a cleaner user experience by returning explicit 503 responses with detailed reasons, rather than allowing requests to proceed and fail with less specific errors.
 
@@ -131,3 +132,5 @@
 * Consider optimizing the caching mechanism in `StatusService` to better support high-concurrency scenarios where Swagger might be making multiple requests.
 * Consider adding a mechanism to manually refresh the configuration status cache when configuration changes are known to have occurred.
 * Implement a code analyzer or static analysis tool to ensure configuration keys are always valid and match between `appsettings.json` and `[RequiresConfiguration]` attributes. This would help catch configuration issues at compile-time rather than runtime.
+* Consider adding validation or normalization in the external API for consistency between response formats.
+* Add better documentation of the `ExternalServices` enum values in the API response to make the values more self-explanatory to API consumers.

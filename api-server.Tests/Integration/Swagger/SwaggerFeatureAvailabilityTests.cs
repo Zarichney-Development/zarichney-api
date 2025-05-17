@@ -10,6 +10,7 @@ using Zarichney.Config;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 using Zarichney.Tests.Framework.Helpers;
+using static Zarichney.Tests.Framework.Helpers.TestFactories;
 
 namespace Zarichney.Tests.Integration.Swagger;
 
@@ -27,6 +28,10 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
 {
   private const string _swaggerJsonUrl = "/api/swagger/swagger.json";
 
+  /// <summary>
+  /// Tests that the Swagger UI doesn't show any warnings for endpoints
+  /// when all required features are available.
+  /// </summary>
   [Fact]
   [Trait(TestCategories.Feature, TestCategories.Swagger)]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
@@ -39,19 +44,15 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     // Set up the mock to return available status for any feature (enum-based)
     mockStatusService
         .Setup(s => s.GetFeatureStatus(It.IsAny<ExternalServices>()))
-        .Returns(new ServiceStatusInfo(IsAvailable: true, []));
+        .Returns((ExternalServices service) => new ServiceStatusInfo(serviceName: service, IsAvailable: true, MissingConfigurations: []));
 
     mockStatusService
         .Setup(s => s.IsFeatureAvailable(It.IsAny<ExternalServices>()))
         .Returns(true);
 
-    // For backward compatibility, support string-based lookups too
+    // The string overloads should be gone now, so no need to set these up
     mockStatusService
-        .Setup(s => s.GetFeatureStatus(It.IsAny<string>()))
-        .Returns(new ServiceStatusInfo(IsAvailable: true, []));
-
-    mockStatusService
-        .Setup(s => s.IsFeatureAvailable(It.IsAny<string>()))
+        .Setup(s => s.IsFeatureAvailable(It.IsAny<ExternalServices>()))
         .Returns(true);
 
     // Create a factory with replaced services
@@ -76,15 +77,33 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     // Assert
     swagger.Should().NotBeNull("Swagger JSON should be returned");
 
-    // Check if any path's operations have a warning symbol in the summary
+    // More resilient check using query projection rather than direct path navigation
     var operationsWithWarnings = swagger.Paths
-        .SelectMany(path => path.Value.Operations)
-        .Where(op => op.Value.Summary?.Contains("⚠️") == true)
+        // Convert to dictionary entries for more flexible checks
+        .Select(path => new { Path = path.Key, Operations = path.Value.Operations })
+        // Get all operations 
+        .SelectMany(x => x.Operations.Select(op => new
+        {
+          Path = x.Path,
+          HttpMethod = op.Key,
+          Operation = op.Value,
+          HasWarning = op.Value.Summary?.Contains("⚠️") == true
+        }))
+        // Filter to only operations with warnings
+        .Where(x => x.HasWarning)
         .ToList();
 
-    operationsWithWarnings.Should().BeEmpty("No operations should have warnings when all features are available");
+    // Better failure detail
+    operationsWithWarnings.Should().BeEmpty(
+        "No operations should have warnings when all features are available. " +
+        "Found warnings in: {0}",
+        string.Join(", ", operationsWithWarnings.Select(x => $"{x.Path} ({x.HttpMethod})")));
   }
 
+  /// <summary>
+  /// Tests that the Swagger UI shows appropriate warnings for AI endpoints
+  /// when the OpenAI API and GitHub services are unavailable due to missing configuration.
+  /// </summary>
   [Fact]
   [Trait(TestCategories.Feature, TestCategories.Swagger)]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
@@ -97,10 +116,10 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     // Also make LLM unavailable
     mockStatusService
         .Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
-        .Returns(new ServiceStatusInfo(
-          ExternalServices.OpenAiApi.ToString(),
-            IsAvailable: false,
-            ["LlmConfig:ApiKey"]
+        .Returns(TestFactories.CreateServiceStatus(
+          serviceName: ExternalServices.OpenAiApi,
+          isAvailable: false,
+          missingConfigurations: ["LlmConfig:ApiKey"]
         ));
 
     mockStatusService
@@ -111,9 +130,9 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     mockStatusService
         .Setup(s => s.GetFeatureStatus(ExternalServices.GitHubAccess))
         .Returns(new ServiceStatusInfo(
-          ExternalServices.GitHubAccess.ToString(),
-            IsAvailable: false,
-            ["GitHubConfig:AccessToken"]
+          serviceName: ExternalServices.GitHubAccess,
+          IsAvailable: false,
+          MissingConfigurations: ["GitHubConfig:AccessToken"]
         ));
 
     mockStatusService
@@ -124,23 +143,14 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     mockStatusService
         .Setup(s => s.GetFeatureStatus(It.Is<ExternalServices>(f =>
             f != ExternalServices.OpenAiApi && f != ExternalServices.GitHubAccess)))
-        .Returns(new ServiceStatusInfo(ExternalServices.GitHubAccess.ToString(), IsAvailable: true, []));
+        .Returns((ExternalServices service) => new ServiceStatusInfo(service, true, []));
 
     mockStatusService
         .Setup(s => s.IsFeatureAvailable(It.Is<ExternalServices>(f =>
             f != ExternalServices.OpenAiApi && f != ExternalServices.GitHubAccess)))
         .Returns(true);
 
-    // Also catch-all for any other string-based feature name
-    mockStatusService
-        .Setup(s => s.GetFeatureStatus(It.Is<string>(name =>
-            name != "Llm" && name != "Transcription" && name != "GitHub")))
-        .Returns(new ServiceStatusInfo(IsAvailable: true, []));
-
-    mockStatusService
-        .Setup(s => s.IsFeatureAvailable(It.Is<string>(name =>
-            name != "Llm" && name != "Transcription" && name != "GitHub")))
-        .Returns(true);
+    // String-based API is gone, so no need for these setup calls
 
     // Create a factory with replaced services
     var customFactory = Factory.WithWebHostBuilder(builder =>
@@ -199,6 +209,10 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     }
   }
 
+  /// <summary>
+  /// Tests that the Swagger UI shows appropriate warnings for Payment endpoints
+  /// when the Stripe service is unavailable due to missing configuration.
+  /// </summary>
   [Fact]
   [Trait(TestCategories.Feature, TestCategories.Swagger)]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
@@ -212,43 +226,27 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     mockStatusService
         .Setup(s => s.GetFeatureStatus(ExternalServices.Stripe))
         .Returns(new ServiceStatusInfo(
+            serviceName: ExternalServices.Stripe,
             IsAvailable: false,
-            ["PaymentConfig:StripeSecretKey", "PaymentConfig:StripeWebhookSecret"]
+            MissingConfigurations: ["PaymentConfig:StripeSecretKey", "PaymentConfig:StripeWebhookSecret"]
         ));
 
     mockStatusService
         .Setup(s => s.IsFeatureAvailable(ExternalServices.Stripe))
         .Returns(false);
 
-    // For backward compatibility, support string-based lookups too
-    mockStatusService
-        .Setup(s => s.GetFeatureStatus("Payment"))
-        .Returns(new ServiceStatusInfo(
-            IsAvailable: false,
-            ["PaymentConfig:StripeSecretKey", "PaymentConfig:StripeWebhookSecret"]
-        ));
-
-    mockStatusService
-        .Setup(s => s.IsFeatureAvailable("Payment"))
-        .Returns(false);
+    // No longer need string-based lookups
 
     // Other features are available - catch-all for any other Feature enum value
     mockStatusService
         .Setup(s => s.GetFeatureStatus(It.Is<ExternalServices>(f => f != ExternalServices.Stripe)))
-        .Returns(new ServiceStatusInfo(IsAvailable: true, []));
+        .Returns((ExternalServices service) => new ServiceStatusInfo(serviceName: service, IsAvailable: true, MissingConfigurations: []));
 
     mockStatusService
         .Setup(s => s.IsFeatureAvailable(It.Is<ExternalServices>(f => f != ExternalServices.Stripe)))
         .Returns(true);
 
-    // Also catch-all for any other string-based feature name
-    mockStatusService
-        .Setup(s => s.GetFeatureStatus(It.Is<string>(name => name != "Payment")))
-        .Returns(new ServiceStatusInfo(IsAvailable: true, []));
-
-    mockStatusService
-        .Setup(s => s.IsFeatureAvailable(It.Is<string>(name => name != "Payment")))
-        .Returns(true);
+    // No longer need string-based lookups
 
     // Create a factory with replaced services
     var customFactory = Factory.WithWebHostBuilder(builder =>
@@ -289,6 +287,10 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     }
   }
 
+  /// <summary>
+  /// Tests that the Swagger UI shows appropriate warnings for all affected endpoints
+  /// when multiple services (OpenAI API, GitHub, and Stripe) are unavailable due to missing configuration.
+  /// </summary>
   [Fact]
   [Trait(TestCategories.Feature, TestCategories.Swagger)]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
@@ -302,8 +304,9 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     mockStatusService
         .Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
         .Returns(new ServiceStatusInfo(
+            serviceName: ExternalServices.OpenAiApi,
             IsAvailable: false,
-            ["LlmConfig:ApiKey"]
+            MissingConfigurations: ["LlmConfig:ApiKey"]
         ));
 
     mockStatusService
@@ -313,8 +316,9 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     mockStatusService
         .Setup(s => s.GetFeatureStatus(ExternalServices.GitHubAccess))
         .Returns(new ServiceStatusInfo(
+            serviceName: ExternalServices.GitHubAccess,
             IsAvailable: false,
-            ["GitHubConfig:AccessToken"]
+            MissingConfigurations: ["GitHubConfig:AccessToken"]
         ));
 
     mockStatusService
@@ -324,64 +328,22 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     mockStatusService
         .Setup(s => s.GetFeatureStatus(ExternalServices.Stripe))
         .Returns(new ServiceStatusInfo(
+            serviceName: ExternalServices.Stripe,
             IsAvailable: false,
-            ["PaymentConfig:StripeSecretKey"]
+            MissingConfigurations: ["PaymentConfig:StripeSecretKey"]
         ));
 
     mockStatusService
         .Setup(s => s.IsFeatureAvailable(ExternalServices.Stripe))
         .Returns(false);
 
-    // For backward compatibility, support string-based lookups too
-    mockStatusService
-        .Setup(s => s.GetFeatureStatus("Llm"))
-        .Returns(new ServiceStatusInfo(
-            IsAvailable: false,
-            ["LlmConfig:ApiKey"]
-        ));
-
-    mockStatusService
-        .Setup(s => s.IsFeatureAvailable("Llm"))
-        .Returns(false);
-
-    mockStatusService
-        .Setup(s => s.GetFeatureStatus("Transcription"))
-        .Returns(new ServiceStatusInfo(
-            IsAvailable: false,
-            ["TranscribeConfig:ModelName"]
-        ));
-
-    mockStatusService
-        .Setup(s => s.IsFeatureAvailable("Transcription"))
-        .Returns(false);
-
-    mockStatusService
-        .Setup(s => s.GetFeatureStatus("GitHub"))
-        .Returns(new ServiceStatusInfo(
-            IsAvailable: false,
-            ["GitHubConfig:AccessToken"]
-        ));
-
-    mockStatusService
-        .Setup(s => s.IsFeatureAvailable("GitHub"))
-        .Returns(false);
-
-    mockStatusService
-        .Setup(s => s.GetFeatureStatus("Payment"))
-        .Returns(new ServiceStatusInfo(
-            IsAvailable: false,
-            ["PaymentConfig:StripeSecretKey"]
-        ));
-
-    mockStatusService
-        .Setup(s => s.IsFeatureAvailable("Payment"))
-        .Returns(false);
+    // No longer need string-based lookups - removed
 
     // Other features are available - catch-all for any other Feature enum value
     mockStatusService
         .Setup(s => s.GetFeatureStatus(It.Is<ExternalServices>(f =>
             f != ExternalServices.OpenAiApi && f != ExternalServices.GitHubAccess && f != ExternalServices.Stripe)))
-        .Returns(new ServiceStatusInfo(IsAvailable: true, []));
+        .Returns((ExternalServices service) => new ServiceStatusInfo(serviceName: service, IsAvailable: true, MissingConfigurations: []));
 
     mockStatusService
         .Setup(s => s.IsFeatureAvailable(It.Is<ExternalServices>(f =>
@@ -389,15 +351,8 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
         .Returns(true);
 
     // Also catch-all for any other string-based feature name
-    mockStatusService
-        .Setup(s => s.GetFeatureStatus(It.Is<ExternalServices>(name =>
-            name != "Llm" && name != "Transcription" && name != "GitHub" && name != "Payment")))
-        .Returns(new ServiceStatusInfo(IsAvailable: true, []));
-
-    mockStatusService
-        .Setup(s => s.IsFeatureAvailable(It.Is<ExternalServices>(name =>
-            name != "Llm" && name != "Transcription" && name != "GitHub" && name != "Payment")))
-        .Returns(true);
+    // This setup has incorrect type (was using strings as enum)
+    // Fixed to use proper enum comparison
 
     // Create a factory with replaced services
     var customFactory = Factory.WithWebHostBuilder(builder =>

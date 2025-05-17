@@ -1,5 +1,6 @@
 using Zarichney.Services.Status;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 
@@ -55,16 +56,36 @@ public static class ConfigurationStatusHelper
         return new Dictionary<string, ServiceStatusInfo>();
       }
 
-      // Deserialize the response
-      var statuses = await response.Content.ReadFromJsonAsync<Dictionary<string, ServiceStatusInfo>>();
-
-      if (statuses == null)
+      try
       {
-        // Return empty dictionary if deserialization failed
+        // First try to deserialize as a List<ServiceStatusInfo> (new format)
+        var statusList = await response.Content.ReadFromJsonAsync<List<ServiceStatusInfo>>();
+
+        if (statusList != null && statusList.Count > 0)
+        {
+          // Convert the list to dictionary using ServiceName as key for backwards compatibility
+          return statusList.ToDictionary(
+            s => s.serviceName.ToString(),
+            s => s
+          );
+        }
+
+        // If list deserialization fails or returns empty, try to deserialize as Dictionary (old format)
+        var legacyStatusDict = await response.Content.ReadFromJsonAsync<Dictionary<string, ServiceStatusInfo>>();
+
+        if (legacyStatusDict != null && legacyStatusDict.Count > 0)
+        {
+          return legacyStatusDict;
+        }
+
+        // If both formats fail, return empty dictionary
         return new Dictionary<string, ServiceStatusInfo>();
       }
-
-      return statuses;
+      catch (JsonException)
+      {
+        // If JSON deserialization fails (format doesn't match), return empty dictionary
+        return new Dictionary<string, ServiceStatusInfo>();
+      }
     }
     catch
     {
