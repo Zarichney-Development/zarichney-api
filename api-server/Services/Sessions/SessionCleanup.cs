@@ -115,4 +115,11 @@ public class SessionCleanupService : BackgroundService
     await base.StopAsync(cancellationToken);
     _cleanupLock.Dispose();
   }
+
+  public override void Dispose()
+  {
+    _cleanupLock.Dispose();
+    base.Dispose();
+    GC.SuppressFinalize(this);
+  }
 }

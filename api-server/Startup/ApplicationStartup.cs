@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Serilog;
 using Zarichney.Config;
 using Zarichney.Cookbook.Recipes;
+using Zarichney.Services.Status;
 
 namespace Zarichney.Startup;
 
@@ -76,6 +77,9 @@ public static class ApplicationStartup
     application.UseMiddleware<RequestResponseLoggerMiddleware>();
     application.UseMiddleware<ErrorHandlingMiddleware>();
 
+    // Serve static files to make the custom CSS available - must come before UseSwagger
+    application.UseStaticFiles();
+
     application.UseForwardedHeaders(new ForwardedHeadersOptions
     {
       // This tells the app to trust proxy headers (like X-Forwarded-Proto set by CloudFront/ALB) indicating the original request was HTTPS
@@ -92,21 +96,19 @@ public static class ApplicationStartup
       {
         c.SwaggerEndpoint("/api/swagger/swagger.json", "Zarichney API");
         c.RoutePrefix = "api/swagger";
-      });
 
-    // if (application.Environment.IsProduction())
-    // {
-    //   application.UseHttpsRedirection();
-    //   Log.Information("HTTPS redirection middleware added for Production (will respect X-Forwarded-Proto).");
-    // }
-    // else
-    // {
-    //   Log.Information("HTTPS redirection middleware disabled for {EnvironmentName} environment.", application.Environment.EnvironmentName);
-    // }
+        // Apply custom CSS for better warning visibility
+        c.InjectStylesheet("/api/swagger-ui/custom.css");
+        c.InjectJavascript("/api/swagger-ui/custom.js");
+      });
 
     application.UseCors("AllowSpecificOrigin");
     application.UseCustomAuthentication();
     application.UseSessionManagement(); // Session's user detection requires authentication, must be after
+
+    // Check feature availability before executing endpoints
+    application.UseFeatureAvailability();
+
     application.MapControllers();
 
     if (application.Environment.IsProduction())

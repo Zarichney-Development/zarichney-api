@@ -49,90 +49,76 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
       var getAlternativeQueryPrompt = new GetAlternativeQueryPrompt();
 
       // Setup test data
-      _recipes = new List<Recipe>
+      _recipes =
+      [
+        new Recipe
+        {
+          Id = "recipe1",
+          Title = "Chicken Noodle Soup",
+          Description = "A classic chicken soup",
+          Ingredients = ["Chicken", "Noodles", "Broth"],
+          Directions = ["Boil water", "Add ingredients", "Simmer"],
+          IndexTitle = "Chicken Noodle Soup",
+          Servings = "4",
+          PrepTime = "10 minutes",
+          CookTime = "30 minutes",
+          TotalTime = "40 minutes",
+          Notes = "",
+          Aliases = [],
+          Relevancy = new Dictionary<string, RelevancyResult>
+          {
             {
-                new Recipe
-                {
-                    Id = "recipe1",
-                    Title = "Chicken Noodle Soup",
-                    Description = "A classic chicken soup",
-                    Ingredients = ["Chicken", "Noodles", "Broth"],
-                    Directions = ["Boil water", "Add ingredients", "Simmer"],
-                    IndexTitle = "Chicken Noodle Soup",
-                    Servings = "4",
-                    PrepTime = "10 minutes",
-                    CookTime = "30 minutes",
-                    TotalTime = "40 minutes",
-                    Notes = "",
-                    Aliases = [],
-                    Relevancy = new Dictionary<string, RelevancyResult>
-                    {
-                        {
-                            _query,
-                            new RelevancyResult
-                            {
-                                Query = _query,
-                                Score = 85,
-                                Reasoning = "Great match for chicken soup"
-                            }
-                        }
-                    }
-                },
-                new Recipe
-                {
-                    Id = "recipe2",
-                    Title = "Basic Broth",
-                    Description = "A simple broth",
-                    Ingredients = ["Water", "Vegetables"],
-                    Directions = ["Boil water", "Add vegetables", "Simmer"],
-                    IndexTitle = "Basic Broth",
-                    Servings = "4",
-                    PrepTime = "5 minutes",
-                    CookTime = "20 minutes",
-                    TotalTime = "25 minutes",
-                    Notes = "",
-                    Aliases = [],
-                    Relevancy = new Dictionary<string, RelevancyResult>
-                    {
-                        {
-                            _query,
-                            new RelevancyResult
-                            {
-                                Query = _query,
-                                Score = 60,
-                                Reasoning = "Not a complete match for chicken soup"
-                            }
-                        }
-                    }
-                },
-                new Recipe
-                {
-                    Id = "recipe3",
-                    Title = "Chicken Stock",
-                    Description = "A rich chicken stock",
-                    Ingredients = ["Chicken bones", "Vegetables", "Water"],
-                    Directions = ["Roast bones", "Add water", "Simmer"],
-                    IndexTitle = "Chicken Stock",
-                    Servings = "8",
-                    PrepTime = "15 minutes",
-                    CookTime = "4 hours",
-                    TotalTime = "4 hours 15 minutes",
-                    Notes = "",
-                    Aliases = [],
-                    Relevancy = new Dictionary<string, RelevancyResult>
-                    {
-                        {
-                            _query,
-                            new RelevancyResult
-                            {
-                                Query = _query,
-                                Score = 80,
-                                Reasoning = "Good match for chicken soup base"
-                            }
-                        }
-                    }
-                }
-            };
+              _query, new RelevancyResult { Query = _query, Score = 85, Reasoning = "Great match for chicken soup" }
+            }
+          }
+        },
+
+        new Recipe
+        {
+          Id = "recipe2",
+          Title = "Basic Broth",
+          Description = "A simple broth",
+          Ingredients = ["Water", "Vegetables"],
+          Directions = ["Boil water", "Add vegetables", "Simmer"],
+          IndexTitle = "Basic Broth",
+          Servings = "4",
+          PrepTime = "5 minutes",
+          CookTime = "20 minutes",
+          TotalTime = "25 minutes",
+          Notes = "",
+          Aliases = [],
+          Relevancy = new Dictionary<string, RelevancyResult>
+          {
+            {
+              _query,
+              new RelevancyResult { Query = _query, Score = 60, Reasoning = "Not a complete match for chicken soup" }
+            }
+          }
+        },
+
+        new Recipe
+        {
+          Id = "recipe3",
+          Title = "Chicken Stock",
+          Description = "A rich chicken stock",
+          Ingredients = ["Chicken bones", "Vegetables", "Water"],
+          Directions = ["Roast bones", "Add water", "Simmer"],
+          IndexTitle = "Chicken Stock",
+          Servings = "8",
+          PrepTime = "15 minutes",
+          CookTime = "4 hours",
+          TotalTime = "4 hours 15 minutes",
+          Notes = "",
+          Aliases = [],
+          Relevancy = new Dictionary<string, RelevancyResult>
+          {
+            {
+              _query,
+              new RelevancyResult { Query = _query, Score = 80, Reasoning = "Good match for chicken soup base" }
+            }
+          }
+        }
+      ];
 
       // Setup default repository search to return test data
       _mockRepository.Setup(r => r.SearchRecipes(
@@ -155,7 +141,7 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
       // Setup default web scraper to return empty by default
       _mockWebScraper.Setup(w => w.ScrapeForRecipesAsync(
           It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string?>()))
-          .ReturnsAsync(new List<ScrapedRecipe>());
+          .ReturnsAsync([]);
 
       // Setup config
       var recipeConfig = new RecipeConfig
@@ -225,11 +211,11 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
           It.Is<int?>(s => s == _acceptableScore),
           It.IsAny<int?>(),
           It.IsAny<CancellationToken>()))
-          .ReturnsAsync(new List<Recipe>());
+          .ReturnsAsync([]);
 
       var scrapedRecipes = new List<ScrapedRecipe>
             {
-                new ScrapedRecipe
+                new()
                 {
                     Id = "scraped1",
                     Title = "Exotic Curry",
@@ -248,7 +234,7 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
 
       var mappedRecipes = new List<Recipe>
             {
-                new Recipe
+                new()
                 {
                     Id = "scraped1",
                     Title = "Exotic Curry",

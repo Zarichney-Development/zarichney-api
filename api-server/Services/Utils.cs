@@ -43,7 +43,7 @@ public static class Utils
   public static List<string> GetListPropertyValue(object obj, string propertyName)
   {
     var property = obj.GetType().GetProperty(propertyName);
-    return (property?.GetValue(obj) as IEnumerable<string> ?? Enumerable.Empty<string>()).ToList();
+    return (property?.GetValue(obj) as IEnumerable<string> ?? []).ToList();
   }
 
   // MarkdownConverter methods
@@ -235,12 +235,12 @@ public class AtomicCounter
 
 public static class HtmlStripper
 {
-  private static readonly Regex StripHtmlRegex = new Regex(
+  private static readonly Regex StripHtmlRegex = new(
     @"</?(?!h[1-6]|p|br/?|strong|em|ul|ol|li|blockquote)[^>]+>|<(h[1-6]|p|blockquote)[\s>]",
     RegexOptions.IgnoreCase | RegexOptions.Compiled
   );
 
-  private static readonly Regex CleanupRegex = new Regex(
+  private static readonly Regex CleanupRegex = new(
     @"^\s+|&nbsp;|\s+$|\n\s*\n\s*\n",
     RegexOptions.Multiline | RegexOptions.Compiled
   );

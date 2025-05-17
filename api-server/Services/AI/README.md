@@ -20,8 +20,9 @@
 ## 2. Architecture & Key Concepts
 
 * **Core Services:**
+    * `AiService`: Implements `IAiService` as a high-level orchestration service that integrates various AI-related services. Provides a simplified interface for audio transcription workflows (`ProcessAudioTranscriptionAsync`) and LLM completion operations (`GetCompletionAsync`) by coordinating `ILlmService`, `ITranscribeService`, `IGitHubService`, `IEmailService`, and `ISessionManager`. Used by `AiController` to reduce controller complexity and improve separation of concerns. [cite: api-server/Services/AI/AiService.cs]
     * `LlmService`: Implements `ILlmService` using the official `OpenAI` .NET library (`OpenAIClient`). Handles chat completions, function calling (leveraging `PromptBase` definitions), and the stateful Assistants API flow. Incorporates Polly for retry logic. [cite: api-server/Services/AI/LlmService.cs]
-    * `TranscribeService`: Implements `ITranscribeService` using the `OpenAI` library's `AudioClient`. Handles audio stream processing and calls to the Whisper API. Uses Polly for retries. [cite: api-server/Services/AI/TranscribeService.cs]
+    * `TranscribeService`: Implements `ITranscribeService` using the `OpenAI` library's `AudioClient`. Handles audio file validation, transcription processing, filename generation, and error handling. Provides comprehensive methods for validating audio files (`ValidateAudioFile`) and processing complete audio files with metadata generation (`ProcessAudioFileAsync`). Uses Polly for retries and integrates with `IEmailService` for error notifications. [cite: api-server/Services/AI/TranscribeService.cs]
     * `LlmRepository`: Implements `ILlmRepository` for saving conversation history. Currently delegates persistence to `IGitHubService`. [cite: api-server/Services/AI/LlmRepository.cs, api-server/Services/GitHub/GitHubService.cs]
 * **Prompt Base Class:** `PromptBase` defines a standard structure for creating prompt definitions used with the `LlmService`. It standardizes properties like system instructions, model name, and function definitions. [cite: api-server/Services/AI/PromptBase.cs]
 * **Configuration:** Uses `LlmConfig` and `TranscribeConfig` classes (registered via `IConfig`) injected via DI to configure API keys, model names, and retry attempts. [cite: api-server/Services/AI/LlmService.cs, api-server/Services/AI/TranscribeService.cs]
@@ -34,6 +35,7 @@
 graph TD
     subgraph AIServices ["Services/AI Module"]
         direction LR
+        AiSvc["AiService (IAiService)"]
         LlmSvc["LlmService (ILlmService)"]
         TranscribeSvc["TranscribeService (ITranscribeService)"]
         LlmRepo["LlmRepository (ILlmRepository)"]
@@ -48,6 +50,7 @@ graph TD
     subgraph CoreServices ["Core Services / Config"]
         SessionMgr["SessionManager"]
         GithubSvc["GitHubService"]
+        EmailSvc["EmailService"]
         LlmConfig["LlmConfig"]
         TranscribeConfig["TranscribeConfig"]
     end
@@ -62,7 +65,13 @@ graph TD
 
     %% Interactions
     ExternalConsumers --> LlmSvc
-    AiController --> TranscribeSvc
+    AiController --> AiSvc
+    
+    AiSvc --> LlmSvc
+    AiSvc --> TranscribeSvc
+    AiSvc --> GithubSvc
+    AiSvc --> EmailSvc
+    AiSvc --> SessionMgr
 
     LlmSvc --> OpenAISDK
     LlmSvc --> SessionMgr
@@ -71,6 +80,7 @@ graph TD
     LlmSvc -- Uses --> LlmConfig
 
     TranscribeSvc --> OpenAISDK
+    TranscribeSvc --> EmailSvc
     TranscribeSvc -- Uses --> TranscribeConfig
 
     LlmRepo --> GithubSvc
@@ -86,10 +96,10 @@ graph TD
     classDef config fill:#eee,stroke:#666,stroke-width:1px;
     classDef consumer fill:#f9f,stroke:#333,stroke-width:2px;
 
-    class LlmSvc,TranscribeSvc service;
+    class AiSvc,LlmSvc,TranscribeSvc service;
     class LlmRepo repo;
     class PromptBaseClass,ExamplePrompt prompt;
-    class SessionMgr,GithubSvc external;
+    class SessionMgr,GithubSvc,EmailSvc external;
     class OpenAISDK external;
     class LlmConfig,TranscribeConfig config;
     class CookbookSvcs,AiController consumer;
@@ -98,7 +108,12 @@ graph TD
 
 ## 3. Interface Contract & Assumptions
 
-* **Key Public Interfaces:** `ILlmService`, `ITranscribeService`, `ILlmRepository`, `PromptBase`.
+* **Key Public Interfaces:** 
+    * `IAiService`: High-level service interface for AI operations. Provides coordinated methods for audio transcription workflows and LLM completions that leverage multiple underlying services.
+    * `ILlmService`: Provides methods for interacting with OpenAI's LLM models.
+    * `ITranscribeService`: Provides methods for audio transcription, validation, and processing. Includes `TranscribeAudioAsync` for basic transcription, `ValidateAudioFile` for audio file validation, and `ProcessAudioFileAsync` for full audio processing workflow with metadata generation.
+    * `ILlmRepository`: Provides methods for persisting LLM conversation logs.
+    * `PromptBase`: Base class for creating structured prompts for LLM interactions.
 * **Return Types:**
     * `CallFunction<T>` and `GetCompletionContent(List<ChatMessage>...)` now return an `LlmResult<T>` object containing both the primary `Data` and the `ConversationId`. This facilitates multi-turn conversations managed by the caller without requiring manual history reconstruction.
     * The single-prompt overload `GetCompletionContent(string userPrompt...)` continues to return just the completion string for backward compatibility.
@@ -150,9 +165,9 @@ graph TD
     * `AutoMapper`: Used for mapping between `FunctionDefinition` and OpenAI's `FunctionToolDefinition`.
 * **Dependents (Impact of Changes):**
     * [`/Cookbook`](../../Cookbook/README.md): Multiple services (`RecipeService`, `OrderService`, `RecipeRepository`, `WebScraperService`) consume `ILlmService`.
-    * [`/Controllers/AiController.cs`](../../Controllers/AiController.cs): Consumes `ILlmService` and `ITranscribeService`.
+    * [`/Controllers/AiController.cs`](../../Controllers/AiController.cs): Now uses the high-level `IAiService` interface instead of directly integrating with multiple services. This improved architecture reduces the controller's responsibilities and provides better separation of concerns.
     * [`/Cookbook/Prompts`](../../Cookbook/Prompts/README.md): Contains implementations of `PromptBase`.
-    * Changes to `ILlmService`, `ITranscribeService`, or `PromptBase` interfaces would impact all consuming modules.
+    * Changes to `IAiService`, `ILlmService`, `ITranscribeService`, or `PromptBase` interfaces would impact all consuming modules.
 
 ## 7. Rationale & Key Historical Context
 

@@ -23,10 +23,10 @@ public class Recipe
   /// <summary>
   /// Gets or sets the list of ingredients.
   /// </summary>
-  public List<string> Ingredients { get; set; } = new List<string>();
+  public List<string> Ingredients { get; set; } = new();
 
   /// <summary>
   /// Gets or sets the list of instructions.
   /// </summary>
-  public List<string> Instructions { get; set; } = new List<string>();
+  public List<string> Instructions { get; set; } = new();
 }

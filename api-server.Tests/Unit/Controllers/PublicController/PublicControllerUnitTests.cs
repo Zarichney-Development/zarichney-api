@@ -1,9 +1,10 @@
+using Zarichney.Services.Status;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
-using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Helpers;
 
 namespace Zarichney.Tests.Unit.Controllers.PublicController;
 
@@ -58,62 +59,63 @@ public class PublicControllerUnitTests
   }
 
   /// <summary>
-  /// Verifies that GetConfigurationStatus returns an OK result with the status list
+  /// Verifies that GetServicesStatus returns an OK result with the status list
   /// when the IStatusService succeeds.
-  /// Corresponds to README TODOs:
-  /// - Test `_statusService.GetPublicStatusAsync` (or similar) called. (Adapted for GetConfigurationStatusAsync)
-  /// - Test handling successful service result -> verify `OkObjectResult` with status data.
   /// </summary>
   [Fact]
-  public async Task GetConfigurationStatus_WhenServiceSucceeds_ReturnsOkWithStatusList()
+  public async Task GetServicesStatus_WhenServiceSucceeds_ReturnsOkWithStatusList()
   {
     // Arrange
-    var expectedStatusList = new List<ConfigurationItemStatus>
+    var service1 = ExternalServices.OpenAiApi;
+    var service2 = ExternalServices.MsGraph;
+
+    var expectedStatusDict = new Dictionary<ExternalServices, ServiceStatusInfo>
     {
-      new("Test Item 1", "Configured"),
-      new("Test Item 2", "Missing/Invalid", "Missing value")
+      { service1, new ServiceStatusInfo(service1, true, []) },
+      { service2, new ServiceStatusInfo(service2, false, [GetRandom.String()]) }
     };
+
+    var expectedList = expectedStatusDict.Values.ToList();
+
     _mockStatusService
-      .Setup(s => s.GetConfigurationStatusAsync())
-      .ReturnsAsync(expectedStatusList)
-      .Verifiable(); // Removed 'because' parameter
+      .Setup(s => s.GetServiceStatusAsync())
+      .ReturnsAsync(expectedStatusDict)
+      .Verifiable();
 
     // Act
-    var result = await _controller.GetConfigurationStatus();
+    var result = await _controller.GetServicesStatus();
 
     // Assert
     result.Should()
       .BeOfType<OkObjectResult>(because: "a successful service call should return an OK status with content");
     var okResult = result as OkObjectResult;
     okResult.Should().NotBeNull();
-    okResult.Value.Should().BeEquivalentTo(expectedStatusList,
-      because: "the returned value should match the list from the service");
+    okResult.Value.Should().BeEquivalentTo(expectedList,
+      because: "the returned value should match the list of service statuses from the service");
 
-    _mockStatusService.Verify(); // Verify the setup was called
+    _mockStatusService.Verify();
   }
 
   /// <summary>
-  /// Verifies that GetConfigurationStatus propagates exceptions thrown by the IStatusService.
-  /// Corresponds to README TODO: Test handling failure/exception from service -> verify appropriate error ActionResult.
-  /// (Note: In unit tests, we verify the exception propagates; middleware handles the final ActionResult in integration).
+  /// Verifies that GetServicesStatus propagates exceptions thrown by the IStatusService.
   /// </summary>
   [Fact]
-  public async Task GetConfigurationStatus_WhenServiceThrows_ThrowsException()
+  public async Task GetServicesStatus_WhenServiceThrows_ThrowsException()
   {
     // Arrange
     var expectedException = new InvalidOperationException("Service failure simulation");
     _mockStatusService
-      .Setup(s => s.GetConfigurationStatusAsync())
+      .Setup(s => s.GetServiceStatusAsync())
       .ThrowsAsync(expectedException)
-      .Verifiable(); // Removed 'because' parameter
+      .Verifiable();
 
     // Act
-    Func<Task> act = async () => await _controller.GetConfigurationStatus();
+    Func<Task> act = async () => await _controller.GetServicesStatus();
 
     // Assert
     await act.Should().ThrowAsync<InvalidOperationException>(because: "exceptions from the service should propagate")
       .WithMessage(expectedException.Message);
 
-    _mockStatusService.Verify(); // Verify the setup was called
+    _mockStatusService.Verify();
   }
 }

@@ -1,3 +1,4 @@
+using Zarichney.Services.Status;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Zarichney.Cookbook.Customers;
@@ -9,6 +10,7 @@ namespace Zarichney.Controllers;
 [ApiController]
 [Route("api/payments")]
 [Authorize]
+[DependsOnService(ExternalServices.Stripe)]
 public class PaymentController(
   ILogger<PaymentController> logger,
   IPaymentService paymentService,
@@ -115,7 +117,11 @@ public class PaymentController(
   [ProducesResponseType(StatusCodes.Status400BadRequest)]
   public async Task<IActionResult> HandleWebhook()
   {
-    var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+    string json;
+    using (var reader = new StreamReader(HttpContext.Request.Body))
+    {
+      json = await reader.ReadToEndAsync();
+    }
 
     try
     {

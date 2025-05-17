@@ -1,10 +1,11 @@
 # Module/Directory: /Integration/Controllers/AiController
 
-**Last Updated:** 2025-04-18
+**Last Updated:** 2025-05-15
 
 > **Parent:** [`Controllers`](../README.md)
 > **Related:**
 > * **Source:** [`AiController.cs`](../../../../api-server/Controllers/AiController.cs)
+> * **Services:** [`AiService.cs`](../../../../api-server/Services/AI/AiService.cs), [`LlmService.cs`](../../../../api-server/Services/AI/LlmService.cs), [`TranscribeService.cs`](../../../../api-server/Services/AI/TranscribeService.cs)
 > * **Test Infrastructure:** [`IntegrationTestBase.cs`](../../IntegrationTestBase.cs), [`CustomWebApplicationFactory.cs`](../../../Framework/Fixtures/CustomWebApplicationFactory.cs)
 > * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
 
@@ -38,9 +39,11 @@ These tests focus on the externally observable behavior of the `AiController` en
 * **Test Server:** Provided by `CustomWebApplicationFactory<Program>`, bootstrapping the application stack in-memory. Refer to `TestingStandards.md` for the general approach.
 * **Authentication:** Simulated using `TestAuthHandler`. Client instances representing specific users/roles are created via helpers in `AuthTestHelper`. See `TestingStandards.md` for details.
 * **Mocked Dependencies:** Key external service interactions are replaced with mocks configured within `CustomWebApplicationFactory.ConfigureWebHost`. The crucial mocked interfaces for *these* tests are:
-    * `Zarichnyi.ApiServer.Services.AI.ILlmService`
-    * `Zarichnyi.ApiServer.Services.AI.ITranscribeService`
-    * `Zarichnyi.ApiServer.Services.GitHub.IGitHubService`
+    * `Zarichnyi.ApiServer.Services.AI.IAiService` - The primary service used by the controller for coordinating AI operations. This service orchestrates operations between other services.
+    * `Zarichnyi.ApiServer.Services.AI.ILlmService` - Used by AiService for LLM completions.
+    * `Zarichnyi.ApiServer.Services.AI.ITranscribeService` - Used by AiService for audio transcription and validation.
+    * `Zarichnyi.ApiServer.Services.GitHub.IGitHubService` - Used by AiService for storing audio files and transcripts.
+    * `Zarichnyi.ApiServer.Services.Email.IEmailService` - Used by AiService for sending error notifications.
     * *(Note: `ISessionManager` might also be mocked or use a test-specific implementation depending on factory setup).*
 
 ## 4. Maintenance Notes & Troubleshooting
@@ -63,18 +66,38 @@ These tests focus on the externally observable behavior of the `AiController` en
     * `Transcribe_WithIncorrectFormFieldName_ReturnsBadRequest` - Verifies 400 response when incorrect form field is used
     * `Transcribe_Unauthenticated_ReturnsUnauthorized` - Verifies 401 response for unauthenticated requests
 
+* **✅ Success Path Tests:**
+    * `Completion_WithValidTextPrompt_Authenticated_ReturnsOkAndCompletion` - Verifies 200 OK with valid text prompt, authenticated user
+    * `Completion_WithValidAudioPrompt_Authenticated_ReturnsOkAndCompletion` - Verifies 200 OK with valid audio prompt, authenticated user
+    * `Completion_WithBothTextAndAudioPrompt_PrioritizesAudioAndReturnsOk` - Verifies 200 OK when both prompts are present
+    * `Transcribe_WithValidAudioFile_Authenticated_ReturnsOkAndTranscription` - Verifies 200 OK with valid audio file, authenticated user
+    * `Transcribe_WithValidAudioFile_ReturnsOkAndTranscription` - Another successful transcription test case
+    * `Transcribe_WithValidRequest_IncludesSessionIdHeader` - Verifies X-Session-Id header is present in transcription response
+
+* **✅ Error Handling Tests:**
+    * `Completion_WhenLlmServiceThrows_ReturnsInternalServerError` - Verifies 500 response when LlmService throws
+    * `Transcribe_WhenTranscribeServiceThrows_ReturnsInternalServerError` - Verifies 500 response when TranscribeService throws
+    * `Transcribe_WhenGitHubServiceThrowsOnAudioCommit_ReturnsInternalServerError` - Verifies 500 response when GitHub service throws on audio commit
+    * `Transcribe_WhenGitHubServiceThrowsOnTranscriptCommit_ReturnsInternalServerError` - Verifies 500 response when GitHub service throws on transcript commit
+    * `Transcribe_WhenTranscribeServiceThrowsException_Returns500Error` - Verifies ErrorHandlingMiddleware returns 500
+    * `Transcribe_WhenTranscribeServiceThrowsException_Returns500` - Verifies 500 response with ApiError message
+    * `Transcribe_WhenGitHubServiceThrowsException_Returns500Error` - Verifies ErrorHandlingMiddleware returns 500
+    * `Transcribe_WhenGitHubServiceThrowsException_Returns500` - Verifies 500 response with ApiError message
+
+### Notes on AiService Usage
+
+With the recent architectural refactoring, the `AiController` now delegates to the orchestration layer `IAiService` rather than directly calling individual services. This means:
+
+1. The integration tests should mock `IAiService` rather than mocking individual service implementations
+2. Test cases should verify the `AiController` correctly forwards requests to `IAiService` methods
+3. Unit tests for `AiService` should cover the orchestration logic between services
+
 ### Outstanding TODOs:
 
-* **Success Path Tests:**
-    * **TODO:** Test `/api/completion` POST with valid text prompt, authenticated user, verify 200 OK and response structure
-    * **TODO:** Test `/api/completion` POST with valid audio prompt (`audioPrompt` form field), authenticated user, verify 200 OK
-    * **TODO:** Test `/api/completion` POST with *both* text and audio prompts (define expected behavior - prioritize one or return 400?)
-    * **TODO:** Test `/api/completion` POST when `ILlmService` mock throws an exception (should return 500 Internal Server Error via `ErrorHandlingMiddleware`)
-    * **TODO:** Test `/api/completion` POST verifies `X-Session-Id` header is present in the response
-    * **TODO:** Test `/api/transcribe` POST with valid audio file (`audioFile` form field), authenticated user, verify 200 OK
-    * **TODO:** Test `/api/transcribe` POST when `ITranscribeService` mock throws exception (should return 500)
-    * **TODO:** Test `/api/transcribe` POST when `IGitHubService` mock throws exception (should return 500)
-    * **TODO:** Test `/api/transcribe` POST verifies `X-Session-Id` header is present in the response
+* **Test Updates:**
+    * **TODO:** Update tests to mock IAiService methods instead of individual services
+    * **TODO:** Ensure all existing test cases verify the controller's interaction with AiService
+    * **TODO:** Add tests verifying AiController's error handling when AiService throws exceptions
 
 * **Additional Test Ideas:**
     * **TODO:** Consider tests for different audio file types/sizes if relevant validation exists
@@ -82,7 +105,8 @@ These tests focus on the externally observable behavior of the `AiController` en
 
 ## 6. Changelog
 
-* **2025-04-18:** Revision 3 - Updated test implementation status, marking completed tests and outstanding TODOs.
+* **2025-05-15:** Revision 4 - Updated documentation to reflect the architectural refactoring which moved controller logic to AiService
+* **2025-04-18:** Revision 3 - Updated test implementation status, marking completed tests and outstanding TODOs
 * **2025-04-18:** Revision 2 - Refocused content on why/what, aligned with standards, added Maintenance Notes, streamlined setup/dependency info. (Gemini)
 * **2025-04-18:** Revision 1 - Initial creation and population of sections. (Gemini)
 

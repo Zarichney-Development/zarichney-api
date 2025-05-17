@@ -1,5 +1,6 @@
 using Refit;
 using Xunit;
+using Xunit.Abstractions;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 
@@ -13,8 +14,8 @@ namespace Zarichney.Tests.Integration.Controllers.CookbookControllers.Recipe;
 [Trait(TestCategories.Component, TestCategories.Controller)]
 [Trait(TestCategories.Feature, TestCategories.Cookbook)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
-public class GetRecipeDetailsTests(ApiClientFixture apiClientFixture)
-    : DatabaseIntegrationTestBase(apiClientFixture)
+public class GetRecipeDetailsTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper)
+    : DatabaseIntegrationTestBase(apiClientFixture, testOutputHelper)
 {
   [DependencyFact]
   public async Task GetRecipes_Unauthenticated_ReturnsUnauthorized()

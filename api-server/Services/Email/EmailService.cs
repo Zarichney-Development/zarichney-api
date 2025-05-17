@@ -1,7 +1,5 @@
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
-using RestSharp;
 using Zarichney.Config;
 using SendMailPostRequestBody = Microsoft.Graph.Users.Item.SendMail.SendMailPostRequestBody;
 
@@ -13,23 +11,33 @@ public interface IEmailService
     Dictionary<string, object>? templateData = null, FileAttachment? attachment = null);
 
   Task<bool> ValidateEmail(string email);
+
+  /// <summary>
+  /// Sends an error notification email with details about an exception.
+  /// </summary>
+  /// <param name="stage">The processing stage where the error occurred.</param>
+  /// <param name="ex">The exception that was thrown.</param>
+  /// <param name="serviceName">The name of the service reporting the error.</param>
+  /// <param name="additionalContext">Optional dictionary with additional contextual information about the error.</param>
+  /// <returns>A task representing the asynchronous operation.</returns>
+  Task SendErrorNotification(string stage, Exception ex, string serviceName, Dictionary<string, string>? additionalContext = null);
 }
 
 public class EmailService(
   GraphServiceClient graphClient,
   EmailConfig config,
   ITemplateService templateService,
-  IMemoryCache cache,
+  IMailCheckClient mailCheckClient,
   ILogger<EmailService> logger)
   : IEmailService
 {
+  private const int HighRiskThreshold = 70;
+
   public async Task SendEmail(string recipient, string subject, string templateName,
     Dictionary<string, object>? templateData = null, FileAttachment? attachment = null)
   {
-    if (graphClient == null)
-    {
-      throw new ConfigurationMissingException(nameof(EmailConfig), "Azure Tenant ID, App ID, Secret, or FromEmail is missing or invalid");
-    }
+    // ServiceUnavailableException will be thrown by the proxy if Email service is unavailable
+    ArgumentNullException.ThrowIfNull(graphClient, nameof(graphClient));
 
     string bodyContent;
     try
@@ -115,57 +123,23 @@ public class EmailService(
   }
 
   /// <summary>
-  /// Uses the MailCheck API to validate an email address and cache the result.
+  /// Uses the MailCheck API to validate an email address and checks the result against validation criteria.
   /// </summary>
-  /// <param name="email"></param>
-  /// <returns></returns>
-  /// <exception cref="InvalidOperationException"></exception>
-  /// <exception cref="ConfigurationMissingException">Thrown when the MailCheck API key is missing or invalid.</exception>
+  /// <param name="email">The email address to validate</param>
+  /// <returns>True if the email is valid, otherwise an exception is thrown</returns>
+  /// <exception cref="InvalidOperationException">Thrown when the API returns unexpected results</exception>
+  /// <exception cref="ConfigurationMissingException">Thrown when the MailCheck API key is missing or invalid</exception>
+  /// <exception cref="InvalidEmailException">Thrown when the email fails validation criteria</exception>
   public async Task<bool> ValidateEmail(string email)
   {
-    if (string.IsNullOrEmpty(config.MailCheckApiKey) ||
-        config.MailCheckApiKey == "recommended to set in app secrets")
-    {
-      throw new ConfigurationMissingException(nameof(EmailConfig), nameof(config.MailCheckApiKey));
-    }
-
     var domain = email.Split('@').Last();
 
-    // Check cache first
-    if (cache.TryGetValue(domain, out EmailValidationResponse? cachedResult))
-    {
-      return ValidateWithCachedResult(email, cachedResult!);
-    }
+    var result = await mailCheckClient.GetValidationData(domain);
 
-    logger.LogInformation("Validating email {Email}", email);
-
-    var client = new RestClient("https://mailcheck.p.rapidapi.com");
-    var request = new RestRequest($"/?domain={domain}");
-    request.AddHeader("x-rapidapi-host", "mailcheck.p.rapidapi.com");
-    request.AddHeader("x-rapidapi-key", config.MailCheckApiKey);
-    var response = await client.ExecuteAsync(request);
-
-    if (response.StatusCode != System.Net.HttpStatusCode.OK)
-    {
-      logger.LogError("Email validation service returned non-success status code: {StatusCode}", response.StatusCode);
-      throw new InvalidOperationException("Email validation service error");
-    }
-
-    var result = Utils.Deserialize<EmailValidationResponse>(response.Content!);
-
-    if (result == null)
-    {
-      logger.LogError("Failed to deserialize email validation response");
-      throw new InvalidOperationException("Email validation response deserialization error");
-    }
-
-    // Cache the result
-    cache.Set(domain, result, TimeSpan.FromHours(24));
-
-    return ValidateWithCachedResult(email, result);
+    return ValidateWithResult(email, result);
   }
 
-  private bool ValidateWithCachedResult(string email, EmailValidationResponse result)
+  private bool ValidateWithResult(string email, EmailValidationResponse result)
   {
     try
     {
@@ -184,7 +158,7 @@ public class EmailService(
         ThrowInvalidEmailException("Disposable email detected", email, InvalidEmailReason.DisposableEmail);
       }
 
-      if (result.Risk > 70) // Adjust this threshold as needed
+      if (result.Risk > HighRiskThreshold)
       {
         ThrowInvalidEmailException($"High risk email detected. Risk score: {result.Risk}", email,
           InvalidEmailReason.InvalidDomain);
@@ -221,4 +195,55 @@ public class EmailService(
       .Replace(" ", "_")
       .Replace(":", "_")
       .Replace(";", "_");
+
+  /// <summary>
+  /// Sends an error notification email with details about an exception.
+  /// </summary>
+  /// <param name="stage">The processing stage where the error occurred.</param>
+  /// <param name="ex">The exception that was thrown.</param>
+  /// <param name="serviceName">The name of the service reporting the error.</param>
+  /// <param name="additionalContext">Optional dictionary with additional contextual information about the error.</param>
+  /// <returns>A task representing the asynchronous operation.</returns>
+  public async Task SendErrorNotification(string stage, Exception ex, string serviceName, Dictionary<string, string>? additionalContext = null)
+  {
+    try // Prevent email sending from crashing the calling code
+    {
+      var templateData = TemplateService.GetErrorTemplateData(ex);
+      templateData["stage"] = stage;
+      templateData["serviceName"] = serviceName;
+
+      // Add additional context if provided
+      if (additionalContext != null)
+      {
+        // Ensure additionalContext exists in templateData before adding to it
+        if (!templateData.TryGetValue("additionalContext", out var value) ||
+            value is not Dictionary<string, string> existingContext)
+        {
+          existingContext = new Dictionary<string, string>();
+          templateData["additionalContext"] = existingContext;
+        }
+
+        // Add all provided context items
+        foreach (var item in additionalContext)
+        {
+          ((Dictionary<string, string>)templateData["additionalContext"])[item.Key] = item.Value;
+        }
+      }
+
+      await SendEmail(
+        config.FromEmail, // Send to the configured From email (self notification)
+        $"{serviceName} Error - {stage}",
+        "error-log", // Template name
+        templateData
+      );
+
+      logger.LogInformation("Error notification email sent for service: {ServiceName}, stage: {Stage}", serviceName, stage);
+    }
+    catch (Exception emailEx)
+    {
+      logger.LogError(emailEx, "Failed to send error notification email for service: {ServiceName}, stage: {Stage}",
+        serviceName, stage);
+      // Intentionally swallow the exception to prevent it from bubbling up
+    }
+  }
 }

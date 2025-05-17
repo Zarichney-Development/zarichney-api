@@ -6,8 +6,10 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Moq;
+using Serilog;
+using Serilog.Sinks.XUnit.Injectable;
+using Serilog.Sinks.XUnit.Injectable.Extensions;
 using Zarichney.Client;
 using Zarichney.Services.AI;
 using Zarichney.Services.Auth;
@@ -28,6 +30,51 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
   /// Gets a value indicating whether the database is available.
   /// </summary>
   public bool IsDatabaseAvailable => _databaseFixture?.IsContainerAvailable ?? false;
+
+  /// <summary>
+  /// Gets a value indicating whether Docker is available on the system.
+  /// </summary>
+  public bool IsDockerAvailable => CheckDockerAvailability();
+
+  /// <summary>
+  /// Checks if Docker is available and properly configured.
+  /// </summary>
+  private bool CheckDockerAvailability()
+  {
+    try
+    {
+      var psi = new System.Diagnostics.ProcessStartInfo("docker", "info")
+      {
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+        UseShellExecute = false,
+        CreateNoWindow = true
+      };
+      using var proc = System.Diagnostics.Process.Start(psi);
+      if (proc == null) return false;
+
+      // Set a shorter timeout
+      if (!proc.WaitForExit(1000))
+      {
+        try
+        {
+          proc.Kill();
+        }
+        catch
+        {
+          // Ignore errors when killing the process
+        }
+
+        return false;
+      }
+
+      return proc.ExitCode == 0;
+    }
+    catch
+    {
+      return false;
+    }
+  }
 
   /// <summary>
   /// Initializes a new instance of the <see cref="CustomWebApplicationFactory"/> class.
@@ -80,7 +127,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
       configBuilder.AddEnvironmentVariables();
     });
 
-    builder.ConfigureTestServices(services =>
+    builder.ConfigureServices(services =>
     {
       // Register test-specific services
 
@@ -90,21 +137,32 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
           options.DefaultAuthenticateScheme = "Test";
           options.DefaultChallengeScheme = "Test";
         })
-        .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
-          "Test", _ => { });
+        .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
 
       // Register mock external services
       RegisterMockExternalServices(services);
 
       // Implement prioritized database selection logic
       ConfigureTestDatabase(services);
+
+      var testOutputSink = new InjectableTestOutputSink();
+      services.AddSingleton(testOutputSink);
+
+      var xunitLogger = new LoggerConfiguration()
+        .MinimumLevel.Warning()
+        .Enrich.FromLogContext()
+        .WriteTo.InjectableTestOutput(testOutputSink)
+        .CreateLogger();
+
+      Log.Logger = xunitLogger;
+      Log.Information("Starting up Zarichney API for automation testing suite...");
     });
 
-    builder.ConfigureLogging(logging =>
-    {
-      logging.ClearProviders();
-      logging.AddConsole();
-    });
+    // builder.ConfigureLogging(logging =>
+    // {
+    //   logging.ClearProviders();
+    //   logging.AddConsole();
+    // });
   }
 
   /// <summary>
@@ -210,7 +268,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
   /// </summary>
   /// <param name="httpClient">Optional HTTP client to use. If not provided, a new client will be created.</param>
   /// <returns>A Refit client for the API.</returns>
-  public IZarichneyAPI CreateRefitClient(HttpClient? httpClient = null)
+  private IZarichneyAPI CreateRefitClient(HttpClient? httpClient = null)
   {
     httpClient ??= CreateClient();
     return Refit.RestService.For<IZarichneyAPI>(httpClient);
@@ -228,10 +286,25 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     return CreateRefitClient(client);
   }
 
+  /// <summary>
+  /// Replaces services in the service collection with custom implementations.
+  /// Useful for overriding specific services in integration tests.
+  /// </summary>
+  /// <param name="configureServices">An action to configure the service collection.</param>
+  /// <returns>A new WebApplicationFactory with the modified services.</returns>
+  public WebApplicationFactory<Program> ReplaceService(Action<IServiceCollection> configureServices)
+  {
+    // Create a new WebApplicationFactory with modified services
+    return WithWebHostBuilder(builder =>
+    {
+      builder.ConfigureTestServices(configureServices);
+    });
+  }
+
   /// <inheritdoc/>
   protected override void Dispose(bool disposing)
   {
-    if (disposing && _databaseFixture != null && _databaseFixture.IsContainerAvailable)
+    if (disposing && _databaseFixture is { IsContainerAvailable: true })
     {
       _databaseFixture.DisposeAsync().GetAwaiter().GetResult();
     }

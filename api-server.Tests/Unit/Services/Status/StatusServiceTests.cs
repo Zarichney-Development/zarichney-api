@@ -1,12 +1,15 @@
+using Zarichney.Services.Status;
+using System.Reflection;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+using Zarichney.Config;
 using Zarichney.Services.AI;
 using Zarichney.Services.Email;
 using Zarichney.Services.GitHub;
 using Zarichney.Services.Payment;
-using Zarichney.Services.Status;
 
 namespace Zarichney.Tests.Unit.Services.Status;
 
@@ -14,9 +17,11 @@ public class StatusServiceTests
 {
   private const string ValidApiKey = "valid-api-key";
   private const string ValidConnectionString = "valid-connection-string";
-  private const string MissingValue = "recommended to set in app secrets";
 
   private readonly Mock<IConfiguration> _mockConfiguration;
+  private readonly Mock<IServiceProvider> _mockServiceProvider;
+  private readonly Mock<ILogger<StatusService>> _mockLogger;
+  private readonly Mock<Assembly> _mockAssembly;
   private StatusService _statusService;
   private LlmConfig _llmConfig = null!;
   private EmailConfig _emailConfig = null!;
@@ -26,19 +31,28 @@ public class StatusServiceTests
   public StatusServiceTests()
   {
     _mockConfiguration = new Mock<IConfiguration>();
+    _mockServiceProvider = new Mock<IServiceProvider>();
+    _mockLogger = new Mock<ILogger<StatusService>>();
+    _mockAssembly = new Mock<Assembly>();
 
     // Initialize configs with missing values
-    InitializeConfigs(MissingValue);
+    InitializeConfigs(StatusService.PlaceholderMessage);
 
     // Mock configuration to return connection string
     _mockConfiguration.Setup(c => c["ConnectionStrings:IdentityConnection"]).Returns(ValidConnectionString);
+
+    // Setup mock assembly to return test config types
+    _mockAssembly.Setup(asm => asm.GetTypes()).Returns([typeof(TestService1Config), typeof(TestService2Config)]);
 
     _statusService = new StatusService(
         _llmConfig,
         _emailConfig,
         _gitHubConfig,
         _paymentConfig,
-        _mockConfiguration.Object
+        _mockConfiguration.Object,
+        _mockServiceProvider.Object,
+        _mockLogger.Object,
+        _mockAssembly.Object
     );
   }
 
@@ -48,7 +62,16 @@ public class StatusServiceTests
   {
     // Arrange
     InitializeConfigs(ValidApiKey);
-    _statusService = new StatusService(_llmConfig, _emailConfig, _gitHubConfig, _paymentConfig, _mockConfiguration.Object);
+    _statusService = new StatusService(
+        _llmConfig,
+        _emailConfig,
+        _gitHubConfig,
+        _paymentConfig,
+        _mockConfiguration.Object,
+        _mockServiceProvider.Object,
+        _mockLogger.Object,
+        _mockAssembly.Object
+    );
 
     // Act
     var result = await _statusService.GetConfigurationStatusAsync();
@@ -85,8 +108,17 @@ public class StatusServiceTests
   {
     // Arrange
     InitializeConfigs(ValidApiKey);
-    _llmConfig = new LlmConfig { ApiKey = MissingValue };
-    _statusService = new StatusService(_llmConfig, _emailConfig, _gitHubConfig, _paymentConfig, _mockConfiguration.Object);
+    _llmConfig = new LlmConfig { ApiKey = StatusService.PlaceholderMessage };
+    _statusService = new StatusService(
+        _llmConfig,
+        _emailConfig,
+        _gitHubConfig,
+        _paymentConfig,
+        _mockConfiguration.Object,
+        _mockServiceProvider.Object,
+        _mockLogger.Object,
+        _mockAssembly.Object
+    );
 
     // Act
     var result = await _statusService.GetConfigurationStatusAsync();
@@ -96,6 +128,182 @@ public class StatusServiceTests
         status.Name == "OpenAI API Key" &&
         status.Status == "Missing/Invalid" &&
         status.Details == "ApiKey is missing or placeholder");
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public async Task GetServiceStatusAsync_WithNoRegisteredConfigs_ReturnsEmptyDictionary()
+  {
+    // Arrange
+    SetupEmptyServiceProvider();
+
+    // Act
+    var result = await _statusService.GetServiceStatusAsync();
+
+    // Assert
+    result.Should().BeEmpty();
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public async Task GetServiceStatusAsync_WithAllConfigsAvailable_ReturnsAvailableServices()
+  {
+    // Arrange
+    SetupServiceProviderWithTestConfigs();
+    SetupConfigurationWithValidValues();
+
+    // Act
+    var result = await _statusService.GetServiceStatusAsync();
+
+    // Assert
+    result.Should().NotBeEmpty("service status result should contain entries");
+
+    // More resilient approach using dictionary lookups that handles structure changes better
+    result.Should().ContainKey(ExternalServices.OpenAiApi, "OpenAI API should be included in the results");
+
+    var openAiStatus = result[ExternalServices.OpenAiApi];
+    openAiStatus.Should().NotBeNull("OpenAI status should be available");
+    openAiStatus.serviceName.Should().Be(ExternalServices.OpenAiApi, "service name should match the key");
+    openAiStatus.IsAvailable.Should().BeTrue("OpenAI API should be available with valid configuration");
+    openAiStatus.MissingConfigurations.Should().BeEmpty("no missing configurations should be reported");
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public async Task GetServiceStatusAsync_WithMissingConfigs_ReturnsUnavailableServices()
+  {
+    // Arrange
+    SetupServiceProviderWithTestConfigs();
+    SetupConfigurationWithMissingValues();
+
+    // Act
+    var result = await _statusService.GetServiceStatusAsync();
+
+    // Assert
+    result.Should().NotBeEmpty();
+    result.Should().ContainKey(ExternalServices.OpenAiApi);
+    result[ExternalServices.OpenAiApi].IsAvailable.Should().BeFalse();
+    result[ExternalServices.OpenAiApi].MissingConfigurations.Should().Contain("TestService1Config:ApiKey");
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public async Task GetServiceStatusAsync_WithPlaceholderValues_ReturnsUnavailableServices()
+  {
+    // Arrange
+    SetupServiceProviderWithTestConfigs();
+    SetupConfigurationWithPlaceholderValues();
+
+    // Act
+    var result = await _statusService.GetServiceStatusAsync();
+
+    // Assert
+    result.Should().NotBeEmpty();
+    result.Should().ContainKey(ExternalServices.OpenAiApi);
+    result[ExternalServices.OpenAiApi].IsAvailable.Should().BeFalse();
+    result[ExternalServices.OpenAiApi].MissingConfigurations.Should().Contain("TestService1Config:ApiKey");
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public async Task GetFeatureStatus_WithValidFeature_ReturnsCorrectStatus()
+  {
+    // Arrange
+    SetupServiceProviderWithTestConfigs();
+    SetupConfigurationWithValidValues();
+
+    // Act - Call GetServiceStatusAsync to populate cache first
+    await _statusService.GetServiceStatusAsync();
+    var result = _statusService.GetFeatureStatus(ExternalServices.OpenAiApi);
+
+    // Assert
+    result.Should().NotBeNull();
+    result.IsAvailable.Should().BeTrue();
+    result.MissingConfigurations.Should().BeEmpty();
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public async Task GetFeatureStatus_WithInvalidFeature_ReturnsNull()
+  {
+    // Arrange
+    SetupServiceProviderWithTestConfigs();
+    SetupConfigurationWithValidValues();
+
+    // Act - Call GetServiceStatusAsync to populate cache first
+    await _statusService.GetServiceStatusAsync();
+    // Use a value that doesn't exist in our test data
+    var result = _statusService.GetFeatureStatus(ExternalServices.MsGraph);
+
+    // Assert
+    result.Should().BeNull();
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public async Task GetFeatureStatus_WithUnavailableFeature_ReturnsCorrectStatus()
+  {
+    // Arrange
+    SetupServiceProviderWithTestConfigs();
+    SetupConfigurationWithMissingValues();
+
+    // Act - Call GetServiceStatusAsync to populate cache first
+    await _statusService.GetServiceStatusAsync();
+    var result = _statusService.GetFeatureStatus(ExternalServices.OpenAiApi);
+
+    // Assert
+    result.Should().NotBeNull();
+    result.IsAvailable.Should().BeFalse();
+    result.MissingConfigurations.Should().Contain("TestService1Config:ApiKey");
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public async Task IsFeatureAvailable_WithAvailableFeature_ReturnsTrue()
+  {
+    // Arrange
+    SetupServiceProviderWithTestConfigs();
+    SetupConfigurationWithValidValues();
+
+    // Act - Call GetServiceStatusAsync to populate cache first
+    await _statusService.GetServiceStatusAsync();
+    var result = _statusService.IsFeatureAvailable(ExternalServices.OpenAiApi);
+
+    // Assert
+    result.Should().BeTrue();
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public async Task IsFeatureAvailable_WithUnavailableFeature_ReturnsFalse()
+  {
+    // Arrange
+    SetupServiceProviderWithTestConfigs();
+    SetupConfigurationWithMissingValues();
+
+    // Act - Call GetServiceStatusAsync to populate cache first
+    await _statusService.GetServiceStatusAsync();
+    var result = _statusService.IsFeatureAvailable(ExternalServices.OpenAiApi);
+
+    // Assert
+    result.Should().BeFalse();
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public async Task IsFeatureAvailable_WithNonExistentFeature_ReturnsFalse()
+  {
+    // Arrange
+    SetupServiceProviderWithTestConfigs();
+    SetupConfigurationWithValidValues();
+
+    // Act - Call GetServiceStatusAsync to populate cache first
+    await _statusService.GetServiceStatusAsync();
+    // Use a value that doesn't exist in our test data
+    var result = _statusService.IsFeatureAvailable(ExternalServices.MsGraph);
+
+    // Assert
+    result.Should().BeFalse();
   }
 
   private void InitializeConfigs(string value)
@@ -115,5 +323,58 @@ public class StatusServiceTests
       StripeSecretKey = value,
       StripeWebhookSecret = value
     };
+  }
+
+  private void SetupEmptyServiceProvider()
+  {
+    // Ensure GetTypes returns an empty array for this test case
+    _mockAssembly.Setup(asm => asm.GetTypes()).Returns(Type.EmptyTypes);
+
+    // Mock GetService to return null for any type, simulating no registered IConfig services
+    _mockServiceProvider.Setup(p => p.GetService(It.IsAny<Type>())).Returns(null!);
+  }
+
+  private void SetupServiceProviderWithTestConfigs()
+  {
+    // Reset GetTypes to return test config types for other tests
+    _mockAssembly.Setup(asm => asm.GetTypes()).Returns([typeof(TestService1Config), typeof(TestService2Config)]);
+
+    _mockServiceProvider.Setup(p => p.GetService(typeof(TestService1Config)))
+        .Returns(new TestService1Config());
+    _mockServiceProvider.Setup(p => p.GetService(typeof(TestService2Config)))
+        .Returns(new TestService2Config());
+  }
+
+  private void SetupConfigurationWithValidValues()
+  {
+    _mockConfiguration.Setup(c => c["TestService1Config:ApiKey"]).Returns("valid-api-key");
+    _mockConfiguration.Setup(c => c["TestService1Config:ApiSecret"]).Returns("valid-api-secret");
+    _mockConfiguration.Setup(c => c["TestService2Config:Setting"]).Returns("valid-setting");
+  }
+
+  private void SetupConfigurationWithMissingValues()
+  {
+    _mockConfiguration.Setup(c => c["TestService1Config:ApiKey"]).Returns((string?)null);
+  }
+
+  private void SetupConfigurationWithPlaceholderValues()
+  {
+    _mockConfiguration.Setup(c => c["TestService1Config:ApiKey"]).Returns(StatusService.PlaceholderMessage);
+  }
+
+  // Test Config Classes
+  private class TestService1Config : IConfig
+  {
+    [RequiresConfiguration(ExternalServices.OpenAiApi)]
+    public string ApiKey { get; set; } = "valid_key"; // Default to valid for simplicity in some tests
+
+    [RequiresConfiguration(ExternalServices.OpenAiApi)]
+    public string ApiSecret { get; set; } = "valid_secret";
+  }
+
+  private class TestService2Config : IConfig
+  {
+    [RequiresConfiguration(ExternalServices.FrontEnd)]
+    public string Setting { get; set; } = "valid_setting";
   }
 }

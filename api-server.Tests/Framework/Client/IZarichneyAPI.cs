@@ -978,7 +978,8 @@ namespace Zarichney.Client
         [Get("/api/recipe/scrape")]
         Task<ICollection<Recipe>> Scrape([Query] string query, [Query] string site, [Query] int? acceptableScore, [Query] int? recipesNeeded, [Query] bool? store);
 
-        /// <summary>Creates a Stripe checkout session for the specified order</summary>
+        /// <summary>⚠️ (Unavailable: Stripe (Missing: PaymentConfig:StripeWebhookSecret)) Creates a Stripe checkout session for the specified order</summary>
+        /// <remarks>**This endpoint is currently unavailable** due to missing configuration for: Stripe (Missing: PaymentConfig:StripeWebhookSecret)</remarks>
         /// <param name="orderId">Order identifier</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">
@@ -1006,7 +1007,8 @@ namespace Zarichney.Client
         [Post("/api/payments/create-checkout-session/{orderId}")]
         Task<CheckoutUrlResponse> CreateCheckoutSession(string orderId);
 
-        /// <summary>Creates a Stripe checkout session for purchasing recipe credits</summary>
+        /// <summary>⚠️ (Unavailable: Stripe (Missing: PaymentConfig:StripeWebhookSecret)) Creates a Stripe checkout session for purchasing recipe credits</summary>
+        /// <remarks>**This endpoint is currently unavailable** due to missing configuration for: Stripe (Missing: PaymentConfig:StripeWebhookSecret)</remarks>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">
         /// Thrown when the request returns a non-success status code:
@@ -1029,7 +1031,8 @@ namespace Zarichney.Client
         [Post("/api/payments/create-credit-session")]
         Task<CheckoutUrlResponse> CreateCreditSession([Body] RecipeCreditRequest body);
 
-        /// <summary>Handles Stripe webhook events</summary>
+        /// <summary>⚠️ (Unavailable: Stripe (Missing: PaymentConfig:StripeWebhookSecret)) Handles Stripe webhook events</summary>
+        /// <remarks>**This endpoint is currently unavailable** due to missing configuration for: Stripe (Missing: PaymentConfig:StripeWebhookSecret)</remarks>
         /// <returns>A <see cref="Task"/> that completes when the request is finished.</returns>
         /// <exception cref="ApiException">
         /// Thrown when the request returns a non-success status code:
@@ -1048,7 +1051,8 @@ namespace Zarichney.Client
         [Post("/api/payments/webhook")]
         Task Webhook();
 
-        /// <summary>Gets information about a checkout session</summary>
+        /// <summary>⚠️ (Unavailable: Stripe (Missing: PaymentConfig:StripeWebhookSecret)) Gets information about a checkout session</summary>
+        /// <remarks>**This endpoint is currently unavailable** due to missing configuration for: Stripe (Missing: PaymentConfig:StripeWebhookSecret)</remarks>
         /// <param name="sessionId">The Stripe checkout session ID</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">
@@ -1072,7 +1076,8 @@ namespace Zarichney.Client
         [Get("/api/payments/session/{sessionId}")]
         Task<CheckoutSessionInfo> Session(string sessionId);
 
-        /// <summary>Creates a Stripe payment intent directly.</summary>
+        /// <summary>⚠️ (Unavailable: Stripe (Missing: PaymentConfig:StripeWebhookSecret)) Creates a Stripe payment intent directly.</summary>
+        /// <remarks>**This endpoint is currently unavailable** due to missing configuration for: Stripe (Missing: PaymentConfig:StripeWebhookSecret)</remarks>
         /// <returns>A <see cref="Task"/> that completes when the request is finished.</returns>
         /// <exception cref="ApiException">
         /// Thrown when the request returns a non-success status code:
@@ -1091,7 +1096,8 @@ namespace Zarichney.Client
         [Post("/api/payments/create-intent")]
         Task CreateIntent([Body] PaymentIntentRequest body);
 
-        /// <summary>Gets status of a Stripe payment intent.</summary>
+        /// <summary>⚠️ (Unavailable: Stripe (Missing: PaymentConfig:StripeWebhookSecret)) Gets status of a Stripe payment intent.</summary>
+        /// <remarks>**This endpoint is currently unavailable** due to missing configuration for: Stripe (Missing: PaymentConfig:StripeWebhookSecret)</remarks>
         /// <returns>A <see cref="Task"/> that completes when the request is finished.</returns>
         /// <exception cref="ApiException">Thrown when the request returns a non-success status code.</exception>
         [Get("/api/payments/status/{paymentId}")]
@@ -1102,7 +1108,7 @@ namespace Zarichney.Client
         [Get("/api/health")]
         Task Health();
 
-        /// <summary>Returns the status of critical configuration values (API keys, secrets, connection strings).</summary>
+        /// <summary>Returns the status of services based on their configuration availability.</summary>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">
         /// Thrown when the request returns a non-success status code:
@@ -1118,7 +1124,26 @@ namespace Zarichney.Client
         /// </list>
         /// </exception>
         [Headers("Accept: text/plain, application/json, text/json")]
-        [Get("/api/status/config")]
+        [Get("/api/status")]
+        Task<ICollection<ServiceStatusInfo>> StatusAll();
+
+        /// <summary>Returns the configuration item status.</summary>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">
+        /// Thrown when the request returns a non-success status code:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </exception>
+        [Headers("Accept: text/plain, application/json, text/json")]
+        [Get("/api/config")]
         Task<ICollection<ConfigurationItemStatus>> Config();
 
 
@@ -1246,6 +1271,7 @@ namespace Zarichney.Client
         public long HostContext { get; set; }
 
         [JsonPropertyName("securityRuleSet")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public SecurityRuleSet SecurityRuleSet { get; set; }
 
     }
@@ -1304,15 +1330,20 @@ namespace Zarichney.Client
     public enum CallingConventions
     {
 
-        _1 = 1,
+        [System.Runtime.Serialization.EnumMember(Value = @"Standard")]
+        Standard = 0,
 
-        _2 = 2,
+        [System.Runtime.Serialization.EnumMember(Value = @"VarArgs")]
+        VarArgs = 1,
 
-        _3 = 3,
+        [System.Runtime.Serialization.EnumMember(Value = @"Any")]
+        Any = 2,
 
-        _32 = 32,
+        [System.Runtime.Serialization.EnumMember(Value = @"HasThis")]
+        HasThis = 3,
 
-        _64 = 64,
+        [System.Runtime.Serialization.EnumMember(Value = @"ExplicitThis")]
+        ExplicitThis = 4,
 
     }
 
@@ -1393,12 +1424,15 @@ namespace Zarichney.Client
         public int MetadataToken { get; set; }
 
         [JsonPropertyName("attributes")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public MethodAttributes Attributes { get; set; }
 
         [JsonPropertyName("methodImplementationFlags")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public MethodImplAttributes MethodImplementationFlags { get; set; }
 
         [JsonPropertyName("callingConvention")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public CallingConventions CallingConvention { get; set; }
 
         [JsonPropertyName("isAbstract")]
@@ -1465,6 +1499,7 @@ namespace Zarichney.Client
         public bool IsSecurityTransparent { get; set; }
 
         [JsonPropertyName("memberType")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public MemberTypes MemberType { get; set; }
 
     }
@@ -1558,6 +1593,7 @@ namespace Zarichney.Client
         public ICollection<SynthesizedRecipe> SynthesizedRecipes { get; set; }
 
         [JsonPropertyName("status")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public OrderStatus Status { get; set; }
 
         [JsonPropertyName("requiresPayment")]
@@ -1697,11 +1733,14 @@ namespace Zarichney.Client
     public enum EventAttributes
     {
 
-        _0 = 0,
+        [System.Runtime.Serialization.EnumMember(Value = @"None")]
+        None = 0,
 
-        _512 = 512,
+        [System.Runtime.Serialization.EnumMember(Value = @"SpecialName")]
+        SpecialName = 1,
 
-        _1024 = 1024,
+        [System.Runtime.Serialization.EnumMember(Value = @"RTSpecialName")]
+        RTSpecialName = 2,
 
     }
 
@@ -1731,9 +1770,11 @@ namespace Zarichney.Client
         public int MetadataToken { get; set; }
 
         [JsonPropertyName("memberType")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public MemberTypes MemberType { get; set; }
 
         [JsonPropertyName("attributes")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public EventAttributes Attributes { get; set; }
 
         [JsonPropertyName("isSpecialName")]
@@ -1756,47 +1797,94 @@ namespace Zarichney.Client
 
     }
 
+    /// <summary>
+    /// Defines all the features available in the application that can be enabled or disabled
+    /// <br/>based on configuration availability.
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum ExternalServices
+    {
+
+        [System.Runtime.Serialization.EnumMember(Value = @"FrontEnd")]
+        FrontEnd = 0,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"OpenAiApi")]
+        OpenAiApi = 1,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"MsGraph")]
+        MsGraph = 2,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"Stripe")]
+        Stripe = 3,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"GitHubAccess")]
+        GitHubAccess = 4,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"MailCheck")]
+        MailCheck = 5,
+
+    }
+
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
     public enum FieldAttributes
     {
 
-        _0 = 0,
+        [System.Runtime.Serialization.EnumMember(Value = @"PrivateScope")]
+        PrivateScope = 0,
 
-        _1 = 1,
+        [System.Runtime.Serialization.EnumMember(Value = @"Private")]
+        Private = 1,
 
-        _2 = 2,
+        [System.Runtime.Serialization.EnumMember(Value = @"FamANDAssem")]
+        FamANDAssem = 2,
 
-        _3 = 3,
+        [System.Runtime.Serialization.EnumMember(Value = @"Assembly")]
+        Assembly = 3,
 
-        _4 = 4,
+        [System.Runtime.Serialization.EnumMember(Value = @"Family")]
+        Family = 4,
 
-        _5 = 5,
+        [System.Runtime.Serialization.EnumMember(Value = @"FamORAssem")]
+        FamORAssem = 5,
 
-        _6 = 6,
+        [System.Runtime.Serialization.EnumMember(Value = @"Public")]
+        Public = 6,
 
-        _7 = 7,
+        [System.Runtime.Serialization.EnumMember(Value = @"FieldAccessMask")]
+        FieldAccessMask = 7,
 
-        _16 = 16,
+        [System.Runtime.Serialization.EnumMember(Value = @"Static")]
+        Static = 8,
 
-        _32 = 32,
+        [System.Runtime.Serialization.EnumMember(Value = @"InitOnly")]
+        InitOnly = 9,
 
-        _64 = 64,
+        [System.Runtime.Serialization.EnumMember(Value = @"Literal")]
+        Literal = 10,
 
-        _128 = 128,
+        [System.Runtime.Serialization.EnumMember(Value = @"NotSerialized")]
+        NotSerialized = 11,
 
-        _256 = 256,
+        [System.Runtime.Serialization.EnumMember(Value = @"HasFieldRVA")]
+        HasFieldRVA = 12,
 
-        _512 = 512,
+        [System.Runtime.Serialization.EnumMember(Value = @"SpecialName")]
+        SpecialName = 13,
 
-        _1024 = 1024,
+        [System.Runtime.Serialization.EnumMember(Value = @"RTSpecialName")]
+        RTSpecialName = 14,
 
-        _4096 = 4096,
+        [System.Runtime.Serialization.EnumMember(Value = @"HasFieldMarshal")]
+        HasFieldMarshal = 15,
 
-        _8192 = 8192,
+        [System.Runtime.Serialization.EnumMember(Value = @"PinvokeImpl")]
+        PinvokeImpl = 16,
 
-        _32768 = 32768,
+        [System.Runtime.Serialization.EnumMember(Value = @"HasDefault")]
+        HasDefault = 17,
 
-        _38144 = 38144,
+        [System.Runtime.Serialization.EnumMember(Value = @"ReservedMask")]
+        ReservedMask = 18,
 
     }
 
@@ -1826,9 +1914,11 @@ namespace Zarichney.Client
         public int MetadataToken { get; set; }
 
         [JsonPropertyName("memberType")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public MemberTypes MemberType { get; set; }
 
         [JsonPropertyName("attributes")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public FieldAttributes Attributes { get; set; }
 
         [JsonPropertyName("fieldType")]
@@ -1904,21 +1994,29 @@ namespace Zarichney.Client
     public enum GenericParameterAttributes
     {
 
-        _0 = 0,
+        [System.Runtime.Serialization.EnumMember(Value = @"None")]
+        None = 0,
 
-        _1 = 1,
+        [System.Runtime.Serialization.EnumMember(Value = @"Covariant")]
+        Covariant = 1,
 
-        _2 = 2,
+        [System.Runtime.Serialization.EnumMember(Value = @"Contravariant")]
+        Contravariant = 2,
 
-        _3 = 3,
+        [System.Runtime.Serialization.EnumMember(Value = @"VarianceMask")]
+        VarianceMask = 3,
 
-        _4 = 4,
+        [System.Runtime.Serialization.EnumMember(Value = @"ReferenceTypeConstraint")]
+        ReferenceTypeConstraint = 4,
 
-        _8 = 8,
+        [System.Runtime.Serialization.EnumMember(Value = @"NotNullableValueTypeConstraint")]
+        NotNullableValueTypeConstraint = 5,
 
-        _16 = 16,
+        [System.Runtime.Serialization.EnumMember(Value = @"DefaultConstructorConstraint")]
+        DefaultConstructorConstraint = 6,
 
-        _28 = 28,
+        [System.Runtime.Serialization.EnumMember(Value = @"SpecialConstraintMask")]
+        SpecialConstraintMask = 7,
 
     }
 
@@ -1944,11 +2042,14 @@ namespace Zarichney.Client
     public enum LayoutKind
     {
 
-        _0 = 0,
+        [System.Runtime.Serialization.EnumMember(Value = @"Sequential")]
+        Sequential = 0,
 
-        _2 = 2,
+        [System.Runtime.Serialization.EnumMember(Value = @"Explicit")]
+        Explicit = 1,
 
-        _3 = 3,
+        [System.Runtime.Serialization.EnumMember(Value = @"Auto")]
+        Auto = 2,
 
     }
 
@@ -1979,6 +2080,7 @@ namespace Zarichney.Client
     {
 
         [JsonPropertyName("memberType")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public MemberTypes MemberType { get; set; }
 
         [JsonPropertyName("name")]
@@ -2008,23 +2110,32 @@ namespace Zarichney.Client
     public enum MemberTypes
     {
 
-        _1 = 1,
+        [System.Runtime.Serialization.EnumMember(Value = @"Constructor")]
+        Constructor = 0,
 
-        _2 = 2,
+        [System.Runtime.Serialization.EnumMember(Value = @"Event")]
+        Event = 1,
 
-        _4 = 4,
+        [System.Runtime.Serialization.EnumMember(Value = @"Field")]
+        Field = 2,
 
-        _8 = 8,
+        [System.Runtime.Serialization.EnumMember(Value = @"Method")]
+        Method = 3,
 
-        _16 = 16,
+        [System.Runtime.Serialization.EnumMember(Value = @"Property")]
+        Property = 4,
 
-        _32 = 32,
+        [System.Runtime.Serialization.EnumMember(Value = @"TypeInfo")]
+        TypeInfo = 5,
 
-        _64 = 64,
+        [System.Runtime.Serialization.EnumMember(Value = @"Custom")]
+        Custom = 6,
 
-        _128 = 128,
+        [System.Runtime.Serialization.EnumMember(Value = @"NestedType")]
+        NestedType = 7,
 
-        _191 = 191,
+        [System.Runtime.Serialization.EnumMember(Value = @"All")]
+        All = 8,
 
     }
 
@@ -2032,49 +2143,71 @@ namespace Zarichney.Client
     public enum MethodAttributes
     {
 
-        _0 = 0,
+        [System.Runtime.Serialization.EnumMember(Value = @"PrivateScope")]
+        PrivateScope = 0,
 
-        _1 = 1,
+        [System.Runtime.Serialization.EnumMember(Value = @"Private")]
+        Private = 1,
 
-        _2 = 2,
+        [System.Runtime.Serialization.EnumMember(Value = @"FamANDAssem")]
+        FamANDAssem = 2,
 
-        _3 = 3,
+        [System.Runtime.Serialization.EnumMember(Value = @"Assembly")]
+        Assembly = 3,
 
-        _4 = 4,
+        [System.Runtime.Serialization.EnumMember(Value = @"Family")]
+        Family = 4,
 
-        _5 = 5,
+        [System.Runtime.Serialization.EnumMember(Value = @"FamORAssem")]
+        FamORAssem = 5,
 
-        _6 = 6,
+        [System.Runtime.Serialization.EnumMember(Value = @"Public")]
+        Public = 6,
 
-        _7 = 7,
+        [System.Runtime.Serialization.EnumMember(Value = @"MemberAccessMask")]
+        MemberAccessMask = 7,
 
-        _8 = 8,
+        [System.Runtime.Serialization.EnumMember(Value = @"UnmanagedExport")]
+        UnmanagedExport = 8,
 
-        _16 = 16,
+        [System.Runtime.Serialization.EnumMember(Value = @"Static")]
+        Static = 9,
 
-        _32 = 32,
+        [System.Runtime.Serialization.EnumMember(Value = @"Final")]
+        Final = 10,
 
-        _64 = 64,
+        [System.Runtime.Serialization.EnumMember(Value = @"Virtual")]
+        Virtual = 11,
 
-        _128 = 128,
+        [System.Runtime.Serialization.EnumMember(Value = @"HideBySig")]
+        HideBySig = 12,
 
-        _256 = 256,
+        [System.Runtime.Serialization.EnumMember(Value = @"NewSlot")]
+        NewSlot = 13,
 
-        _512 = 512,
+        [System.Runtime.Serialization.EnumMember(Value = @"CheckAccessOnOverride")]
+        CheckAccessOnOverride = 14,
 
-        _1024 = 1024,
+        [System.Runtime.Serialization.EnumMember(Value = @"Abstract")]
+        Abstract = 15,
 
-        _2048 = 2048,
+        [System.Runtime.Serialization.EnumMember(Value = @"SpecialName")]
+        SpecialName = 16,
 
-        _4096 = 4096,
+        [System.Runtime.Serialization.EnumMember(Value = @"RTSpecialName")]
+        RTSpecialName = 17,
 
-        _8192 = 8192,
+        [System.Runtime.Serialization.EnumMember(Value = @"PinvokeImpl")]
+        PinvokeImpl = 18,
 
-        _16384 = 16384,
+        [System.Runtime.Serialization.EnumMember(Value = @"HasSecurity")]
+        HasSecurity = 19,
 
-        _32768 = 32768,
+        [System.Runtime.Serialization.EnumMember(Value = @"RequireSecObject")]
+        RequireSecObject = 20,
 
-        _53248 = 53248,
+        [System.Runtime.Serialization.EnumMember(Value = @"ReservedMask")]
+        ReservedMask = 21,
 
     }
 
@@ -2083,6 +2216,7 @@ namespace Zarichney.Client
     {
 
         [JsonPropertyName("memberType")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public MemberTypes MemberType { get; set; }
 
         [JsonPropertyName("name")]
@@ -2107,12 +2241,15 @@ namespace Zarichney.Client
         public int MetadataToken { get; set; }
 
         [JsonPropertyName("attributes")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public MethodAttributes Attributes { get; set; }
 
         [JsonPropertyName("methodImplementationFlags")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public MethodImplAttributes MethodImplementationFlags { get; set; }
 
         [JsonPropertyName("callingConvention")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public CallingConventions CallingConvention { get; set; }
 
         [JsonPropertyName("isAbstract")]
@@ -2184,33 +2321,47 @@ namespace Zarichney.Client
     public enum MethodImplAttributes
     {
 
-        _0 = 0,
+        [System.Runtime.Serialization.EnumMember(Value = @"IL")]
+        IL = 0,
 
-        _1 = 1,
+        [System.Runtime.Serialization.EnumMember(Value = @"Native")]
+        Native = 1,
 
-        _2 = 2,
+        [System.Runtime.Serialization.EnumMember(Value = @"OPTIL")]
+        OPTIL = 2,
 
-        _3 = 3,
+        [System.Runtime.Serialization.EnumMember(Value = @"CodeTypeMask")]
+        CodeTypeMask = 3,
 
-        _4 = 4,
+        [System.Runtime.Serialization.EnumMember(Value = @"ManagedMask")]
+        ManagedMask = 4,
 
-        _8 = 8,
+        [System.Runtime.Serialization.EnumMember(Value = @"NoInlining")]
+        NoInlining = 5,
 
-        _16 = 16,
+        [System.Runtime.Serialization.EnumMember(Value = @"ForwardRef")]
+        ForwardRef = 6,
 
-        _32 = 32,
+        [System.Runtime.Serialization.EnumMember(Value = @"Synchronized")]
+        Synchronized = 7,
 
-        _64 = 64,
+        [System.Runtime.Serialization.EnumMember(Value = @"NoOptimization")]
+        NoOptimization = 8,
 
-        _128 = 128,
+        [System.Runtime.Serialization.EnumMember(Value = @"PreserveSig")]
+        PreserveSig = 9,
 
-        _256 = 256,
+        [System.Runtime.Serialization.EnumMember(Value = @"AggressiveInlining")]
+        AggressiveInlining = 10,
 
-        _512 = 512,
+        [System.Runtime.Serialization.EnumMember(Value = @"AggressiveOptimization")]
+        AggressiveOptimization = 11,
 
-        _4096 = 4096,
+        [System.Runtime.Serialization.EnumMember(Value = @"InternalCall")]
+        InternalCall = 12,
 
-        _65535 = 65535,
+        [System.Runtime.Serialization.EnumMember(Value = @"MaxMethodImplVal")]
+        MaxMethodImplVal = 13,
 
     }
 
@@ -2240,12 +2391,15 @@ namespace Zarichney.Client
         public int MetadataToken { get; set; }
 
         [JsonPropertyName("attributes")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public MethodAttributes Attributes { get; set; }
 
         [JsonPropertyName("methodImplementationFlags")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public MethodImplAttributes MethodImplementationFlags { get; set; }
 
         [JsonPropertyName("callingConvention")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public CallingConventions CallingConvention { get; set; }
 
         [JsonPropertyName("isAbstract")]
@@ -2312,6 +2466,7 @@ namespace Zarichney.Client
         public bool IsSecurityTransparent { get; set; }
 
         [JsonPropertyName("memberType")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public MemberTypes MemberType { get; set; }
 
         [JsonPropertyName("returnParameter")]
@@ -2380,17 +2535,23 @@ namespace Zarichney.Client
     public enum OrderStatus
     {
 
-        _0 = 0,
+        [System.Runtime.Serialization.EnumMember(Value = @"Submitted")]
+        Submitted = 0,
 
-        _1 = 1,
+        [System.Runtime.Serialization.EnumMember(Value = @"InProgress")]
+        InProgress = 1,
 
-        _2 = 2,
+        [System.Runtime.Serialization.EnumMember(Value = @"Completed")]
+        Completed = 2,
 
-        _3 = 3,
+        [System.Runtime.Serialization.EnumMember(Value = @"Paid")]
+        Paid = 3,
 
-        _4 = 4,
+        [System.Runtime.Serialization.EnumMember(Value = @"Failed")]
+        Failed = 4,
 
-        _5 = 5,
+        [System.Runtime.Serialization.EnumMember(Value = @"AwaitingPayment")]
+        AwaitingPayment = 5,
 
     }
 
@@ -2398,27 +2559,38 @@ namespace Zarichney.Client
     public enum ParameterAttributes
     {
 
-        _0 = 0,
+        [System.Runtime.Serialization.EnumMember(Value = @"None")]
+        None = 0,
 
-        _1 = 1,
+        [System.Runtime.Serialization.EnumMember(Value = @"In")]
+        In = 1,
 
-        _2 = 2,
+        [System.Runtime.Serialization.EnumMember(Value = @"Out")]
+        Out = 2,
 
-        _4 = 4,
+        [System.Runtime.Serialization.EnumMember(Value = @"Lcid")]
+        Lcid = 3,
 
-        _8 = 8,
+        [System.Runtime.Serialization.EnumMember(Value = @"Retval")]
+        Retval = 4,
 
-        _16 = 16,
+        [System.Runtime.Serialization.EnumMember(Value = @"Optional")]
+        Optional = 5,
 
-        _4096 = 4096,
+        [System.Runtime.Serialization.EnumMember(Value = @"HasDefault")]
+        HasDefault = 6,
 
-        _8192 = 8192,
+        [System.Runtime.Serialization.EnumMember(Value = @"HasFieldMarshal")]
+        HasFieldMarshal = 7,
 
-        _16384 = 16384,
+        [System.Runtime.Serialization.EnumMember(Value = @"Reserved3")]
+        Reserved3 = 8,
 
-        _32768 = 32768,
+        [System.Runtime.Serialization.EnumMember(Value = @"Reserved4")]
+        Reserved4 = 9,
 
-        _61440 = 61440,
+        [System.Runtime.Serialization.EnumMember(Value = @"ReservedMask")]
+        ReservedMask = 10,
 
     }
 
@@ -2427,6 +2599,7 @@ namespace Zarichney.Client
     {
 
         [JsonPropertyName("attributes")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public ParameterAttributes Attributes { get; set; }
 
         [JsonPropertyName("member")]
@@ -2522,21 +2695,29 @@ namespace Zarichney.Client
     public enum PropertyAttributes
     {
 
-        _0 = 0,
+        [System.Runtime.Serialization.EnumMember(Value = @"None")]
+        None = 0,
 
-        _512 = 512,
+        [System.Runtime.Serialization.EnumMember(Value = @"SpecialName")]
+        SpecialName = 1,
 
-        _1024 = 1024,
+        [System.Runtime.Serialization.EnumMember(Value = @"RTSpecialName")]
+        RTSpecialName = 2,
 
-        _4096 = 4096,
+        [System.Runtime.Serialization.EnumMember(Value = @"HasDefault")]
+        HasDefault = 3,
 
-        _8192 = 8192,
+        [System.Runtime.Serialization.EnumMember(Value = @"Reserved2")]
+        Reserved2 = 4,
 
-        _16384 = 16384,
+        [System.Runtime.Serialization.EnumMember(Value = @"Reserved3")]
+        Reserved3 = 5,
 
-        _32768 = 32768,
+        [System.Runtime.Serialization.EnumMember(Value = @"Reserved4")]
+        Reserved4 = 6,
 
-        _62464 = 62464,
+        [System.Runtime.Serialization.EnumMember(Value = @"ReservedMask")]
+        ReservedMask = 7,
 
     }
 
@@ -2566,12 +2747,14 @@ namespace Zarichney.Client
         public int MetadataToken { get; set; }
 
         [JsonPropertyName("memberType")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public MemberTypes MemberType { get; set; }
 
         [JsonPropertyName("propertyType")]
         public Type PropertyType { get; set; }
 
         [JsonPropertyName("attributes")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public PropertyAttributes Attributes { get; set; }
 
         [JsonPropertyName("isSpecialName")]
@@ -2806,11 +2989,41 @@ namespace Zarichney.Client
     public enum SecurityRuleSet
     {
 
-        _0 = 0,
+        [System.Runtime.Serialization.EnumMember(Value = @"None")]
+        None = 0,
 
-        _1 = 1,
+        [System.Runtime.Serialization.EnumMember(Value = @"Level1")]
+        Level1 = 1,
 
-        _2 = 2,
+        [System.Runtime.Serialization.EnumMember(Value = @"Level2")]
+        Level2 = 2,
+
+    }
+
+    /// <summary>
+    /// Represents the status of a service based on its configuration availability.
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.3.0.0 (NJsonSchema v11.2.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ServiceStatusInfo
+    {
+
+        [JsonPropertyName("serviceName")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public ExternalServices ServiceName { get; set; }
+
+        /// <summary>
+        /// Whether the service is available based on its configuration.
+        /// </summary>
+
+        [JsonPropertyName("isAvailable")]
+        public bool IsAvailable { get; set; }
+
+        /// <summary>
+        /// A list of missing configuration keys if the service is unavailable.
+        /// </summary>
+
+        [JsonPropertyName("missingConfigurations")]
+        public ICollection<string> MissingConfigurations { get; set; }
 
     }
 
@@ -2822,6 +3035,7 @@ namespace Zarichney.Client
         public object TypeId { get; set; }
 
         [JsonPropertyName("value")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public LayoutKind Value { get; set; }
 
     }
@@ -2906,6 +3120,7 @@ namespace Zarichney.Client
         public bool IsInterface { get; set; }
 
         [JsonPropertyName("memberType")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public MemberTypes MemberType { get; set; }
 
         [JsonPropertyName("namespace")]
@@ -2993,9 +3208,11 @@ namespace Zarichney.Client
         public int GenericParameterPosition { get; set; }
 
         [JsonPropertyName("genericParameterAttributes")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public GenericParameterAttributes GenericParameterAttributes { get; set; }
 
         [JsonPropertyName("attributes")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public TypeAttributes Attributes { get; set; }
 
         [JsonPropertyName("isAbstract")]
@@ -3116,57 +3333,83 @@ namespace Zarichney.Client
     public enum TypeAttributes
     {
 
-        _0 = 0,
+        [System.Runtime.Serialization.EnumMember(Value = @"NotPublic")]
+        NotPublic = 0,
 
-        _1 = 1,
+        [System.Runtime.Serialization.EnumMember(Value = @"Public")]
+        Public = 1,
 
-        _2 = 2,
+        [System.Runtime.Serialization.EnumMember(Value = @"NestedPublic")]
+        NestedPublic = 2,
 
-        _3 = 3,
+        [System.Runtime.Serialization.EnumMember(Value = @"NestedPrivate")]
+        NestedPrivate = 3,
 
-        _4 = 4,
+        [System.Runtime.Serialization.EnumMember(Value = @"NestedFamily")]
+        NestedFamily = 4,
 
-        _5 = 5,
+        [System.Runtime.Serialization.EnumMember(Value = @"NestedAssembly")]
+        NestedAssembly = 5,
 
-        _6 = 6,
+        [System.Runtime.Serialization.EnumMember(Value = @"NestedFamANDAssem")]
+        NestedFamANDAssem = 6,
 
-        _7 = 7,
+        [System.Runtime.Serialization.EnumMember(Value = @"VisibilityMask")]
+        VisibilityMask = 7,
 
-        _8 = 8,
+        [System.Runtime.Serialization.EnumMember(Value = @"SequentialLayout")]
+        SequentialLayout = 8,
 
-        _16 = 16,
+        [System.Runtime.Serialization.EnumMember(Value = @"ExplicitLayout")]
+        ExplicitLayout = 9,
 
-        _24 = 24,
+        [System.Runtime.Serialization.EnumMember(Value = @"LayoutMask")]
+        LayoutMask = 10,
 
-        _32 = 32,
+        [System.Runtime.Serialization.EnumMember(Value = @"Interface")]
+        Interface = 11,
 
-        _128 = 128,
+        [System.Runtime.Serialization.EnumMember(Value = @"Abstract")]
+        Abstract = 12,
 
-        _256 = 256,
+        [System.Runtime.Serialization.EnumMember(Value = @"Sealed")]
+        Sealed = 13,
 
-        _1024 = 1024,
+        [System.Runtime.Serialization.EnumMember(Value = @"SpecialName")]
+        SpecialName = 14,
 
-        _2048 = 2048,
+        [System.Runtime.Serialization.EnumMember(Value = @"RTSpecialName")]
+        RTSpecialName = 15,
 
-        _4096 = 4096,
+        [System.Runtime.Serialization.EnumMember(Value = @"Import")]
+        Import = 16,
 
-        _8192 = 8192,
+        [System.Runtime.Serialization.EnumMember(Value = @"Serializable")]
+        Serializable = 17,
 
-        _16384 = 16384,
+        [System.Runtime.Serialization.EnumMember(Value = @"WindowsRuntime")]
+        WindowsRuntime = 18,
 
-        _65536 = 65536,
+        [System.Runtime.Serialization.EnumMember(Value = @"UnicodeClass")]
+        UnicodeClass = 19,
 
-        _131072 = 131072,
+        [System.Runtime.Serialization.EnumMember(Value = @"AutoClass")]
+        AutoClass = 20,
 
-        _196608 = 196608,
+        [System.Runtime.Serialization.EnumMember(Value = @"StringFormatMask")]
+        StringFormatMask = 21,
 
-        _262144 = 262144,
+        [System.Runtime.Serialization.EnumMember(Value = @"HasSecurity")]
+        HasSecurity = 22,
 
-        _264192 = 264192,
+        [System.Runtime.Serialization.EnumMember(Value = @"ReservedMask")]
+        ReservedMask = 23,
 
-        _1048576 = 1048576,
+        [System.Runtime.Serialization.EnumMember(Value = @"BeforeFieldInit")]
+        BeforeFieldInit = 24,
 
-        _12582912 = 12582912,
+        [System.Runtime.Serialization.EnumMember(Value = @"CustomFormatMask")]
+        CustomFormatMask = 25,
 
     }
 
@@ -3190,6 +3433,7 @@ namespace Zarichney.Client
         public bool IsInterface { get; set; }
 
         [JsonPropertyName("memberType")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public MemberTypes MemberType { get; set; }
 
         [JsonPropertyName("namespace")]
@@ -3277,9 +3521,11 @@ namespace Zarichney.Client
         public int GenericParameterPosition { get; set; }
 
         [JsonPropertyName("genericParameterAttributes")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public GenericParameterAttributes GenericParameterAttributes { get; set; }
 
         [JsonPropertyName("attributes")]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public TypeAttributes Attributes { get; set; }
 
         [JsonPropertyName("isAbstract")]

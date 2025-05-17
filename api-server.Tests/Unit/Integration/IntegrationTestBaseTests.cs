@@ -1,7 +1,11 @@
 using System.Reflection;
 using FluentAssertions;
+using Moq;
 using Xunit;
+using Xunit.Abstractions;
+using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Fixtures;
 using Zarichney.Tests.Integration;
 
 namespace Zarichney.Tests.Unit.Integration;
@@ -14,7 +18,7 @@ public class IntegrationTestBaseTests
   {
     // Use reflection to access the private static field in IntegrationTestBase
     var traitToConfigNamesMapField = typeof(IntegrationTestBase)
-        .GetField("_traitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
+        .GetField("TraitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
 
     var traitToConfigNamesMap = traitToConfigNamesMapField?.GetValue(null)
         as Dictionary<string, List<string>>;
@@ -32,7 +36,7 @@ public class IntegrationTestBaseTests
   public void GetTraitToConfigNamesMap_WhenAccessingDatabaseCategory_ContainsDatabaseConnectionConfig()
   {
     var traitToConfigNamesMapField = typeof(IntegrationTestBase)
-        .GetField("_traitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
+        .GetField("TraitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
 
     var traitToConfigNamesMap = traitToConfigNamesMapField?.GetValue(null)
         as Dictionary<string, List<string>>;
@@ -44,67 +48,66 @@ public class IntegrationTestBaseTests
   }
 
   [Fact]
-  public void GetTraitToConfigNamesMap_WhenAccessingOpenAICategory_ContainsApiKeyConfig()
+  public void GetDependencyFactAttributeFromTestClass_WhenMethodHasDependencyFactWithFeatures_ReturnsFeatures()
   {
-    var traitToConfigNamesMapField = typeof(IntegrationTestBase)
-        .GetField("_traitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
+    // Arrange
+    var testMethodInfo = typeof(DummyTestClassWithExternalServices).GetMethod(nameof(DummyTestClassWithExternalServices.TestWithLlmDependency));
+    testMethodInfo.Should().NotBeNull();
 
-    var traitToConfigNamesMap = traitToConfigNamesMapField?.GetValue(null)
-        as Dictionary<string, List<string>>;
+    // Act - Use reflection to invoke private method GetRequiredFeaturesFromTestClass
+    var getRequiredFeaturesMethod = typeof(IntegrationTestBase)
+        .GetMethod("GetDependencyFactAttributeFromTestClass", BindingFlags.Instance | BindingFlags.NonPublic);
+
+    // Create an instance of IntegrationTestBase using dummy arguments
+    var mockFixture = new Mock<ApiClientFixture>().Object;
+    var mockOutputHelper = new Mock<ITestOutputHelper>().Object;
+
+    // Create an instance of IntegrationTestBase using a mock fixture
+    var mockIntegrationTestBase = new Mock<IntegrationTestBase>(mockFixture, mockOutputHelper) { CallBase = true }.Object;
+
+    var result = getRequiredFeaturesMethod?.Invoke(mockIntegrationTestBase, [typeof(DummyTestClassWithExternalServices)
+    ]) as DependencyFactAttribute;
 
     // Assert
-    var openAiConfigs = traitToConfigNamesMap?[TestCategories.ExternalOpenAI];
-    openAiConfigs.Should().NotBeNull();
-    openAiConfigs.Should().Contain("OpenAI API Key");
+    result.Should().NotBeNull();
+    result.RequiredExternalServices.Should().Contain(ExternalServices.OpenAiApi);
   }
 
   [Fact]
-  public void GetTraitToConfigNamesMap_WhenAccessingStripeCategory_ContainsSecretAndWebhookConfigs()
+  public void GetDependencyFactAttributeFromTestClass_WithInfrastructureDependency_ReturnsAttributeWithInfrastructure()
   {
-    var traitToConfigNamesMapField = typeof(IntegrationTestBase)
-        .GetField("_traitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
+    // Arrange
+    var mockFixture = new Mock<ApiClientFixture>().Object;
+    var mockOutputHelper = new Mock<ITestOutputHelper>().Object;
 
-    var traitToConfigNamesMap = traitToConfigNamesMapField?.GetValue(null)
-        as Dictionary<string, List<string>>;
+    // Create an instance of IntegrationTestBase using a mock fixture
+    var mockIntegrationTestBase = new Mock<IntegrationTestBase>(mockFixture, mockOutputHelper) { CallBase = true }.Object;
+
+    // Use reflection to invoke the private method
+    var getDependencyFactAttributeMethod = typeof(IntegrationTestBase)
+        .GetMethod("GetDependencyFactAttributeFromTestClass", BindingFlags.Instance | BindingFlags.NonPublic);
+
+    // Act
+    var result = getDependencyFactAttributeMethod?.Invoke(mockIntegrationTestBase,
+      [typeof(DummyTestClassWithInfrastructureDependency)]) as DependencyFactAttribute;
 
     // Assert
-    var stripeConfigs = traitToConfigNamesMap?[TestCategories.ExternalStripe];
-    stripeConfigs.Should().NotBeNull();
-    stripeConfigs.Should().Contain("Stripe Secret Key");
-    stripeConfigs.Should().Contain("Stripe Webhook Secret");
+    result.Should().NotBeNull();
+    result.RequiredInfrastructure.Should().NotBeNull();
+    result.RequiredInfrastructure.Should().Contain(InfrastructureDependency.Database);
+    result.RequiredExternalServices.Should().BeNull();
   }
+}
 
-  [Fact]
-  public void GetTraitToConfigNamesMap_WhenAccessingGitHubCategory_ContainsAccessTokenConfig()
-  {
-    var traitToConfigNamesMapField = typeof(IntegrationTestBase)
-        .GetField("_traitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
+// Helper classes for testing
+public class DummyTestClassWithExternalServices
+{
+  [DependencyFact(ExternalServices.OpenAiApi)]
+  public void TestWithLlmDependency() { }
+}
 
-    var traitToConfigNamesMap = traitToConfigNamesMapField?.GetValue(null)
-        as Dictionary<string, List<string>>;
-
-    // Assert
-    var gitHubConfigs = traitToConfigNamesMap?[TestCategories.ExternalGitHub];
-    gitHubConfigs.Should().NotBeNull();
-    gitHubConfigs.Should().Contain("GitHub Access Token");
-  }
-
-  [Fact]
-  public void GetTraitToConfigNamesMap_WhenAccessingMSGraphCategory_ContainsAllEmailConfigs()
-  {
-    var traitToConfigNamesMapField = typeof(IntegrationTestBase)
-        .GetField("_traitToConfigNamesMap", BindingFlags.Static | BindingFlags.NonPublic);
-
-    var traitToConfigNamesMap = traitToConfigNamesMapField?.GetValue(null)
-        as Dictionary<string, List<string>>;
-
-    // Assert
-    var msGraphConfigs = traitToConfigNamesMap?[TestCategories.ExternalMSGraph];
-    msGraphConfigs.Should().NotBeNull();
-    msGraphConfigs.Should().Contain("Email AzureTenantId");
-    msGraphConfigs.Should().Contain("Email AzureAppId");
-    msGraphConfigs.Should().Contain("Email AzureAppSecret");
-    msGraphConfigs.Should().Contain("Email FromEmail");
-    msGraphConfigs.Should().Contain("Email MailCheckApiKey");
-  }
+public class DummyTestClassWithInfrastructureDependency
+{
+  [DependencyFact(InfrastructureDependency.Database)]
+  public void TestWithDatabaseDependency() { }
 }

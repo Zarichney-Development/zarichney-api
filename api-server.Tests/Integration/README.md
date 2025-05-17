@@ -55,7 +55,13 @@
 * **Assertions:** Use `FluentAssertions`. Assert on response status codes, DTO contents (`Should().BeEquivalentTo()`), and expected side effects. Include `.Because("...")` clauses.
 * **Collection:** All integration tests **MUST** belong to the `[Collection("Integration")]`.
 * **Base Class Inheritance:** Tests **MUST** inherit `IntegrationTestBase`. Tests requiring database access **MUST** inherit `DatabaseIntegrationTestBase`.
-* **Traits:** Must use `[Trait("Category", "Integration")]` and relevant `Feature`, `Dependency`, and `Mutability` traits. Use `[DependencyFact]` for tests with external dependencies.
+* **Traits:** Must use `[Trait("Category", "Integration")]` and relevant `Feature`, `Dependency`, and `Mutability` traits. For tests with dependencies:
+  * **Preferred Methods:**
+    * For API features: Use `[DependencyFact(ExternalServices.XYZ)]` with appropriate ApiFeature enum values.
+    * For infrastructure: Use `[DependencyFact(InfrastructureDependency.Database)]` with appropriate InfrastructureDependency enum values.
+    * For combined dependencies: Use `[DependencyFact(ExternalServices.LLM, InfrastructureDependency.Database)]`.
+  * Each of these enum-based approaches automatically maps to the appropriate TestCategories.Dependency traits for filtering/reporting.
+  * **Legacy Method:** Use `[DependencyFact]` combined with explicit `[Trait(TestCategories.Dependency, TestCategories.ExternalOpenAI)]` declarations.
 * **API Interaction:** **MUST** use the Refit client provided by the base class (`ApiClient` or `AuthenticatedApiClient`). Direct service calls are forbidden.
 * **Database Cleanup:** Call `await ResetDatabaseAsync()` at the start of tests modifying or relying on specific DB state.
 

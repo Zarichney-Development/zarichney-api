@@ -7,6 +7,7 @@ using OpenAI.Chat;
 using Zarichney.Services.Email;
 using Zarichney.Services.GitHub;
 using Zarichney.Services.Sessions;
+using Zarichney.Services.Status;
 
 namespace Zarichney.Services.AI;
 
@@ -32,7 +33,7 @@ public interface ILlmRepository
   Task WriteConversationAsync(LlmConversation conversation, Session session);
 }
 
-public class LlmRepository(IGitHubService githubService) : ILlmRepository
+public class LlmRepository(IGitHubService githubService, IStatusService statusService, ILogger<LlmRepository> logger) : ILlmRepository
 {
   private static readonly JsonSerializerOptions IndentedOptions = new()
   {
@@ -63,7 +64,7 @@ public class LlmRepository(IGitHubService githubService) : ILlmRepository
   private static string FormatRequestContent(string request)
   {
     var lines = new List<string>();
-    var parts = request.Split(new[] { "```json", "```" }, StringSplitOptions.None);
+    var parts = request.Split(["```json", "```"], StringSplitOptions.None);
 
     for (var i = 0; i < parts.Length; i++)
     {
@@ -146,6 +147,13 @@ public class LlmRepository(IGitHubService githubService) : ILlmRepository
 
   public async Task WriteConversationAsync(LlmConversation conversation, Session session)
   {
+    var isGitHubAvailable = statusService.IsFeatureAvailable(ExternalServices.GitHubAccess);
+    if (!isGitHubAvailable)
+    {
+      logger.LogWarning("Unable to persist LLM conversation as github service is not available.");
+      return;
+    }
+
     var baseDir = $"prompts/session_{session.CreatedAt:yyyyMMdd-HHmmss}_";
 
     var userEmail = session.Order?.Customer.Email;

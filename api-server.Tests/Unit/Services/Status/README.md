@@ -1,63 +1,106 @@
-# Module/Directory: /Unit/Services/Status
+# Module/Directory: /api-server.Tests/Unit/Services/Status
 
-**Last Updated:** 2025-04-18
+**Last Updated:** 2025-05-16
 
-> **Parent:** [`Services`](../README.md)
-> *(Note: A README for `/Unit/Services/` may be needed)*
-> **Related:**
-> * **Source:** [`Services/Status/StatusService.cs`](../../../../api-server/Services/Status/StatusService.cs)
-> * **Models:** [`Services/Status/ConfigurationItemStatus.cs`](../../../../api-server/Services/Status/ConfigurationItemStatus.cs)
-> * **Dependencies:** `IConfiguration`, potentially other service interfaces (e.g., `IEmailService`, `IStripeService`, `IOpenAIService`), `ILogger<StatusService>`
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> **Parent:** [`/api-server.Tests/Unit/Services/`](../README.md)
 
-## 1. Purpose & Rationale (Why?)
+## 1. Purpose & Responsibility
 
-This directory contains unit tests for the `StatusService` class. This service is responsible for checking the status and validity of various application configurations and potentially the connectivity or configuration of external dependencies. It aggregates this information, often for use in health check endpoints.
+* **What it is:** Unit tests for the Status Service module, which provides runtime configuration status and availability information for system features and external services.
+* **Key Responsibilities:**
+  * Testing `StatusService` functionality for checking configuration values
+  * Validating enum-based service status reporting (using `ExternalServices` enum)
+  * Testing service status caching and retrieval methods
+  * Verifying proper handling of `[RequiresConfiguration]` attributes
+  * Ensuring feature availability checks function correctly
+* **Why it exists:** To verify that the Status Service correctly determines whether features are properly configured and available, supporting the system's ability to report its health and gracefully handle missing configurations.
 
-* **Why Unit Tests?** To validate the logic used by `StatusService` to check individual configuration items and aggregate their statuses, all in isolation from the actual configuration sources or external services. Tests ensure the service correctly interprets configuration values (via mocked `IConfiguration`), potentially interacts with mocked service interfaces (if checking deeper status), and produces the expected status report.
-* **Isolation:** Achieved by mocking `IConfiguration`, any other service interfaces whose status is checked (e.g., mocking a `PingAsync` method if one exists), and `ILogger`.
+## 2. Architecture & Key Concepts
 
-## 2. Scope & Key Functionality Tested (What?)
+* **High-Level Design:** The test suite uses mocked dependencies to isolate and verify the behavior of the `StatusService` class in various scenarios.
+* **Core Tests:**
+  * `ServiceStatusInfoTests` - Verifies the behavior of the `ServiceStatusInfo` record with different constructor parameters
+  * `StatusServiceTests` - Tests the primary functionality of the `StatusService` class
+* **Key Testing Patterns:**
+  * Mocking configuration values to test different configuration states
+  * Setting up mock service providers to return test config instances
+  * Using reflection via a mocked assembly to control which config types are "discovered"
+  * Verifying proper caching behavior for service status information
+  * Testing both dictionary lookup and list enumeration patterns for service status
 
-Unit tests for `StatusService` focus on its core methods, such as:
+```mermaid
+graph TD
+    A[StatusServiceTests] -->|Tests| B[StatusService]
+    A -->|Creates| C[Mock IConfiguration]
+    A -->|Creates| D[Mock IServiceProvider]
+    A -->|Creates| E[Mock Assembly]
+    A -->|Creates| F[Mock ILogger]
+    
+    B -->|Uses| C
+    B -->|Uses| D
+    B -->|Uses| E
+    B -->|Uses| F
+    
+    G[ServiceStatusInfoTests] -->|Tests| H[ServiceStatusInfo Record]
+    
+    I[Test Configs with RequiresConfiguration] -->|Discovered by| E
+    I -->|Resolved by| D
+```
 
-* **`GetStatusAsync()` / `CheckConfigurationStatus()` (or similar):**
-    * Iterating through a predefined list of configuration items or dependencies to check.
-    * Correctly querying the mocked `IConfiguration` for specific keys.
-    * Correctly interpreting configuration values (present, missing, empty string) to determine the status (e.g., `OK`, `Error`, `Warning`).
-    * Potentially calling methods on other mocked service interfaces to check their status/configuration.
-    * Correctly creating `ConfigurationItemStatus` objects for each item checked.
-    * Aggregating individual statuses into an overall status report or list.
-    * Handling exceptions that might occur during checks (e.g., if a mocked service call throws).
+## 3. Interface Contract & Assumptions
 
-## 3. Test Environment Setup
+* **Key Methods Tested:**
+  * `GetConfigurationStatusAsync()` - Tests verify it returns correct configuration status list
+  * `GetServiceStatusAsync()` - Tests verify it returns a dictionary of `ExternalServices` to `ServiceStatusInfo`
+  * `GetFeatureStatus(ExternalServices)` - Tests verify it returns the correct status for a specific service
+  * `IsFeatureAvailable(ExternalServices)` - Tests verify it correctly reports if a service is available
+* **Critical Assumptions:**
+  * Tests assume the `StatusService` properly reflects its cache expiration time
+  * Test config classes use the `[RequiresConfiguration]` attribute to associate properties with services
+  * Tests assume the service correctly uses reflection to find and analyze config types
+  * Mock `IServiceProvider` returns test config objects that mimic real ones
+  * Testing with enum-based service identifiers rather than string-based (post-refactoring)
 
-* **Instantiation:** `StatusService` is instantiated directly in test methods.
-* **Mocking:** Dependencies are mocked using frameworks like Moq. Key mocks include:
-    * `Mock<IConfiguration>`: Requires setting up specific configuration keys/sections to return values or be absent (`null`) depending on the test scenario. Use `SetupGet(c => c[It.Is<string>(key => key == "SpecificKey")])` or `Setup(c => c.GetSection("SpecificSection").Value)`.
-    * Mocks for any other service interfaces checked by `StatusService` (e.g., `Mock<IEmailService>`).
-    * `Mock<ILogger<StatusService>>`.
+## 4. Local Conventions & Constraints
 
-## 4. Maintenance Notes & Troubleshooting
+* **Mock Configuration:** Tests set up mock configuration to return specific values using `_mockConfiguration.Setup(c => c["Key"]).Returns("Value")`
+* **Test Configuration Classes:** Inner classes `TestService1Config` and `TestService2Config` define test configuration objects with `[RequiresConfiguration]` attributes
+* **Helper Methods:** Tests use setup helper methods like `SetupEmptyServiceProvider()`, `SetupServiceProviderWithTestConfigs()`, etc.
+* **Initialization Pattern:** The `StatusServiceTests` constructor sets up common mocks, and individual test methods configure them for specific scenarios
 
-* **`IConfiguration` Mocking:** Setting up `IConfiguration` mocks to simulate different configuration states (key present with value, key present with empty value, key missing) is crucial for testing the status logic accurately.
-* **New Status Checks:** If `StatusService` is updated to check new configuration items or dependencies, corresponding mocks and unit tests must be added here.
-* **Dependency Checks:** If the service checks more than just configuration (e.g., tries to connect to a database or call an external service ping endpoint), ensure the relevant service interface is mocked to simulate success and failure for those checks.
+## 5. How to Work With This Code
 
-## 5. Test Cases & TODOs
+* **Setup:** No special setup required beyond standard test project dependencies
+* **Testing:**
+  * Location: `/api-server.Tests/Unit/Services/Status/`
+  * How to Run: `dotnet test --filter "FullyQualifiedName~StatusServiceTests"`
+  * Testing Strategy: Focus on verifying correct behavior with different configuration states and service availability scenarios
+* **Common Pitfalls / Gotchas:**
+  * The service uses reflection - test setup is sensitive to the exact configuration of mock assemblies and service providers
+  * Tests rely on proper configuration of the mock service provider to return test config instances
+  * When adding new enum values to `ExternalServices`, update test config classes accordingly
 
-### `StatusServiceTests.cs`
-* **TODO:** Test checking a *required* configuration key that *is present* and *has a value* in mocked `IConfiguration` -> verify corresponding `ConfigurationItemStatus` is `OK`.
-* **TODO:** Test checking a *required* configuration key that *is present* but *empty/whitespace* in mocked `IConfiguration` -> verify corresponding `ConfigurationItemStatus` is `Error` or `Warning`.
-* **TODO:** Test checking a *required* configuration key that *is missing* from mocked `IConfiguration` -> verify corresponding `ConfigurationItemStatus` is `Error`.
-* **TODO:** Test checking an *optional* configuration key that *is missing* -> verify corresponding `ConfigurationItemStatus` is `OK` or `Warning` (depending on logic).
-* **TODO:** Test checking status/config of a dependent service (e.g., `IEmailService`) -> mock service method success -> verify corresponding `ConfigurationItemStatus` is `OK`.
-* **TODO:** Test checking status/config of a dependent service -> mock service method failure/throws -> verify corresponding `ConfigurationItemStatus` is `Error`.
-* **TODO:** Test the aggregation logic -> provide mocks simulating a mix of OK/Error/Warning statuses -> verify the returned list of `ConfigurationItemStatus` is correct.
-* **TODO:** Test the calculation of an overall status (if applicable) based on individual item statuses.
-* **TODO:** Test handling of exceptions thrown during configuration access or service checks.
+## 6. Dependencies
 
-## 6. Changelog
+* **Internal Code Dependencies:**
+  * [`/api-server/Services/Status/`](../../../../api-server/Services/Status/README.md) - The module being tested
+  * [`/api-server/Config/`](../../../../api-server/Config/README.md) - For `ConfigurationExtensions` and configuration-related attributes
+* **External Library Dependencies:**
+  * `Xunit` - Testing framework
+  * `FluentAssertions` - Assertions library
+  * `Moq` - Mocking framework
+* **Dependents (Impact of Changes):**
+  * [`/api-server.Tests/Framework/Helpers/ConfigurationStatusHelper.cs`](../../../Framework/Helpers/README.md) - Relies on the status service behavior for integration tests
 
-* **2025-04-18:** Initial creation - Defined purpose, scope, setup, and TODOs for `StatusService` unit tests. (Gemini)
+## 7. Rationale & Key Historical Context
 
+* The tests were updated to handle the transition from string-based service identifiers to the enum-based approach (`ExternalServices` enum)
+* Previously, tests checked dictionaries with string keys; now they verify dictionary lookups with enum keys
+* The `ServiceStatusInfo` record was updated to include the `serviceName` parameter, requiring updates to test assertions
+* Tests were modified to support the new structure while maintaining the same verification logic
+
+## 8. Known Issues & TODOs
+
+* Consider adding tests for handling caching failures or exceptions during cache refresh
+* Add tests for the new list-based client API response format to verify proper conversion between internal dictionary and external list representation
+* Consider expanding tests to cover more edge cases around service resolution failures

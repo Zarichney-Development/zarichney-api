@@ -10,9 +10,8 @@ public interface IFileWriteQueueService : IDisposable
   Task WriteToFileAndWaitAsync(string directory, string filename, object data, string? extension = "json");
 }
 
-public class FileWriteQueueService : IFileWriteQueueService
+internal class FileWriteQueueService : IFileWriteQueueService
 {
-  private readonly IFileService _fileService;
   private readonly ConcurrentQueue<WriteOperation> _writeQueue = new();
   private readonly ConcurrentDictionary<string, TaskCompletionSource<bool>> _pendingWrites = new();
   private readonly CancellationTokenSource _cancellationTokenSource = new();
@@ -20,9 +19,8 @@ public class FileWriteQueueService : IFileWriteQueueService
   private readonly JsonSerializerOptions _jsonOptions;
   private readonly ILogger<FileWriteQueueService> _logger;
 
-  public FileWriteQueueService(IFileService fileService, ILogger<FileWriteQueueService> logger)
+  public FileWriteQueueService(ILogger<FileWriteQueueService> logger)
   {
-    _fileService = fileService;
     _logger = logger;
     _jsonOptions = new JsonSerializerOptions
     {
@@ -35,7 +33,7 @@ public class FileWriteQueueService : IFileWriteQueueService
   public void QueueWrite(string directory, string filename, object data, string? extension = "json")
   {
     extension ??= "json";
-    string filePath = GetFullPath(directory, filename, extension);
+    var filePath = GetFullPath(directory, filename, extension);
     var content = SerializeContent(data, extension);
 
     var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -48,7 +46,7 @@ public class FileWriteQueueService : IFileWriteQueueService
   public async Task WriteToFileAndWaitAsync(string directory, string filename, object data, string? extension = "json")
   {
     extension ??= "json";
-    string filePath = GetFullPath(directory, filename, extension);
+    var filePath = GetFullPath(directory, filename, extension);
     var content = SerializeContent(data, extension);
 
     var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -66,26 +64,50 @@ public class FileWriteQueueService : IFileWriteQueueService
     {
       if (_writeQueue.TryDequeue(out var op))
       {
-        string filePath = GetFullPath(op.Directory, op.Filename, op.Extension);
+        var filePath = GetFullPath(op.Directory, op.Filename, op.Extension);
         try
         {
-          await _fileService.CreateFile(filePath, op.Data, MimeTypeFor(op.Extension));
+          Directory.CreateDirectory(op.Directory);
+
+          var mimeType = MimeTypeFor(op.Extension);
+          switch (mimeType.ToLower())
+          {
+            case "application/pdf":
+              await File.WriteAllBytesAsync(filePath, (byte[])op.Data, _cancellationTokenSource.Token);
+              _logger.LogInformation("BackgroundWriter created PDF file: {FilePath}", filePath);
+              break;
+            case "application/json":
+              await File.WriteAllTextAsync(filePath, (string)op.Data, _cancellationTokenSource.Token);
+              _logger.LogInformation("BackgroundWriter created JSON file: {FilePath}", filePath);
+              break;
+            case "text/plain":
+              await File.WriteAllTextAsync(filePath, (string)op.Data, _cancellationTokenSource.Token);
+              _logger.LogInformation("BackgroundWriter created Text file: {FilePath}", filePath);
+              break;
+            default:
+              _logger.LogWarning("BackgroundWriter encountered unsupported file type via extension '{Extension}' for file: {FilePath}", op.Extension, filePath);
+              break;
+          }
         }
         catch (Exception ex)
         {
-          _logger.LogError(ex, "Write failed for file: {FilePath}", filePath);
+          _logger.LogError(ex, "BackgroundWriter failed for file: {FilePath}", filePath);
+          if (_pendingWrites.TryRemove(filePath, out var failedTcs))
+          {
+            failedTcs.TrySetException(ex);
+          }
         }
         finally
         {
-          if (_pendingWrites.TryRemove(filePath, out var tcs))
+          if (_pendingWrites.TryRemove(filePath, out var successTcs) && !successTcs.Task.IsCompleted)
           {
-            tcs.TrySetResult(true);
+            successTcs.TrySetResult(true);
           }
         }
       }
       else
       {
-        await Task.Delay(100);
+        await Task.Delay(100, _cancellationTokenSource.Token);
       }
     }
   }
@@ -108,14 +130,14 @@ public class FileWriteQueueService : IFileWriteQueueService
   {
     return extension.ToLower() switch
     {
-      "json" => JsonSerializer.Serialize(data, _jsonOptions),
+      "json" => data is string s ? s : JsonSerializer.Serialize(data, _jsonOptions),
       "md" or "txt" => data.ToString()!,
       "pdf" => data is byte[] bytes ? bytes : throw new ArgumentException("PDF content must be byte array"),
-      _ => throw new ArgumentException($"Unsupported extension: {extension}")
+      _ => throw new ArgumentException($"Unsupported extension for serialization: {extension}")
     };
   }
 
-  public void Dispose()
+  void IDisposable.Dispose()
   {
     _cancellationTokenSource.Cancel();
     try

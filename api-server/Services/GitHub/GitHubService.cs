@@ -1,3 +1,4 @@
+using Zarichney.Services.Status;
 using System.Threading.Channels;
 using Octokit;
 using Polly;
@@ -9,10 +10,17 @@ namespace Zarichney.Services.GitHub;
 
 public class GitHubConfig : IConfig
 {
+  [RequiresConfiguration(ExternalServices.GitHubAccess)]
   public string RepositoryOwner { get; init; } = string.Empty;
+
+  [RequiresConfiguration(ExternalServices.GitHubAccess)]
   public string RepositoryName { get; init; } = string.Empty;
+
   public string BranchName { get; init; } = "main";
+
+  [RequiresConfiguration(ExternalServices.GitHubAccess)]
   public string AccessToken { get; init; } = string.Empty;
+
   public int RetryAttempts { get; init; } = 5;
 }
 
@@ -28,6 +36,16 @@ public class GitHubOperation
 public interface IGitHubService
 {
   Task EnqueueCommitAsync(string filePath, byte[] content, string directory, string commitMessage);
+
+  /// <summary>
+  /// Stores audio files and their transcripts in GitHub repository.
+  /// </summary>
+  /// <param name="audioFileName">The name of the audio file.</param>
+  /// <param name="audioData">The binary content of the audio file.</param>
+  /// <param name="transcriptFileName">The name of the transcript file.</param>
+  /// <param name="transcriptText">The text content of the transcript.</param>
+  /// <returns>Task representing the asynchronous operation.</returns>
+  Task StoreAudioAndTranscriptAsync(string audioFileName, byte[] audioData, string transcriptFileName, string transcriptText);
 }
 
 public class GitHubService : BackgroundService, IGitHubService
@@ -83,6 +101,39 @@ public class GitHubService : BackgroundService, IGitHubService
     await operation.CompletionSource.Task; // Wait for completion without blocking the channel
   }
 
+  /// <summary>
+  /// Stores audio files and their transcripts in GitHub repository.
+  /// </summary>
+  /// <param name="audioFileName">The name of the audio file.</param>
+  /// <param name="audioData">The binary content of the audio file.</param>
+  /// <param name="transcriptFileName">The name of the transcript file.</param>
+  /// <param name="transcriptText">The text content of the transcript.</param>
+  /// <returns>Task representing the asynchronous operation.</returns>
+  public async Task StoreAudioAndTranscriptAsync(string audioFileName, byte[] audioData, string transcriptFileName, string transcriptText)
+  {
+    _logger.LogInformation("Storing audio and transcript files: {AudioFile}, {TranscriptFile}",
+      audioFileName, transcriptFileName);
+
+    // Use Task.WhenAll to enqueue both operations in parallel
+    await Task.WhenAll(
+      EnqueueCommitAsync(
+        audioFileName,
+        audioData,
+        "recordings",
+        $"Add audio recording: {audioFileName}"
+      ),
+      EnqueueCommitAsync(
+        transcriptFileName,
+        System.Text.Encoding.UTF8.GetBytes(transcriptText),
+        "transcripts",
+        $"Add transcript: {transcriptFileName}"
+      )
+    );
+
+    _logger.LogInformation("Successfully stored audio and transcript files: {AudioFile}, {TranscriptFile}",
+      audioFileName, transcriptFileName);
+  }
+
   protected override async Task ExecuteAsync(CancellationToken stoppingToken)
   {
     try
@@ -113,24 +164,8 @@ public class GitHubService : BackgroundService, IGitHubService
 
   private async Task ProcessGitHubOperationAsync(GitHubOperation operation)
   {
-    // Validate configuration before attempting any GitHub operations
-    if (string.IsNullOrEmpty(_config.AccessToken) || _config.AccessToken == "recommended to set in app secrets")
-    {
-      _logger.LogError("GitHub access token is missing or invalid");
-      throw new ConfigurationMissingException(nameof(GitHubConfig), nameof(_config.AccessToken));
-    }
-
-    if (string.IsNullOrEmpty(_config.RepositoryOwner))
-    {
-      _logger.LogError("GitHub repository owner is missing");
-      throw new ConfigurationMissingException(nameof(GitHubConfig), nameof(_config.RepositoryOwner));
-    }
-
-    if (string.IsNullOrEmpty(_config.RepositoryName))
-    {
-      _logger.LogError("GitHub repository name is missing");
-      throw new ConfigurationMissingException(nameof(GitHubConfig), nameof(_config.RepositoryName));
-    }
+    // Configuration validation is now handled by IConfigurationStatusService
+    // These properties are marked with RequiresConfiguration attribute
 
     _logger.LogInformation("Processing GitHub commit for file {FilePath} in directory {Directory}",
       operation.FilePath, operation.Directory);

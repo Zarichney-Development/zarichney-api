@@ -1,3 +1,4 @@
+using Zarichney.Services.Status;
 using System.Text.Json;
 using AutoMapper;
 using OpenAI;
@@ -32,6 +33,7 @@ public class LlmConfig : IConfig
 {
   public string ModelName { get; init; } = LlmModels.Gpt4Omini;
   public int RetryAttempts { get; init; } = 5;
+  [RequiresConfiguration(ExternalServices.OpenAiApi)]
   public string ApiKey { get; init; } = string.Empty;
 }
 
@@ -128,10 +130,8 @@ public class LlmService : ILlmService
 
   public async Task<string> CreateAssistant(PromptBase prompt)
   {
-    if (_client == null)
-    {
-      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
-    }
+    // ServiceUnavailableException will be thrown by the proxy if LLM service is unavailable
+    ArgumentNullException.ThrowIfNull(_client, nameof(_client));
 
     try
     {

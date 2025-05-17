@@ -26,6 +26,7 @@
   * Use `record` types for immutable data transfer objects (DTOs) or simple data carriers where appropriate.
   * Keep methods concise and focused on a single responsibility. Aim for methods that fit on one screen.
   * Adhere to standard C# formatting (indentation, spacing, braces) primarily enforced by the project's `.editorconfig` file.
+  * Prefer comparing 'Count' to 0 rather than using Any(). Instead of `if (!allAttributes.Any())` use `if (allAttributes.Count == 0)`
 
 ## 3. Architecture & Design
 
@@ -39,6 +40,7 @@
   * Register and bind configuration in `Program.cs` using `ConfigurationExtensions.RegisterConfigurationServices`.
   * Inject specific configuration classes (e.g., `RecipeConfig`, `JwtSettings`) via constructor DI where needed.
   * **Validation Strategy:** Missing required configuration values (marked `[Required]` or using the placeholder `recommended to set in app secrets`) will generate warnings during startup but **will not prevent the application from starting**. Services **MUST** check for null or placeholder values at runtime and throw `ConfigurationMissingException` if they attempt to use a required configuration that is missing or invalid. (*Future Enhancement:* This may evolve towards disabling services instead of throwing runtime exceptions).
+  * **API Endpoint Availability:** Controllers and actions that require specific features to be properly configured **SHOULD** be decorated with the `[DependsOnService]` attribute (e.g., `[DependsOnService("Llm")]`, `[DependsOnService("Payments")]`). This helps developers and API consumers understand which endpoints may be unavailable due to missing configuration by providing visual indications in the Swagger UI.
 
 ## 4. Asynchronous Programming
 
@@ -67,6 +69,7 @@
 * Use LINQ effectively for querying and manipulating collections where it enhances readability and conciseness.
 * Prefer returning interfaces like `IReadOnlyList<T>` or `IEnumerable<T>` from methods when the caller should not modify the returned collection. Return `List<T>` when modification is intended or necessary for performance.
 * Use thread-safe collections (`ConcurrentDictionary`, `ConcurrentBag`, `ConcurrentQueue`) when data structures are accessed or modified by multiple threads concurrently (e.g., `FileService._writeQueue`, `SessionManager.Sessions`, `RecipeIndexer._recipes`).
+* Prefer collection expressions. Use `["stringVal"]` instead of `new List<string> { "stringVal" }`.
 
 ## 8. Resource Management
 

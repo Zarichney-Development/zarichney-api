@@ -1,4 +1,4 @@
-using Xunit;
+using Xunit.Abstractions;
 using Zarichney.Tests.Framework.Fixtures;
 
 namespace Zarichney.Tests.Integration;
@@ -10,15 +10,16 @@ namespace Zarichney.Tests.Integration;
 /// </summary>
 public abstract class DatabaseIntegrationTestBase : IntegrationTestBase
 {
-  protected DatabaseFixture DatabaseFixture => _apiClientFixture.DatabaseFixture;
+  private DatabaseFixture DatabaseFixture => _apiClientFixture.DatabaseFixture;
   private readonly ApiClientFixture _apiClientFixture;
 
   /// <summary>
   /// Initializes a new instance of the <see cref="DatabaseIntegrationTestBase"/> class.
   /// </summary>
   /// <param name="apiClientFixture">The API client fixture.</param>
-  protected DatabaseIntegrationTestBase(ApiClientFixture apiClientFixture)
-    : base(apiClientFixture)
+  /// <param name="testOutputHelper"></param>
+  protected DatabaseIntegrationTestBase(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper)
+    : base(apiClientFixture, testOutputHelper)
   {
     _apiClientFixture = apiClientFixture;
     if (!DatabaseFixture.IsContainerAvailable)

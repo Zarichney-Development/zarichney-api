@@ -1,7 +1,7 @@
 # Automation Testing Standards
 
-**Version:** 1.3
-**Last Updated:** 2025-05-03
+**Version:** 1.4
+**Last Updated:** 2025-05-13
 
 ## 1. Introduction
 
@@ -84,7 +84,24 @@
   * **Live external API calls are strictly forbidden.**
 * **Authentication (`TestAuthHandler`):** Use helper methods (e.g., `_authHelper.CreateAuthenticatedClient(userId, roles)` available through the base class) to obtain an `HttpClient` (and subsequently a Refit client) configured with simulated user claims/roles for testing authorization.
 * **Assertions (FluentAssertions):** Assert on API response status codes, DTO content (`Should().BeEquivalentTo()`), and expected side effects (e.g., database state changes verified via a separate DbContext instance obtained from the factory's services *after* the API call). Use `.Because("...")`.
-* **Dependency Skipping:** Use the `[DependencyFact]` attribute for tests requiring specific external configurations (as declared by `Dependency` traits). Use `[DockerAvailableFact]` for tests requiring the Docker runtime. These attributes leverage the `IntegrationTestBase` and framework helpers to automatically skip tests if prerequisites are unmet.
+* **Dependency Skipping:** Use the `[DependencyFact]` attribute for tests requiring specific dependencies (external features, infrastructure, or configurations). These attributes leverage the `IntegrationTestBase` and framework helpers to automatically skip tests if prerequisites are unmet.
+  * **Purpose:** Ensures tests that require external dependencies (databases, APIs, Docker, etc.) are skipped rather than failing when those dependencies are unavailable in the test environment.
+<<<<<<< HEAD
+  * **Implementation:** The `DependencyFact` attribute can be used in two ways:
+    1. **With ExternalServices enum** (preferred): `[DependencyFact(ExternalServices.LLM, ExternalServices.GitHubAccess)]` - This directly checks if the specified features are available using the `IStatusService`. It also automatically maps each ExternalServices to the appropriate dependency trait for filtering and reporting purposes.
+    2. **With string-based trait dependencies** (legacy): `[DependencyFact]` combined with `[Trait(TestCategories.Dependency, TestCategories.ExternalOpenAI)]` - This uses the `ConfigurationStatusHelper` and is maintained for backward compatibility.
+  * **ExternalServices-to-Trait Mapping:** For the preferred approach using ExternalServices, there is a built-in mapping from each ExternalServices to the appropriate TestCategories.Dependency trait value (e.g., ExternalServices.LLM maps to TestCategories.ExternalOpenAI). This mapping ensures that tests can still be filtered by dependency traits even when using the ExternalServices approach.
+  * **Configuration:** Tests using either approach will be properly skipped when the required dependencies are unavailable, with detailed skip reasons that include which features are unavailable and what configurations are missing.
+=======
+  * **Implementation:** The `DependencyFact` attribute can be used in several ways:
+    1. **With ExternalServices enum**: `[DependencyFact(ExternalServices.LLM, ExternalServices.GitHubAccess)]` - This directly checks if the specified features are available using the `IStatusService`. It also automatically maps each ExternalServices to the appropriate dependency trait for filtering and reporting purposes.
+    2. **With InfrastructureDependency enum** (preferred for infrastructure dependencies): `[DependencyFact(InfrastructureDependency.Database)]` - This directly checks for infrastructure-level dependencies like Database or Docker availability using dedicated factory properties.
+    3. **With a combination of both**: `[DependencyFact(ExternalServices.LLM, InfrastructureDependency.Database)]` - For tests requiring both API features and infrastructure dependencies.
+    4. **With string-based trait dependencies** (legacy): `[DependencyFact]` combined with `[Trait(TestCategories.Dependency, TestCategories.ExternalOpenAI)]` - This uses the `ConfigurationStatusHelper` and is maintained for backward compatibility.
+  * **Enum-to-Trait Mapping:** For both the ExternalServices and InfrastructureDependency approaches, there are built-in mappings to appropriate TestCategories.Dependency trait values (e.g., ExternalServices.LLM maps to TestCategories.ExternalOpenAI, InfrastructureDependency.Database maps to TestCategories.Database). This mapping ensures that tests can still be filtered by dependency traits when using the enum-based approaches.
+  * **Configuration:** Tests using any approach will be properly skipped when the required dependencies are unavailable, with detailed skip reasons that include which features or infrastructure are unavailable and what configurations are missing.
+>>>>>>> e4adb1a64dec0488e3a7e8045ca73aaab60c268c
+  * **CI/CD Integration:** In CI environments, all dependencies should be properly configured or mocked to ensure comprehensive test coverage, while local development environments may skip tests based on available dependencies.
 
 ## 8. Test Data Standards
 
@@ -117,3 +134,12 @@
 * **Refactoring:** Keep test code clean (DRY principle via helpers/fixtures). Delete obsolete tests. Add tests for bugs found post-release.
 * **Code Review:** Test code is subject to the same review standards as production code. Reviewers **must** check adherence to these standards.
 * **Comment TODOs:** Use `// TODO:` comments for areas needing improvement or refactoring only if issue is out-of-scope from the current assignment. Make mentions of any newly introduced TODOs in the output report.
+
+* **Dependency Skipping:** Use the `[DependencyFact]` attribute for tests requiring specific dependencies (external features, infrastructure, or configurations). These attributes leverage the `IntegrationTestBase` and framework helpers to automatically skip tests if prerequisites are unmet.
+  * **Implementation:** The `DependencyFact` attribute can be used in several ways:
+    1. **With ExternalServices enum**: `[DependencyFact(ExternalServices.LLM, ExternalServices.GitHubAccess)]` - This directly checks if the specified features are available using the `IStatusService`. It also automatically maps each ExternalServices to the appropriate dependency trait for filtering and reporting purposes.
+    2. **With InfrastructureDependency enum** (preferred for infrastructure dependencies): `[DependencyFact(InfrastructureDependency.Database)]` - This directly checks for infrastructure-level dependencies like Database or Docker availability using dedicated factory properties.
+    3. **With a combination of both**: `[DependencyFact(ExternalServices.LLM, InfrastructureDependency.Database)]` - For tests requiring both API features and infrastructure dependencies.
+    4. **With string-based trait dependencies** (legacy): `[DependencyFact]` combined with `[Trait(TestCategories.Dependency, TestCategories.ExternalOpenAI)]` - This uses the `ConfigurationStatusHelper` and is maintained for backward compatibility.
+  * **Enum-to-Trait Mapping:** For both the ExternalServices and InfrastructureDependency approaches, there are built-in mappings to appropriate TestCategories.Dependency trait values (e.g., ExternalServices.LLM maps to TestCategories.ExternalOpenAI, InfrastructureDependency.Database maps to TestCategories.Database). This mapping ensures that tests can still be filtered by dependency traits when using the enum-based approaches.
+  * **Configuration:** Tests using any approach will be properly skipped when the required dependencies are unavailable, with detailed skip reasons that include which features or infrastructure are unavailable and what configurations are missing.

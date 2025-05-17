@@ -9,8 +9,6 @@ namespace Zarichney.Services.FileSystem;
 
 public interface IFileService
 {
-  Task WriteToFileAndWait(string directory, string filename, object data, string? extension = "json");
-  void QueueWrite(string directory, string filename, object data, string? extension = "json");
   Task<T> ReadFromFile<T>(string directory, string filename, string? extension = "json");
   string[] GetFiles(string directoryPath);
   string GetFile(string filePath);
@@ -25,11 +23,9 @@ public class FileService : IFileService
   private readonly AsyncRetryPolicy _retryPolicy;
   private readonly JsonSerializerOptions _jsonOptions;
   private readonly ILogger<FileService> _logger;
-  private readonly IFileWriteQueueService _writeQueueService;
 
-  public FileService(IFileWriteQueueService writeQueueService, ILogger<FileService> logger)
+  public FileService(ILogger<FileService> logger)
   {
-    _writeQueueService = writeQueueService;
     _logger = logger;
     _jsonOptions = new JsonSerializerOptions
     {
@@ -46,12 +42,6 @@ public class FileService : IFileService
             retryCount, ex.Message, ctx);
         });
   }
-
-  public async Task WriteToFileAndWait(string directory, string filename, object data, string? extension = "json")
-    => await _writeQueueService.WriteToFileAndWaitAsync(directory, filename, data, extension);
-
-  public void QueueWrite(string directory, string filename, object data, string? extension = "json")
-    => _writeQueueService.QueueWrite(directory, filename, data, extension);
 
   public async Task<T> ReadFromFile<T>(string directory, string filename, string? extension = "json")
   {
