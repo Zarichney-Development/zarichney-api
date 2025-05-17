@@ -125,7 +125,6 @@ public class AiController(
   /// <returns>A JSON object containing the transcript, filenames, timestamp, and a success message.</returns>
   [HttpPost("transcribe")]
   [Consumes("multipart/form-data")] // Crucial hint for Swagger
-  [DependsOnService(ExternalServices.GitHubAccess)] // TODO: evaluate whether this can be skipped instead of being a hard dependency on endpoint capability
   [SwaggerOperation(Summary = "Transcribes an audio file.",
     Description =
       "Accepts an audio file via multipart/form-data (parameter name 'audioFile'), transcribes it, and optionally saves files.")]

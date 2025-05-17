@@ -27,7 +27,7 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
     using var client = Factory.CreateAuthenticatedClient("test-user", ["Admin"]);
 
     // Act - Step 1: Get the service status
-    var statusResult = await ApiClient.Status2();
+    var statusResult = await ApiClient.StatusAll();
 
     // Find unavailable services - include both legacy names and enum-based names
     var unavailableServices = statusResult
@@ -36,7 +36,7 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
       .ToList();
 
     // Also include the enum names for completeness (in case we have services that are only represented by enum names)
-    foreach (string enumName in Enum.GetNames(typeof(Zarichney.Services.Status.ExternalServices)))
+    foreach (var enumName in Enum.GetNames(typeof(Zarichney.Services.Status.ExternalServices)))
     {
       if (statusResult.TryGetValue(enumName, out var status) && !status.IsAvailable && !unavailableServices.Contains(enumName))
       {
@@ -83,7 +83,7 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
       // For each service that should have endpoints, make a basic check that the service name
       // appears somewhere in the swagger content - this is a simple verification that
       // the service information is being surfaced in the API documentation
-      // For controller-level services, we also check for pluralized names (e.g. "Payment" might appear as "Payments" in endpoints)
+      // For controller-level services, we also check for pluralized names (e.g. "Payment" might appear as "Stripe" in endpoints)
       var serviceNameFound = swaggerContent.Contains(serviceName) ||
                              swaggerContent.Contains($"{serviceName}s") || // Check pluralized version
                              swaggerContent.Contains(serviceName.ToLowerInvariant()); // Check lowercase
@@ -104,7 +104,7 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
     using var client = Factory.CreateAuthenticatedClient("test-user", ["Admin"]);
 
     // Act - Step 1: Get the service status to check if LLM is available
-    var statusResult = await ApiClient.Status2();
+    var statusResult = await ApiClient.StatusAll();
 
     // Check if LLM service is unavailable - check both "Llm" and "LLM" since we now use enum names
     var llmUnavailable = (statusResult.TryGetValue("Llm", out var llmStatus) && !llmStatus.IsAvailable) ||
@@ -158,7 +158,7 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
       "Server", "Client", "Session", "Recipe", "Customer", "Order", "PdfCompiler", "FileSystem",
       "ConfigurationStatus", "Webscraper", "WebScraper", "RecipeIndexer", "RecipeSearcher", "Email",
       // Include External Services enum names
-      "FrontEnd", "LLM", "Transcription", "EmailSending", "Payments", "GitHubAccess", "AiServices", "EmailValidation"
+      "FrontEnd", "OpenAiApi", "MsGraph", "Stripe", "GitHubAccess", "MailCheck"
     };
 
     return infrastructureServices.Contains(serviceName, StringComparer.OrdinalIgnoreCase);

@@ -1,7 +1,5 @@
 using FluentAssertions;
 using Refit;
-using System;
-using System.Linq;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Services.Status;
@@ -56,7 +54,7 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture,
                                .ToArray();
 
     // Act
-    var serviceStatus = await ApiClient.Status2();
+    var serviceStatus = await ApiClient.StatusAll();
 
     // Assert
     serviceStatus.Should().NotBeNull(

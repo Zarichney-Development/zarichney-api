@@ -23,13 +23,13 @@ public class DependencyFactAttributeTests
   public void Constructor_WhenExternalServicesParametersProvided_RequiredFeaturesContainsThoseFeatures()
   {
     // Arrange & Act
-    var attribute = new DependencyFactAttribute(ExternalServices.OpenAiApi, ExternalServices.EmailValidation);
+    var attribute = new DependencyFactAttribute(ExternalServices.OpenAiApi, ExternalServices.MailCheck);
 
     // Assert
     attribute.RequiredExternalServices.Should().NotBeNull();
     attribute.RequiredExternalServices.Should().HaveCount(2);
     attribute.RequiredExternalServices.Should().Contain(ExternalServices.OpenAiApi);
-    attribute.RequiredExternalServices.Should().Contain(ExternalServices.EmailValidation);
+    attribute.RequiredExternalServices.Should().Contain(ExternalServices.MailCheck);
     attribute.RequiredInfrastructure.Should().BeNull();
   }
 

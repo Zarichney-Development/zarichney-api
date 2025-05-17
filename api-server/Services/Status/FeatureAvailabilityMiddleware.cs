@@ -1,6 +1,4 @@
 using System.Collections.Concurrent;
-using System.Reflection;
-using Microsoft.AspNetCore.Http.Features;
 
 namespace Zarichney.Services.Status;
 
@@ -66,9 +64,10 @@ public class FeatureAvailabilityMiddleware
     foreach (var feature in requiredFeatures)
     {
       var featureStatus = _statusService.GetFeatureStatus(feature);
-      if (featureStatus == null || !featureStatus.IsAvailable)
+      if (featureStatus is not { IsAvailable: true })
       {
-        unavailableFeatures[feature] = featureStatus ?? new ServiceStatusInfo(false, new List<string> { $"Unknown feature: {feature}" });
+        unavailableFeatures[feature] = featureStatus ?? new ServiceStatusInfo(feature, false,
+          [$"Unknown feature: {feature}"]);
       }
     }
 
@@ -86,7 +85,7 @@ public class FeatureAvailabilityMiddleware
     {
       unavailableFeaturesList.Add(feature.ToString());
 
-      if (statusInfo.MissingConfigurations != null && statusInfo.MissingConfigurations.Count > 0)
+      if (statusInfo.MissingConfigurations is { Count: > 0 })
       {
         missingConfigurations.AddRange(statusInfo.MissingConfigurations);
       }
@@ -119,7 +118,7 @@ public class FeatureAvailabilityMiddleware
   /// <param name="endpoint">The endpoint to check.</param>
   /// <param name="cacheKey">A key to use for caching the results.</param>
   /// <returns>A list of all required features for the endpoint.</returns>
-  private List<ExternalServices> GetRequiredFeatures(Endpoint endpoint, string cacheKey)
+  private static List<ExternalServices> GetRequiredFeatures(Endpoint endpoint, string cacheKey)
   {
     // Check if we have cached the attributes for this endpoint
     if (AttributeCache.TryGetValue(cacheKey, out var cachedFeatures))
@@ -131,20 +130,14 @@ public class FeatureAvailabilityMiddleware
 
     // Get the endpoint metadata collection
     var metadata = endpoint.Metadata;
-    if (metadata == null)
-    {
-      // Add empty list to cache to avoid repeated lookups
-      AttributeCache[cacheKey] = features;
-      return features;
-    }
 
     // Extract all DependsOnService attributes from the endpoint metadata
     var featureAttributes = metadata.GetOrderedMetadata<DependsOnService>();
-    if (featureAttributes != null && featureAttributes.Any())
+    if (featureAttributes.Any())
     {
       foreach (var attribute in featureAttributes)
       {
-        if (attribute.Features != null && attribute.Features.Length > 0)
+        if (attribute.Features.Length > 0)
         {
           features.AddRange(attribute.Features);
         }

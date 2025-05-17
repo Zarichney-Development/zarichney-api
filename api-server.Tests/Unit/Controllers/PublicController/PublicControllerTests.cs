@@ -1,7 +1,6 @@
 using Zarichney.Services.Status;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using Zarichney.Tests.Framework.Attributes;
@@ -21,8 +20,7 @@ public class PublicControllerTests
   public PublicControllerTests()
   {
     _mockStatusService = new Mock<IStatusService>();
-    Mock<ILogger<Zarichney.Controllers.PublicController>> mockLogging = new();
-    _controller = new Zarichney.Controllers.PublicController(_mockStatusService.Object, mockLogging.Object);
+    _controller = new Zarichney.Controllers.PublicController(_mockStatusService.Object);
   }
 
   /// <summary>
@@ -65,10 +63,10 @@ public class PublicControllerTests
   public async Task GetServicesStatus_WhenServiceSucceeds_ReturnsOkWithServiceStatus()
   {
     // Arrange
-    var expectedServiceStatus = new Dictionary<string, ServiceStatusInfo>
+    var expectedServiceStatus = new Dictionary<ExternalServices, ServiceStatusInfo>
     {
-      ["LlmService"] = new(true, []),
-      ["EmailService"] = new(false, ["EmailConfig:ApiKey"])
+      [ExternalServices.OpenAiApi] = new(ExternalServices.OpenAiApi, true, []),
+      [ExternalServices.MailCheck] = new(ExternalServices.MailCheck, false, ["EmailConfig:ApiKey"])
     };
 
     _mockStatusService

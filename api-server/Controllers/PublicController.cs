@@ -8,8 +8,7 @@ namespace Zarichney.Controllers;
 [AllowAnonymous]
 [Route("api")]
 public class PublicController(
-  IStatusService statusService,
-  ILogger<PublicController> logger)
+  IStatusService statusService)
   : ControllerBase
 {
   [HttpGet("health")]
@@ -27,12 +26,12 @@ public class PublicController(
   /// </summary>
   /// <returns>Dictionary mapping service names to their status information</returns>
   [HttpGet("status")]
-  [ProducesResponseType(typeof(Dictionary<string, ServiceStatusInfo>), 200)]
+  [ProducesResponseType(typeof(List<ServiceStatusInfo>), 200)]
   [ProducesResponseType(500)]
   public async Task<IActionResult> GetServicesStatus()
   {
     var result = await statusService.GetServiceStatusAsync();
-    return Ok(result);
+    return Ok(result.Values.ToList());
   }
 
   /// <summary>

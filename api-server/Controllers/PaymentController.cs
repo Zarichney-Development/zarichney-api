@@ -10,7 +10,7 @@ namespace Zarichney.Controllers;
 [ApiController]
 [Route("api/payments")]
 [Authorize]
-[DependsOnService(ExternalServices.Payments)]
+[DependsOnService(ExternalServices.Stripe)]
 public class PaymentController(
   ILogger<PaymentController> logger,
   IPaymentService paymentService,

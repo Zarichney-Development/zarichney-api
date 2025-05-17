@@ -1,10 +1,10 @@
 using Zarichney.Services.Status;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Helpers;
 
 namespace Zarichney.Tests.Unit.Controllers.PublicController;
 
@@ -22,8 +22,7 @@ public class PublicControllerUnitTests
   public PublicControllerUnitTests()
   {
     _mockStatusService = new Mock<IStatusService>();
-    Mock<ILogger<Zarichney.Controllers.PublicController>> mockLogging = new();
-    _controller = new Zarichney.Controllers.PublicController(_mockStatusService.Object, mockLogging.Object);
+    _controller = new Zarichney.Controllers.PublicController(_mockStatusService.Object);
   }
 
   /// <summary>
@@ -67,10 +66,10 @@ public class PublicControllerUnitTests
   public async Task GetServicesStatus_WhenServiceSucceeds_ReturnsOkWithStatusDictionary()
   {
     // Arrange
-    var expectedStatusDict = new Dictionary<string, ServiceStatusInfo>
+    var expectedStatusDict = new Dictionary<ExternalServices, ServiceStatusInfo>
     {
-      { "ServiceA", new ServiceStatusInfo(true, []) },
-      { "ServiceB", new ServiceStatusInfo(false, ["ConfigKey1"]) }
+      { GetRandom.Enum<ExternalServices>(), new ServiceStatusInfo(GetRandom.Enum<ExternalServices>(), true, []) },
+      { GetRandom.Enum<ExternalServices>(), new ServiceStatusInfo(GetRandom.Enum<ExternalServices>(), false, [GetRandom.String()]) }
     };
     _mockStatusService
       .Setup(s => s.GetServiceStatusAsync())

@@ -116,7 +116,7 @@ public class ServiceAvailabilityOperationFilterTests
     _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
 
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.EmailValidation))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.MailCheck))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["EmailConfig:MailCheckApiKey"]));
 
     // Act
@@ -125,7 +125,7 @@ public class ServiceAvailabilityOperationFilterTests
     // Assert
     operation.Summary.Should().StartWith("⚠️", "Operation with unavailable features should have a warning symbol");
     operation.Summary.Should().Contain("OpenAiApi", "First feature name should be in the warning");
-    operation.Summary.Should().Contain("EmailValidation", "Second feature name should be in the warning");
+    operation.Summary.Should().Contain("MailCheck", "Second feature name should be in the warning");
     operation.Summary.Should().Contain("LlmConfig:ApiKey", "First missing config should be mentioned");
     operation.Summary.Should().Contain("EmailConfig:MailCheckApiKey", "Second missing config should be mentioned");
   }
@@ -147,7 +147,7 @@ public class ServiceAvailabilityOperationFilterTests
     _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
         .Returns(new ServiceStatusInfo(IsAvailable: true, []));
 
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.EmailValidation))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.MailCheck))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["EmailConfig:MailCheckApiKey"]));
 
     // Act
@@ -156,7 +156,7 @@ public class ServiceAvailabilityOperationFilterTests
     // Assert
     operation.Summary.Should().StartWith("⚠️", "Operation with unavailable feature should have a warning symbol");
     operation.Summary.Should().NotContain("OpenAiApi", "Available feature should not be in warning");
-    operation.Summary.Should().Contain("EmailValidation", "Unavailable feature should be in warning");
+    operation.Summary.Should().Contain("MailCheck", "Unavailable feature should be in warning");
     operation.Summary.Should().Contain("EmailConfig:MailCheckApiKey", "Missing config should be mentioned");
   }
 
@@ -203,7 +203,7 @@ public class ServiceAvailabilityOperationFilterTests
     _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.FrontEnd))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["ServerConfig:BaseUrl"]));
 
-    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.EmailSending))
+    _mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.MsGraph))
         .Returns(new ServiceStatusInfo(IsAvailable: false, ["EmailConfig:AzureAppId"]));
 
     // Act
@@ -213,7 +213,7 @@ public class ServiceAvailabilityOperationFilterTests
     operation.Summary.Should().StartWith("⚠️", "Operation with unavailable features should have a warning symbol");
     // todo update to not be so brittle, refer to enum ExternalServices
     operation.Summary.Should().Contain("FrontEnd", "Class-level feature name should be in the warning");
-    operation.Summary.Should().Contain("EmailSending", "Method-level feature name should be in the warning");
+    operation.Summary.Should().Contain("MsGraph", "Method-level feature name should be in the warning");
   }
 
   [Fact]
@@ -266,7 +266,7 @@ public class ServiceAvailabilityOperationFilterTests
     public void MethodWithAttribute() { }
 
     [DependsOnService(ExternalServices.OpenAiApi)]
-    [DependsOnService(ExternalServices.EmailValidation)]
+    [DependsOnService(ExternalServices.MailCheck)]
     public void MethodWithMultipleAttributes() { }
   }
 
@@ -275,7 +275,7 @@ public class ServiceAvailabilityOperationFilterTests
   {
     public void MethodWithoutAttribute() { }
 
-    [DependsOnService(ExternalServices.EmailSending)]
+    [DependsOnService(ExternalServices.MsGraph)]
     public void MethodWithAttribute() { }
   }
 }

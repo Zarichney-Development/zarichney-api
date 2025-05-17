@@ -134,7 +134,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
         .Returns(new StatusInfo(IsAvailable: false, ["LlmConfig:ApiKey"]));
 
-    mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.EmailSending))
+    mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.MsGraph))
         .Returns(new StatusInfo(IsAvailable: false, ["EmailConfig:FromEmail"]));
 
     mockStatusService.Setup(s => s.IsFeatureAvailable(It.IsAny<ExternalServices>()))

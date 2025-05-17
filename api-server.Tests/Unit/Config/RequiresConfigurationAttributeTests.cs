@@ -11,11 +11,11 @@ public class RequiresConfigurationAttributeTests
   public void Constructor_ValidFeatures_InitializesCorrectly()
   {
     // Arrange & Act
-    var attribute = new RequiresConfigurationAttribute(ExternalServices.OpenAiApi, ExternalServices.EmailValidation);
+    var attribute = new RequiresConfigurationAttribute(ExternalServices.OpenAiApi, ExternalServices.MailCheck);
 
     // Assert
     attribute.Features.Should().HaveCount(2); // Two features were provided
-    attribute.Features.Should().Contain(ExternalServices.OpenAiApi).And.Contain(ExternalServices.EmailValidation);
+    attribute.Features.Should().Contain(ExternalServices.OpenAiApi).And.Contain(ExternalServices.MailCheck);
   }
 
   [Trait("Category", "Unit")]

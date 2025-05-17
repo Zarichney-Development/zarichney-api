@@ -2,8 +2,6 @@ using System.Net;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -72,10 +70,7 @@ public class FeatureAvailabilityMiddlewareTests
         statusService.Object);
 
     var context = new DefaultHttpContext();
-    var metadata = new EndpointMetadataCollection(new object[]
-    {
-            new DependsOnService(ExternalServices.OpenAiApi)
-    });
+    var metadata = new EndpointMetadataCollection(new DependsOnService(ExternalServices.OpenAiApi));
     var endpoint = new Endpoint(_ => Task.CompletedTask, metadata, "Test Endpoint");
     context.SetEndpoint(endpoint);
 
@@ -104,10 +99,7 @@ public class FeatureAvailabilityMiddlewareTests
         statusService.Object);
 
     var context = new DefaultHttpContext();
-    var metadata = new EndpointMetadataCollection(new object[]
-    {
-            new DependsOnService(ExternalServices.OpenAiApi)
-    });
+    var metadata = new EndpointMetadataCollection(new DependsOnService(ExternalServices.OpenAiApi));
     var endpoint = new Endpoint(_ => Task.CompletedTask, metadata, "Test Endpoint");
     context.SetEndpoint(endpoint);
 
@@ -135,9 +127,9 @@ public class FeatureAvailabilityMiddlewareTests
 
     statusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
         .Returns(new StatusInfo(IsAvailable: false, llmMissingConfigs));
-    statusService.Setup(s => s.GetFeatureStatus(ExternalServices.EmailSending))
+    statusService.Setup(s => s.GetFeatureStatus(ExternalServices.MsGraph))
         .Returns(new StatusInfo(IsAvailable: false, emailMissingConfigs));
-    statusService.Setup(s => s.GetFeatureStatus(ExternalServices.Payments))
+    statusService.Setup(s => s.GetFeatureStatus(ExternalServices.Stripe))
         .Returns(new StatusInfo(IsAvailable: true, emptyConfigs));
 
     var middleware = new FeatureAvailabilityMiddleware(
@@ -146,16 +138,13 @@ public class FeatureAvailabilityMiddlewareTests
         statusService.Object);
 
     var context = new DefaultHttpContext();
-    var metadata = new EndpointMetadataCollection(new object[]
-    {
-            new DependsOnService(ExternalServices.OpenAiApi, ExternalServices.EmailSending, ExternalServices.Payments)
-    });
+    var metadata = new EndpointMetadataCollection(new DependsOnService(ExternalServices.OpenAiApi, ExternalServices.MsGraph, ExternalServices.Stripe));
     var endpoint = new Endpoint(_ => Task.CompletedTask, metadata, "Test Endpoint");
     context.SetEndpoint(endpoint);
 
     // Act & Assert
-    var exception = await Assert.ThrowsAsync<ServiceUnavailableException>(
-        () => middleware.InvokeAsync(context));
+    await Assert.ThrowsAsync<ServiceUnavailableException>(
+      () => middleware.InvokeAsync(context));
 
     // Just verify that an exception was thrown (we already tested this in a previous test)
   }

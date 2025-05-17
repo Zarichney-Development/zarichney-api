@@ -11,7 +11,7 @@ using Zarichney.Client;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 using Zarichney.Tests.Framework.Helpers;
-using Zarichney.Tests.Framework.Mocks.Factories;
+using ExternalServices = Zarichney.Services.Status.ExternalServices;
 
 // Import the ServiceStatusInfo from Status namespace with alias
 using StatusInfo = Zarichney.Services.Status.ServiceStatusInfo;
@@ -80,11 +80,17 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
     // Create a custom factory that indicates mixed service availability
     var mockStatusService = new Mock<IStatusService>();
     mockStatusService.Setup(s => s.GetServiceStatusAsync())
-      .ReturnsAsync(new Dictionary<string, StatusInfo>
+      .ReturnsAsync(new Dictionary<ExternalServices, StatusInfo>
       {
-        { "Llm", new StatusInfo(IsAvailable: false, ["Llm:ApiKey"]) },
-        { "Email", new StatusInfo(IsAvailable: true, []) },
-        { "Payment", new StatusInfo(IsAvailable: false, ["Payment:StripeKey"]) }
+        {
+          ExternalServices.OpenAiApi,
+          new StatusInfo(serviceName: ExternalServices.OpenAiApi, IsAvailable: false, ["Llm:ApiKey"])
+        },
+        { ExternalServices.MsGraph, new StatusInfo(serviceName: ExternalServices.MsGraph, IsAvailable: true, []) },
+        {
+          ExternalServices.Stripe,
+          new StatusInfo(serviceName: ExternalServices.Stripe, IsAvailable: false, ["Payment:StripeKey"])
+        }
       });
 
     var customFactory = Factory as CustomWebApplicationFactory;
@@ -101,22 +107,25 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
     var client = RestService.For<IZarichneyAPI>(httpClient);
 
     // Act
-    var result = await client.Status2();
+    var result = await client.StatusAll();
 
     // Assert
     result.Should().NotBeNull();
-    result.Should().ContainKey("Llm");
-    result.Should().ContainKey("Email");
-    result.Should().ContainKey("Payment");
+    result.Should().Contain(c => c.ServiceName == (Client.ExternalServices)ExternalServices.OpenAiApi);
+    result.Should().Contain(c => c.ServiceName == (Client.ExternalServices)ExternalServices.MsGraph);
+    result.Should().Contain(c => c.ServiceName == (Client.ExternalServices)ExternalServices.Stripe);
 
-    result["Llm"].IsAvailable.Should().BeFalse();
-    result["Llm"].MissingConfigurations.Should().Contain("Llm:ApiKey");
+    var openAiApiStatus = result.Single(c => c.ServiceName == (Client.ExternalServices)ExternalServices.OpenAiApi);
+    openAiApiStatus.IsAvailable.Should().BeFalse();
+    openAiApiStatus.MissingConfigurations.Should().Contain("Llm:ApiKey");
 
-    result["Email"].IsAvailable.Should().BeTrue();
-    result["Email"].MissingConfigurations.Should().BeEmpty();
+    var graphApiStatus = result.Single(c => c.ServiceName == (Client.ExternalServices)ExternalServices.MsGraph);
+    graphApiStatus.IsAvailable.Should().BeTrue();
+    graphApiStatus.MissingConfigurations.Should().BeEmpty();
 
-    result["Payment"].IsAvailable.Should().BeFalse();
-    result["Payment"].MissingConfigurations.Should().Contain("Payment:StripeKey");
+    var stripeApiStatus = result.Single(c => c.ServiceName == (Client.ExternalServices)ExternalServices.Stripe);
+    stripeApiStatus.IsAvailable.Should().BeFalse();
+    stripeApiStatus.MissingConfigurations.Should().Contain("Payment:StripeKey");
   }
 
   /// <summary>
@@ -134,12 +143,15 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
     var mockStatusService = new Mock<IStatusService>();
     mockStatusService.Setup(s => s.GetServiceStatusAsync())
       .ReturnsAsync(
-        new Dictionary<string, StatusInfo> { { "Llm", new StatusInfo(IsAvailable: false, ["Llm:ApiKey"]) } });
+        new Dictionary<ExternalServices, StatusInfo>
+        {
+          { ExternalServices.OpenAiApi, new StatusInfo(serviceName: ExternalServices.OpenAiApi,IsAvailable: false, ["Llm:ApiKey"]) }
+        });
 
-    mockStatusService.Setup(s => s.GetFeatureStatus("Llm"))
-      .Returns(new StatusInfo(IsAvailable: false, ["Llm:ApiKey"]));
+    mockStatusService.Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
+      .Returns(new StatusInfo(serviceName: ExternalServices.OpenAiApi, IsAvailable: false, ["Llm:ApiKey"]));
 
-    mockStatusService.Setup(s => s.IsFeatureAvailable("Llm"))
+    mockStatusService.Setup(s => s.IsFeatureAvailable(ExternalServices.OpenAiApi))
       .Returns(false);
 
     var customFactory = Factory as CustomWebApplicationFactory;

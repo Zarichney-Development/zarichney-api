@@ -19,12 +19,12 @@ public enum ExternalServices
   /// <summary>
   /// Email sending capabilities.
   /// </summary>
-  EmailSending,
+  MsGraph,
 
   /// <summary>
   /// Payment processing functionality.
   /// </summary>
-  Payments,
+  Stripe,
 
   /// <summary>
   /// GitHub integration for code storage and retrieval.
@@ -34,5 +34,5 @@ public enum ExternalServices
   /// <summary>
   /// A service to ensure a given email is legitimate
   /// </summary>
-  EmailValidation
+  MailCheck
 }

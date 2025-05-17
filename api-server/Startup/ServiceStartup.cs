@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Azure.Identity;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Graph;
@@ -48,7 +49,11 @@ public class ServiceStartup
 
     services.AddHttpContextAccessor();
     services.AddControllers()
-      .AddJsonOptions(options => { options.JsonSerializerOptions.Converters.Add(new JsonTypeConverter()); });
+      .AddJsonOptions(options =>
+      {
+        options.JsonSerializerOptions.Converters.Add(new JsonTypeConverter());
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+      });
     services.AddAutoMapper(typeof(Program));
     services.AddMemoryCache();
     services.AddSessionManagement();
@@ -91,7 +96,8 @@ public class ServiceStartup
       var statusService = sp.GetRequiredService<IStatusService>();
 
       var serviceStatus = statusService.GetServiceStatusAsync().GetAwaiter().GetResult();
-      var emailServiceAvailable = serviceStatus.TryGetValue("Email", out var status) && status.IsAvailable;
+      var emailServiceAvailable =
+        serviceStatus.TryGetValue(ExternalServices.MsGraph, out var status) && status.IsAvailable;
 
       if (!emailServiceAvailable)
       {
@@ -109,10 +115,7 @@ public class ServiceStartup
             emailConfig.AzureTenantId,
             emailConfig.AzureAppId,
             emailConfig.AzureAppSecret,
-            new TokenCredentialOptions
-            {
-              AuthorityHost = AzureAuthorityHosts.AzurePublicCloud
-            }
+            new TokenCredentialOptions { AuthorityHost = AzureAuthorityHosts.AzurePublicCloud }
           ),
           ["https://graph.microsoft.com/.default"]
         );
@@ -140,7 +143,8 @@ public class ServiceStartup
       var statusService = sp.GetRequiredService<IStatusService>();
 
       var serviceStatus = statusService.GetServiceStatusAsync().GetAwaiter().GetResult();
-      var llmServiceAvailable = serviceStatus.TryGetValue("Llm", out var status) && status.IsAvailable;
+      var llmServiceAvailable =
+        serviceStatus.TryGetValue(ExternalServices.OpenAiApi, out var status) && status.IsAvailable;
 
       if (!llmServiceAvailable)
       {
@@ -173,7 +177,8 @@ public class ServiceStartup
       var statusService = sp.GetRequiredService<IStatusService>();
 
       var serviceStatus = statusService.GetServiceStatusAsync().GetAwaiter().GetResult();
-      var llmServiceAvailable = serviceStatus.TryGetValue("Llm", out var status) && status.IsAvailable;
+      var llmServiceAvailable =
+        serviceStatus.TryGetValue(ExternalServices.OpenAiApi, out var status) && status.IsAvailable;
 
       if (!llmServiceAvailable)
       {
@@ -258,7 +263,6 @@ public class ServiceStartup
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(c =>
     {
-
       c.SwaggerDoc("swagger", new OpenApiInfo
       {
         Title = "Zarichney API",
@@ -285,36 +289,29 @@ public class ServiceStartup
         Description = "API key authentication. Enter your API key here.",
       });
 
-      c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-      {
-        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer {token}'",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
-      });
+      c.AddSecurityDefinition("Bearer",
+        new OpenApiSecurityScheme
+        {
+          Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer {token}'",
+          Name = "Authorization",
+          In = ParameterLocation.Header,
+          Type = SecuritySchemeType.ApiKey,
+          Scheme = "Bearer"
+        });
 
       c.AddSecurityRequirement(new OpenApiSecurityRequirement
       {
         {
           new OpenApiSecurityScheme
           {
-            Reference = new OpenApiReference
-            {
-              Type = ReferenceType.SecurityScheme,
-              Id = "ApiKey"
-            }
+            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "ApiKey" }
           },
           Array.Empty<string>()
         },
         {
           new OpenApiSecurityScheme
           {
-            Reference = new OpenApiReference
-            {
-              Type = ReferenceType.SecurityScheme,
-              Id = "Bearer"
-            }
+            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
           },
           Array.Empty<string>()
         }

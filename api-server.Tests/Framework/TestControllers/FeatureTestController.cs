@@ -26,7 +26,7 @@ public class FeatureTestController : ControllerBase
   /// </summary>
   /// <returns>A simple message.</returns>
   [HttpGet("email")]
-  [DependsOnService(ExternalServices.EmailSending)]
+  [DependsOnService(ExternalServices.MsGraph)]
   public IActionResult EmailEndpoint()
   {
     return Ok("Email feature is available");
@@ -37,7 +37,7 @@ public class FeatureTestController : ControllerBase
   /// </summary>
   /// <returns>A simple message.</returns>
   [HttpGet("multi")]
-  [DependsOnService(ExternalServices.OpenAiApi, ExternalServices.EmailSending)]
+  [DependsOnService(ExternalServices.OpenAiApi, ExternalServices.MsGraph)]
   public IActionResult MultiFeatureEndpoint()
   {
     return Ok("All required features are available");

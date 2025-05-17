@@ -18,7 +18,7 @@ public class ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandling
         "ServiceUnavailableException caught by middleware for {Method} {Path}. Reasons: {Reasons}",
         context.Request.Method,
         context.Request.Path,
-        string.Join(", ", serviceEx.Reasons));
+        string.Join(", ", serviceEx.Reasons!));
 
       context.Response.StatusCode = (int)HttpStatusCode.ServiceUnavailable; // 503
       context.Response.ContentType = "application/json";

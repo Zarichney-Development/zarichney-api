@@ -22,39 +22,23 @@ public interface IStatusService
   /// Gets the status of all registered services and their configuration dependencies.
   /// </summary>
   /// <returns>A dictionary mapping service names to their status information.</returns>
-  Task<Dictionary<string, ServiceStatusInfo>> GetServiceStatusAsync();
+  Task<Dictionary<ExternalServices, ServiceStatusInfo>> GetServiceStatusAsync();
 
   /// <summary>
   /// Gets the cached status of a specific feature by enum value.
   /// This synchronous method is intended for use by Swagger filters.
   /// </summary>
-  /// <param name="externalServices">The feature to check.</param>
+  /// <param name="externalService">The feature to check.</param>
   /// <returns>The service status information, or null if the feature is not found.</returns>
-  ServiceStatusInfo? GetFeatureStatus(ExternalServices externalServices);
-
-  /// <summary>
-  /// Gets the cached status of a specific feature by name.
-  /// This synchronous method is intended for use by Swagger filters.
-  /// </summary>
-  /// <param name="featureName">The name of the feature to check.</param>
-  /// <returns>The service status information, or null if the feature is not found.</returns>
-  ServiceStatusInfo? GetFeatureStatus(string featureName);
+  ServiceStatusInfo? GetFeatureStatus(ExternalServices externalService);
 
   /// <summary>
   /// Checks if a specific feature is available based on its configuration status.
   /// This synchronous method is intended for use by Swagger filters.
   /// </summary>
-  /// <param name="externalServices">The feature to check.</param>
+  /// <param name="service">The feature to check.</param>
   /// <returns>True if the feature is properly configured and available; otherwise, false.</returns>
-  bool IsFeatureAvailable(ExternalServices externalServices);
-
-  /// <summary>
-  /// Checks if a specific feature is available based on its configuration status.
-  /// This synchronous method is intended for use by Swagger filters.
-  /// </summary>
-  /// <param name="featureName">The name of the feature to check.</param>
-  /// <returns>True if the feature is properly configured and available; otherwise, false.</returns>
-  bool IsFeatureAvailable(string featureName);
+  bool IsFeatureAvailable(ExternalServices service);
 }
 
 /// <summary>
@@ -74,10 +58,10 @@ public class StatusService : IStatusService
   private readonly Assembly _assemblyToScan;
 
   // Cache for service status to avoid rechecking configuration on every Swagger request
-  private Dictionary<string, ServiceStatusInfo>? _cachedStatus;
+  private Dictionary<ExternalServices, ServiceStatusInfo>? _cachedStatus;
 
   // Additional mapping from Feature enum to service names
-  private Dictionary<ExternalServices, string[]>? _featureServiceMap;
+  private Dictionary<ExternalServices, ExternalServices[]>? _featureServiceMap;
   private DateTime _cacheExpiration = DateTime.MinValue;
   private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(5);
   private readonly SemaphoreSlim _cacheLock = new(1, 1);
@@ -184,8 +168,7 @@ public class StatusService : IStatusService
     return Task.FromResult(statusList);
   }
 
-  /// <inheritdoc />
-  public async Task<Dictionary<string, ServiceStatusInfo>> GetServiceStatusAsync()
+  public async Task<Dictionary<ExternalServices, ServiceStatusInfo>> GetServiceStatusAsync()
   {
     // Check if cache is valid
     if (_cachedStatus != null && DateTime.UtcNow < _cacheExpiration)
@@ -206,8 +189,8 @@ public class StatusService : IStatusService
       _logger.LogInformation("Refreshing service configuration status cache");
 
       // Create dictionaries to store results
-      var results = new Dictionary<string, ServiceStatusInfo>();
-      var featureMap = new Dictionary<ExternalServices, List<string>>();
+      var results = new Dictionary<ExternalServices, ServiceStatusInfo>();
+      var featureMap = new Dictionary<ExternalServices, List<ExternalServices>>();
 
       // Get all types implementing IConfig (excluding interfaces/abstract classes)
       var configTypes = _assemblyToScan // Use the injected assembly
@@ -241,7 +224,6 @@ public class StatusService : IStatusService
         foreach (var (feature, properties) in featureAssociations)
         {
           // Use the enum name as the service name
-          var serviceName = feature.ToString();
 
           // Determine if this feature's required configurations are available
           var featureMissingConfigs = properties
@@ -249,13 +231,14 @@ public class StatusService : IStatusService
             .ToList();
 
           // Add or update this feature's status in results
-          if (results.TryGetValue(serviceName, out var existingStatus))
+          if (results.TryGetValue(feature, out var existingStatus))
           {
             // If we already have an entry for this feature, merge the missing configurations
             var combinedMissing = existingStatus.MissingConfigurations.ToList();
             combinedMissing.AddRange(featureMissingConfigs);
 
-            results[serviceName] = new ServiceStatusInfo(
+            results[feature] = new ServiceStatusInfo(
+              serviceName: feature,
               IsAvailable: combinedMissing.Count == 0,
               MissingConfigurations: combinedMissing.Distinct().ToList()
             );
@@ -263,7 +246,8 @@ public class StatusService : IStatusService
           else
           {
             // First entry for this feature
-            results[serviceName] = new ServiceStatusInfo(
+            results[feature] = new ServiceStatusInfo(
+              serviceName: feature,
               IsAvailable: featureMissingConfigs.Count == 0,
               MissingConfigurations: featureMissingConfigs
             );
@@ -276,9 +260,9 @@ public class StatusService : IStatusService
             featureMap[feature] = services;
           }
 
-          if (!services.Contains(serviceName))
+          if (!services.Contains(feature))
           {
-            services.Add(serviceName);
+            services.Add(feature);
           }
         }
       }
@@ -302,17 +286,17 @@ public class StatusService : IStatusService
   }
 
   /// <inheritdoc />
-  public ServiceStatusInfo? GetFeatureStatus(ExternalServices externalServices)
+  public ServiceStatusInfo? GetFeatureStatus(ExternalServices externalService)
   {
     try
     {
       EnsureCacheIsValid();
 
-      if (_featureServiceMap == null || !_featureServiceMap.TryGetValue(externalServices, out var serviceNames) ||
+      if (_featureServiceMap == null || !_featureServiceMap.TryGetValue(externalService, out var serviceNames) ||
           _cachedStatus == null)
       {
         _logger.LogWarning("Feature status requested for feature: {Feature}, but no associated services found",
-          externalServices);
+          externalService);
         return null;
       }
 
@@ -327,44 +311,14 @@ public class StatusService : IStatusService
       }
 
       return new ServiceStatusInfo(
+        serviceName: externalService,
         IsAvailable: missingConfigurations.Count == 0,
         MissingConfigurations: missingConfigurations
       );
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, "Error getting feature status for {Feature}", externalServices);
-      return null;
-    }
-  }
-
-  /// <inheritdoc />
-  public ServiceStatusInfo? GetFeatureStatus(string featureName)
-  {
-    try
-    {
-      // Try to parse the string as a Feature enum
-      if (Enum.TryParse<ExternalServices>(featureName, true, out var feature))
-      {
-        return GetFeatureStatus(feature);
-      }
-
-      // Fall back to the old behavior of looking for a service with this name
-      EnsureCacheIsValid();
-
-      if (_cachedStatus == null || !_cachedStatus.TryGetValue(featureName, out var featureStatus))
-      {
-        _logger.LogWarning(
-          "Feature status requested for unknown feature: {FeatureName}. Available services: {AvailableServices}",
-          featureName, _cachedStatus != null ? string.Join(", ", _cachedStatus.Keys) : "none");
-        return null;
-      }
-
-      return featureStatus;
-    }
-    catch (Exception ex)
-    {
-      _logger.LogError(ex, "Error getting feature status for {FeatureName}", featureName);
+      _logger.LogError(ex, "Error getting feature status for {Feature}", externalService);
       return null;
     }
   }
@@ -373,13 +327,6 @@ public class StatusService : IStatusService
   public bool IsFeatureAvailable(ExternalServices externalServices)
   {
     var status = GetFeatureStatus(externalServices);
-    return status?.IsAvailable ?? false;
-  }
-
-  /// <inheritdoc />
-  public bool IsFeatureAvailable(string featureName)
-  {
-    var status = GetFeatureStatus(featureName);
     return status?.IsAvailable ?? false;
   }
 

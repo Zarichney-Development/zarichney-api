@@ -19,7 +19,7 @@ public class ApiController(
   [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(BadRequestObjectResult), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  [DependsOnService(ExternalServices.EmailValidation)]
+  [DependsOnService(ExternalServices.MailCheck)]
   public async Task<IActionResult> ValidateEmail([FromQuery] string email)
   {
     try

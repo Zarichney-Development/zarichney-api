@@ -27,8 +27,8 @@ public sealed class DependencyFactAttribute : FactAttribute
   private static readonly Dictionary<ExternalServices, string> ExternalServicesToTraitMap = new()
   {
     { ExternalServices.OpenAiApi, TestCategories.ExternalOpenAI },
-    { ExternalServices.EmailSending, TestCategories.ExternalMSGraph },
-    { ExternalServices.Payments, TestCategories.ExternalStripe },
+    { ExternalServices.MsGraph, TestCategories.ExternalMSGraph },
+    { ExternalServices.Stripe, TestCategories.ExternalStripe },
     { ExternalServices.GitHubAccess, TestCategories.ExternalGitHub },
     // Core feature doesn't map to a specific external dependency
   };
