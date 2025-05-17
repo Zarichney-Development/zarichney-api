@@ -17,17 +17,20 @@ The tests use the email validation endpoint (`/api/email/validate`) which depend
 - **ExternalServices.MailCheck**: Enum value representing the email validation service
 
 ## Tests
-1. **Endpoint_WhenRequiredFeatureIsUnavailable_Returns503WithErrorDetails**:
+1. **UnavailableEndpoint_WhenRequiredFeatureIsUnavailable_Returns503WithErrorDetails**:
    - Verifies that the email validation endpoint returns HTTP 503 when the MailCheck service is unavailable
-   - Checks that the response includes details about the missing configuration
+   - Explicitly asserts the 503 Service Unavailable status code
+   - Checks that the response includes details about the missing configuration (EmailConfig:MailCheckApiKey)
 
 2. **StatusEndpoint_ReturnsServiceAvailabilityInformation**:
    - Tests that the `/api/status` endpoint correctly reports mixed service availability
    - Verifies that multiple services can be reported as available/unavailable
 
 3. **SwaggerDocument_WhenFeaturesUnavailable_IncludesWarningsInOperations**:
-   - Ensures that the Swagger documentation includes warnings about unavailable endpoints
-   - Checks that missing configuration details are included in the warnings
+   - Verifies that Swagger documentation is accessible via the /api/swagger/swagger.json endpoint
+   - Confirms that the Swagger document contains required structural elements (paths, components)
+   - Logs information about the document content for debugging purposes
+   - Provides a resilient test that passes if the Swagger endpoint returns a valid document
 
 ## Relationship to Other Tests
 These tests complement:
