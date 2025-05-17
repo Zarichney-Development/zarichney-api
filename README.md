@@ -1,82 +1,70 @@
----
-name: AI Coder Task (General)
-about: Define a specific, incremental coding task (feature, fix, refactor) suitable for delegation to an AI Coder agent.
-title: 'feat: Implement FeatureAvailabilityMiddleware for proactive endpoint status checking'
-labels: 'ai-task,type:feature,module:middleware,module:config,module:startup,module:status'
-assignees: '' # Assign to the human orchestrator
+# Zarichney API Server & AI Workflow Testbed
+
+**Last Updated:** 2025-05-04
 
 ---
 
-## 1. Overall Goal / User Story Context
+## Overview
 
-Enhance application robustness and provide immediate feedback to API consumers by implementing a middleware that proactively checks if an endpoint can be served based on its declared feature dependencies (derived from configuration status). This prevents unnecessary processing for unavailable features and ensures the `ErrorHandlingMiddleware` returns a clear HTTP 503 with reasons.
+Welcome! This repository hosts the **Zarichney API Server**, a modular backend built with **.NET 8**, serving as both a functional API and a practical testbed for exploring and refining **AI-assisted software development workflows**.
 
-## 2. Requirements (Mandatory Expectations)
+Think of this repo in two ways:
 
-- A new ASP.NET Core middleware, `FeatureAvailabilityMiddleware`, **MUST** be created.
-- The middleware **MUST** inspect the target endpoint for `[RequiresFeatureEnabled(params Feature[] features)]` attributes (defined in the previous refactor task) at both controller and action levels.
-- It **MUST** use the `IConfigurationStatusService` to determine if all features declared by the attribute(s) are currently available.
-- If any required feature is unavailable, the middleware **MUST** throw a `ServiceUnavailableException`, populated with the reasons for unavailability (e.g., list of missing configuration keys) obtained from `IConfigurationStatusService`.
-- If all required features are available, or if no `[RequiresFeatureEnabled]` attribute is present on the endpoint or its controller, the middleware **MUST** pass the request to the next component in the pipeline.
-- The existing `ErrorHandlingMiddleware` will catch the `ServiceUnavailableException` and return an HTTP 503 response with a detailed JSON body.
-- The `FeatureAvailabilityMiddleware` **MUST** be registered in the ASP.NET Core pipeline in `ApplicationStartup.cs` *after* routing, authentication, and authorization middleware but *before* the `MapControllers()` call that executes endpoint logic.
-- No functional regressions in existing features or tests.
-- Comprehensive unit and integration tests **MUST** be added for the new middleware.
+1.  **A Functional API:** It powers applications like the **Cookbook Factory AI**, which uses Large Language Models (LLMs) to scrape, analyze, clean, and synthesize recipes into custom cookbooks (PDF generation included!). It features secure authentication, payment integration (Stripe), background job processing, and more.
+2.  **An Experiment in Development:** It's actively developed using a **structured, AI-assisted workflow**. Specialized AI agents, guided by detailed prompts and rigorous standards documentation (all included in this repo!), handle significant portions of the coding, testing, and documentation tasks. This allows for rapid iteration while maintaining high quality.
 
-## 3. Specific Task Objective
+Whether you're interested in the API's features or the cutting-edge development methodology, explore the code and documentation to see it in action!
 
-1.  Develop the `FeatureAvailabilityMiddleware` class.
-2.  Implement the logic within the middleware to:
-    a.  Access endpoint metadata to find `[RequiresFeatureEnabled]` attributes.
-    b.  Aggregate all required `Feature` enums from class and method level attributes.
-    c.  Inject and utilize `IConfigurationStatusService` to check the availability of each required feature.
-    d.  If any feature is unavailable, construct and throw a `ServiceUnavailableException` detailing all missing configurations for all unavailable required features.
-3.  Register `FeatureAvailabilityMiddleware` in the correct order in `ApplicationStartup.ConfigureApplication`.
-4.  Add unit tests for the middleware's logic, covering various scenarios (attribute present/absent, features available/unavailable).
-5.  Add integration tests to verify the end-to-end flow, including the 503 response when a feature is unavailable.
-6.  Update relevant documentation (READMEs for middleware, startup process).
+## Key Features & Capabilities
 
-## 4. Acceptance Criteria
+* **Modular .NET 8 API Server:** Designed to be extensible for various "micro-apps" or features.
+* **Cookbook Factory AI:**
+    * Web scraping and recipe data extraction.
+    * LLM-powered recipe analysis, cleaning, ranking, naming, and synthesis (using OpenAI).
+    * Automated generation of customized cookbook PDFs (using QuestPDF).
+    * User authentication (JWT/Refresh Tokens, API Keys via ASP.NET Core Identity).
+    * Payment processing via Stripe integration.
+    * Customer and order management.
+* **Core Services:** Email (MS Graph), File Storage, Background Tasks, Secure Configuration, Session Management.
+* **AI-Assisted Development Workflow (Meta-Feature):**
+    * Leverages AI Planning Assistants and AI Coders for development tasks.
+    * Includes comprehensive standards documentation (`/Docs/Standards/`) governing coding, testing, documentation, diagramming, and task management.
+    * Features detailed workflow definitions (`/Docs/Development/`) and prompt templates (`/Docs/Templates/`) for guiding AI agents.
+    * Aims for high code quality, test coverage, and maintainability through this structured AI collaboration. ([Learn More](./Docs/Development/README.md))
 
-- [ ] `FeatureAvailabilityMiddleware.cs` is implemented correctly.
-- [ ] When an HTTP request targets an endpoint decorated with `[RequiresFeatureEnabled(Feature.SomeFeature)]`:
-    - [ ] If `Feature.SomeFeature` is reported as unavailable by `IConfigurationStatusService`, the middleware throws `ServiceUnavailableException` before the endpoint action executes.
-    - [ ] The `ErrorHandlingMiddleware` catches this exception and returns an HTTP 503 response with a JSON body detailing the missing configurations.
-    - [ ] If `Feature.SomeFeature` is available, the request proceeds to the endpoint action.
-- [ ] Endpoints *not* decorated with `[RequiresFeatureEnabled]` are processed without interference from this middleware.
-- [ ] The middleware correctly aggregates features from both class-level and action-level attributes.
-- [ ] `FeatureAvailabilityMiddleware` is registered in the correct order in `ApplicationStartup.cs`.
-- [ ] Unit tests for `FeatureAvailabilityMiddleware` achieve good coverage of its logic paths.
-- [ ] Integration tests verify that protected endpoints correctly return HTTP 503 when underlying configurations are missing, and function normally when configurations are present.
-- [ ] All existing application tests pass.
-- [ ] Relevant documentation (`/Config/README.md` or a new `/Middleware/README.md`, `/Startup/README.md`) is updated.
+## Technology Highlights
 
-## 5. Affected Components
+* **Backend:** C# 12, .NET 8, ASP.NET Core Web API
+* **AI:** OpenAI API integration
+* **Database:** PostgreSQL (primarily for Identity; application data currently file-based)
+* **Authentication:** ASP.NET Core Identity, JWT, Refresh Tokens (Cookies), API Keys
+* **Testing:** xUnit, Moq, FluentAssertions, Testcontainers (for isolated DB testing), Refit (for API client generation) - *Aiming for >90% coverage.*
+* **API Documentation:** Swagger / OpenAPI
+* **Key Libraries:** Serilog, Polly, MediatR, AutoMapper, RestSharp, Stripe.net, Octokit, QuestPDF, PlaywrightSharp, AngleSharp
+* **Development Process:** Git, GitHub Actions (planned for CI/CD), AI Agent Assistance (via custom prompts/workflows).
 
-- New file: `api-server/Config/FeatureAvailabilityMiddleware.cs` (or `api-server/Middleware/FeatureAvailabilityMiddleware.cs`)
-- `api-server/Startup/ApplicationStartup.cs` (Middleware registration)
-- `api-server/Config/README.md` (or new `/Middleware/README.md`)
-- `api-server/Startup/README.md`
-- `api-server.Tests/Unit/Middleware/FeatureAvailabilityMiddlewareTests.cs` (New test file)
-- `api-server.Tests/Integration/Middleware/FeatureAvailabilityMiddlewareTests.cs` (New test file, or add to existing relevant integration tests)
+## Exploring the Repository
 
-## 6. Relevant Background / Links
+* **`api-server/`:** Contains the main ASP.NET Core application code. Start with [`api-server/README.md`](./api-server/README.md) for an overview.
+* **`api-server.Tests/`:** Contains the unit and integration tests. See [`api-server.Tests/README.md`](./api-server.Tests/README.md).
+* **`Docs/`:** The heart of the documentation and AI workflow definitions.
+    * **`Docs/Standards/`:** Defines the rules (coding, testing, docs, etc.).
+    * **`Docs/Development/`:** Defines the AI-assisted workflow processes and roadmap.
+    * **`Docs/Templates/`:** Contains templates for AI prompts and GitHub Issues.
+    * Each module within `api-server/` also has its own detailed `README.md`.
+* **`Scripts/`:** Utility scripts (e.g., regenerating the test API client).
 
-- **Original Epic:** [https://github.com/Zarichney-Development/zarichney-api/issues/1](https://github.com/Zarichney-Development/zarichney-api/issues/1)
-- **PR for Child Issue 1.1 (Core Infrastructure):** {Orchestrator: Please provide the PR link}
-- **PR for Child Issue 1.2 (Service/DI Adaptation):** {Orchestrator: Please provide the PR link}
-- **PR for Child Issue 1.3 (Swagger Integration):** {Orchestrator: Please provide the PR link}
-- **PR for Attribute Refactor (Task immediately preceding this one):** {Orchestrator: Please provide the PR link}
-- Key components to use:
-    - `RequiresFeatureEnabledAttribute.cs` (Now uses `Feature` enum)
-    - `IConfigurationStatusService` (Provides `IsFeatureAvailable(Feature feature)` and `GetFeatureStatus(Feature feature)`)
-    - `ServiceUnavailableException.cs`
-    - `ErrorHandlingMiddleware.cs`
+## Getting Started (High Level)
 
-## 7. (Optional) Implementation Notes / Plan
+1.  Clone the repository.
+2.  Ensure [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) and [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for integration tests) are installed.
+3.  Review `api-server/README.md` for configuration prerequisites (secrets, API keys).
+4.  Build the solution (`dotnet build`).
+5.  Run the tests (`dotnet test`).
+6.  Run the API (`dotnet run` from `api-server/`).
 
-- The middleware should be placed in the pipeline to execute after routing has determined the endpoint, and after authentication/authorization have run, but before the endpoint itself is invoked.
-- Ensure the `ServiceUnavailableException` is populated with a comprehensive list of all reasons (missing configs) if multiple required features are unavailable.
+*(Detailed setup and contribution guidelines are part of the internal documentation standards.)*
 
 ---
-*Generated by AI Planning Assistant*
+
+This project is actively developed and evolves rapidly. Feel free to explore!
