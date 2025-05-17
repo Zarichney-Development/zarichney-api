@@ -343,8 +343,7 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
         table.ColumnsDefinition(columns =>
         {
           // Count number of cells in first row to determine column count
-          var firstRow = tableBlock.FirstOrDefault() as TableRow;
-          if (firstRow == null) return;
+          if (tableBlock.FirstOrDefault() is not TableRow firstRow) return;
 
           var columnCount = firstRow.Count;
           for (var i = 0; i < columnCount; i++)

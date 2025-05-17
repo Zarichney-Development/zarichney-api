@@ -9,7 +9,7 @@ public class RequestResponseLoggerOptions
 {
   public bool LogRequests { get; set; } = true;
   public bool LogResponses { get; set; } = true;
-  public string[] SensitiveHeaders { get; set; } = { "Authorization", "Cookie" };
+  public string[] SensitiveHeaders { get; set; } = ["Authorization", "Cookie"];
   public Func<HttpContext, bool> RequestFilter { get; set; } = _ => true;
   public string LogDirectory { get; set; } = "Logs";
 }
@@ -65,7 +65,11 @@ public class RequestResponseLoggerMiddleware(RequestDelegate next, IOptions<Requ
   {
     context.Request.EnableBuffering();
 
-    var requestBody = await new StreamReader(context.Request.Body).ReadToEndAsync();
+    string requestBody;
+    using (var reader = new StreamReader(context.Request.Body, leaveOpen: true))
+    {
+      requestBody = await reader.ReadToEndAsync();
+    }
     context.Request.Body.Position = 0;
 
     var logContext = new
@@ -83,7 +87,11 @@ public class RequestResponseLoggerMiddleware(RequestDelegate next, IOptions<Requ
   private async Task LogResponseAsync(HttpContext context, MemoryStream responseBody)
   {
     responseBody.Position = 0;
-    var responseContent = await new StreamReader(responseBody).ReadToEndAsync();
+    string responseContent;
+    using (var reader = new StreamReader(responseBody, leaveOpen: true))
+    {
+      responseContent = await reader.ReadToEndAsync();
+    }
 
     var logContext = new
     {

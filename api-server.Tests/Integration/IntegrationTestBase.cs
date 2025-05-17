@@ -1,6 +1,9 @@
 using Zarichney.Client;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 using Xunit;
+using Xunit.Abstractions;
+using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 using Zarichney.Tests.Framework.Helpers;
@@ -13,9 +16,10 @@ namespace Zarichney.Tests.Integration;
 /// </summary>
 public abstract class IntegrationTestBase : IAsyncLifetime
 {
-  private static readonly Dictionary<string, List<string>> _traitToConfigNamesMap = new()
+  private static readonly Dictionary<string, List<string>> TraitToConfigNamesMap = new()
   {
     { TestCategories.Database, ["Database Connection"] },
+    { TestCategories.Docker, ["Docker Availability"] },
     { TestCategories.ExternalStripe, ["Stripe Secret Key", "Stripe Webhook Secret"] },
     { TestCategories.ExternalOpenAI, ["OpenAI API Key"] },
     { TestCategories.ExternalGitHub, ["GitHub Access Token"] },
@@ -53,9 +57,11 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   /// Initializes a new instance of the <see cref="IntegrationTestBase"/> class.
   /// </summary>
   /// <param name="apiClientFixture">The API client fixture.</param>
-  protected IntegrationTestBase(ApiClientFixture apiClientFixture)
+  /// <param name="testOutputHelper"></param>
+  protected IntegrationTestBase(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper)
   {
     _apiClientFixture = apiClientFixture;
+    apiClientFixture.AttachToSerilog(testOutputHelper);
     // Database availability will be checked based on dependency traits during InitializeAsync
   }
 
@@ -109,20 +115,171 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     // Get all traits defined on the test class via reflection
     var traits = GetTraitsForTestClass(testClassType);
 
-    // Check if this is a minimal functionality test (which should run even without config)
+    // Skip dependency checks for minimal functionality tests
     if (traits.Any(t => t is { Name: TestCategories.Category, Value: TestCategories.MinimalFunctionality }))
     {
-      // Skip dependency checks for minimal functionality tests
       return;
     }
 
+    // Check dependencies in the following order:
+    // 1. First try using ApiFeature enum-based dependencies
+    // 2. Then check InfrastructureDependency enum-based dependencies
+    // 3. Fall back to string-based trait dependencies if no enum-based dependencies are specified
+
+    // Get dependencies specified in DependencyFactAttribute
+    var factAttribute = GetDependencyFactAttributeFromTestClass(testClassType);
+
+    if (factAttribute != null)
+    {
+      // Process ApiFeature dependencies if present
+      var requiredFeatures = factAttribute.RequiredExternalServices;
+      if (requiredFeatures is { Length: > 0 })
+      {
+        await CheckExternalServicesDependenciesAsync(requiredFeatures);
+
+        // If any ApiFeature check failed and set a skip reason, don't continue with other checks
+        if (ShouldSkip)
+        {
+          return;
+        }
+      }
+
+      // Process InfrastructureDependency if present
+      var requiredInfrastructure = factAttribute.RequiredInfrastructure;
+      if (requiredInfrastructure is { Length: > 0 })
+      {
+        CheckInfrastructureDependencies(requiredInfrastructure);
+
+        // If any InfrastructureDependency check failed and set a skip reason, don't continue with other checks
+        if (ShouldSkip)
+        {
+          return;
+        }
+      }
+
+      // If neither enum-based dependency was specified but we have a DependencyFactAttribute,
+      // fall back to string-based traits if available
+      if ((requiredFeatures == null || requiredFeatures.Length == 0) &&
+          (requiredInfrastructure == null || requiredInfrastructure.Length == 0))
+      {
+        await CheckLegacyTraitDependenciesAsync(traits);
+      }
+    }
+    else
+    {
+      // No DependencyFactAttribute found, use traits-based approach as fallback
+      await CheckLegacyTraitDependenciesAsync(traits);
+    }
+  }
+
+  /// <summary>
+  /// Checks ExternalServices-based dependencies using IStatusService.
+  /// This is the preferred approach for API feature dependency checking.
+  /// </summary>
+  /// <param name="requiredFeatures">Array of required ExternalServices values.</param>
+  private Task CheckExternalServicesDependenciesAsync(Services.Status.ExternalServices[] requiredFeatures)
+  {
+    try
+    {
+      // Get IStatusService from the factory
+      using var scope = Factory.Services.CreateScope();
+      var statusService = scope.ServiceProvider.GetRequiredService<IStatusService>();
+
+      // Check each required feature
+      var unavailableFeatures = new List<Services.Status.ExternalServices>();
+      var allMissingConfigs = new List<string>();
+
+      foreach (var feature in requiredFeatures)
+      {
+        var featureStatus = statusService.GetFeatureStatus(feature);
+        if (featureStatus == null || !featureStatus.IsAvailable)
+        {
+          unavailableFeatures.Add(feature);
+          if (featureStatus != null)
+          {
+            allMissingConfigs.AddRange(featureStatus.MissingConfigurations);
+          }
+        }
+      }
+
+      // If there are unavailable features, set SkipReason
+      if (unavailableFeatures.Count > 0)
+      {
+        var reason = $"Required ExternalServices unavailable: {string.Join(", ", unavailableFeatures)}";
+        if (allMissingConfigs.Count > 0)
+        {
+          reason += $" (Missing configurations: {string.Join(", ", allMissingConfigs.Distinct())})";
+        }
+
+        SetSkipReason(reason);
+      }
+    }
+    catch (Exception ex)
+    {
+      // If we encounter an error checking ExternalServices dependencies, set SkipReason
+      SetSkipReason($"Error checking ExternalServices dependencies: {ex.Message}");
+    }
+
+    return Task.CompletedTask;
+  }
+
+  /// <summary>
+  /// Checks InfrastructureDependency-based dependencies by directly querying the Factory properties.
+  /// This is the preferred approach for infrastructure dependency checking.
+  /// </summary>
+  /// <param name="requiredInfrastructure">Array of required InfrastructureDependency values.</param>
+  private void CheckInfrastructureDependencies(InfrastructureDependency[] requiredInfrastructure)
+  {
+    try
+    {
+      foreach (var dependency in requiredInfrastructure)
+      {
+        switch (dependency)
+        {
+          case InfrastructureDependency.Database:
+            if (!Factory.IsDatabaseAvailable)
+            {
+              SetSkipReason("Database is not available.");
+              return;
+            }
+            break;
+
+          case InfrastructureDependency.Docker:
+            if (!Factory.IsDockerAvailable)
+            {
+              SetSkipReason("Docker is not available or misconfigured.");
+              return;
+            }
+            break;
+
+          default:
+            // Unknown infrastructure dependency
+            SetSkipReason($"Unknown infrastructure dependency: {dependency}");
+            return;
+        }
+      }
+    }
+    catch (Exception ex)
+    {
+      // If we encounter an error checking infrastructure dependencies, set SkipReason
+      SetSkipReason($"Error checking infrastructure dependencies: {ex.Message}");
+    }
+  }
+
+  /// <summary>
+  /// Checks string-based trait dependencies using trait values and ConfigurationStatusHelper.
+  /// This is the legacy approach for dependency checking, maintained for backward compatibility.
+  /// </summary>
+  /// <param name="traits">Collection of trait name/value pairs.</param>
+  private async Task CheckLegacyTraitDependenciesAsync(List<(string Name, string Value)> traits)
+  {
     // Filter the traits to only include dependency traits
     var dependencyTraits = traits
       .Where(t => t.Name == TestCategories.Dependency)
       .ToList();
 
     // If there are no dependency traits, return (no dependencies to check)
-    if (!dependencyTraits.Any())
+    if (dependencyTraits.Count == 0)
     {
       return;
     }
@@ -131,7 +288,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     var requiredConfigs = new HashSet<string>();
     foreach (var (_, value) in dependencyTraits)
     {
-      if (_traitToConfigNamesMap.TryGetValue(value, out var configNames))
+      if (TraitToConfigNamesMap.TryGetValue(value, out var configNames))
       {
         foreach (var configName in configNames)
         {
@@ -141,7 +298,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     }
 
     // If there are no required configs after mapping, return
-    if (!requiredConfigs.Any())
+    if (requiredConfigs.Count == 0)
     {
       return;
     }
@@ -155,39 +312,100 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         return;
       }
 
-      // Fetch the actual configuration status
-      var statuses = await ConfigurationStatusHelper.GetConfigurationStatusAsync(Factory);
-
-      // Check if statuses is null or empty
-      if (statuses.Count == 0)
+      // Force skip for Docker-dependent tests if Docker is not available
+      if (requiredConfigs.Contains("Docker Availability") && !Factory.IsDockerAvailable)
       {
-        SetSkipReason("Unable to fetch configuration status.");
+        SetSkipReason("Docker is not available or misconfigured.");
         return;
       }
 
-      // Check if each required config is available
-      var missingConfigs = new List<string>();
-      foreach (var configName in requiredConfigs)
+      try
       {
-        bool isAvailable = ConfigurationStatusHelper.IsConfigurationAvailable(statuses, configName);
+        // Fetch the service statuses from the new endpoint
+        var serviceStatuses = await ConfigurationStatusHelper.GetServiceStatusAsync(Factory);
 
-        if (!isAvailable)
+        // Check if service statuses is null or empty
+        if (serviceStatuses.Count == 0)
         {
-          missingConfigs.Add(configName);
+          SetSkipReason("Unable to fetch service status, assuming dependencies are missing.");
+          return;
+        }
+
+        // Check each dependency trait to see if its corresponding features are available
+        var unavailableDependencies = new List<string>();
+        var allMissingConfigs = new List<string>();
+
+        foreach (var (_, dependencyTraitValue) in dependencyTraits)
+        {
+          // Skip Docker/Database dependencies as they are handled separately
+          if (dependencyTraitValue == TestCategories.Docker || dependencyTraitValue == TestCategories.Database)
+          {
+            continue;
+          }
+
+          if (!ConfigurationStatusHelper.IsFeatureDependencyAvailable(serviceStatuses, dependencyTraitValue))
+          {
+            unavailableDependencies.Add(dependencyTraitValue);
+
+            // Get missing configurations for this dependency
+            var missingConfigs =
+              ConfigurationStatusHelper.GetMissingConfigurationsForDependency(serviceStatuses, dependencyTraitValue);
+            allMissingConfigs.AddRange(missingConfigs);
+          }
+        }
+
+        // If there are unavailable dependencies, set SkipReason
+        if (unavailableDependencies.Count != 0)
+        {
+          var reason = $"Dependencies unavailable: {string.Join(", ", unavailableDependencies)}";
+          if (allMissingConfigs.Count != 0)
+          {
+            reason += $" (Missing configurations: {string.Join(", ", allMissingConfigs.Distinct())})";
+          }
+
+          SetSkipReason(reason);
         }
       }
-
-      // If there are missing configs, set SkipReason
-      if (missingConfigs.Any())
+      catch
       {
-        SetSkipReason($"Missing required configurations: {string.Join(", ", missingConfigs)}");
+        // If we couldn't get configuration status, assume all external service dependencies are unavailable
+        var externalDependencies = dependencyTraits
+          .Where(t => t.Value.StartsWith("External"))
+          .Select(t => t.Value)
+          .ToList();
+
+        SetSkipReason(externalDependencies.Count != 0
+          ? $"External services unavailable: {string.Join(", ", externalDependencies)}"
+          // For tests with no external dependencies, we still need configuration
+          : "Configuration status unavailable, skipping test.");
       }
     }
     catch (Exception ex)
     {
       // If we encounter an error checking configuration, assume dependencies are missing
-      SetSkipReason($"Error checking configuration: {ex.Message}");
+      SetSkipReason($"Error checking dependencies: {ex.Message}");
     }
+  }
+
+  /// <summary>
+  /// Gets the DependencyFactAttribute from a test class.
+  /// </summary>
+  /// <param name="testClassType">The test class type to check.</param>
+  /// <returns>The DependencyFactAttribute if found, or null if not present.</returns>
+  private DependencyFactAttribute? GetDependencyFactAttributeFromTestClass(System.Type testClassType)
+  {
+    // Check test methods for DependencyFactAttribute
+    for (var index = 0; index < testClassType.GetMethods(BindingFlags.Public | BindingFlags.Instance).Length; index++)
+    {
+      var method = testClassType.GetMethods(BindingFlags.Public | BindingFlags.Instance)[index];
+      var factAttr = method.GetCustomAttribute<DependencyFactAttribute>();
+      if (factAttr != null)
+      {
+        return factAttr;
+      }
+    }
+
+    return null;
   }
 
   /// <summary>

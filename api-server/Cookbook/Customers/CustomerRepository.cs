@@ -11,6 +11,7 @@ public interface ICustomerRepository
 
 public class CustomerFileRepository(
   IFileService fileService,
+  IFileWriteQueueService fileWriteQueueService, // Inject IFileWriteQueueService
   CustomerConfig config
   ) : ICustomerRepository
 {
@@ -18,6 +19,7 @@ public class CustomerFileRepository(
   {
     var safeFileName = EmailService.MakeSafeFileName(email);
 
+    // Use fileService for reading
     var customer = await fileService.ReadFromFile<Customer?>(
       Path.Combine(config.OutputDirectory),
       safeFileName
@@ -30,7 +32,8 @@ public class CustomerFileRepository(
   {
     var safeFileName = EmailService.MakeSafeFileName(customer.Email);
 
-    fileService.QueueWrite(
+    // Use fileWriteQueueService for writing
+    fileWriteQueueService.QueueWrite(
       Path.Combine(config.OutputDirectory),
       safeFileName,
       customer

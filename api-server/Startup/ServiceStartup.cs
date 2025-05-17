@@ -1,4 +1,6 @@
+using System.Text.Json.Serialization;
 using Azure.Identity;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Graph;
 using Microsoft.OpenApi.Models;
 using OpenAI;
@@ -16,6 +18,7 @@ using Zarichney.Services.GitHub;
 using Zarichney.Services.Payment;
 using Zarichney.Services.PdfGeneration;
 using Zarichney.Services.Status;
+using Zarichney.Services.Status.Proxies;
 using Zarichney.Services.Web;
 
 namespace Zarichney.Startup;
@@ -46,7 +49,11 @@ public class ServiceStartup
 
     services.AddHttpContextAccessor();
     services.AddControllers()
-      .AddJsonOptions(options => { options.JsonSerializerOptions.Converters.Add(new JsonTypeConverter()); });
+      .AddJsonOptions(options =>
+      {
+        options.JsonSerializerOptions.Converters.Add(new JsonTypeConverter());
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+      });
     services.AddAutoMapper(typeof(Program));
     services.AddMemoryCache();
     services.AddSessionManagement();
@@ -61,24 +68,44 @@ public class ServiceStartup
   /// </summary>
   private static void ConfigureEmailServices(IServiceCollection services)
   {
-    services.AddScoped<GraphServiceClient>(sp =>
+    // Register MailCheckClient
+    services.AddScoped<IMailCheckClient>(sp =>
     {
       var emailConfig = sp.GetRequiredService<EmailConfig>();
       var logger = sp.GetRequiredService<ILogger<ServiceStartup>>();
 
-      // Check if the required configuration values are present
-      if (string.IsNullOrEmpty(emailConfig.AzureTenantId) ||
-          string.IsNullOrEmpty(emailConfig.AzureAppId) ||
-          string.IsNullOrEmpty(emailConfig.AzureAppSecret) ||
-          string.IsNullOrEmpty(emailConfig.FromEmail) ||
-          emailConfig.AzureTenantId == "recommended to set in app secrets" ||
-          emailConfig.AzureAppId == "recommended to set in app secrets" ||
-          emailConfig.AzureAppSecret == "recommended to set in app secrets" ||
-          emailConfig.FromEmail == "recommended to set in app secrets")
+      // Check if MailCheck API key is available
+      if (string.IsNullOrEmpty(emailConfig.MailCheckApiKey) ||
+          emailConfig.MailCheckApiKey == StatusService.PlaceholderMessage)
       {
-        logger.LogWarning(
-          "Missing required configuration for GraphServiceClient. Email functionality will not be available. Required: AzureTenantId, AzureAppId, AzureAppSecret, FromEmail");
-        return null!;
+        logger.LogWarning("Email validation service is unavailable due to missing MailCheck API key");
+        var reasons = new List<string> { "Missing MailCheck API key" };
+        // Return a proxy that throws ServiceUnavailableException when methods are called
+        return new MailCheckClientProxy(reasons);
+      }
+
+      return new MailCheckClient(emailConfig, sp.GetRequiredService<IMemoryCache>(),
+        sp.GetRequiredService<ILogger<MailCheckClient>>());
+    });
+
+    // Register GraphServiceClient
+    services.AddScoped<GraphServiceClient>(sp =>
+    {
+      var emailConfig = sp.GetRequiredService<EmailConfig>();
+      var logger = sp.GetRequiredService<ILogger<ServiceStartup>>();
+      var statusService = sp.GetRequiredService<IStatusService>();
+
+      var serviceStatus = statusService.GetServiceStatusAsync().GetAwaiter().GetResult();
+      var emailServiceAvailable =
+        serviceStatus.TryGetValue(ExternalServices.MsGraph, out var status) && status.IsAvailable;
+
+      if (!emailServiceAvailable)
+      {
+        logger.LogWarning("Email service is unavailable due to missing configuration: {MissingConfigs}",
+          status?.MissingConfigurations == null ? "unknown" : string.Join(", ", status.MissingConfigurations));
+
+        // Return a proxy that throws ServiceUnavailableException when methods are called
+        return new GraphServiceClientProxy(status?.MissingConfigurations.ToList());
       }
 
       try
@@ -88,10 +115,7 @@ public class ServiceStartup
             emailConfig.AzureTenantId,
             emailConfig.AzureAppId,
             emailConfig.AzureAppSecret,
-            new TokenCredentialOptions
-            {
-              AuthorityHost = AzureAuthorityHosts.AzurePublicCloud
-            }
+            new TokenCredentialOptions { AuthorityHost = AzureAuthorityHosts.AzurePublicCloud }
           ),
           ["https://graph.microsoft.com/.default"]
         );
@@ -99,7 +123,9 @@ public class ServiceStartup
       catch (Exception ex)
       {
         logger.LogWarning(ex, "Failed to create GraphServiceClient. Email functionality will not be available.");
-        return null!;
+        var errorMessage = $"Failed to create GraphServiceClient: {ex.Message}";
+        var reasons = new List<string> { errorMessage };
+        return new GraphServiceClientProxy(reasons);
       }
     });
   }
@@ -114,13 +140,19 @@ public class ServiceStartup
     {
       var llmConfig = sp.GetRequiredService<LlmConfig>();
       var logger = sp.GetRequiredService<ILogger<ServiceStartup>>();
+      var statusService = sp.GetRequiredService<IStatusService>();
 
-      // Check if the required API key is present and valid
-      if (string.IsNullOrEmpty(llmConfig.ApiKey) ||
-          llmConfig.ApiKey == "recommended to set in app secrets")
+      var serviceStatus = statusService.GetServiceStatusAsync().GetAwaiter().GetResult();
+      var llmServiceAvailable =
+        serviceStatus.TryGetValue(ExternalServices.OpenAiApi, out var status) && status.IsAvailable;
+
+      if (!llmServiceAvailable)
       {
-        logger.LogWarning("Missing required OpenAI API key configuration. LLM functionality will not be available.");
-        return null!;
+        logger.LogWarning("LLM service is unavailable due to missing configuration: {MissingConfigs}",
+          status?.MissingConfigurations == null ? "unknown" : string.Join(", ", status.MissingConfigurations));
+
+        // Return a proxy that throws ServiceUnavailableException when methods are called
+        return new OpenAIClientProxy(status?.MissingConfigurations.ToList());
       }
 
       try
@@ -130,7 +162,9 @@ public class ServiceStartup
       catch (Exception ex)
       {
         logger.LogWarning(ex, "Failed to create OpenAIClient. LLM functionality will not be available.");
-        return null!;
+        var errorMessage = $"Failed to create OpenAIClient: {ex.Message}";
+        var reasons = new List<string> { errorMessage };
+        return new OpenAIClientProxy(reasons);
       }
     });
 
@@ -140,14 +174,19 @@ public class ServiceStartup
       var transcribeConfig = sp.GetRequiredService<TranscribeConfig>();
       var llmConfig = sp.GetRequiredService<LlmConfig>();
       var logger = sp.GetRequiredService<ILogger<ServiceStartup>>();
+      var statusService = sp.GetRequiredService<IStatusService>();
 
-      // Check if the required API key is present and valid
-      if (string.IsNullOrEmpty(llmConfig.ApiKey) ||
-          llmConfig.ApiKey == "recommended to set in app secrets")
+      var serviceStatus = statusService.GetServiceStatusAsync().GetAwaiter().GetResult();
+      var llmServiceAvailable =
+        serviceStatus.TryGetValue(ExternalServices.OpenAiApi, out var status) && status.IsAvailable;
+
+      if (!llmServiceAvailable)
       {
-        logger.LogWarning(
-          "Missing required OpenAI API key configuration. Audio transcription functionality will not be available.");
-        return null!;
+        logger.LogWarning("Audio transcription service is unavailable due to missing configuration: {MissingConfigs}",
+          status?.MissingConfigurations == null ? "unknown" : string.Join(", ", status.MissingConfigurations));
+
+        // Return a proxy that throws ServiceUnavailableException when methods are called
+        return new AudioClientProxy(status?.MissingConfigurations.ToList());
       }
 
       try
@@ -157,7 +196,9 @@ public class ServiceStartup
       catch (Exception ex)
       {
         logger.LogWarning(ex, "Failed to create AudioClient. Audio transcription functionality will not be available.");
-        return null!;
+        var errorMessage = $"Failed to create AudioClient: {ex.Message}";
+        var reasons = new List<string> { errorMessage };
+        return new AudioClientProxy(reasons);
       }
     });
   }
@@ -180,6 +221,9 @@ public class ServiceStartup
     services.AddSingleton<ITemplateService, TemplateService>();
     services.AddSingleton<IBrowserService, BrowserService>();
 
+    // Status Service - provides configuration and feature availability status
+    services.AddSingleton<IStatusService, StatusService>();
+
     // Repositories
     services.AddSingleton<ILlmRepository, LlmRepository>();
     services.AddSingleton<IRecipeRepository, RecipeFileRepository>();
@@ -194,10 +238,10 @@ public class ServiceStartup
     // Scoped and Transient Services
     services.AddScoped<ICookieAuthManager, CookieAuthManager>();
     services.AddScoped<ILlmService, LlmService>();
+    services.AddScoped<IAiService, AiService>();
     services.AddScoped<IAuthService, AuthService>();
     services.AddScoped<IApiKeyService, ApiKeyService>();
     services.AddScoped<IEmailService, EmailService>();
-    services.AddScoped<IStatusService, StatusService>();
     services.AddTransient<IRecipeService, RecipeService>();
     services.AddTransient<IOrderService, OrderService>();
     services.AddTransient<ICustomerService, CustomerService>();
@@ -224,14 +268,18 @@ public class ServiceStartup
         Title = "Zarichney API",
         Version = "v1",
         Description = "API for the Cookbook application and AI Service. " +
-                      "Authenticate using the 'Authorize' button and provide your API key."
+                      "Authenticate using the 'Authorize' button and provide your API key." +
+                      "\n\n**Note:** Endpoints marked with ⚠️ are currently unavailable due to missing configuration."
       });
 
-      c.OperationFilter<FormFileOperationFilter>();
       c.EnableAnnotations();
 
       var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
       c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+
+      // Register operation filters
+      c.OperationFilter<FormFileOperationFilter>();
+      c.OperationFilter<ServiceAvailabilityOperationFilter>();
 
       c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
       {
@@ -241,36 +289,29 @@ public class ServiceStartup
         Description = "API key authentication. Enter your API key here.",
       });
 
-      c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-      {
-        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer {token}'",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
-      });
+      c.AddSecurityDefinition("Bearer",
+        new OpenApiSecurityScheme
+        {
+          Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer {token}'",
+          Name = "Authorization",
+          In = ParameterLocation.Header,
+          Type = SecuritySchemeType.ApiKey,
+          Scheme = "Bearer"
+        });
 
       c.AddSecurityRequirement(new OpenApiSecurityRequirement
       {
         {
           new OpenApiSecurityScheme
           {
-            Reference = new OpenApiReference
-            {
-              Type = ReferenceType.SecurityScheme,
-              Id = "ApiKey"
-            }
+            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "ApiKey" }
           },
           Array.Empty<string>()
         },
         {
           new OpenApiSecurityScheme
           {
-            Reference = new OpenApiReference
-            {
-              Type = ReferenceType.SecurityScheme,
-              Id = "Bearer"
-            }
+            Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
           },
           Array.Empty<string>()
         }

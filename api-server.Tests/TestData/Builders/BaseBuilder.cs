@@ -10,7 +10,7 @@ public abstract class BaseBuilder<TBuilder, TEntity>
     where TBuilder : BaseBuilder<TBuilder, TEntity>
     where TEntity : class, new()
 {
-  protected TEntity Entity { get; } = new TEntity();
+  protected TEntity Entity { get; } = new();
 
   /// <summary>
   /// Creates a new instance of the entity with default values.

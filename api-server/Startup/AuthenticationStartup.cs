@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Models;
+using Zarichney.Services.Status;
 
 namespace Zarichney.Startup;
 
@@ -81,7 +82,7 @@ public static class AuthenticationStartup
         byte[] signingKeyBytes;
 
         // Check if the JWT secret key is missing, empty, or has a placeholder value
-        if (string.IsNullOrWhiteSpace(jwtSettings.SecretKey) || jwtSettings.SecretKey == "recommended to set in app secrets")
+        if (string.IsNullOrWhiteSpace(jwtSettings.SecretKey) || jwtSettings.SecretKey == StatusService.PlaceholderMessage)
         {
           // Generate a secure random 32-byte key (256 bits) for the current instance
           var randomKey = new byte[32];

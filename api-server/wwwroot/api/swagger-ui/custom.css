@@ -1,0 +1,17 @@
+/* Style for unavailable endpoints */
+.swagger-ui .opblock.unavailable {
+    background-color: rgba(255, 0, 0, 0.1);
+    border-color: rgba(255, 0, 0, 0.5) !important;
+}
+
+/* Make the warning emoji more noticeable */
+.swagger-ui .opblock.unavailable .opblock-summary-method {
+    background-color: #ff6b6b;
+}
+
+/* Add a clear visual indicator */
+.swagger-ui .opblock.unavailable .opblock-summary-description::before {
+    content: '⚠️ UNAVAILABLE: ';
+    font-weight: bold;
+    color: #d32f2f;
+}

@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Refit;
 using Xunit;
+using Xunit.Abstractions;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 
@@ -16,7 +17,7 @@ namespace Zarichney.Tests.Integration.Controllers.PublicController;
 [Trait(TestCategories.Component, TestCategories.Controller)]
 [Trait(TestCategories.Feature, "Public")]
 [Collection("Integration")]
-public class PublicControllerTests(ApiClientFixture apiClientFixture) : IntegrationTestBase(apiClientFixture)
+public class PublicControllerTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper) : IntegrationTestBase(apiClientFixture, testOutputHelper)
 {
   /// <summary>
   /// Tests that the health check endpoint returns an OK result with the expected structure.
@@ -31,7 +32,7 @@ public class PublicControllerTests(ApiClientFixture apiClientFixture) : Integrat
     // ApiClient is obtained from IntegrationTestBase, represents unauthenticated Refit client
 
     // Act & Assert: calling Health should not throw and thus return 200 OK
-    Func<Task> act = () => ApiClient.Health();
+    var act = () => ApiClient.Health();
     await act.Should().NotThrowAsync<ApiException>(
       because: "health endpoint should always return OK status even without configuration");
   }

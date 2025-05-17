@@ -123,8 +123,11 @@ public class ScopeContainer(
   IServiceProvider serviceProvider,
   IScopeContainer? parentScope = null
 )
-  : IScopeContainer
+  : IScopeContainer, IDisposable
 {
+  private bool _disposed;
+  private readonly IServiceScope? _ownedScope;
+
   public IServiceProvider ServiceProvider { get; } = serviceProvider;
   public Guid Id { get; set; } = parentScope?.Id ?? Guid.NewGuid();
   public Guid? SessionId { get; set; } = parentScope?.SessionId;
@@ -132,6 +135,22 @@ public class ScopeContainer(
   public T GetService<T>() where T : notnull
   {
     return ServiceProvider.GetRequiredService<T>();
+  }
+
+  // Implemented IDisposable pattern with Dispose(bool)
+  protected virtual void Dispose(bool disposing)
+  {
+    if (!_disposed && disposing)
+    {
+      _ownedScope?.Dispose();
+      _disposed = true;
+    }
+  }
+
+  public void Dispose()
+  {
+    Dispose(true);
+    GC.SuppressFinalize(this);
   }
 }
 
@@ -162,7 +181,27 @@ public class ScopeFactory(IServiceProvider serviceProvider) : IScopeFactory
   public IScopeContainer CreateScope(IScopeContainer? parentScope = null)
   {
     var newScope = (parentScope?.ServiceProvider ?? serviceProvider).CreateScope();
-    var scope = new ScopeContainer(newScope.ServiceProvider, parentScope);
+    var scope = new DisposableScopeContainer(newScope, parentScope);
     return scope;
+  }
+}
+
+/// <summary>
+/// ScopeContainer that owns and manages the lifetime of its IServiceScope
+/// </summary>
+public class DisposableScopeContainer(IServiceScope scope, IScopeContainer? parentScope = null)
+  : ScopeContainer(scope.ServiceProvider, parentScope)
+{
+  private bool _disposed;
+
+  protected override void Dispose(bool disposing)
+  {
+    if (!_disposed && disposing)
+    {
+      scope.Dispose();
+      _disposed = true;
+    }
+
+    base.Dispose(disposing);
   }
 }

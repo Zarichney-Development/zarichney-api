@@ -1,6 +1,6 @@
 using Stripe;
 using Stripe.Checkout;
-using Zarichney.Config;
+using Zarichney.Services.Status;
 
 namespace Zarichney.Services.Payment;
 
@@ -104,10 +104,11 @@ public class StripeService : IStripeService
   /// </summary>
   private void EnsureStripeKeyConfigured()
   {
+    // ServiceUnavailableException will be thrown by the proxy if Payment service is unavailable
     if (string.IsNullOrEmpty(_config.StripeSecretKey))
     {
       _logger.LogError("Stripe operation failed: Stripe Secret Key is missing");
-      throw new ConfigurationMissingException(nameof(PaymentConfig), nameof(PaymentConfig.StripeSecretKey));
+      throw new ServiceUnavailableException("Payment service is unavailable due to missing Stripe Secret Key configuration");
     }
     StripeConfiguration.ApiKey = _config.StripeSecretKey;
   }
@@ -117,10 +118,11 @@ public class StripeService : IStripeService
   /// </summary>
   private void EnsureWebhookSecretConfigured()
   {
+    // ServiceUnavailableException will be thrown by the proxy if Payment service is unavailable
     if (string.IsNullOrEmpty(_config.StripeWebhookSecret))
     {
       _logger.LogError("Stripe operation failed: Stripe Webhook Secret is missing");
-      throw new ConfigurationMissingException(nameof(PaymentConfig), nameof(PaymentConfig.StripeWebhookSecret));
+      throw new ServiceUnavailableException("Payment service is unavailable due to missing Stripe Webhook Secret configuration");
     }
   }
 

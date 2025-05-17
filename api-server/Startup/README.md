@@ -1,6 +1,6 @@
 # Module/Directory: /Startup
 
-**Last Updated:** 2025-04-15
+**Last Updated:** 2025-05-10
 
 > **Parent:** [`Server`](../README.md)
 
@@ -62,7 +62,7 @@ graph TD
 
     subgraph "ConfigureApplication Method (async)"
         direction TB
-        BuildApp --> ConfigureApp["await ApplicationStartup.ConfigureApplication \n - RequestResponseLogger middleware \n - ErrorHandling middleware \n - ForwardedHeaders (AWS/CloudFront) \n - Swagger UI \n - Custom Authentication middleware \n - Endpoint routing \n - API controllers \n - Database initialization"]
+        BuildApp --> ConfigureApp["await ApplicationStartup.ConfigureApplication \n - RequestResponseLogger middleware \n - ErrorHandling middleware \n - ForwardedHeaders (AWS/CloudFront) \n - Swagger UI \n - Custom Authentication middleware \n - Session management middleware \n - Feature availability middleware \n - Endpoint routing \n - API controllers \n - Database initialization"]
     end
 
     ConfigureApp --> RunApp["app.Run()"]
@@ -127,16 +127,16 @@ graph TD
         * `UseSessionManagement(IApplicationBuilder)`: Uses session management middleware.
     * `ServiceStartup`:
         * `ConfigureServices(WebApplicationBuilder)`: Registers core application services.
-        * `ConfigureEmailServices(IServiceCollection)`: Sets up email services using Microsoft Graph. Uses a factory that returns null if configuration is missing.
-        * `ConfigureOpenAiServices(IServiceCollection)`: Sets up OpenAI services. Uses factories that return null if configuration is missing.
+        * `ConfigureEmailServices(IServiceCollection)`: Sets up email services using Microsoft Graph. Uses a factory that checks IConfigurationStatusService for Email service availability and returns a proxy that throws ServiceUnavailableException if unavailable.
+        * `ConfigureOpenAiServices(IServiceCollection)`: Sets up OpenAI services. Uses factories that check IConfigurationStatusService for Llm service availability and return proxies that throw ServiceUnavailableException when their methods are invoked if unavailable.
         * `ConfigureApplicationServices(IServiceCollection)`: Registers domain-specific application services.
         * `ConfigureSwagger(WebApplicationBuilder)`: Configures Swagger/OpenAPI documentation.
 * **Critical Assumptions:**
     * **Dependency Injection:** Assumes proper DI container setup in `Program.cs` before these methods are called.
     * **Configuration:** Assumes `IConfiguration` has been properly initialized by the time these methods are invoked.
-    * **Missing Configuration Handling:** Properties marked with `[Required]` will generate warnings at startup if missing but will not prevent application startup. Services should check for null/placeholder values at runtime and throw `ConfigurationMissingException` if trying to use missing configuration.
+    * **Missing Configuration Handling:** Properties marked with `[Required]` or `[RequiresConfiguration]` will generate warnings at startup if missing but will not prevent application startup. The `IConfigurationStatusService` tracks service availability based on configurations with `[RequiresConfiguration]` attributes. Services register proxies that throw `ServiceUnavailableException` when their methods are invoked if required configuration is unavailable.
     * **AWS Systems Manager Configuration:** The AWS Systems Manager configuration provider is now optional, allowing the application to start successfully even if AWS credentials are not configured or accessible. This adheres to the goal of deferring configuration validation failures to runtime rather than preventing application startup.
-    * **Middleware Order:** Assumes the specific order of middleware registration in `ConfigureApplication` is maintained to ensure proper request processing.
+    * **Middleware Order:** Assumes the specific order of middleware registration in `ConfigureApplication` is maintained to ensure proper request processing. In particular, the `FeatureAvailabilityMiddleware` must be registered after routing and authentication but before `MapControllers()` to ensure it can access endpoint metadata and correctly validate feature requirements.
     * **Order of Operations:** Methods in `ConfigureBuilder` must be called in the correct order to ensure dependencies are properly established.
 
 ## 4. Local Conventions & Constraints (Beyond Global Standards)
@@ -181,8 +181,10 @@ graph TD
 
 * **Refactoring Motivation:** This module was created to improve the organization and maintainability of the application's startup code by centralizing configuration and service registration logic that was previously scattered across `Program.cs` and various extension files.
 * **Logical Grouping:** The decision to organize code by functional area (App, Authentication, Configuration, Middleware, Services) provides a clearer separation of concerns and makes it easier to locate specific functionality.
-* **Middleware Ordering:** The specific order of middleware registration in `ApplicationStartup.ConfigureApplication` has been carefully preserved to ensure proper request processing, with critical middleware like error handling and authentication positioned appropriately.
+* **Middleware Ordering:** The specific order of middleware registration in `ApplicationStartup.ConfigureApplication` has been carefully preserved to ensure proper request processing, with critical middleware like error handling and authentication positioned appropriately. The `FeatureAvailabilityMiddleware` is positioned after authentication but before endpoint execution to ensure it can access endpoint metadata and validate feature requirements before controllers are invoked.
 * **Configuration Validation Change:** The configuration validation process was modified to log warnings instead of throwing exceptions for missing required configuration values. This change allows the application to start even with incomplete configuration, deferring validation failures to runtime when specific features attempt to use the missing configuration. This approach enables partial functionality of the application even when some external service configurations (like API keys) are missing.
+* **Service Unavailability Strategy:** Instead of returning null from service factories, we now register proxy implementations of external clients (GraphServiceClient, OpenAIClient, AudioClient) that throw ServiceUnavailableException when their methods are invoked if required configuration is missing. This provides clearer error messages and more consistent behavior when a service can't operate due to missing configuration. This is now complemented by the `FeatureAvailabilityMiddleware` which proactively checks if an endpoint can be served based on its declared feature dependencies before the endpoint is invoked, providing a more immediate response to API consumers.
+* **RequiresConfiguration Attribute:** Configuration properties that are critical for services to function are now marked with the RequiresConfiguration attribute. The IConfigurationStatusService tracks these properties and reports service availability status based on their values, which is used by service factories to determine whether to register real implementations or proxies.
 * **AWS Systems Manager Configuration:** The AWS Systems Manager configuration provider was made optional to align with the overall configuration validation strategy. This prevents the application from failing to start when AWS credentials are not configured or the AWS service is unavailable, allowing for local development without AWS setup and ensuring that only the specific features requiring AWS configuration will fail at runtime rather than blocking the entire application startup.
 
 ## 8. Known Issues & TODOs

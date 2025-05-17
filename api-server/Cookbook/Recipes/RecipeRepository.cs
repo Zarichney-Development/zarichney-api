@@ -23,6 +23,7 @@ public interface IRecipeRepository
 public class RecipeFileRepository(
   RecipeConfig config,
   IFileService fileService,
+  IFileWriteQueueService fileWriteQueueService,
   IMapper mapper,
   CleanRecipePrompt cleanRecipePrompt,
   RecipeNamerPrompt recipeNamerPrompt,
@@ -177,7 +178,7 @@ public class RecipeFileRepository(
 
           var combinedRecipes = UpdateExistingRecipes(existingRecipes, recipeList);
 
-          fileService.QueueWrite(config.OutputDirectory, title, combinedRecipes);
+          fileWriteQueueService.QueueWrite(config.OutputDirectory, title, combinedRecipes);
         }
         catch (Exception ex)
         {

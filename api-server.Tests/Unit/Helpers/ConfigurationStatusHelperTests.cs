@@ -1,6 +1,7 @@
+using Zarichney.Services.Status;
 using FluentAssertions;
 using Xunit;
-using Zarichney.Services.Status;
+using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Helpers;
 
 namespace Zarichney.Tests.Unit.Helpers;
@@ -153,4 +154,221 @@ public class ConfigurationStatusHelperTests
     result.Should().BeFalse(
         "Because the status comparison is case-sensitive and should be exactly 'Configured'");
   }
+
+  #region Service Status Tests
+
+  [Fact]
+  public void IsFeatureDependencyAvailable_WhenServiceStatusesNull_ThrowsArgumentNullException()
+  {
+    // Arrange
+    Dictionary<string, ServiceStatusInfo>? serviceStatuses = null;
+    var dependencyTraitValue = TestCategories.ExternalOpenAI;
+
+    // Act & Assert
+    var action = () => ConfigurationStatusHelper.IsFeatureDependencyAvailable(serviceStatuses!, dependencyTraitValue);
+
+    action.Should().Throw<ArgumentNullException>()
+        .WithParameterName("serviceStatuses");
+  }
+
+  [Theory]
+  [InlineData(null)]
+  [InlineData("")]
+  [InlineData("   ")]
+  public void IsFeatureDependencyAvailable_WhenDependencyTraitValueNullOrWhitespace_ThrowsArgumentException(string? dependencyTraitValue)
+  {
+    // Arrange
+    var serviceStatuses = new Dictionary<string, ServiceStatusInfo>();
+
+    // Act & Assert
+    var action = () => ConfigurationStatusHelper.IsFeatureDependencyAvailable(serviceStatuses, dependencyTraitValue!);
+
+    action.Should().Throw<ArgumentException>()
+        .WithParameterName("dependencyTraitValue");
+  }
+
+  [Fact]
+  public void IsFeatureDependencyAvailable_WhenMappedFeaturesAvailable_ReturnsTrue()
+  {
+    // Arrange
+    var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
+    {
+      ["Llm"] = new(ExternalServices.OpenAiApi, true, [])
+    };
+
+    // Act
+    var result = ConfigurationStatusHelper.IsFeatureDependencyAvailable(serviceStatuses, TestCategories.ExternalOpenAI);
+
+    // Assert
+    result.Should().BeTrue(
+        "Because the Llm feature is available and is mapped to ExternalOpenAI");
+  }
+
+  [Fact]
+  public void IsFeatureDependencyAvailable_WhenMappedFeaturesUnavailable_ReturnsFalse()
+  {
+    // Arrange
+    var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
+    {
+      ["Llm"] = new(ExternalServices.OpenAiApi, false, ["Llm:ApiKey"])
+    };
+
+    // Act
+    var result = ConfigurationStatusHelper.IsFeatureDependencyAvailable(serviceStatuses, TestCategories.ExternalOpenAI);
+
+    // Assert
+    result.Should().BeFalse(
+        "Because the Llm feature is unavailable and is mapped to ExternalOpenAI");
+  }
+
+  [Fact]
+  public void IsFeatureDependencyAvailable_WhenMappedFeaturesMissing_ReturnsFalse()
+  {
+    // Arrange
+    var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
+    {
+      ["Email"] = new(ExternalServices.MsGraph, true, [])
+      // Llm is missing from the dictionary
+    };
+
+    // Act
+    var result = ConfigurationStatusHelper.IsFeatureDependencyAvailable(serviceStatuses, TestCategories.ExternalOpenAI);
+
+    // Assert
+    result.Should().BeFalse(
+        "Because the Llm feature is missing from the status dictionary");
+  }
+
+  [Fact]
+  public void IsFeatureDependencyAvailable_WhenDependencyNotMapped_ReturnsTrue()
+  {
+    // Arrange
+    var serviceStatuses = new Dictionary<string, ServiceStatusInfo>();
+    const string unmappedDependency = "UnmappedDependency";
+
+    // Act
+    var result = ConfigurationStatusHelper.IsFeatureDependencyAvailable(serviceStatuses, unmappedDependency);
+
+    // Assert
+    result.Should().BeTrue(
+        "Because unmapped dependencies are considered available by default");
+  }
+
+  [Fact]
+  public void GetMissingConfigurationsForDependency_WhenServiceStatusesNull_ThrowsArgumentNullException()
+  {
+    // Arrange
+    Dictionary<string, ServiceStatusInfo>? serviceStatuses = null;
+    var dependencyTraitValue = TestCategories.ExternalOpenAI;
+
+    // Act & Assert
+    var action = () => ConfigurationStatusHelper.GetMissingConfigurationsForDependency(serviceStatuses!, dependencyTraitValue);
+
+    action.Should().Throw<ArgumentNullException>()
+        .WithParameterName("serviceStatuses");
+  }
+
+  [Theory]
+  [InlineData(null)]
+  [InlineData("")]
+  [InlineData("   ")]
+  public void GetMissingConfigurationsForDependency_WhenDependencyTraitValueNullOrWhitespace_ThrowsArgumentException(string? dependencyTraitValue)
+  {
+    // Arrange
+    var serviceStatuses = new Dictionary<string, ServiceStatusInfo>();
+
+    // Act & Assert
+    var action = () => ConfigurationStatusHelper.GetMissingConfigurationsForDependency(serviceStatuses, dependencyTraitValue!);
+
+    action.Should().Throw<ArgumentException>()
+        .WithParameterName("dependencyTraitValue");
+  }
+
+  [Fact]
+  public void GetMissingConfigurationsForDependency_WhenMappedFeaturesAvailable_ReturnsEmptyList()
+  {
+    // Arrange
+    var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
+    {
+      ["Llm"] = new(ExternalServices.OpenAiApi, true, [])
+    };
+
+    // Act
+    var result = ConfigurationStatusHelper.GetMissingConfigurationsForDependency(serviceStatuses, TestCategories.ExternalOpenAI);
+
+    // Assert
+    result.Should().BeEmpty(
+        "Because the Llm feature is available and has no missing configurations");
+  }
+
+  [Fact]
+  public void GetMissingConfigurationsForDependency_WhenMappedFeaturesUnavailable_ReturnsMissingConfigurations()
+  {
+    // Arrange
+    var missingConfigs = new List<string> { "Llm:ApiKey" };
+    var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
+    {
+      ["Llm"] = new(ExternalServices.OpenAiApi, false, missingConfigs)
+    };
+
+    // Act
+    var result = ConfigurationStatusHelper.GetMissingConfigurationsForDependency(serviceStatuses, TestCategories.ExternalOpenAI);
+
+    // Assert
+    result.Should().BeEquivalentTo(missingConfigs,
+        "Because the Llm feature is unavailable and its missing configurations should be returned");
+  }
+
+  [Fact]
+  public void GetMissingConfigurationsForDependency_WhenMultipleFeaturesUnavailable_ReturnsAllMissingConfigurations()
+  {
+    // Arrange
+    var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
+    {
+      ["Payment"] = new(ExternalServices.Stripe, false, ["Payment:ApiKey"]),
+      ["Stripe"] = new(ExternalServices.Stripe, false, ["Stripe:Secret"])
+    };
+
+    // Act
+    var result = ConfigurationStatusHelper.GetMissingConfigurationsForDependency(serviceStatuses, TestCategories.ExternalStripe);
+
+    // Assert
+    result.Should().BeEquivalentTo(["Payment:ApiKey", "Stripe:Secret"],
+        "Because both mapped features are unavailable and all missing configurations should be returned");
+  }
+
+  [Fact]
+  public void GetMissingConfigurationsForDependency_WhenMappedFeaturesMissing_ReturnsEmptyList()
+  {
+    // Arrange
+    var serviceStatuses = new Dictionary<string, ServiceStatusInfo>
+    {
+      ["Email"] = new(ExternalServices.MsGraph, true, [])
+      // Llm is missing from the dictionary
+    };
+
+    // Act
+    var result = ConfigurationStatusHelper.GetMissingConfigurationsForDependency(serviceStatuses, TestCategories.ExternalOpenAI);
+
+    // Assert
+    result.Should().BeEmpty(
+        "Because the Llm feature is missing from the status dictionary, so there are no known missing configurations");
+  }
+
+  [Fact]
+  public void GetMissingConfigurationsForDependency_WhenDependencyNotMapped_ReturnsEmptyList()
+  {
+    // Arrange
+    var serviceStatuses = new Dictionary<string, ServiceStatusInfo>();
+    var unmappedDependency = "UnmappedDependency";
+
+    // Act
+    var result = ConfigurationStatusHelper.GetMissingConfigurationsForDependency(serviceStatuses, unmappedDependency);
+
+    // Assert
+    result.Should().BeEmpty(
+        "Because unmapped dependencies have no known required configurations");
+  }
+
+  #endregion
 }

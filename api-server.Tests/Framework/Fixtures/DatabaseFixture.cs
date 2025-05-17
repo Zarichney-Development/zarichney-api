@@ -15,7 +15,7 @@ namespace Zarichney.Tests.Framework.Fixtures;
 /// Implements IAsyncLifetime to handle container lifecycle and provides
 /// methods for resetting the database between tests.
 /// </summary>
-public class DatabaseFixture : IAsyncLifetime
+public class DatabaseFixture : IAsyncLifetime, IDisposable
 {
   private readonly PostgreSqlBuilder _builder;
   private PostgreSqlContainer? _dbContainer;
@@ -31,11 +31,14 @@ public class DatabaseFixture : IAsyncLifetime
   /// <summary>
   /// Initializes a new instance of the <see cref="DatabaseFixture"/> class.
   /// </summary>
+  // Logger factory that will be properly disposed in Dispose method
+  private readonly ILoggerFactory _loggerFactory;
+
   public DatabaseFixture()
   {
     // Create a logger factory and logger for the fixture
-    var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-    _logger = loggerFactory.CreateLogger<DatabaseFixture>();
+    _loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+    _logger = _loggerFactory.CreateLogger<DatabaseFixture>();
 
     // Prepare the PostgreSQL container builder; actual build will be in InitializeAsync
     _builder = new PostgreSqlBuilder()
@@ -166,6 +169,27 @@ public class DatabaseFixture : IAsyncLifetime
   /// Indicates whether the database container is available.
   /// </summary>
   public bool IsContainerAvailable => _isContainerAvailable;
+
+  /// <summary>
+  /// Disposes managed resources like the logger factory.
+  /// </summary>
+  public void Dispose()
+  {
+    Dispose(true);
+    GC.SuppressFinalize(this);
+  }
+
+  /// <summary>
+  /// Disposes managed and unmanaged resources.
+  /// </summary>
+  /// <param name="disposing">True to dispose managed resources, false otherwise.</param>
+  protected virtual void Dispose(bool disposing)
+  {
+    if (disposing)
+    {
+      _loggerFactory.Dispose();
+    }
+  }
 }
 
 public class TestSkippedException(string message) : Exception(message)

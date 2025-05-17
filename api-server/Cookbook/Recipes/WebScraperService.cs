@@ -443,16 +443,14 @@ public class WebScraperService(
     {
       logger.LogInformation("Running GET request for URL: {url}", url);
 
-      // Create an HttpClientHandler with automatic decompression
-      var handler = new HttpClientHandler
-      {
-        AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
-      };
+      // Create an HttpClientHandler with automatic decompression and dispose of it properly
+      using var handler = new HttpClientHandler();
+      handler.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
 
       using var client = new HttpClient(handler);
 
-      // Create the request message
-      var request = new HttpRequestMessage(HttpMethod.Get, url);
+      // Create the request message and dispose of it properly
+      using var request = new HttpRequestMessage(HttpMethod.Get, url);
 
       // Add headers to mimic a real browser
       request.Headers.Add("User-Agent",
