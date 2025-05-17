@@ -24,13 +24,13 @@ namespace Zarichney.Tests.Framework.Attributes;
 public sealed class DependencyFactAttribute : FactAttribute
 {
   // Maps ExternalServices enums to TestCategories.Dependency trait values
-  private static readonly Dictionary<Zarichney.Services.Status.ExternalServices, string> ExternalServicesToTraitMap = new()
+  private static readonly Dictionary<ExternalServices, string> ExternalServicesToTraitMap = new()
   {
-    { Zarichney.Services.Status.ExternalServices.OpenAiApi, TestCategories.ExternalOpenAI },
-    { Zarichney.Services.Status.ExternalServices.MsGraph, TestCategories.ExternalMSGraph },
-    { Zarichney.Services.Status.ExternalServices.Stripe, TestCategories.ExternalStripe },
-    { Zarichney.Services.Status.ExternalServices.GitHubAccess, TestCategories.ExternalGitHub },
-    { Zarichney.Services.Status.ExternalServices.MailCheck, TestCategories.ExternalMSGraph },
+    { ExternalServices.OpenAiApi, TestCategories.ExternalOpenAI },
+    { ExternalServices.MsGraph, TestCategories.ExternalMSGraph },
+    { ExternalServices.Stripe, TestCategories.ExternalStripe },
+    { ExternalServices.GitHubAccess, TestCategories.ExternalGitHub },
+    { ExternalServices.MailCheck, TestCategories.ExternalMSGraph },
     // FrontEnd doesn't map to a specific external dependency
   };
 
@@ -48,7 +48,7 @@ public sealed class DependencyFactAttribute : FactAttribute
   /// Gets the array of required ExternalServices values that must be available for the test to run.
   /// Will be null if the attribute was created without specifying ExternalServices dependencies.
   /// </summary>
-  public Zarichney.Services.Status.ExternalServices[]? RequiredExternalServices { get; }
+  public ExternalServices[]? RequiredExternalServices { get; }
 
   /// <summary>
   /// Gets the array of required InfrastructureDependency values that must be available for the test to run.
@@ -73,7 +73,7 @@ public sealed class DependencyFactAttribute : FactAttribute
   /// Maps to appropriate TestCategories.Dependency traits for filtering/reporting.
   /// </summary>
   /// <param name="requiredFeatures">One or more ExternalServices enum values that must be available.</param>
-  public DependencyFactAttribute(params Zarichney.Services.Status.ExternalServices[] requiredFeatures)
+  public DependencyFactAttribute(params ExternalServices[] requiredFeatures)
   {
     RequiredExternalServices = requiredFeatures.Length > 0 ? requiredFeatures : null;
     RequiredInfrastructure = null;
@@ -125,7 +125,7 @@ public sealed class DependencyFactAttribute : FactAttribute
   /// </summary>
   /// <param name="requiredFeature">An ExternalServices enum value that must be available.</param>
   /// <param name="requiredInfrastructure">An InfrastructureDependency enum value that must be available.</param>
-  public DependencyFactAttribute(Zarichney.Services.Status.ExternalServices requiredFeature, InfrastructureDependency requiredInfrastructure)
+  public DependencyFactAttribute(ExternalServices requiredFeature, InfrastructureDependency requiredInfrastructure)
   {
     RequiredExternalServices = new[] { requiredFeature };
     RequiredInfrastructure = new[] { requiredInfrastructure };

@@ -444,10 +444,8 @@ public class WebScraperService(
       logger.LogInformation("Running GET request for URL: {url}", url);
 
       // Create an HttpClientHandler with automatic decompression and dispose of it properly
-      using var handler = new HttpClientHandler
-      {
-        AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
-      };
+      using var handler = new HttpClientHandler();
+      handler.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
 
       using var client = new HttpClient(handler);
 

@@ -80,11 +80,11 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     // More resilient check using query projection rather than direct path navigation
     var operationsWithWarnings = swagger.Paths
         // Convert to dictionary entries for more flexible checks
-        .Select(path => new { Path = path.Key, Operations = path.Value.Operations })
-        // Get all operations 
+        .Select(path => new { Path = path.Key, path.Value.Operations })
+        // Get all operations
         .SelectMany(x => x.Operations.Select(op => new
         {
-          Path = x.Path,
+          x.Path,
           HttpMethod = op.Key,
           Operation = op.Value,
           HasWarning = op.Value.Summary?.Contains("⚠️") == true
@@ -116,7 +116,7 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     // Also make LLM unavailable
     mockStatusService
         .Setup(s => s.GetFeatureStatus(ExternalServices.OpenAiApi))
-        .Returns(TestFactories.CreateServiceStatus(
+        .Returns(CreateServiceStatus(
           serviceName: ExternalServices.OpenAiApi,
           isAvailable: false,
           missingConfigurations: ["LlmConfig:ApiKey"]

@@ -98,7 +98,7 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
     var statusResult = await ApiClient.StatusAll();
 
     // Check if LLM service is unavailable - we now have a list of ServiceStatusInfo objects
-    var llmUnavailable = statusResult.Any(s => Equals(s.ServiceName, Zarichney.Services.Status.ExternalServices.OpenAiApi) && !s.IsAvailable);
+    var llmUnavailable = statusResult.Any(s => Equals(s.ServiceName, Services.Status.ExternalServices.OpenAiApi) && !s.IsAvailable);
 
     // Skip test if LLM service is available
     if (!llmUnavailable)

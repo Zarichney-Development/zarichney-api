@@ -189,22 +189,16 @@ public class ScopeFactory(IServiceProvider serviceProvider) : IScopeFactory
 /// <summary>
 /// ScopeContainer that owns and manages the lifetime of its IServiceScope
 /// </summary>
-public class DisposableScopeContainer : ScopeContainer
+public class DisposableScopeContainer(IServiceScope scope, IScopeContainer? parentScope = null)
+  : ScopeContainer(scope.ServiceProvider, parentScope)
 {
-  private readonly IServiceScope _ownedScope;
   private bool _disposed;
-
-  public DisposableScopeContainer(IServiceScope scope, IScopeContainer? parentScope = null)
-    : base(scope.ServiceProvider, parentScope)
-  {
-    _ownedScope = scope;
-  }
 
   protected override void Dispose(bool disposing)
   {
     if (!_disposed && disposing)
     {
-      _ownedScope.Dispose();
+      scope.Dispose();
       _disposed = true;
     }
 

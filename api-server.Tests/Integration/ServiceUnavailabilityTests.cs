@@ -93,8 +93,8 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
         }
       });
 
-    var customFactory = Factory as CustomWebApplicationFactory;
-    var factoryWithWebHostBuilder = customFactory.WithWebHostBuilder(builder =>
+    var customFactory = Factory;
+    customFactory.WithWebHostBuilder(builder =>
     {
       builder.ConfigureTestServices(services =>
       {
@@ -154,8 +154,8 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
     mockStatusService.Setup(s => s.IsFeatureAvailable(ExternalServices.OpenAiApi))
       .Returns(false);
 
-    var customFactory = Factory as CustomWebApplicationFactory;
-    var factoryWithWebHostBuilder = customFactory.WithWebHostBuilder(builder =>
+    var customFactory = Factory;
+    customFactory.WithWebHostBuilder(builder =>
     {
       builder.ConfigureTestServices(services => { services.AddSingleton(mockStatusService.Object); });
     });

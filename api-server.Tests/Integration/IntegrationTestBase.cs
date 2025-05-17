@@ -177,7 +177,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   /// This is the preferred approach for API feature dependency checking.
   /// </summary>
   /// <param name="requiredFeatures">Array of required ExternalServices values.</param>
-  private Task CheckExternalServicesDependenciesAsync(Zarichney.Services.Status.ExternalServices[] requiredFeatures)
+  private Task CheckExternalServicesDependenciesAsync(Services.Status.ExternalServices[] requiredFeatures)
   {
     try
     {
@@ -186,7 +186,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
       var statusService = scope.ServiceProvider.GetRequiredService<IStatusService>();
 
       // Check each required feature
-      var unavailableFeatures = new List<Zarichney.Services.Status.ExternalServices>();
+      var unavailableFeatures = new List<Services.Status.ExternalServices>();
       var allMissingConfigs = new List<string>();
 
       foreach (var feature in requiredFeatures)

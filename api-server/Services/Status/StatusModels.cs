@@ -7,6 +7,12 @@ namespace Zarichney.Services.Status;
 /// <param name="MissingConfigurations">A list of missing configuration keys if the service is unavailable.</param>
 public record ServiceStatusInfo(ExternalServices serviceName, bool IsAvailable, List<string> MissingConfigurations);
 
+/// <summary>
+///
+/// </summary>
+/// <param name="Name"></param>
+/// <param name="Status"></param>
+/// <param name="Details"></param>
 public record ConfigurationItemStatus(
   string Name,
   string Status,
