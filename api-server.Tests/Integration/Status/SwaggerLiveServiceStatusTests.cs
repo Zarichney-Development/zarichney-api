@@ -7,7 +7,7 @@ using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 
-namespace Zarichney.Tests.Integration.Swagger;
+namespace Zarichney.Tests.Integration.Status;
 
 /// <summary>
 /// Tests that verify the real-world scenario of fetching the service status and
