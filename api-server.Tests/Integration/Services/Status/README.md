@@ -73,7 +73,7 @@ The testing strategy relies on controlled mock implementations to verify determi
 ## 5. How to Work With This Code
 
 * **Running Tests**:
-  * Run all status tests: `dotnet test --filter "FullyQualifiedName~ZarichneyTests.Integration.Status"`
+  * Run all status tests: `dotnet test --filter "FullyQualifiedName~ZarichneyTests.Integration.Services.Status"`
   * Run specific tests: `dotnet test --filter "Name~FeatureAvailabilityMiddleware"`
 
 * **Adding New Tests**:
@@ -134,8 +134,8 @@ The testing strategy relies on controlled mock implementations to verify determi
 
 ## 8. Changelog
 
-* **2025-05-19:** 
-  * Consolidated status tests from multiple directories 
+* **2025-05-19:**
+  * Consolidated status tests from multiple directories
   * Added missing test coverage TODOs based on production code review
   * Moved Swagger and Middleware tests to /Status directory
-  * Updated all namespaces to ZarichneyTests.Integration.Status
+  * Updated all namespaces to ZarichneyTests.Integration.Services.Status

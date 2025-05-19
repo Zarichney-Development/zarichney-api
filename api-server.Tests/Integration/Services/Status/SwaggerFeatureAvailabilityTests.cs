@@ -1,4 +1,3 @@
-using Zarichney.Services.Status;
 using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.TestHost;
@@ -7,12 +6,13 @@ using Moq;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Config;
+using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 using Zarichney.Tests.Framework.Helpers;
 using static Zarichney.Tests.Framework.Helpers.TestFactories;
 
-namespace Zarichney.Tests.Integration.Swagger;
+namespace Zarichney.Tests.Integration.Services.Status;
 
 /// <summary>
 /// Integration tests for the ServiceAvailabilityOperationFilter in Swagger/OpenAPI.

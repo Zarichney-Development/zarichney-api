@@ -26,7 +26,7 @@ public class PaymentControllerTests(ApiClientFixture apiClientFixture, ITestOutp
   : DatabaseIntegrationTestBase(apiClientFixture, testOutputHelper)
 {
   // Using the new ExternalServices-based dependency checking approach
-  [DependencyFact(Services.Status.ExternalServices.Stripe)]
+  [DependencyFact(Zarichney.Services.Status.ExternalServices.Stripe)]
   public async Task CreatePaymentIntent_ValidOrder_ReturnsPaymentIntent()
   {
     // Arrange

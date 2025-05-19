@@ -10,7 +10,7 @@ using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 using StatusInfo = Zarichney.Services.Status.ServiceStatusInfo;
 
-namespace Zarichney.Tests.Integration.Middleware;
+namespace Zarichney.Tests.Integration.Services.Status;
 
 /// <summary>
 /// Integration tests for the <see cref="FeatureAvailabilityMiddleware"/> to verify it correctly
