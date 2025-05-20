@@ -38,8 +38,8 @@ public class StatusServiceTests
     // Initialize configs with missing values
     InitializeConfigs(StatusService.PlaceholderMessage);
 
-    // Mock configuration to return connection string
-    _mockConfiguration.Setup(c => c["ConnectionStrings:" + Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName]).Returns(ValidConnectionString);
+    // Mock configuration to return connection string 
+    _mockConfiguration.Setup(c => c.GetConnectionString(Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName)).Returns(ValidConnectionString);
 
     // Setup mock assembly to return test config types
     _mockAssembly.Setup(asm => asm.GetTypes()).Returns([typeof(TestService1Config), typeof(TestService2Config)]);
@@ -90,7 +90,7 @@ public class StatusServiceTests
   public async Task GetConfigurationStatus_WhenDatabaseConnectionIsMissing_ReturnsDatabaseItemAsNotConfigured()
   {
     // Arrange
-    _mockConfiguration.Setup(c => c["ConnectionStrings:" + Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName]).Returns((string?)null);
+    _mockConfiguration.Setup(c => c.GetConnectionString(Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName)).Returns((string?)null);
 
     // Act
     var result = await _statusService.GetConfigurationStatusAsync();

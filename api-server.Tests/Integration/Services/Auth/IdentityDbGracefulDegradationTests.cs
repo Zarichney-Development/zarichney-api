@@ -87,10 +87,10 @@ namespace Zarichney.Tests.Integration.Services.Auth
       var client = _developmentFactoryWithNoDb.CreateClient();
       
       // Act - Call a simple endpoint to verify the application is running
-      // The /status endpoint appears to be secured, so we need to create a client with authentication
+      // The /api/status endpoint appears to be secured, so we need to create a client with authentication
       client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
           "Test", Framework.Helpers.AuthTestHelper.GenerateTestToken("test-user", ["User"]));
-      var response = await client.GetAsync("/status");
+      var response = await client.GetAsync("/api/status");
       
       // Assert - The application should be running and return a valid response
       response.Should().NotBeNull();
@@ -108,10 +108,10 @@ namespace Zarichney.Tests.Integration.Services.Auth
       var client = _developmentFactoryWithNoDb.CreateClient();
       
       // Act - Call the status endpoint to get service status
-      // The /status endpoint appears to be secured, so we need to create a client with authentication
+      // The /api/status endpoint appears to be secured, so we need to create a client with authentication
       client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
           "Test", Framework.Helpers.AuthTestHelper.GenerateTestToken("test-user", ["User"]));
-      var response = await client.GetAsync("/status");
+      var response = await client.GetAsync("/api/status");
       
       // Assert
       response.Should().NotBeNull();
@@ -201,12 +201,16 @@ namespace Zarichney.Tests.Integration.Services.Auth
       // Arrange
       var client = _developmentFactoryWithNoDb.CreateClient();
       
+      // Add authentication header for the test client
+      client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
+          "Test", Framework.Helpers.AuthTestHelper.GenerateTestToken("test-user", ["User"]));
+          
       // Act - Call an unrelated endpoint that doesn't depend on the Identity DB
-      var response = await client.GetAsync("/api/public/version");
+      var response = await client.GetAsync("/api/health");
       
       // Assert
       response.Should().NotBeNull();
-      response.StatusCode.Should().Be(HttpStatusCode.OK, "The version endpoint should return OK");
+      response.StatusCode.Should().Be(HttpStatusCode.OK, "The health endpoint should return OK");
     }
 
     /// <summary>
