@@ -39,7 +39,7 @@ public static class AuthenticationStartup
     // Configure UserDbContext with PostgreSQL
     services.AddDbContext<UserDbContext>(options =>
       options.UseNpgsql(
-        configuration.GetConnectionString("IdentityConnection"),
+        configuration.GetConnectionString(UserDbContext.UserDatabaseConnectionName),
         b => b.MigrationsAssembly("Zarichney")
       ));
 

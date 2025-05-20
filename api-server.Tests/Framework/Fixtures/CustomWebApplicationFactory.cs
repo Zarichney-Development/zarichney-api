@@ -182,7 +182,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
       .AddEnvironmentVariables()
       .Build();
 
-    var connectionString = configuration.GetConnectionString("IdentityConnection");
+    var connectionString = configuration.GetConnectionString(Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName);
 
     // Remove existing DbContext registrations
     var dbContextDescriptors = services.Where(d =>

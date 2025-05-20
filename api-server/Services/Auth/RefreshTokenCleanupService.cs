@@ -8,7 +8,7 @@ public class RefreshTokenCleanupService : BackgroundService
   private readonly ILogger<RefreshTokenCleanupService> _logger;
   private readonly IConfiguration _configuration;
   private readonly TimeSpan _cleanupInterval;
-  private const string ConnectionStringName = "IdentityConnection";
+  private static readonly string ConnectionStringName = UserDbContext.UserDatabaseConnectionName;
 
   public RefreshTokenCleanupService(
     IServiceProvider serviceProvider,

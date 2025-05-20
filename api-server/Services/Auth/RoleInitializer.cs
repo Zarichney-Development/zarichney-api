@@ -6,7 +6,7 @@ public class RoleInitializer(
   IConfiguration configuration,
   ILogger<RoleInitializer> logger) : IHostedService
 {
-  private const string ConnectionStringName = "IdentityConnection";
+  private static readonly string ConnectionStringName = UserDbContext.UserDatabaseConnectionName;
 
   public async Task StartAsync(CancellationToken cancellationToken)
   {

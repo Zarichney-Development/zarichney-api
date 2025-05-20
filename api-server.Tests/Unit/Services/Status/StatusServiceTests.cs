@@ -39,7 +39,7 @@ public class StatusServiceTests
     InitializeConfigs(StatusService.PlaceholderMessage);
 
     // Mock configuration to return connection string
-    _mockConfiguration.Setup(c => c["ConnectionStrings:IdentityConnection"]).Returns(ValidConnectionString);
+    _mockConfiguration.Setup(c => c["ConnectionStrings:" + Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName]).Returns(ValidConnectionString);
 
     // Setup mock assembly to return test config types
     _mockAssembly.Setup(asm => asm.GetTypes()).Returns([typeof(TestService1Config), typeof(TestService2Config)]);
@@ -90,16 +90,16 @@ public class StatusServiceTests
   public async Task GetConfigurationStatus_WhenDatabaseConnectionIsMissing_ReturnsDatabaseItemAsNotConfigured()
   {
     // Arrange
-    _mockConfiguration.Setup(c => c["ConnectionStrings:IdentityConnection"]).Returns((string?)null);
+    _mockConfiguration.Setup(c => c["ConnectionStrings:" + Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName]).Returns((string?)null);
 
     // Act
     var result = await _statusService.GetConfigurationStatusAsync();
 
     // Assert
     result.Should().Contain(status =>
-        status.Name == "Database Connection" &&
+        status.Name == "Identity Database Connection" &&
         status.Status == "Missing/Invalid" &&
-        status.Details == "IdentityConnection is missing or placeholder");
+        status.Details == $"{Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName} is missing or placeholder");
   }
 
   [Trait("Category", "Unit")]
