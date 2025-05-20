@@ -1,6 +1,6 @@
 # Module/Directory: /api-server.Tests/Framework/Framework/Client
 
-**Last Updated:** 2025-04-21
+**Last Updated:** 2025-05-19
 
 > **Parent:** [`api-server.Tests`](../README.md)
 
@@ -15,8 +15,8 @@
 ## 2. Architecture & Key Concepts
 
 * **Generation Process:** This code is **automatically generated** and **should not be manually edited**.
-    * It is created by running the `Scripts/GenerateApiClient.ps1` script.
-    * The script uses `dotnet swagger` to fetch the OpenAPI specification from a running instance of `api-server` and then uses `refitter` to generate the C# code based on that specification.
+    * It is created by running the `Scripts/GenerateApiClient.ps1` script (PowerShell) or the `Scripts/generate-api-client.sh` script (Bash).
+    * The script starts a temporary instance of `api-server`, fetches the OpenAPI specification (swagger.json), and then uses `refitter` to generate the C# code based on that specification.
 * **`IZarichneyAPI` Interface:** Defines methods corresponding to the API endpoints, decorated with Refit attributes (`[Get]`, `[Post]`, `[Body]`, `[Query]`, etc.).
 * **DTOs:** Contains C# records/classes matching the request and response schemas defined in the OpenAPI specification.
 * **Usage:** Integration tests obtain an instance of `IZarichneyAPI` (typically via `CustomWebApplicationFactory.CreateRefitClient` or `CreateAuthenticatedRefitClient`) and call its methods to interact with the API.
@@ -35,7 +35,7 @@
 
 ## 5. How to Work With This Code
 
-* **Setup:** No manual setup required, but **MUST run `Scripts/GenerateApiClient.ps1`** whenever the `api-server` API contract (routes, method signatures, request/response models) changes.
+* **Setup:** No manual setup required, but **MUST run `Scripts/GenerateApiClient.ps1` (PowerShell) or `Scripts/generate-api-client.sh` (Bash)** whenever the `api-server` API contract (routes, method signatures, request/response models) changes.
 * **Testing:** This code is not tested directly; it is used *by* the integration tests in [`/api-server.Tests/Integration/`](../Integration/README.md). Failures in integration tests may indicate a mismatch between this client code and the actual API, requiring regeneration.
 * **Common Pitfalls / Gotchas:**
     * Forgetting to regenerate the client after API changes is a common source of integration test failures or unexpected behavior.
@@ -56,4 +56,4 @@
 
 ## 8. Known Issues & TODOs
 
-* Ensure the `GenerateApiClient.ps1` script is robust and easy to run in all development and CI environments.
+* Ensure the `GenerateApiClient.ps1` and `generate-api-client.sh` scripts are robust and easy to run in all development and CI environments.

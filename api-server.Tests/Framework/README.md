@@ -1,6 +1,6 @@
 # Module/Directory: /Framework
 
-**Last Updated:** 2025-04-18
+**Last Updated:** 2025-05-19
 
 > **Parent:** [`api-server.Tests`](../README.md)
 > **Related:**
@@ -31,7 +31,7 @@ This directory contains subdirectories responsible for different aspects of the 
 ## 4. Maintenance Notes & Troubleshooting
 
 * **Impact of Changes:** Modifications to components within the `/Framework` directory can potentially impact a large number of tests. Changes should be made carefully and tested thoroughly.
-* **Client Regeneration:** The Refit client in `Client/` must be regenerated whenever the API contract changes (see `Client/README.md`).
+* **Client Regeneration:** The Refit client in `Client/` must be regenerated whenever the API contract changes using either PowerShell script `Scripts/GenerateApiClient.ps1` or Bash script `Scripts/generate-api-client.sh` (see `Client/README.md`).
 * **Fixture Management:** Fixtures manage shared resources (like database containers or the web application factory instance). Ensure they handle setup and cleanup (disposal) correctly to avoid resource leaks or test interference.
 * **Mock Updates:** Mocks and mock factories need to be updated if the interfaces or behaviors of the external services they represent change.
 * **Helper Testing:** Complex helper classes within `Helpers/` should ideally have their own unit tests (which might reside under `/Unit/Helpers/`) to ensure their correctness.

@@ -59,7 +59,11 @@ Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskMan
     * Create PR: `gh pr create --base [target-branch] --title "<type>: <description> (#ISSUE_ID)" --body "Closes #ISSUE_ID. [Summary]"`
 * **Regenerate API Client (for `/api-server.Tests/`):** If API contracts change.
     ```powershell
+    # PowerShell
     ./Scripts/GenerateApiClient.ps1
+    
+    # Bash
+    ./Scripts/generate-api-client.sh
     ```
 
 ## 5. MUST ALWAYS CONSULT: Key Standards Documents
