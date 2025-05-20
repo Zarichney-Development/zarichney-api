@@ -171,7 +171,7 @@ public class StatusService : IStatusService
         nameof(_paymentConfig.StripeWebhookSecret)),
 
       // Identity Database Connection
-      CheckConfigurationItem("Identity Database Connection", _configuration.GetConnectionString(UserDbContext.UserDatabaseConnectionName),
+      CheckConfigurationItem("Identity Database Connection", _configuration[$"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}"],
         UserDbContext.UserDatabaseConnectionName)
     };
 
