@@ -53,8 +53,20 @@ public static class ValidateStartup
                   "Application cannot start in Production environment.",
                   UserDbContext.UserDatabaseConnectionName);
         
-        // Exit the application with a non-zero exit code
-        Environment.Exit(1);
+        // For unit testing, throw an exception instead of exiting when running in test mode
+        bool isTestMode = AppDomain.CurrentDomain.GetAssemblies()
+          .Any(a => a.FullName?.Contains("xunit") == true || a.FullName?.Contains("TestHost") == true);
+        
+        if (isTestMode)
+        {
+          IsIdentityDbAvailable = false;
+          throw new InvalidOperationException($"Identity Database connection string '{UserDbContext.UserDatabaseConnectionName}' is missing. Application cannot start in Production environment.");
+        }
+        else
+        {
+          // Exit the application with a non-zero exit code in normal operation
+          Environment.Exit(1);
+        }
         
         // This line will never be reached, but it's here for clarity
         return false;

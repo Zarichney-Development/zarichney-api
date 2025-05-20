@@ -247,18 +247,18 @@ namespace Zarichney.Tests.Integration.Services.Auth
     /// when the Identity Database connection string is missing.
     /// </summary>
     /// <remarks>
-    /// Note that this test is expected to cause Environment.Exit(1) to be called,
-    /// but since that would terminate the test runner, we check that a WebApplicationFactory
-    /// with missing DB config in Production environment throws an exception during startup.
+    /// Note that in a real environment this would cause Environment.Exit(1) to be called,
+    /// but in the test environment, we've modified ValidateStartup to throw an InvalidOperationException
+    /// instead of calling Environment.Exit for safer testing.
     /// </remarks>
     [Fact]
     public void Application_FailsToStart_InProductionWithMissingIdentityDbConfig()
     {
       // Arrange & Act & Assert
-      Assert.ThrowsAny<Exception>(() => 
+      Assert.Throws<InvalidOperationException>(() => 
       {
-        // This should cause ValidateStartup.ValidateProductionConfiguration to call Environment.Exit(1)
-        // which causes an exception to be thrown in the test environment
+        // This should cause ValidateStartup.ValidateProductionConfiguration to throw an exception
+        // rather than calling Environment.Exit(1) since we're in a test environment
         _productionFactoryWithNoDb.CreateClient();
       });
     }
