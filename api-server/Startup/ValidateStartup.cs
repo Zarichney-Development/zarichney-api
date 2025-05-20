@@ -1,5 +1,6 @@
 using Serilog;
 using Zarichney.Services.Auth;
+using Zarichney.Services.Status;
 
 namespace Zarichney.Startup;
 
@@ -10,30 +11,57 @@ namespace Zarichney.Startup;
 public static class ValidateStartup
 {
   /// <summary>
+  /// Indicates whether the Identity Database connection string is available
+  /// </summary>
+  public static bool IsIdentityDbAvailable { get; private set; } = true;
+
+  /// <summary>
   /// Validates critical configuration settings when running in Production environment.
   /// The application will exit with an error code if required configuration is missing.
+  /// In non-Production environments, it will allow the application to start but will
+  /// mark the Identity Database as unavailable if the connection string is missing.
   /// </summary>
   /// <param name="builder">The WebApplicationBuilder containing configuration</param>
-  public static void ValidateProductionConfiguration(WebApplicationBuilder builder)
+  /// <returns>True if all validations pass, false if any non-critical validations fail in non-Production</returns>
+  public static bool ValidateProductionConfiguration(WebApplicationBuilder builder)
   {
-    // Only enforce strict validation in Production environment
-    if (!builder.Environment.IsProduction())
-    {
-      return;
-    }
-    
-    // Check for required Identity database connection string
+    // Check for Identity database connection string
     var connectionString = builder.Configuration.GetConnectionString(UserDbContext.UserDatabaseConnectionName);
+    var isConnectionStringEmpty = string.IsNullOrEmpty(connectionString);
     
-    if (string.IsNullOrEmpty(connectionString))
+    // Production environment requires the Identity DB connection string
+    if (builder.Environment.IsProduction())
     {
-      // Log a fatal error for the missing configuration
-      Log.Fatal("CRITICAL ERROR: Identity Database connection string '{ConnectionName}' is missing or empty. " +
-                "Application cannot start in Production environment.",
-                UserDbContext.UserDatabaseConnectionName);
+      if (isConnectionStringEmpty)
+      {
+        // Log a fatal error for the missing configuration
+        Log.Fatal("CRITICAL ERROR: Identity Database connection string '{ConnectionName}' is missing or empty. " +
+                  "Application cannot start in Production environment.",
+                  UserDbContext.UserDatabaseConnectionName);
+        
+        // Exit the application with a non-zero exit code
+        Environment.Exit(1);
+        
+        // This line will never be reached, but it's here for clarity
+        return false;
+      }
       
-      // Exit the application with a non-zero exit code
-      Environment.Exit(1);
+      IsIdentityDbAvailable = true;
+      return true;
     }
+    
+    // In non-Production environments, mark the Identity DB as unavailable but allow the app to start
+    if (isConnectionStringEmpty)
+    {
+      Log.Warning("Identity Database connection string '{ConnectionName}' is missing or empty. " +
+                 "Application will start, but authentication functionality will be degraded.",
+                 UserDbContext.UserDatabaseConnectionName);
+      
+      IsIdentityDbAvailable = false;
+      return false;
+    }
+    
+    IsIdentityDbAvailable = true;
+    return true;
   }
 }

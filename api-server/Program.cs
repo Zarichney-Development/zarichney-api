@@ -1,4 +1,5 @@
 using Serilog;
+using Zarichney.Services.Status;
 using Zarichney.Startup;
 
 namespace Zarichney;
@@ -9,8 +10,20 @@ public class Program
   {
     var builder = WebApplication.CreateBuilder(args);
     ConfigureBuilder(builder);
-    ValidateStartup.ValidateProductionConfiguration(builder);
+    
+    // Validate critical configuration and capture Identity DB availability status
+    // In Production, this will exit the app if the Identity DB is not available
+    // In non-Production, this will set the availability status but allow the app to continue
+    bool identityDbConfigValid = ValidateStartup.ValidateProductionConfiguration(builder);
+    
     var app = builder.Build();
+    
+    // Update the StatusService with the Identity DB availability
+    if (app.Services.GetService<IStatusService>() is StatusService statusService)
+    {
+      statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, ValidateStartup.IsIdentityDbAvailable);
+    }
+    
     await ConfigureApplication(app);
     try
     {

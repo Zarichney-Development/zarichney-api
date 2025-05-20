@@ -306,6 +306,60 @@ public class StatusServiceTests
     result.Should().BeFalse();
   }
 
+  [Trait("Category", "Unit")]
+  [Fact]
+  public void SetServiceAvailability_ForIdentityDb_ShouldUpdateStatus()
+  {
+    // Arrange
+    var missingConfigs = new List<string> { "ConnectionStrings:UserDatabase" };
+
+    // Act
+    _statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, false, missingConfigs);
+    var result = _statusService.GetFeatureStatus(ExternalServices.PostgresIdentityDb);
+
+    // Assert
+    result.Should().NotBeNull();
+    result!.IsAvailable.Should().BeFalse();
+    result.MissingConfigurations.Should().ContainSingle()
+      .Which.Should().Be("ConnectionStrings:UserDatabase");
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public void SetServiceAvailability_ForIdentityDb_ShouldUpdateAvailabilityEvenAfterGetServiceStatusAsync()
+  {
+    // Arrange - Mark the service as unavailable
+    _statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, false, 
+      new List<string> { "ConnectionStrings:UserDatabase" });
+
+    // Act - Call GetServiceStatusAsync() which shouldn't override our setting
+    var serviceStatus = _statusService.GetServiceStatusAsync().GetAwaiter().GetResult();
+    var dbStatus = _statusService.GetFeatureStatus(ExternalServices.PostgresIdentityDb);
+
+    // Assert - Service should still be unavailable
+    dbStatus.Should().NotBeNull();
+    dbStatus!.IsAvailable.Should().BeFalse();
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public void IsFeatureAvailable_ForIdentityDb_ShouldReturnCorrectValue()
+  {
+    // Arrange
+    _statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, true);
+
+    // Act
+    var result = _statusService.IsFeatureAvailable(ExternalServices.PostgresIdentityDb);
+
+    // Assert
+    result.Should().BeTrue();
+
+    // Change the status and verify the result changes
+    _statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, false);
+    result = _statusService.IsFeatureAvailable(ExternalServices.PostgresIdentityDb);
+    result.Should().BeFalse();
+  }
+
   private void InitializeConfigs(string value)
   {
     _llmConfig = new LlmConfig { ApiKey = value };

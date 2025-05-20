@@ -7,7 +7,8 @@ This guide provides instructions for maintaining the PostgreSQL database used by
 The application connects to the PostgreSQL database (`zarichney_identity`) using the user `zarichney_user`.
 
 **Production Environment Requirements:**
-* In Production environment, a valid `ConnectionStrings:UserDatabase` connection string is **mandatory**. If this connection string is missing or empty, the application will fail to start.
+* In Production environment, a valid `ConnectionStrings:UserDatabase` connection string is **mandatory**. If this connection string is missing or empty, the application will fail to start with a fatal error.
+* This requirement is enforced by the `ValidateStartup.ValidateProductionConfiguration` method in `Startup/ValidateStartup.cs`, which checks the connection string presence at application startup.
 * The connection string details (host, database name, username, password) are typically injected via environment variables or fetched securely at runtime from **AWS Secrets Manager** (Secret ID: `cookbook-factory-secrets`, Key: `DbPassword`) or potentially **AWS Systems Manager Parameter Store**, configured within the EC2 instance's environment or application startup. Do **not** rely on `appsettings.Production.json` for sensitive credentials like the password.
 
 **Local Development:**
@@ -19,7 +20,15 @@ The application connects to the PostgreSQL database (`zarichney_identity`) using
       }
     }
     ```
-* In non-Production environments, a missing or empty `UserDatabase` connection string will not prevent the application from starting. The application includes appropriate fallback mechanisms for development/testing scenarios.
+
+**Graceful Degradation (Non-Production Only):**
+* In non-Production environments (Development, Testing, etc.), the application will start successfully even if the `UserDatabase` connection string is missing or empty.
+* This behavior allows developers to run and test parts of the application without setting up a PostgreSQL Identity Database.
+* When the Identity Database is unavailable:
+  * The `/status` endpoint will report `PostgresIdentityDb` as unavailable.
+  * Authentication-related endpoints (e.g., `/api/auth/login`, `/api/auth/register`) will return HTTP 503 (Service Unavailable).
+  * Other endpoints that don't depend on authentication will function normally.
+* For more details, see the [Local Development Setup Guide](../Development/LocalSetup.md).
 
 ## Migrations (EF Core)
 

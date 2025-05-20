@@ -21,6 +21,12 @@ namespace Zarichney.Controllers;
 /// Front-end clients generally do **not** need to manually handle these tokens. The browser will automatically include the cookies in requests to the same domain. Ensure your HTTP client configuration (e.g., Axios, Fetch) includes credentials (`withCredentials: true` or `credentials: 'include'`).
 ///
 /// API Key authentication is also supported for specific use cases (e.g., server-to-server communication) via the `Authorization: ApiKey YOUR_API_KEY` header, managed by separate middleware.
+///
+/// IMPORTANT: This controller's endpoints require the Identity Database to be available and properly configured. In Production, 
+/// the application won't start if the Identity DB connection string is missing. In non-Production environments (e.g., Development),
+/// the application will start, but the endpoints marked with [DependsOnService(ExternalServices.PostgresIdentityDb)] will return
+/// a 503 Service Unavailable response if the Identity DB is unavailable. This allows the application to gracefully degrade
+/// functionality in development and testing scenarios.
 /// </remarks>
 [ApiController]
 [Route("api/auth")]
@@ -102,11 +108,13 @@ public class AuthController(
   /// <returns>An AuthResponse indicating success or failure.</returns>
   [HttpPost("register")]
   [AllowAnonymous]
+  [DependsOnService(ExternalServices.PostgresIdentityDb)]
   [SwaggerOperation(Summary = "Registers a new user.",
     Description = "Creates a user account and sends a confirmation email.")]
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
   public async Task<IActionResult> Register([FromBody] RegisterRequest request)
   {
     try
@@ -143,11 +151,13 @@ public class AuthController(
   /// <returns>An AuthResponse indicating success or failure. On success, auth cookies are set.</returns>
   [HttpPost("login")]
   [AllowAnonymous]
+  [DependsOnService(ExternalServices.PostgresIdentityDb)]
   [SwaggerOperation(Summary = "Logs in a user.",
     Description = "Authenticates credentials and sets HttpOnly access and refresh token cookies.")]
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
   public async Task<IActionResult> Login([FromBody] LoginRequest request)
   {
     try
@@ -193,11 +203,13 @@ public class AuthController(
   /// </remarks>
   /// <returns>An AuthResponse indicating success or failure. On success, auth cookies are updated.</returns>
   [HttpPost("refresh")]
+  [DependsOnService(ExternalServices.PostgresIdentityDb)]
   [SwaggerOperation(Summary = "Refreshes the authentication tokens.",
     Description = "Uses the refresh token cookie to issue new access and refresh tokens as HttpOnly cookies.")]
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status401Unauthorized)] // Changed from 400 for token issues
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
   public async Task<IActionResult> RefreshToken()
   {
     try
@@ -261,6 +273,7 @@ public class AuthController(
   /// <returns>An AuthResponse indicating success or failure.</returns>
   [Authorize] // Requires a valid access token
   [HttpPost("revoke")]
+  [DependsOnService(ExternalServices.PostgresIdentityDb)]
   [SwaggerOperation(Summary = "Revokes the current refresh token.",
     Description =
       "Invalidates the refresh token used by the current session (identified by cookie) and clears auth cookies. Requires authentication.")]
@@ -268,6 +281,7 @@ public class AuthController(
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)] // If not authenticated
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
   public async Task<IActionResult> RevokeRefreshToken()
   {
     try
@@ -348,11 +362,13 @@ public class AuthController(
   /// <param name="request">The request containing the user's email.</param>
   /// <returns>An AuthResponse indicating the request was processed.</returns>
   [HttpPost("email-forgot-password")]
+  [DependsOnService(ExternalServices.PostgresIdentityDb)]
   [SwaggerOperation(Summary = "Sends a password reset email.",
     Description = "Initiates the password reset flow by sending an email with a reset link/token.")]
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)] // For validation errors, if any
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
   public async Task<IActionResult> EmailForgetPassword([FromBody] ForgotPasswordRequest request)
   {
     try
@@ -390,11 +406,13 @@ public class AuthController(
   /// <param name="request">The request containing the email, reset token, and new password.</param>
   /// <returns>An AuthResponse indicating success or failure of the password reset.</returns>
   [HttpPost("reset-password")]
+  [DependsOnService(ExternalServices.PostgresIdentityDb)]
   [SwaggerOperation(Summary = "Resets the user password.",
     Description = "Sets a new password using the email, a valid reset token, and the new password.")]
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
   public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
   {
     try
@@ -454,12 +472,14 @@ public class AuthController(
   /// - 500 Internal Server Error (ApiErrorResult): On unexpected server errors.
   /// </returns>
   [HttpGet("confirm-email")]
+  [DependsOnService(ExternalServices.PostgresIdentityDb)]
   [SwaggerOperation(Summary = "Confirms a user's email address.",
     Description = "Validates the user ID and token from a confirmation link. May log the user in and redirect.")]
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)] // Success without redirect
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)] // Confirmation failed
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
   [ProducesResponseType(StatusCodes.Status302Found)] // Success with redirect
+  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
   public async Task<IActionResult> ConfirmEmail([FromQuery] ConfirmEmailRequest request)
   {
     try
@@ -520,11 +540,13 @@ public class AuthController(
   /// <param name="request">The request containing the user's email.</param>
   /// <returns>An AuthResponse indicating the request was processed.</returns>
   [HttpPost("resend-confirmation")] // Changed to POST as it performs an action
+  [DependsOnService(ExternalServices.PostgresIdentityDb)]
   [SwaggerOperation(Summary = "Resends the email confirmation link.",
     Description = "Sends a new confirmation email to the specified address.")]
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)] // For validation errors
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
   public async Task<IActionResult>
     ResendConfirmation([FromBody] ResendConfirmationRequest request) // Changed to FromBody
   {
@@ -611,6 +633,7 @@ public class AuthController(
   /// <returns>An ApiKeyResponse containing the details of the created key, including the key itself.</returns>
   [Authorize(Roles = "admin")]
   [HttpPost("api-keys")]
+  [DependsOnService(ExternalServices.PostgresIdentityDb)]
   [SwaggerOperation(Summary = "Creates a new API key (Admin only).",
     Description = "Generates a key for non-interactive authentication. Requires 'admin' role.")]
   [ProducesResponseType(typeof(ApiKeyResponse), StatusCodes.Status200OK)]
@@ -618,6 +641,7 @@ public class AuthController(
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)] // Not logged in
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)] // Logged in but not admin
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
   public async Task<IActionResult> CreateApiKey([FromBody] CreateApiKeyCommand request)
   {
     try
@@ -644,6 +668,7 @@ public class AuthController(
   /// <returns>A list of ApiKeyResponse objects (without the 'Key' property populated).</returns>
   [Authorize(Roles = "admin")]
   [HttpGet("api-keys")]
+  [DependsOnService(ExternalServices.PostgresIdentityDb)]
   [SwaggerOperation(Summary = "Retrieves all API key metadata (Admin only).",
     Description = "Lists existing API keys without revealing the key values. Requires 'admin' role.")]
   [ProducesResponseType(typeof(List<ApiKeyResponse>),
@@ -651,6 +676,7 @@ public class AuthController(
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
   public async Task<IActionResult> GetApiKeys()
   {
     try
@@ -677,6 +703,7 @@ public class AuthController(
   /// <returns>An ApiKeyResponse object (without the 'Key' property) or 404 Not Found.</returns>
   [Authorize(Roles = "admin")]
   [HttpGet("api-keys/{id:int}")]
+  [DependsOnService(ExternalServices.PostgresIdentityDb)]
   [SwaggerOperation(Summary = "Retrieves specific API key metadata by ID (Admin only).",
     Description = "Gets metadata for one API key without revealing the key value. Requires 'admin' role.")]
   [ProducesResponseType(typeof(ApiKeyResponse), StatusCodes.Status200OK)] // Assuming ApiKeyResponse omits Key
@@ -684,6 +711,7 @@ public class AuthController(
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
   public async Task<IActionResult> GetApiKeyById(int id)
   {
     try
@@ -715,6 +743,7 @@ public class AuthController(
   /// <returns>200 OK on success, 404 Not Found if the key doesn't exist, or standard error responses.</returns>
   [Authorize]
   [HttpDelete("api-keys/{id:int}")]
+  [DependsOnService(ExternalServices.PostgresIdentityDb)]
   [SwaggerOperation(Summary = "Revokes an API key by ID.",
     Description =
       "Deactivates the specified API key. Requires appropriate authorization (WARNING: Currently any authenticated user).")]
@@ -723,6 +752,7 @@ public class AuthController(
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)] // If role check added
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
   public async Task<IActionResult> RevokeApiKey(int id)
   {
     try
@@ -778,6 +808,7 @@ public class AuthController(
   /// <returns>A RoleCommandResult indicating success or failure.</returns>
   [Authorize(Roles = "admin")]
   [HttpPost("roles/add")]
+  [DependsOnService(ExternalServices.PostgresIdentityDb)]
   [SwaggerOperation(Summary = "Adds a user to a role (Admin only).",
     Description = "Assigns the specified role to the user. Requires 'admin' role.")]
   [ProducesResponseType(typeof(RoleCommandResult), StatusCodes.Status200OK)]
@@ -786,6 +817,7 @@ public class AuthController(
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
   public async Task<IActionResult> AddUserToRole([FromBody] RoleRequest request)
   {
     // Note: Basic validation moved inside try-catch for consistent error handling
@@ -827,6 +859,7 @@ public class AuthController(
   /// <returns>A RoleCommandResult indicating success or failure.</returns>
   [Authorize(Roles = "admin")]
   [HttpPost("roles/remove")]
+  [DependsOnService(ExternalServices.PostgresIdentityDb)]
   [SwaggerOperation(Summary = "Removes a user from a role (Admin only).",
     Description = "Revokes the specified role from the user. Requires 'admin' role.")]
   [ProducesResponseType(typeof(RoleCommandResult), StatusCodes.Status200OK)]
@@ -834,6 +867,7 @@ public class AuthController(
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
   public async Task<IActionResult> RemoveUserFromRole([FromBody] RoleRequest request)
   {
     try
@@ -873,6 +907,7 @@ public class AuthController(
   /// <returns>A RoleCommandResult containing the list of roles for the user.</returns>
   [Authorize(Roles = "admin")]
   [HttpGet("roles/user/{identifier}")]
+  [DependsOnService(ExternalServices.PostgresIdentityDb)]
   [SwaggerOperation(Summary = "Gets roles for a specific user (Admin only).",
     Description = "Retrieves a list of roles assigned to the given user ID or email. Requires 'admin' role.")]
   [ProducesResponseType(typeof(RoleCommandResult),
@@ -882,6 +917,7 @@ public class AuthController(
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status404NotFound)] // If user not found
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
   public async Task<IActionResult> GetUserRoles(string identifier)
   {
     try
@@ -921,6 +957,7 @@ public class AuthController(
   /// <returns>A list of users (e.g., UserRoleInfo containing ID and Email) in the specified role.</returns>
   [Authorize(Roles = "admin")]
   [HttpGet("roles/{roleName}/users")]
+  [DependsOnService(ExternalServices.PostgresIdentityDb)]
   [SwaggerOperation(Summary = "Gets users within a specific role (Admin only).",
     Description = "Retrieves a list of users assigned to the given role name. Requires 'admin' role.")]
   [ProducesResponseType(typeof(List<UserRoleInfo>), StatusCodes.Status200OK)]
@@ -929,6 +966,7 @@ public class AuthController(
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status404NotFound)] // If role not found
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
   public async Task<IActionResult> GetUsersInRole(string roleName)
   {
     try
@@ -963,6 +1001,7 @@ public class AuthController(
   /// <returns>An AuthResponse indicating success or failure. On success, auth cookies are updated with refreshed claims.</returns>
   [Authorize] // Requires user to be logged in
   [HttpPost("refresh-claims")]
+  [DependsOnService(ExternalServices.PostgresIdentityDb)]
   [SwaggerOperation(Summary = "Refreshes claims in the access token.",
     Description =
       "Generates new tokens with updated user claims based on the current user session and replaces auth cookies. Requires authentication.")]
@@ -971,6 +1010,7 @@ public class AuthController(
     StatusCodes.Status400BadRequest)] // If user info missing or refresh fails logically
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)] // If user is not authenticated
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
+  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
   public async Task<IActionResult> RefreshUserClaims()
   {
     try
@@ -1044,12 +1084,14 @@ public class AuthController(
   /// <returns>A dictionary containing authentication status, user ID, roles, and authentication type. Returns 401 if not authenticated.</returns>
   [Authorize] // Ensures only authenticated users can access this
   [HttpGet("check-authentication")]
+  [DependsOnService(ExternalServices.PostgresIdentityDb)]
   [SwaggerOperation(Summary = "Checks current user authentication status.",
     Description =
       "Returns basic info (ID, roles, auth status) based on the current valid access token cookie. Requires authentication.")]
   [ProducesResponseType(typeof(Dictionary<string, object>), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)] // If token missing/invalid
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)] // Added for completeness
+  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
   public IActionResult CheckAuthentication()
   {
     try // Added try-catch block
