@@ -25,12 +25,26 @@ public static class ValidateStartup
   /// <returns>True if all validations pass, false if any non-critical validations fail in non-Production</returns>
   public static bool ValidateProductionConfiguration(WebApplicationBuilder builder)
   {
+    return ValidateProductionConfiguration(builder.Environment, builder.Configuration);
+  }
+  
+  /// <summary>
+  /// Validates critical configuration settings when running in Production environment.
+  /// The application will exit with an error code if required configuration is missing.
+  /// In non-Production environments, it will allow the application to start but will
+  /// mark the Identity Database as unavailable if the connection string is missing.
+  /// </summary>
+  /// <param name="environment">The web host environment</param>
+  /// <param name="configuration">The configuration</param>
+  /// <returns>True if all validations pass, false if any non-critical validations fail in non-Production</returns>
+  public static bool ValidateProductionConfiguration(IWebHostEnvironment environment, IConfiguration configuration)
+  {
     // Check for Identity database connection string
-    var connectionString = builder.Configuration.GetConnectionString(UserDbContext.UserDatabaseConnectionName);
+    var connectionString = configuration["ConnectionStrings:" + UserDbContext.UserDatabaseConnectionName];
     var isConnectionStringEmpty = string.IsNullOrEmpty(connectionString);
     
     // Production environment requires the Identity DB connection string
-    if (builder.Environment.IsProduction())
+    if (environment.EnvironmentName.Equals("Production", StringComparison.OrdinalIgnoreCase))
     {
       if (isConnectionStringEmpty)
       {

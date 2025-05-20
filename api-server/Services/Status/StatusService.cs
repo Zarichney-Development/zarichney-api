@@ -245,7 +245,7 @@ public class StatusService : IStatusService
 
       // Initialize or preserve existing cache
       var results = _cachedStatus ?? new Dictionary<ExternalServices, ServiceStatusInfo>();
-      var featureMap = _featureServiceMap ?? new Dictionary<ExternalServices, List<ExternalServices>>();
+      var featureMap = _featureServiceMap ?? new Dictionary<ExternalServices, ExternalServices[]>();
 
       // Get all types implementing IConfig (excluding interfaces/abstract classes)
       var configTypes = _assemblyToScan // Use the injected assembly
@@ -315,15 +315,17 @@ public class StatusService : IStatusService
           }
 
           // Update feature mapping
-          if (!featureMap.TryGetValue(feature, out var services))
+          if (!featureMap.TryGetValue(feature, out var servicesArray))
           {
-            services = [];
-            featureMap[feature] = services;
+            // If no entry exists yet, create a new array with just this feature
+            featureMap[feature] = new[] { feature };
           }
-
-          if (!services.Contains(feature))
+          else if (!servicesArray.Contains(feature))
           {
-            services.Add(feature);
+            // If an entry exists but doesn't include this feature, add it
+            var servicesList = servicesArray.ToList();
+            servicesList.Add(feature);
+            featureMap[feature] = servicesList.ToArray();
           }
         }
       }

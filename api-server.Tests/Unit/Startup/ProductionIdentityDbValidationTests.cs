@@ -45,18 +45,22 @@ public class ProductionIdentityDbValidationTests
     public void ValidateStartup_ShouldHave_ValidateProductionConfiguration_Method()
     {
         // Arrange & Act
-        var method = typeof(ValidateStartup).GetMethod(
-            "ValidateProductionConfiguration", 
-            BindingFlags.Public | BindingFlags.Static);
+        var methods = typeof(ValidateStartup).GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Where(m => m.Name == "ValidateProductionConfiguration")
+            .ToList();
         
         // Assert
-        method.Should().NotBeNull("ValidateStartup should have a ValidateProductionConfiguration method");
+        methods.Should().NotBeEmpty("ValidateStartup should have ValidateProductionConfiguration methods");
         
-        // The method should take a WebApplicationBuilder parameter
-        var parameters = method!.GetParameters();
-        parameters.Should().HaveCount(1, "The method should have exactly one parameter");
-        parameters[0].ParameterType.Name.Should().Be("WebApplicationBuilder", 
-            "The parameter should be of type WebApplicationBuilder");
+        // Verify we have both overloads
+        var builderOverload = methods.FirstOrDefault(m => m.GetParameters().Length == 1 && 
+            m.GetParameters()[0].ParameterType == typeof(WebApplicationBuilder));
+        builderOverload.Should().NotBeNull("Should have a ValidateProductionConfiguration method that takes a WebApplicationBuilder");
+        
+        var environmentConfigOverload = methods.FirstOrDefault(m => m.GetParameters().Length == 2 && 
+            m.GetParameters()[0].ParameterType == typeof(IWebHostEnvironment) &&
+            m.GetParameters()[1].ParameterType == typeof(IConfiguration));
+        environmentConfigOverload.Should().NotBeNull("Should have a ValidateProductionConfiguration method that takes IWebHostEnvironment and IConfiguration");
     }
     
     /// <summary>
@@ -83,20 +87,16 @@ public class ProductionIdentityDbValidationTests
     public void ValidateProductionConfiguration_InProduction_WithValidConfig_ReturnsTrue()
     {
         // Arrange
-        var mockEnvironment = new Mock<IHostEnvironment>();
+        var mockEnvironment = new Mock<IWebHostEnvironment>();
         mockEnvironment.Setup(e => e.EnvironmentName).Returns("Production");
-        mockEnvironment.Setup(e => e.IsProduction()).Returns(true);
+        // No need to setup IsProduction as it's an extension method
         
         var mockConfiguration = new Mock<IConfiguration>();
-        mockConfiguration.Setup(c => c.GetConnectionString(UserDbContext.UserDatabaseConnectionName))
+        mockConfiguration.Setup(c => c["ConnectionStrings:" + UserDbContext.UserDatabaseConnectionName])
             .Returns("valid-connection-string");
         
-        var mockBuilder = new Mock<WebApplicationBuilder>();
-        mockBuilder.Setup(b => b.Environment).Returns(mockEnvironment.Object);
-        mockBuilder.Setup(b => b.Configuration).Returns(mockConfiguration.Object);
-        
         // Act - The method should not throw an exception
-        var result = ValidateStartup.ValidateProductionConfiguration(mockBuilder.Object);
+        var result = ValidateStartup.ValidateProductionConfiguration(mockEnvironment.Object, mockConfiguration.Object);
         
         // Assert
         result.Should().BeTrue("ValidateProductionConfiguration should return true with valid configuration");
@@ -110,20 +110,16 @@ public class ProductionIdentityDbValidationTests
     public void ValidateProductionConfiguration_InDevelopment_WithMissingConfig_ReturnsFalse()
     {
         // Arrange
-        var mockEnvironment = new Mock<IHostEnvironment>();
+        var mockEnvironment = new Mock<IWebHostEnvironment>();
         mockEnvironment.Setup(e => e.EnvironmentName).Returns("Development");
-        mockEnvironment.Setup(e => e.IsProduction()).Returns(false);
+        // No need to setup IsProduction as it's an extension method
         
         var mockConfiguration = new Mock<IConfiguration>();
-        mockConfiguration.Setup(c => c.GetConnectionString(UserDbContext.UserDatabaseConnectionName))
+        mockConfiguration.Setup(c => c["ConnectionStrings:" + UserDbContext.UserDatabaseConnectionName])
             .Returns((string?)null);
         
-        var mockBuilder = new Mock<WebApplicationBuilder>();
-        mockBuilder.Setup(b => b.Environment).Returns(mockEnvironment.Object);
-        mockBuilder.Setup(b => b.Configuration).Returns(mockConfiguration.Object);
-        
         // Act
-        var result = ValidateStartup.ValidateProductionConfiguration(mockBuilder.Object);
+        var result = ValidateStartup.ValidateProductionConfiguration(mockEnvironment.Object, mockConfiguration.Object);
         
         // Assert
         result.Should().BeFalse("ValidateProductionConfiguration should return false with missing configuration");
@@ -137,20 +133,16 @@ public class ProductionIdentityDbValidationTests
     public void ValidateProductionConfiguration_InDevelopment_WithValidConfig_ReturnsTrue()
     {
         // Arrange
-        var mockEnvironment = new Mock<IHostEnvironment>();
+        var mockEnvironment = new Mock<IWebHostEnvironment>();
         mockEnvironment.Setup(e => e.EnvironmentName).Returns("Development");
-        mockEnvironment.Setup(e => e.IsProduction()).Returns(false);
+        // No need to setup IsProduction as it's an extension method
         
         var mockConfiguration = new Mock<IConfiguration>();
-        mockConfiguration.Setup(c => c.GetConnectionString(UserDbContext.UserDatabaseConnectionName))
+        mockConfiguration.Setup(c => c["ConnectionStrings:" + UserDbContext.UserDatabaseConnectionName])
             .Returns("valid-connection-string");
         
-        var mockBuilder = new Mock<WebApplicationBuilder>();
-        mockBuilder.Setup(b => b.Environment).Returns(mockEnvironment.Object);
-        mockBuilder.Setup(b => b.Configuration).Returns(mockConfiguration.Object);
-        
         // Act
-        var result = ValidateStartup.ValidateProductionConfiguration(mockBuilder.Object);
+        var result = ValidateStartup.ValidateProductionConfiguration(mockEnvironment.Object, mockConfiguration.Object);
         
         // Assert
         result.Should().BeTrue("ValidateProductionConfiguration should return true with valid configuration");

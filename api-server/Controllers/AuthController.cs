@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.ComponentModel.DataAnnotations;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +7,7 @@ using Swashbuckle.AspNetCore.Annotations;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Models;
 using Zarichney.Services.Auth.Commands;
+using Zarichney.Services.Status;
 
 namespace Zarichney.Controllers;
 
@@ -114,7 +116,7 @@ public class AuthController(
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
+  [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Returns when the Identity Database is unavailable", typeof(ApiErrorResult))]
   public async Task<IActionResult> Register([FromBody] RegisterRequest request)
   {
     try
@@ -157,7 +159,7 @@ public class AuthController(
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
+  [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Returns when the Identity Database is unavailable", typeof(ApiErrorResult))]
   public async Task<IActionResult> Login([FromBody] LoginRequest request)
   {
     try
@@ -209,7 +211,7 @@ public class AuthController(
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status401Unauthorized)] // Changed from 400 for token issues
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
+  [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Returns when the Identity Database is unavailable", typeof(ApiErrorResult))]
   public async Task<IActionResult> RefreshToken()
   {
     try
@@ -281,7 +283,7 @@ public class AuthController(
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)] // If not authenticated
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
+  [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Returns when the Identity Database is unavailable", typeof(ApiErrorResult))]
   public async Task<IActionResult> RevokeRefreshToken()
   {
     try
@@ -368,7 +370,7 @@ public class AuthController(
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)] // For validation errors, if any
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
+  [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Returns when the Identity Database is unavailable", typeof(ApiErrorResult))]
   public async Task<IActionResult> EmailForgetPassword([FromBody] ForgotPasswordRequest request)
   {
     try
@@ -412,7 +414,7 @@ public class AuthController(
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
+  [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Returns when the Identity Database is unavailable", typeof(ApiErrorResult))]
   public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
   {
     try
@@ -479,7 +481,7 @@ public class AuthController(
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)] // Confirmation failed
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
   [ProducesResponseType(StatusCodes.Status302Found)] // Success with redirect
-  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
+  [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Returns when the Identity Database is unavailable", typeof(ApiErrorResult))]
   public async Task<IActionResult> ConfirmEmail([FromQuery] ConfirmEmailRequest request)
   {
     try
@@ -546,7 +548,7 @@ public class AuthController(
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status400BadRequest)] // For validation errors
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
+  [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Returns when the Identity Database is unavailable", typeof(ApiErrorResult))]
   public async Task<IActionResult>
     ResendConfirmation([FromBody] ResendConfirmationRequest request) // Changed to FromBody
   {
@@ -641,7 +643,7 @@ public class AuthController(
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)] // Not logged in
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)] // Logged in but not admin
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
+  [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Returns when the Identity Database is unavailable", typeof(ApiErrorResult))]
   public async Task<IActionResult> CreateApiKey([FromBody] CreateApiKeyCommand request)
   {
     try
@@ -676,7 +678,7 @@ public class AuthController(
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
+  [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Returns when the Identity Database is unavailable", typeof(ApiErrorResult))]
   public async Task<IActionResult> GetApiKeys()
   {
     try
@@ -711,7 +713,7 @@ public class AuthController(
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
+  [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Returns when the Identity Database is unavailable", typeof(ApiErrorResult))]
   public async Task<IActionResult> GetApiKeyById(int id)
   {
     try
@@ -752,7 +754,7 @@ public class AuthController(
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)] // If role check added
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
+  [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Returns when the Identity Database is unavailable", typeof(ApiErrorResult))]
   public async Task<IActionResult> RevokeApiKey(int id)
   {
     try
@@ -817,7 +819,7 @@ public class AuthController(
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
+  [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Returns when the Identity Database is unavailable", typeof(ApiErrorResult))]
   public async Task<IActionResult> AddUserToRole([FromBody] RoleRequest request)
   {
     // Note: Basic validation moved inside try-catch for consistent error handling
@@ -867,7 +869,7 @@ public class AuthController(
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
+  [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Returns when the Identity Database is unavailable", typeof(ApiErrorResult))]
   public async Task<IActionResult> RemoveUserFromRole([FromBody] RoleRequest request)
   {
     try
@@ -917,7 +919,7 @@ public class AuthController(
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status404NotFound)] // If user not found
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
+  [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Returns when the Identity Database is unavailable", typeof(ApiErrorResult))]
   public async Task<IActionResult> GetUserRoles(string identifier)
   {
     try
@@ -966,7 +968,7 @@ public class AuthController(
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status403Forbidden)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status404NotFound)] // If role not found
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
+  [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Returns when the Identity Database is unavailable", typeof(ApiErrorResult))]
   public async Task<IActionResult> GetUsersInRole(string roleName)
   {
     try
@@ -1010,7 +1012,7 @@ public class AuthController(
     StatusCodes.Status400BadRequest)] // If user info missing or refresh fails logically
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)] // If user is not authenticated
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
-  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
+  [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Returns when the Identity Database is unavailable", typeof(ApiErrorResult))]
   public async Task<IActionResult> RefreshUserClaims()
   {
     try
@@ -1091,7 +1093,7 @@ public class AuthController(
   [ProducesResponseType(typeof(Dictionary<string, object>), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status401Unauthorized)] // If token missing/invalid
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)] // Added for completeness
-  [ProducesResponseType(StatusCodes.Status503ServiceUnavailable, Description = "Returns when the Identity Database is unavailable")]
+  [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Returns when the Identity Database is unavailable", typeof(ApiErrorResult))]
   public IActionResult CheckAuthentication()
   {
     try // Added try-catch block
