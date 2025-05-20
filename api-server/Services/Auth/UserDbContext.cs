@@ -33,6 +33,11 @@ public sealed class ApplicationUser : IdentityUser
 
 public class UserDbContext(DbContextOptions<UserDbContext> options) : IdentityDbContext<ApplicationUser>(options)
 {
+  /// <summary>
+  /// The name of the connection string used for the Identity database in the configuration.
+  /// </summary>
+  public const string UserDatabaseConnectionName = "UserDatabase";
+
   /* Tables inherited from IdentityDbContext - Command to list all tables in the database:
       ```
       zarichney_identity-# \dt

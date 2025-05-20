@@ -6,7 +6,8 @@ This guide provides instructions for maintaining the PostgreSQL database used by
 
 The application connects to the PostgreSQL database (`zarichney_identity`) using the user `zarichney_user`.
 
-**Production:**
+**Production Environment Requirements:**
+* In Production environment, a valid `ConnectionStrings:UserDatabase` connection string is **mandatory**. If this connection string is missing or empty, the application will fail to start.
 * The connection string details (host, database name, username, password) are typically injected via environment variables or fetched securely at runtime from **AWS Secrets Manager** (Secret ID: `cookbook-factory-secrets`, Key: `DbPassword`) or potentially **AWS Systems Manager Parameter Store**, configured within the EC2 instance's environment or application startup. Do **not** rely on `appsettings.Production.json` for sensitive credentials like the password.
 
 **Local Development:**
@@ -14,10 +15,11 @@ The application connects to the PostgreSQL database (`zarichney_identity`) using
     ```json
     {
       "ConnectionStrings": {
-        "IdentityConnection": "Host=localhost;Database=zarichney_identity;Username=postgres;Password=your_local_dev_password"
+        "UserDatabase": "Host=localhost;Database=zarichney_identity;Username=postgres;Password=your_local_dev_password"
       }
     }
     ```
+* In non-Production environments, a missing or empty `UserDatabase` connection string will not prevent the application from starting. The application includes appropriate fallback mechanisms for development/testing scenarios.
 
 ## Migrations (EF Core)
 
