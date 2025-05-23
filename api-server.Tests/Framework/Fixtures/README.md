@@ -1,120 +1,107 @@
-# Module/Directory: /api-server.Tests/Framework/Fixtures
+# README: /Framework/Fixtures Directory
 
-**Last Updated:** 2025-04-22
-
-> **Parent:** [`/api-server.Tests/Framework/`](../README.md)
+**Version:** 1.1
+**Last Updated:** 2025-05-22
+**Parent:** `../README.md`
 
 ## 1. Purpose & Responsibility
 
-* **What it is:** Contains xUnit fixtures responsible for setting up and managing the test environment for integration tests.
-* **Key Responsibilities:**
-  * Bootstrapping the `api-server` application in-memory using `WebApplicationFactory` (`CustomWebApplicationFactory`).
-  * Managing the lifecycle of a dedicated PostgreSQL test database container (`DatabaseFixture`).
-  * Providing shared, configured API client instances (`ApiClientFixture`).
-  * Configuring the test application's services, including mocking external dependencies and setting up test authentication.
-  * Providing mechanisms for database cleanup between tests (via Respawn in `DatabaseFixture`).
-* **Why it exists:** To provide reusable, isolated, and configurable test environments for running integration tests against the API, ensuring consistency and managing shared resources like the database container and application host.
+This directory contains shared xUnit **fixtures** that are fundamental to the integration testing strategy of the `api-server.Tests` project. Fixtures are used by xUnit to manage the lifecycle of expensive or shared resources, ensuring that tests have a consistent and properly configured environment.
 
-## 2. Architecture & Key Concepts (Current & Future State)
+The primary responsibilities of the fixtures in this directory are:
+* **Test Server Management (`CustomWebApplicationFactory.cs`):** To host the `api-server` application in-memory, manage its configuration for testing, and provide a mechanism for overriding services (e.g., for injecting mocks or test-specific authentication handlers).
+* **Database Management (`DatabaseFixture.cs`):** To manage the lifecycle of a PostgreSQL database instance using Testcontainers, including starting/stopping the container, applying EF Core migrations, and providing database cleanup capabilities via Respawn.
+* **API Client Provisioning (`ApiClientFixture.cs`):** To create and provide pre-configured instances of the auto-generated Refit client (`IZarichneyAPI.cs`), ensuring tests use a consistent client for API interactions.
 
-### Current State (Pre-Refactor)
+These fixtures are crucial for creating efficient, reliable, and maintainable integration tests by abstracting away complex setup and teardown logic.
 
-* **`CustomWebApplicationFactory`**: Inherits `WebApplicationFactory<Program>`. Configures services, mocks, test auth, and configuration loading. Intended to provide the application host. Often used via `IClassFixture` in base test classes.
-* **`DatabaseFixture`**: Manages PostgreSQL Testcontainer via `Testcontainers.PostgreSql` and `IAsyncLifetime`. Provides connection string and `ResetDatabaseAsync` using Respawn. Intended for use via `ICollectionFixture` in a dedicated database collection.
-* **`ApiClientFixture`**: Creates its *own internal* `CustomWebApplicationFactory` instance. Reads test user config via `TestConfigurationHelper`, attempts login, and provides shared `IZarichneyAPI` clients. Used via `ICollectionFixture` in a separate integration collection.
-* **Issues:** This setup leads to multiple `CustomWebApplicationFactory` instances, inconsistent configuration between the `ApiClientFixture`'s factory and the test's factory, and inefficient resource usage. Fixture management is spread across `IClassFixture` in base classes and multiple `ICollectionFixture` definitions.
+## 2. Architecture & Key Concepts
 
-### Desired Future State (Consolidated Approach - TDD v1.5)
+* **xUnit Fixture Model:** These fixtures primarily leverage xUnit's `ICollectionFixture<>` interface. This allows a single instance of each fixture to be created and shared across all test classes within a specific test collection (the `"Integration"` collection defined in `../../Integration/IntegrationCollection.cs`). This significantly improves test suite performance by avoiding repeated setup of expensive resources like database containers or the web application host.
+* **Asynchronous Initialization/Disposal:** Fixtures managing external resources or requiring asynchronous setup (like `DatabaseFixture` and `CustomWebApplicationFactory` in practice, though `WebApplicationFactory` handles its async aspects internally) often implement `IAsyncLifetime` for `InitializeAsync` and `DisposeAsync` logic.
+* **Key Fixtures:**
+    * **`CustomWebApplicationFactory.cs`:**
+        * Inherits from `Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory<Program>`.
+        * Overrides `ConfigureWebHost` to customize the test server's services (`ConfigureTestServices`) and configuration (`ConfigureAppConfiguration`). This is where dependencies are mocked/overridden (e.g., `TestAuthHandler` registration, mock factories from `../Mocks/Factories/`, and future WireMock.Net setup).
+        * The detailed test configuration strategy is defined in Section 9 of the `../../TechnicalDesignDocument.md`.
+    * **`DatabaseFixture.cs`:**
+        * Manages a PostgreSQL `Testcontainer`.
+        * Applies EF Core migrations (`_dbContext.Database.MigrateAsync()`) upon initialization to ensure the schema is current.
+        * Provides a connection string to the test database.
+        * Initializes `Respawner` for database cleaning and exposes `ResetDatabaseAsync()` to be called by tests.
+    * **`ApiClientFixture.cs`:**
+        * Depends on `CustomWebApplicationFactory` to get an `HttpClient`.
+        * Creates and configures instances of the Refit client `IZarichneyAPI`.
+* **Consumption:** These fixtures are typically injected into the constructor of base test classes (`IntegrationTestBase`, `DatabaseIntegrationTestBase`), which then expose their functionalities or the resources they manage (e.g., API client, DbContext factory method) to the actual test methods.
 
-* **Single Collection:** A single `[Collection("Integration")]` definition will manage *all three* fixtures (`CustomWebApplicationFactory`, `DatabaseFixture`, `ApiClientFixture`) using `ICollectionFixture<>`. This ensures only one instance of each fixture is created and shared across all tests in the collection.
-* **`CustomWebApplicationFactory` (Shared):**
-  * Will implement the refined configuration loading strategy (supporting user secrets, env vars, `appsettings.Testing.json`) as defined in TDD v1.5.
-  * Will implement the prioritized database selection logic (Config -> Testcontainers -> InMemory).
-  * Will be provided as a shared instance by the `"Integration"` collection.
-* **`DatabaseFixture` (Shared):**
-  * Will remain largely the same but **must** include logic to automatically apply EF Core migrations after the container starts successfully (`InitializeAsync`).
-  * Will be provided as a shared instance by the `"Integration"` collection.
-* **`ApiClientFixture` (Shared & Refactored):**
-  * Will **receive** the shared `CustomWebApplicationFactory` instance via constructor injection.
-  * Will **not** create its own factory instance.
-  * Will use the injected factory to create its `HttpClient` and resolve the final `IConfiguration` to get `TestUser` credentials.
-  * Will be provided as a shared instance by the `"Integration"` collection.
-* **Base Classes (`IntegrationTestBase`, `DatabaseIntegrationTestBase`):**
-  * Will be simplified by removing `IClassFixture<>` declarations.
-  * Will continue to accept shared fixture instances via constructor injection (provided by the collection).
-* **Test Classes:**
-  * All integration tests will belong to the `[Collection("Integration")]`.
-  * Tests requiring database access will inherit `DatabaseIntegrationTestBase`.
+## 3. Interface Contract & Assumptions
 
-## 3. Interface Contract & Assumptions (Future State)
+* **Interface for Test Classes:**
+    * Test classes belonging to the `"Integration"` collection receive these fixtures via constructor injection (often handled by their base class).
+    * They interact with the fixtures' exposed properties or methods (e.g., `ApiClientFixture.GetApiClient()`, `DatabaseFixture.GetContext()`, `DatabaseFixture.ResetDatabaseAsync()`, `CustomWebApplicationFactory.CreateClient()`).
+* **Assumptions:**
+    * **Docker Environment:** `DatabaseFixture` fundamentally assumes that a Docker environment is available and correctly configured on the machine running the tests. Tests requiring it can be decorated with `[DockerAvailableFact]`.
+    * **`api-server` Configurability:** `CustomWebApplicationFactory` assumes that the `api-server`'s `Program.cs` is structured to allow for in-memory hosting and that its service registration and configuration pipeline can be customized for testing.
+    * **Migration Application:** `DatabaseFixture` assumes that EF Core migrations are present and can be applied successfully to the test database.
+    * **Client Generation:** `ApiClientFixture` assumes the `IZarichneyAPI.cs` client has been correctly generated and is up-to-date.
 
-* **`CustomWebApplicationFactory`**:
-  * Provides a single, shared, configured instance of the `api-server` application via `ICollectionFixture`.
-  * Correctly loads configuration according to TDD v1.5.
-  * Correctly configures `UserDbContext` based on the prioritized strategy.
-  * Registers mocks and test authentication.
-* **`DatabaseFixture`**:
-  * Provides a single, shared PostgreSQL container instance via `ICollectionFixture`.
-  * Applies migrations successfully during `InitializeAsync`. Throws/skips if container or migrations fail.
-  * Provides `ResetDatabaseAsync` for test cleanup.
-  * Provides `ConnectionString`.
-* **`ApiClientFixture`**:
-  * Provides shared, initialized `UnauthenticatedClient` and `AuthenticatedClient` instances via `ICollectionFixture`.
-  * Uses the shared `CustomWebApplicationFactory` for client creation and configuration access.
-  * Handles test user login based on configuration resolved from the shared factory.
-* **Critical Assumptions:**
-  * Docker Desktop (or equivalent) is running for tests requiring the `DatabaseFixture`.
-  * The configurations specified in TDD v1.5 are adhered to.
-  * User secrets are configured correctly for local development scenarios.
-  * `TestUser` credentials exist in a loadable configuration source (`appsettings.Testing.json`, user secrets, or env vars).
+## 4. Local Conventions & Constraints
 
-## 4. Local Conventions & Constraints (Future State)
+* **Naming:** Fixture classes should clearly indicate their purpose and end with `Fixture` (e.g., `DatabaseFixture`).
+* **Scope:** Fixtures in this directory are intended for broad, cross-cutting concerns shared by many integration tests. More specialized, single-test-class fixtures (using `IClassFixture<>`) are generally discouraged in favor of this shared model for performance, unless a resource is truly unique to one test class and very expensive.
+* **Resource Management:** Fixtures managing unmanaged resources or requiring asynchronous setup/teardown **must** implement `IAsyncLifetime` correctly.
+* **Idempotency:** Fixture setup should be idempotent where possible, though `ICollectionFixture` instances are created only once per collection run. Methods like `DatabaseFixture.ResetDatabaseAsync()` are designed to be called multiple times.
+* **Documentation:** New fixtures must be documented in this README, and their usage patterns explained.
 
-* **Fixture Usage:** All three fixtures (`CustomWebApplicationFactory`, `DatabaseFixture`, `ApiClientFixture`) are managed and shared via `ICollectionFixture` within a single `[Collection("Integration")]`.
-* **Base Classes:** `IntegrationTestBase` and `DatabaseIntegrationTestBase` provide common functionality and receive shared fixtures via constructor injection (without implementing `IClassFixture<>`).
-* **Mocking:** Relies on mock factories located in [`/api-server.Tests/Framework/Mocks/Factories/`](../Mocks/Factories/README.md).
-* **Configuration:** The shared `CustomWebApplicationFactory` defines the primary configuration loading strategy for all integration tests.
+## 5. How to Work With This Code
 
-## 5. How to Work With This Code (Future State)
-
-* **Setup:** Ensure Docker is running if database tests are included. Ensure user secrets are set up for local development testing against a real DB.
-* **Testing:** Inherit from `IntegrationTestBase` or `DatabaseIntegrationTestBase`. Add `[Collection("Integration")]` to the test class. Use the injected fixtures or helper properties from the base class. Call `await ResetDatabaseAsync()` in database tests before mutating actions or seeding data.
-* **Common Pitfalls / Gotchas:**
-  * Forgetting `await ResetDatabaseAsync()` can cause state leakage.
-  * Ensure test classes have the correct `[Collection("Integration")]` attribute.
-  * Ensure tests needing the DB inherit `DatabaseIntegrationTestBase`.
-  * Remember that configuration loading depends on the environment (`Development` default, override via `ASPNETCORE_ENVIRONMENT`/`DOTNET_ENVIRONMENT`).
+* **Primary Usage (for Test Writers):**
+    * Developers writing integration tests typically do not need to instantiate or directly manage these fixtures in their test methods.
+    * Instead, they inherit from `IntegrationTestBase` or `DatabaseIntegrationTestBase`. These base classes receive the shared fixtures through constructor injection (due to the `[Collection("Integration")]` attribute) and expose necessary functionalities (e.g., `ApiClient` property, `ResetDatabaseAsync()` method).
+    * Example: To get a database context in a test: `await using var context = DbFixture.GetContext();` (where `DbFixture` is a property from `DatabaseIntegrationTestBase`).
+    * Example: To reset the database: `await DbFixture.ResetDatabaseAsync();`.
+* **Extending or Modifying Fixtures:**
+    * Modifications to these core fixtures should be done cautiously, as they impact all integration tests.
+    * When adding a new shared resource (e.g., a Testcontainer for Redis, a shared WireMock.Net server instance):
+        1.  Create a new class in this directory implementing `IAsyncLifetime` if needed.
+        2.  Add it to the `IntegrationCollection` definition (`../../Integration/IntegrationCollection.cs`) as an `ICollectionFixture<>`.
+        3.  Update `IntegrationTestBase` to accept and expose the new fixture if it's broadly needed.
+        4.  Document the new fixture in this README.
 
 ## 6. Dependencies
 
-* **Internal Code Dependencies:**
-  * [`/api-server.Tests/Framework/Helpers/`](../Helpers/README.md)
-  * [`/api-server.Tests/Framework/Mocks/Factories/`](../Mocks/Factories/README.md)
-  * `api-server/Program.cs`
-* **External Library Dependencies:**
-  * `Microsoft.AspNetCore.Mvc.Testing`
-  * `Testcontainers.PostgreSql`
-  * `Respawn`
-  * `Xunit`
-  * `Moq`, `Refit`, `FluentAssertions`, `AutoFixture` (used by dependents)
-* **Dependents (Impact of Changes):**
-  * [`/api-server.Tests/Integration/`](../Integration/README.md) - All integration tests rely on these fixtures.
+### Internal Dependencies
+
+* **`api-server` Project:** Required by `CustomWebApplicationFactory` for hosting and by `DatabaseFixture` for `UserDbContext` and migrations.
+* **`../Client/IZarichneyAPI.cs`:** Used by `ApiClientFixture`.
+* **`../Helpers/`**: Fixtures may use helper classes (e.g., `TestAuthHandler` is configured by `CustomWebApplicationFactory`).
+* **`../Mocks/Factories/`**: Used by `CustomWebApplicationFactory` to register mock services.
+* **`../../Integration/IntegrationCollection.cs`:** Defines how these fixtures are shared.
+
+### Key External Libraries
+
+* **`Xunit.net` (`xunit.core`, `xunit.abstractions`):** For `ICollectionFixture<>`, `IAsyncLifetime`.
+* **`Microsoft.AspNetCore.Mvc.Testing`:** Base for `CustomWebApplicationFactory`.
+* **`Testcontainers.PostgreSql`:** Used by `DatabaseFixture`.
+* **`Respawn.Postgres`:** Used by `DatabaseFixture` for database cleanup.
+* **`Refit`:** Consumed indirectly via `ApiClientFixture`.
+* **`Microsoft.EntityFrameworkCore` (and related packages):** Used by `DatabaseFixture` for migrations and `DbContext` operations.
 
 ## 7. Rationale & Key Historical Context
 
-* The consolidated fixture strategy using a single `ICollectionFixture` definition provides the most efficient and consistent way to manage shared resources like the application host, database container, and API clients across the entire integration test suite.
-* The refined configuration and database handling logic allows tests to run correctly and predictably across different environments (local dev with secrets, CI with Testcontainers).
+The primary rationale for the design of these fixtures, especially their use as `ICollectionFixture`s, is **performance and consistency**. Starting a web application host and a database container are expensive operations. Sharing these resources across the entire integration test suite drastically reduces overall execution time.
 
-## 8. Known Issues & TODOs (Refactoring Plan)
+* `CustomWebApplicationFactory` centralizes test server configuration and service overriding logic.
+* `DatabaseFixture` was created to provide a true, ephemeral PostgreSQL database for testing data persistence and complex queries, moving away from less reliable in-memory database providers. The inclusion of programmatic migration application and Respawn ensures each test can run against a known, clean schema.
+* `ApiClientFixture` ensures all tests use a consistently configured HTTP client and Refit interface for interacting with the SUT.
 
-* ~~Define the single `[Collection("Integration")]` class providing `CustomWebApplicationFactory`, `DatabaseFixture`, and `ApiClientFixture` via `ICollectionFixture<>`.~~ ✅ Completed
-* ~~Remove the old collection definition classes (`IntegrationTestCollection.cs`, `DatabaseIntegrationTestCollection.cs`).~~ ✅ Completed
-* ~~Refactor `ApiClientFixture` to remove internal `CustomWebApplicationFactory` creation. Inject the shared `CustomWebApplicationFactory` via the constructor. Use the injected factory to create `HttpClient` and resolve `IConfiguration`. Remove `DisposeAsync` logic related to the internal factory.~~ ✅ Completed
-* ~~Refactor `CustomWebApplicationFactory.ConfigureWebHost` to implement the configuration loading order specified in TDD v1.5 (Default Env -> JSON files -> User Secrets (Dev) -> Env Vars). Remove the `AddInMemoryCollection` override for the connection string.~~ ✅ Completed
-* ~~Refactor `CustomWebApplicationFactory.ConfigureTestServices` to implement the prioritized database selection logic (Config -> `DatabaseFixture` -> InMemory) and configure `UserDbContext` accordingly.~~ ✅ Completed
-* ~~Implement automatic EF Core migration application within `DatabaseFixture.InitializeAsync` after the container starts. Ensure proper error handling if migrations fail.~~ ✅ Completed
-* ~~Remove `IClassFixture<>` interface declarations from `IntegrationTestBase` and `DatabaseIntegrationTestBase`. Ensure constructors still accept the fixtures.~~ ✅ Completed
-* ~~Add `[Collection("Integration")]` to all integration test classes.~~ ✅ Completed
-* ~~Ensure all test classes requiring database access inherit from `DatabaseIntegrationTestBase` (e.g., fix `LoginEndpointTests.cs`).~~ ✅ Completed
-* ~~Verify `TestUser` credentials are still loaded correctly from configuration and used successfully by the refactored `ApiClientFixture`.~~ ✅ Completed
+This centralized fixture model is a cornerstone of the integration testing strategy outlined in the `../../TechnicalDesignDocument.md`.
 
+## 8. Known Issues & TODOs
+
+* **Testcontainer Startup Time:** While shared, the initial startup of the PostgreSQL Testcontainer can still take several seconds. This is a known trade-off for database fidelity. (See TDD FRMK-003 for planned Testcontainer enhancements).
+* **WireMock.Net Fixture (Planned):** A new fixture will be introduced here to manage the lifecycle of `WireMock.Net` servers for external HTTP service virtualization (as per TDD FRMK-004). This fixture will likely be integrated into the `IntegrationCollection` as well.
+* **Configuration Complexity:** The `CustomWebApplicationFactory` has complex configuration logic. This needs to be carefully maintained and well-understood.
+* Refer to the "Framework Augmentation Roadmap (TODOs)" in `../../TechnicalDesignDocument.md` for broader framework enhancements that may impact components in this directory.
+
+---

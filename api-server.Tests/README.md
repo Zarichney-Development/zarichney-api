@@ -1,213 +1,138 @@
-# Zarichney API Server Tests (`api-server.Tests`)
+# README: api-server.Tests Project
 
-**Last Updated:** 2025-04-22
+**Version:** 1.1
+**Last Updated:** 2025-05-22
+**Parent:** `../api-server/README.md` (Conceptual link to the main application's README)
 
-This project contains automated tests for the `api-server` application, providing comprehensive coverage through both unit and integration tests. It aims to establish a robust, maintainable, and efficient testing framework adhering to the standards outlined in the [Technical Design Document](./TechnicalDesignDocument.md).
+## 1. Purpose & Responsibility
 
-*(Note: Refactoring has been completed to consolidate fixture management for improved efficiency and consistency. See "Refactoring Status" below for details).*
+This project, `api-server.Tests`, contains all automated tests for the `zarichney-api/api-server` project. Its primary purpose is to ensure the quality, stability, and correctness of the API server through comprehensive unit and integration testing.
 
-## Project Structure
+This project and its contents are governed by the strategies and requirements outlined in the following key documents:
+* **`./TechnicalDesignDocument.md`**: The blueprint for this test project's architecture, tools, and advanced strategies.
+* **`../../Docs/Standards/TestingStandards.md`**: The overarching testing standards for the entire solution.
+* **`../../Docs/Standards/UnitTestCaseDevelopment.md`**: Detailed guidance for writing unit tests.
+* **`../../Docs/Standards/IntegrationTestCaseDevelopment.md`**: Detailed guidance for writing integration tests.
 
-The test project is organized to separate concerns and mirror the main application structure where applicable:
+Adherence to these documents is mandatory for all test development and maintenance, enabling effective collaboration between human and AI developers and ensuring the test suite remains robust and maintainable.
 
-* **`/Framework/`**: Contains the core testing infrastructure, including:  
-* `Fixtures/`: Shared test environment setup (`CustomWebApplicationFactory`, `DatabaseFixture`, `ApiClientFixture`).  
-* `Helpers/`: Utility classes for authentication simulation, random data, dependency checking, etc.  
-* `Mocks/`: Mock implementations and factories for external services.  
-* `Client/`: Auto-generated Refit client for API interaction.  
-* `Attributes/`: Custom xUnit attributes (`DependencyFact`, `DockerAvailableFact`).  
-* Base classes (`IntegrationTestBase`, `DatabaseIntegrationTestBase`).  
-* **`/Unit/`**: Contains unit tests focusing on isolated component logic. Organized mirroring the `api-server` project structure.  
-* **`/Integration/`**: Contains integration tests verifying end-to-end API behavior. Organized mirroring the `api-server/Controllers` structure.  
-* **`/TestData/`**: Contains test data builders and sample data artifacts.
+## 2. Test Framework Overview & Key Concepts
 
-## Core Testing Strategies (Target State)
+The testing strategy employed aims for high confidence through realistic test scenarios while maintaining performance and reliability. Key aspects include:
 
-* **Unit Testing:** Uses xUnit, Moq, FluentAssertions, and AutoFixture/Builders to test components in isolation. Aims for high coverage of business logic. See [`./Unit/README.md`](./Unit/README.md).  
-* **Integration Testing:**  
-* Uses `CustomWebApplicationFactory` to host the application in-memory.  
-* Interacts with the API via a generated Refit client (`IZarichneyAPI`).  
-* Leverages Testcontainers (`DatabaseFixture`) for realistic PostgreSQL database testing in CI/CD and optionally locally.  
-* Employs a refined configuration loading strategy supporting User Secrets (local dev), Environment Variables (CI/CD), and `appsettings.Testing.json` (base test settings/overrides).  
-* Uses a prioritized database connection approach (Config -> Testcontainers -> InMemory Fallback).  
-* Automatic database schema migration via `DatabaseFixture`.  
-* Uses mocks for external service boundaries (Stripe, OpenAI, etc.).  
-* Simulates authentication using `TestAuthHandler`.  
-See [`./Integration/README.md`](./Integration/README.md).  
-* **Fixture Management:** A single xUnit collection (`[Collection("Integration")]`) manages shared instances of `CustomWebApplicationFactory`, `DatabaseFixture`, and `ApiClientFixture` via the `ApiClientFixture` class for all integration tests, ensuring efficiency and consistency. `ApiClientFixture` creates and manages the other fixtures. Base classes (`IntegrationTestBase`, `DatabaseIntegrationTestBase`) are simplified to consume these shared fixtures. See [`./Framework/Fixtures/README.md`](./Framework/Fixtures/README.md).  
-* **Dependency Awareness:** Uses custom attributes (`[DependencyFact]`, `[DockerAvailableFact]`) and base class logic to automatically skip tests when required external configurations or Docker are unavailable. See "Dependency-Aware Testing" below and [`./Framework/Helpers/README.md`](./Framework/Helpers/README.md).
+* **In-Memory API Hosting:** Integration tests run against an in-memory instance of the `api-server` using `CustomWebApplicationFactory<Program>`, allowing for fast execution without network overhead.
+* **Database Testing:** Real database interactions are tested using PostgreSQL managed by **Testcontainers** via the `DatabaseFixture`. This ensures tests run against a clean, consistent database schema with migrations applied. Database state is reset between tests using **Respawn**.
+* **External HTTP Service Virtualization:** Interactions with external third-party HTTP APIs (e.g., Stripe, OpenAI) will be managed using **WireMock.Net** (as per FRMK-004 in `TechnicalDesignDocument.md`). This ensures deterministic behavior and isolates tests from external flakiness.
+* **API Client Interaction:** Integration tests interact with the API using a type-safe **Refit client** (`IZarichneyAPI`), which is auto-generated from the API's OpenAPI specification.
+* **Authentication Simulation:** The `TestAuthHandler` allows for simulating various authenticated users and authorization scenarios.
+* **Core Tooling:**
+    * **xUnit:** Test execution framework.
+    * **FluentAssertions:** Expressive and readable assertions.
+    * **Moq:** Mocking framework for unit tests.
+    * **AutoFixture:** Test data generation, including advanced customizations for complex objects.
+* **Fixture Strategy:** A consolidated fixture strategy is employed, primarily using xUnit's `ICollectionFixture` with the `"Integration"` collection to share expensive resources like `CustomWebApplicationFactory` and `DatabaseFixture` across test classes, optimizing performance.
 
-## Test Categorization
+## 3. Project Structure
 
-Tests are categorized using `[TraitAttribute]` for granular filtering:
+This test project is organized into the following main directories:
 
-* **`Category`**: `Unit`, `Integration`, `MinimalFunctionality`, etc.  
-* **`Feature`**: `Auth`, `Cookbook`, `Payment`, etc. (Domain-specific)  
-* **`Dependency`**: `Database`, `ExternalStripe`, `ExternalOpenAI`, `ExternalGitHub`, `ExternalMSGraph`, etc.  
-* **`Mutability`**: `ReadOnly`, `DataMutating` (For safe execution filtering).
+* **`/Framework/`**: Contains the core testing infrastructure, including:
+    * `Attributes/`: Custom xUnit attributes like `[DependencyFact]` and `[DockerAvailableFact]`. (See `./Framework/Attributes/README.md`)
+    * `Client/`: The auto-generated Refit API client (`IZarichneyAPI.cs`). (See `./Framework/Client/README.md`)
+    * `Fixtures/`: Shared test fixtures like `CustomWebApplicationFactory`, `DatabaseFixture`, and `ApiClientFixture`. (See `./Framework/Fixtures/README.md`)
+    * `Helpers/`: Utility classes for testing, such as `AuthTestHelper` and `TestConfigurationHelper`. (See `./Framework/Helpers/README.md`)
+    * `Mocks/`: Contains mock factories (e.g., `MockStripeServiceFactory`) for configuring mocked services within the `CustomWebApplicationFactory`, and will include configurations for WireMock.Net. (See `./Framework/Mocks/README.md`)
+    * `TestData/AutoFixtureCustomizations/`: (New) Will house advanced AutoFixture customizations.
+    * (See `./Framework/README.md`)
+* **`/Unit/`**: Contains all unit tests, mirroring the structure of the `api-server` project. (See `./Unit/README.md`)
+* **`/Integration/`**: Contains all integration tests, generally organized by API controllers or features. (See `./Integration/README.md`)
+* **`/TestData/`**: Contains test data builders and sample data files.
+    * `Builders/`: Custom test data builders (e.g., `RecipeBuilder`). (See `./TestData/Builders/README.md`)
+    * `Recipes/`: Sample JSON data like `Burger.json`.
+    * (See `./TestData/README.md`)
 
-## Running Tests
+## 4. Key Standards & Development Guides
 
-Execute tests using the `dotnet test` command with optional filters.
+All test development **must** adhere to the following standards documents:
 
-```bash  
-# Run all tests  
-dotnet test
+* **Core Technical Design:**
+    * `./TechnicalDesignDocument.md` - The primary architectural blueprint for this test suite.
+* **Overarching Testing Principles:**
+    * `../../Docs/Standards/TestingStandards.md` - General testing philosophy, tooling, and quality expectations.
+* **Specific Test Type Development:**
+    * `../../Docs/Standards/UnitTestCaseDevelopment.md` - Detailed "how-to" for writing unit tests.
+    * `../../Docs/Standards/IntegrationTestCaseDevelopment.md` - Detailed "how-to" for writing integration tests.
+* **Code & Documentation Quality:**
+    * `../../Docs/Standards/CodingStandards.md` - Standards for writing C# code (applies to test code too).
+    * `../../Docs/Standards/DocumentationStandards.md` - Standards for writing per-directory README files within this project.
 
-# Run unit tests only  
-dotnet test --filter "Category=Unit"
+A commitment to high test coverage (>=90% for unit tests) and rigorous adherence to these standards is expected to ensure a reliable and maintainable API.
 
-# Run integration tests only  
-dotnet test --filter "Category=Integration"
+## 5. How to Work With This Code
 
-# Run specific feature tests (e.g., Authentication)  
-dotnet test --filter "Category=Integration&Feature=Auth"
+### Running Tests
 
-# Run integration tests that don't require the database  
-dotnet test --filter "Category=Integration&Dependency!=Database"
+* **Unit Tests:**
+    ```bash
+    dotnet test --filter "Category=Unit"
+    ```
+* **Integration Tests:**
+    * Ensure Docker is running if tests rely on `DatabaseFixture` or other Testcontainers.
+    * Ensure necessary configurations are available (e.g., in `appsettings.Testing.json` or user secrets) for tests using `[DependencyFact]`. Tests for unavailable dependencies will be skipped.
+    ```bash
+    dotnet test --filter "Category=Integration"
+    ```
+* **Specific Tests:** Use appropriate `--filter` options with `dotnet test`.
+* Refer to the `TechnicalDesignDocument.md` Section 11 for CI/CD testing execution details.
 
-# Run non-mutating integration tests (safer for prod-like checks)  
-dotnet test --filter "Category=Integration&Mutability=ReadOnly"
-```
+### API Client Generation
 
-## Dependency-Aware Testing
+* If you make changes to the `api-server`'s API contracts (controller signatures, routes, DTOs), you **must** regenerate the Refit client:
+    ```powershell
+    ./Scripts/GenerateApiClient.ps1
+    ```
+  or for bash/zsh:
+    ```bash
+    ./Scripts/generate-api-client.sh
+    ```
+  This ensures the test client (`IZarichneyAPI.cs`) is synchronized.
 
-The test suite includes a dependency awareness mechanism that handles tests with external dependencies.
+### Contribution Guidelines
 
-### How It Works
+* Follow all linked standards documents when writing or modifying tests.
+* Ensure all tests pass locally before submitting changes.
+* Update any relevant documentation (including this README or sub-directory READMEs) if your changes impact the testing framework, strategies, or setup.
+* New tests must accompany new features or bug fixes in the `api-server`.
+* Refactor existing tests for clarity, performance, or adherence to evolving standards as needed.
 
-1. Tests that depend on external services or specific runtime conditions (like Docker) should be marked with:
-  * Appropriate dependency traits: e.g., `[Trait(TestCategories.Dependency, TestCategories.Database)]`
-  * The `[DependencyFact]` attribute instead of the standard `[Fact]`.
-  * Alternatively, `[DockerAvailableFact]` for tests requiring only the Docker runtime.
-2. The system (primarily IntegrationTestBase and the custom Fact attributes/discoverers) will:
-  * Check for the required configuration or runtime conditions during test discovery/initialization.
-  * Skip tests automatically when dependencies are missing.
-  * Provide clear skip reasons in the test output.
+## 6. Dependencies
 
-### Example Usage
+### Internal Dependencies
 
-```csharp
-[Trait(TestCategories.Category, TestCategories.Integration)]  
-[Trait(TestCategories.Feature, TestCategories.Auth)]  
-[Trait(TestCategories.Dependency, TestCategories.Database)] // Depends on DB config/availability  
-[Trait(TestCategories.Mutability, TestCategories.DataMutating)]  
-public class AuthTests : DatabaseIntegrationTestBase // Use DB base class  
-{  
-// Constructor receives fixtures from collection  
-public AuthTests(ApiClientFixture clientFixture)  
-: base(clientFixture) { }
+* **`zarichney-api/api-server`**: The primary dependency, as this project tests the API server.
 
-    [DependencyFact]  // Use DependencyFact instead of Fact  
-    public async Task Register_WithValidInput_ShouldCreateUser()  
-    {  
-        // This test will be skipped if the database dependency check fails  
-        await ResetDatabaseAsync(); // Example DB interaction setup  
-        // ...test code...  
-    }  
-}
-```
+### Key External Libraries & Tools
 
-```csharp
-[Trait(TestCategories.Category, TestCategories.Integration)]  
-[Trait(TestCategories.Feature, "Infrastructure")]  
-public class DockerTests : IntegrationTestBase // Doesn't need DB specific base  
-{  
-public DockerTests(ApiClientFixture clientFixture)  
-: base(clientFixture) { }
+* **xUnit**: Test framework.
+* **FluentAssertions**: Assertion library.
+* **Moq**: Mocking library.
+* **AutoFixture**: Test data generation.
+* **Testcontainers**: For managing Dockerized dependencies (e.g., PostgreSQL).
+* **Refit**: For generating the type-safe HTTP client.
+* **Respawn**: For database cleanup.
+* **Coverlet**: For code coverage.
+* **WireMock.Net** (Planned): For HTTP service virtualization.
+* **PactNet** (Future Consideration): For contract testing.
 
-    [DockerAvailableFact] // Requires Docker runtime  
-    public async Task SomeDockerDependentCheck()  
-    {  
-        // This test will be skipped if Docker is not running  
-        // ...test code...  
-    }  
-}
-```
+## 7. Rationale & Key Historical Context
 
-## Integration Testing Setup (Overview)
+This test suite has evolved with an increasing emphasis on rigor and AI-coder compatibility. A significant past effort involved refactoring to a consolidated fixture strategy (using `ICollectionFixture`) to improve the performance and maintainability of integration tests by sharing expensive resources like the `CustomWebApplicationFactory` and `DatabaseFixture`.
 
-Integration tests rely on the shared infrastructure provided by the Framework/ directory and managed via the single "Integration" xUnit collection:
+The current focus is on implementing the framework augmentations detailed in the `TechnicalDesignDocument.md` and achieving comprehensive test coverage adhering to the newly established detailed testing guides.
 
-1. **ApiClientFixture**: Creates and manages instances of the DatabaseFixture and CustomWebApplicationFactory. Provides pre-configured unauthenticated and authenticated IZarichneyAPI clients.
-2. **CustomWebApplicationFactory**: Configures the test server with appropriate settings for the environment (Dev/CI/Testing) and handles DbContext setup based on configuration/fixture availability.
-3. **DatabaseFixture**: Manages the PostgreSQL Testcontainer (including applying migrations) for tests needing a real database.
-4. **Base Classes**: IntegrationTestBase and DatabaseIntegrationTestBase provide common functionality and access to the shared fixtures via constructor injection.
-5. **Refit API Client**: Tests interact with the API using the clients provided by ApiClientFixture via the base classes.
+## 8. Known Issues & TODOs
 
-### Database Reset
+* **Framework Augmentation:** This test framework is actively being enhanced. Refer to the **"Framework Augmentation Roadmap (TODOs)" (Section 16)** in `TechnicalDesignDocument.md` for a list of planned improvements (e.g., WireMock.Net integration, advanced AutoFixture customizations).
+* **Test Coverage:** While the goal is >=90% unit test coverage and comprehensive integration test coverage, this is an ongoing effort. Specific coverage gaps may exist and are being progressively addressed. (Refer to `../../Docs/Development/TestCovergeWorkflow.md`).
 
-Integration tests inheriting DatabaseIntegrationTestBase **must** call await ResetDatabaseAsync() at the beginning of each test method that modifies or relies on specific database state to ensure isolation.
-
-```csharp
-[DependencyFact]  
-public async Task Test_RequiringCleanDatabase_ShouldWork()  
-{  
-// Reset database to clean state before test execution  
-await ResetDatabaseAsync();
-
-    // Now the database is clean for this test  
-    // ...test code...  
-}
-```
-
-## Test Data Management
-
-Use standard approaches for test data:
-
-1. **AutoFixture**: Via the GetRandom helper (Framework/Helpers/GetRandom.cs) for simple random values.
-2. **Test Data Builders**: (TestData/Builders/) For complex object creation with a fluent syntax (e.g., RecipeBuilder).
-
-Refer to [./TestData/README.md](./TestData/README.md) for details.
-
-## Maintaining the API Client
-
-After changing API contracts (controllers, routes, models) in api-server, **regenerate the Refit client**:
-
-```bash
-# From the solution root directory  
-./Scripts/GenerateApiClient.ps1
-```
-
-Failure to do so may result in compilation errors or runtime failures in integration tests.
-
-## Configuration Management (Overview)
-
-Test configuration follows a layered approach managed primarily by CustomWebApplicationFactory:
-
-1. appsettings.json (Optional base config)
-2. appsettings.{EnvironmentName}.json (Optional environment-specific)
-3. appsettings.Testing.json (Optional base test settings/overrides)
-4. User Secrets (Loaded in Development environment for local secrets)
-5. Environment Variables (Highest precedence, for CI/local overrides)
-
-This allows flexibility for different testing scenarios (local dev with secrets, CI with env vars/Testcontainers). See the TDD and Fixtures README for details.
-
-## CI/CD Integration
-
-The test suite is integrated with GitHub Actions (/.github/workflows/main.yml):
-
-* Workflow runs on PRs to main and merges to main.
-* Tests are executed in phases (unit → integration).
-* Coverage reports are generated and published.
-
-See /Docs/Maintenance/TestingSetup.md for details.
-
-## Key Documents & Further Reading
-
-* **Technical Design Document:** [./TechnicalDesignDocument.md](./TechnicalDesignDocument.md) - Detailed testing strategy and requirements.
-* **Framework README:** [./Framework/README.md](./Framework/README.md) - Overview of the core testing infrastructure.
-* **Fixtures README:** [./Framework/Fixtures/README.md](./Framework/Fixtures/README.md) - Details on fixtures.
-* **Integration Tests README:** [./Integration/README.md](./Integration/README.md) - Conventions for integration tests.
-* **Testing Standards:** /Docs/Standards/TestingStandards.md (in solution root) - Coding and documentation standards for tests.
-
-## Refactoring Status
-
-The integration testing framework has been refactored to implement the consolidated fixture strategy described in the TDD. This includes:
-* Using a single test collection (`[Collection("Integration")]`)
-* Creating a simplified fixture management approach with ApiClientFixture as the main fixture that creates and manages other fixtures
-* Simplifying base classes to use a cleaner, more maintainable injection approach
-* Implementing proper configuration loading order as specified in the TDD
-* Adding automatic EF Core migrations in the DatabaseFixture
-* Ensuring consistent database handling with prioritized connection string selection
-* Updating all integration test classes to use the new approach
+---

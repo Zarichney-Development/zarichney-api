@@ -1,70 +1,130 @@
-# Module/Directory: /Framework/Attributes
+# README: /Framework/Attributes Directory
 
-**Last Updated:** 2025-05-13
+**Version:** 1.1
+**Last Updated:** 2025-05-22
+**Parent:** `../README.md`
 
-> **Parent:** [`Framework`](../README.md)
-> **Related:**
-> * **Attribute Sources:** [`DockerAvailableFactAttribute.cs`](DockerAvailableFactAttribute.cs), [`DependencyFactAttribute.cs`](DependencyFactAttribute.cs), [`SkipMissingDependencyDiscoverer.cs`](SkipMissingDependencyDiscoverer.cs), [`SkipMissingDependencyTestCase.cs`](SkipMissingDependencyTestCase.cs) (List may vary)
-> * **Usage Context:** Applied to test methods in `/Unit` and `/Integration`.
-> * **Standards:** [`TestingStandards.md`](../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../Docs/Development/DocumentationStandards.md)
+## 1. Purpose & Responsibility
 
-## 1. Purpose & Rationale (Why?)
+This directory contains custom xUnit attributes developed to extend the standard testing capabilities and enforce project-specific conventions. These attributes play a crucial role in:
 
-This directory contains **custom xUnit attributes** (classes deriving from `FactAttribute`, `TheoryAttribute`, or related xUnit extensibility points) used within the test project. These attributes provide specialized logic to control the execution or reporting of tests based on external factors or specific conditions.
+* **Conditional Test Execution:** Enabling tests to be dynamically skipped based on environmental conditions, configuration status, or the availability of external dependencies (e.g., `DependencyFactAttribute`, `DockerAvailableFactAttribute`).
+* **Test Categorization and Filtering:** While xUnit's `[Trait]` attribute is used directly for categorization, some attributes like `DependencyFactAttribute` implicitly assign or relate to categories defined in `TestCategories.cs`.
+* **Specialized Test Discovery/Execution Logic:** Providing tailored behavior for test discovery and execution beyond standard `[Fact]` and `[Theory]` attributes.
 
-* **Why Custom Attributes?** To conditionally skip tests based on environment state (e.g., Docker not running) or configuration (e.g., a required external dependency like an API key is not configured), preventing test failures caused by missing prerequisites rather than actual code errors. They can also be used for custom test discovery or categorization beyond standard `Trait` attributes.
+These attributes are integral to maintaining an efficient, reliable, and context-aware test suite, particularly in diverse development and CI/CD environments.
 
-## 2. Scope & Key Functionality
+## 2. Architecture & Key Concepts
 
-This directory houses attributes that modify xUnit's test execution behavior:
+The primary attributes and their mechanisms are:
 
-* **`DockerAvailableFactAttribute.cs`:** An attribute (likely deriving from `FactAttribute`) that checks if the Docker daemon/engine is running on the test execution machine. If Docker is not available, tests decorated with this attribute are skipped, typically with an informative message.
-* **`DependencyFactAttribute.cs`:** An attribute that derives from `FactAttribute` and works with custom test case discoverer/executer to check for the presence and validity of specific configuration settings or external dependencies needed for a test to run successfully. It can be used in these ways:
-  1. **With ApiFeature enum values:** `[DependencyFact(ApiFeature.LLM, ApiFeature.Transcription)]` - This approach directly checks if the specified features are available using the `IStatusService`. It automatically maps each ApiFeature to an appropriate TestCategories.Dependency trait for filtering and reporting purposes.
-  2. **With InfrastructureDependency enum values (preferred for infrastructure):** `[DependencyFact(InfrastructureDependency.Database)]` - This approach explicitly checks for infrastructure-level dependencies like Database or Docker availability using direct factory property checks.
-  3. **With a combination of both:** `[DependencyFact(ApiFeature.LLM, InfrastructureDependency.Database)]` - For tests requiring both API features and infrastructure dependencies.
-  4. **With string-based trait dependencies (legacy):** `[DependencyFact]` combined with `[Trait(TestCategories.Dependency, TestCategories.ExternalOpenAI)]` - This approach uses the `ConfigurationStatusHelper` and is maintained for backward compatibility.
-* **`SkipMissingDependencyDiscoverer.cs` / `SkipMissingDependencyTestCase.cs`:** Supporting classes for `DependencyFactAttribute` that implement xUnit's test discovery and execution extensibility points to enable the conditional skipping logic.
+* **`DependencyFactAttribute.cs`**:
+    * **Purpose:** An advanced `[Fact]` attribute that conditionally skips tests if specified dependencies are not met. This is crucial for integration tests that rely on external services or specific configurations.
+    * **Mechanism:** It leverages the `IStatusService` from the `api-server` (to check feature availability via `ExternalServices` enum) and `ConfigurationStatusHelper` (to check for presence of required configuration values). It can also check for infrastructure dependencies like database connectivity via `InfrastructureDependency` enum.
+    * **Usage:** Decorated on test methods, e.g., `[DependencyFact(ExternalServices.Llm, InfrastructureDependency.Database)]`.
+    * **Details:** See Section 7 of `../../TechnicalDesignDocument.md` and Section 7 of `../../../Docs/Standards/IntegrationTestCaseDevelopment.md`.
 
-## 3. Test Environment Setup
+* **`DockerAvailableFactAttribute.cs`**:
+    * **Purpose:** A specialized `[Fact]` attribute that skips tests if a running Docker environment is not detected.
+    * **Mechanism:** It typically attempts a simple Docker command (e.g., `docker version`) to ascertain availability.
+    * **Usage:** Decorated on test methods that directly require Docker for Testcontainers, independent of specific service configurations (e.g., tests for `DatabaseFixture` itself).
 
-* **Usage:** These attributes are applied directly to test methods within `/Unit` or `/Integration` test classes, replacing standard `[Fact]` or `[Theory]` attributes where conditional execution is needed.
+* **`TestCategories.cs`**:
+    * **Purpose:** This static class does not define attributes itself but provides string constants for standardized test category names used with xUnit's `[Trait("Category", TestCategories.Unit)]` attribute.
+    * **Mechanism:** Ensures consistency in trait naming across the test suite, facilitating accurate test filtering.
+    * **Usage:** Referenced in `[Trait]` attributes on test methods. The `DependencyFactAttribute` also uses these categories for its enum-to-trait mapping.
+
+These attributes often work in conjunction with custom xUnit test case discoverers and executors (like `SkipMissingDependencyDiscoverer` and `SkipMissingDependencyTestCase`) to implement their conditional logic.
+
+## 3. Interface Contract & Assumptions
+
+* **For Test Writers:**
+    * Attributes are applied directly to test methods (e.g., `[DependencyFact(...)]`, `[DockerAvailableFact]`) or test classes.
+    * When using `DependencyFactAttribute` with `ExternalServices` or `InfrastructureDependency` enums, the attribute handles checking the status via the application's `IStatusService` or framework-level checks.
+    * Tests using these attributes should clearly indicate their dependencies also via appropriate `[Trait("Category", ...)]` attributes (though `DependencyFactAttribute` handles some implicit trait mapping).
+* **Assumptions Made by Attributes:**
+    * `DependencyFactAttribute` assumes:
+        * The `IStatusService` (when checking `ExternalServices`) is correctly implemented in the `api-server` and reflects the true availability of features based on configuration.
+        * The `ConfigurationStatusHelper` (used for string-based dependency checks or by `IStatusService`) has access to the relevant `IConfiguration` instance.
+        * For `InfrastructureDependency.Database`, it assumes the `DatabaseFixture` correctly reports its operational status.
+    * `DockerAvailableFactAttribute` assumes that the mechanism it uses to check Docker's presence (e.g., running `docker version`) is reliable in the test execution environment.
+
+## 4. Local Conventions & Constraints
+
+* **Naming:** New custom fact/theory attributes should end with `FactAttribute` or `TheoryAttribute` respectively.
+* **Documentation:** Any new attribute **must** have clear XML documentation explaining its purpose, parameters, and usage. Its README entry here must also be updated.
+* **Testing:** Complex custom attributes, especially those with discovery or execution logic, **must** have their own unit tests in `../../Unit/Framework/Attributes/`. (e.g., `../../Unit/Framework/Attributes/DependencyFactAttributeTests.cs`).
+* **Scope:** New attributes should be general-purpose and provide clear benefits for test management or execution across a range of scenarios.
+
+## 5. How to Work With This Code
+
+### Using Existing Attributes
+
+* **`DependencyFactAttribute`**:
     ```csharp
-    // Check if Docker is available
-    [DockerAvailableFact]
-    public async Task MyIntegrationTest_RequiresDocker_RunsSuccessfully() { /* ... */ }
-
-    // Using ExternalServices enum (preferred approach)
-    // This automatically maps to appropriate TestCategories.Dependency traits
-    [DependencyFact(ExternalServices.Payments)]
-    public void MyStripeTest_RequiresPaymentFeature_RunsSuccessfully() { /* ... */ }
-
-    // Backward compatible string-based traits approach
-    [DependencyFact]
-    [Trait(TestCategories.Dependency, TestCategories.ExternalStripe)]
-    public void MyLegacyTest_RequiresStripe_RunsSuccessfully() { /* ... */ }
-
-    // Multiple ExternalServices dependencies
-    [DependencyFact(ExternalServices.LLM, ExternalServices.GitHubAccess)]
-    public void MyAiAndGitHubTest_RunsSuccessfully() { /* ... */ }
+    // Example: Test requires LLM feature (via IStatusService) AND Database infrastructure
+    [DependencyFact(ExternalServices.Llm, InfrastructureDependency.Database)]
+    [Trait("Category", "Integration")]
+    [Trait("Category", TestCategories.ExternalOpenAI)] // Explicit trait for filtering
+    [Trait("Category", TestCategories.Database)]     // Explicit trait for filtering
+    public async Task MyFeature_ThatUsesLlmAndDb_WorksCorrectly()
+    {
+        // ... test logic ...
+    }
     ```
-* **Dependencies:** Relies heavily on the xUnit.net testing framework's extensibility features (`FactAttribute`, `TheoryAttribute`, `ITestCaseDiscoverer`, `IXunitTestCase`).
+* **`DockerAvailableFactAttribute`**:
+    ```csharp
+    [DockerAvailableFact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "Infrastructure")] // Custom trait for infrastructure-specific tests
+    public async Task DatabaseFixture_WhenDockerIsAvailable_StartsSuccessfully()
+    {
+        // ... test logic for DatabaseFixture itself ...
+    }
+    ```
+* **`TestCategories.cs`**:
+    ```csharp
+    [Fact]
+    [Trait("Category", TestCategories.Unit)] // Using constant from TestCategories.cs
+    public void MyService_UnitLogic_IsCorrect()
+    {
+        // ...
+    }
+    ```
 
-## 4. Maintenance Notes & Troubleshooting
+### Adding New Custom Attributes
 
-* **ExternalServices to TestCategory Mapping:** The `DependencyFactAttribute` includes a mapping from `ExternalServices` enum values to `TestCategories.Dependency` trait values. The mapping is defined in the static `ExternalServicesToTraitMap` dictionary. If new `ExternalServices` enum values are added, ensure that corresponding mappings are added to this dictionary.
-* **Dependency Checking Logic:** The accuracy of attributes like `DockerAvailableFactAttribute` and `DependencyFactAttribute` depends on the reliability of their internal checks (e.g., how Docker presence is detected, how configuration status is determined). Updates to this checking logic may be needed if the environment or configuration methods change.
-* **xUnit Extensibility:** Modifying or creating custom xUnit attributes requires understanding xUnit's discovery and execution pipeline. Errors can sometimes be non-obvious.
-* **New Conditions:** If tests need to be skipped based on other conditions, new custom attributes could be created and added to this directory.
+1.  Create the new attribute class in this directory, typically inheriting from `Xunit.Sdk.FactAttribute` or `Xunit.Sdk.TheoryAttribute`.
+2.  If custom discovery or execution logic is needed, implement `Xunit.Sdk.ITestCaseDiscoverer` and/or `Xunit.Sdk.IXunitTestCase`.
+3.  Register the discoverer using `Xunit.Sdk.TestCaseDiscovererAttribute` on your custom attribute if applicable.
+4.  Add unit tests for the new attribute in `../../Unit/Framework/Attributes/`.
+5.  Update this README to document the new attribute.
 
-## 5. Test Cases & TODOs
+## 6. Dependencies
 
-* **Unit Tests:** `DependencyFactAttributeTests` verifies the behavior of the `DependencyFactAttribute`, including the mapping of `ExternalServices` values to corresponding dependency traits.
-* **TODO:** Enhance documentation about the trait mapping mechanism and ensure any new ExternalServices values are properly mapped in the future.
+### Internal Dependencies
 
-## 6. Changelog
+* **`api-server`**:
+    * `DependencyFactAttribute` may rely on `IStatusService` and enums like `ExternalServices` from the main application.
+* **`../Helpers/`**:
+    * `DependencyFactAttribute` uses `ConfigurationStatusHelper`, `SkipMissingDependencyDiscoverer`, and `SkipMissingDependencyTestCase`.
+* **`../Fixtures/`**:
+    * `DependencyFactAttribute` may interact with properties of fixtures like `DatabaseFixture` when checking `InfrastructureDependency.Database`.
 
-* **2025-05-13:** Improved DependencyFactAttribute with proper trait mapping. Refactored IntegrationTestBase.CheckDependenciesAsync for better clarity. (#2)
-* **2025-05-12:** Enhanced DependencyFactAttribute to support ExternalServices-based dependencies. Added dual approach with backward compatibility for string-based traits. (#1)
-* **2025-04-18:** Initial creation - Moved custom attributes from Helpers. Defined purpose and scope. (Gemini)
+### Key External Libraries
 
+* **`Xunit.net` (xunit.core, xunit.extensibility.core, xunit.extensibility.execution):** Essential for creating custom attributes that integrate with the xUnit test execution pipeline.
+
+## 7. Rationale & Key Historical Context
+
+Custom attributes like `DependencyFactAttribute` and `DockerAvailableFactAttribute` were developed to address the need for more sophisticated control over test execution in varying environments. Standard `[Fact]` attributes lack the ability to dynamically skip tests based on runtime conditions or external dependencies without custom logic. These attributes centralize this skipping logic, making tests cleaner and the test suite more robust when run in environments where not all dependencies are available (e.g., local development without certain API keys vs. a fully configured CI environment).
+
+The use of `TestCategories.cs` ensures standardized and type-safe categorization for test filtering, which is critical for managing a large test suite and enabling efficient test runs during development and CI.
+
+## 8. Known Issues & TODOs
+
+* **Trait Mapping Review:** The implicit trait mapping within `DependencyFactAttribute` should be periodically reviewed to ensure it aligns with all defined `TestCategories` and filtering needs.
+* **Extensibility:** Consider if a more generic "ConditionalFactAttribute" base class could simplify the creation of new conditional attributes in the future.
+* Refer to the "Framework Augmentation Roadmap (TODOs)" in `../../TechnicalDesignDocument.md` for broader framework enhancements.
+
+---

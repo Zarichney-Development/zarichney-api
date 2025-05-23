@@ -1,84 +1,130 @@
-# Module/Directory: /api-server.Tests/Unit
+# README: /Unit Tests Directory
 
-**Last Updated:** 2025-04-18
-
-> **Parent:** [`api-server.Tests`](../README.md)
+**Version:** 1.1
+**Last Updated:** 2025-05-22
+**Parent:** `../README.md`
 
 ## 1. Purpose & Responsibility
 
-* **What it is:** Contains unit tests that verify the behavior of individual classes or components within the `api-server` project in isolation.
-* **Key Responsibilities:**
-    * Testing the logic within specific services, handlers, repositories, utilities, etc.
-    * Validating algorithms, conditional logic, state transitions, and error handling within a single unit.
-    * Ensuring components adhere to their intended contracts when interacting with dependencies (via mocks).
-* **Why it exists:** To provide fast, granular feedback on the correctness of individual code units, isolate failures, and facilitate refactoring by ensuring low-level logic remains correct.
-* **Submodule Structure:** Tests are organized in subdirectories mirroring the structure of the `api-server` project (e.g., `./Cookbook/Recipes/RecipeServiceTests.cs`, `./Services/Status/StatusServiceTests.cs`, `./Helpers/ConfigurationStatusHelperTests.cs`).
+This directory, `/Unit/`, contains all **unit tests** for the `zarichney-api/api-server` project. The primary purpose of these tests is to verify the correctness of individual software units—such as classes, methods, services, command/query handlers, and utility functions—in **complete isolation** from their dependencies.
 
-## 2. Architecture & Key Concepts
+Unit tests are foundational to our testing strategy, aiming to:
+* Provide fast feedback to developers on code changes.
+* Pinpoint defects accurately within specific components.
+* Prevent regressions in business logic and core functionalities.
+* Facilitate safer code refactoring by ensuring individual units still behave as expected after changes.
+* Achieve a high level of code coverage (striving for >=90%) for non-trivial logic.
 
-* **Isolation:** The fundamental principle is testing units in isolation. All external dependencies (other services, repositories, `ILogger`, `IConfiguration`, `HttpClient`, `DbContext`, external APIs) **must** be mocked.
-* **Mocking Framework:** Uses `Moq` as the primary mocking library.
-* **Mock Factories:** May leverage mock factories from [`/api-server.Tests/Framework/Mocks/Factories/`](../Mocks/Factories/README.md) for consistent setup of mocks representing external service interfaces (like `ILlmService`), although direct `Mock<T>` instantiation is also common.
-* **Assertion Library:** Uses `FluentAssertions` for writing expressive and readable assertions.
-* **Test Data:** Uses a combination of direct instantiation, Test Data Builders from [`/api-server.Tests/TestData/Builders/`](../TestData/Builders/README.md), and potentially `AutoFixture` (via helpers like `GetRandom`) for creating input data and mock return values.
-* **Structure:** Follows the Arrange-Act-Assert (AAA) pattern clearly within each test method.
+All unit tests **must** adhere to the detailed guidelines and standards outlined in **`../../../Docs/Standards/UnitTestCaseDevelopment.md`**.
 
-## 3. Interface Contract & Assumptions
+## 2. Unit Testing Approach & Key Concepts
 
-* **Tests as Consumers:** Unit tests act as the first consumer of a class's public (and sometimes internal) interface.
-* **Mock Interactions:** Tests define the expected interactions with mocked dependencies using `mock.Setup(...)` and potentially verify critical interactions using `mock.Verify(...)`.
-* **Critical Assumptions:**
-    * Assumes mocks accurately represent the essential contract of the real dependencies for the scenario under test.
-    * Assumes the test data provided covers the relevant logic paths and edge cases.
+Our unit testing strategy emphasizes rigor, clarity, and maintainability:
 
-## 4. Local Conventions & Constraints (Beyond Global Standards)
+* **Complete Isolation:** The System Under Test (SUT) is tested without involving external dependencies like databases, network services, file systems, or live configuration sources. All such dependencies **must be mocked** using Moq.
+* **Speed:** Unit tests must execute very quickly (typically in milliseconds) to ensure rapid feedback cycles.
+* **Test Behavior, Not Implementation:** Tests should focus on the observable outcomes and external contract of a unit, rather than its internal implementation details. This makes tests more resilient to refactoring.
+* **AAA Pattern (Arrange-Act-Assert):** All test methods must clearly follow this structure.
+* **Core Tooling:**
+    * **xUnit:** Test framework (`[Fact]`, `[Theory]`).
+    * **Moq:** Mocking library for creating test doubles of dependencies.
+    * **FluentAssertions:** Assertion library for expressive and readable verifications.
+    * **AutoFixture:** For generating anonymous test data, especially with attributes like `[AutoData]` and `[Frozen]` for parameters and mock setup.
+* **Coverage Goal:** As stated in the `../TechnicalDesignDocument.md` (Section 8), we aim for >=90% unit test coverage of all non-trivial logic.
 
-* **Test Structure:** Adhere strictly to the AAA pattern. Keep tests focused on verifying a single logical concern. Test class names end with `Tests`. Test method names follow `[MethodName]_[Scenario]_[ExpectedOutcome]`. Directory structure mirrors `api-server`.
-* **Assertions:** Use specific `FluentAssertions` (e.g., `Should().Be()`, `Should().Throw<TException>()`, `Should().BeEquivalentTo()`). Include `.Because("...")` clauses for clarity.
-* **Traits:** Must use `[Trait("Category", "Unit")]` and relevant `Component`, `Feature` traits. Use Dependency traits (e.g., `[Trait("Dependency", "External:OpenAI")]`) if the *unit under test* interacts with a *mock* of that dependency.
-* **Mocking:** Mock *all* external dependencies. Use constructor injection in the class under test to facilitate mocking.
+## 3. Directory Structure & Organization
+
+The directory structure within `/Unit/` is designed to **mirror the project structure of the `api-server` application**. This convention makes it easy to locate unit tests corresponding to a specific component or module. For example:
+* Unit tests for `api-server/Services/Auth/AuthService.cs` would typically be found in `api-server.Tests/Unit/Services/Auth/AuthServiceTests.cs`.
+* Unit tests for controllers might be in `api-server.Tests/Unit/Controllers/[ControllerName]/[ControllerName]UnitTests.cs`.
+
+**Test File Granularity (as per TDD Section 8):**
+* For complex SUT methods or classes that warrant numerous test cases, it's encouraged to create a dedicated test file focusing on that specific method or a cohesive set of related methods (e.g., `MyService_ComplexMethodBehaviorTests.cs`).
+* If a SUT class or method has only a few test cases, they can be grouped within a more general test file for that SUT (e.g., `MyServiceTests.cs`). The expectation is that if test cases for a particular function grow, they may be migrated to their own dedicated file for better organization.
+
+Key subdirectories within `/Unit/` typically include (but are not limited to):
+* `./Config/` (Tests for configuration models, middleware, etc.)
+* `./Controllers/` (Tests for controller logic, often focused on parameter mapping, service delegation, and action result creation, with services mocked)
+* `./Cookbook/` (Tests for components within the Cookbook domain)
+* `./Framework/` (Unit tests for components *within* the `../Framework/` directory itself, e.g., `Attributes/`, `Helpers/`)
+* `./Middleware/` (If testing middleware in isolation)
+* `./Services/` (Tests for business logic within various services)
+* `./Startup/` (Tests for dependency injection wiring or startup validation logic)
+
+Each significant subdirectory under `/Unit/` should have its own `README.md` detailing its specific focus if it deviates from general unit testing patterns or contains a large, distinct group of tests.
+
+## 4. Key Standards & Development Guide
+
+The definitive guide for writing unit tests in this project is:
+* **`../../../Docs/Standards/UnitTestCaseDevelopment.md`**
+
+This document provides detailed instructions on:
+* Designing production code for testability.
+* Setting up unit tests (AAA, naming, structure).
+* Advanced mocking with Moq.
+* Writing expressive assertions with FluentAssertions.
+* Effective test data management with AutoFixture.
+* Testing specific scenarios like asynchronous code and exception handling.
+* Common pitfalls and how to avoid them.
+
+All developers (human and AI) writing unit tests **must** adhere to this guide.
+Supporting standards include:
+* `../../../Docs/Standards/TestingStandards.md` (Overarching principles and tooling).
+* `../../../Docs/Standards/CodingStandards.md` (Essential for writing testable SUTs).
+* `../TechnicalDesignDocument.md` (Provides context on the overall testing strategy and framework components that might be unit-tested here).
 
 ## 5. How to Work With This Code
 
-* **Setup:** No external setup (like Docker) is required.
-* **Running Tests:** Use `dotnet test --filter "Category=Unit"`. Filter further by `Feature`, `Component`, or specific class name as needed.
-* **Adding Tests:**
-    1.  Locate or create the corresponding test file in the mirrored directory structure (e.g., for `api-server/Services/MyService.cs`, use `api-server.Tests/Unit/Services/MyServiceTests.cs`).
-    2.  Add `[Trait]` attributes to the class.
-    3.  In the test class constructor or setup method (Arrange phase):
-        * Create mocks for all dependencies of the class under test using `new Mock<IDependency>()`.
-        * Set up default or specific behaviors on mocks using `Setup()`.
-        * Instantiate the class under test, injecting the `.Object` property of the mocks.
-        * Prepare input data using builders or direct instantiation.
-    4.  Write test methods using `[Fact]` or `[Theory]`.
-    5.  Follow the AAA pattern:
-        * **Arrange:** Additional setup specific to the test case (if not covered in constructor).
-        * **Act:** Call the method under test.
-        * **Assert:** Use `FluentAssertions` to verify the result, state changes, or mock interactions (`Verify()`).
-* **Common Pitfalls / Gotchas:**
-    * **Incomplete Mocking:** Forgetting to mock a dependency, leading to `NullReferenceException` or unexpected behavior.
-    * **Testing Implementation Details:** Writing tests that rely too heavily on the internal workings of a class, making them brittle to refactoring. Focus on testing the observable behavior and outputs.
-    * **Over-verification:** Using `mock.Verify()` excessively for non-critical interactions can make tests verbose and fragile. Verify only essential collaborations.
+### Writing New Unit Tests
+
+1.  **Identify the SUT:** Determine the specific class or method in `api-server` that needs testing.
+2.  **Create Test File:** Following the directory structure and naming conventions, create or locate the appropriate test file in `/Unit/`.
+3.  **Design for Testability:** Ensure the SUT adheres to principles in `../../../Docs/Standards/CodingStandards.md` (e.g., uses DI, avoids statics for dependencies). Refactor the SUT if necessary.
+4.  **Follow `UnitTestCaseDevelopment.md`:** Apply the AAA pattern, mock all dependencies using Moq, use AutoFixture for data, and write clear assertions with FluentAssertions.
+5.  **Categorize:** Add `[Trait("Category", "Unit")]`.
+
+### Running Unit Tests
+
+* **Run all unit tests:**
+  ```bash
+  dotnet test --filter "Category=Unit"
+  ```
+* **Run specific unit tests:** Use more specific filters, for example:
+  ```bash
+  dotnet test --filter "FullyQualifiedName~MyNamespace.MyClassTests"
+  dotnet test --filter "DisplayName~MyMethod_MyScenario_MyExpectedOutcome"
+  ```
+* Ensure all unit tests pass locally before committing code, as per the workflow defined in `../../../Docs/Standards/TestingStandards.md`.
 
 ## 6. Dependencies
 
-* **Internal Code Dependencies:**
-    * The specific `api-server` class being tested.
-    * Interfaces of dependencies being mocked (from `api-server`).
-    * [`/api-server.Tests/TestData/Builders/`](../TestData/Builders/README.md) - Used for data setup.
-    * [`/api-server.Tests/Framework/Mocks/Factories/`](../Mocks/Factories/README.md) - Optionally used for mock creation.
-* **External Library Dependencies:**
-    * `Xunit` - Test framework.
-    * `FluentAssertions` - Assertion library.
-    * `Moq` - Mocking library.
-    * Potentially `AutoFixture` (if used for test data).
-* **Dependents (Impact of Changes):** CI/CD workflows consume the results. Refactoring the code under test will likely require corresponding updates to these unit tests.
+### Internal Dependencies
+
+* **`api-server` Project:** This is the primary dependency, as its components are the Systems Under Test (SUTs).
+* **`../Framework/Helpers/GetRandom.cs`:** May be used for simple data generation needs, though AutoFixture attributes (`[AutoData]`, `[Frozen]`) are often preferred for parameter-level data.
+* **This directory also contains unit tests for components within `../Framework/` itself** (e.g., `../Unit/Framework/Attributes/`, `../Unit/Framework/Helpers/`).
+
+### Key External Libraries
+
+* **`xUnit.net`**: The test framework.
+* **`Moq`**: The mocking library.
+* **`FluentAssertions`**: The assertion library.
+* **`AutoFixture`** (including `AutoFixture.Xunit2` and `AutoFixture.AutoMoq`): For test data generation and integration with Moq.
 
 ## 7. Rationale & Key Historical Context
 
-* Unit tests provide the fastest feedback loop during development and are essential for verifying the correctness of individual components and preventing regressions at a granular level. They form the base of the test pyramid.
+Unit tests form the largest and most critical layer of our automated testing pyramid. Their speed and precision are essential for:
+* **Rapid Feedback:** Allowing developers to quickly verify changes and catch regressions locally.
+* **Design Guidance:** Writing unit tests often drives better, more decoupled designs in the production code.
+* **Documentation:** Well-written unit tests can serve as executable documentation for the behavior of individual components.
+* **Confidence for Refactoring:** A strong unit test suite allows for confident refactoring of production code, knowing that breakages in core logic will be caught.
+
+The emphasis on strict isolation and mocking ensures that failures in unit tests point directly to issues within the SUT itself, not its dependencies.
 
 ## 8. Known Issues & TODOs
 
-* Need to achieve target code coverage (>=90%) across all non-trivial components in `api-server`.
-* Ensure consistent application of mocking strategies and AAA pattern across all unit tests.
+* **Coverage Gaps:** While the goal is >=90% coverage, there may be existing areas in `api-server` with lower unit test coverage. These should be identified and addressed progressively, especially for critical business logic. (Tracked via tasks referencing the `../../../Docs/Templates/GHTestCoverageTask.md` template).
+* **Complex SUTs:** Some older or more complex components in `api-server` might still be challenging to unit test effectively. Ongoing refactoring for testability, guided by `../../../Docs/Standards/CodingStandards.md`, is encouraged.
+* **Review AI-Generated Tests:** As AI tools assist in test generation, ensure their output is rigorously reviewed against the `../../../Docs/Standards/UnitTestCaseDevelopment.md` for quality, correctness, and adherence to best practices.
+
+---
