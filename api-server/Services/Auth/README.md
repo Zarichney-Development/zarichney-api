@@ -43,6 +43,7 @@
     * `AuthenticationMiddleware`: Middleware to handle authentication via `X-Api-Key` header or JWT. Respects endpoints marked with the `[AllowAnonymous]` attribute and skips authentication for them. [cite: api-server/Services/Auth/AuthenticationMiddleware.cs]
     * `RefreshTokenCleanupService`: Background service to remove expired/used tokens. [cite: api-server/Auth/RefreshTokenCleanupService.cs]
     * `MockAuthHandler`: Authentication handler for non-Production environments when Identity DB is unavailable. Creates mock authenticated users with configurable roles. [cite: api-server/Services/Auth/MockAuthHandler.cs]
+    * `RoleInitializer`: Hosted service that initializes application roles and seeds a default administrator user in non-Production environments when a real database is available. [cite: api-server/Auth/RoleInitializer.cs]
 * **Core Logic Flow (Login):**
     1.  `AuthController.Login` receives email/password. [cite: api-server/Controllers/AuthController.cs]
     2.  Delegates to `LoginCommandHandler` (MediatR). [cite: api-server/Auth/Commands/LoginCommand.cs]

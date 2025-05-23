@@ -205,6 +205,30 @@ For full functionality, we recommend setting up a local PostgreSQL database:
    ./ApplyMigrations.ps1 # Windows
    ```
 
+5. **Default Administrator User Seeding (New in Task GH-4)**:
+   When the application starts in non-Production environments with a configured Identity Database, it automatically seeds a default administrator user for convenience. This feature:
+   
+   * **Automatically creates** an admin user with credentials from configuration
+   * **Assigns the "Admin" role** to the user for full system access
+   * **Is idempotent** - safe to run multiple times without creating duplicates
+   * **Only runs in non-Production environments** (Development, Testing, etc.)
+   
+   **Configuration** in `appsettings.Development.json`:
+   ```json
+   "DefaultAdminUser": {
+     "Email": "admin@example.com",
+     "UserName": "admin",
+     "Password": "Password123!"
+   }
+   ```
+   
+   **Usage**:
+   * The admin user is created automatically when the application starts
+   * Use the configured credentials to log in through the `/api/auth/login` endpoint
+   * The user will have full administrative access to all protected endpoints
+   
+   **Important**: Ensure the password meets ASP.NET Core Identity requirements (uppercase, lowercase, digit, special character, minimum 6 characters).
+
 ## 7. Next Steps
 
 * Review [`/api-server/Services/Status/README.md`](../../api-server/Services/Status/README.md) for details on the Status Service implementation.

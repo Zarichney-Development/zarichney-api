@@ -67,14 +67,23 @@ When you change your C# entities or `DbContext`:
 
 Use your application's API endpoints or internal services that leverage `UserManager<ApplicationUser>` and `RoleManager<IdentityRole>`.
 
-### Creating Admin User Example
+### Automatic Admin User Seeding (New in Task GH-4)
+
+In non-Production environments with a configured Identity Database, a default administrator user is automatically seeded when the application starts:
+
+* **Automatic Process**: The `RoleInitializer` service creates an admin user based on configuration
+* **Configuration**: Set in `appsettings.Development.json` under `DefaultAdminUser`
+* **Idempotent**: Safe to run multiple times without creating duplicates
+* **Environment-Specific**: Only runs in Development, Testing, etc. (never in Production)
+
+For manual admin user creation, use the following pattern:
 
 ```csharp
 // In a service or controller:
 public async Task CreateAdminUser(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
 {
     // Create admin role if it doesn't exist
-    string adminRole = "Admin";
+    string adminRole = "admin";
     if (!await roleManager.RoleExistsAsync(adminRole))
     {
         await roleManager.CreateAsync(new IdentityRole(adminRole));
