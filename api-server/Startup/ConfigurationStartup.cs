@@ -43,6 +43,8 @@ public static class ConfigurationStartup
   public static void ConfigureLogging(WebApplicationBuilder builder)
   {
     var logger = new LoggerConfiguration()
+      .MinimumLevel.Warning()
+      .ReadFrom.Configuration(builder.Configuration)
       .WriteTo.Console(
         outputTemplate:
         "[{Timestamp:HH:mm:ss} {Level:u3}] {SessionId} {ScopeId} {Message:lj}{NewLine}{Exception}"
