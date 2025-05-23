@@ -14,6 +14,7 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.14" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+        <PackageReference Include="Pose" Version="1.2.1" />
         <PackageReference Include="Serilog.Sinks.XUnit" Version="3.0.19" />
         <PackageReference Include="Serilog.Sinks.XUnit.Injectable" Version="3.0.64" />
         <PackageReference Include="xunit" Version="2.9.3" />

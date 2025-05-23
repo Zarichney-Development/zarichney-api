@@ -1,6 +1,7 @@
 using System.Reflection;
 using Zarichney.Config;
 using Zarichney.Services.AI;
+using Zarichney.Services.Auth;
 using Zarichney.Services.Email;
 using Zarichney.Services.GitHub;
 using Zarichney.Services.Payment;
@@ -39,6 +40,15 @@ public interface IStatusService
   /// <param name="service">The feature to check.</param>
   /// <returns>True if the feature is properly configured and available; otherwise, false.</returns>
   bool IsFeatureAvailable(ExternalServices service);
+
+  /// <summary>
+  /// Sets the availability status of a service directly.
+  /// This is used for services like the Identity database that are checked at startup.
+  /// </summary>
+  /// <param name="service">The service to set the status for.</param>
+  /// <param name="isAvailable">Whether the service is available or not.</param>
+  /// <param name="missingConfigurations">Optional list of missing configuration items that make the service unavailable.</param>
+  void SetServiceAvailability(ExternalServices service, bool isAvailable, List<string>? missingConfigurations = null);
 }
 
 /// <summary>
@@ -65,6 +75,7 @@ public class StatusService : IStatusService
   private DateTime _cacheExpiration = DateTime.MinValue;
   private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(5);
   private readonly SemaphoreSlim _cacheLock = new(1, 1);
+  private bool _hasPerformedFullScan = false;
 
   /// <summary>
   /// Initializes a new instance of the <see cref="StatusService"/> class.
@@ -160,18 +171,63 @@ public class StatusService : IStatusService
       CheckConfigurationItem("Stripe Webhook Secret", _paymentConfig.StripeWebhookSecret,
         nameof(_paymentConfig.StripeWebhookSecret)),
 
-      // Database Connection
-      CheckConfigurationItem("Database Connection", _configuration["ConnectionStrings:IdentityConnection"],
-        "IdentityConnection")
+      // Identity Database Connection
+      CheckConfigurationItem("Identity Database Connection", _configuration[$"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}"],
+        UserDbContext.UserDatabaseConnectionName)
     };
 
     return Task.FromResult(statusList);
   }
 
+  /// <inheritdoc />
+  public void SetServiceAvailability(ExternalServices service, bool isAvailable, List<string>? missingConfigurations = null)
+  {
+    // Acquire lock first to prevent race conditions with other cache updates
+    _cacheLock.Wait();
+    try
+    {
+      // Initialize the cache if needed
+      if (_cachedStatus == null)
+      {
+        _cachedStatus = new Dictionary<ExternalServices, ServiceStatusInfo>();
+        _featureServiceMap = new Dictionary<ExternalServices, ExternalServices[]>();
+      }
+
+      // Create or update the feature mapping (we need it for consistency)
+      if (!_featureServiceMap!.ContainsKey(service))
+      {
+        _featureServiceMap[service] = [service];
+      }
+
+      // Create or update the service status
+      _cachedStatus[service] = new ServiceStatusInfo(
+        serviceName: service,
+        IsAvailable: isAvailable,
+        MissingConfigurations: missingConfigurations ?? new List<string>()
+      );
+
+      // Update the cache expiration
+      _cacheExpiration = DateTime.UtcNow.Add(_cacheDuration);
+
+      _logger.LogInformation(
+        "Service {Service} availability set to {Available} {Reason}",
+        service,
+        isAvailable ? "Available" : "Unavailable",
+        !isAvailable && missingConfigurations?.Any() == true
+          ? $"due to missing: {string.Join(", ", missingConfigurations)}"
+          : string.Empty
+      );
+    }
+    finally
+    {
+      _cacheLock.Release();
+    }
+  }
+
   public async Task<Dictionary<ExternalServices, ServiceStatusInfo>> GetServiceStatusAsync()
   {
-    // Check if cache is valid
-    if (_cachedStatus != null && DateTime.UtcNow < _cacheExpiration)
+    // Check if cache is valid, not expired, AND we've performed a full scan
+    if (_cachedStatus != null && DateTime.UtcNow < _cacheExpiration && _hasPerformedFullScan)
     {
       return _cachedStatus;
     }
@@ -181,16 +237,16 @@ public class StatusService : IStatusService
     try
     {
       // Double-check cache after acquiring lock
-      if (_cachedStatus != null && DateTime.UtcNow < _cacheExpiration)
+      if (_cachedStatus != null && DateTime.UtcNow < _cacheExpiration && _hasPerformedFullScan)
       {
         return _cachedStatus;
       }
 
       _logger.LogInformation("Refreshing service configuration status cache");
 
-      // Create dictionaries to store results
-      var results = new Dictionary<ExternalServices, ServiceStatusInfo>();
-      var featureMap = new Dictionary<ExternalServices, List<ExternalServices>>();
+      // Initialize or preserve existing cache
+      var results = _cachedStatus ?? new Dictionary<ExternalServices, ServiceStatusInfo>();
+      var featureMap = _featureServiceMap ?? new Dictionary<ExternalServices, ExternalServices[]>();
 
       // Get all types implementing IConfig (excluding interfaces/abstract classes)
       var configTypes = _assemblyToScan // Use the injected assembly
@@ -223,6 +279,12 @@ public class StatusService : IStatusService
         // Group configurations by feature from the ExternalServicesEnum
         foreach (var (feature, properties) in featureAssociations)
         {
+          // Skip the PostgresIdentityDb as it's handled separately by the SetServiceAvailability method
+          if (feature == ExternalServices.PostgresIdentityDb)
+          {
+            continue;
+          }
+
           // Use the enum name as the service name
 
           // Determine if this feature's required configurations are available
@@ -254,15 +316,17 @@ public class StatusService : IStatusService
           }
 
           // Update feature mapping
-          if (!featureMap.TryGetValue(feature, out var services))
+          if (!featureMap.TryGetValue(feature, out var servicesArray))
           {
-            services = [];
-            featureMap[feature] = services;
+            // If no entry exists yet, create a new array with just this feature
+            featureMap[feature] = new[] { feature };
           }
-
-          if (!services.Contains(feature))
+          else if (!servicesArray.Contains(feature))
           {
-            services.Add(feature);
+            // If an entry exists but doesn't include this feature, add it
+            var servicesList = servicesArray.ToList();
+            servicesList.Add(feature);
+            featureMap[feature] = servicesList.ToArray();
           }
         }
       }
@@ -276,6 +340,8 @@ public class StatusService : IStatusService
       // Update cache
       _cachedStatus = results;
       _cacheExpiration = DateTime.UtcNow.Add(_cacheDuration);
+      _hasPerformedFullScan = true; // Mark that we've done a full configuration scan
+
 
       return results;
     }
@@ -292,6 +358,13 @@ public class StatusService : IStatusService
     {
       EnsureCacheIsValid();
 
+      // Direct lookup for the service status (this covers PostgresIdentityDb and others set directly)
+      if (_cachedStatus != null && _cachedStatus.TryGetValue(externalService, out var directStatus))
+      {
+        return directStatus;
+      }
+
+      // For indirectly mapped services
       if (_featureServiceMap == null || !_featureServiceMap.TryGetValue(externalService, out var serviceNames) ||
           _cachedStatus == null)
       {

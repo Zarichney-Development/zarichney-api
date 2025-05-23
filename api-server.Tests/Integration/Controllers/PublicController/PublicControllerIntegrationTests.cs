@@ -26,6 +26,7 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture,
   /// </summary>
   [Fact]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
+  [LogTestStartEnd]
   public async Task GetHealth_WhenCalled_ReturnsOkStatus()
   {
     // Arrange
@@ -43,6 +44,7 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture,
   /// </summary>
   [Fact]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
+  [LogTestStartEnd]
   public async Task
     GetServiceStatus_WhenCalled_ReturnsServiceStatusInfo() // Renamed from GetStatus_WhenCalled_ReturnsServiceStatusInfo
   {

@@ -47,6 +47,7 @@ public class PublicControllerTests(ApiClientFixture apiClientFixture, ITestOutpu
   public async Task GetConfigurationStatus_WhenCalled_ReturnsAllExpectedConfigItems()
   {
     // Arrange
+    // TODO: make this less brittle by strongly tying it to whats expected from the enum ExternalServices
     var expectedConfigItemNames = new List<string>
     {
       "OpenAI API Key",
@@ -58,7 +59,7 @@ public class PublicControllerTests(ApiClientFixture apiClientFixture, ITestOutpu
       "GitHub Access Token",
       "Stripe Secret Key",
       "Stripe Webhook Secret",
-      "Database Connection"
+      "Identity Database Connection"
     };
 
     // Act

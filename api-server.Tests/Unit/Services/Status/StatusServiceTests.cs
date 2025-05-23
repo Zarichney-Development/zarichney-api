@@ -38,8 +38,8 @@ public class StatusServiceTests
     // Initialize configs with missing values
     InitializeConfigs(StatusService.PlaceholderMessage);
 
-    // Mock configuration to return connection string
-    _mockConfiguration.Setup(c => c["ConnectionStrings:IdentityConnection"]).Returns(ValidConnectionString);
+    // Mock configuration to return connection string using indexer rather than the extension method
+    _mockConfiguration.Setup(c => c[$"ConnectionStrings:{Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName}"]).Returns(ValidConnectionString);
 
     // Setup mock assembly to return test config types
     _mockAssembly.Setup(asm => asm.GetTypes()).Returns([typeof(TestService1Config), typeof(TestService2Config)]);
@@ -90,16 +90,16 @@ public class StatusServiceTests
   public async Task GetConfigurationStatus_WhenDatabaseConnectionIsMissing_ReturnsDatabaseItemAsNotConfigured()
   {
     // Arrange
-    _mockConfiguration.Setup(c => c["ConnectionStrings:IdentityConnection"]).Returns((string?)null);
+    _mockConfiguration.Setup(c => c[$"ConnectionStrings:{Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName}"]).Returns((string?)null);
 
     // Act
     var result = await _statusService.GetConfigurationStatusAsync();
 
     // Assert
     result.Should().Contain(status =>
-        status.Name == "Database Connection" &&
+        status.Name == "Identity Database Connection" &&
         status.Status == "Missing/Invalid" &&
-        status.Details == "IdentityConnection is missing or placeholder");
+        status.Details == $"{Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName} is missing or placeholder");
   }
 
   [Trait("Category", "Unit")]
@@ -303,6 +303,60 @@ public class StatusServiceTests
     var result = _statusService.IsFeatureAvailable(ExternalServices.MsGraph);
 
     // Assert
+    result.Should().BeFalse();
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public void SetServiceAvailability_ForIdentityDb_ShouldUpdateStatus()
+  {
+    // Arrange
+    var missingConfigs = new List<string> { $"ConnectionStrings:{Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName}" };
+
+    // Act
+    _statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, false, missingConfigs);
+    var result = _statusService.GetFeatureStatus(ExternalServices.PostgresIdentityDb);
+
+    // Assert
+    result.Should().NotBeNull();
+    result!.IsAvailable.Should().BeFalse();
+    result.MissingConfigurations.Should().ContainSingle()
+      .Which.Should().Be("ConnectionStrings:UserDatabase");
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public void SetServiceAvailability_ForIdentityDb_ShouldUpdateAvailabilityEvenAfterGetServiceStatusAsync()
+  {
+    // Arrange - Mark the service as unavailable
+    _statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, false,
+      new List<string> { "ConnectionStrings:UserDatabase" });
+
+    // Act - Call GetServiceStatusAsync() which shouldn't override our setting
+    _ = _statusService.GetServiceStatusAsync().GetAwaiter().GetResult();
+    var dbStatus = _statusService.GetFeatureStatus(ExternalServices.PostgresIdentityDb);
+
+    // Assert - Service should still be unavailable
+    dbStatus.Should().NotBeNull();
+    dbStatus!.IsAvailable.Should().BeFalse();
+  }
+
+  [Trait("Category", "Unit")]
+  [Fact]
+  public void IsFeatureAvailable_ForIdentityDb_ShouldReturnCorrectValue()
+  {
+    // Arrange
+    _statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, true);
+
+    // Act
+    var result = _statusService.IsFeatureAvailable(ExternalServices.PostgresIdentityDb);
+
+    // Assert
+    result.Should().BeTrue();
+
+    // Change the status and verify the result changes
+    _statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, false);
+    result = _statusService.IsFeatureAvailable(ExternalServices.PostgresIdentityDb);
     result.Should().BeFalse();
   }
 
