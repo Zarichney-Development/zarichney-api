@@ -75,6 +75,7 @@ public class StatusService : IStatusService
   private DateTime _cacheExpiration = DateTime.MinValue;
   private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(5);
   private readonly SemaphoreSlim _cacheLock = new(1, 1);
+  private bool _hasPerformedFullScan = false;
 
   /// <summary>
   /// Initializes a new instance of the <see cref="StatusService"/> class.
@@ -225,8 +226,8 @@ public class StatusService : IStatusService
 
   public async Task<Dictionary<ExternalServices, ServiceStatusInfo>> GetServiceStatusAsync()
   {
-    // Check if cache is valid
-    if (_cachedStatus != null && DateTime.UtcNow < _cacheExpiration)
+    // Check if cache is valid, not expired, AND we've performed a full scan
+    if (_cachedStatus != null && DateTime.UtcNow < _cacheExpiration && _hasPerformedFullScan)
     {
       return _cachedStatus;
     }
@@ -236,7 +237,7 @@ public class StatusService : IStatusService
     try
     {
       // Double-check cache after acquiring lock
-      if (_cachedStatus != null && DateTime.UtcNow < _cacheExpiration)
+      if (_cachedStatus != null && DateTime.UtcNow < _cacheExpiration && _hasPerformedFullScan)
       {
         return _cachedStatus;
       }
@@ -339,6 +340,8 @@ public class StatusService : IStatusService
       // Update cache
       _cachedStatus = results;
       _cacheExpiration = DateTime.UtcNow.Add(_cacheDuration);
+      _hasPerformedFullScan = true; // Mark that we've done a full configuration scan
+
 
       return results;
     }

@@ -149,9 +149,14 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
       services.AddSingleton(testOutputSink);
 
       var xunitLogger = new LoggerConfiguration()
-        .MinimumLevel.Warning()
+        .MinimumLevel.Information()
         .Enrich.FromLogContext()
         .WriteTo.InjectableTestOutput(testOutputSink)
+        // Filter out noisy Microsoft logs during startup
+        .Filter.ByExcluding(logEvent => 
+          logEvent.Properties.ContainsKey("SourceContext") &&
+          logEvent.Properties["SourceContext"].ToString().Contains("Microsoft") &&
+          logEvent.Level < Serilog.Events.LogEventLevel.Warning)
         .CreateLogger();
 
       Log.Logger = xunitLogger;

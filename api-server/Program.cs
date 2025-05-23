@@ -21,7 +21,12 @@ public class Program
     // Update the StatusService with the Identity DB availability
     if (app.Services.GetService<IStatusService>() is StatusService statusService)
     {
-      statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, ValidateStartup.IsIdentityDbAvailable);
+      // Include missing configuration details when Identity DB is unavailable
+      var missingConfigurations = ValidateStartup.IsIdentityDbAvailable 
+        ? null 
+        : new List<string> { $"ConnectionStrings:{Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName}" };
+        
+      statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, ValidateStartup.IsIdentityDbAvailable, missingConfigurations);
     }
     
     await ConfigureApplication(app);

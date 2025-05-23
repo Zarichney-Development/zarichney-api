@@ -24,6 +24,7 @@ public static class TestCategories
   // Categories
   public const string Unit = "Unit";
   public const string Integration = "Integration";
+  public const string SlowIntegration = "SlowIntegration"; // Tests that take a long time to complete (>30 seconds)
   public const string E2E = "E2E";
   public const string Smoke = "Smoke";
   public const string Performance = "Performance";

@@ -42,5 +42,6 @@ This directory contains subdirectories responsible for different aspects of the 
 
 ## 6. Changelog
 
+* **2025-05-22:** Added LogTestStartEndAttribute for individual test method timing, optimized background service cleanup intervals for tests, and improved Serilog filtering to reduce startup noise. Resolved 45-second test suite stall issue by configuring SessionConfig and RefreshTokenCleanupService intervals appropriately for test environments. (Claude)
 * **2025-04-18:** Initial creation - Grouped Client, Configuration, Fixtures, Helpers, Mocks under Framework. Defined purpose and scope. (Gemini)
 
