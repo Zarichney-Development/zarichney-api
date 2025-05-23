@@ -1,6 +1,6 @@
 # Module/Directory: /Auth
 
-**Last Updated:** 2025-04-15
+**Last Updated:** 2025-05-22
 
 > **Parent:** [`Server`](../README.md)
 
@@ -30,6 +30,7 @@
     * **JWT Bearer Tokens:** Standard mechanism using short-lived access tokens. [cite: api-server/Auth/AuthConfigurations.cs]
     * **Refresh Tokens:** Long-lived tokens stored in the database, used to obtain new access tokens. [cite: api-server/Auth/Models/RefreshToken.cs, api-server/Auth/AuthService.cs]
     * **API Keys:** For server-to-server or non-interactive clients via `X-Api-Key` header. [cite: api-server/Services/Auth/AuthenticationMiddleware.cs, api-server/Auth/ApiKeyService.cs]
+    * **Mock Authentication:** Configurable fallback authentication system for non-Production environments when Identity Database is unavailable. Requires explicit enabling via `MockAuth:Enabled=true` configuration. Provides authenticated access for development and testing with configurable mock user roles. Supports dynamic role assignment via `X-Mock-Roles` header in Development environment. [cite: api-server/Services/Auth/MockAuthHandler.cs, api-server/Startup/AuthenticationStartup.cs, api-server/Config/ConfigModels.cs]
 * **Token Transport:** JWT access tokens and refresh tokens are primarily handled via secure, HttpOnly cookies (`AuthAccessToken`, `AuthRefreshToken`) managed by `CookieAuthManager`. [cite: api-server/Auth/CookieAuthManager.cs, Docs/AuthRefactoring.md]
 * **Design Pattern:** CQRS (Command Query Responsibility Segregation) implemented using MediatR. Authentication actions are handled by specific command handlers in the `Commands` directory. [cite: api-server/Auth/Commands/, Docs/AuthRefactoring.md]
 * **Key Classes:**
@@ -41,6 +42,7 @@
     * `UserDbContext`: EF Core database context for Identity entities. [cite: api-server/Auth/UserDbContext.cs]
     * `AuthenticationMiddleware`: Middleware to handle authentication via `X-Api-Key` header or JWT. Respects endpoints marked with the `[AllowAnonymous]` attribute and skips authentication for them. [cite: api-server/Services/Auth/AuthenticationMiddleware.cs]
     * `RefreshTokenCleanupService`: Background service to remove expired/used tokens. [cite: api-server/Auth/RefreshTokenCleanupService.cs]
+    * `MockAuthHandler`: Authentication handler for non-Production environments when Identity DB is unavailable. Creates mock authenticated users with configurable roles. [cite: api-server/Services/Auth/MockAuthHandler.cs]
 * **Core Logic Flow (Login):**
     1.  `AuthController.Login` receives email/password. [cite: api-server/Controllers/AuthController.cs]
     2.  Delegates to `LoginCommandHandler` (MediatR). [cite: api-server/Auth/Commands/LoginCommand.cs]
@@ -198,7 +200,7 @@ graph TD
 
 ## 4. Local Conventions & Constraints (Beyond Global Standards)
 
-* **Configuration:** Requires `ConnectionStrings:IdentityConnection` and `JwtSettings` section in configuration (`appsettings.json`, user secrets, environment variables, AWS SSM/Secrets Manager). [cite: api-server/Auth/AuthConfigurations.cs]
+* **Configuration:** Requires `ConnectionStrings:UserDatabase` and `JwtSettings` section in configuration (`appsettings.json`, user secrets, environment variables, AWS SSM/Secrets Manager). Optional `MockAuth` section for configuring mock authentication when Identity Database is unavailable in non-Production environments. [cite: api-server/Startup/AuthenticationStartup.cs, api-server/Config/ConfigModels.cs]
 * **Directory Structure:** Commands in `Commands/`, DB context/entities/DTOs in `Models/`, Migrations in `Migrations/`.
 * **Technology Choices:** ASP.NET Core Identity, EF Core with PostgreSQL (`Npgsql.EntityFrameworkCore.PostgreSQL`), MediatR for CQRS, JWT for access tokens.
 * **Security Notes:** 
@@ -214,7 +216,7 @@ graph TD
 
 ## 5. How to Work With This Code
 
-* **Setup:** Requires a running PostgreSQL instance. Configure `ConnectionStrings:IdentityConnection` and `JwtSettings` (especially `SecretKey`) via user secrets or environment variables for local development. For quick development starts, you can omit the `JwtSettings:SecretKey` and the system will generate a temporary key, but this is not recommended for anything beyond local testing. Run EF Core migrations (`dotnet ef database update --context UserDbContext`). [cite: Docs/PostgreSqlMaintenance.md]
+* **Setup:** Requires a running PostgreSQL instance. Configure `ConnectionStrings:UserDatabase` and `JwtSettings` (especially `SecretKey`) via user secrets or environment variables for local development. For quick development starts, you can omit the `JwtSettings:SecretKey` and the system will generate a temporary key, but this is not recommended for anything beyond local testing. Run EF Core migrations (`dotnet ef database update --context UserDbContext`). For mock authentication when database is unavailable, create `appsettings.Development.json` with MockAuth configuration: `{"MockAuth": {"Enabled": true, "DefaultRoles": ["User", "Admin"], "DefaultUsername": "MockUser", "DefaultEmail": "mock@example.com", "DefaultUserId": "mock-user-id"}}`. [cite: Docs/PostgreSqlMaintenance.md]
 * **Testing:** Requires mocking `UserManager`, `RoleManager`, `IAuthService`, `IEmailService`, `UserDbContext` (or using an in-memory provider/test database). Test command handlers individually. Integration tests needed for full flows (register -> confirm -> login -> refresh). Test scripts available in `Scripts/` (`test-auth-endpoints.*`). [cite: api-server/Scripts/test-auth-endpoints.ps1, api-server/Scripts/test-auth-endpoints.sh, api-server/Scripts/TestAuthEndpoints.cs]
 * **Common Pitfalls / Gotchas:** JWT secret mismatch between generation and validation (especially when using temporary keys in multi-instance environments). Incorrect cookie settings (`HttpOnly`, `Secure`, `SameSite`). Database connection issues. Migration mismatches. Handling token expiry and refresh logic correctly on the client-side (triggering `/refresh` on 401). Ensuring background cleanup service (`RefreshTokenCleanupService`) is running. Forgetting to include `credentials: 'include'` in frontend fetch calls.
 

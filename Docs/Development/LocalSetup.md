@@ -1,6 +1,6 @@
 # Local Development Setup & Configuration
 
-**Last Updated:** 2025-05-19
+**Last Updated:** 2025-05-22
 
 > **Parent:** [`README.md`](./README.md)
 
@@ -104,6 +104,25 @@ The Identity Database is required for authentication and user management. The ap
   * Other endpoints that don't depend on authentication will function normally.
 
 This allows developers to run and test parts of the application even without a properly configured Identity Database.
+
+**Mock Authentication Mode (New in Task GH-4):**
+When the Identity Database is unavailable in non-Production environments, the application automatically enables a mock authentication system that:
+* Allows access to `[Authorize]` protected endpoints as an authenticated user
+* Creates a configurable mock user with default roles
+* Supports dynamic role assignment via HTTP headers in Development environment
+* Configuration in `appsettings.Development.json`:
+  ```json
+  "MockAuth": {
+    "DefaultRoles": ["User", "Admin"],
+    "DefaultUsername": "MockUser",
+    "DefaultEmail": "mock@example.com",
+    "DefaultUserId": "mock-user-id"
+  }
+  ```
+* Optional: In Development environment, use the `X-Mock-Roles` header to dynamically specify roles for testing:
+  ```bash
+  curl -H "X-Mock-Roles: Admin,Editor" http://localhost:5000/api/admin/endpoint
+  ```
 
 Example `/status` response when Identity Database is unavailable:
 ```json

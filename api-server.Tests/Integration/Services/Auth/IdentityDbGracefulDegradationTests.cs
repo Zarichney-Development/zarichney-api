@@ -31,7 +31,7 @@ namespace Zarichney.Tests.Integration.Services.Auth
     {
       private readonly string _environmentName;
 
-      public IdentityDbMissingWebApplicationFactory(string environmentName = "Development")
+      public IdentityDbMissingWebApplicationFactory(string environmentName = "Testing")
       {
         _environmentName = environmentName;
       }
@@ -50,7 +50,9 @@ namespace Zarichney.Tests.Integration.Services.Auth
           var inMemoryConfig = new Dictionary<string, string?>
           {
             // Set connection string to null to simulate it being missing
-            { $"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}", null }
+            { $"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}", null },
+            // Explicitly disable mock authentication to test graceful degradation of real Identity services
+            { "MockAuth:Enabled", "false" }
           };
 
           // Add memory configuration with higher precedence than other sources
@@ -74,12 +76,12 @@ namespace Zarichney.Tests.Integration.Services.Auth
     public IdentityDbGracefulDegradationTests(ITestOutputHelper testOutputHelper)
     {
       _testOutputHelper = testOutputHelper;
-      _developmentFactoryWithNoDb = new IdentityDbMissingWebApplicationFactory("Development");
+      _developmentFactoryWithNoDb = new IdentityDbMissingWebApplicationFactory("Testing");
       _productionFactoryWithNoDb = new IdentityDbMissingWebApplicationFactory("Production");
     }
 
     /// <summary>
-    /// Verifies that the application can start in Development environment
+    /// Verifies that the application can start in Testing environment
     /// even if the Identity Database connection string is missing.
     /// </summary>
     [Fact]
