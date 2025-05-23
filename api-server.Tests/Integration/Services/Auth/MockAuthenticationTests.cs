@@ -32,11 +32,11 @@ public class MockAuthenticationTests
   {
     // This test verifies that the ShouldUseMockAuthentication logic works correctly
     // by testing the AuthenticationStartup logic directly rather than trying to start the full app
-    
+
     // Arrange - Development environment with missing DB connection
     var mockEnvironment = new Mock<IWebHostEnvironment>();
     mockEnvironment.Setup(x => x.EnvironmentName).Returns("Development");
-    
+
     var configuration = new ConfigurationBuilder()
       .AddInMemoryCollection(new Dictionary<string, string?>
       {
@@ -61,7 +61,7 @@ public class MockAuthenticationTests
     // Arrange - Production environment (should never use mock auth)
     var mockEnvironment = new Mock<IWebHostEnvironment>();
     mockEnvironment.Setup(x => x.EnvironmentName).Returns("Production");
-    
+
     var configuration = new ConfigurationBuilder()
       .AddInMemoryCollection(new Dictionary<string, string?>
       {
@@ -84,7 +84,7 @@ public class MockAuthenticationTests
     // Arrange - Development environment with valid DB connection
     var mockEnvironment = new Mock<IWebHostEnvironment>();
     mockEnvironment.Setup(x => x.EnvironmentName).Returns("Development");
-    
+
     var configuration = new ConfigurationBuilder()
       .AddInMemoryCollection(new Dictionary<string, string?>
       {
@@ -107,7 +107,7 @@ public class MockAuthenticationTests
     // Arrange - Staging environment (non-Production) with missing DB
     var mockEnvironment = new Mock<IWebHostEnvironment>();
     mockEnvironment.Setup(x => x.EnvironmentName).Returns("Staging");
-    
+
     var configuration = new ConfigurationBuilder()
       .AddInMemoryCollection(new Dictionary<string, string?>
       {
@@ -133,7 +133,7 @@ public class MockAuthenticationTests
     // Add base authentication services that AddMockAuthentication builds upon
     services.AddAuthentication();
     services.AddAuthorization();
-    
+
     var configuration = new ConfigurationBuilder()
       .AddInMemoryCollection(new Dictionary<string, string?>
       {
@@ -150,17 +150,17 @@ public class MockAuthenticationTests
 
     // Assert - Verify services are registered
     var serviceProvider = services.BuildServiceProvider();
-    
+
     var authenticationService = serviceProvider.GetService<Microsoft.AspNetCore.Authentication.IAuthenticationService>();
     authenticationService.Should().NotBeNull("because authentication service should be registered");
-    
+
     var authorizationService = serviceProvider.GetService<Microsoft.AspNetCore.Authorization.IAuthorizationService>();
     authorizationService.Should().NotBeNull("because authorization service should be registered");
-    
+
     // Verify MockAuthHandler is registered
     var mockAuthHandler = serviceProvider.GetService<MockAuthHandler>();
     mockAuthHandler.Should().NotBeNull("because MockAuthHandler should be registered");
-    
+
     var mockAuthConfig = serviceProvider.GetService<Microsoft.Extensions.Options.IOptions<Zarichney.Config.MockAuthConfig>>();
     mockAuthConfig.Should().NotBeNull("because MockAuthConfig should be registered");
     mockAuthConfig!.Value.DefaultRoles.Should().Contain("TestRole1");
@@ -183,17 +183,17 @@ public class MockAuthenticationTests
     // Arrange
     var mockEnvironment = new Mock<IWebHostEnvironment>();
     mockEnvironment.Setup(x => x.EnvironmentName).Returns(environment);
-    
+
     var configValues = new Dictionary<string, string?>
     {
       ["MockAuth:Enabled"] = mockAuthEnabled.ToString()
     };
-    
+
     if (connectionString != null)
     {
       configValues[$"ConnectionStrings:{Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName}"] = connectionString;
     }
-    
+
     var configuration = new ConfigurationBuilder()
       .AddInMemoryCollection(configValues)
       .Build();
@@ -203,7 +203,7 @@ public class MockAuthenticationTests
       mockEnvironment.Object, configuration);
 
     // Assert
-    result.Should().Be(expectedResult, 
+    result.Should().Be(expectedResult,
       because: $"Environment '{environment}' with connection '{connectionString ?? "null"}' and MockAuth:Enabled={mockAuthEnabled} should {(expectedResult ? "" : "not ")}use mock auth");
   }
 
@@ -223,9 +223,9 @@ public static class TestableAuthenticationStartup
   {
     // Use reflection to call the private method
     var type = typeof(AuthenticationStartup);
-    var method = type.GetMethod("ShouldUseMockAuthentication", 
+    var method = type.GetMethod("ShouldUseMockAuthentication",
       System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-    
+
     if (method == null)
       throw new InvalidOperationException("ShouldUseMockAuthentication method not found");
 
@@ -239,9 +239,9 @@ public static class TestableAuthenticationStartup
   {
     // Use reflection to call the private method
     var type = typeof(AuthenticationStartup);
-    var method = type.GetMethod("AddMockAuthentication", 
+    var method = type.GetMethod("AddMockAuthentication",
       System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-    
+
     if (method == null)
       throw new InvalidOperationException("AddMockAuthentication method not found");
 

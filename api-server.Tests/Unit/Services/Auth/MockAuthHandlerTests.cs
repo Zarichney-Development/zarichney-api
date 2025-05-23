@@ -83,7 +83,7 @@ public class MockAuthHandlerTests
     // Arrange
     var context = CreateHttpContext("Development");
     context.Request.Headers["X-Mock-Roles"] = "TestRole1,TestRole2";
-    
+
     var handler = CreateMockAuthHandler();
     await handler.InitializeAsync(new AuthenticationScheme("MockAuth", null, typeof(MockAuthHandler)), context);
 
@@ -110,7 +110,7 @@ public class MockAuthHandlerTests
     // Arrange
     var context = CreateHttpContext("Production");
     context.Request.Headers["X-Mock-Roles"] = "TestRole1,TestRole2";
-    
+
     var handler = CreateMockAuthHandler();
     await handler.InitializeAsync(new AuthenticationScheme("MockAuth", null, typeof(MockAuthHandler)), context);
 
@@ -137,7 +137,7 @@ public class MockAuthHandlerTests
     // Arrange
     var context = CreateHttpContext("Development");
     context.Request.Headers["X-Mock-Roles"] = "";
-    
+
     var handler = CreateMockAuthHandler();
     await handler.InitializeAsync(new AuthenticationScheme("MockAuth", null, typeof(MockAuthHandler)), context);
 
@@ -162,7 +162,7 @@ public class MockAuthHandlerTests
     // Arrange
     var context = CreateHttpContext("Development");
     context.Request.Headers["X-Mock-Roles"] = " Role1 , Role2 , ";
-    
+
     var handler = CreateMockAuthHandler();
     await handler.InitializeAsync(new AuthenticationScheme("MockAuth", null, typeof(MockAuthHandler)), context);
 
@@ -184,16 +184,16 @@ public class MockAuthHandlerTests
   private HttpContext CreateHttpContext(string environment = "Development")
   {
     var context = new DefaultHttpContext();
-    
+
     // Mock IWebHostEnvironment
     var mockWebHostEnvironment = new Mock<IWebHostEnvironment>();
     mockWebHostEnvironment.Setup(x => x.EnvironmentName).Returns(environment);
-    
+
     // Set up service provider
     var serviceCollection = new ServiceCollection();
     serviceCollection.AddSingleton(mockWebHostEnvironment.Object);
     context.RequestServices = serviceCollection.BuildServiceProvider();
-    
+
     return context;
   }
 

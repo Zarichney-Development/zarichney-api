@@ -33,8 +33,8 @@ public class AuthenticationStartupTests
   [InlineData("Staging", "", false, false)]
   [InlineData("Staging", null, false, false)]
   public void ShouldUseMockAuthentication_VariousScenarios_ReturnsExpectedResult(
-    string environment, 
-    string? connectionString, 
+    string environment,
+    string? connectionString,
     bool mockAuthEnabled,
     bool expectedResult)
   {
@@ -46,23 +46,23 @@ public class AuthenticationStartupTests
     {
       new("MockAuth:Enabled", mockAuthEnabled.ToString())
     };
-    
+
     if (connectionString != null)
     {
       configValues.Add(new KeyValuePair<string, string?>($"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}", connectionString));
     }
-    
+
     var configurationBuilder = new ConfigurationBuilder();
     configurationBuilder.AddInMemoryCollection(configValues);
     var configuration = configurationBuilder.Build();
 
     // Act
     var result = TestableAuthenticationStartup.TestShouldUseMockAuthentication(
-      mockWebHostEnvironment.Object, 
+      mockWebHostEnvironment.Object,
       configuration);
 
     // Assert
-    result.Should().Be(expectedResult, 
+    result.Should().Be(expectedResult,
       because: $"Environment '{environment}' with connection string '{connectionString ?? "null"}' and MockAuth:Enabled={mockAuthEnabled} should {(expectedResult ? "" : "not ")}use mock authentication");
   }
 
@@ -71,13 +71,13 @@ public class AuthenticationStartupTests
   {
     // Arrange
     var services = new ServiceCollection();
-    
+
     // Add logging and authentication services that mock auth depends on
     services.AddLogging();
     // Add base authentication services that AddMockAuthentication builds upon
     services.AddAuthentication();
     services.AddAuthorization();
-    
+
     var configurationBuilder = new ConfigurationBuilder();
     configurationBuilder.AddInMemoryCollection([
       new KeyValuePair<string, string?>("MockAuth:DefaultRoles:0", "User"),
@@ -93,7 +93,7 @@ public class AuthenticationStartupTests
 
     // Assert
     var serviceProvider = services.BuildServiceProvider();
-    
+
     // Verify authentication service is registered (from AddAuthentication())
     var authenticationService = serviceProvider.GetService<IAuthenticationService>();
     authenticationService.Should().NotBeNull("because authentication service should be registered");
@@ -129,9 +129,9 @@ public static class TestableAuthenticationStartup
   {
     // Use reflection to call the private method
     var type = typeof(AuthenticationStartup);
-    var method = type.GetMethod("ShouldUseMockAuthentication", 
+    var method = type.GetMethod("ShouldUseMockAuthentication",
       System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-    
+
     if (method == null)
       throw new InvalidOperationException("ShouldUseMockAuthentication method not found");
 
@@ -145,9 +145,9 @@ public static class TestableAuthenticationStartup
   {
     // Use reflection to call the private method
     var type = typeof(AuthenticationStartup);
-    var method = type.GetMethod("AddMockAuthentication", 
+    var method = type.GetMethod("AddMockAuthentication",
       System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-    
+
     if (method == null)
       throw new InvalidOperationException("AddMockAuthentication method not found");
 

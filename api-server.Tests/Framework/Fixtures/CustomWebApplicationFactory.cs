@@ -153,7 +153,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         .Enrich.FromLogContext()
         .WriteTo.InjectableTestOutput(testOutputSink)
         // Filter out noisy Microsoft logs during startup
-        .Filter.ByExcluding(logEvent => 
+        .Filter.ByExcluding(logEvent =>
           logEvent.Properties.ContainsKey("SourceContext") &&
           logEvent.Properties["SourceContext"].ToString().Contains("Microsoft") &&
           logEvent.Level < Serilog.Events.LogEventLevel.Warning)

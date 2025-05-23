@@ -25,10 +25,11 @@ These fixtures are crucial for creating efficient, reliable, and maintainable in
         * Overrides `ConfigureWebHost` to customize the test server's services (`ConfigureTestServices`) and configuration (`ConfigureAppConfiguration`). This is where dependencies are mocked/overridden (e.g., `TestAuthHandler` registration, mock factories from `../Mocks/Factories/`, and future WireMock.Net setup).
         * The detailed test configuration strategy is defined in Section 9 of the `../../TechnicalDesignDocument.md`.
     * **`DatabaseFixture.cs`:**
-        * Manages a PostgreSQL `Testcontainer`.
-        * Applies EF Core migrations (`_dbContext.Database.MigrateAsync()`) upon initialization to ensure the schema is current.
-        * Provides a connection string to the test database.
-        * Initializes `Respawner` for database cleaning and exposes `ResetDatabaseAsync()` to be called by tests.
+        * Manages a PostgreSQL `Testcontainer` using the `Testcontainers.PostgreSql` library.
+        * Automatically starts a `postgres:15` container and obtains a dynamic connection string.
+        * Applies EF Core migrations programmatically using the containerized database connection.
+        * Initializes `Respawner` for database cleaning between tests and exposes `ResetDatabaseAsync()` to ensure test isolation.
+        * Handles Docker availability gracefully - tests automatically skip if Docker is not running.
     * **`ApiClientFixture.cs`:**
         * Depends on `CustomWebApplicationFactory` to get an `HttpClient`.
         * Creates and configures instances of the Refit client `IZarichneyAPI`.
@@ -92,7 +93,7 @@ These fixtures are crucial for creating efficient, reliable, and maintainable in
 The primary rationale for the design of these fixtures, especially their use as `ICollectionFixture`s, is **performance and consistency**. Starting a web application host and a database container are expensive operations. Sharing these resources across the entire integration test suite drastically reduces overall execution time.
 
 * `CustomWebApplicationFactory` centralizes test server configuration and service overriding logic.
-* `DatabaseFixture` was created to provide a true, ephemeral PostgreSQL database for testing data persistence and complex queries, moving away from less reliable in-memory database providers. The inclusion of programmatic migration application and Respawn ensures each test can run against a known, clean schema.
+* `DatabaseFixture` was implemented using Testcontainers to provide a true, ephemeral PostgreSQL database for testing authentication logic and data persistence, moving away from less reliable in-memory database providers. The containerized approach ensures tests run against the same PostgreSQL version as production, while automatic migration application and Respawn integration guarantees each test runs against a known, clean schema.
 * `ApiClientFixture` ensures all tests use a consistently configured HTTP client and Refit interface for interacting with the SUT.
 
 This centralized fixture model is a cornerstone of the integration testing strategy outlined in the `../../TechnicalDesignDocument.md`.

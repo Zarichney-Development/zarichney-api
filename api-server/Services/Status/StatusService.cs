@@ -40,7 +40,7 @@ public interface IStatusService
   /// <param name="service">The feature to check.</param>
   /// <returns>True if the feature is properly configured and available; otherwise, false.</returns>
   bool IsFeatureAvailable(ExternalServices service);
-  
+
   /// <summary>
   /// Sets the availability status of a service directly.
   /// This is used for services like the Identity database that are checked at startup.
@@ -192,7 +192,7 @@ public class StatusService : IStatusService
         _cachedStatus = new Dictionary<ExternalServices, ServiceStatusInfo>();
         _featureServiceMap = new Dictionary<ExternalServices, ExternalServices[]>();
       }
-      
+
       // Create or update the feature mapping (we need it for consistency)
       if (!_featureServiceMap!.ContainsKey(service))
       {
@@ -205,16 +205,16 @@ public class StatusService : IStatusService
         IsAvailable: isAvailable,
         MissingConfigurations: missingConfigurations ?? new List<string>()
       );
-      
+
       // Update the cache expiration
       _cacheExpiration = DateTime.UtcNow.Add(_cacheDuration);
-      
+
       _logger.LogInformation(
-        "Service {Service} availability set to {Available} {Reason}", 
-        service, 
+        "Service {Service} availability set to {Available} {Reason}",
+        service,
         isAvailable ? "Available" : "Unavailable",
-        !isAvailable && missingConfigurations?.Any() == true 
-          ? $"due to missing: {string.Join(", ", missingConfigurations)}" 
+        !isAvailable && missingConfigurations?.Any() == true
+          ? $"due to missing: {string.Join(", ", missingConfigurations)}"
           : string.Empty
       );
     }
@@ -284,7 +284,7 @@ public class StatusService : IStatusService
           {
             continue;
           }
-          
+
           // Use the enum name as the service name
 
           // Determine if this feature's required configurations are available
@@ -363,7 +363,7 @@ public class StatusService : IStatusService
       {
         return directStatus;
       }
-      
+
       // For indirectly mapped services
       if (_featureServiceMap == null || !_featureServiceMap.TryGetValue(externalService, out var serviceNames) ||
           _cachedStatus == null)

@@ -72,7 +72,7 @@ namespace Zarichney.Tests.Integration.Services.Auth
     private readonly IdentityDbMissingWebApplicationFactory _productionFactoryWithNoDb;
 
     private readonly ITestOutputHelper _testOutputHelper;
-    
+
     public IdentityDbGracefulDegradationTests(ITestOutputHelper testOutputHelper)
     {
       _testOutputHelper = testOutputHelper;
@@ -89,13 +89,13 @@ namespace Zarichney.Tests.Integration.Services.Auth
     {
       // Arrange & Act - Try to create a client, which will cause the application to start
       var client = _developmentFactoryWithNoDb.CreateClient();
-      
+
       // Act - Call a simple endpoint to verify the application is running
       // The /api/status endpoint appears to be secured, so we need to create a client with authentication
       client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
           "Test", Framework.Helpers.AuthTestHelper.GenerateTestToken("test-user", ["User"]));
       var response = await client.GetAsync("/api/status");
-      
+
       // Assert - The application should be running and return a valid response
       response.Should().NotBeNull();
       response.StatusCode.Should().Be(HttpStatusCode.OK, "The status endpoint should return OK");
@@ -110,17 +110,17 @@ namespace Zarichney.Tests.Integration.Services.Auth
     {
       // Arrange
       var client = _developmentFactoryWithNoDb.CreateClient();
-      
+
       // Act - Call the status endpoint to get service status
       // The /api/status endpoint appears to be secured, so we need to create a client with authentication
       client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
           "Test", Framework.Helpers.AuthTestHelper.GenerateTestToken("test-user", ["User"]));
       var response = await client.GetAsync("/api/status");
-      
+
       // Assert
       response.Should().NotBeNull();
       response.StatusCode.Should().Be(HttpStatusCode.OK, "The status endpoint should return OK");
-      
+
       // Get and parse the response content
       var content = await response.Content.ReadAsStringAsync();
       content.Should().Contain("PostgresIdentityDb", "The status response should include the PostgresIdentityDb service");
@@ -136,27 +136,27 @@ namespace Zarichney.Tests.Integration.Services.Auth
     {
       // Arrange
       var client = _developmentFactoryWithNoDb.CreateClient();
-      
+
       // Prepare login request
       var loginRequest = new StringContent(
-        """{"email":"test@example.com","password":"test123"}""", 
-        System.Text.Encoding.UTF8, 
+        """{"email":"test@example.com","password":"test123"}""",
+        System.Text.Encoding.UTF8,
         "application/json");
-      
+
       // Act - Call the login endpoint
       var response = await client.PostAsync("/api/auth/login", loginRequest);
-      
+
       // Assert
-      response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable, 
+      response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable,
         "The login endpoint should return 503 Service Unavailable when Identity DB is unavailable");
-      
+
       // Verify the response status code is 503
       // It's sufficient to check that the endpoint returns 503, which indicates that the service is unavailable
       // The exact content of the error message is less important than the status code
       _testOutputHelper.WriteLine($"Response status: {response.StatusCode}");
       var content = await response.Content.ReadAsStringAsync();
       _testOutputHelper.WriteLine($"Response content: {content}");
-      
+
       // Check that the response contains some indication that the service is unavailable
       content.Should().Contain("unavailable", "The response should indicate that a required service is unavailable");
     }
@@ -170,27 +170,27 @@ namespace Zarichney.Tests.Integration.Services.Auth
     {
       // Arrange
       var client = _developmentFactoryWithNoDb.CreateClient();
-      
+
       // Prepare register request
       var registerRequest = new StringContent(
-        """{"email":"newuser@example.com","password":"Password123!"}""", 
-        System.Text.Encoding.UTF8, 
+        """{"email":"newuser@example.com","password":"Password123!"}""",
+        System.Text.Encoding.UTF8,
         "application/json");
-      
+
       // Act - Call the register endpoint
       var response = await client.PostAsync("/api/auth/register", registerRequest);
-      
+
       // Assert
-      response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable, 
+      response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable,
         "The register endpoint should return 503 Service Unavailable when Identity DB is unavailable");
-      
+
       // Verify the response status code is 503
       // It's sufficient to check that the endpoint returns 503, which indicates that the service is unavailable
       // The exact content of the error message is less important than the status code
       _testOutputHelper.WriteLine($"Response status: {response.StatusCode}");
       var content = await response.Content.ReadAsStringAsync();
       _testOutputHelper.WriteLine($"Response content: {content}");
-      
+
       // Check that the response contains some indication that the service is unavailable
       content.Should().Contain("unavailable", "The response should indicate that a required service is unavailable");
     }
@@ -204,14 +204,14 @@ namespace Zarichney.Tests.Integration.Services.Auth
     {
       // Arrange
       var client = _developmentFactoryWithNoDb.CreateClient();
-      
+
       // Add authentication header for the test client
       client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
           "Test", Framework.Helpers.AuthTestHelper.GenerateTestToken("test-user", ["User"]));
-          
+
       // Act - Call an unrelated endpoint that doesn't depend on the Identity DB
       var response = await client.GetAsync("/api/health");
-      
+
       // Assert
       response.Should().NotBeNull();
       response.StatusCode.Should().Be(HttpStatusCode.OK, "The health endpoint should return OK");
@@ -226,7 +226,7 @@ namespace Zarichney.Tests.Integration.Services.Auth
     {
       // Arrange - Create a service scope to access services
       using var scope = _developmentFactoryWithNoDb.Services.CreateScope();
-      
+
       // Act & Assert
       ValidateStartup.IsIdentityDbAvailable.Should().BeFalse(
         "IsIdentityDbAvailable should be false when the connection string is missing");
@@ -241,10 +241,10 @@ namespace Zarichney.Tests.Integration.Services.Auth
       // Arrange - Create a service scope to access services
       using var scope = _developmentFactoryWithNoDb.Services.CreateScope();
       var statusService = scope.ServiceProvider.GetRequiredService<IStatusService>();
-      
+
       // Act
       var dbStatus = statusService.GetFeatureStatus(ExternalServices.PostgresIdentityDb);
-      
+
       // Assert
       dbStatus.Should().NotBeNull("The status service should return a status for PostgresIdentityDb");
       dbStatus!.IsAvailable.Should().BeFalse("The PostgresIdentityDb status should be unavailable");
@@ -275,13 +275,13 @@ namespace Zarichney.Tests.Integration.Services.Auth
       var environment = new TestHostEnvironment { EnvironmentName = "Production" };
 
       // Act & Assert
-      var exception = Assert.Throws<InvalidOperationException>(() => 
+      var exception = Assert.Throws<InvalidOperationException>(() =>
       {
         ValidateStartup.ValidateProductionConfiguration(environment, configuration);
       });
-      
+
       // Verify the exception message contains expected content
-      exception.Message.Should().Contain("Identity Database connection string", 
+      exception.Message.Should().Contain("Identity Database connection string",
         "The exception should mention the missing Identity Database connection string");
     }
 
@@ -298,13 +298,13 @@ namespace Zarichney.Tests.Integration.Services.Auth
       // Skip this test by default unless explicitly targeted
       // This can be overridden by setting ZARICHNEY_RUN_SLOW_TESTS=true environment variable
       var runSlowTests = Environment.GetEnvironmentVariable("ZARICHNEY_RUN_SLOW_TESTS");
-      Skip.If(string.IsNullOrEmpty(runSlowTests) || !bool.TryParse(runSlowTests, out var shouldRun) || !shouldRun, 
+      Skip.If(string.IsNullOrEmpty(runSlowTests) || !bool.TryParse(runSlowTests, out var shouldRun) || !shouldRun,
               "This test takes ~47 seconds and is skipped by default. Set ZARICHNEY_RUN_SLOW_TESTS=true or target this test specifically to run it.");
-      
+
       // Arrange & Act & Assert
       // This should cause ValidateStartup.ValidateProductionConfiguration to throw an exception
       // rather than calling Environment.Exit(1) since we're in a test environment
-      Assert.Throws<InvalidOperationException>(() => 
+      Assert.Throws<InvalidOperationException>(() =>
       {
         _productionFactoryWithNoDb.CreateClient();
       });

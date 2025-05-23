@@ -191,7 +191,7 @@ public static class AuthenticationStartup
     {
       // Add MockAuth as an additional scheme
       options.AddScheme<MockAuthHandler>("MockAuth", "MockAuth");
-      
+
       // Set MockAuth as the default authenticate scheme when Identity DB is unavailable
       options.DefaultAuthenticateScheme = "MockAuth";
       options.DefaultChallengeScheme = "MockAuth";

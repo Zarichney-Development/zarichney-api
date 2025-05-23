@@ -165,7 +165,7 @@ public class GitHubService : BackgroundService, IGitHubService
   public override async Task StopAsync(CancellationToken cancellationToken)
   {
     _logger.LogInformation("GitHub service is stopping");
-    
+
     // Complete the channel to signal no more operations will be written
     try
     {
@@ -175,10 +175,10 @@ public class GitHubService : BackgroundService, IGitHubService
     {
       // Channel already completed, ignore
     }
-    
+
     // Wait for base class to stop
     await base.StopAsync(cancellationToken);
-    
+
     _logger.LogInformation("GitHub service stopped");
   }
 
