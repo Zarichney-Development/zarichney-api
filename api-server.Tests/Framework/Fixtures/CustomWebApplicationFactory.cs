@@ -148,8 +148,12 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
       var testOutputSink = new InjectableTestOutputSink();
       services.AddSingleton(testOutputSink);
 
+      // Get configuration to load Serilog settings from appsettings.Testing.json
+      var tempSp = services.BuildServiceProvider();
+      var configuration = tempSp.GetRequiredService<IConfiguration>();
+
       var xunitLogger = new LoggerConfiguration()
-        .MinimumLevel.Information()
+        .ReadFrom.Configuration(configuration)
         .Enrich.FromLogContext()
         .WriteTo.InjectableTestOutput(testOutputSink)
         // Filter out noisy Microsoft logs during startup
