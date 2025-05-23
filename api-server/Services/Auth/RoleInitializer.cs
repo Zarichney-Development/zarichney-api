@@ -77,6 +77,20 @@ public class RoleInitializer(
       return;
     }
 
+    // Validate email format
+    if (!adminConfig.Email.Contains('@') || adminConfig.Email.Length > 254)
+    {
+      logger.LogError("DefaultAdminUser email '{Email}' is invalid. Skipping admin user seeding.", adminConfig.Email);
+      return;
+    }
+
+    // Validate username
+    if (adminConfig.UserName.Length > 256)
+    {
+      logger.LogError("DefaultAdminUser username is too long. Skipping admin user seeding.");
+      return;
+    }
+
     logger.LogInformation("Seeding default admin user in {Environment} environment...", environment.EnvironmentName);
 
     try

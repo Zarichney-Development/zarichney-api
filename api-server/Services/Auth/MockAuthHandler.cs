@@ -76,33 +76,42 @@ public class MockAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions
   /// <returns>List of roles from header, or null if not present or not in Development.</returns>
   private List<string>? GetDynamicRolesFromHeader()
   {
-    // Only allow dynamic roles in Development environment
-    var environment = Context.RequestServices.GetService<IWebHostEnvironment>();
-    if (environment?.EnvironmentName != "Development")
+    try
     {
-      return null;
-    }
-
-    // Check for X-Mock-Roles header
-    if (Request.Headers.TryGetValue("X-Mock-Roles", out var headerValue))
-    {
-      var rolesString = headerValue.ToString();
-      if (!string.IsNullOrWhiteSpace(rolesString))
+      // Only allow dynamic roles in Development environment
+      var environment = Context.RequestServices.GetService<IWebHostEnvironment>();
+      if (environment?.EnvironmentName != "Development")
       {
-        var roles = rolesString.Split(',', StringSplitOptions.RemoveEmptyEntries)
-          .Select(r => r.Trim())
-          .Where(r => !string.IsNullOrWhiteSpace(r))
-          .ToList();
+        return null;
+      }
 
-        if (roles.Any())
+      // Check for X-Mock-Roles header
+      if (Request.Headers.TryGetValue("X-Mock-Roles", out var headerValue))
+      {
+        var rolesString = headerValue.ToString();
+        if (!string.IsNullOrWhiteSpace(rolesString))
         {
-          Logger.LogDebug("Using dynamic roles from X-Mock-Roles header: {Roles}",
-            string.Join(", ", roles));
-          return roles;
+          var roles = rolesString.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(r => r.Trim())
+            .Where(r => !string.IsNullOrWhiteSpace(r) && r.Length <= 50) // Add reasonable length limit
+            .Take(10) // Limit number of roles to prevent abuse
+            .ToList();
+
+          if (roles.Any())
+          {
+            Logger.LogDebug("Using dynamic roles from X-Mock-Roles header: {Roles}",
+              string.Join(", ", roles));
+            return roles;
+          }
         }
       }
-    }
 
-    return null;
+      return null;
+    }
+    catch (Exception ex)
+    {
+      Logger.LogWarning(ex, "Error parsing X-Mock-Roles header, falling back to default roles");
+      return null;
+    }
   }
 }

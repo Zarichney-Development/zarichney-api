@@ -1,5 +1,4 @@
 using Serilog;
-using Zarichney.Services.Status;
 using Zarichney.Startup;
 
 namespace Zarichney;
@@ -11,23 +10,7 @@ public class Program
     var builder = WebApplication.CreateBuilder(args);
     ConfigureBuilder(builder);
 
-    // Validate critical configuration and capture Identity DB availability status
-    // In Production, this will exit the app if the Identity DB is not available
-    // In non-Production, this will set the availability status but allow the app to continue
-    _ = ValidateStartup.ValidateProductionConfiguration(builder);
-
     var app = builder.Build();
-
-    // Update the StatusService with the Identity DB availability
-    if (app.Services.GetService<IStatusService>() is StatusService statusService)
-    {
-      // Include missing configuration details when Identity DB is unavailable
-      var missingConfigurations = ValidateStartup.IsIdentityDbAvailable
-        ? null
-        : new List<string> { $"ConnectionStrings:{Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName}" };
-
-      statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, ValidateStartup.IsIdentityDbAvailable, missingConfigurations);
-    }
 
     await ConfigureApplication(app);
     try
@@ -50,6 +33,7 @@ public class Program
     ApplicationStartup.ConfigureKestrel(webBuilder);
     ConfigurationStartup.ConfigureConfiguration(webBuilder);
     ConfigurationStartup.ConfigureLogging(webBuilder);
+    ValidateStartup.ConfigureValidation(webBuilder);
     ServiceStartup.ConfigureServices(webBuilder);
     AuthenticationStartup.ConfigureIdentity(webBuilder);
     ServiceStartup.ConfigureSwagger(webBuilder);

@@ -16,6 +16,19 @@ public static class ValidateStartup
   public static bool IsIdentityDbAvailable { get; private set; } = true;
 
   /// <summary>
+  /// Configures and performs startup validation checks.
+  /// This should be called during the builder configuration phase.
+  /// </summary>
+  /// <param name="builder">The WebApplicationBuilder containing configuration</param>
+  public static void ConfigureValidation(WebApplicationBuilder builder)
+  {
+    // Validate critical configuration and capture Identity DB availability status
+    // In Production, this will exit the app if the Identity DB is not available
+    // In non-Production, this will set the availability status but allow the app to continue
+    _ = ValidateProductionConfiguration(builder);
+  }
+
+  /// <summary>
   /// Validates critical configuration settings when running in Production environment.
   /// The application will exit with an error code if required configuration is missing.
   /// In non-Production environments, it will allow the application to start but will

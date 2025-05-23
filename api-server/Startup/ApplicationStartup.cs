@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Serilog;
 using Zarichney.Config;
 using Zarichney.Cookbook.Recipes;
+using Zarichney.Services.Auth;
 using Zarichney.Services.Status;
 
 namespace Zarichney.Startup;
@@ -70,10 +71,29 @@ public static class ApplicationStartup
   }
 
   /// <summary>
+  /// Configures the StatusService with Identity Database availability status
+  /// </summary>
+  public static void ConfigureStatusService(WebApplication application)
+  {
+    // Update the StatusService with the Identity DB availability
+    if (application.Services.GetService<IStatusService>() is StatusService statusService)
+    {
+      // Include missing configuration details when Identity DB is unavailable
+      var missingConfigurations = ValidateStartup.IsIdentityDbAvailable
+        ? null
+        : new List<string> { $"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}" };
+
+      statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, ValidateStartup.IsIdentityDbAvailable, missingConfigurations);
+    }
+  }
+
+  /// <summary>
   /// Configures the application request pipeline with middleware and services
   /// </summary>
   public static async Task ConfigureApplication(WebApplication application)
   {
+    // Configure status service with Identity DB availability
+    ConfigureStatusService(application);
     application.UseMiddleware<RequestResponseLoggerMiddleware>();
     application.UseMiddleware<ErrorHandlingMiddleware>();
 
