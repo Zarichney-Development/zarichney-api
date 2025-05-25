@@ -92,7 +92,7 @@ Supporting standards include:
   ```bash
   dotnet test --filter "FullyQualifiedName~MyNamespace.MyIntegrationTestsClass"
   ```
-* Ensure all relevant integration tests pass locally before committing code, as per the workflow in `../../../Docs/Standards/TestingStandards.md`. Remember to run `Scripts/GenerateApiClient.ps1` if API contracts were changed.
+* Ensure all relevant integration tests pass locally before committing code, as per the workflow in `../../../Docs/Standards/TestingStandards.md`. Remember to run `Scripts/generate-api-client.ps1` if API contracts were changed.
 
 ## 6. Dependencies
 

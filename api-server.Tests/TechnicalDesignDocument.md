@@ -157,7 +157,7 @@
         * `returnIApiResponse: true` - Returns `IApiResponse<T>` for better error handling
         * `namespace: "Zarichney.Client"` - Generated code namespace
         * `contractsNamespace: "Zarichney.Client.Contracts"` - DTOs namespace
-* **Generation Tools:** PowerShell script at `/Scripts/GenerateApiClient.ps1` and shell script `/Scripts/generate-api-client.sh`.
+* **Generation Tools:** PowerShell script at `/Scripts/generate-api-client.ps1` and shell script `/Scripts/generate-api-client.sh`.
 * **Script Functionality:** The scripts automate:
     1.  Building the `api-server` project (Debug config).
     2.  Generating `swagger.json` using `dotnet swagger tofile`.

@@ -56,7 +56,7 @@ After making changes to API contracts (controllers, endpoints, models), you must
 
 ```powershell
 # From the solution root
-./Scripts/GenerateApiClient.ps1
+./Scripts/generate-api-client.ps1
 ```
 
 This script generates:
@@ -140,7 +140,7 @@ For tests that specifically test the mock authentication functionality:
 {
   "MockAuth": {
     "DefaultRoles": ["User", "Admin"],
-    "DefaultUsername": "TestMockUser", 
+    "DefaultUsername": "TestMockUser",
     "DefaultEmail": "test@mock.com",
     "DefaultUserId": "test-mock-id"
   }

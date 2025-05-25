@@ -43,7 +43,7 @@ The framework components are designed to be composable and to integrate seamless
 * **Assumptions Made by Framework Components:**
     * `DatabaseFixture` assumes Docker is available and operational for managing Testcontainers. Tests requiring Docker can use `[DockerAvailableFact]`.
     * `DependencyFactAttribute` relies on configuration status provided by the `IStatusService` within the SUT and specific configuration flags to determine if dependencies are met.
-    * The Refit client generation script (`../../Scripts/GenerateApiClient.ps1`) assumes the `api-server` project can be built and its Swagger specification is accessible.
+    * The Refit client generation script (`../../Scripts/generate-api-client.ps1`) assumes the `api-server` project can be built and its Swagger specification is accessible.
 
 ## 4. Local Conventions & Constraints
 

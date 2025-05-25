@@ -78,9 +78,9 @@ fi
 
 # Step 5: Generate Refit client using refitter with .refitter settings file
 echo -e "\e[32mGenerating Refit client using .refitter settings file...\e[0m"
-refitter --settings-file "$ROOT_DIR/.refitter" --skip-validation
+refitter --settings-file "$ROOT_DIR/Scripts/.refitter" --skip-validation
 if [ $? -ne 0 ]; then
-    echo -e "\e[31mError generating Refit client using .refitter file. Exiting.\e[0m"
+    echo -e "\e[31mError generating Refit client using Scripts/.refitter file. Exiting.\e[0m"
     exit 1
 fi
 

@@ -149,7 +149,7 @@ graph TD
 * If API contracts in `/api-server/Controllers/` change, the Refit client used by integration tests (`/api-server.Tests/Framework/Client/IZarichneyAPI.cs`) needs regeneration.
 * From the repository root directory (`zarichney-api/`), run the script:
 ```powershell
-./Scripts/GenerateApiClient.ps1
+./Scripts/generate-api-client.ps1
 ```
 * **Key Tooling:**
 * `.NET CLI`

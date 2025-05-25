@@ -26,7 +26,7 @@
 * **Mocking Library:** Moq (*Mandatory*)
 * **Test Data:** AutoFixture, Custom Test Data Builders
 * **Integration Host:** `CustomWebApplicationFactory<Program>` (in `api-server.Tests/Framework/Fixtures/`)
-* **Integration API Client:** Refit (`IZarichneyAPI` generated via `Scripts/GenerateApiClient.ps1` into `api-server.Tests/Framework/Client/`)
+* **Integration API Client:** Refit (`IZarichneyAPI` generated via `Scripts/generate-api-client.ps1` into `api-server.Tests/Framework/Client/`)
 * **Integration Database:** Testcontainers (PostgreSQL) via `DatabaseFixture`
 * **External HTTP Service Virtualization:** WireMock.Net (as per `api-server.Tests/TechnicalDesignDocument.md` roadmap)
 * **Database Cleanup:** Respawn (within `DatabaseFixture`)
@@ -89,15 +89,15 @@
         // ✅ CORRECT - Extract content first
         var loginResponse = await client.Login(request);
         var authResult = loginResponse.Content;
-        
+
         // Assert on the extracted content
         authResult.Success.Should().BeTrue();
         authResult.Email.Should().NotBeEmpty();
-        
+
         // ✅ CORRECT - For collections, extract and name appropriately
         var statusResponse = await client.StatusAll();
         var serviceStatuses = statusResponse.Content;
-        
+
         serviceStatuses.Should().NotBeEmpty();
         serviceStatuses.Should().HaveCountGreaterThan(3);
         ```
@@ -138,7 +138,7 @@
 
 * **Requirement:** New/updated tests **must** be included in the *same Pull Request* as the code changes they cover.
 * **Local Testing (Mandatory Pre-PR):**
-    1.  Run `Scripts/GenerateApiClient.ps1` (or `.sh`) if API contracts changed.
+    1.  Run `Scripts/generate-api-client.ps1` (or `.sh`) if API contracts changed.
     2.  Run the specific tests added/modified.
     3.  Run **all unit tests** (`dotnet test --filter "Category=Unit"`).
     4.  Run relevant integration tests (e.g., `dotnet test --filter "Category=Integration&Feature=Auth"`).

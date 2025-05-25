@@ -90,7 +90,7 @@ A commitment to high test coverage (>=90% for unit tests) and rigorous adherence
 
 * If you make changes to the `api-server`'s API contracts (controller signatures, routes, DTOs), you **must** regenerate the Refit client:
     ```powershell
-    ./Scripts/GenerateApiClient.ps1
+    ./Scripts/generate-api-client.ps1
     ```
   or for bash/zsh:
     ```bash

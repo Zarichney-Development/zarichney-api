@@ -71,9 +71,9 @@ if (-not $refitterInstalled) {
 
 # Step 5: Generate Refit client using refitter with .refitter settings file
 Write-Host "Generating Refit client using .refitter settings file..." -ForegroundColor Green
-refitter --settings-file "$rootDir/.refitter" --skip-validation
+refitter --settings-file "$rootDir/Scripts/.refitter" --skip-validation
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "Error generating Refit client using .refitter file. Exiting." -ForegroundColor Red
+    Write-Host "Error generating Refit client using Scripts/.refitter file. Exiting." -ForegroundColor Red
     exit 1
 }
 
