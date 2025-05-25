@@ -1,6 +1,6 @@
 # Module/Directory: /Startup
 
-**Last Updated:** 2025-05-19
+**Last Updated:** 2025-01-25
 
 > **Parent:** [`Server`](../README.md)
 
@@ -48,7 +48,7 @@ graph TD
         direction TB
         CreateBuilder --> ConfigureConfig["ConfigurationStartup.ConfigureConfiguration \n - Environment-specific appsettings \n - UserSecrets (Dev) \n - EnvVars \n - AWS Systems Manager (Prod)"]
         
-        ConfigureConfig --> ConfigureLogging["ConfigurationStartup.ConfigureLogging \n - Serilog setup with Console/File/Seq \n - Session/Scope enrichers"]
+        ConfigureConfig --> ConfigureLogging["ConfigurationStartup.ConfigureLogging \n - Enhanced Serilog setup with Warning default \n - Configuration-driven log level overrides \n - Console/File/Seq sinks \n - Session/Scope enrichers"]
         
         ConfigureLogging --> ConfigureServices["ServiceStartup.ConfigureServices \n - RegisterConfigurationServices \n   (IConfig implementations, path transforms) \n - HttpsRedirection, HttpContext, JSON converters \n - EmailServices (GraphServiceClient w/ fallback) \n - OpenAIServices (LLM/Audio w/ fallbacks) \n - Application Services (20+ custom registrations)"]
         
@@ -118,7 +118,7 @@ graph TD
         * `ConfigureApplication(WebApplication)`: Configures the middleware pipeline.
     * `ConfigurationStartup`:
         * `ConfigureConfiguration(WebApplicationBuilder)`: Sets up configuration sources.
-        * `ConfigureLogging(WebApplicationBuilder)`: Configures Serilog logging.
+        * `ConfigureLogging(WebApplicationBuilder)`: Configures enhanced Serilog logging with Warning default level and configuration-driven overrides. Full configuration details available at [`../../../Docs/Development/LoggingGuide.md`](../../../Docs/Development/LoggingGuide.md).
         * `RegisterConfigurationServices(IServiceCollection, IConfiguration)`: Registers configuration services.
         * `AddPrompts(IServiceCollection, Assembly[])`: Registers prompt types from specified assemblies.
         * `ValidateAndReplaceProperties(object, string)`: Validates config properties and logs warnings for missing required values (no longer throws exceptions).
