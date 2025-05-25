@@ -13,12 +13,33 @@
   "returnIApiResponse": true,
   "generateOperationHeaders": true,
   "generateXmlDocCodeComments": true,
+  "generateStatusCodeComments": true,
   "typeAccessibility": "Public",
-  "useCancellationTokens": false,
+  "useCancellationTokens": true,
   "trimUnusedSchema": true,
   "generateDeprecatedOperations": false,
-  "optionalParameters": false,
+  "optionalParameters": true,
   "operationNameGenerator": "Default",
+  "operationNameTemplate": "{operationName}",
   "useDynamicQuerystringParameters": false,
-  "dependencyInjectionSettings": null
+  "immutableRecords": true,
+  "useIsoDateFormat": true,
+  "generateDefaultAdditionalProperties": true,
+  "skipDefaultAdditionalProperties": false,
+  "dependencyInjectionSettings": {
+    "baseUrl": "http://localhost:5000",
+    "transientErrorHandler": "None",
+    "httpMessageHandlers": []
+  },
+  "codeGeneratorSettings": {
+    "generateNullableReferenceTypes": true,
+    "generateDataAnnotations": true,
+    "generateDefaultValues": true,
+    "requiredPropertiesMustBeDefined": true,
+    "arrayType": "System.Collections.Generic.ICollection",
+    "dictionaryType": "System.Collections.Generic.IDictionary",
+    "generateOptionalPropertiesAsNullable": true,
+    "dateFormat": "yyyy-MM-dd",
+    "dateTimeFormat": "yyyy-MM-ddTHH:mm:ss.fffZ"
+  }
 }

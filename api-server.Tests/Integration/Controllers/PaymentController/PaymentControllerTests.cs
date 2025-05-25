@@ -33,12 +33,7 @@ public class PaymentControllerTests(ApiClientFixture apiClientFixture, ITestOutp
     // Arrange
     await ResetDatabaseAsync();
     var apiClient = _apiClientFixture.AuthenticatedPaymentApi;
-    var requestDto = new PaymentIntentRequest
-    {
-      Amount = 1000,
-      Currency = "usd",
-      Description = "Test order"
-    };
+    var requestDto = new PaymentIntentRequest(1000, "usd", "Test order");
 
     // Mock the Stripe service
     var mockStripeService = GetMockStripeService();
@@ -159,12 +154,7 @@ public class PaymentControllerServiceAvailabilityTests : IntegrationTestBase
   {
     // Arrange
     var client = _apiClientFixture.AuthenticatedPaymentApi;
-    var request = new PaymentIntentRequest
-    {
-      Amount = 1000,
-      Currency = "usd",
-      Description = "Test payment"
-    };
+    var request = new PaymentIntentRequest(1000, "usd", "Test payment");
 
     // Act
     var response = await client.CreateIntent(request);
@@ -189,12 +179,7 @@ public class PaymentControllerServiceAvailabilityTests : IntegrationTestBase
   {
     // Arrange
     var client = _apiClientFixture.UnauthenticatedPaymentApi;
-    var request = new PaymentIntentRequest
-    {
-      Amount = 1000,
-      Currency = "usd",
-      Description = "Test payment"
-    };
+    var request = new PaymentIntentRequest(1000, "usd", "Test payment");
 
     // Act & Assert - All payment endpoints should require authentication
     var createIntentResponse = await client.CreateIntent(request);

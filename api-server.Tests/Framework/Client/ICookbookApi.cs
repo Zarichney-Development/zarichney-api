@@ -6,6 +6,7 @@
 using Refit;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using Zarichney.Client.Contracts;
 
@@ -42,7 +43,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Post("/api/cookbook/sample")]
-        Task<IApiResponse<CookbookOrderSubmission>> Sample();
+        Task<IApiResponse<CookbookOrderSubmission>> Sample(CancellationToken cancellationToken = default);
 
         /// <summary>Creates a new cookbook order based on user submission.</summary>
         /// <remarks>
@@ -76,7 +77,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Post("/api/cookbook")]
-        Task<IApiResponse<CookbookOrder>> Cookbook([Query] bool? processOrder, [Body] CookbookOrderSubmission body);
+        Task<IApiResponse<CookbookOrder>> Cookbook([Query] bool? processOrder = default, [Body] CookbookOrderSubmission? body = default, CancellationToken cancellationToken = default);
 
         /// <summary>Retrieves the details of a specific cookbook order.</summary>
         /// <remarks>
@@ -107,7 +108,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Get("/api/cookbook/order/{orderId}")]
-        Task<IApiResponse<CookbookOrder>> OrderGET(string orderId);
+        Task<IApiResponse<CookbookOrder>> OrderGET(string orderId, CancellationToken cancellationToken = default);
 
         /// <summary>Triggers reprocessing for an existing cookbook order.</summary>
         /// <remarks>
@@ -140,7 +141,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Post("/api/cookbook/order/{orderId}")]
-        Task<IApiResponse<CookbookOrder>> OrderPOST(string orderId);
+        Task<IApiResponse<CookbookOrder>> OrderPOST(string orderId, CancellationToken cancellationToken = default);
 
         /// <summary>Retrieves the generated cookbook PDF for a specific order.</summary>
         /// <remarks>
@@ -178,7 +179,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Get("/api/cookbook/order/{orderId}/pdf")]
-        Task<IApiResponse<FileResponse>> Pdf(string orderId, [Query] bool? rebuild, [Query] bool? email);
+        Task<IApiResponse<FileResponse>> Pdf(string orderId, [Query] bool? rebuild = default, [Query] bool? email = default, CancellationToken cancellationToken = default);
 
         /// <summary>Resends the cookbook PDF via email for a specific order.</summary>
         /// <remarks>
@@ -209,7 +210,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Post("/api/cookbook/order/{orderId}/email")]
-        Task<IApiResponse<string>> Email(string orderId);
+        Task<IApiResponse<string>> Email(string orderId, CancellationToken cancellationToken = default);
 
         /// <summary>Searches for recipes based on a query string.</summary>
         /// <remarks>
@@ -247,7 +248,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Get("/api/recipe")]
-        Task<IApiResponse<ICollection<Recipe>>> Recipe([Query] string query, [Query] bool? scrape, [Query] int? acceptableScore, [Query] int? requiredCount);
+        Task<IApiResponse<ICollection<Recipe>>> Recipe([Query] string? query = default, [Query] bool? scrape = default, [Query] int? acceptableScore = default, [Query] int? requiredCount = default, CancellationToken cancellationToken = default);
 
         /// <summary>Scrapes web sources for recipes based on a query.</summary>
         /// <remarks>
@@ -287,7 +288,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Get("/api/recipe/scrape")]
-        Task<IApiResponse<ICollection<Recipe>>> Scrape([Query] string query, [Query] string site, [Query] int? acceptableScore, [Query] int? recipesNeeded, [Query] bool? store);
+        Task<IApiResponse<ICollection<Recipe>>> Scrape([Query] string? query = default, [Query] string? site = default, [Query] int? acceptableScore = default, [Query] int? recipesNeeded = default, [Query] bool? store = default, CancellationToken cancellationToken = default);
     }
 
 }

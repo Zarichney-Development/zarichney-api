@@ -28,11 +28,7 @@ public class ApiSmokeTests(ApiClientFixture apiClientFixture, ITestOutputHelper 
 
     // Arrange
     var apiClient = _apiClientFixture.UnauthenticatedAuthApi;
-    var loginRequest = new LoginRequest
-    {
-      Email = "zarichney@gmail.com",
-      Password = "Hershey6"
-    };
+    var loginRequest = new LoginRequest("test@email.com", "Password123!");
 
     // Act - Login
     var loginResponse = await apiClient.Login(loginRequest);

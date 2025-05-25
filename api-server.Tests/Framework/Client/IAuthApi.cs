@@ -6,6 +6,7 @@
 using Refit;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using Zarichney.Client.Contracts;
 
@@ -52,7 +53,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Post("/api/auth/register")]
-        Task<IApiResponse<AuthResponse>> Register([Body] RegisterRequest body);
+        Task<IApiResponse<AuthResponse>> Register([Body] RegisterRequest? body = default, CancellationToken cancellationToken = default);
 
         /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Logs in a user and sets authentication cookies.</summary>
         /// <remarks>
@@ -91,7 +92,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Post("/api/auth/login")]
-        Task<IApiResponse<AuthResponse>> Login([Body] LoginRequest body);
+        Task<IApiResponse<AuthResponse>> Login([Body] LoginRequest? body = default, CancellationToken cancellationToken = default);
 
         /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Refreshes the access token using the refresh token cookie.</summary>
         /// <remarks>
@@ -129,7 +130,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Post("/api/auth/refresh")]
-        Task<IApiResponse<AuthResponse>> Refresh();
+        Task<IApiResponse<AuthResponse>> Refresh(CancellationToken cancellationToken = default);
 
         /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Revokes the current refresh token associated with the session.</summary>
         /// <remarks>
@@ -171,7 +172,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Post("/api/auth/revoke")]
-        Task<IApiResponse<AuthResponse>> Revoke();
+        Task<IApiResponse<AuthResponse>> Revoke(CancellationToken cancellationToken = default);
 
         /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Initiates the password reset process for a given email address.</summary>
         /// <remarks>
@@ -208,7 +209,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Post("/api/auth/email-forgot-password")]
-        Task<IApiResponse<AuthResponse>> EmailForgotPassword([Body] ForgotPasswordRequest body);
+        Task<IApiResponse<AuthResponse>> EmailForgotPassword([Body] ForgotPasswordRequest? body = default, CancellationToken cancellationToken = default);
 
         /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Resets the user's password using a token received via email.</summary>
         /// <remarks>
@@ -244,7 +245,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Post("/api/auth/reset-password")]
-        Task<IApiResponse<AuthResponse>> ResetPassword([Body] ResetPasswordRequest body);
+        Task<IApiResponse<AuthResponse>> ResetPassword([Body] ResetPasswordRequest? body = default, CancellationToken cancellationToken = default);
 
         /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Confirms a user's email address using a token sent via email.</summary>
         /// <remarks>
@@ -288,7 +289,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Get("/api/auth/confirm-email")]
-        Task<IApiResponse<AuthResponse>> ConfirmEmail([Query, AliasAs("UserId")] string userId, [Query, AliasAs("Token")] string token);
+        Task<IApiResponse<AuthResponse>> ConfirmEmail([Query, AliasAs("UserId")] string? userId = default, [Query, AliasAs("Token")] string? token = default, CancellationToken cancellationToken = default);
 
         /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Resends the email confirmation link to the specified email address.</summary>
         /// <remarks>
@@ -326,7 +327,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Post("/api/auth/resend-confirmation")]
-        Task<IApiResponse<AuthResponse>> ResendConfirmation([Body] ResendConfirmationRequest body);
+        Task<IApiResponse<AuthResponse>> ResendConfirmation([Body] ResendConfirmationRequest? body = default, CancellationToken cancellationToken = default);
 
         /// <summary>Logs the current user out by clearing authentication cookies.</summary>
         /// <remarks>
@@ -357,7 +358,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Post("/api/auth/logout")]
-        Task<IApiResponse<AuthResponse>> Logout();
+        Task<IApiResponse<AuthResponse>> Logout(CancellationToken cancellationToken = default);
 
         /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Creates a new API key (Admin only).</summary>
         /// <remarks>
@@ -404,7 +405,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Post("/api/auth/api-keys")]
-        Task<IApiResponse<ApiKeyResponse>> ApiKeysPOST([Body] CreateApiKeyCommand body);
+        Task<IApiResponse<ApiKeyResponse>> ApiKeysPOST([Body] CreateApiKeyCommand? body = default, CancellationToken cancellationToken = default);
 
         /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Retrieves a list of all active API keys (Admin only).</summary>
         /// <remarks>
@@ -444,7 +445,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Get("/api/auth/api-keys")]
-        Task<IApiResponse<ICollection<ApiKeyResponse>>> ApiKeysAll();
+        Task<IApiResponse<ICollection<ApiKeyResponse>>> ApiKeysAll(CancellationToken cancellationToken = default);
 
         /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Retrieves metadata for a specific API key by ID (Admin only).</summary>
         /// <remarks>
@@ -489,7 +490,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Get("/api/auth/api-keys/{id}")]
-        Task<IApiResponse<ApiKeyResponse>> ApiKeysGET(int id);
+        Task<IApiResponse<ApiKeyResponse>> ApiKeysGET(int id, CancellationToken cancellationToken = default);
 
         /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Revokes (deactivates) an existing API key (Admin or Key Owner - adjust as needed).</summary>
         /// <remarks>
@@ -534,7 +535,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Delete("/api/auth/api-keys/{id}")]
-        Task<IApiResponse<object>> ApiKeysDELETE(int id);
+        Task<IApiResponse<object>> ApiKeysDELETE(int id, CancellationToken cancellationToken = default);
 
         /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Assigns a specified role to a user (Admin only).</summary>
         /// <remarks>
@@ -579,7 +580,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Post("/api/auth/roles/add")]
-        Task<IApiResponse<RoleCommandResult>> Add([Body] RoleRequest body);
+        Task<IApiResponse<RoleCommandResult>> Add([Body] RoleRequest? body = default, CancellationToken cancellationToken = default);
 
         /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Removes a specified role from a user (Admin only).</summary>
         /// <remarks>
@@ -624,7 +625,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Post("/api/auth/roles/remove")]
-        Task<IApiResponse<RoleCommandResult>> Remove([Body] RoleRequest body);
+        Task<IApiResponse<RoleCommandResult>> Remove([Body] RoleRequest? body = default, CancellationToken cancellationToken = default);
 
         /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Gets all roles assigned to a specific user (Admin only).</summary>
         /// <remarks>
@@ -673,7 +674,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Get("/api/auth/roles/user/{identifier}")]
-        Task<IApiResponse<RoleCommandResult>> User(string identifier);
+        Task<IApiResponse<RoleCommandResult>> User(string identifier, CancellationToken cancellationToken = default);
 
         /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Gets all users assigned to a specific role (Admin only).</summary>
         /// <remarks>
@@ -721,7 +722,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Get("/api/auth/roles/{roleName}/users")]
-        Task<IApiResponse<ICollection<UserRoleInfo>>> Users(string roleName);
+        Task<IApiResponse<ICollection<UserRoleInfo>>> Users(string roleName, CancellationToken cancellationToken = default);
 
         /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Refreshes the claims included in the user's access token. (Requires Authentication)</summary>
         /// <remarks>
@@ -762,7 +763,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: application/json")]
         [Post("/api/auth/refresh-claims")]
-        Task<IApiResponse<AuthResponse>> RefreshClaims();
+        Task<IApiResponse<AuthResponse>> RefreshClaims(CancellationToken cancellationToken = default);
 
         /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Checks the authentication status and basic claims of the current user. (Requires Authentication)</summary>
         /// <remarks>
@@ -796,7 +797,7 @@ namespace Zarichney.Client
         /// </exception>
         [Headers("Accept: application/json")]
         [Get("/api/auth/check-authentication")]
-        Task<IApiResponse<IDictionary<string, object>>> CheckAuthentication();
+        Task<IApiResponse<IDictionary<string, object>>> CheckAuthentication(CancellationToken cancellationToken = default);
     }
 
 }
