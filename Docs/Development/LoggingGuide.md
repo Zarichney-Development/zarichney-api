@@ -1,6 +1,6 @@
 # Enhanced Logging System Guide
 
-**Version:** 1.0  
+**Version:** 1.0
 **Last Updated:** 2025-01-25
 
 ## Introduction
@@ -113,7 +113,7 @@ Development environments can use more verbose logging for easier debugging:
 
 ## Logging in the Test Environment
 
-### Test Configuration (`api-server.Tests/appsettings.Testing.json`)
+### Test Configuration (`api-server/appsettings.Testing.json`)
 
 The test environment also defaults to Warning level to keep test output clean:
 

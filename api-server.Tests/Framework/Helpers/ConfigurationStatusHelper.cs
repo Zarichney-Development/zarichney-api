@@ -117,7 +117,7 @@ public static class ConfigurationStatusHelper
       if (!response.IsSuccessStatusCode)
       {
         // Return empty list if the request was not successful
-        return new List<ConfigurationItemStatus>();
+        return [];
       }
 
       // Deserialize the response
@@ -126,7 +126,7 @@ public static class ConfigurationStatusHelper
       if (statuses == null)
       {
         // Return empty list if deserialization failed
-        return new List<ConfigurationItemStatus>();
+        return [];
       }
 
       return statuses;
@@ -134,7 +134,7 @@ public static class ConfigurationStatusHelper
     catch
     {
       // Return empty list if any exception occurs
-      return new List<ConfigurationItemStatus>();
+      return [];
     }
   }
 

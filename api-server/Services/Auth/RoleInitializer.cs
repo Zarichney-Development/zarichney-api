@@ -39,7 +39,7 @@ public class RoleInitializer(
       logger.LogInformation("Roles initialized successfully.");
 
       // Seed default admin user in non-Production environments
-      await SeedDefaultAdminUserAsync(scope, cancellationToken);
+      await SeedDefaultAdminUserAsync(scope);
     }
     catch (Exception ex)
     {
@@ -54,8 +54,7 @@ public class RoleInitializer(
   /// This operation is idempotent and will not create duplicate users.
   /// </summary>
   /// <param name="scope">The dependency injection scope.</param>
-  /// <param name="cancellationToken">The cancellation token.</param>
-  private async Task SeedDefaultAdminUserAsync(IServiceScope scope, CancellationToken cancellationToken)
+  private async Task SeedDefaultAdminUserAsync(IServiceScope scope)
   {
     // Only seed admin user in non-Production environments
     if (environment.IsProduction())

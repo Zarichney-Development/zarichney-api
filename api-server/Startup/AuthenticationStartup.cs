@@ -145,7 +145,7 @@ public static class AuthenticationStartup
   public static void UseCustomAuthentication(this IApplicationBuilder builder)
   {
     builder.UseAuthentication();
-    builder.UseMiddleware<Zarichney.Services.Auth.AuthenticationMiddleware>();
+    builder.UseMiddleware<Services.Auth.AuthenticationMiddleware>();
     builder.UseAuthorization();
   }
 

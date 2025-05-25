@@ -319,7 +319,7 @@ public class StatusServiceTests
 
     // Assert
     result.Should().NotBeNull();
-    result!.IsAvailable.Should().BeFalse();
+    result.IsAvailable.Should().BeFalse();
     result.MissingConfigurations.Should().ContainSingle()
       .Which.Should().Be("ConnectionStrings:UserDatabase");
   }
@@ -330,7 +330,7 @@ public class StatusServiceTests
   {
     // Arrange - Mark the service as unavailable
     _statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, false,
-      new List<string> { "ConnectionStrings:UserDatabase" });
+      ["ConnectionStrings:UserDatabase"]);
 
     // Act - Call GetServiceStatusAsync() which shouldn't override our setting
     _ = await _statusService.GetServiceStatusAsync();
@@ -338,7 +338,7 @@ public class StatusServiceTests
 
     // Assert - Service should still be unavailable
     dbStatus.Should().NotBeNull();
-    dbStatus!.IsAvailable.Should().BeFalse();
+    dbStatus.IsAvailable.Should().BeFalse();
   }
 
   [Trait("Category", "Unit")]

@@ -79,7 +79,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
   /// <summary>
   /// Initializes a new instance of the <see cref="CustomWebApplicationFactory"/> class.
   /// </summary>
-  public CustomWebApplicationFactory()
+  protected CustomWebApplicationFactory()
   {
     // No database fixture available
     _databaseFixture = null;
@@ -102,7 +102,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
   {
     // Force the environment to Testing for all tests
     builder.UseEnvironment("Testing");
-    
+
     builder.ConfigureAppConfiguration((hostingContext, configBuilder) =>
     {
       var env = hostingContext.HostingEnvironment;
@@ -129,7 +129,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
       configBuilder.AddEnvironmentVariables();
     });
 
-    builder.ConfigureServices(services =>
+    builder.ConfigureServices((hostingContext, services) =>
     {
       // Register test-specific services
 
@@ -150,9 +150,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
       var testOutputSink = new InjectableTestOutputSink();
       services.AddSingleton(testOutputSink);
 
-      // Get configuration to load Serilog settings from appsettings.Testing.json
-      var tempSp = services.BuildServiceProvider();
-      var configuration = tempSp.GetRequiredService<IConfiguration>();
+      // Use configuration from hosting context instead of building service provider
+      var configuration = hostingContext.Configuration;
 
       var xunitLogger = new LoggerConfiguration()
         .ReadFrom.Configuration(configuration)
@@ -192,7 +191,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
       .AddEnvironmentVariables()
       .Build();
 
-    var connectionString = configuration.GetConnectionString(Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName);
+    var connectionString = configuration.GetConnectionString(UserDbContext.UserDatabaseConnectionName);
 
     // Remove existing DbContext registrations
     var dbContextDescriptors = services.Where(d =>
