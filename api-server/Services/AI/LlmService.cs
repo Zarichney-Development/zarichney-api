@@ -8,8 +8,6 @@ using Polly;
 using Polly.Retry;
 using Zarichney.Config;
 using Zarichney.Services.Sessions;
-using ILogger = Serilog.ILogger;
-
 namespace Zarichney.Services.AI;
 
 /// <summary>
@@ -72,7 +70,7 @@ public interface ILlmService
 
 public class LlmService : ILlmService
 {
-  private static readonly ILogger Log = Serilog.Log.ForContext<LlmService>();
+  private readonly ILogger<LlmService> _logger;
   private readonly OpenAIClient _client;
   private readonly IMapper _mapper;
   private readonly LlmConfig _config;
@@ -87,7 +85,8 @@ public class LlmService : ILlmService
     IMapper mapper,
     LlmConfig config,
     ISessionManager sessionManager,
-    IScopeContainer scope
+    IScopeContainer scope,
+    ILogger<LlmService> logger
   )
   {
     _client = client;
@@ -95,6 +94,7 @@ public class LlmService : ILlmService
     _config = config;
     _sessionManager = sessionManager;
     _scope = scope;
+    _logger = logger;
 
     _retryPolicy = Policy
       .Handle<Exception>()
@@ -103,7 +103,7 @@ public class LlmService : ILlmService
         sleepDurationProvider: _ => TimeSpan.FromSeconds(1),
         onRetry: (exception, _, retryCount, context) =>
         {
-          Log.Warning(exception,
+          _logger.LogWarning(exception,
             "LLM attempt {retryCount}: Retrying due to {exception}. Retry Context: {@Context}",
             retryCount, exception.Message, context);
         }
@@ -119,7 +119,7 @@ public class LlmService : ILlmService
         sleepDurationProvider: _ => TimeSpan.FromSeconds(1),
         onRetry: (exception, _, currentRetry, context) =>
         {
-          Log.Warning(exception,
+          _logger.LogWarning(exception,
             "LLM attempt {retryCount}: Retrying due to {exception}. Retry Context: {@Context}",
             currentRetry, exception.Message, context);
         }
@@ -150,7 +150,7 @@ public class LlmService : ILlmService
     }
     catch (Exception e)
     {
-      Log.Error(e, "Error occurred while creating assistant");
+      _logger.LogError(e, "Error occurred while creating assistant");
       throw;
     }
   }
@@ -170,7 +170,7 @@ public class LlmService : ILlmService
     }
     catch (Exception e)
     {
-      Log.Error(e, "Error occurred while creating thread");
+      _logger.LogError(e, "Error occurred while creating thread");
       throw;
     }
   }
@@ -184,7 +184,7 @@ public class LlmService : ILlmService
 
     try
     {
-      Log.Information("Creating message for thread {threadId}, message: {content}", threadId, content);
+      _logger.LogInformation("Creating message for thread {threadId}, message: {content}", threadId, content);
       var assistantClient = _client.GetAssistantClient();
       await assistantClient.CreateMessageAsync(
         threadId,
@@ -194,7 +194,7 @@ public class LlmService : ILlmService
     }
     catch (Exception e)
     {
-      Log.Error(e, "Error occurred while creating message");
+      _logger.LogError(e, "Error occurred while creating message");
       throw;
     }
   }
@@ -221,7 +221,7 @@ public class LlmService : ILlmService
     }
     catch (Exception e)
     {
-      Log.Error(e, "Error occurred while creating run for thread {threadId}, assistant {assistantId}", threadId,
+      _logger.LogError(e, "Error occurred while creating run for thread {threadId}, assistant {assistantId}", threadId,
         assistantId);
       throw;
     }
@@ -248,7 +248,7 @@ public class LlmService : ILlmService
     }
     catch (Exception e)
     {
-      Log.Error(e, "Error occurred while getting run {runId} for thread {threadId}", runId, threadId);
+      _logger.LogError(e, "Error occurred while getting run {runId} for thread {threadId}", runId, threadId);
       throw;
     }
   }
@@ -260,7 +260,7 @@ public class LlmService : ILlmService
       throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
     }
 
-    Log.Information("Cancelling run: {runId} for thread: {threadId}", runId, threadId);
+    _logger.LogInformation("Cancelling run: {runId} for thread: {threadId}", runId, threadId);
     try
     {
       var assistantClient = _client.GetAssistantClient();
@@ -280,7 +280,7 @@ public class LlmService : ILlmService
     }
     catch (Exception e)
     {
-      Log.Error(e, "Error occurred while cancelling run {runId} for thread {threadId}", runId, threadId);
+      _logger.LogError(e, "Error occurred while cancelling run {runId} for thread {threadId}", runId, threadId);
       return "Failed to cancel run.";
     }
     finally
@@ -299,7 +299,7 @@ public class LlmService : ILlmService
 
     try
     {
-      Log.Information(
+      _logger.LogInformation(
         "Submitting tool outputs for run {runId}, thread {threadId} for tool call {toolCallId}, Output: {output}",
         runId, threadId, toolCallId, output);
 
@@ -324,7 +324,7 @@ public class LlmService : ILlmService
     }
     catch (Exception e)
     {
-      Log.Error(e, "Error occurred while submitting tool outputs for run {runId}, thread {threadId}", runId,
+      _logger.LogError(e, "Error occurred while submitting tool outputs for run {runId}, thread {threadId}", runId,
         threadId);
       throw;
     }
@@ -345,7 +345,7 @@ public class LlmService : ILlmService
     }
     catch (Exception e)
     {
-      Log.Error(e, "Error occurred while getting run {runId} for thread {threadId}", runId, threadId);
+      _logger.LogError(e, "Error occurred while getting run {runId} for thread {threadId}", runId, threadId);
       throw;
     }
   }
@@ -364,7 +364,7 @@ public class LlmService : ILlmService
     }
     catch (Exception e)
     {
-      Log.Error(e, "Error occurred while deleting assistant {assistantId}", assistantId);
+      _logger.LogError(e, "Error occurred while deleting assistant {assistantId}", assistantId);
     }
   }
 
@@ -382,7 +382,7 @@ public class LlmService : ILlmService
     }
     catch (Exception e)
     {
-      Log.Error(e, "Error occurred while deleting thread {threadId}", threadId);
+      _logger.LogError(e, "Error occurred while deleting thread {threadId}", threadId);
     }
   }
 
@@ -399,7 +399,7 @@ public class LlmService : ILlmService
       throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
     }
 
-    Log.Information(
+    _logger.LogInformation(
       "Getting response from model. System prompt: {systemPrompt}, User prompt: {userPrompt}, Function: {@function}",
       systemPrompt, userPrompt, function);
 
@@ -493,17 +493,17 @@ public class LlmService : ILlmService
     {
       if (toolCall.FunctionName != functionTool.FunctionName)
       {
-        Log.Error("Expected function name {functionName} but got {toolCall.FunctionName}",
+        _logger.LogError("Expected function name {functionName} but got {toolCall.FunctionName}",
           functionTool.FunctionName, toolCall.FunctionName);
         continue;
       }
 
       try
       {
-        Log.Information("Function arguments: {FunctionArguments}", toolCall.FunctionArguments);
+        _logger.LogInformation("Function arguments: {FunctionArguments}", toolCall.FunctionArguments);
         using var argumentsJson = JsonDocument.Parse(toolCall.FunctionArguments);
 
-        Log.Debug("Deserializing tool call arguments to type {type}", typeof(T).Name);
+        _logger.LogDebug("Deserializing tool call arguments to type {type}", typeof(T).Name);
         var result = Utils.Deserialize<T>(argumentsJson)
           ?? throw new Exception("Failed to deserialize tool call arguments");
 
@@ -519,7 +519,7 @@ public class LlmService : ILlmService
       }
       catch (Exception e)
       {
-        Log.Error(e,
+        _logger.LogError(e,
           "Failed to deserialize tool call arguments to type {type}, attempted to deserialize {FunctionArguments}",
           typeof(T).Name, toolCall.FunctionArguments);
         throw;
@@ -631,17 +631,17 @@ public class LlmService : ILlmService
 
       try
       {
-        Log.Information("Sending prompts to model. Messages: {@message}. Options: {@options}", messages, options);
+        _logger.LogInformation("Sending prompts to model. Messages: {@message}. Options: {@options}", messages, options);
 
         var result = await chatClient.CompleteChatAsync(messages, options);
 
-        Log.Information("Received response from model: {@result}", result);
+        _logger.LogInformation("Received response from model: {@result}", result);
 
         return result;
       }
       catch (Exception e)
       {
-        Log.Error(e, "Error occurred while getting response from model");
+        _logger.LogError(e, "Error occurred while getting response from model");
         throw;
       }
     });
@@ -667,10 +667,10 @@ public class LlmService : ILlmService
 
         if (run.RequiredActions.Count > 1)
         {
-          Log.Warning("Multiple actions found for run {runId}. Actions:", runId);
+          _logger.LogWarning("Multiple actions found for run {runId}. Actions:", runId);
           foreach (var toolCall in run.RequiredActions)
           {
-            Log.Warning("Tool call ID: {toolCallId}, Function name: {functionName}, Arguments: {arguments}",
+            _logger.LogWarning("Tool call ID: {toolCallId}, Function name: {functionName}, Arguments: {arguments}",
               toolCall.ToolCallId, toolCall.FunctionName, toolCall.FunctionArguments);
           }
         }
@@ -692,7 +692,7 @@ public class LlmService : ILlmService
       }
       catch (Exception e)
       {
-        Log.Error(e, "Error occurred while getting run action");
+        _logger.LogError(e, "Error occurred while getting run action");
         throw;
       }
     });
@@ -724,7 +724,7 @@ public class LlmService : ILlmService
     }
     catch (Exception e)
     {
-      Log.Error(e, "Error occurred while getting tool call ID");
+      _logger.LogError(e, "Error occurred while getting tool call ID");
       throw;
     }
   }

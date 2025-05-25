@@ -1,5 +1,3 @@
-using ILogger = Serilog.ILogger;
-
 namespace Zarichney.Services.Sessions;
 
 /// <summary>
@@ -9,25 +7,24 @@ namespace Zarichney.Services.Sessions;
 public class SessionCleanupService : BackgroundService
 {
   private readonly ISessionManager _sessionManager;
-  private readonly ILogger _logger;
+  private readonly ILogger<SessionCleanupService> _logger;
   private readonly SessionConfig _config;
   private readonly SemaphoreSlim _cleanupLock;
 
   public SessionCleanupService(
     ISessionManager sessionManager,
     SessionConfig config,
-    ILogger logger)
+    ILogger<SessionCleanupService> logger)
   {
     _sessionManager = sessionManager ?? throw new ArgumentNullException(nameof(sessionManager));
     _config = config ?? throw new ArgumentNullException(nameof(config));
-    _logger = logger.ForContext<SessionCleanupService>()
-              ?? throw new ArgumentNullException(nameof(logger));
+    _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     _cleanupLock = new SemaphoreSlim(_config.MaxConcurrentCleanup, _config.MaxConcurrentCleanup);
   }
 
   protected override async Task ExecuteAsync(CancellationToken stoppingToken)
   {
-    _logger.Information("Session cleanup service started");
+    _logger.LogInformation("Session cleanup service started");
 
     while (!stoppingToken.IsCancellationRequested)
     {
@@ -43,13 +40,13 @@ public class SessionCleanupService : BackgroundService
       }
       catch (Exception ex)
       {
-        _logger.Error(ex, "Error occurred during session cleanup");
+        _logger.LogError(ex, "Error occurred during session cleanup");
         // Wait before retrying after error
         await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
       }
     }
 
-    _logger.Information("Session cleanup service stopped");
+    _logger.LogInformation("Session cleanup service stopped");
   }
 
   private async Task CleanupExpiredSessions(CancellationToken cancellationToken)
@@ -65,7 +62,7 @@ public class SessionCleanupService : BackgroundService
       return;
     }
 
-    _logger.Information("Found {Count} expired sessions to clean up", expiredSessions.Count);
+    _logger.LogInformation("Found {Count} expired sessions to clean up", expiredSessions.Count);
 
     var cleanupTasks = expiredSessions.Select(async session =>
     {
@@ -83,7 +80,7 @@ public class SessionCleanupService : BackgroundService
       }
       catch (Exception ex)
       {
-        _logger.Error(ex, "Error cleaning up session {SessionId}", session.Id);
+        _logger.LogError(ex, "Error cleaning up session {SessionId}", session.Id);
       }
     });
 
@@ -95,14 +92,14 @@ public class SessionCleanupService : BackgroundService
     if (session.Order != null)
     {
       await _sessionManager.EndSession(session.Order.OrderId);
-      _logger.Information("Cleaned up expired session {SessionId} for order {OrderId}",
+      _logger.LogInformation("Cleaned up expired session {SessionId} for order {OrderId}",
         session.Id, session.Order.OrderId);
     }
     else
     {
       if (_sessionManager.Sessions.TryRemove(session.Id, out _))
       {
-        _logger.Information(
+        _logger.LogInformation(
           "Removed expired session {SessionId} without associated order",
           session.Id);
       }
@@ -111,7 +108,7 @@ public class SessionCleanupService : BackgroundService
 
   public override async Task StopAsync(CancellationToken cancellationToken)
   {
-    _logger.Information("Session cleanup service is stopping");
+    _logger.LogInformation("Session cleanup service is stopping");
     try
     {
       await base.StopAsync(cancellationToken);
@@ -119,7 +116,7 @@ public class SessionCleanupService : BackgroundService
     finally
     {
       _cleanupLock.Dispose();
-      _logger.Information("Session cleanup service stopped");
+      _logger.LogInformation("Session cleanup service stopped");
     }
   }
 
