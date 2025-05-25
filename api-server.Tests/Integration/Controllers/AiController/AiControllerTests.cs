@@ -1,8 +1,6 @@
 using System.Net;
 using Zarichney.Tests.Framework.Fixtures;
-using Zarichney.Tests.Integration;
 using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Services.Status;
 using Refit;
 using Xunit;
 using Xunit.Abstractions;
@@ -15,13 +13,9 @@ namespace Zarichney.Tests.Integration.Controllers.AiController;
 /// resolves multipart/form-data Content-Type header conflicts.
 /// </summary>
 [Collection("Integration")]
-public class AiControllerTests : IntegrationTestBase
+public class AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHelper output)
+  : IntegrationTestBase(apiClientFixture, output)
 {
-  public AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHelper output)
-      : base(apiClientFixture, output)
-  {
-  }
-
   // --- /api/completion Tests ---
 
   [Fact]
@@ -35,7 +29,7 @@ public class AiControllerTests : IntegrationTestBase
     var textPrompt = "What is the capital of France?";
 
     // Act
-    var response = await client.Completion(textPrompt, null);
+    var response = await client.Completion(textPrompt, null!);
 
     // Assert - Should either succeed (if OpenAI available) or return 503 (if unavailable)
     Assert.True(
@@ -69,7 +63,7 @@ public class AiControllerTests : IntegrationTestBase
     var audioPrompt = new StreamPart(new MemoryStream(audioData), "test.wav", "audio/wav");
 
     // Act
-    var response = await client.Completion(null, audioPrompt);
+    var response = await client.Completion(null!, audioPrompt);
 
     // Assert - Should either succeed (if OpenAI available) or return 503 (if unavailable)
     Assert.True(
@@ -137,7 +131,7 @@ public class AiControllerTests : IntegrationTestBase
     var textPrompt = "What is the capital of France?";
 
     // Act
-    var response = await client.Completion(textPrompt, null);
+    var response = await client.Completion(textPrompt, null!);
 
     // Assert
     Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -153,7 +147,7 @@ public class AiControllerTests : IntegrationTestBase
     var client = _apiClientFixture.AuthenticatedAiApi;
 
     // Act
-    var response = await client.Completion(null, null);
+    var response = await client.Completion(null!, null!);
 
     // Assert - Should return 400 Bad Request if service available, or 503 if OpenAI unavailable
     Assert.True(
@@ -239,7 +233,7 @@ public class AiControllerTests : IntegrationTestBase
     var client = _apiClientFixture.AuthenticatedAiApi;
 
     // Act
-    var response = await client.Transcribe(null);
+    var response = await client.Transcribe(null!);
 
     // Assert - Should return 400 Bad Request if service available, or 503 if OpenAI unavailable
     Assert.True(

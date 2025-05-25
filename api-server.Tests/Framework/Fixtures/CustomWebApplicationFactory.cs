@@ -10,7 +10,6 @@ using Moq;
 using Serilog;
 using Serilog.Sinks.XUnit.Injectable;
 using Serilog.Sinks.XUnit.Injectable.Extensions;
-using Zarichney.Client;
 using Zarichney.Services.AI;
 using Zarichney.Services.Auth;
 using Zarichney.Tests.Framework.Helpers;

@@ -1,4 +1,3 @@
-using Zarichney.Client;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using Xunit;
@@ -7,7 +6,6 @@ using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 using Zarichney.Tests.Framework.Helpers;
-using Serilog;
 
 namespace Zarichney.Tests.Integration;
 

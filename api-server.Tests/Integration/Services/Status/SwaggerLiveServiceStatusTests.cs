@@ -3,10 +3,8 @@ using FluentAssertions;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Config;
-using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
-using Zarichney.Client.Contracts;
 
 namespace Zarichney.Tests.Integration.Services.Status;
 
@@ -99,7 +97,7 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
 
     // Act - Step 1: Get the service status to check if LLM is available
     var statusResponse = await _apiClientFixture.UnauthenticatedPublicApi.StatusAll();
-    var serviceStatuses = statusResponse.Content;
+    var serviceStatuses = statusResponse.Content!;
 
     // Check if LLM service is unavailable - we now have a list of ServiceStatusInfo objects
     var llmUnavailable = serviceStatuses.Any(s => Equals(s.ServiceName, Zarichney.Client.Contracts.ExternalServices.OpenAiApi) && !s.IsAvailable);

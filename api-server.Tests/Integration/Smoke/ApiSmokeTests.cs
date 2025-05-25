@@ -2,7 +2,6 @@ using FluentAssertions;
 using Refit;
 using Xunit;
 using Xunit.Abstractions;
-using Zarichney.Client;
 using Zarichney.Client.Contracts;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
@@ -37,12 +36,12 @@ public class ApiSmokeTests(ApiClientFixture apiClientFixture, ITestOutputHelper 
 
     // Act - Login
     var loginResponse = await apiClient.Login(loginRequest);
-    var loginResult = loginResponse.Content;
+    var loginResult = loginResponse.Content!;
 
     // Create authenticated Refit client and Logout
     var authenticatedClient = _apiClientFixture.AuthenticatedAuthApi;
     var logoutResponse = await authenticatedClient.Logout();
-    var logoutResult = logoutResponse.Content;
+    var logoutResult = logoutResponse.Content!;
 
     // Assert
     Assert.True(loginResult.Success);

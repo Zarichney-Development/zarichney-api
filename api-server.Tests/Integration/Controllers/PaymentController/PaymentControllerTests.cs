@@ -7,10 +7,8 @@ using Zarichney.Services.Payment;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 using Zarichney.Tests.Framework.Helpers;
-using Zarichney.Tests.Integration;
 using Refit;
 using Xunit.Abstractions;
-using Zarichney.Client;
 using Zarichney.Client.Contracts;
 
 namespace Zarichney.Tests.Integration.Controllers.PaymentController;
