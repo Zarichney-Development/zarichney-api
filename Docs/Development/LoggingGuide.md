@@ -1,6 +1,6 @@
 # Enhanced Logging System Guide
 
-**Version:** 1.2
+**Version:** 1.3
 **Last Updated:** 2025-05-25
 
 ## Introduction
@@ -370,6 +370,93 @@ For debugging specific test scenarios, you can target particular namespaces:
   "Zarichney.Services.Auth.AuthService": "Verbose"
 }
 ```
+
+### Adding Test Context to Logs (Test Class/Method Name)
+
+The logging system supports enriching log events with test-specific contextual information, making it easier to identify which test generated specific log entries when debugging test failures or analyzing test behavior.
+
+#### Benefits
+
+- **Test Identification:** Easily identify which test class and method generated specific log entries
+- **Debugging:** When tests fail, you can quickly filter logs to see only entries from the failing test
+- **Analysis:** Understand the flow of execution within specific tests
+- **Correlation:** Connect log entries to the specific test scenario that generated them
+
+#### Implementation Pattern
+
+The test context enrichment uses `Serilog.Context.LogContext.PushProperty()` to add `TestClassName` and `TestMethodName` properties to log events during test execution.
+
+**Base Class Setup:**
+```csharp
+// In IntegrationTestBase.cs constructor
+public IntegrationTestBase(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper)
+{
+    _apiClientFixture = apiClientFixture;
+    apiClientFixture.AttachToSerilog(testOutputHelper);
+    
+    // Push test class name to logging context for all tests in this class
+    _testClassContext = Serilog.Context.LogContext.PushProperty("TestClassName", GetType().Name);
+}
+
+// Cleanup in DisposeAsync
+public Task DisposeAsync()
+{
+    _testClassContext?.Dispose();
+    return Task.CompletedTask;
+}
+```
+
+**Individual Test Method:**
+```csharp
+[Fact]
+public async Task GetHealth_WhenCalled_ReturnsOkStatus()
+{
+    using (CreateTestMethodContext(nameof(GetHealth_WhenCalled_ReturnsOkStatus)))
+    {
+        // Arrange
+        // Any log events generated within this using block will include:
+        // - TestClassName: "PublicControllerIntegrationTests" 
+        // - TestMethodName: "GetHealth_WhenCalled_ReturnsOkStatus"
+        
+        // Act & Assert
+        var act = () => ApiClient.Health();
+        await act.Should().NotThrowAsync<ApiException>();
+    }
+}
+```
+
+**Helper Method Usage:**
+```csharp
+protected IDisposable CreateTestMethodContext(string testMethodName)
+{
+    return Serilog.Context.LogContext.PushProperty("TestMethodName", testMethodName);
+}
+```
+
+#### Log Output Format
+
+When test context properties are added, they appear in the console log template:
+
+```
+[14:30:15 INF] a1b2c3d4-e5f6 session-123 scope-456 PublicControllerIntegrationTests GetHealth_WhenCalled_ReturnsOkStatus Processing health check request
+[14:30:15 INF] a1b2c3d4-e5f6 session-123 scope-456 PublicControllerIntegrationTests GetHealth_WhenCalled_ReturnsOkStatus Health check completed successfully
+```
+
+**Template Format:**
+```
+[{Timestamp:HH:mm:ss} {Level:u3}] {CorrelationId:-} {SessionId:-} {ScopeId:-} {TestClassName:-} {TestMethodName:-} {Message:lj}{NewLine}{Exception}
+```
+
+#### Usage Guidelines
+
+1. **Test Class Context:** Automatically applied in `IntegrationTestBase` constructor for all integration tests
+2. **Test Method Context:** Use `CreateTestMethodContext(nameof(YourTestMethod))` within a `using` statement in individual test methods
+3. **Scope Management:** The `using` statement ensures proper cleanup of the test method context
+4. **Naming Convention:** Use `nameof()` to get the method name to avoid typos and enable refactoring support
+
+#### Non-Test Logs
+
+For logs generated outside of test contexts (such as during normal application operation), the test context properties will display as "-" in the log output, ensuring consistent formatting without errors.
 
 ## Viewing Logs
 

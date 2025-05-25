@@ -48,14 +48,16 @@ public static class ConfigurationStartup
       .Enrich.FromLogContext()
       .Enrich.WithProperty("CorrelationId", null)
       .Enrich.WithProperty("SessionId", null)
-      .Enrich.WithProperty("ScopeId", null);
+      .Enrich.WithProperty("ScopeId", null)
+      .Enrich.WithProperty("TestClassName", null)
+      .Enrich.WithProperty("TestMethodName", null);
 
     // Only add console sink if not in Testing environment (tests use their own xUnit sink)
     if (builder.Environment.EnvironmentName != "Testing")
     {
       logger = logger.WriteTo.Console(
         outputTemplate:
-        "[{Timestamp:HH:mm:ss} {Level:u3}] {CorrelationId:-} {SessionId:-} {ScopeId:-} {Message:lj}{NewLine}{Exception}"
+        "[{Timestamp:HH:mm:ss} {Level:u3}] {CorrelationId:-} {SessionId:-} {ScopeId:-} {TestClassName:-} {TestMethodName:-} {Message:lj}{NewLine}{Exception}"
       );
     }
 
