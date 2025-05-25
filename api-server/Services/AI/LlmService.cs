@@ -39,7 +39,8 @@ public class LlmConfig : IConfig
 
 public static class LlmModels
 {
-  public const string Gpt4Omini = "gpt-4o-mini";
+  // TODO: clean this up and add param support with default model
+  public const string Gpt4Omini = "gpt-4.1-mini-2025-04-14";
   public const string Gpt4O = "gpt-4o";
   public const string O1Mini = "gpt-o1-mini";
   public const string O1 = "gpt-o1";
