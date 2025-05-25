@@ -1,6 +1,6 @@
 # Enhanced Logging System Guide
 
-**Version:** 1.3
+**Version:** 1.4
 **Last Updated:** 2025-05-25
 
 ## Introduction
@@ -477,6 +477,24 @@ Logs can be viewed through several channels depending on your environment and co
 ### Test Output
 - Integration tests use the `InjectableTestOutput` sink to route logs to xUnit test output
 - Logs appear in your test runner's output window
+
+#### Test Output Format
+
+**Template Limitations:** The `Serilog.Sinks.XUnit.Injectable` sink (version 3.0.64) does not support custom output templates or formatters. The `WriteTo.InjectableTestOutput()` method only accepts the sink instance and does not provide parameters for `outputTemplate`, `formatter`, or other formatting options.
+
+**Current Behavior:** Test logs use the same format as defined in the main application's console template from `ConfigurationStartup.cs`:
+```
+[{Timestamp:HH:mm:ss} {Level:u3}] {CorrelationId:-} {SessionId:-} {ScopeId:-} {TestClassName:-} {TestMethodName:-} {Message:lj}{NewLine}{Exception}
+```
+
+**Investigation Summary:** During logging system enhancement, we investigated implementing a test-optimized output template (e.g., `[{Level:u3}] {TestClassName:-}.{TestMethodName:-} >> {Message:lj}{NewLine}{Exception}`) to make test logs more concise. However, this was not feasible with the current `InjectableTestOutput` sink implementation.
+
+**Alternatives Considered:**
+- Custom `outputTemplate` parameter: Not supported by the sink
+- Custom `ITextFormatter` parameter: Not supported by the sink
+- Manual logger configuration without `.ReadFrom.Configuration()`: Still requires the sink to accept formatting parameters
+
+**Current Solution:** Test logs inherit the main application's logging configuration via `.ReadFrom.Configuration()`, ensuring consistent formatting and property enrichment across both application and test environments.
 
 ## Best Practices
 
