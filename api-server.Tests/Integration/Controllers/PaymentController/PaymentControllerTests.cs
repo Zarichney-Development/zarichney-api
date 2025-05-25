@@ -11,6 +11,7 @@ using Zarichney.Tests.Integration;
 using Refit;
 using Xunit.Abstractions;
 using Zarichney.Client;
+using Zarichney.Client.Contracts;
 
 namespace Zarichney.Tests.Integration.Controllers.PaymentController;
 

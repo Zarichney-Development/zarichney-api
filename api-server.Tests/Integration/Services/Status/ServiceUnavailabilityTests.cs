@@ -7,6 +7,7 @@ using Refit;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Client;
+using Zarichney.Client.Contracts;
 using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
@@ -154,9 +155,9 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
 
     // Test that the result contains the expected services, but don't make assumptions about their availability
     // since that may depend on the test environment's configuration
-    serviceStatuses.Should().Contain(c => c.ServiceName == (Client.ExternalServices)ExternalServices.OpenAiApi);
-    serviceStatuses.Should().Contain(c => c.ServiceName == (Client.ExternalServices)ExternalServices.MsGraph);
-    serviceStatuses.Should().Contain(c => c.ServiceName == (Client.ExternalServices)ExternalServices.MailCheck);
+    serviceStatuses.Should().Contain(c => c.ServiceName == (Zarichney.Client.Contracts.ExternalServices)ExternalServices.OpenAiApi);
+    serviceStatuses.Should().Contain(c => c.ServiceName == (Zarichney.Client.Contracts.ExternalServices)ExternalServices.MsGraph);
+    serviceStatuses.Should().Contain(c => c.ServiceName == (Zarichney.Client.Contracts.ExternalServices)ExternalServices.MailCheck);
 
     // Verify result structure without making assertions about specific service configurations
     foreach (var service in serviceStatuses)

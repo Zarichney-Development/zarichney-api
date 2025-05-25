@@ -6,6 +6,7 @@ using Zarichney.Config;
 using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.Client.Contracts;
 
 namespace Zarichney.Tests.Integration.Services.Status;
 
@@ -101,7 +102,7 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
     var serviceStatuses = statusResponse.Content;
 
     // Check if LLM service is unavailable - we now have a list of ServiceStatusInfo objects
-    var llmUnavailable = serviceStatuses.Any(s => Equals(s.ServiceName, (Zarichney.Client.ExternalServices)ExternalServices.OpenAiApi) && !s.IsAvailable);
+    var llmUnavailable = serviceStatuses.Any(s => Equals(s.ServiceName, Zarichney.Client.Contracts.ExternalServices.OpenAiApi) && !s.IsAvailable);
 
     // Skip test if LLM service is available
     if (!llmUnavailable)

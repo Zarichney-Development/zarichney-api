@@ -12,14 +12,14 @@ Its primary responsibilities are to:
 * Provide a consistent and reliable testing environment.
 * Offer shared services and fixtures to reduce boilerplate and improve test maintainability (e.g., `CustomWebApplicationFactory`, `DatabaseFixture`).
 * Encapsulate common testing patterns and logic (e.g., authentication simulation via `TestAuthHandler`, conditional test execution via `DependencyFactAttribute`).
-* Host the auto-generated API client used for integration testing (`IZarichneyAPI.cs`).
+* Host the auto-generated API clients used for integration testing (multiple granular interfaces).
 
 The components within this directory are designed to be leveraged by test cases in the `/Unit` and `/Integration` directories, ensuring adherence to the project's testing standards as defined in `../../Docs/Standards/TestingStandards.md` and the detailed guides for unit and integration testing.
 
 ### Child Modules / Key Subdirectories:
 
 * **`./Attributes/README.md`**: Custom xUnit attributes for specialized test execution control (e.g., `[DependencyFact]`, `[DockerAvailableFact]`).
-* **`./Client/README.md`**: Contains the auto-generated Refit client (`IZarichneyAPI.cs`) for type-safe API interactions during integration tests.
+* **`./Client/README.md`**: Contains the auto-generated Refit clients (multiple granular interfaces) for type-safe API interactions during integration tests.
 * **`./Fixtures/README.md`**: Core xUnit fixtures managing the lifecycle of expensive resources like the test server (`CustomWebApplicationFactory.cs`) and database (`DatabaseFixture.cs`).
 * **`./Helpers/README.md`**: Utility classes and extension methods that provide common helper functions for tests (e.g., `AuthTestHelper.cs`, `TestConfigurationHelper.cs`).
 * **`./Mocks/README.md`**: Infrastructure for mocking external dependencies, including mock factories (e.g., `MockStripeServiceFactory.cs`) and configurations for service virtualization tools like WireMock.Net (planned).

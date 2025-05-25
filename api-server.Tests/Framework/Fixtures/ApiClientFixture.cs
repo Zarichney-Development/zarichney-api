@@ -79,17 +79,6 @@ public class ApiClientFixture : IAsyncLifetime
   /// </summary>
   public IApiApi AuthenticatedApiApi { get; private set; } = null!;
 
-  /// <summary>
-  /// Gets the legacy unauthenticated API client (backward compatibility).
-  /// </summary>
-  [Obsolete("Use specific API interface properties (e.g., UnauthenticatedPublicApi) instead")]
-  public IZarichneyAPI UnauthenticatedClient { get; private set; } = null!;
-
-  /// <summary>
-  /// Gets the legacy authenticated API client (backward compatibility).
-  /// </summary>
-  [Obsolete("Use specific API interface properties (e.g., AuthenticatedPublicApi) instead")]
-  public IZarichneyAPI AuthenticatedClient { get; private set; } = null!;
 
   /// <summary>
   /// Gets the database fixture.
@@ -148,9 +137,6 @@ public class ApiClientFixture : IAsyncLifetime
     UnauthenticatedApiApi = RestService.For<IApiApi>(unauthHttpClient);
     AuthenticatedApiApi = RestService.For<IApiApi>(authHttpClient);
 
-    // Backward compatibility - keep until all tests are updated
-    UnauthenticatedClient = RestService.For<IZarichneyAPI>(unauthHttpClient);
-    AuthenticatedClient = RestService.For<IZarichneyAPI>(authHttpClient);
   }
 
   /// <summary>

@@ -71,17 +71,6 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     // Database availability will be checked based on dependency traits during InitializeAsync
   }
 
-  /// <summary>
-  /// Unauthenticated API client from shared fixture.
-  /// </summary>
-  [Obsolete("Use specific API interface properties from _apiClientFixture (e.g., _apiClientFixture.UnauthenticatedPublicApi) instead")]
-  protected IZarichneyAPI ApiClient => _apiClientFixture.UnauthenticatedClient;
-
-  /// <summary>
-  /// Authenticated API client from shared fixture.
-  /// </summary>
-  [Obsolete("Use specific API interface properties from _apiClientFixture (e.g., _apiClientFixture.AuthenticatedPublicApi) instead")]
-  protected IZarichneyAPI AuthenticatedApiClient => _apiClientFixture.AuthenticatedClient;
 
   /// <summary>
   /// Gets a service from the factory's service provider.

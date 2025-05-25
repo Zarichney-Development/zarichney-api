@@ -11,7 +11,7 @@ This directory contains shared xUnit **fixtures** that are fundamental to the in
 The primary responsibilities of the fixtures in this directory are:
 * **Test Server Management (`CustomWebApplicationFactory.cs`):** To host the `api-server` application in-memory, manage its configuration for testing, and provide a mechanism for overriding services (e.g., for injecting mocks or test-specific authentication handlers).
 * **Database Management (`DatabaseFixture.cs`):** To manage the lifecycle of a PostgreSQL database instance using Testcontainers, including starting/stopping the container, applying EF Core migrations, and providing database cleanup capabilities via Respawn.
-* **API Client Provisioning (`ApiClientFixture.cs`):** To create and provide pre-configured instances of the auto-generated Refit client (`IZarichneyAPI.cs`), ensuring tests use a consistent client for API interactions.
+* **API Client Provisioning (`ApiClientFixture.cs`):** To create and provide pre-configured instances of the auto-generated Refit clients (multiple granular interfaces), ensuring tests use consistent clients for API interactions.
 
 These fixtures are crucial for creating efficient, reliable, and maintainable integration tests by abstracting away complex setup and teardown logic.
 
@@ -32,7 +32,7 @@ These fixtures are crucial for creating efficient, reliable, and maintainable in
         * Handles Docker availability gracefully - tests automatically skip if Docker is not running.
     * **`ApiClientFixture.cs`:**
         * Depends on `CustomWebApplicationFactory` to get an `HttpClient`.
-        * Creates and configures instances of the Refit client `IZarichneyAPI`.
+        * Creates and configures instances of the granular Refit client interfaces.
 * **Consumption:** These fixtures are typically injected into the constructor of base test classes (`IntegrationTestBase`, `DatabaseIntegrationTestBase`), which then expose their functionalities or the resources they manage (e.g., API client, DbContext factory method) to the actual test methods.
 
 ## 3. Interface Contract & Assumptions
@@ -44,7 +44,7 @@ These fixtures are crucial for creating efficient, reliable, and maintainable in
     * **Docker Environment:** `DatabaseFixture` fundamentally assumes that a Docker environment is available and correctly configured on the machine running the tests. Tests requiring it can be decorated with `[DockerAvailableFact]`.
     * **`api-server` Configurability:** `CustomWebApplicationFactory` assumes that the `api-server`'s `Program.cs` is structured to allow for in-memory hosting and that its service registration and configuration pipeline can be customized for testing.
     * **Migration Application:** `DatabaseFixture` assumes that EF Core migrations are present and can be applied successfully to the test database.
-    * **Client Generation:** `ApiClientFixture` assumes the `IZarichneyAPI.cs` client has been correctly generated and is up-to-date.
+    * **Client Generation:** `ApiClientFixture` assumes the granular client interfaces have been correctly generated and are up-to-date.
 
 ## 4. Local Conventions & Constraints
 
@@ -74,7 +74,7 @@ These fixtures are crucial for creating efficient, reliable, and maintainable in
 ### Internal Dependencies
 
 * **`api-server` Project:** Required by `CustomWebApplicationFactory` for hosting and by `DatabaseFixture` for `UserDbContext` and migrations.
-* **`../Client/IZarichneyAPI.cs`:** Used by `ApiClientFixture`.
+* **`../Client/` directory:** Contains granular client interfaces used by `ApiClientFixture`.
 * **`../Helpers/`**: Fixtures may use helper classes (e.g., `TestAuthHandler` is configured by `CustomWebApplicationFactory`).
 * **`../Mocks/Factories/`**: Used by `CustomWebApplicationFactory` to register mock services.
 * **`../../Integration/IntegrationCollection.cs`:** Defines how these fixtures are shared.

@@ -3,6 +3,7 @@ using Refit;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Client;
+using Zarichney.Client.Contracts;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 

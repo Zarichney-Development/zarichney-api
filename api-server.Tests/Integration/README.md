@@ -23,7 +23,7 @@ Our integration testing strategy is built upon a robust framework designed for r
 
 * **In-Memory Hosting:** The `api-server` is hosted in-memory using `CustomWebApplicationFactory<Program>`, which allows tests to make HTTP requests to the application as if it were deployed, but without actual network overhead for the host itself.
 * **Real Database Interaction:** Database operations are tested against a genuine PostgreSQL instance managed by **Testcontainers** via the `DatabaseFixture`. This fixture handles container lifecycle, applies EF Core migrations, and provides database cleanup using **Respawn**.
-* **Type-Safe API Client:** All API interactions are performed using a **Refit client** (`IZarichneyAPI`), auto-generated from the `api-server`'s OpenAPI specification.
+* **Type-Safe API Clients:** All API interactions are performed using **Refit clients** (multiple granular interfaces), auto-generated from the `api-server`'s OpenAPI specification.
 * **Simulated Authentication:** The `TestAuthHandler` and `AuthTestHelper` enable simulation of various authenticated users, roles, and claims.
 * **External Service Virtualization (Planned):** External HTTP dependencies will be virtualized using **WireMock.Net** (TDD FRMK-004) to ensure deterministic test outcomes. Until fully implemented, interfaces for these services are mocked via DI using factories from `../Framework/Mocks/Factories/`.
 * **Shared Fixtures:** Expensive resources like `CustomWebApplicationFactory`, `DatabaseFixture`, and `ApiClientFixture` are shared across test classes using xUnit's `ICollectionFixture` mechanism within the `"Integration"` collection for optimal performance.
@@ -99,7 +99,7 @@ Supporting standards include:
 ### Internal Dependencies
 
 * **`api-server` Project:** The System Under Test.
-* **`../Framework/`**: This entire directory heavily relies on components from the `../Framework/` directory, including all fixtures (`CustomWebApplicationFactory`, `DatabaseFixture`, `ApiClientFixture`), helpers (`AuthTestHelper`), the Refit client (`Client/IZarichneyAPI.cs`), attributes (`DependencyFactAttribute`), and mock infrastructure.
+* **`../Framework/`**: This entire directory heavily relies on components from the `../Framework/` directory, including all fixtures (`CustomWebApplicationFactory`, `DatabaseFixture`, `ApiClientFixture`), helpers (`AuthTestHelper`), the Refit clients (`Client/` directory), attributes (`DependencyFactAttribute`), and mock infrastructure.
 * **`../TestData/`**: May use Test Data Builders or static sample files from this directory.
 
 ### Key External Libraries
@@ -118,7 +118,7 @@ Supporting standards include:
 
 Integration tests are a vital part of the testing strategy, providing assurance that the system's components work together as designed.
 * **Realistic Testing:** The use of `CustomWebApplicationFactory` with a real (Testcontainer-managed) database provides a high-fidelity test environment.
-* **API Contract Validation:** Testing through the Refit API client (`IZarichneyAPI.cs`) ensures that the API behaves according to its OpenAPI specification.
+* **API Contract Validation:** Testing through the Refit API clients ensures that the API behaves according to its OpenAPI specification.
 * **Performance & Reliability:** The shared fixture model (`IntegrationCollection`) was adopted to manage expensive resources efficiently. The planned introduction of WireMock.Net will further enhance reliability by isolating tests from external network dependencies.
 
 These tests bridge the gap between fast, isolated unit tests and potentially slower, more complex end-to-end tests (which are currently out of scope).

@@ -24,7 +24,7 @@ The helpers in this directory serve various functions:
 
 * **`AuthTestHelper.cs`:**
     * Works in conjunction with `TestAuthHandler.cs` (which it often instantiates or references) and `CustomWebApplicationFactory.cs`.
-    * Provides methods (e.g., `CreateAuthenticatedClientAsync`) to easily create `HttpClient` instances or `IZarichneyAPI` clients. These clients are pre-configured to simulate authenticated users with specific IDs, roles, and claims for integration testing of secured API endpoints.
+    * Provides methods (e.g., `CreateAuthenticatedClientAsync`) to easily create `HttpClient` instances or granular API clients. These clients are pre-configured to simulate authenticated users with specific IDs, roles, and claims for integration testing of secured API endpoints.
 * **`ConfigurationStatusHelper.cs`:**
     * A key component supporting the `DependencyFactAttribute`.
     * It checks if specific configuration keys (representing feature flags, API keys, or other dependencies) are present and have valid (non-placeholder) values within the test environment's `IConfiguration`.
@@ -114,8 +114,8 @@ The helpers in this directory serve various functions:
 ### Internal Dependencies
 
 * **`../Attributes/`**: Components like `SkipMissingDependencyDiscoverer` are direct collaborators with attributes such as `DependencyFactAttribute`.
-* **`../Fixtures/`**: `AuthTestHelper` typically depends on `ApiClientFixture` (to get an `IZarichneyAPI` instance) and indirectly on `CustomWebApplicationFactory` (which sets up `TestAuthHandler`).
-* **`../Client/`**: `AuthTestHelper` may create instances of `IZarichneyAPI`.
+* **`../Fixtures/`**: `AuthTestHelper` typically depends on `ApiClientFixture` (to get granular client instances) and indirectly on `CustomWebApplicationFactory` (which sets up `TestAuthHandler`).
+* **`../Client/`**: `AuthTestHelper` may create instances of granular API client interfaces.
 * **`api-server` Project Types**: Some helpers, like `AuthTestHelper`, may interact with or use DTOs and model types defined in the main `api-server` project (e.g., `ApplicationUser`, `Roles`).
 
 ### Key External Libraries
