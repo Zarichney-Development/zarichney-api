@@ -27,7 +27,7 @@ public class ApiSmokeTests(ApiClientFixture apiClientFixture, ITestOutputHelper 
     SetSkipReason("Test requires authentication service which is missing configuration");
 
     // Arrange
-    var apiClient = ApiClient;
+    var apiClient = _apiClientFixture.UnauthenticatedAuthApi;
     var loginRequest = new LoginRequest
     {
       Email = "zarichney@gmail.com",
@@ -38,7 +38,7 @@ public class ApiSmokeTests(ApiClientFixture apiClientFixture, ITestOutputHelper 
     var loginResult = await apiClient.Login(loginRequest);
 
     // Create authenticated Refit client and Logout
-    var authenticatedClient = AuthenticatedApiClient;
+    var authenticatedClient = _apiClientFixture.AuthenticatedAuthApi;
     var logoutResult = await authenticatedClient.Logout();
 
     // Assert
@@ -55,7 +55,7 @@ public class ApiSmokeTests(ApiClientFixture apiClientFixture, ITestOutputHelper 
     SetSkipReason("Test requires cookbook service which is missing configuration");
 
     // Arrange
-    var client = AuthenticatedApiClient;
+    var client = _apiClientFixture.AuthenticatedCookbookApi;
 
     // Act
     var recipes = await client.Recipe("burger", false, null, null);
@@ -75,7 +75,7 @@ public class ApiSmokeTests(ApiClientFixture apiClientFixture, ITestOutputHelper 
     // It doesn't test actual payment processing
 
     // Arrange
-    var apiClient = AuthenticatedApiClient;
+    var apiClient = _apiClientFixture.AuthenticatedApiApi;
 
     // Act & Assert - Secure endpoint should be accessible
     var act = () => apiClient.Secure();

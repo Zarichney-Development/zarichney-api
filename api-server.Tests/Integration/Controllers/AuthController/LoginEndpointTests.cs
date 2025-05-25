@@ -20,7 +20,7 @@ public class LoginEndpointsTests(ApiClientFixture apiClientFixture, ITestOutputH
   public async Task Login_WithValidCredentials_ShouldSucceed()
   {
     // Arrange
-    var client = ApiClient;
+    var client = _apiClientFixture.UnauthenticatedAuthApi;
     // todo replace with the test user values that resides in config
     var request = new LoginRequest
     {
@@ -40,7 +40,7 @@ public class LoginEndpointsTests(ApiClientFixture apiClientFixture, ITestOutputH
   public async Task Login_WithInvalidCredentials_ShouldFail()
   {
     // Arrange
-    var client = ApiClient;
+    var client = _apiClientFixture.UnauthenticatedAuthApi;
     var request = new LoginRequest
     {
       Email = "invalid@example.com",
@@ -55,7 +55,7 @@ public class LoginEndpointsTests(ApiClientFixture apiClientFixture, ITestOutputH
   public async Task Login_WithEmptyEmail_ShouldFail()
   {
     // Arrange
-    var client = ApiClient;
+    var client = _apiClientFixture.UnauthenticatedAuthApi;
     var request = new LoginRequest
     {
       Email = "",

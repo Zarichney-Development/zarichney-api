@@ -21,5 +21,17 @@ namespace Zarichney.Client
         /// </summary>
         [Get("/api/auth/stub")]
         Task<object> StubMethod();
+
+        /// <summary>
+        /// Stub for Login method
+        /// </summary>
+        [Post("/api/auth/login")]
+        Task<AuthResponse> Login([Body] LoginRequest body);
+
+        /// <summary>
+        /// Stub for Logout method
+        /// </summary>
+        [Post("/api/auth/logout")]
+        Task<AuthResponse> Logout();
     }
 }

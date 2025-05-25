@@ -21,5 +21,17 @@ namespace Zarichney.Client
         /// </summary>
         [Get("/api/payments/stub")]
         Task<object> StubMethod();
+
+        /// <summary>
+        /// Stub for CreateIntent method
+        /// </summary>
+        [Post("/api/payments/create-intent")]
+        Task CreateIntent([Body] PaymentIntentRequest request);
+
+        /// <summary>
+        /// Stub for Status method
+        /// </summary>
+        [Get("/api/payments/status")]
+        Task Status(string paymentIntentId);
     }
 }

@@ -21,5 +21,11 @@ namespace Zarichney.Client
         /// </summary>
         [Get("/api/stub")]
         Task<object> StubMethod();
+
+        /// <summary>
+        /// Stub for Secure method
+        /// </summary>
+        [Get("/api/health/secure")]
+        Task Secure();
     }
 }

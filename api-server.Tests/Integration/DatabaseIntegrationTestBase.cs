@@ -11,7 +11,7 @@ namespace Zarichney.Tests.Integration;
 public abstract class DatabaseIntegrationTestBase : IntegrationTestBase
 {
   private DatabaseFixture DatabaseFixture => _apiClientFixture.DatabaseFixture;
-  private readonly ApiClientFixture _apiClientFixture;
+  protected readonly new ApiClientFixture _apiClientFixture;
 
   /// <summary>
   /// Initializes a new instance of the <see cref="DatabaseIntegrationTestBase"/> class.

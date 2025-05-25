@@ -143,7 +143,7 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
     });
 
     using var httpClient = customFactory.CreateAuthenticatedClient("test-user", ["User"]);
-    var client = RestService.For<IZarichneyAPI>(httpClient);
+    var client = RestService.For<IPublicApi>(httpClient);
 
     // Act
     var result = await client.StatusAll();

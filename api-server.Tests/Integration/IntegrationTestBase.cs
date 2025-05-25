@@ -36,7 +36,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   };
 
   protected CustomWebApplicationFactory Factory => _apiClientFixture.Factory;
-  private readonly ApiClientFixture _apiClientFixture;
+  protected readonly ApiClientFixture _apiClientFixture;
   private readonly IDisposable _testClassContext;
 
   private bool _dependenciesChecked;

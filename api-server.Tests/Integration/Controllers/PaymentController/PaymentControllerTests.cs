@@ -31,7 +31,7 @@ public class PaymentControllerTests(ApiClientFixture apiClientFixture, ITestOutp
   {
     // Arrange
     await ResetDatabaseAsync();
-    var apiClient = AuthenticatedApiClient;
+    var apiClient = _apiClientFixture.AuthenticatedPaymentApi;
     var requestDto = new PaymentIntentRequest
     {
       Amount = 1000,
@@ -75,7 +75,7 @@ public class PaymentControllerTests(ApiClientFixture apiClientFixture, ITestOutp
   {
     // Arrange
     await ResetDatabaseAsync();
-    var apiClient = AuthenticatedApiClient;
+    var apiClient = _apiClientFixture.AuthenticatedPaymentApi;
     var paymentId = "pi_test_" + GetRandom.String();
 
     // Mock the Stripe service

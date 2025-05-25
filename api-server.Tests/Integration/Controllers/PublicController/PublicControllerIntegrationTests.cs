@@ -35,7 +35,7 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture,
       // ApiClient is obtained from IntegrationTestBase, represents unauthenticated Refit client
 
       // Act & Assert: calling Health should not throw and thus return 200 OK
-      var act = () => ApiClient.Health();
+      var act = () => _apiClientFixture.UnauthenticatedPublicApi.Health();
       await act.Should().NotThrowAsync<ApiException>(
         because: "health endpoint should always return OK status even without configuration");
     }
@@ -59,7 +59,7 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture,
                                .ToArray();
 
     // Act
-    var serviceStatus = await ApiClient.StatusAll();
+    var serviceStatus = await _apiClientFixture.UnauthenticatedPublicApi.StatusAll();
 
     // Assert
     serviceStatus.Should().NotBeNull(
@@ -104,7 +104,7 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture,
     // but we can check the structure and that it's not empty if successful.
 
     // Act
-    var configStatus = await ApiClient.Config();
+    var configStatus = await _apiClientFixture.UnauthenticatedPublicApi.Config();
 
     // Assert
     configStatus.Should().NotBeNull(

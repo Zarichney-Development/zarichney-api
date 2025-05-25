@@ -24,7 +24,7 @@ public class GetRecipeDetailsTests(ApiClientFixture apiClientFixture, ITestOutpu
     // The database doesn't need to be reset for authentication tests
 
     // Act & Assert
-    await Assert.ThrowsAsync<ApiException>(() => ApiClient.Recipe("", false, null, null));
+    await Assert.ThrowsAsync<ApiException>(() => _apiClientFixture.UnauthenticatedCookbookApi.Recipe("", false, null, null));
   }
 
   [DependencyFact]
@@ -38,7 +38,7 @@ public class GetRecipeDetailsTests(ApiClientFixture apiClientFixture, ITestOutpu
     // var testRecipes = await SeedTestRecipesAsync();
 
     // Create an authenticated client with user roles
-    var authenticatedClient = AuthenticatedApiClient;
+    var authenticatedClient = _apiClientFixture.AuthenticatedCookbookApi;
 
     // Act
     var recipes = await authenticatedClient.Recipe("", scrape: false, acceptableScore: null, requiredCount: null);

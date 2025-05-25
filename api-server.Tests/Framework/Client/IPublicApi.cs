@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Refit;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 #nullable enable annotations
@@ -21,5 +22,23 @@ namespace Zarichney.Client
         /// </summary>
         [Get("/api/public/stub")]
         Task<object> StubMethod();
+
+        /// <summary>
+        /// Stub for Health method
+        /// </summary>
+        [Get("/api/health")]
+        Task Health();
+
+        /// <summary>
+        /// Stub for Config method
+        /// </summary>
+        [Get("/api/config")]
+        Task<ICollection<ConfigurationItemStatus>> Config();
+
+        /// <summary>
+        /// Stub for StatusAll method
+        /// </summary>
+        [Get("/api/status")]
+        Task<ICollection<ServiceStatusInfo>> StatusAll();
     }
 }

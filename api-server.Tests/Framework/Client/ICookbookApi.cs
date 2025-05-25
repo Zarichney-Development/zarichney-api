@@ -4,6 +4,7 @@
 // </auto-generated>
 
 using Refit;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 #nullable enable annotations
@@ -21,5 +22,11 @@ namespace Zarichney.Client
         /// </summary>
         [Get("/api/cookbook/stub")]
         Task<object> StubMethod();
+
+        /// <summary>
+        /// Stub for Recipe method
+        /// </summary>
+        [Get("/api/recipe")]
+        Task<ICollection<Recipe>> Recipe(string query, bool scrape, int? acceptableScore, int? requiredCount);
     }
 }
