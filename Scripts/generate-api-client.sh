@@ -1,7 +1,7 @@
 #!/bin/bash
 # Generate API Client for Tests
-# This script automates the generation of a strongly-typed Refit client for integration testing.
-# It builds the api-server project, generates swagger.json, and creates the Refit client.
+# This script automates the generation of strongly-typed Refit client interfaces for integration testing.
+# It builds the api-server project, generates swagger.json, and creates multiple Refit client interfaces grouped by OpenAPI tags.
 
 # Exit on error
 set -e
@@ -91,6 +91,6 @@ if [ -f "$SWAGGER_JSON_PATH" ]; then
 fi
 
 echo -e "\e[36mAPI client generation completed successfully!\e[0m"
-echo -e "\e[36mGenerated client is available at: $API_CLIENT_DIR/IZarichneyAPI.cs\e[0m"
-echo -e "\e[36mClient interface name: IZarichneyAPI\e[0m"
+echo -e "\e[36mGenerated client interfaces are available in: $API_CLIENT_DIR/\e[0m"
+echo -e "\e[36mClient interfaces are grouped by OpenAPI tags (multiple files)\e[0m"
 echo -e "\e[36mClient namespace: Zarichney.Client\e[0m"
