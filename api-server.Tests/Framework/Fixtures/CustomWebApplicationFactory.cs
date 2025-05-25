@@ -100,6 +100,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
   /// <param name="builder">The <see cref="IWebHostBuilder"/> for configuring the application.</param>
   protected override void ConfigureWebHost(IWebHostBuilder builder)
   {
+    // Force the environment to Testing for all tests
+    builder.UseEnvironment("Testing");
+    
     builder.ConfigureAppConfiguration((hostingContext, configBuilder) =>
     {
       var env = hostingContext.HostingEnvironment;
@@ -164,7 +167,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         .CreateLogger();
 
       Log.Logger = xunitLogger;
-      Log.Information("Starting up Zarichney API for automation testing suite...");
     });
 
     // builder.ConfigureLogging(logging =>

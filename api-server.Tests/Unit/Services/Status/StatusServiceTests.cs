@@ -326,14 +326,14 @@ public class StatusServiceTests
 
   [Trait("Category", "Unit")]
   [Fact]
-  public void SetServiceAvailability_ForIdentityDb_ShouldUpdateAvailabilityEvenAfterGetServiceStatusAsync()
+  public async Task SetServiceAvailability_ForIdentityDb_ShouldUpdateAvailabilityEvenAfterGetServiceStatusAsync()
   {
     // Arrange - Mark the service as unavailable
     _statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, false,
       new List<string> { "ConnectionStrings:UserDatabase" });
 
     // Act - Call GetServiceStatusAsync() which shouldn't override our setting
-    _ = _statusService.GetServiceStatusAsync().GetAwaiter().GetResult();
+    _ = await _statusService.GetServiceStatusAsync();
     var dbStatus = _statusService.GetFeatureStatus(ExternalServices.PostgresIdentityDb);
 
     // Assert - Service should still be unavailable

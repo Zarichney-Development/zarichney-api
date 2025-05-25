@@ -45,13 +45,18 @@ public static class ConfigurationStartup
     var logger = new LoggerConfiguration()
       .MinimumLevel.Warning()
       .ReadFrom.Configuration(builder.Configuration)
-      .WriteTo.Console(
-        outputTemplate:
-        "[{Timestamp:HH:mm:ss} {Level:u3}] {SessionId} {ScopeId} {Message:lj}{NewLine}{Exception}"
-      )
       .Enrich.FromLogContext()
       .Enrich.WithProperty("SessionId", null)
       .Enrich.WithProperty("ScopeId", null);
+
+    // Only add console sink if not in Testing environment (tests use their own xUnit sink)
+    if (builder.Environment.EnvironmentName != "Testing")
+    {
+      logger = logger.WriteTo.Console(
+        outputTemplate:
+        "[{Timestamp:HH:mm:ss} {Level:u3}] {SessionId} {ScopeId} {Message:lj}{NewLine}{Exception}"
+      );
+    }
 
     var seqUrl = builder.Configuration["LoggingConfig:SeqUrl"];
     if (!string.IsNullOrEmpty(seqUrl) && Uri.IsWellFormedUriString(seqUrl, UriKind.Absolute))
@@ -69,9 +74,8 @@ public static class ConfigurationStartup
     }
 
     Log.Logger = logger.CreateLogger();
-    Log.Information("Starting up Zarichney API...");
 
-    builder.Host.UseSerilog();
+    builder.Host.UseSerilog(Log.Logger, dispose: true);
   }
 
   #region Configuration Registration

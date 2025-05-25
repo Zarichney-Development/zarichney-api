@@ -137,13 +137,11 @@ namespace Zarichney.Tests.Integration.Services.Auth
       // Arrange
       var client = _developmentFactoryWithNoDb.CreateClient();
 
-      // Prepare login request
-      var loginRequest = new StringContent(
+      // Act - Call the login endpoint
+      using var loginRequest = new StringContent(
         """{"email":"test@example.com","password":"test123"}""",
         System.Text.Encoding.UTF8,
         "application/json");
-
-      // Act - Call the login endpoint
       var response = await client.PostAsync("/api/auth/login", loginRequest);
 
       // Assert
@@ -171,13 +169,11 @@ namespace Zarichney.Tests.Integration.Services.Auth
       // Arrange
       var client = _developmentFactoryWithNoDb.CreateClient();
 
-      // Prepare register request
-      var registerRequest = new StringContent(
+      // Act - Call the register endpoint
+      using var registerRequest = new StringContent(
         """{"email":"newuser@example.com","password":"Password123!"}""",
         System.Text.Encoding.UTF8,
         "application/json");
-
-      // Act - Call the register endpoint
       var response = await client.PostAsync("/api/auth/register", registerRequest);
 
       // Assert
