@@ -76,18 +76,11 @@ if ! dotnet tool list -g | grep -q "refitter"; then
     fi
 fi
 
-# Step 5: Generate Refit client using refitter
-echo -e "\e[32mGenerating Refit client...\e[0m"
-refitter "$SWAGGER_JSON_PATH" \
-    --namespace "Zarichney.Client" \
-    --output "$API_CLIENT_DIR/IZarichneyAPI.cs" \
-    --interface-name "IZarichneyAPI" \
-    --use-api-response-for-all-responses \
-    --use-nullable-reference-types \
-    --use-api-response-for-successful-responses \
-    --skip-validation
+# Step 5: Generate Refit client using refitter with .refitter settings file
+echo -e "\e[32mGenerating Refit client using .refitter settings file...\e[0m"
+refitter --settings-file "$ROOT_DIR/.refitter" --skip-validation
 if [ $? -ne 0 ]; then
-    echo -e "\e[31mError generating Refit client. Exiting.\e[0m"
+    echo -e "\e[31mError generating Refit client using .refitter file. Exiting.\e[0m"
     exit 1
 fi
 
