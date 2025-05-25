@@ -60,7 +60,7 @@ After making changes to API contracts (controllers, endpoints, models), you must
 ```
 
 This script generates:
-- `api-server.Tests/Client/ZarichneyAPI.cs` file containing the `IZarichneyAPI` interface and supporting models
+- Multiple granular interface files in `api-server.Tests/Framework/Client/` (e.g., `IAuthApi.cs`, `IAiApi.cs`, etc.) and supporting models in `Contracts.cs`
 
 This ensures integration tests use the most up-to-date API client.
 

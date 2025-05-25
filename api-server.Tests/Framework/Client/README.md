@@ -11,7 +11,6 @@ This directory houses **multiple auto-generated Refit client interfaces** and th
 The primary responsibilities of the code within this directory are:
 * To provide **type-safe mechanisms for integration tests** to interact with the `api-server`'s HTTP endpoints through granular, controller-specific interfaces.
 * To ensure that integration tests are calling the API according to its **current contract** as defined by its OpenAPI (Swagger) specification.
-* To maintain a legacy unified interface (`IZarichneyAPI.cs`) for backward compatibility during transition.
 
 These generated clients are critical components for robust integration testing, enabling compile-time checks for API calls and simplifying the process of making requests and deserializing responses.
 
@@ -30,7 +29,6 @@ These generated clients are critical components for robust integration testing, 
     * Individual interface definitions with methods corresponding to each API endpoint grouped by controller/tag.
     * Attributes (from Refit) that define HTTP methods, paths, parameters, and body serialization for each endpoint method.
     * A shared `Contracts.cs` file containing DTO classes used for request bodies and response deserialization.
-    * A legacy `IZarichneyAPI.cs` interface maintained for backward compatibility.
 
 ## 3. Interface Contract & Assumptions
 

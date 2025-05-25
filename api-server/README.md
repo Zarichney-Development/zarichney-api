@@ -35,7 +35,7 @@
     * **External API Integration:** Uses libraries like `RestSharp`, `OpenAI-DotNet`, `Stripe.net`, `Octokit`, `Microsoft.Graph` for interacting with external services, often wrapped in dedicated internal services (e.g., `LlmService`, `StripeService`, `GitHubService`, `EmailService`). Polly is used for retry policies.
     * **Authentication:** Uses JWT Bearer tokens and Refresh Tokens managed via cookies (`CookieAuthManager`, `AuthService`). ASP.NET Core Identity is used for user/role management backed by `UserDbContext` (PostgreSQL). API Key authentication is also supported via `AuthenticationMiddleware`.
     * **Logging:** Enhanced configurable logging system using Serilog with default Warning level, environment-specific configuration overrides, and support for namespace-specific log levels. Full configuration guide available at [`../Docs/Development/LoggingGuide.md`](../Docs/Development/LoggingGuide.md).
-    * **Testing:** A dedicated companion project (`../api-server.Tests`) contains comprehensive unit and integration tests. Integration tests leverage `CustomWebApplicationFactory` for in-memory hosting, Testcontainers for isolated PostgreSQL databases (`DatabaseFixture`), and a Refit-generated HTTP client (`IZarichneyAPI`) for API interaction. External dependencies are mocked during testing.
+    * **Testing:** A dedicated companion project (`../api-server.Tests`) contains comprehensive unit and integration tests. Integration tests leverage `CustomWebApplicationFactory` for in-memory hosting, Testcontainers for isolated PostgreSQL databases (`DatabaseFixture`), and Refit-generated HTTP clients (multiple granular interfaces) for API interaction. External dependencies are mocked during testing.
 * **Architectural Diagram:**
     *(Diagram follows conventions defined in [`/Docs/Standards/DiagrammingStandards.md`](../Docs/Standards/DiagrammingStandards.md))*
 ```mermaid
@@ -69,7 +69,7 @@ graph TD
         UNIT["Unit Tests\n(Mock Dependencies)"] -->|Test| SVCS
         subgraph IntegrationTesting ["Integration Tests"]
            direction TB
-           ITestClient(["Refit Client\n(IZarichneyAPI)"]) -->|Interact| ApiServer
+           ITestClient(["Refit Clients\n(Granular Interfaces)"]) -->|Interact| ApiServer
            DBContainer{{"Testcontainers\n(PostgreSQL)"}} <-- Manages --> REPO
            TestFactory(["CustomWebApplicationFactory\n(In-Memory Host, Mock Externals)"]) -.-> ApiServer
            TestFactory -.-> DBContainer
@@ -146,7 +146,7 @@ graph TD
 * Run only Integration tests: `dotnet test --filter "Category=Integration"` (Requires Docker)
 * Run tests for a specific feature (using Traits): `dotnet test --filter "Category=Integration&Feature=Auth"`
 * **Regenerating API Client for Tests:** **(New)**
-* If API contracts in `/api-server/Controllers/` change, the Refit client used by integration tests (`/api-server.Tests/Framework/Client/IZarichneyAPI.cs`) needs regeneration.
+* If API contracts in `/api-server/Controllers/` change, the Refit clients used by integration tests (multiple interfaces in `/api-server.Tests/Framework/Client/`) need regeneration.
 * From the repository root directory (`zarichney-api/`), run the script:
 ```powershell
 ./Scripts/generate-api-client.ps1

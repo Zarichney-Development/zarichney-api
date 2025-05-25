@@ -166,7 +166,6 @@
 * **Generated Output:** Multiple files including:
     * Individual interface files: `IAuthApi.cs`, `IAiApi.cs`, `ICookbookApi.cs`, `IPaymentApi.cs`, `IPublicApi.cs`
     * Shared contracts: `Contracts.cs` (DTOs and models)
-    * Legacy monolithic interface: `IZarichneyAPI.cs` (for backward compatibility)
 * **ApiClientFixture Integration:** The `ApiClientFixture` provides granular access to each client interface via properties like `AuthenticatedAuthApi`, `UnauthenticatedAiApi`, etc.
 * **Usage Requirement:** The developer (or AI coder) assigned a task **must** run the generation script after any changes to `api-server` controller signatures, routes, or associated models to ensure the test clients are synchronized with the API contract. The `.refitter` configuration ensures consistent generation behavior.
 * **Deliverable:** The functional generation scripts in `/Scripts/`, the `.refitter` configuration file, and references to these in relevant documentation to ensure proper workflow integration.

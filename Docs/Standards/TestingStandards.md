@@ -26,7 +26,7 @@
 * **Mocking Library:** Moq (*Mandatory*)
 * **Test Data:** AutoFixture, Custom Test Data Builders
 * **Integration Host:** `CustomWebApplicationFactory<Program>` (in `api-server.Tests/Framework/Fixtures/`)
-* **Integration API Client:** Refit (`IZarichneyAPI` generated via `Scripts/generate-api-client.ps1` into `api-server.Tests/Framework/Client/`)
+* **Integration API Client:** Refit (Multiple granular interfaces generated via `Scripts/generate-api-client.sh` into `api-server.Tests/Framework/Client/`)
 * **Integration Database:** Testcontainers (PostgreSQL) via `DatabaseFixture`
 * **External HTTP Service Virtualization:** WireMock.Net (as per `api-server.Tests/TechnicalDesignDocument.md` roadmap)
 * **Database Cleanup:** Respawn (within `DatabaseFixture`)
