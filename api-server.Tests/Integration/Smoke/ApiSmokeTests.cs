@@ -35,11 +35,13 @@ public class ApiSmokeTests(ApiClientFixture apiClientFixture, ITestOutputHelper 
     };
 
     // Act - Login
-    var loginResult = await apiClient.Login(loginRequest);
+    var loginResponse = await apiClient.Login(loginRequest);
+    var loginResult = loginResponse.Content;
 
     // Create authenticated Refit client and Logout
     var authenticatedClient = _apiClientFixture.AuthenticatedAuthApi;
-    var logoutResult = await authenticatedClient.Logout();
+    var logoutResponse = await authenticatedClient.Logout();
+    var logoutResult = logoutResponse.Content;
 
     // Assert
     Assert.True(loginResult.Success);

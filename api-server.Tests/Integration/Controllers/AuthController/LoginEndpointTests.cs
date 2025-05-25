@@ -29,11 +29,12 @@ public class LoginEndpointsTests(ApiClientFixture apiClientFixture, ITestOutputH
     };
 
     // Act
-    var result = await client.Login(request);
+    var loginResponse = await client.Login(request);
+    var authResult = loginResponse.Content;
 
     // Assert
-    Assert.True(result.Success);
-    Assert.NotEmpty(result.Email);
+    Assert.True(authResult.Success);
+    Assert.NotEmpty(authResult.Email);
   }
 
   [DependencyFact(InfrastructureDependency.Database)]

@@ -28,10 +28,11 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
     using var client = Factory.CreateAuthenticatedClient("test-user", ["Admin"]);
 
     // Act - Step 1: Get the service status
-    var statusResult = await _apiClientFixture.UnauthenticatedPublicApi.StatusAll();
+    var statusResponse = await _apiClientFixture.UnauthenticatedPublicApi.StatusAll();
+    var serviceStatuses = statusResponse.Content;
 
     // Find unavailable services - we now expect a list of ServiceStatusInfo objects
-    var unavailableServices = statusResult
+    var unavailableServices = serviceStatuses
       .Where(s => !s.IsAvailable)
       .Select(s => s.ServiceName.ToString())
       .ToList();
@@ -96,10 +97,11 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
     using var client = Factory.CreateAuthenticatedClient("test-user", ["Admin"]);
 
     // Act - Step 1: Get the service status to check if LLM is available
-    var statusResult = await _apiClientFixture.UnauthenticatedPublicApi.StatusAll();
+    var statusResponse = await _apiClientFixture.UnauthenticatedPublicApi.StatusAll();
+    var serviceStatuses = statusResponse.Content;
 
     // Check if LLM service is unavailable - we now have a list of ServiceStatusInfo objects
-    var llmUnavailable = statusResult.Any(s => Equals(s.ServiceName, (Zarichney.Client.ExternalServices)ExternalServices.OpenAiApi) && !s.IsAvailable);
+    var llmUnavailable = serviceStatuses.Any(s => Equals(s.ServiceName, (Zarichney.Client.ExternalServices)ExternalServices.OpenAiApi) && !s.IsAvailable);
 
     // Skip test if LLM service is available
     if (!llmUnavailable)

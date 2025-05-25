@@ -146,26 +146,27 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
     var client = RestService.For<IPublicApi>(httpClient);
 
     // Act
-    var result = await client.StatusAll();
+    var statusResponse = await client.StatusAll();
+    var serviceStatuses = statusResponse.Content;
 
     // Assert
-    result.Should().NotBeNull();
+    statusResponse.Should().NotBeNull();
 
     // Test that the result contains the expected services, but don't make assumptions about their availability
     // since that may depend on the test environment's configuration
-    result.Should().Contain(c => c.ServiceName == (Client.ExternalServices)ExternalServices.OpenAiApi);
-    result.Should().Contain(c => c.ServiceName == (Client.ExternalServices)ExternalServices.MsGraph);
-    result.Should().Contain(c => c.ServiceName == (Client.ExternalServices)ExternalServices.MailCheck);
+    serviceStatuses.Should().Contain(c => c.ServiceName == (Client.ExternalServices)ExternalServices.OpenAiApi);
+    serviceStatuses.Should().Contain(c => c.ServiceName == (Client.ExternalServices)ExternalServices.MsGraph);
+    serviceStatuses.Should().Contain(c => c.ServiceName == (Client.ExternalServices)ExternalServices.MailCheck);
 
     // Verify result structure without making assertions about specific service configurations
-    foreach (var service in result)
+    foreach (var service in serviceStatuses)
     {
       _outputHelper.WriteLine(
         $"Service: {service.ServiceName}, Available: {service.IsAvailable}, MissingConfigs: {string.Join(", ", service.MissingConfigurations)}");
     }
 
     // Verify the test ran correctly by checking that we have a sensible response
-    result.Should().HaveCountGreaterThanOrEqualTo(3);
+    serviceStatuses.Should().HaveCountGreaterThanOrEqualTo(3);
   }
 
   /// <summary>

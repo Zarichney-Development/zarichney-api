@@ -54,7 +54,7 @@ sleep 10
 
 # Download the swagger.json
 echo -e "\e[32mDownloading swagger.json...\e[0m"
-curl -s "http://localhost:5000/swagger/swagger.json" -o "$SWAGGER_JSON_PATH"
+curl -s "http://localhost:5000/api/swagger/swagger.json" -o "$SWAGGER_JSON_PATH"
 if [ $? -ne 0 ] || [ ! -s "$SWAGGER_JSON_PATH" ]; then
     echo -e "\e[31mError downloading swagger.json. Exiting.\e[0m"
     kill $API_PID

@@ -79,9 +79,40 @@
 * **Scope:** Cover all public API endpoints, focusing on key success/error paths, authorization, and component interactions.
 * **Key Framework Components:**
     * `CustomWebApplicationFactory`, `DatabaseFixture`, `ApiClientFixture` (via shared collection fixture).
-    * API interaction **must** use the generated Refit client (`IZarichneyAPI`).
+    * API interaction **must** use the generated Refit client interfaces (e.g., `IAuthApi`, `ICookbookApi`, `IPublicApi`).
     * External HTTP APIs **must be virtualized** using WireMock.Net. Live external API calls are strictly forbidden.
     * Authentication simulated via `TestAuthHandler`.
+* **API Response Handling Standards:**
+    * All Refit client methods return `IApiResponse<T>` wrapper types for proper HTTP response inspection.
+    * **Mandatory Pattern:** Always extract the response content into a descriptively named variable before assertions:
+        ```csharp
+        // ✅ CORRECT - Extract content first
+        var loginResponse = await client.Login(request);
+        var authResult = loginResponse.Content;
+        
+        // Assert on the extracted content
+        authResult.Success.Should().BeTrue();
+        authResult.Email.Should().NotBeEmpty();
+        
+        // ✅ CORRECT - For collections, extract and name appropriately
+        var statusResponse = await client.StatusAll();
+        var serviceStatuses = statusResponse.Content;
+        
+        serviceStatuses.Should().NotBeEmpty();
+        serviceStatuses.Should().HaveCountGreaterThan(3);
+        ```
+    * **Avoid:** Repetitive `.Content` access in assertions for better readability:
+        ```csharp
+        // ❌ INCORRECT - Repetitive .Content access
+        loginResponse.Content.Success.Should().BeTrue();
+        loginResponse.Content.Email.Should().NotBeEmpty();
+        loginResponse.Content.UserId.Should().NotBeEmpty();
+        ```
+    * **HTTP Status Verification:** When testing specific HTTP status codes, use the response wrapper:
+        ```csharp
+        var response = await client.GetNonExistentResource();
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        ```
 * **Dependency Skipping:** Use the `[DependencyFact]` attribute for tests requiring specific dependencies (external features, infrastructure, or configurations). These attributes leverage the `IntegrationTestBase` and framework helpers to automatically skip tests if prerequisites are unmet.
     * **Implementation:** The `DependencyFact` attribute can be used in several ways:
         1. **With ExternalServices enum**: `[DependencyFact(ExternalServices.LLM, ExternalServices.GitHubAccess)]` - This directly checks if the specified features are available using the `IStatusService`. It also automatically maps each ExternalServices to the appropriate dependency trait for filtering and reporting purposes.
