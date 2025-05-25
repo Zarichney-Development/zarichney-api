@@ -1,7 +1,7 @@
 # Enhanced Logging System Guide
 
-**Version:** 1.0
-**Last Updated:** 2025-01-25
+**Version:** 1.1
+**Last Updated:** 2025-05-25
 
 ## Introduction
 
@@ -11,6 +11,93 @@ This guide describes the enhanced logging system implemented in the Zarichney AP
 - **Highly Configurable:** Log levels can be easily adjusted through configuration files without code changes
 - **Environment-Specific:** Different environments (Development, Testing, Production) can have tailored logging configurations
 - **Namespace-Specific Control:** Fine-grained control over logging levels for specific namespaces or classes
+
+## Code Examples
+
+For detailed coding conventions regarding logger usage, message formatting, structured property naming, and error logging, please refer to the 'Logging Standards' section in the main [`Docs/Standards/CodingStandards.md`](../Standards/CodingStandards.md) document.
+
+### Logger Injection
+
+The standard way to use logging in the application is through constructor dependency injection with `ILogger<T>`:
+
+```csharp
+public class MyService
+{
+    private readonly ILogger<MyService> _logger;
+
+    public MyService(ILogger<MyService> logger)
+    {
+        _logger = logger;
+    }
+
+    public void DoSomething(string parameter1, int parameter2)
+    {
+        _logger.LogInformation("DoSomething called with Parameter1: {Parameter1}, Parameter2: {Parameter2}", 
+            parameter1, parameter2);
+        
+        // ... business logic ...
+        
+        _logger.LogInformation("DoSomething completed successfully for Parameter1: {Parameter1}", parameter1);
+    }
+}
+```
+
+### Structured Logging Examples
+
+Use structured logging with named placeholders for better searchability and filtering in log management systems:
+
+```csharp
+public class OrderService
+{
+    private readonly ILogger<OrderService> _logger;
+
+    public OrderService(ILogger<OrderService> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task ProcessOrderAsync(string orderId, string userId)
+    {
+        _logger.LogInformation("Processing order {OrderId} for user {UserId}", orderId, userId);
+        
+        try
+        {
+            // Validate order
+            var order = await ValidateOrder(orderId);
+            if (order == null)
+            {
+                _logger.LogWarning("Order {OrderId} validation failed: Order not found", orderId);
+                return;
+            }
+
+            // Process payment
+            _logger.LogInformation("Processing payment for order {OrderId}, Amount: {Amount}", 
+                orderId, order.TotalAmount);
+            
+            await ProcessPayment(order);
+            
+            _logger.LogInformation("Order {OrderId} processed successfully for user {UserId}", orderId, userId);
+        }
+        catch (PaymentException ex)
+        {
+            _logger.LogWarning(ex, "Payment failed for order {OrderId}: {ErrorMessage}", orderId, ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error processing order {OrderId}", orderId);
+            throw;
+        }
+    }
+}
+```
+
+### Key Benefits of Structured Logging
+
+- **Searchability:** You can search for all logs related to a specific `OrderId` or `UserId`
+- **Filtering:** Log management systems can filter by structured properties
+- **Correlation:** Related operations can be easily correlated using common identifiers
+- **Performance:** More efficient than string interpolation for log processing
 
 ## Default Logging Level
 
@@ -134,23 +221,95 @@ The test environment also defaults to Warning level to keep test output clean:
 
 ### Debugging Tests with Verbose Logging
 
-When debugging specific tests, you can temporarily modify `appsettings.Testing.json` to get more detailed output:
+When debugging specific tests, you can temporarily modify `api-server/appsettings.Testing.json` to get more detailed output from the system under test (SUT). The test logs will appear in your test runner's output window.
 
+**Current Test Configuration:**
 ```json
 {
   "Serilog": {
     "MinimumLevel": {
-      "Default": "Information",
+      "Default": "Warning",
       "Override": {
         "Microsoft": "Warning",
         "System": "Warning",
-        "Zarichney": "Debug",
-        "Zarichney.Services.Auth": "Verbose"
+        "Zarichney": "Warning"
       }
     }
   }
 }
 ```
+
+**Examples for Debugging Specific Tests:**
+
+To debug a specific test class in verbose detail:
+```json
+{
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Warning",
+      "Override": {
+        "Microsoft": "Warning",
+        "System": "Warning",
+        "Zarichney": "Warning",
+        // Example: Debug authentication integration tests
+        "Zarichney.Services.Auth.AuthService": "Verbose",
+        "Zarichney.Services.Auth.ApiKeyService": "Debug"
+      }
+    }
+  }
+}
+```
+
+To debug all tests in a specific namespace:
+```json
+{
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Warning",
+      "Override": {
+        "Microsoft": "Warning",
+        "System": "Warning", 
+        "Zarichney": "Warning",
+        // Example: Debug all recipe-related services during tests
+        "Zarichney.Cookbook.Recipes": "Debug",
+        "Zarichney.Services.AI": "Information"
+      }
+    }
+  }
+}
+```
+
+**Common Test Debugging Scenarios:**
+
+For debugging controller tests:
+```json
+"Override": {
+  "Zarichney.Controllers.AuthController": "Debug",
+  "Zarichney.Services.Auth": "Verbose"
+}
+```
+
+For debugging database integration tests:
+```json
+"Override": {
+  "Zarichney.Services.Auth.UserDbContext": "Information",
+  "Microsoft.EntityFrameworkCore.Database.Command": "Information"
+}
+```
+
+For debugging payment processing tests:
+```json
+"Override": {
+  "Zarichney.Services.Payment": "Debug",
+  "Zarichney.Controllers.PaymentController": "Debug"
+}
+```
+
+**Important Notes:**
+- These overrides only affect SUT (System Under Test) logs during test execution
+- Test framework logs are handled separately by the xUnit output sink
+- Remember to revert changes after debugging to keep test output clean
+- Use `dotnet test --verbosity detailed` for more test framework output if needed
 
 ### Test-Specific Logging
 
