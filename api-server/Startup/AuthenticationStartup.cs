@@ -1,11 +1,13 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
+using Zarichney.Config;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Models;
 using Zarichney.Services.Status;
@@ -22,13 +24,17 @@ public static class AuthenticationStartup
   /// </summary>
   public static void ConfigureIdentity(WebApplicationBuilder builder)
   {
+    // Always register Identity services and roles
     builder.Services.AddIdentityServices(builder.Configuration);
-
-    // Add role manager
     builder.Services.AddScoped<IRoleManager, RoleManager>();
-
-    // Register RoleManager<IdentityRole> if not already registered by AddIdentity
     builder.Services.AddScoped<RoleManager<IdentityRole>>();
+
+    // Additionally configure mock authentication if needed
+    if (ShouldUseMockAuthentication(builder.Environment, builder.Configuration))
+    {
+      Log.Information("Identity Database unavailable in non-Production environment. Configuring mock authentication.");
+      builder.Services.AddMockAuthentication(builder.Configuration);
+    }
   }
 
   /// <summary>
@@ -39,7 +45,7 @@ public static class AuthenticationStartup
     // Configure UserDbContext with PostgreSQL
     services.AddDbContext<UserDbContext>(options =>
       options.UseNpgsql(
-        configuration.GetConnectionString("IdentityConnection"),
+        configuration.GetConnectionString(UserDbContext.UserDatabaseConnectionName),
         b => b.MigrationsAssembly("Zarichney")
       ));
 
@@ -139,7 +145,61 @@ public static class AuthenticationStartup
   public static void UseCustomAuthentication(this IApplicationBuilder builder)
   {
     builder.UseAuthentication();
-    builder.UseMiddleware<AuthenticationMiddleware>();
+    builder.UseMiddleware<Zarichney.Services.Auth.AuthenticationMiddleware>();
     builder.UseAuthorization();
+  }
+
+  /// <summary>
+  /// Determines if mock authentication should be used based on environment and explicit configuration
+  /// </summary>
+  /// <param name="environment">The web host environment</param>
+  /// <param name="configuration">The configuration</param>
+  /// <returns>True if mock authentication should be used, false otherwise</returns>
+  private static bool ShouldUseMockAuthentication(IWebHostEnvironment environment, IConfiguration configuration)
+  {
+    // Never use mock authentication in Production
+    if (environment.EnvironmentName.Equals("Production", StringComparison.OrdinalIgnoreCase))
+    {
+      return false;
+    }
+
+    // Only enable mock authentication if explicitly enabled via configuration
+    var mockAuthEnabled = configuration.GetValue<bool>("MockAuth:Enabled", false);
+    if (!mockAuthEnabled)
+    {
+      return false;
+    }
+
+    // Additional safety check: only enable if Identity Database connection string is missing or empty
+    var connectionString = configuration["ConnectionStrings:" + UserDbContext.UserDatabaseConnectionName];
+    return string.IsNullOrEmpty(connectionString);
+  }
+
+  /// <summary>
+  /// Configures mock authentication services for non-Production environments when Identity DB is unavailable
+  /// </summary>
+  /// <param name="services">The service collection</param>
+  /// <param name="configuration">The configuration</param>
+  private static void AddMockAuthentication(this IServiceCollection services, IConfiguration configuration)
+  {
+    // Configure MockAuth settings
+    services.Configure<MockAuthConfig>(configuration.GetSection("MockAuth"));
+
+    // Add mock authentication scheme to existing authentication setup
+    // This modifies the existing authentication configuration rather than replacing it
+    services.PostConfigure<AuthenticationOptions>(options =>
+    {
+      // Add MockAuth as an additional scheme
+      options.AddScheme<MockAuthHandler>("MockAuth", "MockAuth");
+
+      // Set MockAuth as the default authenticate scheme when Identity DB is unavailable
+      options.DefaultAuthenticateScheme = "MockAuth";
+      options.DefaultChallengeScheme = "MockAuth";
+    });
+
+    // Register the MockAuthHandler
+    services.AddSingleton<MockAuthHandler>();
+
+    Log.Information("Mock authentication configured for non-Production environment with unavailable Identity Database.");
   }
 }

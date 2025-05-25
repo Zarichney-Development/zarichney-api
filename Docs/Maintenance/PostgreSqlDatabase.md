@@ -6,7 +6,9 @@ This guide provides instructions for maintaining the PostgreSQL database used by
 
 The application connects to the PostgreSQL database (`zarichney_identity`) using the user `zarichney_user`.
 
-**Production:**
+**Production Environment Requirements:**
+* In Production environment, a valid `ConnectionStrings:UserDatabase` connection string is **mandatory**. If this connection string is missing or empty, the application will fail to start with a fatal error.
+* This requirement is enforced by the `ValidateStartup.ValidateProductionConfiguration` method in `Startup/ValidateStartup.cs`, which checks the connection string presence at application startup.
 * The connection string details (host, database name, username, password) are typically injected via environment variables or fetched securely at runtime from **AWS Secrets Manager** (Secret ID: `cookbook-factory-secrets`, Key: `DbPassword`) or potentially **AWS Systems Manager Parameter Store**, configured within the EC2 instance's environment or application startup. Do **not** rely on `appsettings.Production.json` for sensitive credentials like the password.
 
 **Local Development:**
@@ -14,10 +16,19 @@ The application connects to the PostgreSQL database (`zarichney_identity`) using
     ```json
     {
       "ConnectionStrings": {
-        "IdentityConnection": "Host=localhost;Database=zarichney_identity;Username=postgres;Password=your_local_dev_password"
+        "UserDatabase": "Host=localhost;Database=zarichney_identity;Username=postgres;Password=your_local_dev_password"
       }
     }
     ```
+
+**Graceful Degradation (Non-Production Only):**
+* In non-Production environments (Development, Testing, etc.), the application will start successfully even if the `UserDatabase` connection string is missing or empty.
+* This behavior allows developers to run and test parts of the application without setting up a PostgreSQL Identity Database.
+* When the Identity Database is unavailable:
+  * The `/status` endpoint will report `PostgresIdentityDb` as unavailable.
+  * Authentication-related endpoints (e.g., `/api/auth/login`, `/api/auth/register`) will return HTTP 503 (Service Unavailable).
+  * Other endpoints that don't depend on authentication will function normally.
+* For more details, see the [Local Development Setup Guide](../Development/LocalSetup.md).
 
 ## Migrations (EF Core)
 
@@ -56,14 +67,23 @@ When you change your C# entities or `DbContext`:
 
 Use your application's API endpoints or internal services that leverage `UserManager<ApplicationUser>` and `RoleManager<IdentityRole>`.
 
-### Creating Admin User Example
+### Automatic Admin User Seeding (New in Task GH-4)
+
+In non-Production environments with a configured Identity Database, a default administrator user is automatically seeded when the application starts:
+
+* **Automatic Process**: The `RoleInitializer` service creates an admin user based on configuration
+* **Configuration**: Set in `appsettings.Development.json` under `DefaultAdminUser`
+* **Idempotent**: Safe to run multiple times without creating duplicates
+* **Environment-Specific**: Only runs in Development, Testing, etc. (never in Production)
+
+For manual admin user creation, use the following pattern:
 
 ```csharp
 // In a service or controller:
 public async Task CreateAdminUser(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
 {
     // Create admin role if it doesn't exist
-    string adminRole = "Admin";
+    string adminRole = "admin";
     if (!await roleManager.RoleExistsAsync(adminRole))
     {
         await roleManager.CreateAsync(new IdentityRole(adminRole));

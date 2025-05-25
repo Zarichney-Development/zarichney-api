@@ -1,6 +1,6 @@
 # Module/Directory: /Startup
 
-**Last Updated:** 2025-05-10
+**Last Updated:** 2025-05-19
 
 > **Parent:** [`Server`](../README.md)
 
@@ -29,6 +29,7 @@
     * `ConfigurationStartup`: Manages configuration loading, binding, and validation.
     * `MiddlewareStartup`: Sets up custom middleware for sessions and request logging.
     * `ServiceStartup`: Registers application services, OpenAI, email services, and configures Swagger.
+    * `ValidateStartup`: Handles critical validation checks during application startup.
 * **Core Logic Flow:** 
     1. `Program.cs` calls `ConfigureBuilder`, which invokes various startup methods from the specialized classes.
     2. These methods set up different aspects of the application (encoding, Kestrel, configuration sources, logging, services).
@@ -58,7 +59,9 @@ graph TD
         ConfigureSwagger --> ConfigureCors["ApplicationStartup.ConfigureCors \n - Origin allowlist \n - Request/Response logging"]
     end
 
-    ConfigureCors --> BuildApp["builder.Build()"]
+    ConfigureCors --> ValidateConfig["ValidateStartup.ValidateProductionConfiguration \n - Ensures Identity DB connection string \n   exists in Production environment \n - Terminates app if missing in Production"]
+    
+    ValidateConfig --> BuildApp["builder.Build()"]
 
     subgraph "ConfigureApplication Method (async)"
         direction TB
@@ -91,12 +94,14 @@ graph TD
     classDef configStep fill:#e6f2ff,stroke:#004080,stroke-width:1px;
     classDef pipelineStep fill:#fff0b3,stroke:#cca300,stroke-width:1px;
     classDef errorStep fill:#ffe6e6,stroke:#b30000,stroke-width:1px;
+    classDef validateStep fill:#ffe6cc,stroke:#b35900,stroke-width:1px;
     classDef repoStep fill:#f5f5dc,stroke:#8b4513,stroke-width:2px;
     classDef serviceBg fill:#e6e6ff,stroke:#000080,stroke-width:2px;
 
     class Start,End startEnd;
     class CreateBuilder,BuildApp,RunApp process;
     class ConfigureConfig,ConfigureLogging,ConfigureServices,ConfigureIdentity,ConfigureSwagger,ConfigureCors configStep;
+    class ValidateConfig validateStep;
     class ConfigureApp pipelineStep;
     class LogFatal errorStep;
     class BackgroundSvcs serviceBg;
@@ -131,10 +136,13 @@ graph TD
         * `ConfigureOpenAiServices(IServiceCollection)`: Sets up OpenAI services. Uses factories that check IConfigurationStatusService for Llm service availability and return proxies that throw ServiceUnavailableException when their methods are invoked if unavailable.
         * `ConfigureApplicationServices(IServiceCollection)`: Registers domain-specific application services.
         * `ConfigureSwagger(WebApplicationBuilder)`: Configures Swagger/OpenAPI documentation.
+    * `ValidateStartup`:
+        * `ValidateProductionConfiguration(WebApplicationBuilder)`: Validates critical configuration settings in Production environment and terminates the application if required configurations are missing or invalid.
 * **Critical Assumptions:**
     * **Dependency Injection:** Assumes proper DI container setup in `Program.cs` before these methods are called.
     * **Configuration:** Assumes `IConfiguration` has been properly initialized by the time these methods are invoked.
     * **Missing Configuration Handling:** Properties marked with `[Required]` or `[RequiresConfiguration]` will generate warnings at startup if missing but will not prevent application startup. The `IConfigurationStatusService` tracks service availability based on configurations with `[RequiresConfiguration]` attributes. Services register proxies that throw `ServiceUnavailableException` when their methods are invoked if required configuration is unavailable.
+    * **Critical Production Validation:** Some critical configuration elements like the Identity database connection string are strictly validated in Production environment through `ValidateStartup.ValidateProductionConfiguration`. The application will fail to start if these critical elements are missing or invalid when running in Production.
     * **AWS Systems Manager Configuration:** The AWS Systems Manager configuration provider is now optional, allowing the application to start successfully even if AWS credentials are not configured or accessible. This adheres to the goal of deferring configuration validation failures to runtime rather than preventing application startup.
     * **Middleware Order:** Assumes the specific order of middleware registration in `ConfigureApplication` is maintained to ensure proper request processing. In particular, the `FeatureAvailabilityMiddleware` must be registered after routing and authentication but before `MapControllers()` to ensure it can access endpoint metadata and correctly validate feature requirements.
     * **Order of Operations:** Methods in `ConfigureBuilder` must be called in the correct order to ensure dependencies are properly established.
@@ -180,7 +188,7 @@ graph TD
 ## 7. Rationale & Key Historical Context
 
 * **Refactoring Motivation:** This module was created to improve the organization and maintainability of the application's startup code by centralizing configuration and service registration logic that was previously scattered across `Program.cs` and various extension files.
-* **Logical Grouping:** The decision to organize code by functional area (App, Authentication, Configuration, Middleware, Services) provides a clearer separation of concerns and makes it easier to locate specific functionality.
+* **Logical Grouping:** The decision to organize code by functional area (App, Authentication, Configuration, Middleware, Services, Validation) provides a clearer separation of concerns and makes it easier to locate specific functionality.
 * **Middleware Ordering:** The specific order of middleware registration in `ApplicationStartup.ConfigureApplication` has been carefully preserved to ensure proper request processing, with critical middleware like error handling and authentication positioned appropriately. The `FeatureAvailabilityMiddleware` is positioned after authentication but before endpoint execution to ensure it can access endpoint metadata and validate feature requirements before controllers are invoked.
 * **Configuration Validation Change:** The configuration validation process was modified to log warnings instead of throwing exceptions for missing required configuration values. This change allows the application to start even with incomplete configuration, deferring validation failures to runtime when specific features attempt to use the missing configuration. This approach enables partial functionality of the application even when some external service configurations (like API keys) are missing.
 * **Service Unavailability Strategy:** Instead of returning null from service factories, we now register proxy implementations of external clients (GraphServiceClient, OpenAIClient, AudioClient) that throw ServiceUnavailableException when their methods are invoked if required configuration is missing. This provides clearer error messages and more consistent behavior when a service can't operate due to missing configuration. This is now complemented by the `FeatureAvailabilityMiddleware` which proactively checks if an endpoint can be served based on its declared feature dependencies before the endpoint is invoked, providing a more immediate response to API consumers.

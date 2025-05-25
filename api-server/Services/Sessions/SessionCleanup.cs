@@ -112,8 +112,15 @@ public class SessionCleanupService : BackgroundService
   public override async Task StopAsync(CancellationToken cancellationToken)
   {
     _logger.Information("Session cleanup service is stopping");
-    await base.StopAsync(cancellationToken);
-    _cleanupLock.Dispose();
+    try
+    {
+      await base.StopAsync(cancellationToken);
+    }
+    finally
+    {
+      _cleanupLock.Dispose();
+      _logger.Information("Session cleanup service stopped");
+    }
   }
 
   public override void Dispose()

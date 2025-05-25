@@ -124,6 +124,11 @@ public class DatabaseFixture : IAsyncLifetime, IDisposable
   /// </summary>
   public async Task ResetDatabaseAsync()
   {
+    if (!_isContainerAvailable || _respawner == null)
+    {
+      throw new InvalidOperationException("Database container is not available or not properly initialized. Cannot reset database.");
+    }
+
     _logger.LogInformation("Resetting database to clean state...");
 
     await using var connection = new NpgsqlConnection(ConnectionString);
@@ -140,6 +145,11 @@ public class DatabaseFixture : IAsyncLifetime, IDisposable
   /// <returns>A new database connection.</returns>
   public async Task<DbConnection> CreateConnectionAsync()
   {
+    if (!_isContainerAvailable)
+    {
+      throw new InvalidOperationException("Database container is not available. Cannot create connection.");
+    }
+
     var connection = new NpgsqlConnection(ConnectionString);
     await connection.OpenAsync();
     return connection;
