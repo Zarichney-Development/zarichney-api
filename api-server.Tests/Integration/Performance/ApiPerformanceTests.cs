@@ -23,7 +23,7 @@ public class ApiPerformanceTests(ApiClientFixture apiClientFixture, ITestOutputH
     SetSkipReason("Test requires database and cookbook services which are missing configuration");
 
     // Arrange
-    var client = AuthenticatedApiClient;
+    var client = _apiClientFixture.AuthenticatedCookbookApi;
 
     // Set an acceptable performance threshold
     const int maxAcceptableMilliseconds = 500;
@@ -47,7 +47,7 @@ public class ApiPerformanceTests(ApiClientFixture apiClientFixture, ITestOutputH
     SetSkipReason("Test requires database and cookbook services which are missing configuration");
 
     // Arrange
-    var client = AuthenticatedApiClient;
+    var client = _apiClientFixture.AuthenticatedCookbookApi;
 
     const int requestCount = 10;
     var responseTimes = new List<long>(requestCount);

@@ -58,10 +58,11 @@ public class GetRecipeDetailsTests(ApiClientFixture apiClientFixture, ITestOutpu
     var recipeId = "sample-recipe-id"; // In a real test, this would be the ID of a seeded recipe
 
     // Create an authenticated client
-    var authenticatedClient = AuthenticatedApiClient;
+    var authenticatedClient = _apiClientFixture.AuthenticatedCookbookApi;
 
     // Act
-    var order = await authenticatedClient.OrderGET(recipeId);
+    var orderResponse = await authenticatedClient.OrderGET(recipeId);
+    var order = orderResponse.Content;
 
     // Assert
     Assert.NotNull(order);
@@ -77,7 +78,7 @@ public class GetRecipeDetailsTests(ApiClientFixture apiClientFixture, ITestOutpu
     var nonExistentId = "non-existent-id";
 
     // Create an authenticated client
-    var authenticatedClient = AuthenticatedApiClient;
+    var authenticatedClient = _apiClientFixture.AuthenticatedCookbookApi;
 
     // Act & Assert
     var ex = await Assert.ThrowsAsync<ApiException>(() => authenticatedClient.OrderGET(nonExistentId));
