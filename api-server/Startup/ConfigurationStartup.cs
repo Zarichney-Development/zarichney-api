@@ -46,6 +46,7 @@ public static class ConfigurationStartup
       .MinimumLevel.Warning()
       .ReadFrom.Configuration(builder.Configuration)
       .Enrich.FromLogContext()
+      .Enrich.WithProperty("CorrelationId", null)
       .Enrich.WithProperty("SessionId", null)
       .Enrich.WithProperty("ScopeId", null);
 
@@ -54,7 +55,7 @@ public static class ConfigurationStartup
     {
       logger = logger.WriteTo.Console(
         outputTemplate:
-        "[{Timestamp:HH:mm:ss} {Level:u3}] {SessionId:-} {ScopeId:-} {Message:lj}{NewLine}{Exception}"
+        "[{Timestamp:HH:mm:ss} {Level:u3}] {CorrelationId:-} {SessionId:-} {ScopeId:-} {Message:lj}{NewLine}{Exception}"
       );
     }
 

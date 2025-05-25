@@ -1,6 +1,6 @@
 # Enhanced Logging System Guide
 
-**Version:** 1.1
+**Version:** 1.2
 **Last Updated:** 2025-05-25
 
 ## Introduction
@@ -98,6 +98,55 @@ public class OrderService
 - **Filtering:** Log management systems can filter by structured properties
 - **Correlation:** Related operations can be easily correlated using common identifiers
 - **Performance:** More efficient than string interpolation for log processing
+
+## Request Correlation ID
+
+The application automatically adds a correlation ID to every HTTP request for enhanced log traceability and distributed system debugging.
+
+### How It Works
+
+- **Incoming Header Detection:** If a request includes an `X-Correlation-ID` header, the application uses its value as the correlation ID
+- **Automatic Generation:** If no correlation ID header is provided, the application generates a new GUID for the request
+- **Log Context Integration:** The correlation ID is automatically included in all log events generated during request processing
+- **Response Header:** The correlation ID (either received or generated) is included in the response headers as `X-Correlation-ID`
+
+### Benefits
+
+- **Request Tracing:** Track a single request's journey through all log entries, even across different services
+- **Debugging:** Easily filter logs to see only entries related to a specific problematic request
+- **Distributed Tracing:** When multiple services forward the same correlation ID, you can trace requests across service boundaries
+- **Client Correlation:** Clients can generate their own correlation IDs to correlate server-side logs with client-side events
+
+### Usage Examples
+
+**Client sending correlation ID:**
+```http
+GET /api/recipes HTTP/1.1
+Host: api.zarichney.com
+X-Correlation-ID: user-generated-12345
+```
+
+**Server response includes correlation ID:**
+```http
+HTTP/1.1 200 OK
+X-Correlation-ID: user-generated-12345
+Content-Type: application/json
+```
+
+**Log output with correlation ID:**
+```
+[14:30:15 INF] a1b2c3d4-e5f6-7890-abcd-ef1234567890 session-123 scope-456 Processing order OrderId: "ORD-001" for user UserId: "user-789"
+[14:30:15 WRN] a1b2c3d4-e5f6-7890-abcd-ef1234567890 session-123 scope-456 Order OrderId: "ORD-001" validation failed: Order not found
+```
+
+### Template Format
+
+The console log template includes the correlation ID as the first contextual identifier:
+```
+[{Timestamp:HH:mm:ss} {Level:u3}] {CorrelationId:-} {SessionId:-} {ScopeId:-} {Message:lj}{NewLine}{Exception}
+```
+
+When no correlation ID is available (such as during application startup), it displays as "-".
 
 ## Default Logging Level
 

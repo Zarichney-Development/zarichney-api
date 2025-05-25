@@ -94,6 +94,10 @@ public static class ApplicationStartup
   {
     // Configure status service with Identity DB availability
     ConfigureStatusService(application);
+    
+    // Add correlation ID middleware early in pipeline for request tracing
+    application.UseMiddleware<CorrelationIdMiddleware>();
+    
     application.UseMiddleware<RequestResponseLoggerMiddleware>();
     application.UseMiddleware<ErrorHandlingMiddleware>();
 
