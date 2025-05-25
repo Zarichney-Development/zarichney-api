@@ -54,7 +54,7 @@ public static class ConfigurationStartup
     {
       logger = logger.WriteTo.Console(
         outputTemplate:
-        "[{Timestamp:HH:mm:ss} {Level:u3}] {SessionId} {ScopeId} {Message:lj}{NewLine}{Exception}"
+        "[{Timestamp:HH:mm:ss} {Level:u3}] {SessionId:-} {ScopeId:-} {Message:lj}{NewLine}{Exception}"
       );
     }
 
@@ -120,7 +120,7 @@ public static class ConfigurationStartup
         if (!string.IsNullOrEmpty(parentDirectory))
         {
           dataPath = Path.GetFullPath(Path.Combine(parentDirectory, DataFolderName));
-          Log.Information("Fallback using parent of CurrentDirectory ({CurrentDirectory}). Path: {DataPath}",
+          Log.Debug("Fallback using parent of CurrentDirectory ({CurrentDirectory}). Path: {DataPath}",
             Environment.CurrentDirectory, dataPath);
         }
         else
@@ -146,11 +146,11 @@ public static class ConfigurationStartup
       ((IConfigurationBuilder)configuration).AddInMemoryCollection(transformedPaths!);
 
       // Verify final configuration
-      Log.Information("Final configuration paths:");
+      Log.Debug("Final configuration paths:");
       foreach (var key in transformedPaths.Keys)
       {
         var finalValue = configuration[key];
-        Log.Information("{Key}: {Value}", key, finalValue);
+        Log.Debug("{Key}: {Value}", key, finalValue);
       }
     }
 
@@ -251,14 +251,14 @@ public static class ConfigurationStartup
       .Where(kvp => kvp.Value?.StartsWith(prefix) == true)
       .ToList();
 
-    Log.Information("Found {Count} {Prefix} paths in configuration:", pathConfigs.Count, prefix);
+    Log.Debug("Found {Count} {Prefix} paths in configuration:", pathConfigs.Count, prefix);
 
     // Log transformations
     foreach (var kvp in pathConfigs.Where(kvp =>
                Path.Combine(basePath, kvp.Value![prefix.Length..]) != kvp.Value))
     {
       var newPath = Path.Combine(basePath, kvp.Value![prefix.Length..]);
-      Log.Information("Transforming path: {OldPath} -> {NewPath}", kvp.Value, newPath);
+      Log.Debug("Transforming path: {OldPath} -> {NewPath}", kvp.Value, newPath);
     }
 
     // Create the transformed paths dictionary
