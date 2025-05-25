@@ -69,17 +69,11 @@ if (-not $refitterInstalled) {
     }
 }
 
-# Step 5: Generate Refit client using refitter
-Write-Host "Generating Refit client..." -ForegroundColor Green
-refitter "$swaggerJsonPath" `
-    --namespace "Zarichney.Client" `
-    --output "$apiClientDir/IZarichneyAPI.cs" `
-    --interface-name "IZarichneyAPI" `
-    --use-api-response-for-all-responses `
-    --use-nullable-reference-types `
-    --use-api-response-for-successful-responses
+# Step 5: Generate Refit client using refitter with .refitter settings file
+Write-Host "Generating Refit client using .refitter settings file..." -ForegroundColor Green
+refitter --settings-file "$rootDir/.refitter" --skip-validation
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "Error generating Refit client. Exiting." -ForegroundColor Red
+    Write-Host "Error generating Refit client using .refitter file. Exiting." -ForegroundColor Red
     exit 1
 }
 
@@ -90,6 +84,6 @@ if (Test-Path -Path $swaggerJsonPath) {
 }
 
 Write-Host "API client generation completed successfully!" -ForegroundColor Cyan
-Write-Host "Generated client is available at: $apiClientDir/ZarichneyAPI.cs" -ForegroundColor Cyan
-Write-Host "Client interface name: IZarichneyAPI" -ForegroundColor Cyan
+Write-Host "Generated client interfaces are available in: $apiClientDir/" -ForegroundColor Cyan
+Write-Host "Client interfaces are grouped by OpenAPI tags (multiple files)" -ForegroundColor Cyan
 Write-Host "Client namespace: Zarichney.Client" -ForegroundColor Cyan
