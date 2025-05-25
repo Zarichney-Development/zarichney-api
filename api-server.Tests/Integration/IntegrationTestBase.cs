@@ -64,10 +64,10 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   {
     _apiClientFixture = apiClientFixture;
     apiClientFixture.AttachToSerilog(testOutputHelper);
-    
+
     // Push test class name to logging context for all tests in this class
     _testClassContext = Serilog.Context.LogContext.PushProperty("TestClassName", GetType().Name);
-    
+
     // Database availability will be checked based on dependency traits during InitializeAsync
   }
 

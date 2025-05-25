@@ -123,7 +123,7 @@ public class ApiClientFixture : IAsyncLifetime
 
     // Create HTTP client for unauthenticated calls
     var unauthHttpClient = _factory.CreateClient();
-    
+
     // Create authenticated HTTP client using TestAuthHandler
     const string userId = "test-user-id";
     var roles = new[] { "User", "Admin" };
@@ -132,19 +132,19 @@ public class ApiClientFixture : IAsyncLifetime
     // Initialize all API client interfaces
     UnauthenticatedAuthApi = RestService.For<IAuthApi>(unauthHttpClient);
     AuthenticatedAuthApi = RestService.For<IAuthApi>(authHttpClient);
-    
+
     UnauthenticatedAiApi = RestService.For<IAiApi>(unauthHttpClient);
     AuthenticatedAiApi = RestService.For<IAiApi>(authHttpClient);
-    
+
     UnauthenticatedCookbookApi = RestService.For<ICookbookApi>(unauthHttpClient);
     AuthenticatedCookbookApi = RestService.For<ICookbookApi>(authHttpClient);
-    
+
     UnauthenticatedPaymentApi = RestService.For<IPaymentApi>(unauthHttpClient);
     AuthenticatedPaymentApi = RestService.For<IPaymentApi>(authHttpClient);
-    
+
     UnauthenticatedPublicApi = RestService.For<IPublicApi>(unauthHttpClient);
     AuthenticatedPublicApi = RestService.For<IPublicApi>(authHttpClient);
-    
+
     UnauthenticatedApiApi = RestService.For<IApiApi>(unauthHttpClient);
     AuthenticatedApiApi = RestService.For<IApiApi>(authHttpClient);
 
