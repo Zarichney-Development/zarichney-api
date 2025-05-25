@@ -117,8 +117,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
       // Add configuration providers in specific order
       configBuilder
         .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
-        .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: false)
-        .AddJsonFile("../api-server.Tests/appsettings.Testing.json", optional: true, reloadOnChange: false);
+        .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: false);
 
       // Add user secrets in development mode
       if (env.EnvironmentName == "Development")
