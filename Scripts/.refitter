@@ -2,7 +2,7 @@
   "openApiPath": "api-server/swagger.json",
   "namespace": "Zarichney.Client",
   "contractsNamespace": "Zarichney.Client.Contracts",
-  "outputFolder": "api-server.Tests/Framework/Client",
+  "outputFolder": "../api-server.Tests/Framework/Client",
   "generateContracts": true,
   "generateClients": true,
   "generateMultipleFiles": true,
