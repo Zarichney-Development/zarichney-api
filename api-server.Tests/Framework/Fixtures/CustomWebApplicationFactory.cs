@@ -79,7 +79,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
   /// <summary>
   /// Initializes a new instance of the <see cref="CustomWebApplicationFactory"/> class.
   /// </summary>
-  public CustomWebApplicationFactory()
+  protected CustomWebApplicationFactory()
   {
     // No database fixture available
     _databaseFixture = null;
@@ -100,6 +100,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
   /// <param name="builder">The <see cref="IWebHostBuilder"/> for configuring the application.</param>
   protected override void ConfigureWebHost(IWebHostBuilder builder)
   {
+    // Force the environment to Testing for all tests
+    builder.UseEnvironment("Testing");
+
     builder.ConfigureAppConfiguration((hostingContext, configBuilder) =>
     {
       var env = hostingContext.HostingEnvironment;
@@ -114,8 +117,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
       // Add configuration providers in specific order
       configBuilder
         .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
-        .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: false)
-        .AddJsonFile("../api-server.Tests/appsettings.Testing.json", optional: true, reloadOnChange: false);
+        .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: false);
 
       // Add user secrets in development mode
       if (env.EnvironmentName == "Development")
@@ -127,7 +129,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
       configBuilder.AddEnvironmentVariables();
     });
 
-    builder.ConfigureServices(services =>
+    builder.ConfigureServices((hostingContext, services) =>
     {
       // Register test-specific services
 
@@ -148,8 +150,11 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
       var testOutputSink = new InjectableTestOutputSink();
       services.AddSingleton(testOutputSink);
 
+      // Use configuration from hosting context instead of building service provider
+      var configuration = hostingContext.Configuration;
+
       var xunitLogger = new LoggerConfiguration()
-        .MinimumLevel.Information()
+        .ReadFrom.Configuration(configuration)
         .Enrich.FromLogContext()
         .WriteTo.InjectableTestOutput(testOutputSink)
         // Filter out noisy Microsoft logs during startup
@@ -160,7 +165,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         .CreateLogger();
 
       Log.Logger = xunitLogger;
-      Log.Information("Starting up Zarichney API for automation testing suite...");
     });
 
     // builder.ConfigureLogging(logging =>
@@ -187,7 +191,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
       .AddEnvironmentVariables()
       .Build();
 
-    var connectionString = configuration.GetConnectionString(Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName);
+    var connectionString = configuration.GetConnectionString(UserDbContext.UserDatabaseConnectionName);
 
     // Remove existing DbContext registrations
     var dbContextDescriptors = services.Where(d =>

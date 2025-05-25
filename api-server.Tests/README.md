@@ -1,7 +1,7 @@
 # README: api-server.Tests Project
 
 **Version:** 1.1
-**Last Updated:** 2025-05-22
+**Last Updated:** 2025-05-25
 **Parent:** `../api-server/README.md` (Conceptual link to the main application's README)
 
 ## 1. Purpose & Responsibility
@@ -22,6 +22,7 @@ The testing strategy employed aims for high confidence through realistic test sc
 
 * **In-Memory API Hosting:** Integration tests run against an in-memory instance of the `api-server` using `CustomWebApplicationFactory<Program>`, allowing for fast execution without network overhead.
 * **Database Testing:** Real database interactions are tested using PostgreSQL managed by **Testcontainers** via the `DatabaseFixture`. This ensures tests run against a clean, consistent database schema with migrations applied. Database state is reset between tests using **Respawn**.
+* **Test Environment Logging:** Enhanced configurable logging system for test environment using Serilog with Warning default level and configuration-driven overrides. Test-specific logging configuration available in `appsettings.Testing.json`. Full configuration guide at [`../Docs/Development/LoggingGuide.md`](../Docs/Development/LoggingGuide.md).
 * **External HTTP Service Virtualization:** Interactions with external third-party HTTP APIs (e.g., Stripe, OpenAI) will be managed using **WireMock.Net** (as per FRMK-004 in `TechnicalDesignDocument.md`). This ensures deterministic behavior and isolates tests from external flakiness.
 * **API Client Interaction:** Integration tests interact with the API using a type-safe **Refit client** (`IZarichneyAPI`), which is auto-generated from the API's OpenAPI specification.
 * **Authentication Simulation:** The `TestAuthHandler` allows for simulating various authenticated users and authorization scenarios.

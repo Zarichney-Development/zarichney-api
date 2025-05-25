@@ -29,13 +29,16 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture,
   [LogTestStartEnd]
   public async Task GetHealth_WhenCalled_ReturnsOkStatus()
   {
-    // Arrange
-    // ApiClient is obtained from IntegrationTestBase, represents unauthenticated Refit client
+    using (CreateTestMethodContext(nameof(GetHealth_WhenCalled_ReturnsOkStatus)))
+    {
+      // Arrange
+      // ApiClient is obtained from IntegrationTestBase, represents unauthenticated Refit client
 
-    // Act & Assert: calling Health should not throw and thus return 200 OK
-    var act = () => ApiClient.Health();
-    await act.Should().NotThrowAsync<ApiException>(
-      because: "health endpoint should always return OK status even without configuration");
+      // Act & Assert: calling Health should not throw and thus return 200 OK
+      var act = () => ApiClient.Health();
+      await act.Should().NotThrowAsync<ApiException>(
+        because: "health endpoint should always return OK status even without configuration");
+    }
   }
 
   /// <summary>

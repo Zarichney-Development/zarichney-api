@@ -1,11 +1,8 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Hosting.Server;
-using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.Hosting;
 using System.Net;
 using Xunit;
 using Xunit.Abstractions;
@@ -22,30 +19,24 @@ namespace Zarichney.Tests.Integration.Services.Auth
   /// in non-Production environments.
   /// </summary>
   [Trait("Category", "Integration")]
-  public class IdentityDbGracefulDegradationTests
+  public class IdentityDbGracefulDegradationTests(ITestOutputHelper testOutputHelper)
   {
     /// <summary>
     /// Specialized factory that removes the Identity Database connection string from configuration.
     /// </summary>
-    private class IdentityDbMissingWebApplicationFactory : CustomWebApplicationFactory
+    private class IdentityDbMissingWebApplicationFactory(string environmentName = "Testing")
+      : CustomWebApplicationFactory
     {
-      private readonly string _environmentName;
-
-      public IdentityDbMissingWebApplicationFactory(string environmentName = "Testing")
-      {
-        _environmentName = environmentName;
-      }
-
       protected override void ConfigureWebHost(IWebHostBuilder builder)
       {
         // First call the base implementation to configure common services
         base.ConfigureWebHost(builder);
 
         // Override the environment name
-        builder.UseEnvironment(_environmentName);
+        builder.UseEnvironment(environmentName);
 
         // Override configuration to ensure the Identity Database connection string is missing/empty
-        builder.ConfigureAppConfiguration((context, config) =>
+        builder.ConfigureAppConfiguration((_, config) =>
         {
           var inMemoryConfig = new Dictionary<string, string?>
           {
@@ -56,7 +47,7 @@ namespace Zarichney.Tests.Integration.Services.Auth
           };
 
           // Add memory configuration with higher precedence than other sources
-          config.AddInMemoryCollection(inMemoryConfig!);
+          config.AddInMemoryCollection(inMemoryConfig);
         });
       }
     }
@@ -64,21 +55,12 @@ namespace Zarichney.Tests.Integration.Services.Auth
     /// <summary>
     /// Factory with missing Identity Database connection string in Development environment.
     /// </summary>
-    private readonly IdentityDbMissingWebApplicationFactory _developmentFactoryWithNoDb;
+    private readonly IdentityDbMissingWebApplicationFactory _developmentFactoryWithNoDb = new();
 
     /// <summary>
     /// Factory with missing Identity Database connection string in Production environment.
     /// </summary>
-    private readonly IdentityDbMissingWebApplicationFactory _productionFactoryWithNoDb;
-
-    private readonly ITestOutputHelper _testOutputHelper;
-
-    public IdentityDbGracefulDegradationTests(ITestOutputHelper testOutputHelper)
-    {
-      _testOutputHelper = testOutputHelper;
-      _developmentFactoryWithNoDb = new IdentityDbMissingWebApplicationFactory("Testing");
-      _productionFactoryWithNoDb = new IdentityDbMissingWebApplicationFactory("Production");
-    }
+    private readonly IdentityDbMissingWebApplicationFactory _productionFactoryWithNoDb = new("Production");
 
     /// <summary>
     /// Verifies that the application can start in Testing environment
@@ -137,13 +119,11 @@ namespace Zarichney.Tests.Integration.Services.Auth
       // Arrange
       var client = _developmentFactoryWithNoDb.CreateClient();
 
-      // Prepare login request
-      var loginRequest = new StringContent(
+      // Act - Call the login endpoint
+      using var loginRequest = new StringContent(
         """{"email":"test@example.com","password":"test123"}""",
         System.Text.Encoding.UTF8,
         "application/json");
-
-      // Act - Call the login endpoint
       var response = await client.PostAsync("/api/auth/login", loginRequest);
 
       // Assert
@@ -153,9 +133,9 @@ namespace Zarichney.Tests.Integration.Services.Auth
       // Verify the response status code is 503
       // It's sufficient to check that the endpoint returns 503, which indicates that the service is unavailable
       // The exact content of the error message is less important than the status code
-      _testOutputHelper.WriteLine($"Response status: {response.StatusCode}");
+      testOutputHelper.WriteLine($"Response status: {response.StatusCode}");
       var content = await response.Content.ReadAsStringAsync();
-      _testOutputHelper.WriteLine($"Response content: {content}");
+      testOutputHelper.WriteLine($"Response content: {content}");
 
       // Check that the response contains some indication that the service is unavailable
       content.Should().Contain("unavailable", "The response should indicate that a required service is unavailable");
@@ -171,13 +151,11 @@ namespace Zarichney.Tests.Integration.Services.Auth
       // Arrange
       var client = _developmentFactoryWithNoDb.CreateClient();
 
-      // Prepare register request
-      var registerRequest = new StringContent(
+      // Act - Call the register endpoint
+      using var registerRequest = new StringContent(
         """{"email":"newuser@example.com","password":"Password123!"}""",
         System.Text.Encoding.UTF8,
         "application/json");
-
-      // Act - Call the register endpoint
       var response = await client.PostAsync("/api/auth/register", registerRequest);
 
       // Assert
@@ -187,9 +165,9 @@ namespace Zarichney.Tests.Integration.Services.Auth
       // Verify the response status code is 503
       // It's sufficient to check that the endpoint returns 503, which indicates that the service is unavailable
       // The exact content of the error message is less important than the status code
-      _testOutputHelper.WriteLine($"Response status: {response.StatusCode}");
+      testOutputHelper.WriteLine($"Response status: {response.StatusCode}");
       var content = await response.Content.ReadAsStringAsync();
-      _testOutputHelper.WriteLine($"Response content: {content}");
+      testOutputHelper.WriteLine($"Response content: {content}");
 
       // Check that the response contains some indication that the service is unavailable
       content.Should().Contain("unavailable", "The response should indicate that a required service is unavailable");
@@ -247,7 +225,7 @@ namespace Zarichney.Tests.Integration.Services.Auth
 
       // Assert
       dbStatus.Should().NotBeNull("The status service should return a status for PostgresIdentityDb");
-      dbStatus!.IsAvailable.Should().BeFalse("The PostgresIdentityDb status should be unavailable");
+      dbStatus.IsAvailable.Should().BeFalse("The PostgresIdentityDb status should be unavailable");
     }
 
     /// <summary>

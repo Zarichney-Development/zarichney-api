@@ -1,7 +1,7 @@
 # Project Coding Standards for AI Assistants
 
-**Version:** 1.6
-**Last Updated:** 2025-05-22
+**Version:** 1.7
+**Last Updated:** 2025-05-25
 
 ## 1. Core Principles
 
@@ -151,7 +151,60 @@ To ensure code remains highly testable, actively avoid the following common anti
 * Handle API keys and secrets securely. Do not hardcode them; use configuration providers like User Secrets, Environment Variables, AWS Secrets Manager, or Parameter Store.
 * Adhere to existing authentication (`[Authorize]`, `AuthenticationMiddleware`, `CookieAuthManager`) and authorization (`RoleManager`, `[Authorize(Roles = "...")]`) patterns.
 
-## 14. External Libraries
+## 14. Logging Standards
+
+* **Logger Injection:**
+    * **MUST** use constructor injection with the generic `ILogger<T>` type (e.g., `private readonly ILogger<MyService> _logger;`). This provides type safety, easier testing, and automatic source context.
+    * **MUST NOT** use the non-generic `ILogger` followed by `.ForContext<T>()` pattern. This creates unnecessary complexity and reduces testability.
+    * **Example:**
+        ```csharp
+        // Correct
+        public class MyService
+        {
+          private readonly ILogger<MyService> _logger;
+          
+          public MyService(ILogger<MyService> logger)
+          {
+            _logger = logger;
+          }
+        }
+        
+        // Incorrect
+        public class MyService
+        {
+          private readonly ILogger _logger;
+          
+          public MyService(ILogger logger)
+          {
+            _logger = logger.ForContext<MyService>();
+          }
+        }
+        ```
+* **Log Message Formatting:**
+    * **MUST** use structured logging with named parameters (e.g., `_logger.LogInformation("Processing order {OrderId} for customer {CustomerId}", order.Id, customer.Id);`) instead of string interpolation in the message template.
+    * **MUST** use `nameof()` for logging method names or key operations where appropriate (e.g., `_logger.LogWarning("{Method}: No email provided in order", nameof(CreateCookbook));`).
+    * Write clear and concise log messages that explain the context and purpose, not just the action.
+    * Avoid overly verbose or redundant information that can be inferred from the log context.
+* **Structured Property Naming:**
+    * **MUST** use PascalCase for structured logging property names (e.g., `{OrderId}`, `{CustomerId}`, `{FileName}`) for consistency with C# property naming conventions.
+    * Use descriptive and meaningful property names that clearly indicate what the value represents.
+* **Log Levels:**
+    * **Verbose:** Very detailed tracing information, typically only enabled during debugging. Use sparingly.
+    * **Debug:** Detailed information useful for debugging application flow. Should provide insights into application behavior without being overly verbose.
+    * **Information:** General application flow information, important events, and successful operations. This is the primary level for tracking normal application behavior.
+    * **Warning:** Indicates potential issues that don't prevent the application from functioning, recoverable errors, or unexpected but handled conditions.
+    * **Error:** Error events that might still allow the application to continue running. Use for exceptions and failures that need attention.
+    * **Fatal:** Very severe error events that will presumably lead to application abort. Use sparingly for catastrophic failures.
+* **Logging Exceptions:**
+    * **MUST** pass the exception object as the first argument to logging methods (e.g., `_logger.LogError(ex, "An error occurred while processing {Data}", someData);`) to ensure stack traces and full exception details are captured by Serilog.
+    * Include relevant context information as structured parameters to aid in debugging and analysis.
+    * Use appropriate log levels: `LogError` for unexpected exceptions, `LogWarning` for expected/handled exceptions that indicate potential issues.
+* **Performance Considerations:**
+    * Be mindful of log volume in production environments. Use appropriate log levels and avoid excessive logging in tight loops.
+    * Prefer structured logging over string concatenation or interpolation for better performance and searchability.
+    * Consider the performance impact of logging expensive-to-compute values and evaluate if the information is necessary at the chosen log level.
+
+## 15. External Libraries
 
 * Utilize the existing libraries (e.g., Serilog, Polly, MediatR, AutoMapper, EF Core, OpenAI, Playwright, Octokit, QuestPDF, AngleSharp, RestSharp) according to established patterns within the codebase.
 * Do not add new major dependencies (NuGet packages) without prior architectural review/approval.

@@ -1,6 +1,6 @@
 # Module/Directory: Docs/Development
 
-**Last Updated:** 2025-05-04
+**Last Updated:** 2025-05-25
 
 > **Parent:** [`Docs`](../README.md)
 
@@ -17,6 +17,7 @@
     * [`StandardWorkflow.md`](./StandardWorkflow.md): Details the step-by-step workflow for the AI Coder performing standard development tasks.
     * [`ComplexTaskWorkflow.md`](./ComplexTaskWorkflow.md): Details the step-by-step workflow for the AI Coder performing complex or novel tasks using a TDD/Plan-First approach.
     * [`TestCoverageWorkflow.md`](./TestCoverageWorkflow.md): Details the step-by-step workflow for the AI Coder performing test coverage enhancement tasks.
+    * [`LoggingGuide.md`](./LoggingGuide.md): Comprehensive guide for the enhanced logging system, including configuration and best practices.
     * [`ShortTermRoadmap.md`](./ShortTermRoadmap.md): Captures planned enhancements and deferred items for the codebase and development workflow.
 * **Related Templates (Located in /Docs/Templates/):**
     * [`../Templates/AICoderPromptTemplate.md`](../Templates/AICoderPromptTemplate.md): The mandatory template structure used by the Planning Assistant to generate prompts for AI Coders performing coding tasks.

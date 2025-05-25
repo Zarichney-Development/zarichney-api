@@ -1,16 +1,11 @@
-using System.Net;
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Moq;
 using Xunit;
-using Xunit.Abstractions;
 using Zarichney.Services.Auth;
 using Zarichney.Startup;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
 
 namespace Zarichney.Tests.Integration.Services.Auth;
 
@@ -89,7 +84,7 @@ public class MockAuthenticationTests
       .AddInMemoryCollection(new Dictionary<string, string?>
       {
         ["MockAuth:Enabled"] = "true",
-        [$"ConnectionStrings:{Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName}"] = "valid-connection-string"
+        [$"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}"] = "valid-connection-string"
       })
       .Build();
 
@@ -161,9 +156,9 @@ public class MockAuthenticationTests
     var mockAuthHandler = serviceProvider.GetService<MockAuthHandler>();
     mockAuthHandler.Should().NotBeNull("because MockAuthHandler should be registered");
 
-    var mockAuthConfig = serviceProvider.GetService<Microsoft.Extensions.Options.IOptions<Zarichney.Config.MockAuthConfig>>();
+    var mockAuthConfig = serviceProvider.GetService<Microsoft.Extensions.Options.IOptions<Config.MockAuthConfig>>();
     mockAuthConfig.Should().NotBeNull("because MockAuthConfig should be registered");
-    mockAuthConfig!.Value.DefaultRoles.Should().Contain("TestRole1");
+    mockAuthConfig.Value.DefaultRoles.Should().Contain("TestRole1");
     mockAuthConfig.Value.DefaultRoles.Should().Contain("TestRole2");
   }
 
@@ -191,7 +186,7 @@ public class MockAuthenticationTests
 
     if (connectionString != null)
     {
-      configValues[$"ConnectionStrings:{Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName}"] = connectionString;
+      configValues[$"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}"] = connectionString;
     }
 
     var configuration = new ConfigurationBuilder()

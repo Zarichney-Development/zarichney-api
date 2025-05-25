@@ -30,7 +30,7 @@ public class FeatureAvailabilityMiddlewareTests
     var statusService = new Mock<IStatusService>();
     // Setup mock to handle any unexpected calls
     statusService.Setup(s => s.GetFeatureStatus(It.IsAny<ExternalServices>()))
-        .Returns((ExternalServices service) => new StatusInfo(service, true, new List<string>()));
+        .Returns((ExternalServices service) => new StatusInfo(service, true, []));
 
     var nextInvoked = false;
 

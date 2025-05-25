@@ -75,7 +75,7 @@ public class StatusService : IStatusService
   private DateTime _cacheExpiration = DateTime.MinValue;
   private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(5);
   private readonly SemaphoreSlim _cacheLock = new(1, 1);
-  private bool _hasPerformedFullScan = false;
+  private bool _hasPerformedFullScan;
 
   /// <summary>
   /// Initializes a new instance of the <see cref="StatusService"/> class.
@@ -203,7 +203,7 @@ public class StatusService : IStatusService
       _cachedStatus[service] = new ServiceStatusInfo(
         serviceName: service,
         IsAvailable: isAvailable,
-        MissingConfigurations: missingConfigurations ?? new List<string>()
+        MissingConfigurations: missingConfigurations ?? []
       );
 
       // Update the cache expiration
@@ -319,7 +319,7 @@ public class StatusService : IStatusService
           if (!featureMap.TryGetValue(feature, out var servicesArray))
           {
             // If no entry exists yet, create a new array with just this feature
-            featureMap[feature] = new[] { feature };
+            featureMap[feature] = [feature];
           }
           else if (!servicesArray.Contains(feature))
           {
@@ -444,7 +444,7 @@ public class StatusService : IStatusService
       {
         if (!featureAssociations.TryGetValue(feature, out var propertyList))
         {
-          propertyList = new List<string>();
+          propertyList = [];
           featureAssociations[feature] = propertyList;
         }
 

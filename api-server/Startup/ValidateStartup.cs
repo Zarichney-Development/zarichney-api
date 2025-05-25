@@ -1,6 +1,5 @@
 using Serilog;
 using Zarichney.Services.Auth;
-using Zarichney.Services.Status;
 
 namespace Zarichney.Startup;
 

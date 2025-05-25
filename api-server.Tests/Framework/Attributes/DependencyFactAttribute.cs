@@ -42,7 +42,7 @@ public sealed class DependencyFactAttribute : FactAttribute
   };
 
   // Store the mapped trait values for testing and for use by test discoverer
-  private readonly List<(string Name, string Value)> _dependencyTraits = new();
+  private readonly List<(string Name, string Value)> _dependencyTraits = [];
 
   /// <summary>
   /// Gets the array of required ExternalServices values that must be available for the test to run.
@@ -127,8 +127,8 @@ public sealed class DependencyFactAttribute : FactAttribute
   /// <param name="requiredInfrastructure">An InfrastructureDependency enum value that must be available.</param>
   public DependencyFactAttribute(ExternalServices requiredFeature, InfrastructureDependency requiredInfrastructure)
   {
-    RequiredExternalServices = new[] { requiredFeature };
-    RequiredInfrastructure = new[] { requiredInfrastructure };
+    RequiredExternalServices = [requiredFeature];
+    RequiredInfrastructure = [requiredInfrastructure];
 
     // Generate trait mappings for the feature
     if (ExternalServicesToTraitMap.TryGetValue(requiredFeature, out var featureTraitValue))

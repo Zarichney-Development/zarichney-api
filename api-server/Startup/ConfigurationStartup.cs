@@ -43,13 +43,23 @@ public static class ConfigurationStartup
   public static void ConfigureLogging(WebApplicationBuilder builder)
   {
     var logger = new LoggerConfiguration()
-      .WriteTo.Console(
-        outputTemplate:
-        "[{Timestamp:HH:mm:ss} {Level:u3}] {SessionId} {ScopeId} {Message:lj}{NewLine}{Exception}"
-      )
+      .MinimumLevel.Warning()
+      .ReadFrom.Configuration(builder.Configuration)
       .Enrich.FromLogContext()
+      .Enrich.WithProperty("CorrelationId", null)
       .Enrich.WithProperty("SessionId", null)
-      .Enrich.WithProperty("ScopeId", null);
+      .Enrich.WithProperty("ScopeId", null)
+      .Enrich.WithProperty("TestClassName", null)
+      .Enrich.WithProperty("TestMethodName", null);
+
+    // Only add console sink if not in Testing environment (tests use their own xUnit sink)
+    if (builder.Environment.EnvironmentName != "Testing")
+    {
+      logger = logger.WriteTo.Console(
+        outputTemplate:
+        "[{Timestamp:HH:mm:ss} {Level:u3}] {CorrelationId:-} {SessionId:-} {ScopeId:-} {TestClassName:-} {TestMethodName:-} {Message:lj}{NewLine}{Exception}"
+      );
+    }
 
     var seqUrl = builder.Configuration["LoggingConfig:SeqUrl"];
     if (!string.IsNullOrEmpty(seqUrl) && Uri.IsWellFormedUriString(seqUrl, UriKind.Absolute))
@@ -67,9 +77,8 @@ public static class ConfigurationStartup
     }
 
     Log.Logger = logger.CreateLogger();
-    Log.Information("Starting up Zarichney API...");
 
-    builder.Host.UseSerilog();
+    builder.Host.UseSerilog(Log.Logger, dispose: true);
   }
 
   #region Configuration Registration
@@ -114,7 +123,7 @@ public static class ConfigurationStartup
         if (!string.IsNullOrEmpty(parentDirectory))
         {
           dataPath = Path.GetFullPath(Path.Combine(parentDirectory, DataFolderName));
-          Log.Information("Fallback using parent of CurrentDirectory ({CurrentDirectory}). Path: {DataPath}",
+          Log.Debug("Fallback using parent of CurrentDirectory ({CurrentDirectory}). Path: {DataPath}",
             Environment.CurrentDirectory, dataPath);
         }
         else
@@ -140,11 +149,11 @@ public static class ConfigurationStartup
       ((IConfigurationBuilder)configuration).AddInMemoryCollection(transformedPaths!);
 
       // Verify final configuration
-      Log.Information("Final configuration paths:");
+      Log.Debug("Final configuration paths:");
       foreach (var key in transformedPaths.Keys)
       {
         var finalValue = configuration[key];
-        Log.Information("{Key}: {Value}", key, finalValue);
+        Log.Debug("{Key}: {Value}", key, finalValue);
       }
     }
 
@@ -245,14 +254,14 @@ public static class ConfigurationStartup
       .Where(kvp => kvp.Value?.StartsWith(prefix) == true)
       .ToList();
 
-    Log.Information("Found {Count} {Prefix} paths in configuration:", pathConfigs.Count, prefix);
+    Log.Debug("Found {Count} {Prefix} paths in configuration:", pathConfigs.Count, prefix);
 
     // Log transformations
     foreach (var kvp in pathConfigs.Where(kvp =>
                Path.Combine(basePath, kvp.Value![prefix.Length..]) != kvp.Value))
     {
       var newPath = Path.Combine(basePath, kvp.Value![prefix.Length..]);
-      Log.Information("Transforming path: {OldPath} -> {NewPath}", kvp.Value, newPath);
+      Log.Debug("Transforming path: {OldPath} -> {NewPath}", kvp.Value, newPath);
     }
 
     // Create the transformed paths dictionary

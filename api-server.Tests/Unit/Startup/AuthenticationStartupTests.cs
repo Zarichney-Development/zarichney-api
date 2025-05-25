@@ -2,13 +2,11 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Moq;
 using Xunit;
 using FluentAssertions;
 using Zarichney.Services.Auth;
 using Zarichney.Startup;
-using Zarichney.Tests.Framework.Attributes;
 
 namespace Zarichney.Tests.Unit.Startup;
 
@@ -109,7 +107,7 @@ public class AuthenticationStartupTests
     // Verify MockAuthConfig is configured
     var mockAuthConfig = serviceProvider.GetService<Microsoft.Extensions.Options.IOptions<Zarichney.Config.MockAuthConfig>>();
     mockAuthConfig.Should().NotBeNull("because MockAuthConfig should be configured");
-    mockAuthConfig!.Value.DefaultRoles.Should().Contain("User");
+    mockAuthConfig.Value.DefaultRoles.Should().Contain("User");
     mockAuthConfig.Value.DefaultRoles.Should().Contain("Admin");
     mockAuthConfig.Value.DefaultUsername.Should().Be("TestUser");
     mockAuthConfig.Value.DefaultEmail.Should().Be("test@example.com");

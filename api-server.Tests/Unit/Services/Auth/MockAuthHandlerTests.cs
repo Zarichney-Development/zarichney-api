@@ -11,7 +11,6 @@ using Xunit;
 using FluentAssertions;
 using Zarichney.Config;
 using Zarichney.Services.Auth;
-using Zarichney.Tests.Framework.Attributes;
 
 namespace Zarichney.Tests.Unit.Services.Auth;
 
@@ -23,7 +22,6 @@ public class MockAuthHandlerTests
 {
   private readonly Mock<IOptionsMonitor<AuthenticationSchemeOptions>> _authOptionsMonitor;
   private readonly Mock<ILoggerFactory> _loggerFactory;
-  private readonly Mock<ILogger<MockAuthHandler>> _logger;
   private readonly Mock<UrlEncoder> _urlEncoder;
   private readonly Mock<IOptions<MockAuthConfig>> _mockAuthConfigOptions;
   private readonly MockAuthConfig _mockAuthConfig;
@@ -32,7 +30,7 @@ public class MockAuthHandlerTests
   {
     _authOptionsMonitor = new Mock<IOptionsMonitor<AuthenticationSchemeOptions>>();
     _loggerFactory = new Mock<ILoggerFactory>();
-    _logger = new Mock<ILogger<MockAuthHandler>>();
+    Mock<ILogger<MockAuthHandler>> logger = new();
     _urlEncoder = new Mock<UrlEncoder>();
     _mockAuthConfigOptions = new Mock<IOptions<MockAuthConfig>>();
 
@@ -45,7 +43,7 @@ public class MockAuthHandlerTests
     };
 
     _mockAuthConfigOptions.Setup(x => x.Value).Returns(_mockAuthConfig);
-    _loggerFactory.Setup(x => x.CreateLogger(It.IsAny<string>())).Returns(_logger.Object);
+    _loggerFactory.Setup(x => x.CreateLogger(It.IsAny<string>())).Returns(logger.Object);
 
     _authOptionsMonitor.Setup(x => x.Get(It.IsAny<string>()))
       .Returns(new AuthenticationSchemeOptions());
@@ -81,7 +79,7 @@ public class MockAuthHandlerTests
   public async Task HandleAuthenticateAsync_WithMockRolesHeader_InDevelopment_UsesHeaderRoles()
   {
     // Arrange
-    var context = CreateHttpContext("Development");
+    var context = CreateHttpContext();
     context.Request.Headers["X-Mock-Roles"] = "TestRole1,TestRole2";
 
     var handler = CreateMockAuthHandler();
@@ -135,7 +133,7 @@ public class MockAuthHandlerTests
   public async Task HandleAuthenticateAsync_WithEmptyMockRolesHeader_UsesDefaultRoles()
   {
     // Arrange
-    var context = CreateHttpContext("Development");
+    var context = CreateHttpContext();
     context.Request.Headers["X-Mock-Roles"] = "";
 
     var handler = CreateMockAuthHandler();
@@ -160,7 +158,7 @@ public class MockAuthHandlerTests
   public async Task HandleAuthenticateAsync_WithWhitespaceInMockRolesHeader_TrimsRoles()
   {
     // Arrange
-    var context = CreateHttpContext("Development");
+    var context = CreateHttpContext();
     context.Request.Headers["X-Mock-Roles"] = " Role1 , Role2 , ";
 
     var handler = CreateMockAuthHandler();

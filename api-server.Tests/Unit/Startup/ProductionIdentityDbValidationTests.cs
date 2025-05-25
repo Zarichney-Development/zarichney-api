@@ -3,7 +3,6 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using Moq;
 using Xunit;
 using Zarichney.Services.Auth;
@@ -32,7 +31,7 @@ public class ProductionIdentityDbValidationTests
     // Assert
     field.Should().NotBeNull("UserDbContext should have a UserDatabaseConnectionName constant");
 
-    var value = field!.GetValue(null) as string;
+    var value = field.GetValue(null) as string;
     value.Should().NotBeNull("UserDatabaseConnectionName should have a non-null value");
     value.Should().Be("UserDatabase", "UserDatabaseConnectionName should have the expected value");
   }
@@ -76,7 +75,7 @@ public class ProductionIdentityDbValidationTests
 
     // Assert
     property.Should().NotBeNull("ValidateStartup should have an IsIdentityDbAvailable property");
-    property!.PropertyType.Should().Be(typeof(bool), "IsIdentityDbAvailable should be of type bool");
+    property.PropertyType.Should().Be(typeof(bool), "IsIdentityDbAvailable should be of type bool");
     property.CanRead.Should().BeTrue("IsIdentityDbAvailable should be readable");
   }
 

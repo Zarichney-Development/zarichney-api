@@ -3,11 +3,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
 using Xunit.Abstractions;
-using Zarichney.Config;
 using Zarichney.Services.Auth;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
@@ -22,13 +20,9 @@ namespace Zarichney.Tests.Integration.Services.Auth;
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Feature, TestCategories.Auth)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
-public class RoleInitializerTests : DatabaseIntegrationTestBase
+public class RoleInitializerTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper)
+  : DatabaseIntegrationTestBase(apiClientFixture, testOutputHelper)
 {
-  public RoleInitializerTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper)
-    : base(apiClientFixture, testOutputHelper)
-  {
-  }
-
   [DependencyFact(InfrastructureDependency.Database)]
   public async Task SeedAdminUser_CreatesUser_WhenNotExists_And_AssignsAdminRole()
   {
@@ -43,18 +37,15 @@ public class RoleInitializerTests : DatabaseIntegrationTestBase
       { $"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}", "Server=localhost;Database=test;User Id=test;Password=test;" }
     };
 
-    using var factory = Factory.ReplaceService(services =>
+    await using var factory = Factory.ReplaceService(services =>
     {
       // Override configuration to include test admin user settings
-      services.AddSingleton<IConfiguration>(sp =>
-      {
-        return new ConfigurationBuilder()
-          .AddInMemoryCollection(testConfig!)
-          .Build();
-      });
+      services.AddSingleton<IConfiguration>(_ => new ConfigurationBuilder()
+        .AddInMemoryCollection(testConfig)
+        .Build());
 
       // Override environment to be Development (non-Production)
-      services.AddSingleton<IWebHostEnvironment>(sp =>
+      services.AddSingleton<IWebHostEnvironment>(_ =>
         new TestWebHostEnvironment { EnvironmentName = "Development" });
     });
 
@@ -80,7 +71,7 @@ public class RoleInitializerTests : DatabaseIntegrationTestBase
     // Assert
     var createdUser = await userManager.FindByEmailAsync("test-admin@example.com");
     createdUser.Should().NotBeNull("the admin user should be created");
-    createdUser!.UserName.Should().Be("testadmin");
+    createdUser.UserName.Should().Be("testadmin");
     createdUser.Email.Should().Be("test-admin@example.com");
     createdUser.EmailConfirmed.Should().BeTrue("email should be auto-confirmed in dev environment");
 
@@ -108,16 +99,13 @@ public class RoleInitializerTests : DatabaseIntegrationTestBase
       { $"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}", "Server=localhost;Database=test;User Id=test;Password=test;" }
     };
 
-    using var factory = Factory.ReplaceService(services =>
+    await using var factory = Factory.ReplaceService(services =>
     {
-      services.AddSingleton<IConfiguration>(sp =>
-      {
-        return new ConfigurationBuilder()
-          .AddInMemoryCollection(testConfig!)
-          .Build();
-      });
+      services.AddSingleton<IConfiguration>(_ => new ConfigurationBuilder()
+        .AddInMemoryCollection(testConfig)
+        .Build());
 
-      services.AddSingleton<IWebHostEnvironment>(sp =>
+      services.AddSingleton<IWebHostEnvironment>(_ =>
         new TestWebHostEnvironment { EnvironmentName = "Development" });
     });
 
@@ -178,17 +166,14 @@ public class RoleInitializerTests : DatabaseIntegrationTestBase
       { $"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}", "Server=localhost;Database=test;User Id=test;Password=test;" }
     };
 
-    using var factory = Factory.ReplaceService(services =>
+    await using var factory = Factory.ReplaceService(services =>
     {
-      services.AddSingleton<IConfiguration>(sp =>
-      {
-        return new ConfigurationBuilder()
-          .AddInMemoryCollection(testConfig!)
-          .Build();
-      });
+      services.AddSingleton<IConfiguration>(_ => new ConfigurationBuilder()
+        .AddInMemoryCollection(testConfig)
+        .Build());
 
       // Set environment to Production
-      services.AddSingleton<IWebHostEnvironment>(sp =>
+      services.AddSingleton<IWebHostEnvironment>(_ =>
         new TestWebHostEnvironment { EnvironmentName = "Production" });
     });
 
@@ -228,16 +213,13 @@ public class RoleInitializerTests : DatabaseIntegrationTestBase
       { $"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}", "Server=localhost;Database=test;User Id=test;Password=test;" }
     };
 
-    using var factory = Factory.ReplaceService(services =>
+    await using var factory = Factory.ReplaceService(services =>
     {
-      services.AddSingleton<IConfiguration>(sp =>
-      {
-        return new ConfigurationBuilder()
-          .AddInMemoryCollection(testConfig!)
-          .Build();
-      });
+      services.AddSingleton<IConfiguration>(_ => new ConfigurationBuilder()
+        .AddInMemoryCollection(testConfig)
+        .Build());
 
-      services.AddSingleton<IWebHostEnvironment>(sp =>
+      services.AddSingleton<IWebHostEnvironment>(_ =>
         new TestWebHostEnvironment { EnvironmentName = "Development" });
     });
 

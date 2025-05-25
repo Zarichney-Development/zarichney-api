@@ -24,7 +24,7 @@ public static class TestFactories
     return new ServiceStatusInfo(
         serviceName: serviceName,
         IsAvailable: isAvailable,
-        MissingConfigurations: missingConfigurations ?? new List<string>()
+        MissingConfigurations: missingConfigurations ?? []
     );
   }
 

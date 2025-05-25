@@ -7,6 +7,7 @@ using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 using Zarichney.Tests.Framework.Helpers;
+using Serilog;
 
 namespace Zarichney.Tests.Integration;
 
@@ -36,6 +37,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
 
   protected CustomWebApplicationFactory Factory => _apiClientFixture.Factory;
   private readonly ApiClientFixture _apiClientFixture;
+  private readonly IDisposable _testClassContext;
 
   private bool _dependenciesChecked;
   private string? SkipReason { get; set; }
@@ -62,6 +64,10 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   {
     _apiClientFixture = apiClientFixture;
     apiClientFixture.AttachToSerilog(testOutputHelper);
+    
+    // Push test class name to logging context for all tests in this class
+    _testClassContext = Serilog.Context.LogContext.PushProperty("TestClassName", GetType().Name);
+    
     // Database availability will be checked based on dependency traits during InitializeAsync
   }
 
@@ -95,6 +101,17 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   {
     using var scope = Factory.Services.CreateScope();
     return scope.ServiceProvider.GetRequiredService<Moq.Mock<T>>();
+  }
+
+  /// <summary>
+  /// Creates a logging context for a specific test method.
+  /// Use this in a using statement to ensure the test method name appears in logs for that test.
+  /// </summary>
+  /// <param name="testMethodName">The name of the test method. Use nameof() to get the current method name.</param>
+  /// <returns>A disposable that will clean up the logging context when disposed.</returns>
+  protected IDisposable CreateTestMethodContext(string testMethodName)
+  {
+    return Serilog.Context.LogContext.PushProperty("TestMethodName", testMethodName);
   }
 
   /// <summary>
@@ -452,5 +469,9 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   /// Disposes of resources used by the test.
   /// </summary>
   /// <returns>A completed task.</returns>
-  public Task DisposeAsync() => Task.CompletedTask;
+  public Task DisposeAsync()
+  {
+    _testClassContext?.Dispose();
+    return Task.CompletedTask;
+  }
 }
