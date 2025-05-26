@@ -6,6 +6,7 @@
 using Refit;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using Zarichney.Client.Contracts;
 
@@ -39,7 +40,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: text/plain, application/json, text/json")]
         [Post("/api/email/validate")]
-        Task<IApiResponse<string>> Validate([Query] string email);
+        Task<IApiResponse<string>> Validate([Query] string? email = default, CancellationToken cancellationToken = default);
 
         /// <returns>
         /// A <see cref="Task"/> representing the <see cref="IApiResponse"/> instance containing the result:
@@ -55,7 +56,7 @@ namespace Zarichney.Client
         /// </list>
         /// </returns>
         [Get("/api/health/secure")]
-        Task<IApiResponse> Secure();
+        Task<IApiResponse> Secure(CancellationToken cancellationToken = default);
 
         /// <returns>
         /// A <see cref="Task"/> representing the <see cref="IApiResponse"/> instance containing the result:
@@ -71,7 +72,7 @@ namespace Zarichney.Client
         /// </list>
         /// </returns>
         [Get("/api/test-auth")]
-        Task<IApiResponse> TestAuth();
+        Task<IApiResponse> TestAuth(CancellationToken cancellationToken = default);
     }
 
 }

@@ -6,6 +6,7 @@
 using Refit;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using Zarichney.Client.Contracts;
 
@@ -52,7 +53,7 @@ namespace Zarichney.Client
         [Multipart]
         [Headers("Accept: application/json")]
         [Post("/api/completion")]
-        Task<IApiResponse<object>> Completion(string textPrompt, StreamPart audioPrompt);
+        Task<IApiResponse<object>> Completion(string? textPrompt = default, StreamPart? audioPrompt = default, CancellationToken cancellationToken = default);
 
         /// <summary>Transcribes the provided audio file.</summary>
         /// <remarks>
@@ -89,7 +90,7 @@ namespace Zarichney.Client
         [Multipart]
         [Headers("Accept: application/json")]
         [Post("/api/transcribe")]
-        Task<IApiResponse<object>> Transcribe(StreamPart audioFile);
+        Task<IApiResponse<object>> Transcribe(StreamPart? audioFile = default, CancellationToken cancellationToken = default);
     }
 
 }

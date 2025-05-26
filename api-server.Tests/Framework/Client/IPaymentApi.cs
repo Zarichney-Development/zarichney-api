@@ -6,6 +6,7 @@
 using Refit;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using Zarichney.Client.Contracts;
 
@@ -46,7 +47,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: text/plain, application/json, text/json")]
         [Post("/api/payments/create-checkout-session/{orderId}")]
-        Task<IApiResponse<CheckoutUrlResponse>> CreateCheckoutSession(string orderId);
+        Task<IApiResponse<CheckoutUrlResponse>> CreateCheckoutSession(string orderId, CancellationToken cancellationToken = default);
 
         /// <summary>Creates a Stripe checkout session for purchasing recipe credits</summary>
         /// <returns>
@@ -72,7 +73,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: text/plain, application/json, text/json")]
         [Post("/api/payments/create-credit-session")]
-        Task<IApiResponse<CheckoutUrlResponse>> CreateCreditSession([Body] RecipeCreditRequest body);
+        Task<IApiResponse<CheckoutUrlResponse>> CreateCreditSession([Body] RecipeCreditRequest? body = default, CancellationToken cancellationToken = default);
 
         /// <summary>Handles Stripe webhook events</summary>
         /// <returns>
@@ -94,7 +95,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: text/plain, application/json, text/json")]
         [Post("/api/payments/webhook")]
-        Task<IApiResponse> Webhook();
+        Task<IApiResponse> Webhook(CancellationToken cancellationToken = default);
 
         /// <summary>Gets information about a checkout session</summary>
         /// <param name="sessionId">The Stripe checkout session ID</param>
@@ -121,7 +122,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: text/plain, application/json, text/json")]
         [Get("/api/payments/session/{sessionId}")]
-        Task<IApiResponse<CheckoutSessionInfo>> Session(string sessionId);
+        Task<IApiResponse<CheckoutSessionInfo>> Session(string sessionId, CancellationToken cancellationToken = default);
 
         /// <summary>Creates a Stripe payment intent directly.</summary>
         /// <returns>
@@ -143,7 +144,7 @@ namespace Zarichney.Client
         /// </returns>
         [Headers("Accept: text/plain, application/json, text/json")]
         [Post("/api/payments/create-intent")]
-        Task<IApiResponse> CreateIntent([Body] PaymentIntentRequest body);
+        Task<IApiResponse> CreateIntent([Body] PaymentIntentRequest? body = default, CancellationToken cancellationToken = default);
 
         /// <summary>Gets status of a Stripe payment intent.</summary>
         /// <returns>
@@ -160,7 +161,7 @@ namespace Zarichney.Client
         /// </list>
         /// </returns>
         [Get("/api/payments/status/{paymentId}")]
-        Task<IApiResponse> Status(string paymentId);
+        Task<IApiResponse> Status(string paymentId, CancellationToken cancellationToken = default);
     }
 
 }

@@ -79,7 +79,7 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture,
       status.Should().NotBeNull(
         because: $"status for {status.ServiceName} should not be null");
 
-      if (!status.IsAvailable)
+      if (!(status.IsAvailable ?? false))
       {
         status.MissingConfigurations.Should().NotBeEmpty(
           because: $"unavailable service {status.ServiceName} should have missing configurations");

@@ -1,4 +1,6 @@
 using System.Net;
+using FluentAssertions;
+using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Fixtures;
 using Zarichney.Tests.Framework.Attributes;
 using Refit;
@@ -18,11 +20,11 @@ public class AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHel
 {
   // --- /api/completion Tests ---
 
-  [Fact]
+  [DependencyFact(ExternalServices.OpenAiApi)]
   [Trait(TestCategories.Category, TestCategories.Integration)]
   [Trait(TestCategories.Component, TestCategories.Controller)]
   [Trait(TestCategories.Feature, TestCategories.AI)]
-  public async Task Completion_WithValidTextPrompt_ReturnsOkOrServiceUnavailable()
+  public async Task Completion_WithValidTextPrompt_ReturnsOk()
   {
     // Arrange
     var client = _apiClientFixture.AuthenticatedAiApi;
@@ -31,31 +33,37 @@ public class AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHel
     // Act
     var response = await client.Completion(textPrompt, null!);
 
-    // Assert - Should either succeed (if OpenAI available) or return 503 (if unavailable)
-    Assert.True(
-        response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.ServiceUnavailable,
-        $"Expected 200 OK or 503 Service Unavailable but got {response.StatusCode}: {response.Error?.Content}");
-
-    if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
-    {
-      // Verify it's specifically due to AI services being unavailable
-      var errorContent = response.Error?.Content;
-      Assert.True(
-          !string.IsNullOrEmpty(errorContent) && (
-              errorContent.Contains("OpenAiApi") ||
-              errorContent.Contains("OpenAI") ||
-              errorContent.Contains("AI") ||
-              errorContent.Contains("Service Temporarily Unavailable")
-          ),
-          $"Expected error content to mention AI service unavailability, but got: {errorContent}");
-    }
+    // Assert
+    response.IsSuccessStatusCode.Should().BeTrue(
+        because: "the OpenAI API should be available and return a successful response");
   }
 
-  [Fact]
+  [ServiceUnavailableFact(ExternalServices.OpenAiApi)]
   [Trait(TestCategories.Category, TestCategories.Integration)]
   [Trait(TestCategories.Component, TestCategories.Controller)]
   [Trait(TestCategories.Feature, TestCategories.AI)]
-  public async Task Completion_WithValidAudioPrompt_ReturnsOkOrServiceUnavailable()
+  public async Task Completion_WithValidTextPrompt_ReturnsServiceUnavailable_WhenOpenAiUnavailable()
+  {
+    // Arrange
+    var client = _apiClientFixture.AuthenticatedAiApi;
+    var textPrompt = "What is the capital of France?";
+
+    // Act
+    var response = await client.Completion(textPrompt, null!);
+
+    // Assert
+    response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    var errorContent = response.Error?.Content;
+    errorContent.Should().NotBeNullOrEmpty();
+    errorContent.Should().Contain(ExternalServices.OpenAiApi.ToString(),
+        because: "the error message should indicate that the OpenAI API is the unavailable service");
+  }
+
+  [DependencyFact(ExternalServices.OpenAiApi)]
+  [Trait(TestCategories.Category, TestCategories.Integration)]
+  [Trait(TestCategories.Component, TestCategories.Controller)]
+  [Trait(TestCategories.Feature, TestCategories.AI)]
+  public async Task Completion_WithValidAudioPrompt_ReturnsOk()
   {
     // Arrange
     var client = _apiClientFixture.AuthenticatedAiApi;
@@ -65,31 +73,38 @@ public class AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHel
     // Act
     var response = await client.Completion(null!, audioPrompt);
 
-    // Assert - Should either succeed (if OpenAI available) or return 503 (if unavailable)
-    Assert.True(
-        response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.ServiceUnavailable,
-        $"Expected 200 OK or 503 Service Unavailable but got {response.StatusCode}: {response.Error?.Content}");
-
-    if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
-    {
-      // Verify it's specifically due to AI services being unavailable
-      var errorContent = response.Error?.Content;
-      Assert.True(
-          !string.IsNullOrEmpty(errorContent) && (
-              errorContent.Contains("OpenAiApi") ||
-              errorContent.Contains("OpenAI") ||
-              errorContent.Contains("AI") ||
-              errorContent.Contains("Service Temporarily Unavailable")
-          ),
-          $"Expected error content to mention AI service unavailability, but got: {errorContent}");
-    }
+    // Assert
+    response.IsSuccessStatusCode.Should().BeTrue(
+        because: "the OpenAI API should be available and return a successful response");
   }
 
-  [Fact]
+  [ServiceUnavailableFact(ExternalServices.OpenAiApi)]
   [Trait(TestCategories.Category, TestCategories.Integration)]
   [Trait(TestCategories.Component, TestCategories.Controller)]
   [Trait(TestCategories.Feature, TestCategories.AI)]
-  public async Task Completion_WithBothTextAndAudioPrompts_ReturnsOkOrServiceUnavailable()
+  public async Task Completion_WithValidAudioPrompt_ReturnsServiceUnavailable_WhenOpenAiUnavailable()
+  {
+    // Arrange
+    var client = _apiClientFixture.AuthenticatedAiApi;
+    var audioData = new byte[] { 0x52, 0x49, 0x46, 0x46, 0x24, 0x08, 0x00, 0x00 }; // Mock WAV header
+    var audioPrompt = new StreamPart(new MemoryStream(audioData), "test.wav", "audio/wav");
+
+    // Act
+    var response = await client.Completion(null!, audioPrompt);
+
+    // Assert
+    response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    var errorContent = response.Error?.Content;
+    errorContent.Should().NotBeNullOrEmpty();
+    errorContent.Should().Contain(ExternalServices.OpenAiApi.ToString(),
+        because: "the error message should indicate that the OpenAI API is the unavailable service");
+  }
+
+  [DependencyFact(ExternalServices.OpenAiApi)]
+  [Trait(TestCategories.Category, TestCategories.Integration)]
+  [Trait(TestCategories.Component, TestCategories.Controller)]
+  [Trait(TestCategories.Feature, TestCategories.AI)]
+  public async Task Completion_WithBothTextAndAudioPrompts_ReturnsOk()
   {
     // Arrange
     var client = _apiClientFixture.AuthenticatedAiApi;
@@ -100,24 +115,32 @@ public class AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHel
     // Act
     var response = await client.Completion(textPrompt, audioPrompt);
 
-    // Assert - Should either succeed (if OpenAI available) or return 503 (if unavailable)
-    Assert.True(
-        response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.ServiceUnavailable,
-        $"Expected 200 OK or 503 Service Unavailable but got {response.StatusCode}: {response.Error?.Content}");
+    // Assert
+    response.IsSuccessStatusCode.Should().BeTrue(
+        because: "the OpenAI API should be available and return a successful response");
+  }
 
-    if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
-    {
-      // Verify it's specifically due to AI services being unavailable
-      var errorContent = response.Error?.Content;
-      Assert.True(
-          !string.IsNullOrEmpty(errorContent) && (
-              errorContent.Contains("OpenAiApi") ||
-              errorContent.Contains("OpenAI") ||
-              errorContent.Contains("AI") ||
-              errorContent.Contains("Service Temporarily Unavailable")
-          ),
-          $"Expected error content to mention AI service unavailability, but got: {errorContent}");
-    }
+  [ServiceUnavailableFact(ExternalServices.OpenAiApi)]
+  [Trait(TestCategories.Category, TestCategories.Integration)]
+  [Trait(TestCategories.Component, TestCategories.Controller)]
+  [Trait(TestCategories.Feature, TestCategories.AI)]
+  public async Task Completion_WithBothTextAndAudioPrompts_ReturnsServiceUnavailable_WhenOpenAiUnavailable()
+  {
+    // Arrange
+    var client = _apiClientFixture.AuthenticatedAiApi;
+    var textPrompt = "Analyze this audio:";
+    var audioData = new byte[] { 0x52, 0x49, 0x46, 0x46, 0x24, 0x08, 0x00, 0x00 }; // Mock WAV header
+    var audioPrompt = new StreamPart(new MemoryStream(audioData), "test.wav", "audio/wav");
+
+    // Act
+    var response = await client.Completion(textPrompt, audioPrompt);
+
+    // Assert
+    response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    var errorContent = response.Error?.Content;
+    errorContent.Should().NotBeNullOrEmpty();
+    errorContent.Should().Contain(ExternalServices.OpenAiApi.ToString(),
+        because: "the error message should indicate that the OpenAI API is the unavailable service");
   }
 
   [Fact]
@@ -137,11 +160,11 @@ public class AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHel
     Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
   }
 
-  [Fact]
+  [DependencyFact(ExternalServices.OpenAiApi)]
   [Trait(TestCategories.Category, TestCategories.Integration)]
   [Trait(TestCategories.Component, TestCategories.Controller)]
   [Trait(TestCategories.Feature, TestCategories.AI)]
-  public async Task Completion_WithEmptyRequest_ReturnsBadRequestOrServiceUnavailable()
+  public async Task Completion_WithEmptyRequest_ReturnsBadRequest()
   {
     // Arrange
     var client = _apiClientFixture.AuthenticatedAiApi;
@@ -149,33 +172,38 @@ public class AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHel
     // Act
     var response = await client.Completion(null!, null!);
 
-    // Assert - Should return 400 Bad Request if service available, or 503 if OpenAI unavailable
-    Assert.True(
-        response.StatusCode == HttpStatusCode.BadRequest || response.StatusCode == HttpStatusCode.ServiceUnavailable,
-        $"Expected 400 Bad Request or 503 Service Unavailable but got {response.StatusCode}: {response.Error?.Content}");
+    // Assert
+    response.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+        because: "empty request should return bad request when OpenAI API is available");
+  }
 
-    if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
-    {
-      // Verify it's specifically due to AI services being unavailable
-      var errorContent = response.Error?.Content;
-      Assert.True(
-          !string.IsNullOrEmpty(errorContent) && (
-              errorContent.Contains("OpenAiApi") ||
-              errorContent.Contains("OpenAI") ||
-              errorContent.Contains("AI") ||
-              errorContent.Contains("Service Temporarily Unavailable")
-          ),
-          $"Expected error content to mention AI service unavailability, but got: {errorContent}");
-    }
+  [ServiceUnavailableFact(ExternalServices.OpenAiApi)]
+  [Trait(TestCategories.Category, TestCategories.Integration)]
+  [Trait(TestCategories.Component, TestCategories.Controller)]
+  [Trait(TestCategories.Feature, TestCategories.AI)]
+  public async Task Completion_WithEmptyRequest_ReturnsServiceUnavailable_WhenOpenAiUnavailable()
+  {
+    // Arrange
+    var client = _apiClientFixture.AuthenticatedAiApi;
+
+    // Act
+    var response = await client.Completion(null!, null!);
+
+    // Assert
+    response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    var errorContent = response.Error?.Content;
+    errorContent.Should().NotBeNullOrEmpty();
+    errorContent.Should().Contain(ExternalServices.OpenAiApi.ToString(),
+        because: "the error message should indicate that the OpenAI API is the unavailable service");
   }
 
   // --- /api/transcribe Tests ---
 
-  [Fact]
+  [DependencyFact(ExternalServices.OpenAiApi)]
   [Trait(TestCategories.Category, TestCategories.Integration)]
   [Trait(TestCategories.Component, TestCategories.Controller)]
   [Trait(TestCategories.Feature, TestCategories.AI)]
-  public async Task Transcribe_WithValidAudioFile_ReturnsOkOrServiceUnavailable()
+  public async Task Transcribe_WithValidAudioFile_ReturnsOk()
   {
     // Arrange
     var client = _apiClientFixture.AuthenticatedAiApi;
@@ -185,24 +213,31 @@ public class AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHel
     // Act
     var response = await client.Transcribe(audioFile);
 
-    // Assert - Should either succeed (if OpenAI available) or return 503 (if unavailable)
-    Assert.True(
-        response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.ServiceUnavailable,
-        $"Expected 200 OK or 503 Service Unavailable but got {response.StatusCode}: {response.Error?.Content}");
+    // Assert
+    response.IsSuccessStatusCode.Should().BeTrue(
+        because: "the OpenAI API should be available and return a successful response");
+  }
 
-    if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
-    {
-      // Verify it's specifically due to AI services being unavailable
-      var errorContent = response.Error?.Content;
-      Assert.True(
-          !string.IsNullOrEmpty(errorContent) && (
-              errorContent.Contains("OpenAiApi") ||
-              errorContent.Contains("OpenAI") ||
-              errorContent.Contains("AI") ||
-              errorContent.Contains("Service Temporarily Unavailable")
-          ),
-          $"Expected error content to mention AI service unavailability, but got: {errorContent}");
-    }
+  [ServiceUnavailableFact(ExternalServices.OpenAiApi)]
+  [Trait(TestCategories.Category, TestCategories.Integration)]
+  [Trait(TestCategories.Component, TestCategories.Controller)]
+  [Trait(TestCategories.Feature, TestCategories.AI)]
+  public async Task Transcribe_WithValidAudioFile_ReturnsServiceUnavailable_WhenOpenAiUnavailable()
+  {
+    // Arrange
+    var client = _apiClientFixture.AuthenticatedAiApi;
+    var audioData = new byte[] { 0x52, 0x49, 0x46, 0x46, 0x24, 0x08, 0x00, 0x00 }; // Mock WAV header
+    var audioFile = new StreamPart(new MemoryStream(audioData), "test.wav", "audio/wav");
+
+    // Act
+    var response = await client.Transcribe(audioFile);
+
+    // Assert
+    response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    var errorContent = response.Error?.Content;
+    errorContent.Should().NotBeNullOrEmpty();
+    errorContent.Should().Contain(ExternalServices.OpenAiApi.ToString(),
+        because: "the error message should indicate that the OpenAI API is the unavailable service");
   }
 
   [Fact]
@@ -223,11 +258,11 @@ public class AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHel
     Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
   }
 
-  [Fact]
+  [DependencyFact(ExternalServices.OpenAiApi)]
   [Trait(TestCategories.Category, TestCategories.Integration)]
   [Trait(TestCategories.Component, TestCategories.Controller)]
   [Trait(TestCategories.Feature, TestCategories.AI)]
-  public async Task Transcribe_WithoutAudioFile_ReturnsBadRequestOrServiceUnavailable()
+  public async Task Transcribe_WithoutAudioFile_ReturnsBadRequest()
   {
     // Arrange
     var client = _apiClientFixture.AuthenticatedAiApi;
@@ -235,23 +270,28 @@ public class AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHel
     // Act
     var response = await client.Transcribe(null!);
 
-    // Assert - Should return 400 Bad Request if service available, or 503 if OpenAI unavailable
-    Assert.True(
-        response.StatusCode == HttpStatusCode.BadRequest || response.StatusCode == HttpStatusCode.ServiceUnavailable,
-        $"Expected 400 Bad Request or 503 Service Unavailable but got {response.StatusCode}: {response.Error?.Content}");
+    // Assert
+    response.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+        because: "missing audio file should return bad request when OpenAI API is available");
+  }
 
-    if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
-    {
-      // Verify it's specifically due to AI services being unavailable
-      var errorContent = response.Error?.Content;
-      Assert.True(
-          !string.IsNullOrEmpty(errorContent) && (
-              errorContent.Contains("OpenAiApi") ||
-              errorContent.Contains("OpenAI") ||
-              errorContent.Contains("AI") ||
-              errorContent.Contains("Service Temporarily Unavailable")
-          ),
-          $"Expected error content to mention AI service unavailability, but got: {errorContent}");
-    }
+  [ServiceUnavailableFact(ExternalServices.OpenAiApi)]
+  [Trait(TestCategories.Category, TestCategories.Integration)]
+  [Trait(TestCategories.Component, TestCategories.Controller)]
+  [Trait(TestCategories.Feature, TestCategories.AI)]
+  public async Task Transcribe_WithoutAudioFile_ReturnsServiceUnavailable_WhenOpenAiUnavailable()
+  {
+    // Arrange
+    var client = _apiClientFixture.AuthenticatedAiApi;
+
+    // Act
+    var response = await client.Transcribe(null!);
+
+    // Assert
+    response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    var errorContent = response.Error?.Content;
+    errorContent.Should().NotBeNullOrEmpty();
+    errorContent.Should().Contain(ExternalServices.OpenAiApi.ToString(),
+        because: "the error message should indicate that the OpenAI API is the unavailable service");
   }
 }

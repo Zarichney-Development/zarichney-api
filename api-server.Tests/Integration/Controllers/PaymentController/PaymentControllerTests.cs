@@ -10,6 +10,7 @@ using Zarichney.Tests.Framework.Helpers;
 using Refit;
 using Xunit.Abstractions;
 using Zarichney.Client.Contracts;
+using ExternalServices = Zarichney.Services.Status.ExternalServices;
 
 namespace Zarichney.Tests.Integration.Controllers.PaymentController;
 
@@ -27,18 +28,13 @@ public class PaymentControllerTests(ApiClientFixture apiClientFixture, ITestOutp
   : DatabaseIntegrationTestBase(apiClientFixture, testOutputHelper)
 {
   // Using the new ExternalServices-based dependency checking approach
-  [DependencyFact(Zarichney.Services.Status.ExternalServices.Stripe)]
+  [DependencyFact(ExternalServices.Stripe)]
   public async Task CreatePaymentIntent_ValidOrder_ReturnsPaymentIntent()
   {
     // Arrange
     await ResetDatabaseAsync();
     var apiClient = _apiClientFixture.AuthenticatedPaymentApi;
-    var requestDto = new PaymentIntentRequest
-    {
-      Amount = 1000,
-      Currency = "usd",
-      Description = "Test order"
-    };
+    var requestDto = new PaymentIntentRequest(1000, "usd", "Test order");
 
     // Mock the Stripe service
     var mockStripeService = GetMockStripeService();
@@ -71,7 +67,7 @@ public class PaymentControllerTests(ApiClientFixture apiClientFixture, ITestOutp
       It.IsAny<CancellationToken>()), Times.Once);
   }
 
-  [DependencyFact]
+  [DependencyFact(ExternalServices.Stripe)]
   public async Task GetPaymentStatus_ValidPaymentId_ReturnsStatus()
   {
     // Arrange
@@ -127,8 +123,8 @@ public class PaymentControllerServiceAvailabilityTests : IntegrationTestBase
   {
   }
 
-  [Fact]
-  public async Task CreateCheckoutSession_WhenStripeUnavailable_ReturnsServiceUnavailableOrRequiresAuth()
+  [DependencyFact(ExternalServices.Stripe)]
+  public async Task CreateCheckoutSession_Authenticated_ValidOrder_ReturnsExpectedResponse()
   {
     // Arrange
     var client = _apiClientFixture.AuthenticatedPaymentApi;
@@ -137,73 +133,137 @@ public class PaymentControllerServiceAvailabilityTests : IntegrationTestBase
     // Act
     var response = await client.CreateCheckoutSession(orderId);
 
-    // Assert - Should return 503 Service Unavailable when Stripe is unavailable,
-    // or other expected status codes depending on service availability
-    Assert.True(
-      response.StatusCode == HttpStatusCode.ServiceUnavailable ||
-      response.StatusCode == HttpStatusCode.NotFound || // Order not found (expected without DB)
-      response.StatusCode == HttpStatusCode.BadRequest || // Invalid order state
-      response.IsSuccessStatusCode, // If Stripe is actually available
-      $"Expected 503 Service Unavailable, 404 Not Found, 400 Bad Request, or success, but got {response.StatusCode}: {response.Error?.Content}");
-
-    if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
-    {
-      // Verify it's specifically due to Stripe being unavailable
-      var errorContent = response.Error?.Content;
-      Assert.Contains("Stripe", errorContent ?? "");
-    }
+    // Assert - Should return expected business logic response when Stripe is available
+    // Could be 404 (order not found), 400 (invalid order state), or success
+    (response.StatusCode == HttpStatusCode.NotFound ||
+     response.StatusCode == HttpStatusCode.BadRequest ||
+     response.IsSuccessStatusCode).Should().BeTrue(
+        because: "when Stripe is available, should return business logic response (404/400/success)");
   }
 
-  [Fact]
-  public async Task CreateIntent_WhenStripeUnavailable_ReturnsServiceUnavailableOrBadRequest()
+  [ServiceUnavailableFact(ExternalServices.Stripe)]
+  public async Task CreateCheckoutSession_Authenticated_ReturnsServiceUnavailable_WhenStripeUnavailable()
   {
     // Arrange
     var client = _apiClientFixture.AuthenticatedPaymentApi;
-    var request = new PaymentIntentRequest
-    {
-      Amount = 1000,
-      Currency = "usd",
-      Description = "Test payment"
-    };
+    var orderId = "test-order-123";
+
+    // Act
+    var response = await client.CreateCheckoutSession(orderId);
+
+    // Assert
+    response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    var errorContent = response.Error?.Content;
+    errorContent.Should().NotBeNullOrEmpty();
+    errorContent.Should().Contain(ExternalServices.Stripe.ToString(),
+        because: "the error message should indicate that Stripe is the unavailable service");
+  }
+
+  [DependencyFact(ExternalServices.Stripe)]
+  public async Task CreateIntent_Authenticated_ValidRequest_ReturnsSuccess()
+  {
+    // Arrange
+    var client = _apiClientFixture.AuthenticatedPaymentApi;
+    var request = new PaymentIntentRequest(1000, "usd", "Test payment");
 
     // Act
     var response = await client.CreateIntent(request);
 
-    // Assert - Should return 503 Service Unavailable when Stripe is unavailable
-    Assert.True(
-      response.StatusCode == HttpStatusCode.ServiceUnavailable ||
-      response.StatusCode == HttpStatusCode.BadRequest || // Invalid request without proper setup
-      response.IsSuccessStatusCode, // If Stripe is actually available
-      $"Expected 503 Service Unavailable, 400 Bad Request, or success, but got {response.StatusCode}: {response.Error?.Content}");
+    // Assert - Should succeed when Stripe is available and request is valid
+    response.IsSuccessStatusCode.Should().BeTrue(
+        because: "valid payment intent request should succeed when Stripe is available");
+  }
 
-    if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
-    {
-      // Verify it's specifically due to Stripe being unavailable
-      var errorContent = response.Error?.Content;
-      Assert.Contains("Stripe", errorContent ?? "");
-    }
+  [DependencyFact(ExternalServices.Stripe)]
+  public async Task CreateIntent_Authenticated_InvalidRequest_ReturnsBadRequest()
+  {
+    // Arrange
+    var client = _apiClientFixture.AuthenticatedPaymentApi;
+    var request = new PaymentIntentRequest(0, "", ""); // Invalid amount and currency
+
+    // Act
+    var response = await client.CreateIntent(request);
+
+    // Assert
+    response.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+        because: "invalid payment intent request should return bad request when Stripe is available");
+  }
+
+  [ServiceUnavailableFact(ExternalServices.Stripe)]
+  public async Task CreateIntent_Authenticated_ReturnsServiceUnavailable_WhenStripeUnavailable()
+  {
+    // Arrange
+    var client = _apiClientFixture.AuthenticatedPaymentApi;
+    var request = new PaymentIntentRequest(1000, "usd", "Test payment");
+
+    // Act
+    var response = await client.CreateIntent(request);
+
+    // Assert
+    response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    var errorContent = response.Error?.Content;
+    errorContent.Should().NotBeNullOrEmpty();
+    errorContent.Should().Contain(ExternalServices.Stripe.ToString(),
+        because: "the error message should indicate that Stripe is the unavailable service");
   }
 
   [Fact]
-  public async Task PaymentEndpoints_WithoutAuthentication_ReturnsUnauthorized()
+  public async Task CreateIntent_Unauthenticated_ReturnsUnauthorized()
   {
     // Arrange
     var client = _apiClientFixture.UnauthenticatedPaymentApi;
-    var request = new PaymentIntentRequest
-    {
-      Amount = 1000,
-      Currency = "usd",
-      Description = "Test payment"
-    };
+    var request = new PaymentIntentRequest(1000, "usd", "Test payment");
 
-    // Act & Assert - All payment endpoints should require authentication
-    var createIntentResponse = await client.CreateIntent(request);
-    Assert.Equal(HttpStatusCode.Unauthorized, createIntentResponse.StatusCode);
+    // Act
+    var response = await client.CreateIntent(request);
 
-    var statusResponse = await client.Status("pi_test_123");
-    Assert.Equal(HttpStatusCode.Unauthorized, statusResponse.StatusCode);
+    // Assert
+    response.StatusCode.Should().Be(HttpStatusCode.Unauthorized,
+        because: "payment endpoints should require authentication");
+  }
 
-    var checkoutResponse = await client.CreateCheckoutSession("test-order-123");
-    Assert.Equal(HttpStatusCode.Unauthorized, checkoutResponse.StatusCode);
+  [Fact]
+  public async Task GetPaymentStatus_Unauthenticated_ReturnsUnauthorized()
+  {
+    // Arrange
+    var client = _apiClientFixture.UnauthenticatedPaymentApi;
+
+    // Act
+    var response = await client.Status("pi_test_123");
+
+    // Assert
+    response.StatusCode.Should().Be(HttpStatusCode.Unauthorized,
+        because: "payment endpoints should require authentication");
+  }
+
+  [Fact]
+  public async Task CreateCheckoutSession_Unauthenticated_ReturnsUnauthorized()
+  {
+    // Arrange
+    var client = _apiClientFixture.UnauthenticatedPaymentApi;
+
+    // Act
+    var response = await client.CreateCheckoutSession("test-order-123");
+
+    // Assert
+    response.StatusCode.Should().Be(HttpStatusCode.Unauthorized,
+        because: "payment endpoints should require authentication");
+  }
+
+  [ServiceUnavailableFact(ExternalServices.Stripe)]
+  public async Task GetPaymentStatus_Authenticated_ReturnsServiceUnavailable_WhenStripeUnavailable()
+  {
+    // Arrange
+    var client = _apiClientFixture.AuthenticatedPaymentApi;
+
+    // Act
+    var response = await client.Status("pi_test_123");
+
+    // Assert
+    response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    var errorContent = response.Error?.Content;
+    errorContent.Should().NotBeNullOrEmpty();
+    errorContent.Should().Contain(ExternalServices.Stripe.ToString(),
+        because: "the error message should indicate that Stripe is the unavailable service");
   }
 }

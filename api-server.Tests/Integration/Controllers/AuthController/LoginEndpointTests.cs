@@ -22,11 +22,7 @@ public class LoginEndpointsTests(ApiClientFixture apiClientFixture, ITestOutputH
     // Arrange
     var client = _apiClientFixture.UnauthenticatedAuthApi;
     // todo replace with the test user values that resides in config
-    var request = new LoginRequest
-    {
-      Email = "zarichney@gmail.com",
-      Password = "password"
-    };
+    var request = new LoginRequest("zarichney@gmail.com", "password");
 
     // Act
     var loginResponse = await client.Login(request);
@@ -42,11 +38,7 @@ public class LoginEndpointsTests(ApiClientFixture apiClientFixture, ITestOutputH
   {
     // Arrange
     var client = _apiClientFixture.UnauthenticatedAuthApi;
-    var request = new LoginRequest
-    {
-      Email = "invalid@example.com",
-      Password = "WrongPassword123!"
-    };
+    var request = new LoginRequest("invalid@example.com", "WrongPassword123!");
 
     // Act & Assert
     await Assert.ThrowsAsync<ApiException>(() => client.Login(request));
@@ -57,11 +49,7 @@ public class LoginEndpointsTests(ApiClientFixture apiClientFixture, ITestOutputH
   {
     // Arrange
     var client = _apiClientFixture.UnauthenticatedAuthApi;
-    var request = new LoginRequest
-    {
-      Email = "",
-      Password = "Password123!"
-    };
+    var request = new LoginRequest("", "Password123!");
 
     // Act & Assert
     await Assert.ThrowsAsync<ApiException>(() => client.Login(request));
