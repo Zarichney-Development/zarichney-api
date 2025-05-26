@@ -25,7 +25,27 @@ public class ServiceUnavailableFactDiscoverer(IMessageSink diagnosticMessageSink
     var methodDisplayOptions = discoveryOptions.MethodDisplayOptionsOrDefault();
 
     // Extract the required unavailable service from the attribute
-    var requiredUnavailableService = factAttribute.GetConstructorArguments().FirstOrDefault() as ExternalServices?;
+    var constructorArgs = factAttribute.GetConstructorArguments();
+    var firstArg = constructorArgs.FirstOrDefault();
+    
+    // Handle different possible types for the enum value
+    ExternalServices? requiredUnavailableService = null;
+    if (firstArg is ExternalServices enumValue)
+    {
+      requiredUnavailableService = enumValue;
+    }
+    else if (firstArg is int intValue)
+    {
+      requiredUnavailableService = (ExternalServices)intValue;
+    }
+    else if (firstArg != null)
+    {
+      // Try to parse if it's some other representation
+      if (Enum.TryParse<ExternalServices>(firstArg.ToString(), out var parsedValue))
+      {
+        requiredUnavailableService = parsedValue;
+      }
+    }
 
     if (!requiredUnavailableService.HasValue)
     {

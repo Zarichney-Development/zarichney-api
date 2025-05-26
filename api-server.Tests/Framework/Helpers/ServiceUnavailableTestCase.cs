@@ -14,7 +14,7 @@ namespace Zarichney.Tests.Framework.Helpers;
 /// </summary>
 public class ServiceUnavailableTestCase : XunitTestCase
 {
-  private ExternalServices RequiredUnavailableService { get; }
+  private ExternalServices RequiredUnavailableService { get; set; }
 
   [Obsolete("Called by the de-serializer", true)]
   public ServiceUnavailableTestCase()
@@ -31,6 +31,18 @@ public class ServiceUnavailableTestCase : XunitTestCase
       : base(diagnosticMessageSink, defaultMethodDisplay, defaultMethodDisplayOptions, testMethod)
   {
     RequiredUnavailableService = requiredUnavailableService;
+  }
+
+  public override void Serialize(IXunitSerializationInfo data)
+  {
+    base.Serialize(data);
+    data.AddValue("RequiredUnavailableService", (int)RequiredUnavailableService);
+  }
+
+  public override void Deserialize(IXunitSerializationInfo data)
+  {
+    base.Deserialize(data);
+    RequiredUnavailableService = (ExternalServices)data.GetValue<int>("RequiredUnavailableService");
   }
 
   protected override string GetDisplayName(IAttributeInfo factAttribute, string displayName)

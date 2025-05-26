@@ -74,7 +74,7 @@ public class ErrorHandlingMiddlewareTests
 
     response.Should().NotBeNull();
     response.Should().ContainKey("error");
-    ((JsonElement)response["error"]).GetString().Should().Be("Service Temporarily Unavailable");
+    ((JsonElement)response["error"]).GetString().Should().Be("External Service Unavailable");
     response.Should().ContainKey("message");
     ((JsonElement)response["message"]).GetString().Should().Be("Service is unavailable due to missing configuration.");
     response.Should().ContainKey("missingConfigurations");
@@ -119,9 +119,9 @@ public class ErrorHandlingMiddlewareTests
 
     response.Should().NotBeNull();
     response.Should().ContainKey("error");
-    ((JsonElement)response["error"]).GetString().Should().Be("Service Temporarily Unavailable");
+    ((JsonElement)response["error"]).GetString().Should().Be("External Service Unavailable");
     response.Should().ContainKey("message");
-    ((JsonElement)response["message"]).GetString().Should().Be("A required configuration for a service is missing or invalid. Please contact the administrator. Section: LlmConfig");
+    ((JsonElement)response["message"]).GetString().Should().Be("A required configuration for a service is missing or invalid. Section: LlmConfig");
     response.Should().ContainKey("traceId");
     ((JsonElement)response["traceId"]).GetString().Should().Be("test-trace-id");
   }
