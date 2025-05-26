@@ -24,7 +24,7 @@ The testing strategy employed aims for high confidence through realistic test sc
 * **Database Testing:** Real database interactions are tested using PostgreSQL managed by **Testcontainers** via the `DatabaseFixture`. This ensures tests run against a clean, consistent database schema with migrations applied. Database state is reset between tests using **Respawn**.
 * **Test Environment Logging:** Enhanced configurable logging system for test environment using Serilog with Warning default level and configuration-driven overrides. Test-specific logging configuration available in `appsettings.Testing.json`. Full configuration guide at [`../Docs/Development/LoggingGuide.md`](../Docs/Development/LoggingGuide.md).
 * **External HTTP Service Virtualization:** Interactions with external third-party HTTP APIs (e.g., Stripe, OpenAI) will be managed using **WireMock.Net** (as per FRMK-004 in `TechnicalDesignDocument.md`). This ensures deterministic behavior and isolates tests from external flakiness.
-* **API Client Interaction:** Integration tests interact with the API using a type-safe **Refit client** (`IZarichneyAPI`), which is auto-generated from the API's OpenAPI specification.
+* **API Client Interaction:** Integration tests interact with the API using type-safe **Refit clients** (multiple granular interfaces), which are auto-generated from the API's OpenAPI specification.
 * **Authentication Simulation:** The `TestAuthHandler` allows for simulating various authenticated users and authorization scenarios.
 * **Core Tooling:**
     * **xUnit:** Test execution framework.
@@ -39,7 +39,7 @@ This test project is organized into the following main directories:
 
 * **`/Framework/`**: Contains the core testing infrastructure, including:
     * `Attributes/`: Custom xUnit attributes like `[DependencyFact]` and `[DockerAvailableFact]`. (See `./Framework/Attributes/README.md`)
-    * `Client/`: The auto-generated Refit API client (`IZarichneyAPI.cs`). (See `./Framework/Client/README.md`)
+    * `Client/`: The auto-generated Refit API clients (multiple interface files). (See `./Framework/Client/README.md`)
     * `Fixtures/`: Shared test fixtures like `CustomWebApplicationFactory`, `DatabaseFixture`, and `ApiClientFixture`. (See `./Framework/Fixtures/README.md`)
     * `Helpers/`: Utility classes for testing, such as `AuthTestHelper` and `TestConfigurationHelper`. (See `./Framework/Helpers/README.md`)
     * `Mocks/`: Contains mock factories (e.g., `MockStripeServiceFactory`) for configuring mocked services within the `CustomWebApplicationFactory`, and will include configurations for WireMock.Net. (See `./Framework/Mocks/README.md`)
@@ -90,13 +90,13 @@ A commitment to high test coverage (>=90% for unit tests) and rigorous adherence
 
 * If you make changes to the `api-server`'s API contracts (controller signatures, routes, DTOs), you **must** regenerate the Refit client:
     ```powershell
-    ./Scripts/GenerateApiClient.ps1
+    ./Scripts/generate-api-client.ps1
     ```
   or for bash/zsh:
     ```bash
     ./Scripts/generate-api-client.sh
     ```
-  This ensures the test client (`IZarichneyAPI.cs`) is synchronized.
+  This ensures the test clients are synchronized.
 
 ### Contribution Guidelines
 

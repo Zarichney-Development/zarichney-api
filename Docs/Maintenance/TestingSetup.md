@@ -56,11 +56,11 @@ After making changes to API contracts (controllers, endpoints, models), you must
 
 ```powershell
 # From the solution root
-./Scripts/GenerateApiClient.ps1
+./Scripts/generate-api-client.ps1
 ```
 
 This script generates:
-- `api-server.Tests/Client/ZarichneyAPI.cs` file containing the `IZarichneyAPI` interface and supporting models
+- Multiple granular interface files in `api-server.Tests/Framework/Client/` (e.g., `IAuthApi.cs`, `IAiApi.cs`, etc.) and supporting models in `Contracts.cs`
 
 This ensures integration tests use the most up-to-date API client.
 
@@ -140,7 +140,7 @@ For tests that specifically test the mock authentication functionality:
 {
   "MockAuth": {
     "DefaultRoles": ["User", "Admin"],
-    "DefaultUsername": "TestMockUser", 
+    "DefaultUsername": "TestMockUser",
     "DefaultEmail": "test@mock.com",
     "DefaultUserId": "test-mock-id"
   }

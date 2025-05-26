@@ -20,14 +20,65 @@ public class ApiClientFixture : IAsyncLifetime
     _factory.Services.GetRequiredService<TService>();
 
   /// <summary>
+  /// Gets the unauthenticated Auth API client.
+  /// </summary>
+  public IAuthApi UnauthenticatedAuthApi { get; private set; } = null!;
+
+  /// <summary>
+  /// Gets the authenticated Auth API client.
+  /// </summary>
+  public IAuthApi AuthenticatedAuthApi { get; private set; } = null!;
+
+  /// <summary>
+  /// Gets the unauthenticated AI API client.
+  /// </summary>
+  public IAiApi UnauthenticatedAiApi { get; private set; } = null!;
+
+  /// <summary>
+  /// Gets the authenticated AI API client.
+  /// </summary>
+  public IAiApi AuthenticatedAiApi { get; private set; } = null!;
+
+  /// <summary>
+  /// Gets the unauthenticated Cookbook API client.
+  /// </summary>
+  public ICookbookApi UnauthenticatedCookbookApi { get; private set; } = null!;
+
+  /// <summary>
+  /// Gets the authenticated Cookbook API client.
+  /// </summary>
+  public ICookbookApi AuthenticatedCookbookApi { get; private set; } = null!;
+
+  /// <summary>
+  /// Gets the unauthenticated Payment API client.
+  /// </summary>
+  public IPaymentApi UnauthenticatedPaymentApi { get; private set; } = null!;
+
+  /// <summary>
+  /// Gets the authenticated Payment API client.
+  /// </summary>
+  public IPaymentApi AuthenticatedPaymentApi { get; private set; } = null!;
+
+  /// <summary>
+  /// Gets the unauthenticated Public API client.
+  /// </summary>
+  public IPublicApi UnauthenticatedPublicApi { get; private set; } = null!;
+
+  /// <summary>
+  /// Gets the authenticated Public API client.
+  /// </summary>
+  public IPublicApi AuthenticatedPublicApi { get; private set; } = null!;
+
+  /// <summary>
   /// Gets the unauthenticated API client.
   /// </summary>
-  public IZarichneyAPI UnauthenticatedClient { get; private set; } = null!;
+  public IApiApi UnauthenticatedApiApi { get; private set; } = null!;
 
   /// <summary>
   /// Gets the authenticated API client.
   /// </summary>
-  public IZarichneyAPI AuthenticatedClient { get; private set; } = null!;
+  public IApiApi AuthenticatedApiApi { get; private set; } = null!;
+
 
   /// <summary>
   /// Gets the database fixture.
@@ -61,13 +112,31 @@ public class ApiClientFixture : IAsyncLifetime
 
     // Create HTTP client for unauthenticated calls
     var unauthHttpClient = _factory.CreateClient();
-    UnauthenticatedClient = RestService.For<IZarichneyAPI>(unauthHttpClient);
 
     // Create authenticated HTTP client using TestAuthHandler
     const string userId = "test-user-id";
     var roles = new[] { "User", "Admin" };
     var authHttpClient = _factory.CreateAuthenticatedClient(userId, roles);
-    AuthenticatedClient = RestService.For<IZarichneyAPI>(authHttpClient);
+
+    // Initialize all API client interfaces
+    UnauthenticatedAuthApi = RestService.For<IAuthApi>(unauthHttpClient);
+    AuthenticatedAuthApi = RestService.For<IAuthApi>(authHttpClient);
+
+    UnauthenticatedAiApi = RestService.For<IAiApi>(unauthHttpClient);
+    AuthenticatedAiApi = RestService.For<IAiApi>(authHttpClient);
+
+    UnauthenticatedCookbookApi = RestService.For<ICookbookApi>(unauthHttpClient);
+    AuthenticatedCookbookApi = RestService.For<ICookbookApi>(authHttpClient);
+
+    UnauthenticatedPaymentApi = RestService.For<IPaymentApi>(unauthHttpClient);
+    AuthenticatedPaymentApi = RestService.For<IPaymentApi>(authHttpClient);
+
+    UnauthenticatedPublicApi = RestService.For<IPublicApi>(unauthHttpClient);
+    AuthenticatedPublicApi = RestService.For<IPublicApi>(authHttpClient);
+
+    UnauthenticatedApiApi = RestService.For<IApiApi>(unauthHttpClient);
+    AuthenticatedApiApi = RestService.For<IApiApi>(authHttpClient);
+
   }
 
   /// <summary>

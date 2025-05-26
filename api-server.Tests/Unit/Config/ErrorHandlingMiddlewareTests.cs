@@ -23,9 +23,7 @@ public class ErrorHandlingMiddlewareTests
     _mockLogger = new Mock<ILogger<ErrorHandlingMiddleware>>();
     _mockNextDelegate = new Mock<RequestDelegate>();
     _middleware = new ErrorHandlingMiddleware(_mockNextDelegate.Object, _mockLogger.Object);
-    _httpContext = new DefaultHttpContext();
-    _httpContext.Response.Body = new MemoryStream();
-    _httpContext.TraceIdentifier = "test-trace-id";
+    _httpContext = new DefaultHttpContext { Response = { Body = new MemoryStream() }, TraceIdentifier = "test-trace-id" };
   }
 
   [Fact]
@@ -74,9 +72,9 @@ public class ErrorHandlingMiddlewareTests
 
     response.Should().NotBeNull();
     response.Should().ContainKey("error");
-    ((JsonElement)response["error"]).GetString().Should().Be("Service Temporarily Unavailable");
+    ((JsonElement)response["error"]).GetString().Should().Be("External Service Unavailable");
     response.Should().ContainKey("message");
-    ((JsonElement)response["message"]).GetString().Should().Be("Service is unavailable due to missing configuration.");
+    ((JsonElement)response["message"]).GetString().Should().Be("Service is unavailable");
     response.Should().ContainKey("missingConfigurations");
     var missingConfigsElement = (JsonElement)response["missingConfigurations"];
     var extractedConfigs = new List<string>();
@@ -119,9 +117,9 @@ public class ErrorHandlingMiddlewareTests
 
     response.Should().NotBeNull();
     response.Should().ContainKey("error");
-    ((JsonElement)response["error"]).GetString().Should().Be("Service Temporarily Unavailable");
+    ((JsonElement)response["error"]).GetString().Should().Be("Configuration Missing");
     response.Should().ContainKey("message");
-    ((JsonElement)response["message"]).GetString().Should().Be("A required configuration for a service is missing or invalid. Please contact the administrator. Section: LlmConfig");
+    ((JsonElement)response["message"]).GetString().Should().Be("A required configuration for a service is missing or invalid. Section: LlmConfig");
     response.Should().ContainKey("traceId");
     ((JsonElement)response["traceId"]).GetString().Should().Be("test-trace-id");
   }

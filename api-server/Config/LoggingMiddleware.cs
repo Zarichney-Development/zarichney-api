@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Options;
-using Serilog;
 using Zarichney.Services.Sessions;
 
 namespace Zarichney.Config;

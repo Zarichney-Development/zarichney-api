@@ -32,7 +32,7 @@ public class PublicControllerTests(ApiClientFixture apiClientFixture, ITestOutpu
     // ApiClient is obtained from IntegrationTestBase, represents unauthenticated Refit client
 
     // Act & Assert: calling Health should not throw and thus return 200 OK
-    var act = () => ApiClient.Health();
+    var act = () => _apiClientFixture.UnauthenticatedPublicApi.Health();
     await act.Should().NotThrowAsync<ApiException>(
       because: "health endpoint should always return OK status even without configuration");
   }
@@ -63,20 +63,21 @@ public class PublicControllerTests(ApiClientFixture apiClientFixture, ITestOutpu
     };
 
     // Act
-    var statusItems = await ApiClient.Config();
+    var configResponse = await _apiClientFixture.UnauthenticatedPublicApi.Config();
+    var configItems = configResponse.Content;
 
     // Assert
-    statusItems.Should().NotBeNull(
+    configResponse.Should().NotBeNull(
       because: "response should contain a list of configuration statuses");
 
-    statusItems.Should().NotBeEmpty(
+    configItems.Should().NotBeEmpty(
       because: "response should contain at least some configuration items");
 
-    statusItems.Select(item => item.Name).Should().BeEquivalentTo(expectedConfigItemNames,
+    configItems.Select(item => item.Name).Should().BeEquivalentTo(expectedConfigItemNames,
       because: "the response should contain exactly the expected configuration item statuses");
 
     // Check that status values are either "Configured" or "Missing/Invalid"
-    foreach (var item in statusItems)
+    foreach (var item in configItems)
     {
       item.Status.Should().Match(s =>
           s == "Configured" || s == "Missing/Invalid",

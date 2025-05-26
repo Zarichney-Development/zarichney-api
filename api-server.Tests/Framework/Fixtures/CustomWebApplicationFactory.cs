@@ -10,7 +10,6 @@ using Moq;
 using Serilog;
 using Serilog.Sinks.XUnit.Injectable;
 using Serilog.Sinks.XUnit.Injectable.Extensions;
-using Zarichney.Client;
 using Zarichney.Services.AI;
 using Zarichney.Services.Auth;
 using Zarichney.Tests.Framework.Helpers;
@@ -272,28 +271,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     return client;
   }
 
-  /// <summary>
-  /// Creates a configured Refit client for the API.
-  /// </summary>
-  /// <param name="httpClient">Optional HTTP client to use. If not provided, a new client will be created.</param>
-  /// <returns>A Refit client for the API.</returns>
-  private IZarichneyAPI CreateRefitClient(HttpClient? httpClient = null)
-  {
-    httpClient ??= CreateClient();
-    return Refit.RestService.For<IZarichneyAPI>(httpClient);
-  }
-
-  /// <summary>
-  /// Creates a configured Refit client with authentication for the specified user.
-  /// </summary>
-  /// <param name="userId">The user ID to authenticate as.</param>
-  /// <param name="roles">The roles to assign to the user.</param>
-  /// <returns>A Refit client configured with authentication.</returns>
-  public IZarichneyAPI CreateAuthenticatedRefitClient(string userId, string[] roles)
-  {
-    var client = CreateAuthenticatedClient(userId, roles);
-    return CreateRefitClient(client);
-  }
 
   /// <summary>
   /// Replaces services in the service collection with custom implementations.

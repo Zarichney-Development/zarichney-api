@@ -1,14 +1,14 @@
 # README: /Framework/Attributes Directory
 
-**Version:** 1.1
-**Last Updated:** 2025-05-22
+**Version:** 1.2
+**Last Updated:** 2025-05-25
 **Parent:** `../README.md`
 
 ## 1. Purpose & Responsibility
 
 This directory contains custom xUnit attributes developed to extend the standard testing capabilities and enforce project-specific conventions. These attributes play a crucial role in:
 
-* **Conditional Test Execution:** Enabling tests to be dynamically skipped based on environmental conditions, configuration status, or the availability of external dependencies (e.g., `DependencyFactAttribute`, `DockerAvailableFactAttribute`).
+* **Conditional Test Execution:** Enabling tests to be dynamically skipped based on environmental conditions, configuration status, or the availability of external dependencies (e.g., `DependencyFactAttribute`, `DockerAvailableFactAttribute`, `ServiceUnavailableFactAttribute`).
 * **Test Categorization and Filtering:** While xUnit's `[Trait]` attribute is used directly for categorization, some attributes like `DependencyFactAttribute` implicitly assign or relate to categories defined in `TestCategories.cs`.
 * **Specialized Test Discovery/Execution Logic:** Providing tailored behavior for test discovery and execution beyond standard `[Fact]` and `[Theory]` attributes.
 
@@ -29,18 +29,24 @@ The primary attributes and their mechanisms are:
     * **Mechanism:** It typically attempts a simple Docker command (e.g., `docker version`) to ascertain availability.
     * **Usage:** Decorated on test methods that directly require Docker for Testcontainers, independent of specific service configurations (e.g., tests for `DatabaseFixture` itself).
 
+* **`ServiceUnavailableFactAttribute.cs`**:
+    * **Purpose:** A specialized `[Fact]` attribute that runs tests ONLY when the specified external service is UNAVAILABLE. This is the inverse of `DependencyFactAttribute` - it's used for integration tests that verify HTTP 503 responses from dependency-aware API endpoints when their specific external dependencies are unavailable.
+    * **Mechanism:** It leverages the `IStatusService` from the `api-server` to check feature availability via `ExternalServices` enum. If the service is available, the test is skipped. If the service is unavailable, the test runs normally.
+    * **Usage:** Decorated on test methods, e.g., `[ServiceUnavailableFact(ExternalServices.OpenAiApi)]` for testing that an endpoint returns HTTP 503 when OpenAI is unavailable.
+
 * **`TestCategories.cs`**:
     * **Purpose:** This static class does not define attributes itself but provides string constants for standardized test category names used with xUnit's `[Trait("Category", TestCategories.Unit)]` attribute.
     * **Mechanism:** Ensures consistency in trait naming across the test suite, facilitating accurate test filtering.
     * **Usage:** Referenced in `[Trait]` attributes on test methods. The `DependencyFactAttribute` also uses these categories for its enum-to-trait mapping.
 
-These attributes often work in conjunction with custom xUnit test case discoverers and executors (like `SkipMissingDependencyDiscoverer` and `SkipMissingDependencyTestCase`) to implement their conditional logic.
+These attributes often work in conjunction with custom xUnit test case discoverers and executors (like `SkipMissingDependencyDiscoverer` and `SkipMissingDependencyTestCase` for `DependencyFactAttribute`, or `ServiceUnavailableFactDiscoverer` and `ServiceUnavailableTestCase` for `ServiceUnavailableFactAttribute`) to implement their conditional logic.
 
 ## 3. Interface Contract & Assumptions
 
 * **For Test Writers:**
-    * Attributes are applied directly to test methods (e.g., `[DependencyFact(...)]`, `[DockerAvailableFact]`) or test classes.
+    * Attributes are applied directly to test methods (e.g., `[DependencyFact(...)]`, `[DockerAvailableFact]`, `[ServiceUnavailableFact(...)]`) or test classes.
     * When using `DependencyFactAttribute` with `ExternalServices` or `InfrastructureDependency` enums, the attribute handles checking the status via the application's `IStatusService` or framework-level checks.
+    * When using `ServiceUnavailableFactAttribute` with an `ExternalServices` enum, the attribute checks service availability via `IStatusService` and skips if the service is available (opposite behavior from `DependencyFactAttribute`).
     * Tests using these attributes should clearly indicate their dependencies also via appropriate `[Trait("Category", ...)]` attributes (though `DependencyFactAttribute` handles some implicit trait mapping).
 * **Assumptions Made by Attributes:**
     * `DependencyFactAttribute` assumes:
@@ -48,6 +54,10 @@ These attributes often work in conjunction with custom xUnit test case discovere
         * The `ConfigurationStatusHelper` (used for string-based dependency checks or by `IStatusService`) has access to the relevant `IConfiguration` instance.
         * For `InfrastructureDependency.Database`, it assumes the `DatabaseFixture` correctly reports its operational status.
     * `DockerAvailableFactAttribute` assumes that the mechanism it uses to check Docker's presence (e.g., running `docker version`) is reliable in the test execution environment.
+    * `ServiceUnavailableFactAttribute` assumes:
+        * The `IStatusService` is correctly implemented in the `api-server` and reflects the true availability of features based on configuration.
+        * The test environment has proper access to the `CustomWebApplicationFactory` through the `ApiClientFixture` constructor argument.
+        * The test is designed to verify behavior specifically when the service is unavailable (e.g., testing HTTP 503 responses).
 
 ## 4. Local Conventions & Constraints
 
@@ -82,6 +92,18 @@ These attributes often work in conjunction with custom xUnit test case discovere
         // ... test logic for DatabaseFixture itself ...
     }
     ```
+* **`ServiceUnavailableFactAttribute`**:
+    ```csharp
+    // Example: Test that verifies endpoint returns HTTP 503 when OpenAI is unavailable
+    [ServiceUnavailableFact(ExternalServices.OpenAiApi)]
+    [Trait("Category", "Integration")]
+    [Trait("Feature", TestCategories.AI)]
+    public async Task GetAiResponse_WhenOpenAiUnavailable_Returns503()
+    {
+        var response = await client.GetAiResponse();
+        response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    }
+    ```
 * **`TestCategories.cs`**:
     ```csharp
     [Fact]
@@ -108,6 +130,7 @@ These attributes often work in conjunction with custom xUnit test case discovere
     * `DependencyFactAttribute` may rely on `IStatusService` and enums like `ExternalServices` from the main application.
 * **`../Helpers/`**:
     * `DependencyFactAttribute` uses `ConfigurationStatusHelper`, `SkipMissingDependencyDiscoverer`, and `SkipMissingDependencyTestCase`.
+    * `ServiceUnavailableFactAttribute` uses `ServiceUnavailableFactDiscoverer` and `ServiceUnavailableTestCase`.
 * **`../Fixtures/`**:
     * `DependencyFactAttribute` may interact with properties of fixtures like `DatabaseFixture` when checking `InfrastructureDependency.Database`.
 

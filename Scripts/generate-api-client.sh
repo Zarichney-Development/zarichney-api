@@ -1,7 +1,7 @@
 #!/bin/bash
 # Generate API Client for Tests
-# This script automates the generation of a strongly-typed Refit client for integration testing.
-# It builds the api-server project, generates swagger.json, and creates the Refit client.
+# This script automates the generation of strongly-typed Refit client interfaces for integration testing.
+# It builds the api-server project, generates swagger.json, and creates multiple Refit client interfaces grouped by OpenAPI tags.
 
 # Exit on error
 set -e
@@ -54,7 +54,7 @@ sleep 10
 
 # Download the swagger.json
 echo -e "\e[32mDownloading swagger.json...\e[0m"
-curl -s "http://localhost:5000/swagger/swagger.json" -o "$SWAGGER_JSON_PATH"
+curl -s "http://localhost:5000/api/swagger/swagger.json" -o "$SWAGGER_JSON_PATH"
 if [ $? -ne 0 ] || [ ! -s "$SWAGGER_JSON_PATH" ]; then
     echo -e "\e[31mError downloading swagger.json. Exiting.\e[0m"
     kill $API_PID
@@ -76,18 +76,11 @@ if ! dotnet tool list -g | grep -q "refitter"; then
     fi
 fi
 
-# Step 5: Generate Refit client using refitter
-echo -e "\e[32mGenerating Refit client...\e[0m"
-refitter "$SWAGGER_JSON_PATH" \
-    --namespace "Zarichney.Client" \
-    --output "$API_CLIENT_DIR/IZarichneyAPI.cs" \
-    --interface-name "IZarichneyAPI" \
-    --use-api-response-for-all-responses \
-    --use-nullable-reference-types \
-    --use-api-response-for-successful-responses \
-    --skip-validation
+# Step 5: Generate Refit client using refitter with .refitter settings file
+echo -e "\e[32mGenerating Refit client using .refitter settings file...\e[0m"
+refitter --settings-file "$ROOT_DIR/Scripts/.refitter" --skip-validation
 if [ $? -ne 0 ]; then
-    echo -e "\e[31mError generating Refit client. Exiting.\e[0m"
+    echo -e "\e[31mError generating Refit client using Scripts/.refitter file. Exiting.\e[0m"
     exit 1
 fi
 
@@ -98,6 +91,6 @@ if [ -f "$SWAGGER_JSON_PATH" ]; then
 fi
 
 echo -e "\e[36mAPI client generation completed successfully!\e[0m"
-echo -e "\e[36mGenerated client is available at: $API_CLIENT_DIR/IZarichneyAPI.cs\e[0m"
-echo -e "\e[36mClient interface name: IZarichneyAPI\e[0m"
+echo -e "\e[36mGenerated client interfaces are available in: $API_CLIENT_DIR/\e[0m"
+echo -e "\e[36mClient interfaces are grouped by OpenAPI tags (multiple files)\e[0m"
 echo -e "\e[36mClient namespace: Zarichney.Client\e[0m"

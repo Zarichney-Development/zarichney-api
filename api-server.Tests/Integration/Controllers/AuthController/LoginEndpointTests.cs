@@ -1,7 +1,7 @@
 using Refit;
 using Xunit;
 using Xunit.Abstractions;
-using Zarichney.Client;
+using Zarichney.Client.Contracts;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 
@@ -20,32 +20,25 @@ public class LoginEndpointsTests(ApiClientFixture apiClientFixture, ITestOutputH
   public async Task Login_WithValidCredentials_ShouldSucceed()
   {
     // Arrange
-    var client = ApiClient;
+    var client = _apiClientFixture.UnauthenticatedAuthApi;
     // todo replace with the test user values that resides in config
-    var request = new LoginRequest
-    {
-      Email = "zarichney@gmail.com",
-      Password = "password"
-    };
+    var request = new LoginRequest("zarichney@gmail.com", "password");
 
     // Act
-    var result = await client.Login(request);
+    var loginResponse = await client.Login(request);
+    var authResult = loginResponse.Content;
 
     // Assert
-    Assert.True(result.Success);
-    Assert.NotEmpty(result.Email);
+    Assert.True(authResult.Success);
+    Assert.NotEmpty(authResult.Email);
   }
 
   [DependencyFact(InfrastructureDependency.Database)]
   public async Task Login_WithInvalidCredentials_ShouldFail()
   {
     // Arrange
-    var client = ApiClient;
-    var request = new LoginRequest
-    {
-      Email = "invalid@example.com",
-      Password = "WrongPassword123!"
-    };
+    var client = _apiClientFixture.UnauthenticatedAuthApi;
+    var request = new LoginRequest("invalid@example.com", "WrongPassword123!");
 
     // Act & Assert
     await Assert.ThrowsAsync<ApiException>(() => client.Login(request));
@@ -55,12 +48,8 @@ public class LoginEndpointsTests(ApiClientFixture apiClientFixture, ITestOutputH
   public async Task Login_WithEmptyEmail_ShouldFail()
   {
     // Arrange
-    var client = ApiClient;
-    var request = new LoginRequest
-    {
-      Email = "",
-      Password = "Password123!"
-    };
+    var client = _apiClientFixture.UnauthenticatedAuthApi;
+    var request = new LoginRequest("", "Password123!");
 
     // Act & Assert
     await Assert.ThrowsAsync<ApiException>(() => client.Login(request));

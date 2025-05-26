@@ -64,7 +64,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     // Assert
     response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
     var content = await response.Content.ReadAsStringAsync();
-    content.Should().Contain("Service Temporarily Unavailable");
+    content.Should().Contain("External Service Unavailable");
     content.Should().Contain("LlmConfig:ApiKey");
 
     mockStatusService.Verify(s => s.GetFeatureStatus(ExternalServices.OpenAiApi), Times.AtLeastOnce);
@@ -168,7 +168,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     // Assert
     response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
     var content = await response.Content.ReadAsStringAsync();
-    content.Should().Contain("Service Temporarily Unavailable");
+    content.Should().Contain("External Service Unavailable");
 
     // Should contain all missing configurations
     content.Should().Contain("LlmConfig:ApiKey");

@@ -1,7 +1,7 @@
 **Technical Design Document: Automation Testing Strategy for api-server**
 
-**Version:** 1.6
-**Last Updated:** 2025-05-22
+**Version:** 1.7
+**Last Updated:** 2025-05-25
 
 **1. Introduction & Goals**
 
@@ -37,8 +37,8 @@
 * **Mocking Library:** Moq
 * **Test Data Generation:** AutoFixture, Custom Test Data Builders
 * **Integration Testing Host:** `Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory<Program>`
-* **Integration Testing API Client:** Refit (code generated into `api-server.Tests`)
-* **API Client Generation Tools:** `dotnet swagger`, `refitter` (automation expected via script)
+* **Integration Testing API Client:** Refit (multiple clients generated into `api-server.Tests` via `.refitter` configuration)
+* **API Client Generation Tools:** `dotnet swagger`, `refitter` (automation expected via script with `.refitter` settings file)
 * **Integration Test Database:** Testcontainers (PostgreSQL)
 * **External HTTP Service Virtualization:** WireMock.Net (to be integrated, see Roadmap)
 * **Database Cleanup:** Respawn
@@ -49,7 +49,7 @@
 **5. Test Project Structure (`api-server.Tests/Framework/`) (Expected)**
 
 * A clear folder structure separating configuration, unit tests, integration tests, fixtures, helpers, mocks (including mock factories and virtualization setups), test data artifacts (including builders), and the generated API client code.
-    * `Client/`: Will contain the auto-generated Refit client code (Namespace: `Zarichney.Client`).
+    * `Client/`: Will contain the auto-generated Refit client interfaces grouped by API tags (controllers) and contracts (Namespace: `Zarichney.Client`).
     * `Configuration/`: Expected to contain helpers for loading test configuration (though the factory primarily uses direct `IConfigurationBuilder` methods).
     * `Unit/`, `Integration/`: Organized mirroring `api-server` structure where applicable.
     * `Fixtures/`: Must contain implementations for `CustomWebApplicationFactory`, `DatabaseFixture`, and potentially fixtures for managing WireMock.Net instances.
@@ -83,7 +83,7 @@
 
 **9. Integration Testing Strategy (Requirements)**
 
-* **Approach:** Host `api-server` in-memory via `CustomWebApplicationFactory`. Interact using the generated Refit client (`Zarichney.Client.IZarichneyAPI`) from `api-server.Tests/Framework/Client/`. Tests declare dependencies on external resources (Database, external APIs) using `[Trait("Category", "ExternalHttp:...")]`. The `IntegrationTestBase` checks these dependencies against runtime configuration status during initialization. Test methods requiring these dependencies use `[DependencyFact]` to ensure they are automatically skipped if dependencies are unavailable. Adhere to `Docs/Standards/IntegrationTestCaseDevelopment.md`.
+* **Approach:** Host `api-server` in-memory via `CustomWebApplicationFactory`. Interact using the generated Refit client interfaces (e.g., `IAuthApi`, `IAiApi`, `ICookbookApi`) from `api-server.Tests/Framework/Client/`. Tests declare dependencies on external resources (Database, external APIs) using `[Trait("Category", "ExternalHttp:...")]`. The `IntegrationTestBase` checks these dependencies against runtime configuration status during initialization. Test methods requiring these dependencies use `[DependencyFact]` to ensure they are automatically skipped if dependencies are unavailable. Adhere to `Docs/Standards/IntegrationTestCaseDevelopment.md`.
 * **Test Configuration:** The `CustomWebApplicationFactory` configures the test application's `IConfiguration` to closely mimic the main application's loading strategy while allowing for test-specific overrides and integration with user secrets for local development. The goal is to ensure tests run under realistic configuration conditions across different environments (Local Dev, CI, specific "Testing" environment).
     * **Loading Order:** Configuration providers are added in the following order within the factory's `ConfigureAppConfiguration`:
         1.  `appsettings.json` (Optional base configuration)
@@ -111,7 +111,7 @@
     * Initializes Respawn for database cleanup.
     * Offers a `ResetDatabaseAsync()` method to be called by tests before seeding data.
     * Is provided as a shared instance via `ICollectionFixture` to all tests in the `"Integration"` collection.
-* **Refit Client Usage:** Tests must obtain and use instances of the generated `IZarichneyAPI`. Client instantiation happens within the shared `ApiClientFixture`, which uses an `HttpClient` derived from the shared `CustomWebApplicationFactory.CreateClient()`.
+* **Refit Client Usage:** Tests must obtain and use instances of the generated API client interfaces (e.g., `IAuthApi`, `IAiApi`, `ICookbookApi`, `IPaymentApi`, `IPublicApi`). Client instantiation happens within the shared `ApiClientFixture`, which provides granular access to specific API functionality and uses `HttpClient` instances derived from the shared `CustomWebApplicationFactory.CreateClient()`.
 * **Database Handling:** Tests requiring DB access should inherit `DatabaseIntegrationTestBase` and belong to the `"Integration"` collection to receive the shared `DatabaseFixture`. The `CustomWebApplicationFactory` determines the `DbContext` configuration based on this priority: 1. Use connection string from `IConfiguration` (supports User Secrets) if valid. 2. Else, use connection string from the shared `DatabaseFixture` (supports Testcontainers) if available and running. 3. Else, fallback to `UseInMemoryDatabase`. Tests should call `await ResetDatabaseAsync()` before seeding data or performing mutating actions. Interaction should prioritize API calls over direct DB manipulation for setup/assert where practical.
 * **External API Handling:** Integration tests must interact with virtualized external HTTP services managed by WireMock.Net, configured via `CustomWebApplicationFactory`. Mocks for non-HTTP external dependencies (if any) are registered via `Mocks/Factories/`.
 * **Authentication Simulation:** Implement and use `TestAuthHandler` (registered in factory). Employ `AuthTestHelper` or base class methods to configure user/claims before API calls.
@@ -147,15 +147,28 @@
 
 **13. API Client Generation for Tests (Requirement)**
 
-* **Purpose:** Provide a strongly-typed Refit client (`IZarichneyAPI`) within `api-server.Tests` for integration testing.
-* **Mechanism:** A PowerShell script must be provided at `/Scripts/GenerateApiClient.ps1`. A corresponding shell script `/Scripts/generate-api-client.sh` is also available.
-* **Script Functionality:** The script must automate:
+* **Purpose:** Provide multiple strongly-typed Refit client interfaces (grouped by API tags/controllers) within `api-server.Tests` for integration testing.
+* **Configuration:** The primary configuration is managed via the root `.refitter` file, which defines:
+    * **Key Settings:**
+        * `multipleInterfaces: "ByTag"` - Generates separate interfaces per OpenAPI tag (controller)
+        * `generateMultipleFiles: true` - Creates separate files for each interface
+        * `outputFolder: "api-server.Tests/Framework/Client"` - Target directory for generated code
+        * `addContentTypeHeaders: false` - Resolves multipart/form-data Content-Type conflicts
+        * `returnIApiResponse: true` - Returns `IApiResponse<T>` for better error handling
+        * `namespace: "Zarichney.Client"` - Generated code namespace
+        * `contractsNamespace: "Zarichney.Client.Contracts"` - DTOs namespace
+* **Generation Tools:** PowerShell script at `/Scripts/generate-api-client.ps1` and shell script `/Scripts/generate-api-client.sh`.
+* **Script Functionality:** The scripts automate:
     1.  Building the `api-server` project (Debug config).
     2.  Generating `swagger.json` using `dotnet swagger tofile`.
-    3.  Generating the Refit client (`IZarichneyAPI` and models) using `refitter`.
-    4.  Placing the generated code into `api-server.Tests/Framework/Client/` with the namespace `Zarichney.Client`.
-* **Usage Requirement:** The developer (or AI coder) assigned a task **must** run this script after any changes to `api-server` controller signatures, routes, or associated models to ensure the test client is synchronized with the API contract. Relevant documentation should remind users of this step.
-* **Deliverable:** The functional `GenerateApiClient.ps1` script in the `/Scripts` directory, and references to this script in the relevant endpoint and standards documentation, to ensure future maintenance and usage of endpoint changes (important: this is part of the expected workflow - when making endpoint changes, this script must be run in order to detect whether the change broke any tests!! So this needs to be well reflected in documentation in order for code maintainers not to miss this).
+    3.  Generating multiple Refit client interfaces (e.g., `IAuthApi`, `IAiApi`, `ICookbookApi`) and contracts using `refitter` with the `.refitter` settings file.
+    4.  Placing the generated code into `api-server.Tests/Framework/Client/` with organized structure.
+* **Generated Output:** Multiple files including:
+    * Individual interface files: `IAuthApi.cs`, `IAiApi.cs`, `ICookbookApi.cs`, `IPaymentApi.cs`, `IPublicApi.cs`
+    * Shared contracts: `Contracts.cs` (DTOs and models)
+* **ApiClientFixture Integration:** The `ApiClientFixture` provides granular access to each client interface via properties like `AuthenticatedAuthApi`, `UnauthenticatedAiApi`, etc.
+* **Usage Requirement:** The developer (or AI coder) assigned a task **must** run the generation script after any changes to `api-server` controller signatures, routes, or associated models to ensure the test clients are synchronized with the API contract. The `.refitter` configuration ensures consistent generation behavior.
+* **Deliverable:** The functional generation scripts in `/Scripts/`, the `.refitter` configuration file, and references to these in relevant documentation to ensure proper workflow integration.
 
 **14. API Server Project Modifications**
 

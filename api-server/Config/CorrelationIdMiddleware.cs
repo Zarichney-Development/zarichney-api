@@ -1,5 +1,3 @@
-using Serilog;
-
 namespace Zarichney.Config;
 
 /// <summary>

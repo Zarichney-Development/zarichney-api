@@ -3,7 +3,6 @@ using FluentAssertions;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Config;
-using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 
@@ -28,12 +27,13 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
     using var client = Factory.CreateAuthenticatedClient("test-user", ["Admin"]);
 
     // Act - Step 1: Get the service status
-    var statusResult = await ApiClient.StatusAll();
+    var statusResponse = await _apiClientFixture.UnauthenticatedPublicApi.StatusAll();
+    var serviceStatuses = statusResponse.Content;
 
     // Find unavailable services - we now expect a list of ServiceStatusInfo objects
-    var unavailableServices = statusResult
-      .Where(s => !s.IsAvailable)
-      .Select(s => s.ServiceName.ToString())
+    var unavailableServices = serviceStatuses
+      .Where(s => !(s.IsAvailable ?? false))
+      .Select(s => s.ServiceName?.ToString() ?? "Unknown")
       .ToList();
 
     // Skip test if no services are unavailable (unlikely in a test environment, but possible)
@@ -96,10 +96,11 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
     using var client = Factory.CreateAuthenticatedClient("test-user", ["Admin"]);
 
     // Act - Step 1: Get the service status to check if LLM is available
-    var statusResult = await ApiClient.StatusAll();
+    var statusResponse = await _apiClientFixture.UnauthenticatedPublicApi.StatusAll();
+    var serviceStatuses = statusResponse.Content!;
 
     // Check if LLM service is unavailable - we now have a list of ServiceStatusInfo objects
-    var llmUnavailable = statusResult.Any(s => Equals(s.ServiceName, (Zarichney.Client.ExternalServices)ExternalServices.OpenAiApi) && !s.IsAvailable);
+    var llmUnavailable = serviceStatuses.Any(s => Equals(s.ServiceName, Zarichney.Client.Contracts.ExternalServices.OpenAiApi) && !(s.IsAvailable ?? false));
 
     // Skip test if LLM service is available
     if (!llmUnavailable)

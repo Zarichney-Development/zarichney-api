@@ -1,4 +1,3 @@
-using Zarichney.Client;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using Xunit;
@@ -7,7 +6,6 @@ using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 using Zarichney.Tests.Framework.Helpers;
-using Serilog;
 
 namespace Zarichney.Tests.Integration;
 
@@ -36,7 +34,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   };
 
   protected CustomWebApplicationFactory Factory => _apiClientFixture.Factory;
-  private readonly ApiClientFixture _apiClientFixture;
+  protected readonly ApiClientFixture _apiClientFixture;
   private readonly IDisposable _testClassContext;
 
   private bool _dependenciesChecked;
@@ -64,22 +62,13 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   {
     _apiClientFixture = apiClientFixture;
     apiClientFixture.AttachToSerilog(testOutputHelper);
-    
+
     // Push test class name to logging context for all tests in this class
     _testClassContext = Serilog.Context.LogContext.PushProperty("TestClassName", GetType().Name);
-    
+
     // Database availability will be checked based on dependency traits during InitializeAsync
   }
 
-  /// <summary>
-  /// Unauthenticated API client from shared fixture.
-  /// </summary>
-  protected IZarichneyAPI ApiClient => _apiClientFixture.UnauthenticatedClient;
-
-  /// <summary>
-  /// Authenticated API client from shared fixture.
-  /// </summary>
-  protected IZarichneyAPI AuthenticatedApiClient => _apiClientFixture.AuthenticatedClient;
 
   /// <summary>
   /// Gets a service from the factory's service provider.
