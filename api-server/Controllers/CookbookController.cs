@@ -7,6 +7,7 @@ using Zarichney.Services.Email;
 using Zarichney.Services.Sessions;
 using System.Net;
 using Zarichney.Services.BackgroundTasks;
+using Zarichney.Services.Status;
 
 namespace Zarichney.Controllers;
 
@@ -86,6 +87,9 @@ public class CookbookController(
   /// - 500 Internal Server Error: If any other unexpected error occurs during processing.
   /// </returns>
   [HttpPost("cookbook")]
+  [DependsOnService(ExternalServices.MailCheck)]
+  [DependsOnService(ExternalServices.OpenAiApi)]
+  [DependsOnService(ExternalServices.MsGraph)]
   [ProducesResponseType(typeof(CookbookOrder), StatusCodes.Status201Created)]
   [ProducesResponseType(typeof(BadRequestObjectResult),
     StatusCodes.Status400BadRequest)] // Covers missing email and InvalidEmailException
@@ -190,6 +194,8 @@ public class CookbookController(
   /// - 500 Internal Server Error: If queuing the background task or retrieving the order fails.
   /// </returns>
   [HttpPost("cookbook/order/{orderId}")]
+  [DependsOnService(ExternalServices.OpenAiApi)]
+  [DependsOnService(ExternalServices.MsGraph)]
   [ProducesResponseType(typeof(CookbookOrder), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(NotFoundResult), StatusCodes.Status404NotFound)] // Use NotFoundResult
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
@@ -249,6 +255,7 @@ public class CookbookController(
   /// - 500 Internal Server Error: If PDF generation, retrieval, or emailing fails.
   /// </returns>
   [HttpGet("cookbook/order/{orderId}/pdf")]
+  [DependsOnService(ExternalServices.MsGraph)] // TODO: split this endpoint to separate email functionality
   [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK, "application/pdf")] // Specify content type
   [ProducesResponseType(typeof(BadRequestObjectResult), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(NotFoundResult), StatusCodes.Status404NotFound)] // Use NotFoundResult
@@ -318,6 +325,7 @@ public class CookbookController(
   /// - 500 Internal Server Error: If there's an issue retrieving order details or sending the email.
   /// </returns>
   [HttpPost("cookbook/order/{orderId}/email")]
+  [DependsOnService(ExternalServices.MsGraph)]
   [ProducesResponseType(typeof(string), StatusCodes.Status200OK)] // Simple string success message
   [ProducesResponseType(typeof(NotFoundResult), StatusCodes.Status404NotFound)] // Use NotFoundResult
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
@@ -364,6 +372,7 @@ public class CookbookController(
   /// - 500 Internal Server Error: If an unexpected error occurs during search or scraping.
   /// </returns>
   [HttpGet("recipe")]
+  [DependsOnService(ExternalServices.OpenAiApi)]
   [ProducesResponseType(typeof(IEnumerable<Recipe>), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(BadRequestObjectResult), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(NotFoundResult),
@@ -430,6 +439,7 @@ public class CookbookController(
   /// - 500 Internal Server Error: If an error occurs during scraping, ranking, or storing.
   /// </returns>
   [HttpGet("recipe/scrape")]
+  [DependsOnService(ExternalServices.OpenAiApi)]
   [ProducesResponseType(typeof(IEnumerable<Recipe>), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(BadRequestObjectResult), StatusCodes.Status400BadRequest)]
   [ProducesResponseType(typeof(NotFoundResult), StatusCodes.Status404NotFound)] // If scraping yields nothing
