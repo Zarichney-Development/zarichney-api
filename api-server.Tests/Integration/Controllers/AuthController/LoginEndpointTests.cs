@@ -66,7 +66,7 @@ public class LoginEndpointsTests : DatabaseIntegrationTestBase
       throw new InvalidOperationException("Test user password verification failed after creation");
     }
   }
-  [Fact]
+  [DependencyFact(InfrastructureDependency.Database)]
   public async Task Login_WithValidCredentials_ShouldSucceed()
   {
     // Arrange - Reset database and seed test user
