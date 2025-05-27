@@ -1,6 +1,6 @@
 # README: api-server.Tests Project
 
-**Version:** 1.1
+**Version:** 1.2
 **Last Updated:** 2025-05-25
 **Parent:** `../api-server/README.md` (Conceptual link to the main application's README)
 
@@ -81,7 +81,13 @@ A commitment to high test coverage (>=90% for unit tests) and rigorous adherence
     * Ensure Docker is running if tests rely on `DatabaseFixture` or other Testcontainers.
     * Ensure necessary configurations are available (e.g., in `appsettings.Testing.json` or user secrets) for tests using `[DependencyFact]`. Tests for unavailable dependencies will be skipped.
     ```bash
+    # Standard execution (if Docker group membership is active)
     dotnet test --filter "Category=Integration"
+    
+    # For environments where Docker group membership isn't active in current shell
+    # (Required in some Linux/WSL2 setups for Testcontainers)
+    sg docker -c "dotnet test --filter 'Category=Integration'"
+    sg docker -c "dotnet test --filter 'Category=Integration&Dependency=Database'"
     ```
 * **Specific Tests:** Use appropriate `--filter` options with `dotnet test`.
 * Refer to the `TechnicalDesignDocument.md` Section 11 for CI/CD testing execution details.

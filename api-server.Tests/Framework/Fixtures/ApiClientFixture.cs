@@ -4,6 +4,8 @@ using Serilog.Sinks.XUnit.Injectable;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Client;
+using Zarichney.Services.Auth;
+using Zarichney.Services.Status;
 
 namespace Zarichney.Tests.Framework.Fixtures;
 
@@ -110,6 +112,9 @@ public class ApiClientFixture : IAsyncLifetime
     // Initialize the database fixture
     await _databaseFixture.InitializeAsync();
 
+    // Configure StatusService to report PostgreSQL as available when database container is running
+    ConfigureStatusServiceForTesting();
+
     // Create HTTP client for unauthenticated calls
     var unauthHttpClient = _factory.CreateClient();
 
@@ -152,5 +157,23 @@ public class ApiClientFixture : IAsyncLifetime
   {
     var outputSink = GetSingletonService<InjectableTestOutputSink>();
     outputSink.Inject(testOutputHelper);
+  }
+
+  /// <summary>
+  /// Configures the StatusService to report PostgreSQL as available when the database container is running.
+  /// This overrides the normal startup check to allow integration tests to pass.
+  /// </summary>
+  private void ConfigureStatusServiceForTesting()
+  {
+    if (_factory.Services.GetService<IStatusService>() is StatusService statusService)
+    {
+      // In test environment, mark PostgreSQL as available if we have a database container
+      bool isDatabaseAvailable = _factory.IsDatabaseAvailable;
+      List<string>? missingConfigurations = isDatabaseAvailable 
+        ? null 
+        : new List<string> { $"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}" };
+
+      statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, isDatabaseAvailable, missingConfigurations);
+    }
   }
 }

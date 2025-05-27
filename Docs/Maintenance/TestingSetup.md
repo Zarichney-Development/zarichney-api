@@ -1,7 +1,7 @@
 # Testing Setup and Maintenance
 
-**Version:** 1.0
-**Last Updated:** 2025-05-22
+**Version:** 1.1
+**Last Updated:** 2025-05-25
 
 ## Overview
 
@@ -31,23 +31,29 @@ The test suite is integrated with GitHub Actions for continuous integration:
 #### Running All Tests
 
 ```bash
+# Standard execution (if Docker group membership is active)
 dotnet test
+
+# For environments where Docker group membership isn't active in current shell
+# (Required in some Linux/WSL2 setups for Testcontainers)
+sg docker -c "dotnet test"
 ```
 
 #### Running Specific Test Categories
 
 ```bash
-# Run unit tests only
+# Standard execution (if Docker group membership is active)
 dotnet test --filter "Category=Unit"
-
-# Run integration tests only
 dotnet test --filter "Category=Integration"
-
-# Run database-dependent tests only
 dotnet test --filter "Category=Integration&Dependency=Database"
-
-# Run read-only integration tests
 dotnet test --filter "Category=Integration&Mutability=ReadOnly"
+
+# For environments where Docker group membership isn't active in current shell
+# (Required for integration tests using Testcontainers)
+sg docker -c "dotnet test --filter 'Category=Unit'"
+sg docker -c "dotnet test --filter 'Category=Integration'"
+sg docker -c "dotnet test --filter 'Category=Integration&Dependency=Database'"
+sg docker -c "dotnet test --filter 'Category=Integration&Mutability=ReadOnly'"
 ```
 
 ### Client Generation
@@ -103,6 +109,8 @@ public class AuthenticationTests : DatabaseIntegrationTestBase
 ### Docker Requirements
 
 - **Docker Desktop**: Must be running for Testcontainers to function properly.
+- **Docker Group Membership**: In Linux/WSL2 environments, the user must be a member of the `docker` group to access Docker daemon.
+- **Permission Context**: If Docker group membership isn't active in the current shell session, use `sg docker -c "command"` to run commands with proper Docker permissions.
 - **PostgreSQL Image**: Tests use the `postgres:15` image, which is automatically pulled if not available locally.
 - **Container Cleanup**: Containers are automatically cleaned up after test execution.
 

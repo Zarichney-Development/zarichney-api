@@ -1,6 +1,6 @@
 # Local Development Setup & Configuration
 
-**Last Updated:** 2025-05-22
+**Last Updated:** 2025-05-25
 
 > **Parent:** [`README.md`](./README.md)
 
@@ -38,6 +38,12 @@ This document outlines the configuration and setup requirements for local develo
   # Run specific test categories
   dotnet test --filter "Category=Unit"
   dotnet test --filter "Category=Integration"
+  
+  # For environments where Docker group membership isn't active in current shell
+  # (Required in some Linux/WSL2 setups for integration tests using Testcontainers)
+  sg docker -c "dotnet test Zarichney.sln"
+  sg docker -c "dotnet test --filter 'Category=Integration'"
+  sg docker -c "dotnet test --filter 'Category=Integration&Dependency=Database'"
   ```
 
 * **Format Code:**

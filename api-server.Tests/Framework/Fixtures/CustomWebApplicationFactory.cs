@@ -12,6 +12,7 @@ using Serilog.Sinks.XUnit.Injectable;
 using Serilog.Sinks.XUnit.Injectable.Extensions;
 using Zarichney.Services.AI;
 using Zarichney.Services.Auth;
+using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Helpers;
 using Zarichney.Tests.Framework.Mocks.Factories;
 
@@ -223,6 +224,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
       }
     });
   }
+
 
   /// <summary>
   /// Registers mock implementations of external services.

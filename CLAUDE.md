@@ -1,7 +1,7 @@
 # Project Context & Operating Guide for AI Coding Assistant (Claude)
 
-**Version:** 1.0
-**Last Updated:** 2025-05-10
+**Version:** 1.1
+**Last Updated:** 2025-05-25
 
 ## 1. My Purpose & Your Role
 
@@ -43,12 +43,21 @@ Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskMan
     ```
 * **Run All Tests:** (Ensure Docker Desktop is running for integration tests)
     ```bash
+    # Standard execution (if Docker group membership is active)
     dotnet test Zarichney.sln
+    
+    # For environments where Docker group membership isn't active in current shell
+    sg docker -c "dotnet test Zarichney.sln"
     ```
 * **Run Specific Test Categories:**
     ```bash
+    # Standard execution (if Docker group membership is active)
     dotnet test --filter "Category=Unit"
     dotnet test --filter "Category=Integration"
+    
+    # For environments where Docker group membership isn't active in current shell
+    sg docker -c "dotnet test --filter 'Category=Unit'"
+    sg docker -c "dotnet test --filter 'Category=Integration'"
     ```
 * **Code Formatting:**
     * Check: `dotnet format --verify-no-changes --verbosity diagnostic`

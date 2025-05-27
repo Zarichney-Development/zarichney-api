@@ -1,7 +1,7 @@
 # Overarching Automation Testing Standards
 
-**Version:** 1.5
-**Last Updated:** 2025-05-22
+**Version:** 1.6
+**Last Updated:** 2025-05-25
 
 ## 1. Introduction
 
@@ -140,8 +140,8 @@
 * **Local Testing (Mandatory Pre-PR):**
     1.  Run `Scripts/generate-api-client.ps1` (or `.sh`) if API contracts changed.
     2.  Run the specific tests added/modified.
-    3.  Run **all unit tests** (`dotnet test --filter "Category=Unit"`).
-    4.  Run relevant integration tests (e.g., `dotnet test --filter "Category=Integration&Feature=Auth"`).
+    3.  Run **all unit tests** (`dotnet test --filter "Category=Unit"` or `sg docker -c "dotnet test --filter 'Category=Unit'"` if Docker group membership isn't active).
+    4.  Run relevant integration tests (e.g., `dotnet test --filter "Category=Integration&Feature=Auth"` or `sg docker -c "dotnet test --filter 'Category=Integration&Feature=Auth'"` if Docker group membership isn't active).
     5.  Ensure **all** locally run tests pass.
 * **CI/CD (GitHub Actions):**
     * Workflow runs on Pull Requests and merges to `main`.
