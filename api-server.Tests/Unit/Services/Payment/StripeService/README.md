@@ -9,7 +9,7 @@
 > * **Interface:** [`Services/Payment/IStripeService.cs`](../../../../../api-server/Services/Payment/StripeService.cs)
 > * **Dependencies:** `Stripe.net` SDK clients (e.g., `Stripe.SessionService`, `Stripe.CustomerService`, `Stripe.BillingPortal.SessionService`, `Stripe.WebhookUtility`), `IOptions<StripeSettings>`, `ILogger<StripeService>`
 > * **Models:** [`Config/ConfigModels.cs`](../../../../../api-server/Config/ConfigModels.cs) (for `StripeSettings`)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Zarichney.Standards/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

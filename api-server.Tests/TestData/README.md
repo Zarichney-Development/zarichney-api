@@ -14,7 +14,7 @@ This includes:
 
 This directory complements the dynamic data generation capabilities provided by AutoFixture (often accessed via `GetRandom.cs`) and the planned advanced AutoFixture customizations in `../Framework/TestData/AutoFixtureCustomizations/`. While AutoFixture excels at providing anonymous, structurally valid data, the components in *this* `/TestData/` directory offer more explicit control or provide fixed baseline data.
 
-Adherence to the principles outlined here and in the main testing standards (`../../Docs/Standards/TestingStandards.md`, `../../Docs/Standards/UnitTestCaseDevelopment.md`, `../../Docs/Standards/IntegrationTestCaseDevelopment.md`) is expected.
+Adherence to the principles outlined here and in the main testing standards (`../../Zarichney.Standards/Standards/TestingStandards.md`, `../../Zarichney.Standards/Standards/UnitTestCaseDevelopment.md`, `../../Zarichney.Standards/Standards/IntegrationTestCaseDevelopment.md`) is expected.
 
 ### Child Modules / Key Subdirectories:
 
@@ -135,7 +135,7 @@ This layered approach allows tests to use the most appropriate data generation m
 
 ## 8. Known Issues & TODOs
 
-* **Builder Coverage:** Continue developing Test Data Builders for all key domain entities and complex DTOs to simplify test setup across the suite. (Tracked via tasks referencing the `../../Docs/Templates/GHTestCoverageTask.md` template where applicable for new features).
+* **Builder Coverage:** Continue developing Test Data Builders for all key domain entities and complex DTOs to simplify test setup across the suite. (Tracked via tasks referencing the `../../Zarichney.Standards/Templates/GHTestCoverageTask.md` template where applicable for new features).
 * **Static File Maintenance:** Ensure a process is in place (e.g., as part of code review or specific audit tasks) to check that static data files are kept synchronized with their corresponding C# models to prevent deserialization issues.
 * **Integration with Advanced AutoFixture Customizations:** As `../Framework/TestData/AutoFixtureCustomizations/` is populated, Test Data Builders may be refactored to leverage these advanced customizations for even more powerful and consistent data generation.
 * Refer to the "Framework Augmentation Roadmap (TODOs)" in `../TechnicalDesignDocument.md` for broader framework enhancements related to test data.

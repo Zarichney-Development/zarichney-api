@@ -120,7 +120,7 @@ The overall goal is to enable robust and reliable integration tests by providing
     * Setting up the WireMock.Net server instance (likely via a new fixture).
     * Configuring `CustomWebApplicationFactory` to redirect HTTP clients.
     * Establishing patterns for defining and managing WireMock stubs.
-    * Documenting its usage thoroughly in `../../../Docs/Standards/IntegrationTestCaseDevelopment.md`.
+    * Documenting its usage thoroughly in `../../../Zarichney.Standards/Standards/IntegrationTestCaseDevelopment.md`.
 * **Dynamic Mock Configuration:** The current mock factories provide basic `Mock<T>` instances. More complex shared default behaviors for mocks, if needed, might require enhancements to the factories or a different strategy.
 * **Contract Testing (PactNet - TDD FRMK-005):** Once WireMock.Net is in place, contract testing should be evaluated to ensure WireMock stubs stay synchronized with actual external API contracts.
 * Refer to the "Framework Augmentation Roadmap (TODOs)" in `../../TechnicalDesignDocument.md` for broader framework enhancements.

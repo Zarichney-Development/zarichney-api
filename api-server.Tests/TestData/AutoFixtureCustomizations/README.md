@@ -13,7 +13,7 @@ The primary responsibilities of components within this directory are:
 * **To encapsulate common data generation rules and constraints** that go beyond basic AutoFixture capabilities, ensuring consistency and reducing boilerplate in test setup.
 * **To handle specific challenges** in test data generation, such as managing EF Core navigation properties, omitting database-generated IDs, or ensuring data adheres to specific invariants.
 
-This initiative directly supports the goals outlined in the `../../TechnicalDesignDocument.md` (specifically TDD FRMK-002) and aligns with best practices for robust test data management detailed in the "Research Report" (Sec 4.1) and the specific testing guides (`../../../Docs/Standards/UnitTestCaseDevelopment.md`, `../../../Docs/Standards/IntegrationTestCaseDevelopment.md`).
+This initiative directly supports the goals outlined in the `../../TechnicalDesignDocument.md` (specifically TDD FRMK-002) and aligns with best practices for robust test data management detailed in the "Research Report" (Sec 4.1) and the specific testing guides (`../../../Zarichney.Standards/Standards/UnitTestCaseDevelopment.md`, `../../../Zarichney.Standards/Standards/IntegrationTestCaseDevelopment.md`).
 
 **Note:** This directory is being established as per the framework augmentation roadmap. It will be populated with customizations as they are developed.
 

@@ -17,7 +17,7 @@
     * [`/Config`](./Config/README.md): Core configuration, constants, middleware, extensions.
     * [`/Controllers`](./Controllers/README.md): API endpoint definitions.
     * [`/Cookbook`](./Cookbook/README.md): Domain logic for the AI Cookbook feature.
-    * [`/Docs`](./Docs/README.md): Swagger/OpenAPI documentation setup.
+    * [`/Zarichney.Standards`](./Zarichney.Standards/README.md): Swagger/OpenAPI documentation setup.
     * `/Properties`: Build and launch settings.
     * [`/Services`](./Services/README.md): Core infrastructure and cross-cutting services (Auth, AI, Email, Payment, etc.).
     * [`/Startup`](./Startup/README.md): Application startup configuration logic (DI registration, middleware pipelines).
@@ -34,10 +34,10 @@
     * **Background Tasks:** Utilizes `BackgroundWorker` (based on `Channel<T>`) for queuing and processing long-running tasks asynchronously.
     * **External API Integration:** Uses libraries like `RestSharp`, `OpenAI-DotNet`, `Stripe.net`, `Octokit`, `Microsoft.Graph` for interacting with external services, often wrapped in dedicated internal services (e.g., `LlmService`, `StripeService`, `GitHubService`, `EmailService`). Polly is used for retry policies.
     * **Authentication:** Uses JWT Bearer tokens and Refresh Tokens managed via cookies (`CookieAuthManager`, `AuthService`). ASP.NET Core Identity is used for user/role management backed by `UserDbContext` (PostgreSQL). API Key authentication is also supported via `AuthenticationMiddleware`.
-    * **Logging:** Enhanced configurable logging system using Serilog with default Warning level, environment-specific configuration overrides, and support for namespace-specific log levels. Full configuration guide available at [`../Docs/Development/LoggingGuide.md`](../Docs/Development/LoggingGuide.md).
+    * **Logging:** Enhanced configurable logging system using Serilog with default Warning level, environment-specific configuration overrides, and support for namespace-specific log levels. Full configuration guide available at [`../Zarichney.Standards/Development/LoggingGuide.md`](../Zarichney.Standards/Development/LoggingGuide.md).
     * **Testing:** A dedicated companion project (`../api-server.Tests`) contains comprehensive unit and integration tests. Integration tests leverage `CustomWebApplicationFactory` for in-memory hosting, Testcontainers for isolated PostgreSQL databases (`DatabaseFixture`), and Refit-generated HTTP clients (multiple granular interfaces) for API interaction. External dependencies are mocked during testing.
 * **Architectural Diagram:**
-    *(Diagram follows conventions defined in [`/Docs/Standards/DiagrammingStandards.md`](../Docs/Standards/DiagrammingStandards.md))*
+    *(Diagram follows conventions defined in [`/Zarichney.Standards/Standards/DiagrammingStandards.md`](../Zarichney.Standards/Standards/DiagrammingStandards.md))*
 ```mermaid
 graph TD
     subgraph ExternalClients ["External Clients (UI, Mobile, Scripts)"]
@@ -123,9 +123,9 @@ graph TD
 ## 4. Local Conventions & Constraints
 
 * **Primary Language:** C\# 12 with .NET 8.
-* **Coding Standards:** Strictly adhere to [`/Docs/Standards/CodingStandards.md`](https://www.google.com/search?q=../Docs/Standards/CodingStandards.md) and rules enforced by `.editorconfig`.
-* **Documentation Standards:** All subdirectories with significant logic **MUST** have a `README.md` following [`/Docs/Standards/DocumentationStandards.md`](https://www.google.com/search?q=../Docs/Standards/DocumentationStandards.md) and the template in [`/Docs/Templates/ReadmeTemplate.md`](https://www.google.com/search?q=../Docs/Templates/ReadmeTemplate.md).
-* **Testing Standards:** All new features/fixes **MUST** include corresponding tests adhering to [`/Docs/Standards/TestingStandards.md`](https://www.google.com/search?q=../Docs/Standards/TestingStandards.md).
+* **Coding Standards:** Strictly adhere to [`/Zarichney.Standards/Standards/CodingStandards.md`](../Zarichney.Standards/Standards/CodingStandards.md) and rules enforced by `.editorconfig`.
+* **Documentation Standards:** All subdirectories with significant logic **MUST** have a `README.md` following [`/Zarichney.Standards/Standards/DocumentationStandards.md`](../Zarichney.Standards/Standards/DocumentationStandards.md) and the template in [`/Zarichney.Standards/Templates/ReadmeTemplate.md`](../Zarichney.Standards/Templates/ReadmeTemplate.md).
+* **Testing Standards:** All new features/fixes **MUST** include corresponding tests adhering to [`/Zarichney.Standards/Standards/TestingStandards.md`](../Zarichney.Standards/Standards/TestingStandards.md).
 
 ## 5. How to Work With This Code
 
@@ -175,6 +175,6 @@ graph TD
 * Scalability of file-based storage for Cookbook data needs review (see `ShortTermRoadmap.md`).
 * Configuration handling could be improved (see `ShortTermRoadmap.md`).
 * See individual module READMEs for specific TODOs or known issues.
-* Refer to `/Docs/Development/ShortTermRoadmap.md` for broader planned work.
+* Refer to `/Zarichney.Standards/Development/ShortTermRoadmap.md` for broader planned work.
 
 -----

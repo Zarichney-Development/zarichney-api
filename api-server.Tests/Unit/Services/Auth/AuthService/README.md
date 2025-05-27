@@ -8,7 +8,7 @@
 > * **Dependencies:** `MediatR.IMediator`, `ILogger<AuthService>`
 > * **Commands:** [`Commands/`](../../../../../api-server/Services/Auth/Commands/) (Various command definitions like `RegisterCommand`, `LoginCommand`, etc.)
 > * **Models:** [`Models/AuthResult.cs`](../../../../../api-server/Services/Auth/Models/AuthResult.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Zarichney.Standards/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

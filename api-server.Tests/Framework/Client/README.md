@@ -80,7 +80,7 @@ These generated clients are critical components for robust integration testing, 
     recipes.Should().NotBeNull();
     ```
 * The `ApiClientFixture` provides granular access to different API areas through properties like `AuthenticatedAuthApi`, `UnauthenticatedAiApi`, `AuthenticatedCookbookApi`, etc.
-* Refer to `../../../Docs/Standards/IntegrationTestCaseDevelopment.md` for detailed patterns on using the clients.
+* Refer to `../../../Zarichney.Standards/Standards/IntegrationTestCaseDevelopment.md` for detailed patterns on using the clients.
 
 ## 6. Dependencies
 
