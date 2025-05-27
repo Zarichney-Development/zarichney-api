@@ -1,7 +1,7 @@
 # README: api-server.Tests Project
 
 **Version:** 1.2
-**Last Updated:** 2025-05-25
+**Last Updated:** 2025-05-26
 **Parent:** `../api-server/README.md` (Conceptual link to the main application's README)
 
 ## 1. Purpose & Responsibility
@@ -24,7 +24,7 @@ The testing strategy employed aims for high confidence through realistic test sc
 * **Database Testing:** Real database interactions are tested using PostgreSQL managed by **Testcontainers** via the `DatabaseFixture`. This ensures tests run against a clean, consistent database schema with migrations applied. Database state is reset between tests using **Respawn**.
 * **Test Environment Logging:** Enhanced configurable logging system for test environment using Serilog with Warning default level and configuration-driven overrides. Test-specific logging configuration available in `appsettings.Testing.json`. Full configuration guide at [`../Zarichney.Standards/Development/LoggingGuide.md`](../Zarichney.Standards/Development/LoggingGuide.md).
 * **External HTTP Service Virtualization:** Interactions with external third-party HTTP APIs (e.g., Stripe, OpenAI) will be managed using **WireMock.Net** (as per FRMK-004 in `TechnicalDesignDocument.md`). This ensures deterministic behavior and isolates tests from external flakiness.
-* **API Client Interaction:** Integration tests interact with the API using type-safe **Refit clients** (multiple granular interfaces), which are auto-generated from the API's OpenAPI specification.
+* **API Client Interaction:** Integration tests interact with the API using type-safe **Refit clients** (multiple granular interfaces) from the `Zarichney.ApiClient` project, which are auto-generated from the API's OpenAPI specification.
 * **Authentication Simulation:** The `TestAuthHandler` allows for simulating various authenticated users and authorization scenarios.
 * **Core Tooling:**
     * **xUnit:** Test execution framework.
@@ -39,7 +39,7 @@ This test project is organized into the following main directories:
 
 * **`/Framework/`**: Contains the core testing infrastructure, including:
     * `Attributes/`: Custom xUnit attributes like `[DependencyFact]` and `[DockerAvailableFact]`. (See `./Framework/Attributes/README.md`)
-    * `Client/`: The auto-generated Refit API clients (multiple interface files). (See `./Framework/Client/README.md`)
+    * `Client/`: Directory containing only README.md file. Refit API clients have been migrated to the separate `Zarichney.ApiClient` project. (See `./Framework/Client/README.md`)
     * `Fixtures/`: Shared test fixtures like `CustomWebApplicationFactory`, `DatabaseFixture`, and `ApiClientFixture`. (See `./Framework/Fixtures/README.md`)
     * `Helpers/`: Utility classes for testing, such as `AuthTestHelper` and `TestConfigurationHelper`. (See `./Framework/Helpers/README.md`)
     * `Mocks/`: Contains mock factories (e.g., `MockStripeServiceFactory`) for configuring mocked services within the `CustomWebApplicationFactory`, and will include configurations for WireMock.Net. (See `./Framework/Mocks/README.md`)
@@ -102,7 +102,9 @@ A commitment to high test coverage (>=90% for unit tests) and rigorous adherence
     ```bash
     ./Scripts/generate-api-client.sh
     ```
-  This ensures the test clients are synchronized.
+  This generates the clients in the `Zarichney.ApiClient` project and ensures the test clients are synchronized.
+  
+* **Note:** Refit client interfaces have been moved to the separate `Zarichney.ApiClient` project for improved modularity. Tests will need to be updated to reference this new project (planned for subsequent tasks).
 
 ### Contribution Guidelines
 
@@ -117,6 +119,7 @@ A commitment to high test coverage (>=90% for unit tests) and rigorous adherence
 ### Internal Dependencies
 
 * **`zarichney-api/api-server`**: The primary dependency, as this project tests the API server.
+* **`Zarichney.ApiClient`**: Provides the Refit client interfaces for API interaction (will be added as dependency in subsequent tasks).
 
 ### Key External Libraries & Tools
 
@@ -140,6 +143,7 @@ The current focus is on implementing the framework augmentations detailed in the
 ## 8. Known Issues & TODOs
 
 * **Framework Augmentation:** This test framework is actively being enhanced. Refer to the **"Framework Augmentation Roadmap (TODOs)" (Section 16)** in `TechnicalDesignDocument.md` for a list of planned improvements (e.g., WireMock.Net integration, advanced AutoFixture customizations).
-* **Test Coverage:** While the goal is >=90% unit test coverage and comprehensive integration test coverage, this is an ongoing effort. Specific coverage gaps may exist and are being progressively addressed. (Refer to `../../Zarichney.Standards/Development/TestCovergeWorkflow.md`).
+* **Test Coverage:** While the goal is >=90% unit test coverage and comprehensive integration test coverage, this is an ongoing effort. Specific coverage gaps may exist and are being progressively addressed. (Refer to `../../Zarichney.Standards/Workflows/TestCoverageWorkflow.md`).
+* **API Client Migration:** Following the creation of the `Zarichney.ApiClient` project, this test project needs to be updated to reference the new client library instead of having the clients embedded. This includes adding a project reference and updating imports/namespaces (planned for subsequent tasks).
 
 ---

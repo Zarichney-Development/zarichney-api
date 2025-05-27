@@ -1,7 +1,7 @@
 # Overarching Automation Testing Standards
 
 **Version:** 1.6
-**Last Updated:** 2025-05-25
+**Last Updated:** 2025-05-26
 
 ## 1. Introduction
 
@@ -14,8 +14,8 @@
 * **Test Behavior, Not Implementation:** Focus tests on verifying *observable outcomes* and *external behavior*. Avoid testing internal implementation details to ensure tests are **resilient** to refactoring.
 * **Arrange-Act-Assert (AAA):** Structure all test methods clearly using the AAA pattern.
 * **Isolation:**
-    * **Unit Tests:** Test components in complete isolation, mocking *all* external dependencies. Detailed guidance in `Docs/Standards/UnitTestCaseDevelopment.md`.
-    * **Integration Tests:** Ensure complete isolation between test runs, especially for shared resources. Detailed guidance in `Docs/Standards/IntegrationTestCaseDevelopment.md`.
+    * **Unit Tests:** Test components in complete isolation, mocking *all* external dependencies. Detailed guidance in `UnitTestCaseDevelopment.md`.
+    * **Integration Tests:** Ensure complete isolation between test runs, especially for shared resources. Detailed guidance in `IntegrationTestCaseDevelopment.md`.
 * **Readability & Maintainability:** Test code is production code. Write clear, concise, well-named tests. Use helpers, builders, and fixtures effectively to reduce duplication. Refactoring is encouraged to eliminate redundancies.
 * **Determinism:** Tests **must** be deterministic and repeatable. Flaky tests are bugs and **must** be fixed immediately or temporarily skipped with a linked issue (`[Fact(Skip = "Reason + Issue Link")]`).
 
@@ -26,7 +26,7 @@
 * **Mocking Library:** Moq (*Mandatory*)
 * **Test Data:** AutoFixture, Custom Test Data Builders
 * **Integration Host:** `CustomWebApplicationFactory<Program>` (in `api-server.Tests/Framework/Fixtures/`)
-* **Integration API Client:** Refit (Multiple granular interfaces generated via `Scripts/generate-api-client.sh` into `api-server.Tests/Framework/Client/`)
+* **Integration API Client:** Refit (Multiple granular interfaces generated via `Scripts/generate-api-client.sh` into `Zarichney.ApiClient` project)
 * **Integration Database:** Testcontainers (PostgreSQL) via `DatabaseFixture`
 * **External HTTP Service Virtualization:** WireMock.Net (as per `api-server.Tests/TechnicalDesignDocument.md` roadmap)
 * **Database Cleanup:** Respawn (within `DatabaseFixture`)
@@ -37,7 +37,7 @@
 
 * **Test Project:** All tests **must** reside in the `api-server.Tests` project.
 * **Folder Structure:** Strictly adhere to the structure defined in the `api-server.Tests/TechnicalDesignDocument.md`. Key directories include:
-    * `Framework/Client/` (Generated Refit client)
+    * `Framework/Client/` (Empty directory - Refit clients moved to `Zarichney.ApiClient` project)
     * `Framework/Configuration/`
     * `Framework/Attributes/`
     * `Framework/Fixtures/` (`CustomWebApplicationFactory`, `DatabaseFixture`, `ApiClientFixture`)
@@ -71,7 +71,7 @@
     * **Assertions:** Use FluentAssertions with `.Because("...")`.
     * **Data:** Leverage AutoFixture and custom Builders.
 * **Detailed Guidance:** For comprehensive instructions on writing unit tests, including SUT design for testability, advanced mocking, assertion patterns, and AutoFixture usage, refer to:
-    * **`Docs/Standards/UnitTestCaseDevelopment.md`**
+    * **`UnitTestCaseDevelopment.md`**
 
 ## 7. Integration Test Standards
 
@@ -79,7 +79,7 @@
 * **Scope:** Cover all public API endpoints, focusing on key success/error paths, authorization, and component interactions.
 * **Key Framework Components:**
     * `CustomWebApplicationFactory`, `DatabaseFixture`, `ApiClientFixture` (via shared collection fixture).
-    * API interaction **must** use the generated Refit client interfaces (e.g., `IAuthApi`, `ICookbookApi`, `IPublicApi`).
+    * API interaction **must** use the generated Refit client interfaces from the `Zarichney.ApiClient` project (e.g., `IAuthApi`, `ICookbookApi`, `IPublicApi`).
     * External HTTP APIs **must be virtualized** using WireMock.Net. Live external API calls are strictly forbidden.
     * Authentication simulated via `TestAuthHandler`.
 * **API Response Handling Standards:**
@@ -123,7 +123,7 @@
     * **Configuration:** Tests using any approach will be properly skipped when the required dependencies are unavailable, with detailed skip reasons that include which features or infrastructure are unavailable and what configurations are missing.
     * **CI/CD Integration:** In CI environments, all dependencies should be properly configured or mocked/virtualized to ensure comprehensive test coverage, while local development environments may skip tests based on available dependencies.
 * **Detailed Guidance:** For comprehensive instructions on writing integration tests, including `WebApplicationFactory` customization, `Testcontainers` usage, `WireMock.Net` setup, data management with `Respawn` and `AutoFixture`, and `TestAuthHandler` patterns, refer to:
-    * **`Docs/Standards/IntegrationTestCaseDevelopment.md`**
+    * **`IntegrationTestCaseDevelopment.md`**
 
 ## 8. Test Data Standards
 
@@ -131,7 +131,7 @@
 * **Usage Principles:**
     * Use **Builders** for core domain models or complex DTOs requiring specific, controlled states.
     * Use **AutoFixture** for anonymous data, simple DTOs, and populating non-critical properties.
-* **Detailed Guidance:** Refer to `Docs/Standards/UnitTestCaseDevelopment.md` and `Docs/Standards/IntegrationTestCaseDevelopment.md` for specific AutoFixture customization and builder patterns.
+* **Detailed Guidance:** Refer to `UnitTestCaseDevelopment.md` and `IntegrationTestCaseDevelopment.md` for specific AutoFixture customization and builder patterns.
 * **Clarity:** Test data setup should be clear and maintainable within the Arrange block.
 
 ## 9. Developer Workflow & CI/CD Integration
@@ -167,7 +167,7 @@
     * **Structured Data Snippets (Future):** For complex rules or configuration examples, embedding well-formed JSON or YAML snippets may be adopted.
 * **Input for AI Coders:**
     * This `OverarchingTestingStandards.md` document.
-    * The relevant specific guide: `Docs/Standards/UnitTestCaseDevelopment.md` OR `Docs/Standards/IntegrationTestCaseDevelopment.md`.
+    * The relevant specific guide: `UnitTestCaseDevelopment.md` OR `IntegrationTestCaseDevelopment.md`.
     * The source file(s) of the System Under Test (SUT).
     * The OpenAPI specification (`swagger.json`) for API-related tasks.
     * Any existing tests for the SUT as examples of patterns to follow or refactor.
@@ -185,9 +185,9 @@
 
 ## 12. Document References
 
-* **Detailed Unit Testing Guide:** `Docs/Standards/UnitTestCaseDevelopment.md` (To be created)
-* **Detailed Integration Testing Guide:** `Docs/Standards/IntegrationTestCaseDevelopment.md` (To be created)
-* **Testing Framework Blueprint:** `api-server.Tests/TechnicalDesignDocument.md`
-* **Development Workflows:** See files in `Docs/Development/` (e.g., `StandardWorkflow.md`, `TestCovergeWorkflow.md`).
-* **Code Standards:** `Docs/Standards/CodingStandards.md`
-* **Task Management Standards:** `Docs/Standards/TaskManagementStandards.md`
+* **Detailed Unit Testing Guide:** `UnitTestCaseDevelopment.md` (To be created)
+* **Detailed Integration Testing Guide:** `IntegrationTestCaseDevelopment.md` (To be created)
+* **Testing Framework Blueprint:** `../../../api-server.Tests/TechnicalDesignDocument.md`
+* **Development Workflows:** See files in `../Workflows/` (e.g., `StandardWorkflow.md`, `TestCoverageWorkflow.md`).
+* **Code Standards:** `../Coding/CodingStandards.md`
+* **Task Management Standards:** `../Workflows/TaskManagementStandards.md`

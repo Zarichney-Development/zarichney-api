@@ -76,8 +76,45 @@
 
 ## 5. How to Work With This Code
 
+### Client Regeneration (Mandatory Task)
+
+* **When:** You **MUST** regenerate the client code using the appropriate script whenever:
+    1. Changes are made to `api-server` API controller signatures (methods, parameters).
+    2. API routes are modified.
+    3. Request or response DTOs used by the API are changed.
+    4. OpenAPI/Swagger generation attributes in `api-server` are updated.
+* **How (PowerShell):**
+    ```powershell
+    ./Scripts/generate-api-client.ps1
+    ```
+  (Ensure your execution policy allows script execution: `Set-ExecutionPolicy RemoteSigned -Scope Process`)
+* **How (Bash/Zsh):**
+    ```bash
+    ./Scripts/generate-api-client.sh
+    ```
+  (Ensure the script is executable: `chmod +x ./Scripts/generate-api-client.sh`)
+* **Impact:** This ensures that compilation errors will immediately highlight any integration tests that are broken due to API contract changes, rather than discovering these issues at runtime.
+
+### Using the Clients in Integration Tests
+
+* Instances of specific API interfaces (e.g., `IAuthApi`, `IAiApi`, etc.) are typically obtained via the `ApiClientFixture`, which provides both authenticated and unauthenticated versions of each client.
+    ```csharp
+    // Example within an integration test method:
+    // Using the AuthApi for authentication endpoints
+    var response = await ApiClient.UnauthenticatedAuthApi.LoginAsync(new LoginRequestDto { /* ... */ });
+    response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+    // Using the CookbookApi for cookbook-related endpoints
+    var recipes = await ApiClient.AuthenticatedCookbookApi.GetRecipesAsync();
+    recipes.Should().NotBeNull();
+    ```
+* The `ApiClientFixture` provides granular access to different API areas through properties like `AuthenticatedAuthApi`, `UnauthenticatedAiApi`, `AuthenticatedCookbookApi`, etc.
+* Refer to `Zarichney.Standards/Testing/IntegrationTestCaseDevelopment.md` for detailed patterns on using the clients.
+
+### General Usage
+
 * **Setup:** 
-  - Reference `Zarichney.ApiClient` NuGet package or project
+  - Reference `Zarichney.ApiClient` project or NuGet package
   - Call `services.ConfigureRefitClients()` in DI setup
   - Inject desired API interfaces (e.g., `IAiApi`) into consuming classes
 * **Testing:**
@@ -85,7 +122,7 @@
   * **How to Run:** `dotnet test` (once test project exists)
   * **Testing Strategy:** Mock Refit interfaces for unit tests, use real clients for integration tests
 * **Common Pitfalls / Gotchas:** 
-  - Do not manually modify generated files - changes will be overwritten
+  - **AUTO-GENERATED CODE - DO NOT MANUALLY EDIT:** All interface and model files are auto-generated and will be overwritten
   - Regenerate clients when API contracts change using generation scripts
   - Base URL configuration may need adjustment for different environments
 
