@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "api-server.Tests", "api-ser
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zarichney.ApiClient", "Zarichney.ApiClient\Zarichney.ApiClient.csproj", "{71F5DBD0-244E-4790-BC1E-E76A87018CCA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zarichney.ApiClient.Tests", "Zarichney.ApiClient.Tests\Zarichney.ApiClient.Tests.csproj", "{62014A1C-900D-41F1-854F-E2E76FA4C27B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,5 +27,9 @@ Global
 		{71F5DBD0-244E-4790-BC1E-E76A87018CCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{71F5DBD0-244E-4790-BC1E-E76A87018CCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{71F5DBD0-244E-4790-BC1E-E76A87018CCA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{62014A1C-900D-41F1-854F-E2E76FA4C27B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62014A1C-900D-41F1-854F-E2E76FA4C27B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62014A1C-900D-41F1-854F-E2E76FA4C27B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62014A1C-900D-41F1-854F-E2E76FA4C27B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

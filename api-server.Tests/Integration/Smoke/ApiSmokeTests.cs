@@ -2,7 +2,7 @@ using FluentAssertions;
 using Refit;
 using Xunit;
 using Xunit.Abstractions;
-using Zarichney.Client.Contracts;
+using Zarichney.ApiClient.Models;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
 

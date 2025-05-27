@@ -3,7 +3,7 @@ using Refit;
 using Serilog.Sinks.XUnit.Injectable;
 using Xunit;
 using Xunit.Abstractions;
-using Zarichney.Client;
+using Zarichney.ApiClient.Interfaces;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Status;
 

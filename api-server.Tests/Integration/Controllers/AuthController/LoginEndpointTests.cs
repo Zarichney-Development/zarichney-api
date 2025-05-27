@@ -4,7 +4,7 @@ using Refit;
 using System.Net;
 using Xunit;
 using Xunit.Abstractions;
-using Zarichney.Client.Contracts;
+using Zarichney.ApiClient.Models;
 using Zarichney.Services.Auth;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;

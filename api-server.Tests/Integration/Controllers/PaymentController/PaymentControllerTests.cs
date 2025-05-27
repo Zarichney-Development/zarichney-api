@@ -9,7 +9,7 @@ using Zarichney.Tests.Framework.Fixtures;
 using Zarichney.Tests.Framework.Helpers;
 using Refit;
 using Xunit.Abstractions;
-using Zarichney.Client.Contracts;
+using Zarichney.ApiClient.Models;
 using ExternalServices = Zarichney.Services.Status.ExternalServices;
 
 namespace Zarichney.Tests.Integration.Controllers.PaymentController;
