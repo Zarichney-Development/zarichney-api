@@ -146,7 +146,7 @@
 ## 8. Known Issues & TODOs
 
 * **Auto-generation Scripts:** Scripts updated to target this project but may need refinement as API evolves
-* **Test Coverage:** Dedicated test project (`Zarichney.ApiClient.Tests`) needs to be created
+* **Test Coverage:** Dedicated test project (`Zarichney.ApiClient.Tests`) created with basic unit and integration tests
 * **Documentation Warnings:** Generated code has XML doc warnings for cancellation tokens - acceptable for auto-generated content
 * **Environment Configuration:** Base URL hardcoded - may need environment-specific configuration support
 

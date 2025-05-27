@@ -18,33 +18,33 @@ namespace Zarichney.ApiClient.Tests.Integration;
 /// </summary>
 public class PublicApiClientTests
 {
-    [Fact(Skip = "Requires running api-server instance. TODO: Use test server once Zarichney.TestingFramework is available")]
-    public async Task PublicApi_Health_ShouldReturnSuccessfully()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-        services.ConfigureRefitClients();
-        var serviceProvider = services.BuildServiceProvider();
-        
-        var publicApi = serviceProvider.GetRequiredService<IPublicApi>();
-        
-        // Act & Assert
-        var act = () => publicApi.Health();
-        await act.Should().NotThrowAsync<ApiException>("health endpoint should be accessible");
-    }
-    
-    [Fact]
-    public void PublicApi_CanBeResolvedFromDI()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-        services.ConfigureRefitClients();
-        var serviceProvider = services.BuildServiceProvider();
-        
-        // Act
-        var publicApi = serviceProvider.GetService<IPublicApi>();
-        
-        // Assert
-        publicApi.Should().NotBeNull("IPublicApi should be resolvable from DI container");
-    }
+  [Fact(Skip = "Requires running api-server instance. TODO: Use test server once Zarichney.TestingFramework is available")]
+  public async Task PublicApi_Health_ShouldReturnSuccessfully()
+  {
+    // Arrange
+    var services = new ServiceCollection();
+    services.ConfigureRefitClients();
+    var serviceProvider = services.BuildServiceProvider();
+
+    var publicApi = serviceProvider.GetRequiredService<IPublicApi>();
+
+    // Act & Assert
+    var act = () => publicApi.Health();
+    await act.Should().NotThrowAsync<ApiException>("health endpoint should be accessible");
+  }
+
+  [Fact]
+  public void PublicApi_CanBeResolvedFromDI()
+  {
+    // Arrange
+    var services = new ServiceCollection();
+    services.ConfigureRefitClients();
+    var serviceProvider = services.BuildServiceProvider();
+
+    // Act
+    var publicApi = serviceProvider.GetService<IPublicApi>();
+
+    // Assert
+    publicApi.Should().NotBeNull("IPublicApi should be resolvable from DI container");
+  }
 }
