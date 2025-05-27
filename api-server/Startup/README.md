@@ -118,7 +118,7 @@ graph TD
         * `ConfigureApplication(WebApplication)`: Configures the middleware pipeline.
     * `ConfigurationStartup`:
         * `ConfigureConfiguration(WebApplicationBuilder)`: Sets up configuration sources.
-        * `ConfigureLogging(WebApplicationBuilder)`: Configures enhanced Serilog logging with Warning default level and configuration-driven overrides. Full configuration details available at [`../../../Docs/Development/LoggingGuide.md`](../../../Docs/Development/LoggingGuide.md).
+        * `ConfigureLogging(WebApplicationBuilder)`: Configures enhanced Serilog logging with Warning default level and configuration-driven overrides. Full configuration details available at [`../../../Zarichney.Standards/Development/LoggingGuide.md`](../../../Zarichney.Standards/Development/LoggingGuide.md).
         * `RegisterConfigurationServices(IServiceCollection, IConfiguration)`: Registers configuration services.
         * `AddPrompts(IServiceCollection, Assembly[])`: Registers prompt types from specified assemblies.
         * `ValidateAndReplaceProperties(object, string)`: Validates config properties and logs warnings for missing required values (no longer throws exceptions).

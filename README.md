@@ -28,9 +28,9 @@ Whether you're interested in the API's features or the cutting-edge development 
 * **Core Services:** Email (MS Graph), File Storage, Background Tasks, Secure Configuration, Session Management.
 * **AI-Assisted Development Workflow (Meta-Feature):**
     * Leverages AI Planning Assistants and AI Coders for development tasks.
-    * Includes comprehensive standards documentation (`/Docs/Standards/`) governing coding, testing, documentation, diagramming, and task management.
-    * Features detailed workflow definitions (`/Docs/Development/`) and prompt templates (`/Docs/Templates/`) for guiding AI agents.
-    * Aims for high code quality, test coverage, and maintainability through this structured AI collaboration. ([Learn More](./Docs/Development/README.md))
+    * Includes comprehensive standards documentation (`/Zarichney.Standards/Standards/`) governing coding, testing, documentation, diagramming, and task management.
+    * Features detailed workflow definitions (`/Zarichney.Standards/Development/`) and prompt templates (`/Zarichney.Standards/Templates/`) for guiding AI agents.
+    * Aims for high code quality, test coverage, and maintainability through this structured AI collaboration. ([Learn More](./Zarichney.Standards/Development/README.md))
 
 ## Technology Highlights
 
@@ -47,10 +47,10 @@ Whether you're interested in the API's features or the cutting-edge development 
 
 * **`api-server/`:** Contains the main ASP.NET Core application code. Start with [`api-server/README.md`](./api-server/README.md) for an overview.
 * **`api-server.Tests/`:** Contains the unit and integration tests. See [`api-server.Tests/README.md`](./api-server.Tests/README.md).
-* **`Docs/`:** The heart of the documentation and AI workflow definitions.
-    * **`Docs/Standards/`:** Defines the rules (coding, testing, docs, etc.).
-    * **`Docs/Development/`:** Defines the AI-assisted workflow processes and roadmap.
-    * **`Docs/Templates/`:** Contains templates for AI prompts and GitHub Issues.
+* **`Zarichney.Standards/`:** The heart of the documentation and AI workflow definitions.
+    * **`Zarichney.Standards/Standards/`:** Defines the rules (coding, testing, docs, etc.).
+    * **`Zarichney.Standards/Development/`:** Defines the AI-assisted workflow processes and roadmap.
+    * **`Zarichney.Standards/Templates/`:** Contains templates for AI prompts and GitHub Issues.
     * Each module within `api-server/` also has its own detailed `README.md`.
 * **`Scripts/`:** Utility scripts (e.g., regenerating the test API client).
 

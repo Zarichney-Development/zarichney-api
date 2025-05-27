@@ -5,7 +5,7 @@
 > **Parent:** [`Controllers`](../README.md)
 > **Related:**
 > * **Source:** [`AiController.cs`](../../../../api-server/Controllers/AiController.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Zarichney.Standards/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

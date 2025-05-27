@@ -22,7 +22,7 @@ The primary attributes and their mechanisms are:
     * **Purpose:** An advanced `[Fact]` attribute that conditionally skips tests if specified dependencies are not met. This is crucial for integration tests that rely on external services or specific configurations.
     * **Mechanism:** It leverages the `IStatusService` from the `api-server` (to check feature availability via `ExternalServices` enum) and `ConfigurationStatusHelper` (to check for presence of required configuration values). It can also check for infrastructure dependencies like database connectivity via `InfrastructureDependency` enum.
     * **Usage:** Decorated on test methods, e.g., `[DependencyFact(ExternalServices.Llm, InfrastructureDependency.Database)]`.
-    * **Details:** See Section 7 of `../../TechnicalDesignDocument.md` and Section 7 of `../../../Docs/Standards/IntegrationTestCaseDevelopment.md`.
+    * **Details:** See Section 7 of `../../TechnicalDesignDocument.md` and Section 7 of `../../../Zarichney.Standards/Standards/IntegrationTestCaseDevelopment.md`.
 
 * **`DockerAvailableFactAttribute.cs`**:
     * **Purpose:** A specialized `[Fact]` attribute that skips tests if a running Docker environment is not detected.

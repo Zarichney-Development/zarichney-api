@@ -15,7 +15,7 @@ Integration tests in this project typically focus on:
 * **Authentication and Authorization:** Testing access control mechanisms for secured endpoints.
 * **Interactions with External Services:** Validating behavior when interacting with external HTTP services (which will be virtualized using WireMock.Net as per TDD FRMK-004).
 
-These tests provide a high level of confidence that the `api-server` operates as a cohesive system. All integration tests **must** adhere to the detailed guidelines and standards outlined in **`../../../Docs/Standards/IntegrationTestCaseDevelopment.md`**.
+These tests provide a high level of confidence that the `api-server` operates as a cohesive system. All integration tests **must** adhere to the detailed guidelines and standards outlined in **`../../../Zarichney.Standards/Standards/IntegrationTestCaseDevelopment.md`**.
 
 ## 2. Integration Testing Approach & Key Concepts
 
@@ -47,7 +47,7 @@ Each significant subdirectory under `/Integration/` should have its own `README.
 ## 4. Key Standards & Development Guide
 
 The definitive guide for writing integration tests in this project is:
-* **`../../../Docs/Standards/IntegrationTestCaseDevelopment.md`**
+* **`../../../Zarichney.Standards/Standards/IntegrationTestCaseDevelopment.md`**
 
 This document provides detailed instructions on:
 * Core principles of integration testing.
@@ -60,7 +60,7 @@ This document provides detailed instructions on:
 
 All developers (human and AI) writing integration tests **must** adhere to this guide.
 Supporting standards include:
-* `../../../Docs/Standards/TestingStandards.md` (Overarching principles and tooling).
+* `../../../Zarichney.Standards/Standards/TestingStandards.md` (Overarching principles and tooling).
 * `../TechnicalDesignDocument.md` (Provides the architectural blueprint for the testing framework used by these tests).
 
 ## 5. How to Work With This Code
@@ -92,7 +92,7 @@ Supporting standards include:
   ```bash
   dotnet test --filter "FullyQualifiedName~MyNamespace.MyIntegrationTestsClass"
   ```
-* Ensure all relevant integration tests pass locally before committing code, as per the workflow in `../../../Docs/Standards/TestingStandards.md`. Remember to run `Scripts/generate-api-client.ps1` if API contracts were changed.
+* Ensure all relevant integration tests pass locally before committing code, as per the workflow in `../../../Zarichney.Standards/Standards/TestingStandards.md`. Remember to run `Scripts/generate-api-client.ps1` if API contracts were changed.
 
 ## 6. Dependencies
 
@@ -126,7 +126,7 @@ These tests bridge the gap between fast, isolated unit tests and potentially slo
 ## 8. Known Issues & TODOs
 
 * **WireMock.Net Integration (TDD FRMK-004):** Full implementation of HTTP service virtualization using WireMock.Net is a key pending task. Current tests requiring external HTTP services mock the internal service interface instead.
-* **Coverage Expansion:** Continuously expand integration test coverage for all critical API endpoints, workflows, and error conditions. (Tracked via tasks referencing the `../../../Docs/Templates/GHTestCoverageTask.md` template).
+* **Coverage Expansion:** Continuously expand integration test coverage for all critical API endpoints, workflows, and error conditions. (Tracked via tasks referencing the `../../../Zarichney.Standards/Templates/GHTestCoverageTask.md` template).
 * **Performance Monitoring:** While the shared fixture model helps, the overall execution time of the integration test suite should be monitored, especially as more tests are added.
 * **Complex Scenarios:** Developing robust data setup and verification for very complex multi-step business workflows can be challenging and may require further refinement of Test Data Builder patterns or advanced AutoFixture customizations.
 * Refer to the "Framework Augmentation Roadmap (TODOs)" in `../TechnicalDesignDocument.md` for broader framework enhancements.

@@ -1,7 +1,7 @@
 # AI Coding Planning Assistant Workflow
 
-**Version:** 2.2
-**Last Updated:** 2025-05-04
+**Version:** 2.4
+**Last Updated:** 2025-05-26
 
 ## 1. Role and Objective
 

@@ -6,7 +6,7 @@
 > **Related:**
 > * **Source:** [`Services/AI/TranscribeService.cs`](../../../../../api-server/Services/AI/TranscribeService.cs)
 > * **Dependencies:** `OpenAIClient` (from Azure.AI.OpenAI), `IFileService`, `IGitHubService`, `IConfiguration` / `IOptions<OpenAISettings>`
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Zarichney.Standards/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

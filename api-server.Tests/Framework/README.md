@@ -14,7 +14,7 @@ Its primary responsibilities are to:
 * Encapsulate common testing patterns and logic (e.g., authentication simulation via `TestAuthHandler`, conditional test execution via `DependencyFactAttribute`).
 * Host the auto-generated API clients used for integration testing (multiple granular interfaces).
 
-The components within this directory are designed to be leveraged by test cases in the `/Unit` and `/Integration` directories, ensuring adherence to the project's testing standards as defined in `../../Docs/Standards/TestingStandards.md` and the detailed guides for unit and integration testing.
+The components within this directory are designed to be leveraged by test cases in the `/Unit` and `/Integration` directories, ensuring adherence to the project's testing standards as defined in `../../Zarichney.Standards/Standards/TestingStandards.md` and the detailed guides for unit and integration testing.
 
 ### Child Modules / Key Subdirectories:
 

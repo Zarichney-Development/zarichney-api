@@ -7,7 +7,7 @@
 > * **Source:** [`PaymentController.cs`](../../../../api-server/Controllers/PaymentController.cs)
 > * **Service:** [`Services/Payment/IPaymentService.cs`](../../../../api-server/Services/Payment/IPaymentService.cs)
 > * **Models:** [`Services/Payment/PaymentModels.cs`](../../../../api-server/Services/Payment/PaymentModels.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Zarichney.Standards/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

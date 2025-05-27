@@ -12,15 +12,15 @@
 
 * **`/api-server/`**: Main ASP.NET 8 application code. ([View README](../api-server/README.md))
 * **`/api-server.Tests/`**: Unit and integration tests. ([View README](../api-server.Tests/README.md))
-* **`/Docs/`**: All project documentation.
-    * **`/Docs/Standards/`**: **CRITICAL STANDARDS** - Review these first. ([View README](../Docs/Standards/README.md))
-    * **`/Docs/Development/`**: AI-assisted workflow definitions. ([View README](../Docs/Development/README.md))
-    * **`/Docs/Templates/`**: Templates for prompts, issues, etc. ([View README](../Docs/Templates/README.md))
+* **`/Zarichney.Standards/`**: All project documentation.
+    * **`/Zarichney.Standards/Standards/`**: **CRITICAL STANDARDS** - Review these first. ([View README](../Zarichney.Standards/Standards/README.md))
+    * **`/Zarichney.Standards/Development/`**: AI-assisted workflow definitions. ([View README](../Zarichney.Standards/Development/README.md))
+    * **`/Zarichney.Standards/Templates/`**: Templates for prompts, issues, etc. ([View README](../Zarichney.Standards/Templates/README.md))
 * **Module-Specific `README.md` files:** Each significant directory within `/api-server/` and `/api-server.Tests/` has its own `README.md`. **Always review the local `README.md` for the specific module you are working on.**
 
 ## 3. High-Level Development Workflow (When I give you a task)
 
-Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskManagementStandards.md` and the specific workflow file (e.g., `StandardWorkflow.md`) referenced in your task prompt for full details.
+Generally, your work will follow these phases. Refer to `/Zarichney.Standards/Standards/TaskManagementStandards.md` and the specific workflow file (e.g., `StandardWorkflow.md`) referenced in your task prompt for full details.
 
 1.  **Understand Task:** Review the task prompt thoroughly, the related github issue and the project tree structure.
 2.  **Review Context:** Use read tool on all standards and relevant local `README.md` files.
@@ -79,10 +79,10 @@ Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskMan
 
 Before implementing any significant code, test, or documentation changes, you **MUST** be familiar with and adhere to the following standards. The task prompt will list specific documents, but these are foundational:
 
-* **Primary Code Rules:** [`/Docs/Standards/CodingStandards.md`](../Docs/Standards/CodingStandards.md) (Includes `/.editorconfig` reference)
-* **Task/Git Rules:** [`/Docs/Standards/TaskManagementStandards.md`](../Docs/Standards/TaskManagementStandards.md)
-* **Testing Rules:** [`/Docs/Standards/TestingStandards.md`](../Docs/Standards/TestingStandards.md)
-* **Documentation Rules (READMEs):** [`/Docs/Standards/DocumentationStandards.md`](../Docs/Standards/DocumentationStandards.md) (Uses [`/Docs/Templates/ReadmeTemplate.md`](../Docs/Templates/ReadmeTemplate.md))
+* **Primary Code Rules:** [`/Zarichney.Standards/Standards/CodingStandards.md`](../Zarichney.Standards/Standards/CodingStandards.md) (Includes `/.editorconfig` reference)
+* **Task/Git Rules:** [`/Zarichney.Standards/Standards/TaskManagementStandards.md`](../Zarichney.Standards/Standards/TaskManagementStandards.md)
+* **Testing Rules:** [`/Zarichney.Standards/Standards/TestingStandards.md`](../Zarichney.Standards/Standards/TestingStandards.md)
+* **Documentation Rules (READMEs):** [`/Zarichney.Standards/Standards/DocumentationStandards.md`](../Zarichney.Standards/Standards/DocumentationStandards.md) (Uses [`/Zarichney.Standards/Templates/ReadmeTemplate.md`](../Zarichney.Standards/Templates/ReadmeTemplate.md))
 * **Localized README.md:** Each module has its own `README.md` file. Always check the local `README.md` for specific instructions or context.
 
 ## 6. Important Reminders

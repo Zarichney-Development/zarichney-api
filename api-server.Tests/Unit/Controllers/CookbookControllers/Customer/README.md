@@ -8,7 +8,7 @@
 > * **Source:** [`CookbookController.cs`](../../../../../api-server/Controllers/CookbookController.cs)
 > * **Service:** [`Cookbook/Customers/ICustomerService.cs`](../../../../../api-server/Cookbook/Customers/ICustomerService.cs)
 > * **Models:** [`Cookbook/Customers/CustomerModels.cs`](../../../../../api-server/Cookbook/Customers/CustomerModels.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Zarichney.Standards/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

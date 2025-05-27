@@ -10,9 +10,9 @@ This project, `api-server.Tests`, contains all automated tests for the `zarichne
 
 This project and its contents are governed by the strategies and requirements outlined in the following key documents:
 * **`./TechnicalDesignDocument.md`**: The blueprint for this test project's architecture, tools, and advanced strategies.
-* **`../../Docs/Standards/TestingStandards.md`**: The overarching testing standards for the entire solution.
-* **`../../Docs/Standards/UnitTestCaseDevelopment.md`**: Detailed guidance for writing unit tests.
-* **`../../Docs/Standards/IntegrationTestCaseDevelopment.md`**: Detailed guidance for writing integration tests.
+* **`../../Zarichney.Standards/Standards/TestingStandards.md`**: The overarching testing standards for the entire solution.
+* **`../../Zarichney.Standards/Standards/UnitTestCaseDevelopment.md`**: Detailed guidance for writing unit tests.
+* **`../../Zarichney.Standards/Standards/IntegrationTestCaseDevelopment.md`**: Detailed guidance for writing integration tests.
 
 Adherence to these documents is mandatory for all test development and maintenance, enabling effective collaboration between human and AI developers and ensuring the test suite remains robust and maintainable.
 
@@ -22,7 +22,7 @@ The testing strategy employed aims for high confidence through realistic test sc
 
 * **In-Memory API Hosting:** Integration tests run against an in-memory instance of the `api-server` using `CustomWebApplicationFactory<Program>`, allowing for fast execution without network overhead.
 * **Database Testing:** Real database interactions are tested using PostgreSQL managed by **Testcontainers** via the `DatabaseFixture`. This ensures tests run against a clean, consistent database schema with migrations applied. Database state is reset between tests using **Respawn**.
-* **Test Environment Logging:** Enhanced configurable logging system for test environment using Serilog with Warning default level and configuration-driven overrides. Test-specific logging configuration available in `appsettings.Testing.json`. Full configuration guide at [`../Docs/Development/LoggingGuide.md`](../Docs/Development/LoggingGuide.md).
+* **Test Environment Logging:** Enhanced configurable logging system for test environment using Serilog with Warning default level and configuration-driven overrides. Test-specific logging configuration available in `appsettings.Testing.json`. Full configuration guide at [`../Zarichney.Standards/Development/LoggingGuide.md`](../Zarichney.Standards/Development/LoggingGuide.md).
 * **External HTTP Service Virtualization:** Interactions with external third-party HTTP APIs (e.g., Stripe, OpenAI) will be managed using **WireMock.Net** (as per FRMK-004 in `TechnicalDesignDocument.md`). This ensures deterministic behavior and isolates tests from external flakiness.
 * **API Client Interaction:** Integration tests interact with the API using type-safe **Refit clients** (multiple granular interfaces), which are auto-generated from the API's OpenAPI specification.
 * **Authentication Simulation:** The `TestAuthHandler` allows for simulating various authenticated users and authorization scenarios.
@@ -59,13 +59,13 @@ All test development **must** adhere to the following standards documents:
 * **Core Technical Design:**
     * `./TechnicalDesignDocument.md` - The primary architectural blueprint for this test suite.
 * **Overarching Testing Principles:**
-    * `../../Docs/Standards/TestingStandards.md` - General testing philosophy, tooling, and quality expectations.
+    * `../../Zarichney.Standards/Standards/TestingStandards.md` - General testing philosophy, tooling, and quality expectations.
 * **Specific Test Type Development:**
-    * `../../Docs/Standards/UnitTestCaseDevelopment.md` - Detailed "how-to" for writing unit tests.
-    * `../../Docs/Standards/IntegrationTestCaseDevelopment.md` - Detailed "how-to" for writing integration tests.
+    * `../../Zarichney.Standards/Standards/UnitTestCaseDevelopment.md` - Detailed "how-to" for writing unit tests.
+    * `../../Zarichney.Standards/Standards/IntegrationTestCaseDevelopment.md` - Detailed "how-to" for writing integration tests.
 * **Code & Documentation Quality:**
-    * `../../Docs/Standards/CodingStandards.md` - Standards for writing C# code (applies to test code too).
-    * `../../Docs/Standards/DocumentationStandards.md` - Standards for writing per-directory README files within this project.
+    * `../../Zarichney.Standards/Standards/CodingStandards.md` - Standards for writing C# code (applies to test code too).
+    * `../../Zarichney.Standards/Standards/DocumentationStandards.md` - Standards for writing per-directory README files within this project.
 
 A commitment to high test coverage (>=90% for unit tests) and rigorous adherence to these standards is expected to ensure a reliable and maintainable API.
 
@@ -140,6 +140,6 @@ The current focus is on implementing the framework augmentations detailed in the
 ## 8. Known Issues & TODOs
 
 * **Framework Augmentation:** This test framework is actively being enhanced. Refer to the **"Framework Augmentation Roadmap (TODOs)" (Section 16)** in `TechnicalDesignDocument.md` for a list of planned improvements (e.g., WireMock.Net integration, advanced AutoFixture customizations).
-* **Test Coverage:** While the goal is >=90% unit test coverage and comprehensive integration test coverage, this is an ongoing effort. Specific coverage gaps may exist and are being progressively addressed. (Refer to `../../Docs/Development/TestCovergeWorkflow.md`).
+* **Test Coverage:** While the goal is >=90% unit test coverage and comprehensive integration test coverage, this is an ongoing effort. Specific coverage gaps may exist and are being progressively addressed. (Refer to `../../Zarichney.Standards/Development/TestCovergeWorkflow.md`).
 
 ---

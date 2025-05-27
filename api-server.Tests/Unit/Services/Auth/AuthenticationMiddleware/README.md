@@ -6,7 +6,7 @@
 > **Related:**
 > * **Source:** [`Services/Auth/AuthenticationMiddleware.cs`](../../../../../api-server/Services/Auth/AuthenticationMiddleware.cs)
 > * **Dependencies:** `IApiKeyService`, `ICookieAuthManager`, `RequestDelegate`, `ILogger<AuthenticationMiddleware>`
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Zarichney.Standards/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

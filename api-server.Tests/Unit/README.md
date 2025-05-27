@@ -15,7 +15,7 @@ Unit tests are foundational to our testing strategy, aiming to:
 * Facilitate safer code refactoring by ensuring individual units still behave as expected after changes.
 * Achieve a high level of code coverage (striving for >=90%) for non-trivial logic.
 
-All unit tests **must** adhere to the detailed guidelines and standards outlined in **`../../../Docs/Standards/UnitTestCaseDevelopment.md`**.
+All unit tests **must** adhere to the detailed guidelines and standards outlined in **`../../../Zarichney.Standards/Standards/UnitTestCaseDevelopment.md`**.
 
 ## 2. Unit Testing Approach & Key Concepts
 
@@ -56,7 +56,7 @@ Each significant subdirectory under `/Unit/` should have its own `README.md` det
 ## 4. Key Standards & Development Guide
 
 The definitive guide for writing unit tests in this project is:
-* **`../../../Docs/Standards/UnitTestCaseDevelopment.md`**
+* **`../../../Zarichney.Standards/Standards/UnitTestCaseDevelopment.md`**
 
 This document provides detailed instructions on:
 * Designing production code for testability.
@@ -69,8 +69,8 @@ This document provides detailed instructions on:
 
 All developers (human and AI) writing unit tests **must** adhere to this guide.
 Supporting standards include:
-* `../../../Docs/Standards/TestingStandards.md` (Overarching principles and tooling).
-* `../../../Docs/Standards/CodingStandards.md` (Essential for writing testable SUTs).
+* `../../../Zarichney.Standards/Standards/TestingStandards.md` (Overarching principles and tooling).
+* `../../../Zarichney.Standards/Standards/CodingStandards.md` (Essential for writing testable SUTs).
 * `../TechnicalDesignDocument.md` (Provides context on the overall testing strategy and framework components that might be unit-tested here).
 
 ## 5. How to Work With This Code
@@ -79,7 +79,7 @@ Supporting standards include:
 
 1.  **Identify the SUT:** Determine the specific class or method in `api-server` that needs testing.
 2.  **Create Test File:** Following the directory structure and naming conventions, create or locate the appropriate test file in `/Unit/`.
-3.  **Design for Testability:** Ensure the SUT adheres to principles in `../../../Docs/Standards/CodingStandards.md` (e.g., uses DI, avoids statics for dependencies). Refactor the SUT if necessary.
+3.  **Design for Testability:** Ensure the SUT adheres to principles in `../../../Zarichney.Standards/Standards/CodingStandards.md` (e.g., uses DI, avoids statics for dependencies). Refactor the SUT if necessary.
 4.  **Follow `UnitTestCaseDevelopment.md`:** Apply the AAA pattern, mock all dependencies using Moq, use AutoFixture for data, and write clear assertions with FluentAssertions.
 5.  **Categorize:** Add `[Trait("Category", "Unit")]`.
 
@@ -94,7 +94,7 @@ Supporting standards include:
   dotnet test --filter "FullyQualifiedName~MyNamespace.MyClassTests"
   dotnet test --filter "DisplayName~MyMethod_MyScenario_MyExpectedOutcome"
   ```
-* Ensure all unit tests pass locally before committing code, as per the workflow defined in `../../../Docs/Standards/TestingStandards.md`.
+* Ensure all unit tests pass locally before committing code, as per the workflow defined in `../../../Zarichney.Standards/Standards/TestingStandards.md`.
 
 ## 6. Dependencies
 
@@ -123,8 +123,8 @@ The emphasis on strict isolation and mocking ensures that failures in unit tests
 
 ## 8. Known Issues & TODOs
 
-* **Coverage Gaps:** While the goal is >=90% coverage, there may be existing areas in `api-server` with lower unit test coverage. These should be identified and addressed progressively, especially for critical business logic. (Tracked via tasks referencing the `../../../Docs/Templates/GHTestCoverageTask.md` template).
-* **Complex SUTs:** Some older or more complex components in `api-server` might still be challenging to unit test effectively. Ongoing refactoring for testability, guided by `../../../Docs/Standards/CodingStandards.md`, is encouraged.
-* **Review AI-Generated Tests:** As AI tools assist in test generation, ensure their output is rigorously reviewed against the `../../../Docs/Standards/UnitTestCaseDevelopment.md` for quality, correctness, and adherence to best practices.
+* **Coverage Gaps:** While the goal is >=90% coverage, there may be existing areas in `api-server` with lower unit test coverage. These should be identified and addressed progressively, especially for critical business logic. (Tracked via tasks referencing the `../../../Zarichney.Standards/Templates/GHTestCoverageTask.md` template).
+* **Complex SUTs:** Some older or more complex components in `api-server` might still be challenging to unit test effectively. Ongoing refactoring for testability, guided by `../../../Zarichney.Standards/Standards/CodingStandards.md`, is encouraged.
+* **Review AI-Generated Tests:** As AI tools assist in test generation, ensure their output is rigorously reviewed against the `../../../Zarichney.Standards/Standards/UnitTestCaseDevelopment.md` for quality, correctness, and adherence to best practices.
 
 ---

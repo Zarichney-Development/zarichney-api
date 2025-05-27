@@ -7,7 +7,7 @@
 > * **Source:** [`Services/Auth/RoleInitializer.cs`](../../../../../api-server/Services/Auth/RoleInitializer.cs)
 > * **Dependencies:** `RoleManager<IdentityRole>`, `IServiceProvider` / `IServiceScopeFactory`, `ILogger<RoleInitializer>`
 > * **Models:** [`Models/Roles.cs`](../../../../../api-server/Services/Auth/Models/Roles.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Zarichney.Standards/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 
