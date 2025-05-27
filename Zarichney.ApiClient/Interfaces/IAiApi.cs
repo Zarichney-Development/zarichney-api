@@ -8,11 +8,11 @@ using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Zarichney.Client.Contracts;
+using Zarichney.ApiClient.Models;
 
 #nullable enable annotations
 
-namespace Zarichney.Client
+namespace Zarichney.ApiClient.Interfaces
 {
     /// <summary>Gets a completion from the configured Language Model (LLM) based on either text or audio input.</summary>
     [System.CodeDom.Compiler.GeneratedCode("Refitter", "1.5.5.0")]
