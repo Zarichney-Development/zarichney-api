@@ -6,7 +6,7 @@
 > **Related:**
 > * **Source:** [`Services/AI/AiService.cs`](../../../../../api-server/Services/AI/AiService.cs)
 > * **Dependencies:** `ILlmService`, `ITranscribeService`, `IGitHubService`, `IEmailService`, `ISessionManager`, `IScopeContainer`
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Zarichney.Standards/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

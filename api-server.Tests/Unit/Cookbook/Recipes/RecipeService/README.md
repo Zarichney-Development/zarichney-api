@@ -9,7 +9,7 @@
 > * **Dependencies:** `IRecipeRepository`, `IRecipeSearcher`, `IWebScraperService`, `ILlmService`, `ISessionManager`, `ILogger<RecipeService>`
 > * **Prompts:** Various classes inheriting from `PromptBase` (e.g., `RankRecipe`, `AnalyzeRecipe`, `SynthesizeRecipe`, `GetAlternativeQuery`)
 > * **Models:** [`Cookbook/Recipes/RecipeModels.cs`](../../../../../api-server/Cookbook/Recipes/RecipeModels.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Zarichney.Standards/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

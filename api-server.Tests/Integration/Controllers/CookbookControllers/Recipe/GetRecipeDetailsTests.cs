@@ -1,8 +1,8 @@
 using Refit;
 using Xunit;
 using Xunit.Abstractions;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.TestingFramework.Attributes;
+using Zarichney.TestingFramework.Fixtures;
 
 namespace Zarichney.Tests.Integration.Controllers.CookbookControllers.Recipe;
 
@@ -24,7 +24,7 @@ public class GetRecipeDetailsTests(ApiClientFixture apiClientFixture, ITestOutpu
     // The database doesn't need to be reset for authentication tests
 
     // Act & Assert
-    await Assert.ThrowsAsync<ApiException>(() => ApiClient.Recipe("", false, null, null));
+    await Assert.ThrowsAsync<ApiException>(() => _apiClientFixture.UnauthenticatedCookbookApi.Recipe("", false, null, null));
   }
 
   [DependencyFact]
@@ -38,7 +38,7 @@ public class GetRecipeDetailsTests(ApiClientFixture apiClientFixture, ITestOutpu
     // var testRecipes = await SeedTestRecipesAsync();
 
     // Create an authenticated client with user roles
-    var authenticatedClient = AuthenticatedApiClient;
+    var authenticatedClient = _apiClientFixture.AuthenticatedCookbookApi;
 
     // Act
     var recipes = await authenticatedClient.Recipe("", scrape: false, acceptableScore: null, requiredCount: null);
@@ -58,10 +58,11 @@ public class GetRecipeDetailsTests(ApiClientFixture apiClientFixture, ITestOutpu
     var recipeId = "sample-recipe-id"; // In a real test, this would be the ID of a seeded recipe
 
     // Create an authenticated client
-    var authenticatedClient = AuthenticatedApiClient;
+    var authenticatedClient = _apiClientFixture.AuthenticatedCookbookApi;
 
     // Act
-    var order = await authenticatedClient.OrderGET(recipeId);
+    var orderResponse = await authenticatedClient.OrderGET(recipeId);
+    var order = orderResponse.Content;
 
     // Assert
     Assert.NotNull(order);
@@ -77,7 +78,7 @@ public class GetRecipeDetailsTests(ApiClientFixture apiClientFixture, ITestOutpu
     var nonExistentId = "non-existent-id";
 
     // Create an authenticated client
-    var authenticatedClient = AuthenticatedApiClient;
+    var authenticatedClient = _apiClientFixture.AuthenticatedCookbookApi;
 
     // Act & Assert
     var ex = await Assert.ThrowsAsync<ApiException>(() => authenticatedClient.OrderGET(nonExistentId));

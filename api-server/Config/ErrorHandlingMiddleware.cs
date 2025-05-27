@@ -25,8 +25,8 @@ public class ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandling
 
       var errorResponse = new
       {
-        Error = "Service Temporarily Unavailable",
-        Message = "Service is unavailable due to missing configuration.",
+        Error = "External Service Unavailable",
+        Message = serviceEx.Message,
         MissingConfigurations = serviceEx.Reasons,
         TraceId = context.TraceIdentifier
       };
@@ -46,8 +46,8 @@ public class ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandling
 
       var errorResponse = new
       {
-        Error = "Service Temporarily Unavailable",
-        Message = $"A required configuration for a service is missing or invalid. Please contact the administrator. Section: {configEx.ConfigurationSection}",
+        Error = "Configuration Missing",
+        Message = $"A required configuration for a service is missing or invalid. Section: {configEx.ConfigurationSection}",
         TraceId = context.TraceIdentifier
       };
       await context.Response.WriteAsJsonAsync(errorResponse);

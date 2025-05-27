@@ -4,8 +4,8 @@ using Moq;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Services.Status;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.TestingFramework.Attributes;
+using Zarichney.TestingFramework.Fixtures;
 using Zarichney.Tests.Integration;
 
 namespace Zarichney.Tests.Unit.Integration;

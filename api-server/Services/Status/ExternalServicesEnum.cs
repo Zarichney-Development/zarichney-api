@@ -34,5 +34,10 @@ public enum ExternalServices
   /// <summary>
   /// A service to ensure a given email is legitimate
   /// </summary>
-  MailCheck
+  MailCheck,
+
+  /// <summary>
+  /// PostgreSQL database for user identity management, authentication, and user data.
+  /// </summary>
+  PostgresIdentityDb
 }

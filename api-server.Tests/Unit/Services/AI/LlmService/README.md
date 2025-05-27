@@ -6,7 +6,7 @@
 > **Related:**
 > * **Source:** [`Services/AI/LlmService.cs`](../../../../../api-server/Services/AI/LlmService.cs)
 > * **Dependencies:** [`ILlmRepository`](../../../../../api-server/Services/AI/LlmRepository.cs), [`ISessionManager`](../../../../../api-server/Services/Sessions/SessionManager.cs), [`PromptBase`](../../../../../api-server/Services/AI/PromptBase.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Zarichney.Standards/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

@@ -12,7 +12,7 @@
 >   * [`Services/Status/RequiresConfigurationAttribute.cs`](../../../api-server/Services/Status/RequiresConfigurationAttribute.cs)
 >   * [`Services/Status/DependsOnServiceAttribute.cs`](../../../api-server/Services/Status/DependsOnServiceAttribute.cs)
 > * **Startup:** [`Startup/ApplicationStartup.cs`](../../../api-server/Startup/ApplicationStartup.cs)
-> * **Standards:** [`TestingStandards.md`](../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../Docs/Standards/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../Zarichney.Standards/Standards/DocumentationStandards.md)
 > * **Test Infrastructure:** [`IntegrationTestBase.cs`](../IntegrationTestBase.cs), [`CustomWebApplicationFactory.cs`](../../Framework/Fixtures/CustomWebApplicationFactory.cs)
 
 ## 1. Purpose & Responsibility

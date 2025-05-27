@@ -7,7 +7,7 @@
 > * **Source:** [`AuthController.cs`](../../../../api-server/Controllers/AuthController.cs)
 > * **Commands:** [`Services/Auth/Commands/`](../../../../api-server/Services/Auth/Commands/)
 > * **Services:** [`AuthService.cs`](../../../../api-server/Services/Auth/AuthService.cs), [`CookieAuthManager.cs`](../../../../api-server/Services/Auth/CookieAuthManager.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Zarichney.Standards/Development/DocumentationStandards.md)
 > * **Test Infrastructure:** [`IntegrationTestBase.cs`](../../IntegrationTestBase.cs), [`CustomWebApplicationFactory.cs`](../../../Framework/Fixtures/CustomWebApplicationFactory.cs), [`DatabaseFixture.cs`](../../../Framework/Fixtures/DatabaseFixture.cs), [`AuthTestHelper.cs`](../../../Framework/Helpers/AuthTestHelper.cs)
 
 ## 1. Purpose & Rationale (Why?)

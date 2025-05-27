@@ -3,7 +3,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
-using Zarichney.Tests.Framework.Attributes;
+using Zarichney.TestingFramework.Attributes;
 
 namespace Zarichney.Tests.Unit.Controllers.PublicController;
 

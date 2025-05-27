@@ -9,7 +9,9 @@ public class Program
   {
     var builder = WebApplication.CreateBuilder(args);
     ConfigureBuilder(builder);
+
     var app = builder.Build();
+
     await ConfigureApplication(app);
     try
     {
@@ -31,6 +33,7 @@ public class Program
     ApplicationStartup.ConfigureKestrel(webBuilder);
     ConfigurationStartup.ConfigureConfiguration(webBuilder);
     ConfigurationStartup.ConfigureLogging(webBuilder);
+    ValidateStartup.ConfigureValidation(webBuilder);
     ServiceStartup.ConfigureServices(webBuilder);
     AuthenticationStartup.ConfigureIdentity(webBuilder);
     ServiceStartup.ConfigureSwagger(webBuilder);

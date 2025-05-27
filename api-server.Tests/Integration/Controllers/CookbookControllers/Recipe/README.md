@@ -8,7 +8,7 @@
 > * **Source:** [`CookbookController.cs`](../../../../../api-server/Controllers/CookbookController.cs)
 > * **Service:** [`Cookbook/Recipes/RecipeService.cs`](../../../../../api-server/Cookbook/Recipes/RecipeService.cs)
 > * **Models:** [`Cookbook/Recipes/RecipeModels.cs`](../../../../../api-server/Cookbook/Recipes/RecipeModels.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Zarichney.Standards/Development/DocumentationStandards.md)
 > * **Test Infrastructure:** [`IntegrationTestBase.cs`](../../../IntegrationTestBase.cs), [`CustomWebApplicationFactory.cs`](../../../Framework/Fixtures/CustomWebApplicationFactory.cs), [`AuthTestHelper.cs`](../../../Framework/Helpers/AuthTestHelper.cs)
 
 ## 1. Purpose & Rationale (Why?)

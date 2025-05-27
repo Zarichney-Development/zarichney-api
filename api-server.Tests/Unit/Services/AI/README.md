@@ -12,7 +12,7 @@
 >   * [`Services/AI/TranscribeService.cs`](../../../../api-server/Services/AI/TranscribeService.cs)
 >   * [`Services/AI/PromptBase.cs`](../../../../api-server/Services/AI/PromptBase.cs)
 > * **Interfaces:** [`Services/AI/ILlmRepository.cs`](../../../../api-server/Services/AI/ILlmRepository.cs) (Implicitly defined by LlmRepository)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Zarichney.Standards/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

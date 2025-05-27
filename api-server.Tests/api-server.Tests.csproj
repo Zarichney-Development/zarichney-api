@@ -14,6 +14,7 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.14" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
+        <PackageReference Include="Pose" Version="1.2.1" />
         <PackageReference Include="Serilog.Sinks.XUnit" Version="3.0.19" />
         <PackageReference Include="Serilog.Sinks.XUnit.Injectable" Version="3.0.64" />
         <PackageReference Include="xunit" Version="2.9.3" />
@@ -41,14 +42,9 @@
 
     <ItemGroup>
         <ProjectReference Include="..\api-server\api-server.csproj" />
+        <ProjectReference Include="..\Zarichney.ApiClient\Zarichney.ApiClient.csproj" />
+        <ProjectReference Include="..\Zarichney.TestingFramework\Zarichney.TestingFramework.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-        <Content Include="appsettings.Testing.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-        </Content>
-    </ItemGroup>
 
 </Project>

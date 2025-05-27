@@ -1,7 +1,5 @@
 using Microsoft.Extensions.Options;
-using Serilog;
 using Zarichney.Services.Sessions;
-using ILogger = Serilog.ILogger;
 
 namespace Zarichney.Config;
 
@@ -14,9 +12,9 @@ public class RequestResponseLoggerOptions
   public string LogDirectory { get; set; } = "Logs";
 }
 
-public class RequestResponseLoggerMiddleware(RequestDelegate next, IOptions<RequestResponseLoggerOptions> options)
+public class RequestResponseLoggerMiddleware(RequestDelegate next, IOptions<RequestResponseLoggerOptions> options, ILogger<RequestResponseLoggerMiddleware> logger)
 {
-  private readonly ILogger _logger = Log.ForContext<RequestResponseLoggerMiddleware>();
+  private readonly ILogger<RequestResponseLoggerMiddleware> _logger = logger;
   private readonly RequestResponseLoggerOptions _options = options.Value;
 
   public async Task InvokeAsync(HttpContext context)
@@ -81,7 +79,7 @@ public class RequestResponseLoggerMiddleware(RequestDelegate next, IOptions<Requ
       RequestBody = requestBody
     };
 
-    _logger.Information("HTTP Request: {@RequestDetails}", logContext);
+    _logger.LogInformation("HTTP Request: {@RequestDetails}", logContext);
   }
 
   private async Task LogResponseAsync(HttpContext context, MemoryStream responseBody)
@@ -100,7 +98,7 @@ public class RequestResponseLoggerMiddleware(RequestDelegate next, IOptions<Requ
       ResponseBody = responseContent
     };
 
-    _logger.Information("HTTP Response: {@RequestDetails}", logContext);
+    _logger.LogInformation("HTTP Response: {@RequestDetails}", logContext);
   }
 
   private object MaskSensitiveHeaders(IHeaderDictionary headers)

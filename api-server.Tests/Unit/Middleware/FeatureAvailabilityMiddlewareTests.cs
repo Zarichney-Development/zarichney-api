@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using Zarichney.Services.Status;
-using Zarichney.Tests.Framework.Attributes;
+using Zarichney.TestingFramework.Attributes;
 using StatusInfo = Zarichney.Services.Status.ServiceStatusInfo;
 
 namespace Zarichney.Tests.Unit.Middleware;
@@ -30,7 +30,7 @@ public class FeatureAvailabilityMiddlewareTests
     var statusService = new Mock<IStatusService>();
     // Setup mock to handle any unexpected calls
     statusService.Setup(s => s.GetFeatureStatus(It.IsAny<ExternalServices>()))
-        .Returns((ExternalServices service) => new StatusInfo(service, true, new List<string>()));
+        .Returns((ExternalServices service) => new StatusInfo(service, true, []));
 
     var nextInvoked = false;
 

@@ -2,8 +2,6 @@ using Zarichney.Services.Status;
 using Zarichney.Services.Email;
 using Zarichney.Services.GitHub;
 using Zarichney.Services.Sessions;
-using ILogger = Serilog.ILogger;
-
 namespace Zarichney.Services.AI;
 
 /// <summary>
@@ -112,10 +110,11 @@ public class AiService(
   IGitHubService githubService,
   IEmailService emailService,
   ISessionManager sessionManager,
-  IScopeContainer scope)
+  IScopeContainer scope,
+  ILogger<AiService> logger)
   : IAiService
 {
-  private static readonly ILogger Log = Serilog.Log.ForContext<AiService>();
+  private readonly ILogger<AiService> _logger = logger;
 
   /// <inheritdoc />
   public async Task<AudioTranscriptionResult> ProcessAudioTranscriptionAsync(IFormFile audioFile)
@@ -129,7 +128,7 @@ public class AiService(
       throw new ArgumentException(errorMessage, nameof(audioFile));
     }
 
-    Log.Information(
+    _logger.LogInformation(
       "Processing audio file for transcription. ContentType: {ContentType}, FileName: {FileName}, Length: {Length}",
       audioFile.ContentType,
       audioFile.FileName,
@@ -161,7 +160,7 @@ public class AiService(
     // Handle audio input
     if (prompt.AudioFile != null)
     {
-      Log.Information(
+      _logger.LogInformation(
         "Processing audio prompt. ContentType: {ContentType}, FileName: {FileName}, Length: {Length}",
         prompt.AudioFile.ContentType,
         prompt.AudioFile.FileName,
@@ -184,11 +183,11 @@ public class AiService(
         promptText = await transcribeService.TranscribeAudioAsync(ms);
         transcribedPrompt = promptText;
         sourceType = "audio";
-        Log.Information("Successfully transcribed audio prompt");
+        _logger.LogInformation("Successfully transcribed audio prompt");
       }
       catch (Exception ex)
       {
-        Log.Error(ex, "Failed to transcribe audio prompt");
+        _logger.LogError(ex, "Failed to transcribe audio prompt");
 
         // Send error notification
         await SendErrorNotification(
@@ -204,11 +203,11 @@ public class AiService(
     else if (!string.IsNullOrWhiteSpace(prompt.TextPrompt))
     {
       promptText = prompt.TextPrompt;
-      Log.Information("Processing text prompt");
+      _logger.LogInformation("Processing text prompt");
     }
     else
     {
-      Log.Warning("No valid prompt provided");
+      _logger.LogWarning("No valid prompt provided");
       throw new ArgumentException("Either text prompt or audio file must be provided.", nameof(prompt));
     }
 
@@ -230,7 +229,7 @@ public class AiService(
     }
     catch (Exception ex)
     {
-      Log.Error(ex, "Failed to get LLM completion");
+      _logger.LogError(ex, "Failed to get LLM completion");
 
       // Send error notification for LLM completion errors
       await SendErrorNotification(
@@ -254,11 +253,11 @@ public class AiService(
     }
     catch (ServiceUnavailableException e)
     {
-      Log.Error(e, "Unable to send email as email service is unavailable");
+      _logger.LogError(e, "Unable to send email as email service is unavailable");
     }
     catch (Exception e)
     {
-      Log.Error(e, "Unable to send email as email service failed");
+      _logger.LogError(e, "Unable to send email as email service failed");
       throw;
     }
   }
@@ -282,11 +281,11 @@ public class AiService(
     }
     catch (ServiceUnavailableException e)
     {
-      Log.Error(e, "Unable to store to github as service is unavailable");
+      _logger.LogError(e, "Unable to store to github as service is unavailable");
     }
     catch (Exception ex)
     {
-      Log.Error(ex, "Failed to store audio and transcript files to GitHub");
+      _logger.LogError(ex, "Failed to store audio and transcript files to GitHub");
       await SendErrorNotification(
         "GitHub Storage",
         ex,

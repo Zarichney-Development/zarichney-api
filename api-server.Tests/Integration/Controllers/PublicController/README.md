@@ -6,7 +6,7 @@
 > **Related:**
 > * **Source:** [`PublicController.cs`](../../../../api-server/Controllers/PublicController.cs)
 > * **Service:** [`Services/Status/IStatusService.cs`](../../../../api-server/Services/Status/IStatusService.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Zarichney.Standards/Development/DocumentationStandards.md)
 > * **Test Infrastructure:** [`IntegrationTestBase.cs`](../../IntegrationTestBase.cs), [`CustomWebApplicationFactory.cs`](../../../Framework/Fixtures/CustomWebApplicationFactory.cs)
 
 ## 1. Purpose & Rationale (Why?)

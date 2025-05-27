@@ -7,7 +7,7 @@
 > **Related:**
 > * **Source:** [`Services/Web/BrowserService.cs`](../../../../api-server/Services/Web/BrowserService.cs)
 > * **Dependencies:** Browser Automation Library Interfaces (e.g., Playwright `IBrowser`, `IPage`, `ILocator`), `ILogger<BrowserService>`
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Zarichney.Standards/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

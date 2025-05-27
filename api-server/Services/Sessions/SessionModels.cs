@@ -126,7 +126,6 @@ public class ScopeContainer(
   : IScopeContainer, IDisposable
 {
   private bool _disposed;
-  private readonly IServiceScope? _ownedScope;
 
   public IServiceProvider ServiceProvider { get; } = serviceProvider;
   public Guid Id { get; set; } = parentScope?.Id ?? Guid.NewGuid();
@@ -142,7 +141,6 @@ public class ScopeContainer(
   {
     if (!_disposed && disposing)
     {
-      _ownedScope?.Dispose();
       _disposed = true;
     }
   }
@@ -180,9 +178,10 @@ public class ScopeFactory(IServiceProvider serviceProvider) : IScopeFactory
 {
   public IScopeContainer CreateScope(IScopeContainer? parentScope = null)
   {
+#pragma warning disable CA2000 // Dispose objects before losing scope - ownership is transferred to DisposableScopeContainer
     var newScope = (parentScope?.ServiceProvider ?? serviceProvider).CreateScope();
-    var scope = new DisposableScopeContainer(newScope, parentScope);
-    return scope;
+    return new DisposableScopeContainer(newScope, parentScope);
+#pragma warning restore CA2000
   }
 }
 

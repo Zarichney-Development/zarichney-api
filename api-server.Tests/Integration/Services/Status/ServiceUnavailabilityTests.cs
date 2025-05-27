@@ -6,10 +6,11 @@ using Moq;
 using Refit;
 using Xunit;
 using Xunit.Abstractions;
-using Zarichney.Client;
+using Zarichney.ApiClient.Interfaces;
 using Zarichney.Services.Status;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.TestingFramework.Attributes;
+using Zarichney.TestingFramework.Fixtures;
+using Zarichney.TestingFramework.Helpers;
 using ExternalServices = Zarichney.Services.Status.ExternalServices;
 
 // Import the ServiceStatusInfo from Status namespace with alias
@@ -64,7 +65,7 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
     // Create a client with authentication
     using var client = factoryWithMockStatus.CreateClient();
     client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
-      "Test", Framework.Helpers.AuthTestHelper.GenerateTestToken("test-user", ["User"]));
+      "Test", AuthTestHelper.GenerateTestToken("test-user", ["User"]));
 
     // Act
     // Use a direct HTTP POST request since the endpoint is decorated with [HttpPost]
@@ -92,7 +93,7 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
     // Use a separate client for the health check to avoid any authorization issues
     using var healthClient = Factory.CreateClient();
     healthClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
-      "Test", Framework.Helpers.AuthTestHelper.GenerateTestToken("test-user", ["User"]));
+      "Test", AuthTestHelper.GenerateTestToken("test-user", ["User"]));
     var healthResponse = await healthClient.GetAsync("/api/health/secure");
 
     // Check if health endpoint worked without throwing
@@ -143,29 +144,30 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
     });
 
     using var httpClient = customFactory.CreateAuthenticatedClient("test-user", ["User"]);
-    var client = RestService.For<IZarichneyAPI>(httpClient);
+    var client = RestService.For<IPublicApi>(httpClient);
 
     // Act
-    var result = await client.StatusAll();
+    var statusResponse = await client.StatusAll();
+    var serviceStatuses = statusResponse.Content;
 
     // Assert
-    result.Should().NotBeNull();
+    statusResponse.Should().NotBeNull();
 
     // Test that the result contains the expected services, but don't make assumptions about their availability
     // since that may depend on the test environment's configuration
-    result.Should().Contain(c => c.ServiceName == (Client.ExternalServices)ExternalServices.OpenAiApi);
-    result.Should().Contain(c => c.ServiceName == (Client.ExternalServices)ExternalServices.MsGraph);
-    result.Should().Contain(c => c.ServiceName == (Client.ExternalServices)ExternalServices.MailCheck);
+    serviceStatuses.Should().Contain(c => c.ServiceName == (Zarichney.ApiClient.Models.ExternalServices)ExternalServices.OpenAiApi);
+    serviceStatuses.Should().Contain(c => c.ServiceName == (Zarichney.ApiClient.Models.ExternalServices)ExternalServices.MsGraph);
+    serviceStatuses.Should().Contain(c => c.ServiceName == (Zarichney.ApiClient.Models.ExternalServices)ExternalServices.MailCheck);
 
     // Verify result structure without making assertions about specific service configurations
-    foreach (var service in result)
+    foreach (var service in serviceStatuses)
     {
       _outputHelper.WriteLine(
         $"Service: {service.ServiceName}, Available: {service.IsAvailable}, MissingConfigs: {string.Join(", ", service.MissingConfigurations)}");
     }
 
     // Verify the test ran correctly by checking that we have a sensible response
-    result.Should().HaveCountGreaterThanOrEqualTo(3);
+    serviceStatuses.Should().HaveCountGreaterThanOrEqualTo(3);
   }
 
   /// <summary>

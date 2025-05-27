@@ -4,8 +4,6 @@ using Polly;
 using Polly.Retry;
 using Zarichney.Config;
 using Zarichney.Services.Email;
-using ILogger = Serilog.ILogger;
-
 namespace Zarichney.Services.AI;
 
 public class TranscribeConfig : IConfig
@@ -69,15 +67,16 @@ public interface ITranscribeService
 
 public class TranscribeService : ITranscribeService
 {
-  private static readonly ILogger Log = Serilog.Log.ForContext<TranscribeService>();
+  private readonly ILogger<TranscribeService> _logger;
   private readonly AudioClient _client;
   private readonly IEmailService _emailService;
   private readonly AsyncRetryPolicy _retryPolicy;
 
-  public TranscribeService(AudioClient client, TranscribeConfig config, IEmailService emailService)
+  public TranscribeService(AudioClient client, TranscribeConfig config, IEmailService emailService, ILogger<TranscribeService> logger)
   {
     _client = client;
     _emailService = emailService;
+    _logger = logger;
 
     _retryPolicy = Policy
       .Handle<Exception>()
@@ -86,7 +85,7 @@ public class TranscribeService : ITranscribeService
         sleepDurationProvider: _ => TimeSpan.FromSeconds(1),
         onRetry: (exception, _, retryCount, context) =>
         {
-          Log.Warning(exception,
+          _logger.LogWarning(exception,
             "Transcription attempt {retryCount}: Retrying due to {exception}. Retry Context: {@Context}",
             retryCount, exception.Message, context);
         }
@@ -107,7 +106,7 @@ public class TranscribeService : ITranscribeService
 
     try
     {
-      Log.Information("Starting audio transcription");
+      _logger.LogInformation("Starting audio transcription");
 
       return await _retryPolicy.ExecuteAsync(async () =>
       {
@@ -126,7 +125,7 @@ public class TranscribeService : ITranscribeService
 
             var transcription = transcriptionResult.Value;
 
-            Log.Information(
+            _logger.LogInformation(
               "Verbose audio transcription completed successfully. Segments: {SegmentCount}, Words: {WordCount}",
               transcription.Segments?.Count ?? 0,
               transcription.Words?.Count ?? 0);
@@ -144,14 +143,14 @@ public class TranscribeService : ITranscribeService
         }
         catch (Exception e)
         {
-          Log.Error(e, "Error occurred during verbose audio transcription");
+          _logger.LogError(e, "Error occurred during verbose audio transcription");
           throw;
         }
       });
     }
     catch (Exception e)
     {
-      Log.Error(e, "Failed to transcribe audio verbosely after all retry attempts");
+      _logger.LogError(e, "Failed to transcribe audio verbosely after all retry attempts");
       throw;
     }
   }
@@ -172,14 +171,14 @@ public class TranscribeService : ITranscribeService
     // Check if file is empty
     if (audioFile.Length == 0)
     {
-      Log.Warning("Empty audio file received ('{FileName}')", audioFile.FileName);
+      _logger.LogWarning("Empty audio file received ('{FileName}')", audioFile.FileName);
       return (false, "Audio file must not be empty.");
     }
 
     // Check content type
     if (string.IsNullOrEmpty(audioFile.ContentType) || !audioFile.ContentType.StartsWith("audio/"))
     {
-      Log.Warning("Invalid content type: {ContentType}", audioFile.ContentType);
+      _logger.LogWarning("Invalid content type: {ContentType}", audioFile.ContentType);
       return (false, $"Invalid or missing content type: '{audioFile.ContentType}'. Expected audio/*.");
     }
 
@@ -205,7 +204,7 @@ public class TranscribeService : ITranscribeService
       throw new ArgumentException(errorMessage, nameof(audioFile));
     }
 
-    Log.Information(
+    _logger.LogInformation(
       "Processing audio file. ContentType: {ContentType}, FileName: {FileName}, Length: {Length}",
       audioFile.ContentType,
       audioFile.FileName,
@@ -237,11 +236,11 @@ public class TranscribeService : ITranscribeService
     try
     {
       transcript = await TranscribeAudioAsync(ms);
-      Log.Information("Successfully transcribed audio file: {FileName}", audioFileName);
+      _logger.LogInformation("Successfully transcribed audio file: {FileName}", audioFileName);
     }
     catch (Exception ex)
     {
-      Log.Error(ex, "Failed to transcribe audio file {FileName}", audioFileName);
+      _logger.LogError(ex, "Failed to transcribe audio file {FileName}", audioFileName);
       await _emailService.SendErrorNotification(
         "Audio Transcription",
         ex,
@@ -260,7 +259,7 @@ public class TranscribeService : ITranscribeService
     };
   }
 
-  private static async Task<string> SaveStreamToTempFile(Stream stream)
+  private async Task<string> SaveStreamToTempFile(Stream stream)
   {
     var tempFile = Path.Combine(Path.GetTempPath(), $"audio_{Utils.GenerateId()}.webm");
 
@@ -279,7 +278,7 @@ public class TranscribeService : ITranscribeService
         File.Delete(tempFile);
       }
 
-      Log.Error(e, "Failed to save audio stream to temporary file");
+      _logger.LogError(e, "Failed to save audio stream to temporary file");
       throw;
     }
   }

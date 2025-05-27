@@ -14,7 +14,7 @@ public class ServiceStatusInfoTests
     var statusInfo = new ServiceStatusInfo(
         serviceName: ExternalServices.OpenAiApi,
         IsAvailable: true,
-        MissingConfigurations: new List<string>());
+        MissingConfigurations: []);
 
     // Assert
     statusInfo.serviceName.Should().Be(ExternalServices.OpenAiApi);
@@ -49,7 +49,7 @@ public class ServiceStatusInfoTests
     var missingConfigs = new List<string> { "Config1", "Config2" };
     var statusInfo1 = new ServiceStatusInfo(ExternalServices.Stripe, false, missingConfigs);
     var statusInfo2 = new ServiceStatusInfo(ExternalServices.Stripe, false, missingConfigs);
-    var statusInfo3 = new ServiceStatusInfo(ExternalServices.FrontEnd, true, new List<string>());
+    var statusInfo3 = new ServiceStatusInfo(ExternalServices.FrontEnd, true, []);
     var statusInfo4 = new ServiceStatusInfo(ExternalServices.GitHubAccess, false, missingConfigs);
 
     // Act & Assert

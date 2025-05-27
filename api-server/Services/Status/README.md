@@ -1,6 +1,6 @@
 # Module/Directory: /Services/Status
 
-**Last Updated:** 2025-05-16
+**Last Updated:** 2025-05-19
 
 > **Parent:** [`/Services/README.md`](../README.md)
 
@@ -13,6 +13,7 @@
     * Reports service availability based on configuration requirements marked with `[RequiresConfiguration]` attributes.
     * Provides synchronous access to feature availability status for the `ServiceAvailabilityOperationFilter` used in Swagger UI.
     * Enables health checks and automation to verify configuration without triggering runtime failures.
+    * Supports graceful degradation of services when critical dependencies like the Identity Database are unavailable in non-Production environments.
 * **Why it exists:** To allow both humans and automation to quickly verify the application's configuration health, service availability, and readiness, supporting operational monitoring and diagnostics.
 
 ## 2. Architecture & Key Concepts
@@ -31,6 +32,7 @@
         * Returns a dictionary mapping `ExternalServices` enum names to their status information using `ServiceStatusInfo` records.
         * Provides synchronous access to feature availability status for the `ServiceAvailabilityOperationFilter` used in Swagger UI.
         * Includes a constructor that accepts an `Assembly` instance, allowing the assembly to be scanned for `IConfig` types to be specified (primarily for testability).
+        * Supports direct service availability overrides via the `SetServiceAvailability` method, used for services like PostgresIdentityDb that are checked at application startup.
 * **FeatureAvailabilityMiddleware:**
     * Inspects endpoints for `[DependsOnService]` attributes at both controller and action levels.
     * Uses `IStatusService` to check if all required features are available.
@@ -49,6 +51,7 @@
     * `Task<Dictionary<ExternalServices, ServiceStatusInfo>> GetServiceStatusAsync();` — Returns a dictionary mapping `ExternalServices` enum values to their status information. Each `ServiceStatusInfo` contains the service name, availability status, and a list of missing configurations.
     * `ServiceStatusInfo? GetFeatureStatus(ExternalServices service);` — Returns status information for a specific service using the strongly-typed `ExternalServices` enum, or null if the service is not found. Primarily used by the `ServiceAvailabilityOperationFilter` for Swagger UI integration.
     * `bool IsFeatureAvailable(ExternalServices service);` — Returns whether a specific service is available (properly configured) using the strongly-typed `ExternalServices` enum. Primarily used by the `ServiceAvailabilityOperationFilter` for Swagger UI integration.
+    * `void SetServiceAvailability(ExternalServices service, bool isAvailable, List<string>? missingConfigurations = null);` — Allows direct override of a service's availability status, used for services like PostgresIdentityDb that are checked at application startup.
     * Note: All string-based overloads have been removed as part of the enum refactoring.
 * **Critical Assumptions:**
     * Assumes all required config objects are registered and injected.
@@ -82,6 +85,7 @@
     * `GetServiceStatusAsync()` is used by the `/api/status` endpoint and provides feature availability information for Swagger integration.
     * `GetConfigurationStatusAsync()` is used by the `/api/config` endpoint to report specific configuration status.
     * The `FeatureAvailabilityMiddleware` is registered in the request pipeline in `ApplicationStartup.cs` using the extension method `UseFeatureAvailability()`.
+    * For the PostgresIdentityDb service, its availability is determined at startup by the `ValidateStartup.ValidateProductionConfiguration` method, which sets the static `ValidateStartup.IsIdentityDbAvailable` property. This property is then used to update the `StatusService` via the `SetServiceAvailability` method in `Program.cs`.
 * **Marking Configuration Requirements:**
     * Decorate properties in configuration classes with `[RequiresConfiguration(ExternalServices.ServiceName)]` to indicate they are required for specific services to function.
     * Example: `[RequiresConfiguration(ExternalServices.OpenAiApi)] public string ApiKey { get; set; } = string.Empty;`
@@ -108,6 +112,9 @@
     * `Swashbuckle.AspNetCore.SwaggerGen` - Used by `ServiceAvailabilityOperationFilter` for Swagger documentation integration.
 * **Dependents (Impact of Changes):**
     * [`/Controllers/PublicController.cs`](../../Controllers/PublicController.cs) - Uses `IStatusService` for the `/api/status` and `/api/config` endpoints.
+    * [`/Controllers/AuthController.cs`](../../Controllers/AuthController.cs) - Uses `DependsOnService(ExternalServices.PostgresIdentityDb)` to indicate which actions require the Identity Database to be available.
+    * [`/Startup/ValidateStartup.cs`](../../Startup/ValidateStartup.cs) - Checks the availability of the Identity Database at startup.
+    * [`/Program.cs`](../../Program.cs) - Updates the `StatusService` with the Identity Database availability.
     * Any service that needs to check the availability of other services based on their configuration requirements.
     * Controllers and actions that use the `[DependsOnService]` attribute.
     * Configuration properties that use the `[RequiresConfiguration]` attribute.
@@ -124,6 +131,7 @@
 * **May 2025 API Response Format:** The external API response format for `/api/status` was changed from a Dictionary to a List of `ServiceStatusInfo` objects to better align with RESTful API practices and improve client usability. The internal API (`IStatusService.GetServiceStatusAsync()`) still returns a Dictionary for efficient lookups within the application code.
 * **May 2025 Code Organization:** The service availability related files (`RequiresConfigurationAttribute`, `DependsOnServiceAttribute`, `ServiceUnavailableException`, and `ServiceAvailabilityOperationFilter`) were relocated from the `/Config` directory to the `/Services/Status` directory to better reflect their functional relationship with the status service functionality.
 * **May 2025 Feature Availability Middleware:** The `FeatureAvailabilityMiddleware` was added to proactively enforce feature availability at runtime, preventing API consumers from accessing endpoints that can't function due to missing configurations. This provides a cleaner user experience by returning explicit 503 responses with detailed reasons, rather than allowing requests to proceed and fail with less specific errors.
+* **May 2025 Identity Database Graceful Degradation:** Added the `PostgresIdentityDb` to the `ExternalServices` enum and implemented graceful degradation in non-Production environments when the Identity Database is unavailable. The `ValidateStartup` class checks the availability of the Identity Database at startup, and the `Program` class updates the `StatusService` with this information via the new `SetServiceAvailability` method. The `AuthController` endpoints that require the Identity Database are now decorated with the `[DependsOnService]` attribute to ensure they return 503 Service Unavailable when the database is unavailable, allowing the application to start and remain partially functional in Development environments.
 
 ## 8. Known Issues & TODOs
 

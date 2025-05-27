@@ -7,7 +7,7 @@
 > * **Source:** [`PaymentController.cs`](../../../../api-server/Controllers/PaymentController.cs)
 > * **Service:** [`Services/Payment/PaymentService.cs`](../../../../api-server/Services/Payment/PaymentService.cs), [`Services/Payment/StripeService.cs`](../../../../api-server/Services/Payment/StripeService.cs)
 > * **Models:** [`Services/Payment/PaymentModels.cs`](../../../../api-server/Services/Payment/PaymentModels.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Zarichney.Standards/Development/DocumentationStandards.md)
 > * **Test Infrastructure:** [`IntegrationTestBase.cs`](../../IntegrationTestBase.cs), [`CustomWebApplicationFactory.cs`](../../../Framework/Fixtures/CustomWebApplicationFactory.cs), [`AuthTestHelper.cs`](../../../Framework/Helpers/AuthTestHelper.cs), [`MockStripeServiceFactory.cs`](../../../Mocks/Factories/MockStripeServiceFactory.cs)
 
 ## 1. Purpose & Rationale (Why?)

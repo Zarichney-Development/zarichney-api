@@ -3,8 +3,8 @@ using Refit;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Services.Status;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.TestingFramework.Attributes;
+using Zarichney.TestingFramework.Fixtures;
 
 namespace Zarichney.Tests.Integration.Controllers.PublicController;
 
@@ -26,15 +26,19 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture,
   /// </summary>
   [Fact]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
+  [LogTestStartEnd]
   public async Task GetHealth_WhenCalled_ReturnsOkStatus()
   {
-    // Arrange
-    // ApiClient is obtained from IntegrationTestBase, represents unauthenticated Refit client
+    using (CreateTestMethodContext(nameof(GetHealth_WhenCalled_ReturnsOkStatus)))
+    {
+      // Arrange
+      // ApiClient is obtained from IntegrationTestBase, represents unauthenticated Refit client
 
-    // Act & Assert: calling Health should not throw and thus return 200 OK
-    var act = () => ApiClient.Health();
-    await act.Should().NotThrowAsync<ApiException>(
-      because: "health endpoint should always return OK status even without configuration");
+      // Act & Assert: calling Health should not throw and thus return 200 OK
+      var act = () => _apiClientFixture.UnauthenticatedPublicApi.Health();
+      await act.Should().NotThrowAsync<ApiException>(
+        because: "health endpoint should always return OK status even without configuration");
+    }
   }
 
   /// <summary>
@@ -43,6 +47,7 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture,
   /// </summary>
   [Fact]
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
+  [LogTestStartEnd]
   public async Task
     GetServiceStatus_WhenCalled_ReturnsServiceStatusInfo() // Renamed from GetStatus_WhenCalled_ReturnsServiceStatusInfo
   {
@@ -54,26 +59,27 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture,
                                .ToArray();
 
     // Act
-    var serviceStatus = await ApiClient.StatusAll();
+    var statusResponse = await _apiClientFixture.UnauthenticatedPublicApi.StatusAll();
+    var serviceStatuses = statusResponse.Content;
 
     // Assert
-    serviceStatus.Should().NotBeNull(
+    statusResponse.Should().NotBeNull(
       because: "response should contain service status information");
 
-    serviceStatus.Should().NotBeEmpty(
+    serviceStatuses.Should().NotBeEmpty(
       because: "response should contain at least some service status information");
 
     // Check that all the expected service enums are present in the response
-    var serviceNames = serviceStatus.Select(s => s.ServiceName.ToString()).ToList();
+    var serviceNames = serviceStatuses.Select(s => s.ServiceName.ToString()).ToList();
     serviceNames.Should().Contain(expectedServices,
       because: "the response should contain status for all critical services");
 
-    foreach (var status in serviceStatus)
+    foreach (var status in serviceStatuses)
     {
       status.Should().NotBeNull(
         because: $"status for {status.ServiceName} should not be null");
 
-      if (!status.IsAvailable)
+      if (!(status.IsAvailable ?? false))
       {
         status.MissingConfigurations.Should().NotBeEmpty(
           because: $"unavailable service {status.ServiceName} should have missing configurations");
@@ -99,18 +105,19 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture,
     // but we can check the structure and that it's not empty if successful.
 
     // Act
-    var configStatus = await ApiClient.Config();
+    var configResponse = await _apiClientFixture.UnauthenticatedPublicApi.Config();
+    var configItems = configResponse.Content;
 
     // Assert
-    configStatus.Should().NotBeNull(
+    configResponse.Should().NotBeNull(
       because: "response should contain configuration item status information");
 
     // This assertion might be too strict if the list can be legitimately empty.
     // For now, assuming it should return some items if the service is working.
-    configStatus.Should().NotBeEmpty(
+    configItems.Should().NotBeEmpty(
       because: "response should contain at least some configuration item status information");
 
-    foreach (var item in configStatus)
+    foreach (var item in configItems)
     {
       item.Should().NotBeNull(because: "each configuration item should not be null");
       item.Name.Should().NotBeNullOrWhiteSpace(because: "each item should have a name");

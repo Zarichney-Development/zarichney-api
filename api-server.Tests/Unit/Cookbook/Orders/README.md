@@ -7,7 +7,7 @@
 > **Related:**
 > * **Source:** [`Cookbook/Orders/`](../../../../api-server/Cookbook/Orders/)
 > * **Subdirectories:** [`OrderService/`](OrderService/README.md), [`OrderRepository/`](OrderRepository/README.md)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Zarichney.Standards/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

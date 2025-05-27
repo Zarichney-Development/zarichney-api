@@ -57,19 +57,19 @@ public class UserDbContextFactory : IDesignTimeDbContextFactory<UserDbContext>
         .AddEnvironmentVariables()
         .Build();
 
-      connectionString = configuration.GetConnectionString("IdentityConnection")!;
+      connectionString = configuration.GetConnectionString(UserDbContext.UserDatabaseConnectionName)!;
 
       // --- Fallback Logic ---
       if (string.IsNullOrEmpty(connectionString))
       {
         Console.WriteLine(
-          "INFO: 'IdentityConnection' not found in configuration sources. Using dummy connection string for design-time operation (expected during migration script generation).");
+          $"INFO: '{UserDbContext.UserDatabaseConnectionName}' not found in configuration sources. Using dummy connection string for design-time operation (expected during migration script generation).");
         connectionString = designTimeDummyConnectionString;
       }
       else
       {
         Console.WriteLine(
-          "INFO: Found 'IdentityConnection' via configuration sources. Using it for design-time operation (expected during local database update).");
+          $"INFO: Found '{UserDbContext.UserDatabaseConnectionName}' via configuration sources. Using it for design-time operation (expected during local database update).");
       }
     }
     catch (Exception ex)

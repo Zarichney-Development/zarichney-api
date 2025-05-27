@@ -22,7 +22,7 @@
 * **Test Execution:** Tests run within the context provided by the shared `CustomWebApplicationFactory`, hosted in-memory.
 * **Fixtures:** Relies on the shared fixtures (`CustomWebApplicationFactory`, `DatabaseFixture`, `ApiClientFixture`) provided by the single `[Collection("Integration")]` definition via `ICollectionFixture<>`.
 * **Base Classes:** Tests typically inherit from `IntegrationTestBase` or `DatabaseIntegrationTestBase` (if database interaction is required via the controller's actions). These base classes provide access to the shared fixtures.
-* **API Interaction:** Tests **must** interact with the controllers *only* through API calls made using the shared, generated Refit client (`IZarichneyAPI`) provided by `ApiClientFixture` (accessed via `ApiClient` or `AuthenticatedApiClient` properties in the base class). Direct instantiation or invocation of controller classes or their service dependencies is generally forbidden in these integration tests.
+* **API Interaction:** Tests **must** interact with the controllers *only* through API calls made using the shared, generated Refit clients provided by `ApiClientFixture` (accessed via specific interface properties like `_apiClientFixture.UnauthenticatedPublicApi`). Direct instantiation or invocation of controller classes or their service dependencies is generally forbidden in these integration tests.
 * **Database State:** For tests involving controllers that modify or depend on database state, `DatabaseIntegrationTestBase` should be used, and `ResetDatabaseAsync()` must be called to ensure test isolation.
 
 ## 3. Interface Contract & Assumptions
@@ -33,7 +33,7 @@
     * Assumes the shared `CustomWebApplicationFactory` correctly sets up the application environment, including routing, middleware, service registration (and mocks for external services).
     * Assumes the shared `DatabaseFixture` provides a correctly migrated database when required.
     * Assumes the shared `ApiClientFixture` provides correctly configured clients.
-    * Assumes the generated Refit client (`IZarichneyAPI`) accurately reflects the API contract being tested.
+    * Assumes the generated Refit clients accurately reflect the API contract being tested.
 
 ## 4. Local Conventions & Constraints (Beyond Global Standards)
 

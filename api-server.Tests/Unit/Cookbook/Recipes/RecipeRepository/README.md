@@ -8,7 +8,7 @@
 > * **Interface:** [`Cookbook/Recipes/IRecipeRepository.cs`](../../../../../api-server/Cookbook/Recipes/RecipeRepository.cs) (Implicit)
 > * **Dependencies:** `DbContext` (e.g., `AppDbContext`), `ILogger<RecipeRepository>`
 > * **Models:** [`Cookbook/Recipes/RecipeModels.cs`](../../../../../api-server/Cookbook/Recipes/RecipeModels.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Zarichney.Standards/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Zarichney.Standards/Development/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

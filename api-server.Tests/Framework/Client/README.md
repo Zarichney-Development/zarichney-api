@@ -1,59 +1,87 @@
-# Module/Directory: /api-server.Tests/Framework/Framework/Client
+# README: /Framework/Client Directory
 
-**Last Updated:** 2025-04-21
-
-> **Parent:** [`api-server.Tests`](../README.md)
+**Version:** 2.0
+**Last Updated:** 2025-05-26
+**Parent:** `../README.md`
 
 ## 1. Purpose & Responsibility
 
-* **What it is:** Contains the auto-generated C# Refit client code (`IZarichneyAPI` interface and associated DTOs) for interacting with the `api-server` API during integration tests.
-* **Key Responsibilities:**
-    * Providing a strongly-typed interface (`IZarichneyAPI`) to make HTTP requests to the `api-server`.
-    * Defining C# record/class representations of the API's request and response models (DTOs).
-* **Why it exists:** To enable robust, type-safe, and maintainable integration tests by abstracting away raw `HttpClient` calls and providing compile-time checks against the API contract.
+**IMPORTANT:** This directory no longer contains auto-generated Refit client interfaces. These have been **migrated to the dedicated `Zarichney.ApiClient` project** for improved modularity and reusability.
 
-## 2. Architecture & Key Concepts
+### Current Status
 
-* **Generation Process:** This code is **automatically generated** and **should not be manually edited**.
-    * It is created by running the `Scripts/GenerateApiClient.ps1` script.
-    * The script uses `dotnet swagger` to fetch the OpenAPI specification from a running instance of `api-server` and then uses `refitter` to generate the C# code based on that specification.
-* **`IZarichneyAPI` Interface:** Defines methods corresponding to the API endpoints, decorated with Refit attributes (`[Get]`, `[Post]`, `[Body]`, `[Query]`, etc.).
-* **DTOs:** Contains C# records/classes matching the request and response schemas defined in the OpenAPI specification.
-* **Usage:** Integration tests obtain an instance of `IZarichneyAPI` (typically via `CustomWebApplicationFactory.CreateRefitClient` or `CreateAuthenticatedRefitClient`) and call its methods to interact with the API.
+* **Directory Contents:** Only this README.md file remains
+* **Migration Date:** 2025-05-26 (Issue #12)
+* **New Location:** All Refit client interfaces and models are now in the `Zarichney.ApiClient` project
 
-## 3. Interface Contract & Assumptions
+### Historical Responsibility (Pre-Migration)
 
-* **Interface:** The methods and DTOs defined in `ZarichneyAPI.cs` and related files represent the client-side view of the `api-server` contract *at the time the generation script was last run*.
-* **Critical Assumptions:**
-    * Assumes the generated code accurately reflects the actual API behavior. **If the API changes, this code MUST be regenerated.**
-    * Assumes the underlying `HttpClient` used to create the Refit instance is correctly configured (e.g., `BaseAddress`, authentication headers) by the test setup (e.g., `CustomWebApplicationFactory`).
+Previously, this directory housed multiple auto-generated Refit client interfaces and their associated Data Transfer Objects (DTOs). These interfaces were organized by API tags (corresponding to controllers) and provided type-safe mechanisms for integration tests to interact with the `api-server`'s HTTP endpoints.
 
-## 4. Local Conventions & Constraints (Beyond Global Standards)
+## 2. Migration Details
 
-* **Generated Code:** Files in this directory are auto-generated. Style conventions are determined by the `refitter` tool.
-* **Namespace:** Code resides in the `Zarichney.Client` namespace.
+### What Was Moved
 
-## 5. How to Work With This Code
+* **Interface Files:** `IAiApi.cs`, `IAuthApi.cs`, `ICookbookApi.cs`, `IPaymentApi.cs`, `IPublicApi.cs`
+* **Models/DTOs:** `Contracts.cs` (moved to `Zarichney.ApiClient/Models/`)
+* **Dependency Injection:** `DependencyInjection.cs` (moved to `Zarichney.ApiClient/Configuration/`)
 
-* **Setup:** No manual setup required, but **MUST run `Scripts/GenerateApiClient.ps1`** whenever the `api-server` API contract (routes, method signatures, request/response models) changes.
-* **Testing:** This code is not tested directly; it is used *by* the integration tests in [`/api-server.Tests/Integration/`](../Integration/README.md). Failures in integration tests may indicate a mismatch between this client code and the actual API, requiring regeneration.
-* **Common Pitfalls / Gotchas:**
-    * Forgetting to regenerate the client after API changes is a common source of integration test failures or unexpected behavior.
-    * Serialization issues can occur if the generated DTOs don't perfectly match the API's JSON structure (though Refit/System.Text.Json are usually robust).
+### New Structure
 
-## 6. Dependencies
+The migrated code is now organized in the `Zarichney.ApiClient` project with the following structure:
+* `Zarichney.ApiClient/Interfaces/` - All Refit interface definitions
+* `Zarichney.ApiClient/Models/` - All DTOs and response models
+* `Zarichney.ApiClient/Configuration/` - Dependency injection setup
 
-* **Internal Code Dependencies:** None directly, but conceptually tied to the API defined in `api-server/Controllers`.
-* **External Library Dependencies:**
-    * `Refit` - Required for the attributes and runtime implementation.
-    * `System.Text.Json` - Used for serialization/deserialization.
-* **Dependents (Impact of Changes):**
-    * [`/api-server.Tests/Integration/`](../Integration/README.md) - All integration tests depend on this generated client. Regenerating the client might require updates to integration tests if method signatures or DTOs change significantly.
+### Updated Namespaces
 
-## 7. Rationale & Key Historical Context
+* **Old:** `Zarichney.Client` and `Zarichney.Client.Contracts`
+* **New:** `Zarichney.ApiClient.Interfaces` and `Zarichney.ApiClient.Models`
 
-* Using a generated Refit client significantly improves the reliability and maintainability of integration tests compared to manual `HttpClient` usage and string-based URLs/JSON manipulation.
+## 3. Impact on Testing Framework
 
-## 8. Known Issues & TODOs
+### For Integration Tests
 
-* Ensure the `GenerateApiClient.ps1` script is robust and easy to run in all development and CI environments.
+* **Current State:** Integration tests still reference the old namespace and will have build errors
+* **Required Action:** Tests need to be updated to reference the new `Zarichney.ApiClient` project (planned for subsequent tasks)
+* **ApiClientFixture:** Will need to be updated to use the new project structure
+
+### Client Generation
+
+* **Script Updates:** Generation scripts have been updated to target the new `Zarichney.ApiClient` project
+* **Configuration:** The `.refitter` configuration now outputs to `../Zarichney.ApiClient` instead of this directory
+
+## 4. Next Steps
+
+### For Test Project Migration (Planned)
+
+1. Add project reference to `Zarichney.ApiClient` in `api-server.Tests.csproj`
+2. Update all `using` statements from `Zarichney.Client.*` to `Zarichney.ApiClient.*`
+3. Update `ApiClientFixture` to use the new project structure
+4. Update all integration tests that reference the client interfaces
+5. Remove build errors caused by missing client references
+
+### For Future Development
+
+* **API Changes:** Continue using the same generation scripts (`./Scripts/generate-api-client.ps1` or `.sh`)
+* **Client Usage:** Reference patterns documented in `Zarichney.ApiClient/README.md`
+* **Testing Patterns:** Follow guidance in `../../../Zarichney.Standards/Testing/IntegrationTestCaseDevelopment.md`
+
+## 5. References
+
+* **New Client Project:** `../../../Zarichney.ApiClient/README.md`
+* **Migration Task:** GitHub Issue #12
+* **Testing Standards:** `../../../Zarichney.Standards/Testing/TestingStandards.md`
+* **Technical Design:** `../../TechnicalDesignDocument.md`
+
+## 6. Rationale for Migration
+
+The migration to a dedicated `Zarichney.ApiClient` project provides:
+* **Improved Modularity:** Separates client concerns from test infrastructure
+* **Reusability:** Allows multiple projects to consume the API clients
+* **Better Organization:** Clear separation between generated client code and test framework
+* **Future-Proofing:** Prepares for potential NuGet package distribution
+
+---
+
+**Note:** This directory structure will be maintained for backward compatibility during the transition period. Once all tests are migrated to use the new `Zarichney.ApiClient` project, this directory may be considered for removal in future cleanup tasks.
