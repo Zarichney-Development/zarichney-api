@@ -42,6 +42,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\api-server\api-server.csproj" />
+        <ProjectReference Include="..\Zarichney.ApiClient\Zarichney.ApiClient.csproj" />
     </ItemGroup>
 
 

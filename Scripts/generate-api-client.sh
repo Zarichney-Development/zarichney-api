@@ -11,8 +11,7 @@ echo -e "\e[36mStarting API client generation process...\e[0m"
 # Define paths
 ROOT_DIR="$(dirname "$(dirname "$(readlink -f "$0")")")"
 API_SERVER_DIR="$ROOT_DIR/api-server"
-API_SERVER_TESTS_DIR="$ROOT_DIR/api-server.Tests"
-API_CLIENT_DIR="$API_SERVER_TESTS_DIR/Framework/Client"
+API_CLIENT_DIR="$ROOT_DIR/Zarichney.ApiClient"
 SWAGGER_JSON_PATH="$API_SERVER_DIR/swagger.json"
 
 # Ensure the ApiClient directory exists
@@ -93,4 +92,5 @@ fi
 echo -e "\e[36mAPI client generation completed successfully!\e[0m"
 echo -e "\e[36mGenerated client interfaces are available in: $API_CLIENT_DIR/\e[0m"
 echo -e "\e[36mClient interfaces are grouped by OpenAPI tags (multiple files)\e[0m"
-echo -e "\e[36mClient namespace: Zarichney.Client\e[0m"
+echo -e "\e[36mClient namespace: Zarichney.ApiClient.Interfaces\e[0m"
+echo -e "\e[36mModels namespace: Zarichney.ApiClient.Models\e[0m"

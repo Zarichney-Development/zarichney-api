@@ -3,7 +3,7 @@ using Refit;
 using Serilog.Sinks.XUnit.Injectable;
 using Xunit;
 using Xunit.Abstractions;
-using Zarichney.Client;
+using Zarichney.ApiClient.Interfaces;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Status;
 
@@ -169,8 +169,8 @@ public class ApiClientFixture : IAsyncLifetime
     {
       // In test environment, mark PostgreSQL as available if we have a database container
       bool isDatabaseAvailable = _factory.IsDatabaseAvailable;
-      List<string>? missingConfigurations = isDatabaseAvailable 
-        ? null 
+      List<string>? missingConfigurations = isDatabaseAvailable
+        ? null
         : new List<string> { $"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}" };
 
       statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, isDatabaseAvailable, missingConfigurations);

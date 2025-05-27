@@ -10,8 +10,7 @@ Write-Host "Starting API client generation process..." -ForegroundColor Cyan
 # Define paths
 $rootDir = Split-Path -Parent $PSScriptRoot
 $apiServerDir = Join-Path -Path $rootDir -ChildPath "api-server"
-$apiServerTestsDir = Join-Path -Path $rootDir -ChildPath "api-server.Tests"
-$apiClientDir = Join-Path -Path $apiServerTestsDir -ChildPath "Framework\Client"
+$apiClientDir = Join-Path -Path $rootDir -ChildPath "Zarichney.ApiClient"
 $swaggerJsonPath = Join-Path -Path $apiServerDir -ChildPath "swagger.json"
 
 # Ensure the ApiClient directory exists
@@ -102,4 +101,5 @@ if (Test-Path -Path $swaggerJsonPath) {
 Write-Host "API client generation completed successfully!" -ForegroundColor Cyan
 Write-Host "Generated client interfaces are available in: $apiClientDir/" -ForegroundColor Cyan
 Write-Host "Client interfaces are grouped by OpenAPI tags (multiple files)" -ForegroundColor Cyan
-Write-Host "Client namespace: Zarichney.Client" -ForegroundColor Cyan
+Write-Host "Client namespace: Zarichney.ApiClient.Interfaces" -ForegroundColor Cyan
+Write-Host "Models namespace: Zarichney.ApiClient.Models" -ForegroundColor Cyan

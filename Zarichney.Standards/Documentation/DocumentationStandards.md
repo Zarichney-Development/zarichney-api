@@ -1,7 +1,7 @@
 # Project Documentation Standards (Per-Directory README.md Files)
 
 **Version:** 1.5
-**Last Updated:** 2025-05-22
+**Last Updated:** 2025-05-26
 
 ## 1. Purpose and Scope
 
@@ -11,7 +11,7 @@ This document defines the mandatory standards and practices for creating and mai
 * **Scope:** This document governs *only* the per-directory `README.md` files. It dictates their structure, content focus, linking strategy, and maintenance requirements.
 * **Relationship to Other Standards:**
     * This document complements **[`./CodingStandards.md`](./CodingStandards.md)**. While `CodingStandards.md` focuses on *how to write C# code*, this document focuses exclusively on *how to document code modules via README.md files*.
-    * Information within these READMEs, particularly regarding interface contracts, dependencies, and module-specific operational details, directly supports the testing activities outlined in **`Docs/Standards/TestingStandards.md`** (the overarching testing guide), **`Docs/Standards/UnitTestCaseDevelopment.md`**, and **`Docs/Standards/IntegrationTestCaseDevelopment.md`**.
+    * Information within these READMEs, particularly regarding interface contracts, dependencies, and module-specific operational details, directly supports the testing activities outlined in **`../Testing/TestingStandards.md`** (the overarching testing guide), **`../Testing/UnitTestCaseDevelopment.md`**, and **`../Testing/IntegrationTestCaseDevelopment.md`**.
     * Embedded diagrams within READMEs **MUST** adhere to **[`./DiagrammingStandards.md`](./DiagrammingStandards.md)**.
     * The mandatory structure for all READMEs is defined in the **[`./README_template.md`](./README_template.md)** file. This document explains *how* to effectively utilize that template.
 

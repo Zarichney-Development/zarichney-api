@@ -27,7 +27,7 @@ public class ServiceUnavailableFactDiscoverer(IMessageSink diagnosticMessageSink
     // Extract the required unavailable service from the attribute
     var constructorArgs = factAttribute.GetConstructorArguments();
     var firstArg = constructorArgs.FirstOrDefault();
-    
+
     // Handle different possible types for the enum value
     ExternalServices? requiredUnavailableService = null;
     if (firstArg is ExternalServices enumValue)

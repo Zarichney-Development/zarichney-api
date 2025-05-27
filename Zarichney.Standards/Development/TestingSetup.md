@@ -1,7 +1,7 @@
 # Testing Setup and Maintenance
 
 **Version:** 1.1
-**Last Updated:** 2025-05-25
+**Last Updated:** 2025-05-26
 
 ## Overview
 
@@ -66,7 +66,8 @@ After making changes to API contracts (controllers, endpoints, models), you must
 ```
 
 This script generates:
-- Multiple granular interface files in `api-server.Tests/Framework/Client/` (e.g., `IAuthApi.cs`, `IAiApi.cs`, etc.) and supporting models in `Contracts.cs`
+- Multiple granular interface files in the `Zarichney.ApiClient` project (e.g., `IAuthApi.cs`, `IAiApi.cs`, etc.) and supporting models in `Contracts.cs`
+- **Note:** Clients were moved from `api-server.Tests/Framework/Client/` to the dedicated `Zarichney.ApiClient` project for improved modularity
 
 This ensures integration tests use the most up-to-date API client.
 

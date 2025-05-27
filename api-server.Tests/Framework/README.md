@@ -1,7 +1,7 @@
 # README: /Framework Directory
 
 **Version:** 1.1
-**Last Updated:** 2025-05-22
+**Last Updated:** 2025-05-26
 **Parent:** `../README.md`
 
 ## 1. Purpose & Responsibility
@@ -12,14 +12,14 @@ Its primary responsibilities are to:
 * Provide a consistent and reliable testing environment.
 * Offer shared services and fixtures to reduce boilerplate and improve test maintainability (e.g., `CustomWebApplicationFactory`, `DatabaseFixture`).
 * Encapsulate common testing patterns and logic (e.g., authentication simulation via `TestAuthHandler`, conditional test execution via `DependencyFactAttribute`).
-* Host the auto-generated API clients used for integration testing (multiple granular interfaces).
+* Provide integration with the `Zarichney.ApiClient` project for type-safe API interactions (auto-generated API clients have been moved to dedicated project).
 
-The components within this directory are designed to be leveraged by test cases in the `/Unit` and `/Integration` directories, ensuring adherence to the project's testing standards as defined in `../../Zarichney.Standards/Standards/TestingStandards.md` and the detailed guides for unit and integration testing.
+The components within this directory are designed to be leveraged by test cases in the `/Unit` and `/Integration` directories, ensuring adherence to the project's testing standards as defined in `../../Zarichney.Standards/Testing/TestingStandards.md` and the detailed guides for unit and integration testing.
 
 ### Child Modules / Key Subdirectories:
 
 * **`./Attributes/README.md`**: Custom xUnit attributes for specialized test execution control (e.g., `[DependencyFact]`, `[DockerAvailableFact]`).
-* **`./Client/README.md`**: Contains the auto-generated Refit clients (multiple granular interfaces) for type-safe API interactions during integration tests.
+* **`./Client/README.md`**: Directory that previously contained auto-generated Refit clients. Clients have been migrated to the `Zarichney.ApiClient` project for improved modularity.
 * **`./Fixtures/README.md`**: Core xUnit fixtures managing the lifecycle of expensive resources like the test server (`CustomWebApplicationFactory.cs`) and database (`DatabaseFixture.cs`).
 * **`./Helpers/README.md`**: Utility classes and extension methods that provide common helper functions for tests (e.g., `AuthTestHelper.cs`, `TestConfigurationHelper.cs`).
 * **`./Mocks/README.md`**: Infrastructure for mocking external dependencies, including mock factories (e.g., `MockStripeServiceFactory.cs`) and configurations for service virtualization tools like WireMock.Net (planned).
@@ -43,7 +43,7 @@ The framework components are designed to be composable and to integrate seamless
 * **Assumptions Made by Framework Components:**
     * `DatabaseFixture` assumes Docker is available and operational for managing Testcontainers. Tests requiring Docker can use `[DockerAvailableFact]`.
     * `DependencyFactAttribute` relies on configuration status provided by the `IStatusService` within the SUT and specific configuration flags to determine if dependencies are met.
-    * The Refit client generation script (`../../Scripts/generate-api-client.ps1`) assumes the `api-server` project can be built and its Swagger specification is accessible.
+    * The Refit client generation script (`../../Scripts/generate-api-client.ps1`) generates clients in the `Zarichney.ApiClient` project and assumes the `api-server` project can be built and its Swagger specification is accessible.
 
 ## 4. Local Conventions & Constraints
 
@@ -74,7 +74,8 @@ The framework components are designed to be composable and to integrate seamless
 
 ### Internal Dependencies (Consumed by or Consumes)
 
-* **`api-server` project:** `CustomWebApplicationFactory` directly depends on the `api-server`'s `Program.cs` (or `Startup.cs`) for hosting. The Refit client is generated from this project's API.
+* **`api-server` project:** `CustomWebApplicationFactory` directly depends on the `api-server`'s `Program.cs` (or `Startup.cs`) for hosting.
+* **`Zarichney.ApiClient` project:** Generated Refit clients are now housed in this dedicated project (migrated from Framework/Client).
 * **`api-server.Tests/Unit` & `api-server.Tests/Integration`:** These directories are the primary consumers of the components within `/Framework`.
 
 ### Key External Libraries Used to Build Framework Components
@@ -82,7 +83,7 @@ The framework components are designed to be composable and to integrate seamless
 * **xUnit.net:** For custom attributes (`FactAttribute`, `TheoryAttribute` derivatives) and fixture interfaces (`IAsyncLifetime`, `ICollectionFixture<>`).
 * **Testcontainers.PostgreSql:** Used by `DatabaseFixture`.
 * **Microsoft.AspNetCore.Mvc.Testing:** Base for `CustomWebApplicationFactory`.
-* **Refit:** Core library used for the generated API client.
+* **Refit:** Core library referenced for API client integration (clients now in `Zarichney.ApiClient` project).
 * **Moq:** Used within mock factories in `./Mocks/Factories/`.
 * **AutoFixture:** May be used within helpers or planned for `./TestData/AutoFixtureCustomizations/`.
 * **WireMock.Net** (Planned): Will be a key dependency for HTTP service virtualization components.
@@ -99,6 +100,7 @@ The `DependencyFactAttribute` was introduced to handle conditional test executio
     * Full integration of WireMock.Net for external HTTP service virtualization (TDD FRMK-004).
     * Development of advanced AutoFixture customizations (TDD FRMK-002).
     * Further enhancements to Testcontainers usage (TDD FRMK-003).
+    * Integration with the new `Zarichney.ApiClient` project (requires updating `ApiClientFixture` and test references).
 * Refer to the issues tracker in the repository for any specific bugs or minor improvements planned for framework components.
 
 ---

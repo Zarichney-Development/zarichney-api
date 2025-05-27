@@ -1,11 +1,12 @@
 
 
 #nullable enable
-namespace Zarichney.Client
+namespace Zarichney.ApiClient.Configuration
 {
   using System;
   using Microsoft.Extensions.DependencyInjection;
   using Refit;
+  using Zarichney.ApiClient.Interfaces;
 
   public static partial class IServiceCollectionExtensions
   {

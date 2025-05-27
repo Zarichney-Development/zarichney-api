@@ -1,7 +1,7 @@
 **Technical Design Document: Automation Testing Strategy for api-server**
 
 **Version:** 1.7
-**Last Updated:** 2025-05-25
+**Last Updated:** 2025-05-26
 
 **1. Introduction & Goals**
 
@@ -28,7 +28,8 @@
 **3. Solution Project Structure (Expected)**
 
 1.  `api-server/`: The main ASP.NET Core Web API project.
-2.  `api-server.Tests/Framework/`: The single test project containing all automated tests and the generated Refit API client code. (Depends on `api-server`).
+2.  `Zarichney.ApiClient/`: A dedicated .NET class library containing auto-generated Refit client interfaces and models for consuming the API.
+3.  `api-server.Tests/Framework/`: The single test project containing all automated tests. (Depends on `api-server` and `Zarichney.ApiClient`).
 
 **4. Chosen Framework & Tools (Requirements)**
 
@@ -37,7 +38,7 @@
 * **Mocking Library:** Moq
 * **Test Data Generation:** AutoFixture, Custom Test Data Builders
 * **Integration Testing Host:** `Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory<Program>`
-* **Integration Testing API Client:** Refit (multiple clients generated into `api-server.Tests` via `.refitter` configuration)
+* **Integration Testing API Client:** Refit (multiple clients generated into `Zarichney.ApiClient` via `.refitter` configuration)
 * **API Client Generation Tools:** `dotnet swagger`, `refitter` (automation expected via script with `.refitter` settings file)
 * **Integration Test Database:** Testcontainers (PostgreSQL)
 * **External HTTP Service Virtualization:** WireMock.Net (to be integrated, see Roadmap)
@@ -49,7 +50,7 @@
 **5. Test Project Structure (`api-server.Tests/Framework/`) (Expected)**
 
 * A clear folder structure separating configuration, unit tests, integration tests, fixtures, helpers, mocks (including mock factories and virtualization setups), test data artifacts (including builders), and the generated API client code.
-    * `Client/`: Will contain the auto-generated Refit client interfaces grouped by API tags (controllers) and contracts (Namespace: `Zarichney.Client`).
+    * `Client/`: Contains only README.md file. Auto-generated Refit client interfaces have been moved to the dedicated `Zarichney.ApiClient` project for improved modularity.
     * `Configuration/`: Expected to contain helpers for loading test configuration (though the factory primarily uses direct `IConfigurationBuilder` methods).
     * `Unit/`, `Integration/`: Organized mirroring `api-server` structure where applicable.
     * `Fixtures/`: Must contain implementations for `CustomWebApplicationFactory`, `DatabaseFixture`, and potentially fixtures for managing WireMock.Net instances.
@@ -83,7 +84,7 @@
 
 **9. Integration Testing Strategy (Requirements)**
 
-* **Approach:** Host `api-server` in-memory via `CustomWebApplicationFactory`. Interact using the generated Refit client interfaces (e.g., `IAuthApi`, `IAiApi`, `ICookbookApi`) from `api-server.Tests/Framework/Client/`. Tests declare dependencies on external resources (Database, external APIs) using `[Trait("Category", "ExternalHttp:...")]`. The `IntegrationTestBase` checks these dependencies against runtime configuration status during initialization. Test methods requiring these dependencies use `[DependencyFact]` to ensure they are automatically skipped if dependencies are unavailable. Adhere to `Zarichney.Standards/Standards/IntegrationTestCaseDevelopment.md`.
+* **Approach:** Host `api-server` in-memory via `CustomWebApplicationFactory`. Interact using the generated Refit client interfaces (e.g., `IAuthApi`, `IAiApi`, `ICookbookApi`) from the `Zarichney.ApiClient` project. Tests declare dependencies on external resources (Database, external APIs) using `[Trait("Category", "ExternalHttp:...")]`. The `IntegrationTestBase` checks these dependencies against runtime configuration status during initialization. Test methods requiring these dependencies use `[DependencyFact]` to ensure they are automatically skipped if dependencies are unavailable. Adhere to `Zarichney.Standards/Testing/IntegrationTestCaseDevelopment.md`.
 * **Test Configuration:** The `CustomWebApplicationFactory` configures the test application's `IConfiguration` to closely mimic the main application's loading strategy while allowing for test-specific overrides and integration with user secrets for local development. The goal is to ensure tests run under realistic configuration conditions across different environments (Local Dev, CI, specific "Testing" environment).
     * **Loading Order:** Configuration providers are added in the following order within the factory's `ConfigureAppConfiguration`:
         1.  `appsettings.json` (Optional base configuration)
@@ -147,27 +148,29 @@
 
 **13. API Client Generation for Tests (Requirement)**
 
-* **Purpose:** Provide multiple strongly-typed Refit client interfaces (grouped by API tags/controllers) within `api-server.Tests` for integration testing.
+* **Purpose:** Provide multiple strongly-typed Refit client interfaces (grouped by API tags/controllers) within the `Zarichney.ApiClient` project for integration testing and general API consumption.
 * **Configuration:** The primary configuration is managed via the root `.refitter` file, which defines:
     * **Key Settings:**
         * `multipleInterfaces: "ByTag"` - Generates separate interfaces per OpenAPI tag (controller)
         * `generateMultipleFiles: true` - Creates separate files for each interface
-        * `outputFolder: "api-server.Tests/Framework/Client"` - Target directory for generated code
+        * `outputFolder: "../Zarichney.ApiClient"` - Target directory for generated code (updated to new project)
         * `addContentTypeHeaders: false` - Resolves multipart/form-data Content-Type conflicts
         * `returnIApiResponse: true` - Returns `IApiResponse<T>` for better error handling
-        * `namespace: "Zarichney.Client"` - Generated code namespace
-        * `contractsNamespace: "Zarichney.Client.Contracts"` - DTOs namespace
+        * `namespace: "Zarichney.ApiClient.Interfaces"` - Generated interfaces namespace (updated)
+        * `contractsNamespace: "Zarichney.ApiClient.Models"` - DTOs namespace (updated)
 * **Generation Tools:** PowerShell script at `/Scripts/generate-api-client.ps1` and shell script `/Scripts/generate-api-client.sh`.
 * **Script Functionality:** The scripts automate:
     1.  Building the `api-server` project (Debug config).
     2.  Generating `swagger.json` using `dotnet swagger tofile`.
     3.  Generating multiple Refit client interfaces (e.g., `IAuthApi`, `IAiApi`, `ICookbookApi`) and contracts using `refitter` with the `.refitter` settings file.
-    4.  Placing the generated code into `api-server.Tests/Framework/Client/` with organized structure.
+    4.  Placing the generated code into `Zarichney.ApiClient/` with organized structure (Interfaces/, Models/, Configuration/ folders).
 * **Generated Output:** Multiple files including:
-    * Individual interface files: `IAuthApi.cs`, `IAiApi.cs`, `ICookbookApi.cs`, `IPaymentApi.cs`, `IPublicApi.cs`
-    * Shared contracts: `Contracts.cs` (DTOs and models)
-* **ApiClientFixture Integration:** The `ApiClientFixture` provides granular access to each client interface via properties like `AuthenticatedAuthApi`, `UnauthenticatedAiApi`, etc.
-* **Usage Requirement:** The developer (or AI coder) assigned a task **must** run the generation script after any changes to `api-server` controller signatures, routes, or associated models to ensure the test clients are synchronized with the API contract. The `.refitter` configuration ensures consistent generation behavior.
+    * Individual interface files in `Interfaces/`: `IAuthApi.cs`, `IAiApi.cs`, `ICookbookApi.cs`, `IPaymentApi.cs`, `IPublicApi.cs`
+    * Shared contracts in `Models/`: `Contracts.cs` (DTOs and models)
+    * Dependency injection setup in `Configuration/`: `DependencyInjection.cs`
+* **ApiClientFixture Integration:** The `ApiClientFixture` provides granular access to each client interface via properties like `AuthenticatedAuthApi`, `UnauthenticatedAiApi`, etc. The fixture will need to be updated to use the new `Zarichney.ApiClient` project.
+* **Usage Requirement:** The developer (or AI coder) assigned a task **must** run the generation script after any changes to `api-server` controller signatures, routes, or associated models to ensure the clients in `Zarichney.ApiClient` are synchronized with the API contract. The `.refitter` configuration ensures consistent generation behavior.
+* **Migration Note:** Following the creation of the dedicated `Zarichney.ApiClient` project, the test project needs to be updated to reference this new library instead of having embedded client code.
 * **Deliverable:** The functional generation scripts in `/Scripts/`, the `.refitter` configuration file, and references to these in relevant documentation to ensure proper workflow integration.
 
 **14. API Server Project Modifications**

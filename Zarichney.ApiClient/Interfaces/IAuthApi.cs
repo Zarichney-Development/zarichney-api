@@ -8,11 +8,11 @@ using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Zarichney.Client.Contracts;
+using Zarichney.ApiClient.Models;
 
 #nullable enable annotations
 
-namespace Zarichney.Client
+namespace Zarichney.ApiClient.Interfaces
 {
     /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Registers a new user account.</summary>
     [System.CodeDom.Compiler.GeneratedCode("Refitter", "1.5.5.0")]
