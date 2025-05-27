@@ -8,8 +8,9 @@ using Xunit;
 using Xunit.Abstractions;
 using Zarichney.ApiClient.Interfaces;
 using Zarichney.Services.Status;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.TestingFramework.Attributes;
+using Zarichney.TestingFramework.Fixtures;
+using Zarichney.TestingFramework.Helpers;
 using ExternalServices = Zarichney.Services.Status.ExternalServices;
 
 // Import the ServiceStatusInfo from Status namespace with alias
@@ -64,7 +65,7 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
     // Create a client with authentication
     using var client = factoryWithMockStatus.CreateClient();
     client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
-      "Test", Framework.Helpers.AuthTestHelper.GenerateTestToken("test-user", ["User"]));
+      "Test", AuthTestHelper.GenerateTestToken("test-user", ["User"]));
 
     // Act
     // Use a direct HTTP POST request since the endpoint is decorated with [HttpPost]
@@ -92,7 +93,7 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
     // Use a separate client for the health check to avoid any authorization issues
     using var healthClient = Factory.CreateClient();
     healthClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
-      "Test", Framework.Helpers.AuthTestHelper.GenerateTestToken("test-user", ["User"]));
+      "Test", AuthTestHelper.GenerateTestToken("test-user", ["User"]));
     var healthResponse = await healthClient.GetAsync("/api/health/secure");
 
     // Check if health endpoint worked without throwing

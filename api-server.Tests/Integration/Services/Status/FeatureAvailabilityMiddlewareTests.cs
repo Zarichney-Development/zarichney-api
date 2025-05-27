@@ -6,8 +6,10 @@ using Moq;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Services.Status;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.TestingFramework.Attributes;
+using Zarichney.TestingFramework.Fixtures;
+using Zarichney.TestingFramework.Helpers;
+using Zarichney.TestingFramework.TestControllers;
 using StatusInfo = Zarichney.Services.Status.ServiceStatusInfo;
 
 namespace Zarichney.Tests.Integration.Services.Status;
@@ -44,7 +46,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
           {
             services.AddSingleton(mockStatusService.Object);
             // Register the test controller
-            services.AddControllers().AddApplicationPart(typeof(Framework.TestControllers.FeatureTestController).Assembly);
+            services.AddControllers().AddApplicationPart(typeof(FeatureTestController).Assembly);
           });
     });
 
@@ -53,7 +55,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
 
     // Add authentication headers
     client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
-        "Test", Framework.Helpers.AuthTestHelper.GenerateTestToken("test-user", ["User"]));
+        "Test", AuthTestHelper.GenerateTestToken("test-user", ["User"]));
 
     // Configure test client to accept 404 responses (since the endpoint might not actually exist in test)
     client.DefaultRequestHeaders.Add("Accept-Test-Status-Codes", "404");
@@ -100,7 +102,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
           {
             services.AddSingleton(mockStatusService.Object);
             // Register the test controller
-            services.AddControllers().AddApplicationPart(typeof(Framework.TestControllers.FeatureTestController).Assembly);
+            services.AddControllers().AddApplicationPart(typeof(FeatureTestController).Assembly);
           });
     });
 
@@ -109,7 +111,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
 
     // Add authentication headers
     client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
-        "Test", Framework.Helpers.AuthTestHelper.GenerateTestToken("test-user", ["User"]));
+        "Test", AuthTestHelper.GenerateTestToken("test-user", ["User"]));
 
     // Act - Call an endpoint without feature requirements
     var response = await client.GetAsync("/api/test-feature/available");
@@ -148,7 +150,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
           {
             services.AddSingleton(mockStatusService.Object);
             // Register the test controller
-            services.AddControllers().AddApplicationPart(typeof(Framework.TestControllers.FeatureTestController).Assembly);
+            services.AddControllers().AddApplicationPart(typeof(FeatureTestController).Assembly);
           });
     });
 
@@ -157,7 +159,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
 
     // Add authentication headers
     client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
-        "Test", Framework.Helpers.AuthTestHelper.GenerateTestToken("test-user", ["User"]));
+        "Test", AuthTestHelper.GenerateTestToken("test-user", ["User"]));
 
     // Configure test client to accept 404 responses (since the endpoint might not actually exist in test)
     client.DefaultRequestHeaders.Add("Accept-Test-Status-Codes", "404");

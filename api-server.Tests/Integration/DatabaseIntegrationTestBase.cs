@@ -1,5 +1,5 @@
 using Xunit.Abstractions;
-using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.TestingFramework.Fixtures;
 
 namespace Zarichney.Tests.Integration;
 

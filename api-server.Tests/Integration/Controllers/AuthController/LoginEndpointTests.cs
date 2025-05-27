@@ -6,8 +6,8 @@ using Xunit;
 using Xunit.Abstractions;
 using Zarichney.ApiClient.Models;
 using Zarichney.Services.Auth;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.TestingFramework.Attributes;
+using Zarichney.TestingFramework.Fixtures;
 
 namespace Zarichney.Tests.Integration.Controllers.AuthController;
 

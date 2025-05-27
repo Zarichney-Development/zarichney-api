@@ -1,4 +1,4 @@
-using Zarichney.Tests.TestData;
+using Zarichney.TestingFramework.TestData;
 
 namespace Zarichney.Tests.Unit.Services;
 

@@ -9,8 +9,9 @@ using Xunit.Abstractions;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Status;
 using Zarichney.Startup;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.TestingFramework.Attributes;
+using Zarichney.TestingFramework.Fixtures;
+using Zarichney.TestingFramework.Helpers;
 
 namespace Zarichney.Tests.Integration.Services.Auth
 {
@@ -75,7 +76,7 @@ namespace Zarichney.Tests.Integration.Services.Auth
       // Act - Call a simple endpoint to verify the application is running
       // The /api/status endpoint appears to be secured, so we need to create a client with authentication
       client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
-          "Test", Framework.Helpers.AuthTestHelper.GenerateTestToken("test-user", ["User"]));
+          "Test", AuthTestHelper.GenerateTestToken("test-user", ["User"]));
       var response = await client.GetAsync("/api/status");
 
       // Assert - The application should be running and return a valid response
@@ -96,7 +97,7 @@ namespace Zarichney.Tests.Integration.Services.Auth
       // Act - Call the status endpoint to get service status
       // The /api/status endpoint appears to be secured, so we need to create a client with authentication
       client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
-          "Test", Framework.Helpers.AuthTestHelper.GenerateTestToken("test-user", ["User"]));
+          "Test", AuthTestHelper.GenerateTestToken("test-user", ["User"]));
       var response = await client.GetAsync("/api/status");
 
       // Assert
@@ -185,7 +186,7 @@ namespace Zarichney.Tests.Integration.Services.Auth
 
       // Add authentication header for the test client
       client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
-          "Test", Framework.Helpers.AuthTestHelper.GenerateTestToken("test-user", ["User"]));
+          "Test", AuthTestHelper.GenerateTestToken("test-user", ["User"]));
 
       // Act - Call an unrelated endpoint that doesn't depend on the Identity DB
       var response = await client.GetAsync("/api/health");
