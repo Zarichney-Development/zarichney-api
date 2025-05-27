@@ -1,8 +1,9 @@
-# Module/Directory: Docs/Templates
+# Module/Directory: Zarichney.Standards/Templates
 
-**Last Updated:** 2025-05-04
+**Version:** 2.0
+**Last Updated:** 2025-05-26
 
-> **Parent:** [`Docs`](../README.md)
+> **Parent:** [`Zarichney.Standards`](../README.md)
 
 ## 1. Purpose & Responsibility
 

@@ -1,9 +1,10 @@
-# Module/Directory: Docs/Maintenance
+# Module/Directory: Zarichney.Standards/Maintenance
 
-**Last Updated:** 2025-04-13
+**Version:** 2.0
+**Last Updated:** 2025-05-26
 
 **(Optional: Link to Parent Directory's README)**
-> **Parent:** [`Docs`](../README.md)
+> **Parent:** [`Zarichney.Standards`](../README.md)
 
 ## 1. Purpose & Responsibility
 
@@ -11,10 +12,10 @@
 * **Key Responsibilities:** Provides detailed guides and procedures for essential maintenance tasks.
 * **Why it exists:** To centralize operational documentation, ensuring maintainers have access to standardized procedures for keeping the system running smoothly and resolving common issues. This separates operational concerns from development standards or architectural documentation.
 * **Documents within this Directory:**
-    * [`AmazonWebServices.md`](./AmazonWebServices.md): Covers maintenance tasks for the AWS infrastructure hosting the application (EC2, Security Groups, CloudFront, Secrets Manager, SSM Parameter Store), including deployment steps, service control, resource monitoring, and troubleshooting common AWS-related issues [cite: Docs/AmazonWebServices.md].
-    * [`PostgreSqlDatabase.md`](./PostgreSqlDatabase.md): Details the maintenance procedures for the PostgreSQL database (`zarichney_identity`), focusing on EF Core migrations, user/role management (via EF or direct SQL), refresh token management, backup/restore operations, and general PostgreSQL administration commands [cite: Docs/PostgreSqlDatabase.md].
+    * [`AmazonWebServices.md`](./AmazonWebServices.md): Covers maintenance tasks for the AWS infrastructure hosting the application (EC2, Security Groups, CloudFront, Secrets Manager, SSM Parameter Store), including deployment steps, service control, resource monitoring, and troubleshooting common AWS-related issues.
+    * [`PostgreSqlDatabase.md`](./PostgreSqlDatabase.md): Details the maintenance procedures for the PostgreSQL database (`zarichney_identity`), focusing on EF Core migrations, user/role management (via EF or direct SQL), refresh token management, backup/restore operations, and general PostgreSQL administration commands.
     * [`Authentication System Maintenance Guide`](./AuthenticationSystem.md): Provides guidelines for maintaining and troubleshooting the authentication system, including user management, token handling (JWT & Refresh Tokens), API Key management, email verification, configuration, and security best practices. This guide consolidates information previously found in `AuthSystemMaintenance.md` and `ApiKeyAuthentication.md`.
-    * [`DocAuditorAssistant.md`](./DocAuditorAssistant.md): Defines the workflow for using an AI assistant to audit and improve documentation quality, ensuring READMEs remain accurate and valuable over time [cite: Docs/Maintenance/DocAuditorAssistant.md].
+    * [`DocAuditorAssistant.md`](./DocAuditorAssistant.md): Defines the workflow for using an AI assistant to audit and improve documentation quality, ensuring READMEs remain accurate and valuable over time.
 
 ## 2. Architecture & Key Concepts
 
@@ -36,7 +37,7 @@
 
 ## 6. Dependencies
 
-* **Parent:** [`Docs`](../README.md) - This directory is part of the overall documentation structure.
+* **Parent:** [`Zarichney.Standards`](../README.md) - This directory is part of the overall documentation structure.
 * **Related Module Docs:** The procedures outlined here relate to systems described in detail within specific module READMEs, such as:
     * [`Services/Auth/README.md`](../..//Services/Auth/README.md) (For Auth System context)
     * [`Services/Auth/Migrations/README.md`](../..//Services/Auth/Migrations/README.md) (For DB Migration context)
