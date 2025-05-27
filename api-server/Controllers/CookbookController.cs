@@ -87,9 +87,7 @@ public class CookbookController(
   /// - 500 Internal Server Error: If any other unexpected error occurs during processing.
   /// </returns>
   [HttpPost("cookbook")]
-  [DependsOnService(ExternalServices.MailCheck)]
-  [DependsOnService(ExternalServices.OpenAiApi)]
-  [DependsOnService(ExternalServices.MsGraph)]
+  [DependsOnService(ExternalServices.MailCheck, ExternalServices.OpenAiApi, ExternalServices.MsGraph)]
   [ProducesResponseType(typeof(CookbookOrder), StatusCodes.Status201Created)]
   [ProducesResponseType(typeof(BadRequestObjectResult),
     StatusCodes.Status400BadRequest)] // Covers missing email and InvalidEmailException
@@ -194,8 +192,7 @@ public class CookbookController(
   /// - 500 Internal Server Error: If queuing the background task or retrieving the order fails.
   /// </returns>
   [HttpPost("cookbook/order/{orderId}")]
-  [DependsOnService(ExternalServices.OpenAiApi)]
-  [DependsOnService(ExternalServices.MsGraph)]
+  [DependsOnService(ExternalServices.OpenAiApi, ExternalServices.MsGraph)]
   [ProducesResponseType(typeof(CookbookOrder), StatusCodes.Status200OK)]
   [ProducesResponseType(typeof(NotFoundResult), StatusCodes.Status404NotFound)] // Use NotFoundResult
   [ProducesResponseType(typeof(ApiErrorResult), StatusCodes.Status500InternalServerError)]
