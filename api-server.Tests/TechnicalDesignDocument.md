@@ -1,7 +1,7 @@
 **Technical Design Document: Automation Testing Strategy for api-server**
 
-**Version:** 1.7
-**Last Updated:** 2025-05-25
+**Version:** 1.8
+**Last Updated:** 2025-06-26
 
 **1. Introduction & Goals**
 
@@ -25,10 +25,14 @@
     * Authentication/Authorization testing for API endpoints.
 * **Out of Scope (Initially):** UI/E2E testing, Load/Performance testing (beyond basic smoke tests), Security penetration testing, Manual testing.
 
-**3. Solution Project Structure (Expected)**
+**3. Solution Project Structure (Current State)**
 
 1.  `api-server/`: The main ASP.NET Core Web API project.
-2.  `api-server.Tests/Framework/`: The single test project containing all automated tests and the generated Refit API client code. (Depends on `api-server`).
+2.  `api-server.Tests/`: The single test project containing all automated tests and the generated Refit API client code. (Depends on `api-server`).
+3.  `Zarichney.TestingFramework/`: Shared testing framework library (planned migration from api-server.Tests/Framework).
+4.  `Zarichney.TestingFramework.Tests/`: Unit tests for the testing framework itself.
+5.  `Zarichney.ApiClient/`: Refit-based API client library for external consumption.
+6.  `Zarichney.ApiClient.Tests/`: Tests for the API client library.
 
 **4. Chosen Framework & Tools (Requirements)**
 
@@ -67,23 +71,23 @@
 
 * Test methods **must** use `[Trait("Category", "...")]`.
 * **Mandatory Base Traits:** `"Unit"`, `"Integration"`.
-* **Mandatory Dependency Traits (Apply all relevant):** `"Database"`, `"ExternalHttp:Stripe"`, `"ExternalHttp:OpenAI"`, `"ExternalHttp:GitHub"`, `"ExternalHttp:MSGraph"`, etc. (Note: `External:[ServiceName]` changed to `ExternalHttp:[ServiceName]` for clarity with WireMock usage).
+* **Mandatory Dependency Traits (Apply all relevant):** `"Database"`, `"ExternalStripe"`, `"ExternalOpenAI"`, `"ExternalGitHub"`, `"ExternalMSGraph"`, etc.
 * **Mutability:** `"ReadOnly"`, `"DataMutating"` (Used to filter tests for safe execution against production-like environments. `ReadOnly` tests should not alter state; `DataMutating` tests might alter state and should only be run against test environments).
 * **Purpose:** Enable granular test execution filtering for development efficiency and CI optimization. (Expected dev workflow: specific tests -> all unit -> relevant integration).
 * **Note:** Tests that depend on external resources declared via `Dependency` traits should use the `[DependencyFact]` attribute. This attribute ensures the test is skipped if the `IntegrationTestBase` determines required configurations are missing. The `[DockerAvailableFact]` attribute can be used for tests requiring the Docker runtime itself to be available, independent of specific service configuration.
 
 **8. Unit Testing Strategy (Requirements)**
 
-* **Philosophy:** Test units in isolation, verify behavior, promote resilience, refactor to reduce redundancy. Follow AAA. Adhere to `Docs/Standards/UnitTestCaseDevelopment.md`.
+* **Philosophy:** Test units in isolation, verify behavior, promote resilience, refactor to reduce redundancy. Follow AAA. Adhere to `../Docs/Standards/UnitTestCaseDevelopment.md`.
 * **Mocking:** Use Moq. Employ mock factories (`Mocks/Factories/`) for consistent internal service mock setup.
 * **Assertions:** Use FluentAssertions. Utilize `"Because ...")` for intent and specific assertions for clear diagnostics. Logging content is to emphasize being beneficial for future code maintainers.
 * **Parameterization:** Use `[Fact]` and `[Theory]`.
-* **Data:** Use AutoFixture and Builders. Reference `Docs/Standards/UnitTestCaseDevelopment.md` for advanced AutoFixture usage patterns.
+* **Data:** Use AutoFixture and Builders. Reference `../Docs/Standards/UnitTestCaseDevelopment.md` for advanced AutoFixture usage patterns.
 * **Directory Structure**: With the expectation to achieve a maximal practice unit test coverage (striving for >=90%), along with proper organization of the test classes, the unit tests should be organized in a way that mirrors the structure of the `api-server` project. For complex functions that warrants multiple test cases, the unit directory is to contain a dedicated file for that function's test cases. Only if a function has a single test case, should it be placed in a parent file rather than it's own dedicated file. The future expectation is that when a function warrants additional test cases, it will be migrated to a dedicated file to well organize the multitude of test cases and make it easy to find for code maintainers.
 
 **9. Integration Testing Strategy (Requirements)**
 
-* **Approach:** Host `api-server` in-memory via `CustomWebApplicationFactory`. Interact using the generated Refit client interfaces (e.g., `IAuthApi`, `IAiApi`, `ICookbookApi`) from `api-server.Tests/Framework/Client/`. Tests declare dependencies on external resources (Database, external APIs) using `[Trait("Category", "ExternalHttp:...")]`. The `IntegrationTestBase` checks these dependencies against runtime configuration status during initialization. Test methods requiring these dependencies use `[DependencyFact]` to ensure they are automatically skipped if dependencies are unavailable. Adhere to `Docs/Standards/IntegrationTestCaseDevelopment.md`.
+* **Approach:** Host `api-server` in-memory via `CustomWebApplicationFactory`. Interact using the generated Refit client interfaces (e.g., `IAuthApi`, `IAiApi`, `ICookbookApi`) from `api-server.Tests/Framework/Client/`. Tests declare dependencies on external resources (Database, external APIs) using `[Trait("Dependency", "External...")]`. The `IntegrationTestBase` checks these dependencies against runtime configuration status during initialization. Test methods requiring these dependencies use `[DependencyFact]` to ensure they are automatically skipped if dependencies are unavailable. Adhere to `../Docs/Standards/IntegrationTestCaseDevelopment.md`.
 * **Test Configuration:** The `CustomWebApplicationFactory` configures the test application's `IConfiguration` to closely mimic the main application's loading strategy while allowing for test-specific overrides and integration with user secrets for local development. The goal is to ensure tests run under realistic configuration conditions across different environments (Local Dev, CI, specific "Testing" environment).
     * **Loading Order:** Configuration providers are added in the following order within the factory's `ConfigureAppConfiguration`:
         1.  `appsettings.json` (Optional base configuration)
@@ -170,30 +174,44 @@
 * **Usage Requirement:** The developer (or AI coder) assigned a task **must** run the generation script after any changes to `api-server` controller signatures, routes, or associated models to ensure the test clients are synchronized with the API contract. The `.refitter` configuration ensures consistent generation behavior.
 * **Deliverable:** The functional generation scripts in `/Scripts/`, the `.refitter` configuration file, and references to these in relevant documentation to ensure proper workflow integration.
 
-**14. API Server Project Modifications**
+**14. Current Test Coverage State (As of 2025-06-26)**
+
+* **Overall Line Coverage:** 24% (2,558 of 10,640 lines)
+* **Overall Branch Coverage:** 18.2% (404 of 2,208 branches)
+* **Overall Method Coverage:** 30.6% (305 of 996 methods)
+* **Test Count:** 228 total tests (201 passing, 27 skipped)
+* **Test Categories:** 
+    * Unit Tests: 39 test methods marked
+    * Integration Tests: 2 test methods marked (many integration tests missing proper traits)
+* **Key Coverage Gaps:**
+    * Controllers: Most at 0% coverage (AiController, CookbookController, PaymentController)
+    * Core Services: AiService (0%), PaymentService (0%), EmailService (3.8%)
+    * Integration test traits need to be properly applied to existing tests
+
+**15. API Server Project Modifications**
 
 * **Refactoring into a testable state**: The only reason to modify anything under the `/api-server/` directory is to refactor any code to make it testing compatible. You are at liberty to refactor any code that is not testable in it's current state. Confirm any refactoring and ensure no regression via automation test case implementation.
 
-**15. Documentation & Maintenance (Requirements)**
+**16. Documentation & Maintenance (Requirements)**
 
 * **General Documentation:** All general or solution related (non localized specific) documentation must be maintained in the `/Docs/` directory.
-* **Testing Standards:** The overarching testing standards are documented in `Docs/Standards/TestingStandards.md`. Specific guides for unit and integration test case development are located in `Docs/Standards/UnitTestCaseDevelopment.md` and `Docs/Standards/IntegrationTestCaseDevelopment.md` respectively. These documents must be reviewed prior to any assignment work.
-* **Existing Documentation Standards:** `Docs/Standards/DocumentationStandards.md` must be followed for the introduction of documentation within the `api-server.Tests` project. Use the `Docs/Templates/ReadmeTemplate.md` for the introduction of new README files. Note the emphasis on capturing the why and what, and not the how, as these are most beneficial as english documentation, while the how is well articulated via the code itself.
+* **Testing Standards:** The overarching testing standards are documented in `../Docs/Standards/TestingStandards.md`. Specific guides for unit and integration test case development are located in `../Docs/Standards/UnitTestCaseDevelopment.md` and `../Docs/Standards/IntegrationTestCaseDevelopment.md` respectively. These documents must be reviewed prior to any assignment work.
+* **Existing Documentation Standards:** `../Docs/Standards/DocumentationStandards.md` must be followed for the introduction of documentation within the `api-server.Tests` project. Use the `../Docs/Templates/ReadmeTemplate.md` for the introduction of new README files. Note the emphasis on capturing the why and what, and not the how, as these are most beneficial as english documentation, while the how is well articulated via the code itself.
 * **Maintenance:** Use the `/Docs/Maintenance/` for any requirement of manual setups, or beneficial documentation for a human solution maintainer.
 * **Document Recommendations**: For anything that is out-of-scope from this technical design, please leave references where appropriate regarding future recommended enhancements to the test suite or testing framework. You are at liberty to implement any existing recommendations that you see fit, there is no limit to putting in additional effort in order to deliver the highest quality testing project. The ultimate goal to the overall endeavor is to maximize code quality. Your expertise is appreciated.
 
-**16. Framework Augmentation Roadmap (TODOs)**
+**17. Framework Augmentation Roadmap (TODOs)**
 
 This section outlines planned enhancements to the testing framework. These items will be implemented incrementally.
 
-* **16.1. Foundational Enhancements**
+* **17.1. Foundational Enhancements**
     * **TODO (FRMK-001): Implement Testable Time with `System.TimeProvider`**
         * *Goal:* Eliminate `DateTime.Now`/`UtcNow` direct usage in SUT; make time-dependent logic deterministic.
         * *Tasks:*
             * Update coding standards to mandate `TimeProvider` injection for time-sensitive operations.
             * Refactor existing SUT code where `DateTime.Now/UtcNow` is used to use an injected `TimeProvider`.
             * Provide `FakeTimeProvider` (from `Microsoft.Extensions.TimeProvider.Testing`) in `CustomWebApplicationFactory` for integration tests and demonstrate usage in unit tests.
-            * Update `Docs/Standards/UnitTestCaseDevelopment.md` and `Docs/Standards/IntegrationTestCaseDevelopment.md` with guidance.
+            * Update `../Docs/Standards/UnitTestCaseDevelopment.md` and `../Docs/Standards/IntegrationTestCaseDevelopment.md` with guidance.
         * *Impacts:* `api-server` (refactoring), `api-server.Tests` (test setup, new base helpers if any).
         * *References:* Research Report Sec 6.2.
     * **TODO (FRMK-002): Standardize Advanced AutoFixture Customizations**
@@ -201,11 +219,11 @@ This section outlines planned enhancements to the testing framework. These items
         * *Tasks:*
             * Develop and document project-specific AutoFixture `ICustomization` and `ISpecimenBuilder` implementations for common/complex domain entities (e.g., EF Core models with relationships, DTOs with specific constraints). Store these in `api-server.Tests/Framework/TestData/AutoFixtureCustomizations/`.
             * Ensure `OmitOnRecursionBehavior` is consistently applied for EF Core entities within these customizations.
-            * Update `Docs/Standards/UnitTestCaseDevelopment.md` and `Docs/Standards/IntegrationTestCaseDevelopment.md` with guidance on using these advanced customizations.
+            * Update `../Docs/Standards/UnitTestCaseDevelopment.md` and `../Docs/Standards/IntegrationTestCaseDevelopment.md` with guidance on using these advanced customizations.
         * *Impacts:* `api-server.Tests` (new customization classes, test data setup).
         * *References:* Research Report Sec 4.1.1, 4.1.2.
 
-* **16.2. Integration Test Dependency Management**
+* **17.2. Integration Test Dependency Management**
     * **TODO (FRMK-003): Enhance `Testcontainers` Usage in `DatabaseFixture`**
         * *Goal:* Ensure maximum stability and efficiency for database integration tests.
         * *Tasks:*
@@ -221,36 +239,36 @@ This section outlines planned enhancements to the testing framework. These items
             * Integrate WireMock.Net into `CustomWebApplicationFactory` or a new dedicated fixture (e.g., `WireMockFixture`).
             * Define a standard way to configure WireMock.Net instances (port, stubs) per test class or suite, potentially loaded from `api-server.Tests/Framework/Mocks/Virtualization/`.
             * Modify `CustomWebApplicationFactory` to redirect configured external service HTTP clients to the WireMock.Net instance(s).
-            * Update `Docs/Standards/IntegrationTestCaseDevelopment.md` with detailed guidance on setting up stubs and testing with WireMock.Net.
-            * Update `Trait` for external services to `ExternalHttp:[ServiceName]` (e.g., `ExternalHttp:Stripe`).
+            * Update `../Docs/Standards/IntegrationTestCaseDevelopment.md` with detailed guidance on setting up stubs and testing with WireMock.Net.
+            * Update `Trait` for external services to use the existing pattern (e.g., `ExternalStripe`, `ExternalOpenAI`).
         * *Impacts:* `api-server.Tests` (new fixture, mock setup, test logic), `CustomWebApplicationFactory`.
         * *References:* Research Report Sec 2.4.1, 6.5.
 
-* **16.3. Advanced Testing Capabilities (Future Considerations)**
+* **17.3. Advanced Testing Capabilities (Future Considerations)**
     * **TODO (FRMK-005): Evaluate and Pilot Consumer-Driven Contract Testing (PactNet)**
         * *Goal:* Ensure mocks/virtualizations of external services remain aligned with actual provider contracts.
         * *Tasks:*
             * Research PactNet integration with xUnit and ASP.NET Core.
             * Select one critical external HTTP dependency as a pilot.
             * Develop a PoC for generating and verifying pacts.
-            * If successful, plan broader rollout and document in `Docs/Standards/IntegrationTestCaseDevelopment.md`.
+            * If successful, plan broader rollout and document in `../Docs/Standards/IntegrationTestCaseDevelopment.md`.
         * *Impacts:* `api-server.Tests` (new dependencies, test structure for contract tests).
         * *References:* Research Report Sec 2.4.3, 6.5.
 
-* **16.4. Process, Governance, and Developer Experience**
+* **17.4. Process, Governance, and Developer Experience**
     * **TODO (FRMK-006): Establish Formal Production Code Testability Review Process**
         * *Goal:* Proactively improve SUT testability to support high coverage goals.
         * *Tasks:*
             * Integrate a testability review step into the definition of "done" for features/stories.
             * Checklist should include DI best practices, SOLID (esp. SRP, ISP), Humble Object pattern opportunities, and avoidance of anti-patterns.
-            * Document this process in `Docs/Standards/CodingStandards.md` or the overarching `Docs/Standards/TestingStandards.md`.
+            * Document this process in `../Docs/Standards/CodingStandards.md` or the overarching `../Docs/Standards/TestingStandards.md`.
         * *Impacts:* Development workflow, potentially `api-server` code for refactoring.
         * *References:* Research Report Sec 3.
     * **TODO (FRMK-007): Document Patterns for Complex/Interconnected Test Data Seeding**
         * *Goal:* Provide clear guidance for setting up challenging integration test data scenarios.
         * *Tasks:*
             * Identify common scenarios requiring complex data graphs (e.g., user with multiple orders and specific order items).
-            * Document patterns in `Docs/Standards/IntegrationTestCaseDevelopment.md` combining `DatabaseFixture.ResetDatabaseAsync()`, advanced AutoFixture customizations, Test Data Builders, and (if necessary) minimal direct `DbContext` interaction for setup.
+            * Document patterns in `../Docs/Standards/IntegrationTestCaseDevelopment.md` combining `DatabaseFixture.ResetDatabaseAsync()`, advanced AutoFixture customizations, Test Data Builders, and (if necessary) minimal direct `DbContext` interaction for setup.
         * *Impacts:* Documentation, potentially new `TestData/Builders`.
         * *References:* Research Report Sec 4.2.2, 6.4.
     * **TODO (FRMK-008): Enhance AI Coder Support in Framework & Standards**
@@ -259,7 +277,7 @@ This section outlines planned enhancements to the testing framework. These items
             * Periodically review AI-generated tests against the standards.
             * Based on reviews, refine metadata tags, Gherkin-like templates, or other structured guidance in the standards documents (as per Report Sec 5).
             * Consider if new base classes, helper attributes, or utility methods in the test framework could simplify common tasks for AI.
-        * *Impacts:* `Docs/Standards/` documents, potentially `api-server.Tests/Framework/`.
+        * *Impacts:* `../Docs/Standards/` documents, potentially `api-server.Tests/Framework/`.
         * *References:* Research Report Sec 5.
     * **TODO (FRMK-009): Implement Detailed Coverage Analysis and Reporting in CI**
         * *Goal:* Track progress towards 90%+ coverage goal and maintain high standards.

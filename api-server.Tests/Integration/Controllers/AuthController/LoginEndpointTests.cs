@@ -28,7 +28,7 @@ public class LoginEndpointsTests : DatabaseIntegrationTestBase
     // Get UserManager from the test factory - using ApplicationUser
     using var scope = Factory.Services.CreateScope();
     var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<ApplicationUser>>();
-    
+
     // Check if user already exists
     var existingUser = await userManager.FindByEmailAsync("test@example.com");
     if (existingUser != null)
@@ -36,7 +36,7 @@ public class LoginEndpointsTests : DatabaseIntegrationTestBase
       // User already exists, no need to create again
       return;
     }
-    
+
     // Create test user using ApplicationUser
     var testUser = new ApplicationUser
     {
@@ -44,21 +44,21 @@ public class LoginEndpointsTests : DatabaseIntegrationTestBase
       Email = "test@example.com",
       EmailConfirmed = true
     };
-    
+
     var result = await userManager.CreateAsync(testUser, "TestPassword123!");
     if (!result.Succeeded)
     {
       var errors = string.Join(", ", result.Errors.Select(e => e.Description));
       throw new InvalidOperationException($"Failed to create test user: {errors}");
     }
-    
+
     // Verify user was created successfully and check password
     var createdUser = await userManager.FindByEmailAsync("test@example.com");
     if (createdUser == null)
     {
       throw new InvalidOperationException("Test user was not found after creation");
     }
-    
+
     // Verify password is correctly set
     var passwordCheck = await userManager.CheckPasswordAsync(createdUser, "TestPassword123!");
     if (!passwordCheck)
@@ -72,19 +72,19 @@ public class LoginEndpointsTests : DatabaseIntegrationTestBase
     // Arrange - Reset database and seed test user
     await ResetDatabaseAsync();
     await SeedTestUserAsync();
-    
+
     var client = _apiClientFixture.UnauthenticatedAuthApi;
     var request = new LoginRequest("test@example.com", "TestPassword123!");
 
     // Act
     var loginResponse = await client.Login(request);
-    
+
     // Assert - Follow testing standards for API response handling
     loginResponse.IsSuccessStatusCode.Should().BeTrue(
       because: $"login with valid credentials should succeed, but got {loginResponse.StatusCode} with error: {loginResponse.Error?.Content}");
-    
+
     loginResponse.Content.Should().NotBeNull(because: "successful login response should contain auth result data");
-    
+
     var authResult = loginResponse.Content!;
     authResult.Success.Should().BeTrue(because: "auth result should indicate successful login");
     authResult.Email.Should().NotBeNullOrEmpty(because: "auth result should contain the user's email");
