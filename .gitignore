@@ -14,5 +14,8 @@ test_results
 **/Migrations/*.sql
 api-server/logs
 
+# Test and coverage output directories
+TestResults/
+CoverageReport/
 
 **/.claude/settings.local.json
