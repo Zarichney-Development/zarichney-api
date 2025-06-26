@@ -78,6 +78,19 @@ jobs:
         with:
           name: coverage-results
           path: ./TestResults/**/coverage.cobertura.xml
+          
+      - name: Generate Coverage Report
+        uses: danielpalme/ReportGenerator-GitHub-Action@5.2.0
+        with:
+          reports: './TestResults/**/coverage.cobertura.xml'
+          targetdir: './CoverageReport'
+          reporttypes: 'HtmlInline_AzurePipelines;Cobertura;Badges'
+          
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-html
+          path: ./CoverageReport
 
   deploy:
     name: Deploy

@@ -18,6 +18,7 @@
     * [`ComplexTaskWorkflow.md`](./ComplexTaskWorkflow.md): Details the step-by-step workflow for the AI Coder performing complex or novel tasks using a TDD/Plan-First approach.
     * [`TestCoverageWorkflow.md`](./TestCoverageWorkflow.md): Details the step-by-step workflow for the AI Coder performing test coverage enhancement tasks.
     * [`LoggingGuide.md`](./LoggingGuide.md): Comprehensive guide for the enhanced logging system, including configuration and best practices.
+    * [`TestArtifactsGuide.md`](./TestArtifactsGuide.md): Guide for understanding and using CI/CD test artifacts including coverage reports and test results.
     * [`ShortTermRoadmap.md`](./ShortTermRoadmap.md): Captures planned enhancements and deferred items for the codebase and development workflow.
 * **Related Templates (Located in /Docs/Templates/):**
     * [`../Templates/AICoderPromptTemplate.md`](../Templates/AICoderPromptTemplate.md): The mandatory template structure used by the Planning Assistant to generate prompts for AI Coders performing coding tasks.
