@@ -3,8 +3,18 @@ name: Build, Test and Deploy Zarichney API
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'api-server/**'
+      - '*.sln'
+      - 'Scripts/**'
+      - '.github/workflows/**'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'api-server/**'
+      - '*.sln'
+      - 'Scripts/**'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 env:
