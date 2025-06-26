@@ -52,7 +52,7 @@ jobs:
         run: dotnet build zarichney-api.sln --configuration Release --no-restore
 
       - name: Generate API Client
-        run: pwsh ./Scripts/GenerateApiClient.ps1
+        run: pwsh ./Scripts/generate-api-client.ps1
 
       - name: Run unit tests with coverage
         run: |
@@ -95,7 +95,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Clean Project
-        run: dotnet clean zarichney-api/zarichney-api.csproj -c Release
+        run: dotnet clean api-server/api-server.csproj -c Release
 
       - name: Install/Update EF Core Tools
         run: dotnet tool update --global dotnet-ef --version 8.*
@@ -105,10 +105,10 @@ jobs:
           # Create output directory within publish structure
           mkdir -p ./publish/${{ env.EC2_GENERATED_MIGRATION_DIR_RELATIVE }}
           # Generate the script
-          dotnet ef migrations script --context UserDbContext --project zarichney-api/zarichney-api.csproj -o ${{ env.MIGRATION_SCRIPT_PATH }} --idempotent
+          dotnet ef migrations script --context UserDbContext --project api-server/api-server.csproj -o ${{ env.MIGRATION_SCRIPT_PATH }} --idempotent
 
       - name: Publish Application
-        run: dotnet publish zarichney-api/zarichney-api.csproj -c Release -o ./publish
+        run: dotnet publish api-server/api-server.csproj -c Release -o ./publish
 
       - name: Verify Migrations Files in Publish Output
         run: |
