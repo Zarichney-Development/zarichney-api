@@ -45,7 +45,7 @@ Write-Host "Generating swagger.json by running the API server temporarily..." -F
 
 # Start the API server in the background to generate swagger.json
 Write-Host "Starting API server temporarily..." -ForegroundColor Green
-$apiProcess = Start-Process -FilePath "dotnet" -ArgumentList "run", "--project", "$apiServerDir/api-server.csproj", "--urls", "http://localhost:5000" -PassThru -WindowStyle Hidden
+$apiProcess = Start-Process -FilePath "dotnet" -ArgumentList "run", "--project", "$apiServerDir/api-server.csproj", "--urls", "http://localhost:5000" -PassThru
 $apiPid = $apiProcess.Id
 
 # Wait for the API to start up
