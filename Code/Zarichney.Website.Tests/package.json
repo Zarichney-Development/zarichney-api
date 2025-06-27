@@ -1,0 +1,9 @@
+{
+  "name": "zarichney-website-tests",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "cd ../Zarichney.Website && npx jest --config jest.config.js --testMatch '**/Zarichney.Website.Tests/**/*.test.ts'",
+    "test:e2e": "npx playwright test"
+  }
+}

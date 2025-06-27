@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/spec",
+    "types": [
+      "jest",
+      "node"
+    ],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": [
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "src/test-setup.ts",
+    "../Zarichney.Website.Tests/**/*.test.ts",
+    "../Zarichney.Website.Tests/**/*.spec.ts"
+  ],
+  "exclude": [
+    "src/**/*.e2e.ts"
+  ]
+}
