@@ -42,5 +42,13 @@ test_results
 **/Migrations/*.sql
 Zarichney.Server/logs
 
+# Test Coverage
+TestResults/
+CoverageReport/
+coverage/
+*.coverage
+*.coveragexml
+coverage.cobertura.xml
+coverage.opencover.xml
 
 **/.claude/settings.local.json
