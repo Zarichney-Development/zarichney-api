@@ -1,4 +1,4 @@
-# Zarichney API Server & AI Workflow Testbed
+# Zarichney Platform & AI Workflow Testbed
 
 **Last Updated:** 2025-06-27
 
@@ -6,25 +6,28 @@
 
 ## Overview
 
-Welcome! This repository hosts the **Zarichney API Server**, a modular backend built with **.NET 8**, serving as both a functional API and a practical testbed for exploring and refining **AI-assisted software development workflows**.
+Welcome! This repository hosts the **Zarichney Platform**, a full-stack application featuring a modular **.NET 8 backend** and modern **Angular frontend**, serving as both a functional web platform and a practical testbed for exploring and refining **AI-assisted software development workflows**.
 
 Think of this repo in two ways:
 
-1.  **A Functional API:** It powers applications like the **Cookbook Factory AI**, which uses Large Language Models (LLMs) to scrape, analyze, clean, and synthesize recipes into custom cookbooks (PDF generation included!). It features secure authentication, payment integration (Stripe), background job processing, and more.
-2.  **An Experiment in Development:** It's actively developed using a **structured, AI-assisted workflow**. Specialized AI agents, guided by detailed prompts and rigorous standards documentation (all included in this repo!), handle significant portions of the coding, testing, and documentation tasks. This allows for rapid iteration while maintaining high quality.
+1.  **A Functional Web Platform:** It powers the **Cookbook Factory AI** application, which uses Large Language Models (LLMs) to scrape, analyze, clean, and synthesize recipes into custom cookbooks (PDF generation included!). Users interact through a modern Angular web interface with features like secure authentication, payment integration (Stripe), real-time order tracking, and administrative dashboards.
+2.  **An Experiment in Development:** It's actively developed using a **structured, AI-assisted workflow**. Specialized AI agents, guided by detailed prompts and rigorous standards documentation (all included in this repo!), handle significant portions of the coding, testing, and documentation tasks across both frontend and backend. This allows for rapid iteration while maintaining high quality.
 
-Whether you're interested in the API's features or the cutting-edge development methodology, explore the code and documentation to see it in action!
+Whether you're interested in the platform's features or the cutting-edge development methodology, explore the code and documentation to see it in action!
 
 ## Key Features & Capabilities
 
-* **Modular .NET 8 API Server:** Designed to be extensible for various "micro-apps" or features.
+* **Modern Angular Frontend:** Responsive web application with SSR support, featuring user interfaces for recipe browsing, order management, payment processing, and administrative functions.
+* **Modular .NET 8 API Server:** RESTful backend designed to be extensible for various "micro-apps" or features.
 * **Cookbook Factory AI:**
     * Web scraping and recipe data extraction.
     * LLM-powered recipe analysis, cleaning, ranking, naming, and synthesis (using OpenAI).
     * Automated generation of customized cookbook PDFs (using QuestPDF).
+    * Interactive recipe browsing and selection via responsive carousels.
+    * Real-time order tracking and status updates.
     * User authentication (JWT/Refresh Tokens, API Keys via ASP.NET Core Identity).
-    * Payment processing via Stripe integration.
-    * Customer and order management.
+    * Payment processing via Stripe integration with secure checkout flows.
+    * Customer and order management with administrative dashboards.
 * **Core Services:** Email (MS Graph), File Storage, Background Tasks, Secure Configuration, Session Management.
 * **AI-Assisted Development Workflow (Meta-Feature):**
     * Leverages AI Planning Assistants and AI Coders for development tasks.
@@ -34,13 +37,16 @@ Whether you're interested in the API's features or the cutting-edge development 
 
 ## Technology Highlights
 
+* **Frontend:** TypeScript, Angular 19, NgRx (state management), Angular Material (UI), SSR (Server-Side Rendering), Responsive Design
 * **Backend:** C# 12, .NET 8, ASP.NET Core Web API
 * **AI:** OpenAI API integration
 * **Database:** PostgreSQL (primarily for Identity; application data currently file-based)
 * **Authentication:** ASP.NET Core Identity, JWT, Refresh Tokens (Cookies), API Keys
 * **Testing:** xUnit, Moq, FluentAssertions, Testcontainers (for isolated DB testing), Refit (for API client generation) - *Aiming for >90% coverage.*
 * **API Documentation:** Swagger / OpenAPI
-* **Key Libraries:** Serilog, Polly, MediatR, AutoMapper, RestSharp, Stripe.net, Octokit, QuestPDF, PlaywrightSharp, AngleSharp
+* **Key Libraries:** 
+    * **Backend:** Serilog, Polly, MediatR, AutoMapper, RestSharp, Stripe.net, Octokit, QuestPDF, PlaywrightSharp, AngleSharp
+    * **Frontend:** RxJS, Angular CDK, Stripe.js, Express (for SSR), Axios
 * **Development Process:** Git, GitHub Actions (planned for CI/CD), AI Agent Assistance (via custom prompts/workflows).
 
 ## Exploring the Repository
@@ -58,11 +64,17 @@ Whether you're interested in the API's features or the cutting-edge development 
 ## Getting Started (High Level)
 
 1.  Clone the repository.
-2.  Ensure [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) and [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for integration tests) are installed.
-3.  Review `Code/Zarichney.Server/README.md` for configuration prerequisites (secrets, API keys).
-4.  Build the solution (`dotnet build`).
-5.  Run the tests (`dotnet test`).
-6.  Run the API (`dotnet run --project Code/Zarichney.Server`).
+2.  **Backend Setup:**
+    * Ensure [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) and [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for integration tests) are installed.
+    * Review `Code/Zarichney.Server/README.md` for configuration prerequisites (secrets, API keys).
+    * Build the solution (`dotnet build`).
+    * Run the tests (`dotnet test`).
+    * Run the API (`dotnet run --project Code/Zarichney.Server`).
+3.  **Frontend Setup:**
+    * Ensure [Node.js 18+](https://nodejs.org/) is installed.
+    * Navigate to `Code/Zarichney.Website/` and run `npm install`.
+    * Review `Code/Zarichney.Website/README.md` for configuration details.
+    * Start development server (`npm start`) or build for production (`npm run build-prod`).
 
 *(Detailed setup and contribution guidelines are part of the internal documentation standards.)*
 
