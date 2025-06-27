@@ -134,7 +134,7 @@ To ensure code remains highly testable, actively avoid the following common anti
 * **Service Locator:** As mentioned in DI, avoid resolving dependencies dynamically from `IServiceProvider` within classes. This hides dependencies and complicates test setup.
 * **Deeply Nested Object Graphs without Abstractions (Law of Demeter Violations):** Code like `A.getB().getC().getD().doSomething()` makes mocking `D` cumbersome and couples tests to the entire chain. Introduce interfaces or methods at intermediate points if necessary.
 * **Overly Complex Constructors:** Constructors with excessive logic or too many parameters can make object creation difficult in tests. Consider using Factory patterns or refactoring the class.
-* **Time-Dependent Logic without Abstraction:** Directly using `DateTime.Now` or `DateTime.UtcNow` makes code hard to test deterministically. Inject `System.TimeProvider` instead (see `api-server.Tests/TechnicalDesignDocument.md` FRMK-001).
+* **Time-Dependent Logic without Abstraction:** Directly using `DateTime.Now` or `DateTime.UtcNow` makes code hard to test deterministically. Inject `System.TimeProvider` instead (see `Code/Zarichney.Server.Tests/TechnicalDesignDocument.md` FRMK-001).
 
 ## 12. Style Guide
 

@@ -1,0 +1,20 @@
+<button
+  *ngIf="shouldShowPaymentButton"
+  (click)="onPaymentButtonClick()"
+  [disabled]="isButtonDisabled"
+  class="payment-btn"
+  [ngClass]="paymentStateClass"
+>
+  <span class="icon">{{ buttonIcon }}</span>
+  {{ buttonText }}
+</button>
+
+<!-- Show a payment completed indicator when payment is complete -->
+<div *ngIf="paymentStatus === 3" class="payment-status completed">
+  <span class="icon">✅</span> Payment complete
+</div>
+
+<!-- Show a payment pending indicator -->
+<div *ngIf="paymentStatus === 1 && !shouldShowPaymentButton" class="payment-status pending">
+  <span class="icon">⌛</span> Payment pending
+</div>

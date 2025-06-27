@@ -5,12 +5,12 @@
 
 ## 1. Introduction
 
-* **Purpose:** This document provides detailed, actionable guidance on how to write effective, isolated, and maintainable unit tests for the `api-server` project. It expands upon the general principles outlined in the overarching `Docs/Standards/TestingStandards.md`.
-* **Scope:** This guide applies specifically to unit testing individual components (classes, methods, services, handlers, etc.) within the `api-server` solution. All unit tests reside within the `api-server.Tests` project, typically under the `/Unit` directory.
+* **Purpose:** This document provides detailed, actionable guidance on how to write effective, isolated, and maintainable unit tests for the `Code/Zarichney.Server` project. It expands upon the general principles outlined in the overarching `Docs/Standards/TestingStandards.md`.
+* **Scope:** This guide applies specifically to unit testing individual components (classes, methods, services, handlers, etc.) within the `Code/Zarichney.Server` solution. All unit tests reside within the `Code/Zarichney.Server.Tests` project, typically under the `/Unit` directory.
 * **Prerequisites:** Developers (human and AI) utilizing this guide **must** be familiar with:
     * `Docs/Standards/TestingStandards.md` (the overarching testing philosophy and tooling).
     * `Docs/Standards/CodingStandards.md` (for principles on writing testable production code).
-    * The `api-server.Tests/TechnicalDesignDocument.md` for understanding the test framework's architecture.
+    * The `Code/Zarichney.Server.Tests/TechnicalDesignDocument.md` for understanding the test framework's architecture.
 * **Goal:** To enable the creation of a comprehensive suite of unit tests that are fast, reliable, provide precise feedback, and contribute to achieving >=90% code coverage for non-trivial business logic.
 
 ## 2. Core Principles of Unit Testing (Recap & Elaboration)
@@ -58,7 +58,7 @@ Effective unit testing begins with writing testable production code. Adherence t
 
 ## 4. Setting Up Unit Tests
 
-* **Project Structure:** Unit tests should mirror the structure of the `api-server` project under the `api-server.Tests/Unit/` directory. For complex SUT methods warranting multiple test cases, create a dedicated test file (e.g., `MyService_ComplexMethodTests.cs`). Otherwise, group tests for a class in a single test file (`MyServiceTests.cs`).
+* **Project Structure:** Unit tests should mirror the structure of the `Code/Zarichney.Server` project under the `Code/Zarichney.Server.Tests/Unit/` directory. For complex SUT methods warranting multiple test cases, create a dedicated test file (e.g., `MyService_ComplexMethodTests.cs`). Otherwise, group tests for a class in a single test file (`MyServiceTests.cs`).
 * **Test Class Naming:** `[SystemUnderTest]Tests.cs` (e.g., `RecipeServiceTests.cs`).
 * **Test Method Naming:** `[MethodName]_[Scenario]_[ExpectedOutcome]` (e.g., `CreateRecipe_WithValidInput_ReturnsSuccessResult`). Names must be descriptive and unambiguous.
 * **xUnit Attributes:**
@@ -244,7 +244,7 @@ AutoFixture helps create anonymous, yet structurally valid, test data, reducing 
             .ForEach(b => fixture.Behaviors.Remove(b));
         fixture.Behaviors.Add(new OmitOnRecursionBehavior());
         ```
-    * For project-wide AutoFixture customizations (e.g., default behaviors, custom specimen builders for domain types), these should be defined in `api-server.Tests/Framework/TestData/AutoFixtureCustomizations/` and can be composed into custom `AutoData` attributes if needed. However, for unit tests, direct `Fixture` instance customization or simple `[Frozen]` usage is often sufficient.
+    * For project-wide AutoFixture customizations (e.g., default behaviors, custom specimen builders for domain types), these should be defined in `Code/Zarichney.Server.Tests/Framework/TestData/AutoFixtureCustomizations/` and can be composed into custom `AutoData` attributes if needed. However, for unit tests, direct `Fixture` instance customization or simple `[Frozen]` usage is often sufficient.
 
 ## 8. Testing Specific Scenarios
 

@@ -3,7 +3,7 @@
 **Version:** 1.0
 **Last Updated:** 2025-05-03
 
-* **Context:** This document captures planned enhancements, refactoring goals, and potential future directions for the `api-server` codebase and its associated AI-assisted development workflow. It translates broader strategic goals into specific technical or process objectives, including items deferred from the V2.0 documentation update cycle (May 2025).*
+* **Context:** This document captures planned enhancements, refactoring goals, and potential future directions for the `Zarichney.Server` codebase and its associated AI-assisted development workflow. It translates broader strategic goals into specific technical or process objectives, including items deferred from the V2.0 documentation update cycle (May 2025).*
 
 ## 1. AI Workflow & SDLC Automation
 

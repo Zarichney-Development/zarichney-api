@@ -38,8 +38,8 @@ assignees: '' # Assign to the human orchestrator
 
 *(List the primary codebase directories/modules expected to be involved.)*
 
-- `/api-server/[module]/[submodule]`
-- `/api-server.Tests/[module]/[submodule]`
+- `/Zarichney.Server/[module]/[submodule]`
+- `/Zarichney.Server.Tests/[module]/[submodule]`
 - `/Docs/Standards/[standard_name.md]` (If standards require update)
 - `/Docs/Development/[workflow_doc.md]` (If process docs require update)
 

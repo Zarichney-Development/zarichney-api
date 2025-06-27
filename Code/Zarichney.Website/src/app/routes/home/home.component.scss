@@ -1,0 +1,78 @@
+@use '../../styles/screens';
+@use '../../styles/mixins' as mix;
+
+:host {
+  @extend .screen;
+  // border: 1px solid purple;
+
+  .centered-container {
+
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto;
+    width: -moz-fit-content;
+    width: fit-content;
+    padding-top: 10vw;
+
+    logo {
+      // margin: clamp(100px, 10vw, 250px) auto;
+      max-width: -moz-fit-content;
+      max-width: fit-content;
+      width: min-content;
+      cursor: pointer;
+    }
+
+    h1 {
+      @include mix.responsive-font-size(55px, 88px);
+
+      & {
+        padding: 20px;
+        text-align: center;
+        margin: 0 auto;
+        color: #797979;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        height: 100%;
+        align-content: center;
+        justify-content: center;
+      }
+
+      span {
+        padding: 0 5px;
+
+        &:nth-child(2) {
+          color: orange;
+          // TODO: color: var(--primary-accent);
+        }
+      }
+    }
+
+    .icons {
+      --icon-size: 35px;
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+
+      a {
+        display: flex;
+        max-height: var(--icon-size);
+        width: var(--icon-size);
+        background-color: var(--primary-accent);
+        padding: 5px;
+        border-radius: 25px;
+
+        &:not(:first-child) {
+          margin-left: 20px;
+        }
+      }
+    }
+  }
+
+  .grid-container {
+    & {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      height: 100%;
+    }
+  }
+}

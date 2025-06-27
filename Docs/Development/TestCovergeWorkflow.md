@@ -6,7 +6,7 @@
 
 ## 1. Purpose and Goal
 
-* **Purpose:** This document defines the systematic workflow for increasing and maintaining automated test coverage for the `zarichney-api/api-server` project. It is particularly tailored for AI Coding Assistants assigned tasks related to test coverage enhancement but is applicable to all developers.
+* **Purpose:** This document defines the systematic workflow for increasing and maintaining automated test coverage for the `Code/Zarichney.Server` project. It is particularly tailored for AI Coding Assistants assigned tasks related to test coverage enhancement but is applicable to all developers.
 * **Project Goal:** To achieve and maintain:
     * **>=90% unit test coverage** for all non-trivial business logic, services, and utility classes.
     * **Comprehensive integration test coverage** for all public API endpoints, critical workflows, and component interactions.
@@ -27,7 +27,7 @@ Before initiating any test coverage enhancement task, the assigned developer (hu
     * The specific `README.md` file for the directory/module containing the SUT.
     * Any relevant architectural diagrams associated with the SUT (as per `../../Docs/Standards/DiagrammingStandards.md`).
 * **Test Framework Blueprint:**
-    * `../../api-server.Tests/TechnicalDesignDocument.md`: For understanding the testing framework's components and capabilities.
+    * `../../Zarichney.Server.Tests/TechnicalDesignDocument.md`: For understanding the testing framework's components and capabilities.
 
 ## 3. Test Coverage Workflow Steps
 
@@ -41,7 +41,7 @@ This workflow is designed to be iterative and ensure quality.
 
 **Step 2: Analyze Code for Testability & Plan Refactoring (If Needed)**
 * **Action:** Examine the SUT's source code. Assess its current testability based on principles in `../../Docs/Standards/CodingStandards.md` (e.g., adherence to DI, SOLID, Humble Object pattern, avoidance of statics).
-* **Constraint:** Production code (`api-server/`) **should not be changed** unless it is essential for enabling testability of critical, currently untestable logic.
+* **Constraint:** Production code (`Zarichney.Server/`) **should not be changed** unless it is essential for enabling testability of critical, currently untestable logic.
 * **Action (If Refactoring Needed):**
     * If the SUT is difficult to test due to its design:
         * Identify specific refactorings (e.g., extracting dependencies, applying the Humble Object pattern) that would improve testability.
@@ -88,7 +88,7 @@ This workflow is designed to be iterative and ensure quality.
     * Refine test cases for clarity, robustness, or better coverage.
     * Add more test cases if gaps are still evident.
     * If SUT refactoring was done, ensure it's clean and doesn't introduce issues.
-* **Constraint (Reiteration):** Avoid changing production code (`api-server/`) unless it was a pre-approved or minor refactoring strictly for testability.
+* **Constraint (Reiteration):** Avoid changing production code (`Zarichney.Server/`) unless it was a pre-approved or minor refactoring strictly for testability.
 
 **Step 8: Ensure All Project Tests Pass**
 * **Action:** Before finalizing, run all unit tests (`dotnet test --filter "Category=Unit"`) and all relevant integration tests (e.g., `dotnet test --filter "Category=Integration"`) for the entire project, or at least those potentially impacted by your changes, to catch any unintended regressions.

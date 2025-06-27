@@ -1,6 +1,6 @@
 # Zarichney API Server & AI Workflow Testbed
 
-**Last Updated:** 2025-05-04
+**Last Updated:** 2025-06-27
 
 ---
 
@@ -45,23 +45,24 @@ Whether you're interested in the API's features or the cutting-edge development 
 
 ## Exploring the Repository
 
-* **`api-server/`:** Contains the main ASP.NET Core application code. Start with [`api-server/README.md`](./api-server/README.md) for an overview.
-* **`api-server.Tests/`:** Contains the unit and integration tests. See [`api-server.Tests/README.md`](./api-server.Tests/README.md).
+* **`Code/Zarichney.Server/`:** Contains the main ASP.NET Core application code. Start with [`Code/Zarichney.Server/README.md`](./Code/Zarichney.Server/README.md) for an overview.
+* **`Code/Zarichney.Server.Tests/`:** Contains the unit and integration tests. See [`Code/Zarichney.Server.Tests/README.md`](./Code/Zarichney.Server.Tests/README.md).
+* **`Code/Zarichney.Website/`:** Contains the Angular frontend application. See [`Code/Zarichney.Website/README.md`](./Code/Zarichney.Website/README.md).
 * **`Docs/`:** The heart of the documentation and AI workflow definitions.
     * **`Docs/Standards/`:** Defines the rules (coding, testing, docs, etc.).
     * **`Docs/Development/`:** Defines the AI-assisted workflow processes and roadmap.
     * **`Docs/Templates/`:** Contains templates for AI prompts and GitHub Issues.
-    * Each module within `api-server/` also has its own detailed `README.md`.
+    * Each module within `Code/` also has its own detailed `README.md`.
 * **`Scripts/`:** Utility scripts (e.g., regenerating the test API client).
 
 ## Getting Started (High Level)
 
 1.  Clone the repository.
 2.  Ensure [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) and [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for integration tests) are installed.
-3.  Review `api-server/README.md` for configuration prerequisites (secrets, API keys).
+3.  Review `Code/Zarichney.Server/README.md` for configuration prerequisites (secrets, API keys).
 4.  Build the solution (`dotnet build`).
 5.  Run the tests (`dotnet test`).
-6.  Run the API (`dotnet run` from `api-server/`).
+6.  Run the API (`dotnet run --project Code/Zarichney.Server`).
 
 *(Detailed setup and contribution guidelines are part of the internal documentation standards.)*
 

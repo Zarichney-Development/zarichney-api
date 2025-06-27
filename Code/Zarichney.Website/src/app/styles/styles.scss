@@ -1,0 +1,82 @@
+@use "reset";
+@use "mobile";
+@use "tablet";
+@use "desktop";
+@use "variables";
+@use "mixins";
+@use "ngx-toastr/toastr";
+
+:root {
+  --primary-accent: #E67A00;
+  --secondary-accent: #073BDA;
+  --website-background: #0E1115;
+  --section-background: #2B2725;
+  --font-color: #D6D4CB;
+  --border-color: #333;
+
+  --font-family-sans-serif: 'Roboto', sans-serif;
+  --font-family-serif: 'Merriweather', serif;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-sm: 14px;
+  --font-weight-normal: 400;
+  --font-weight-bold: 700;
+}
+
+body {
+  font-family: var(--font-family-sans-serif);
+  font-size: var(--font-size-base);
+  color: var(--font-color);
+  background-color: var(--website-background);
+  padding: 0;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 1rem;
+  }
+}
+
+a,
+.link {
+  cursor: pointer;
+  color: var(--primary-accent);
+  text-decoration: none;
+}
+
+a:hover,
+.link:hover {
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: var(--font-weight-bold);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+span,
+li,
+p {
+  color: var(--font-color);
+}
+
+.section {
+  background-color: var(--section-background);
+  padding: 2rem;
+}
+
+.mat-toolbar {
+  // Example of overriding Angular Material component styles with CSS variables
+  background-color: var(--primary-accent) !important;
+}

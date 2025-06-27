@@ -1,0 +1,74 @@
+// src/styles/_mixins.scss
+@use 'variables' as vars;
+@use "sass:math";
+@use "sass:color";
+
+@mixin responsive-font-size($min-font-size,
+  $max-font-size,
+  $min-viewport-width: vars.$min-vp,
+  $max-viewport-width: vars.$max-vp) {
+  $font-size-range: $max-font-size - $min-font-size;
+  $viewport-range: $max-viewport-width - $min-viewport-width;
+  $font-size-slope: math.div($font-size-range, $viewport-range);
+
+  font-size: #{$min-font-size};
+
+  @media screen and (min-width: #{$min-viewport-width}) {
+    font-size: calc(#{$min-font-size} + #{$font-size-slope} * (100vw - #{$min-viewport-width}));
+  }
+
+  @media screen and (min-width: #{$max-viewport-width}) {
+    font-size: #{$max-font-size};
+  }
+}
+
+// Utility functions for color manipulation
+@function darken-primary($amount) {
+  @return color.adjust(vars.$primary-color-value, $lightness: -$amount);
+}
+
+@function lighten-primary($amount) {
+  @return color.adjust(vars.$primary-color-value, $lightness: $amount);
+}
+
+// Additional utility functions for color manipulation
+@function darken-text($amount) {
+  @return color.adjust(vars.$text-color-value, $lightness: -$amount);
+}
+
+@function lighten-text($amount) {
+  @return color.adjust(vars.$text-color-value, $lightness: $amount);
+}
+
+// Responsive breakpoints
+@mixin mobile {
+  @media (max-width: 480px) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: 481px) and (max-width: 768px) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: 769px) {
+    @content;
+  }
+}
+
+// Common patterns
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+}

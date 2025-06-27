@@ -1,0 +1,120 @@
+.payment-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  margin: 1rem auto;
+  background: #3f51b5; /* Indigo color for payment button */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  @media (prefers-color-scheme: dark) {
+    background: #5c6bc0; /* Lighter indigo for dark mode */
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .icon {
+    font-size: 1.2em;
+  }
+
+  /* Payment state styles */
+  &.pending {
+    background: #ff9800; /* Orange for pending */
+    
+    @media (prefers-color-scheme: dark) {
+      background: #ffb74d; /* Lighter orange for dark mode */
+    }
+  }
+
+  &.processing {
+    background: #2196f3; /* Blue for processing */
+    animation: pulse 1.5s infinite;
+    
+    @media (prefers-color-scheme: dark) {
+      background: #64b5f6; /* Lighter blue for dark mode */
+    }
+  }
+
+  &.failed {
+    background: #f44336; /* Red for failed */
+    
+    @media (prefers-color-scheme: dark) {
+      background: #e57373; /* Lighter red for dark mode */
+    }
+  }
+
+  &.completed {
+    background: #4caf50; /* Green for completed */
+    
+    @media (prefers-color-scheme: dark) {
+      background: #81c784; /* Lighter green for dark mode */
+    }
+  }
+}
+
+/* Payment status indicators */
+.payment-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 1rem auto;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  
+  .icon {
+    font-size: 1.2em;
+  }
+  
+  &.pending {
+    background-color: rgba(255, 152, 0, 0.1);
+    color: #ff9800;
+    border: 1px solid rgba(255, 152, 0, 0.3);
+    
+    @media (prefers-color-scheme: dark) {
+      background-color: rgba(255, 183, 77, 0.2);
+      color: #ffb74d;
+    }
+  }
+  
+  &.completed {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #4caf50;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    
+    @media (prefers-color-scheme: dark) {
+      background-color: rgba(129, 199, 132, 0.2);
+      color: #81c784;
+    }
+  }
+}
+
+/* Animation for processing state */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}

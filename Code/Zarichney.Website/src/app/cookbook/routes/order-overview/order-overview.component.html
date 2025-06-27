@@ -1,0 +1,138 @@
+<!-- Order Not Found Message -->
+<div *ngIf="orderNotFound" class="order-not-found">
+  <div class="not-found-icon">❓</div>
+  <h2>Order Not Found</h2>
+  <p>{{ errorMessage }}</p>
+  <div class="not-found-actions">
+    <button routerLink="/cookbook" class="return-btn">Return to Cookbook</button>
+  </div>
+</div>
+
+<!-- Loading state -->
+<div *ngIf="loading && !orderNotFound" class="loading-container">
+  <p>Loading order details...</p>
+</div>
+
+<!-- Only show order content when order exists and is not in "not found" state -->
+<div *ngIf="!orderNotFound && !loading && (order$ | async) as order" class="order-container">
+  <header class="order-header">
+    <div class="title-group">
+      <h2>Order #{{ order.orderId }}</h2>
+      <span class="status" [class]="getStatusClass(order.status)">
+        {{ getOrderStatus(order.status) }}
+      </span>
+    </div>
+    <div class="order-meta">
+      <div class="menu-container" (clickOutside)="closeMenu()">
+        <button
+          class="menu-trigger"
+          (click)="toggleMenu()"
+          [class.active]="menuOpen"
+        >
+          <span class="icon">☰</span>
+        </button>
+        <div class="menu-dropdown" *ngIf="menuOpen">
+          <button (click)="onAccountDetails()">
+            <span class="icon">👤</span>
+            Account Details
+          </button>
+          <button (click)="viewPdf()">
+            <span class="icon">👁️</span>
+            View Cookbook
+          </button>
+          <button (click)="downloadPdf()">
+            <span class="icon">↓</span>
+            Download PDF
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div *ngIf="errorMessage" class="error-message">
+    <span class="icon">⚠️</span>
+    <span class="message">{{ errorMessage }}</span>
+    <button class="close-btn" (click)="errorMessage = null">×</button>
+  </div>
+
+  <section class="recipe-progress">
+    <div class="progress-toggle" (click)="toggleProgress()">
+      <div class="progress-header">
+        <h3>Cookbook Generation Progress</h3>
+      </div>
+      <div class="progress-bar">
+        <div
+          class="progress"
+          [style.width.%]="
+            getRecipeProgressPercentage(order.synthesizedRecipes)
+          "
+        ></div>
+      </div>
+      <p>
+        {{ order.synthesizedRecipes.length || 0 }} of
+        {{ order.cookbookContent.expectedRecipeCount }} recipes synthesized
+        <span class="expand-icon" [class.expanded]="isProgressExpanded">▼</span>
+      </p>
+    </div>
+    <div
+      class="recipe-checklist"
+      *ngIf="isProgressExpanded"
+      [@expandCollapse]="'visible'"
+    >
+      <div class="recipe-item" *ngFor="let recipe of order.recipeList">
+        <span
+          class="recipe-status"
+          [class.synthesized]="
+            isRecipeSynthesized(recipe, order.synthesizedRecipes)
+          "
+        >
+          ✓
+        </span>
+        <span class="recipe-name">{{ recipe }}</span>
+      </div>
+    </div>
+  </section>
+
+  <button
+    *ngIf="order.status === 0"
+    (click)="processOrder()"
+    [disabled]="processing"
+    class="process-btn"
+  >
+    <span class="icon">▶️</span>
+    {{ processing ? "Processing..." : "Process Order" }}
+  </button>
+  
+  <!-- Payment button component -->
+  <app-payment-button
+    [requiresPayment]="order.requiresPayment"
+    [orderStatus]="order.status"
+    [processing]="processing"
+    (paymentInitiated)="initiatePayment()"
+  ></app-payment-button>
+
+  <section class="recipe-list" *ngIf="order.synthesizedRecipes?.length">
+    <h3>Synthesized Recipes</h3>
+    <app-recipe-carousel
+      [recipes]="order.synthesizedRecipes"
+    ></app-recipe-carousel>
+  </section>
+
+  <section class="customer-info" *ngIf="order.customer">
+    <h3>Account Information</h3>
+    <div class="email-container">
+      <span class="label">Email Address</span>
+      <span class="value">{{ order.email }}</span>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <span class="label">Available Recipes</span>
+        <span class="value">{{ order.customer.availableRecipes }}</span>
+      </div>
+      <div class="stat">
+        <span class="label">Lifetime Recipes</span>
+        <span class="value">{{ order.customer.lifetimeRecipesUsed }}</span>
+      </div>
+    </div>
+  </section>
+</div>

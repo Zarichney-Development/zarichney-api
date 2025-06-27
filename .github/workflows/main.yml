@@ -108,7 +108,7 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Clean Project
-        run: dotnet clean api-server/api-server.csproj -c Release
+        run: dotnet clean Zarichney.Server/Zarichney.Server.csproj -c Release
 
       - name: Install/Update EF Core Tools
         run: dotnet tool update --global dotnet-ef --version 8.*
@@ -118,10 +118,10 @@ jobs:
           # Create output directory within publish structure
           mkdir -p ./publish/${{ env.EC2_GENERATED_MIGRATION_DIR_RELATIVE }}
           # Generate the script
-          dotnet ef migrations script --context UserDbContext --project api-server/api-server.csproj -o ${{ env.MIGRATION_SCRIPT_PATH }} --idempotent
+          dotnet ef migrations script --context UserDbContext --project Zarichney.Server/Zarichney.Server.csproj -o ${{ env.MIGRATION_SCRIPT_PATH }} --idempotent
 
       - name: Publish Application
-        run: dotnet publish api-server/api-server.csproj -c Release -o ./publish
+        run: dotnet publish Zarichney.Server/Zarichney.Server.csproj -c Release -o ./publish
 
       - name: Verify Migrations Files in Publish Output
         run: |

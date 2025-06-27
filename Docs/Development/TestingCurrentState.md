@@ -26,8 +26,8 @@ The testing infrastructure consists of multiple projects:
 
 ```
 zarichney-api/
-├── api-server/                    # Main API project
-├── api-server.Tests/              # Primary test project
+├── Zarichney.Server/                    # Main API project
+├── Zarichney.Server.Tests/              # Primary test project
 │   ├── Framework/                 # Testing infrastructure
 │   ├── Unit/                      # Unit tests
 │   ├── Integration/               # Integration tests
@@ -303,9 +303,9 @@ reportgenerator -reports:"**/coverage.cobertura.xml" -targetdir:"CoverageReport"
 - Test Standards: [`../../Zarichney.Standards/Standards/TestingStandards.md`](../../Zarichney.Standards/Standards/TestingStandards.md)
 - Unit Test Guide: [`../../Zarichney.Standards/Standards/UnitTestCaseDevelopment.md`](../../Zarichney.Standards/Standards/UnitTestCaseDevelopment.md)
 - Integration Test Guide: [`../../Zarichney.Standards/Standards/IntegrationTestCaseDevelopment.md`](../../Zarichney.Standards/Standards/IntegrationTestCaseDevelopment.md)
-- Technical Design: [`../../api-server.Tests/TechnicalDesignDocument.md`](../../api-server.Tests/TechnicalDesignDocument.md)
+- Technical Design: [`../../Zarichney.Server.Tests/TechnicalDesignDocument.md`](../../Zarichney.Server.Tests/TechnicalDesignDocument.md)
 - Coverage Reports: `/CoverageReport/`
-- Test Framework: [`../../api-server.Tests/Framework/`](../../api-server.Tests/Framework/)
+- Test Framework: [`../../Zarichney.Server.Tests/Framework/`](../../Zarichney.Server.Tests/Framework/)
 
 ### C. Coverage Report Access
 
