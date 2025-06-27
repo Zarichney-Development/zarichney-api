@@ -1,7 +1,7 @@
 # README: Code/Zarichney.Server.Tests Project
 
-**Version:** 1.2
-**Last Updated:** 2025-05-25
+**Version:** 1.3
+**Last Updated:** 2025-06-26
 **Parent:** `../Zarichney.Server/README.md` (Conceptual link to the main application's README)
 
 ## 1. Purpose & Responsibility
@@ -72,6 +72,33 @@ A commitment to high test coverage (>=90% for unit tests) and rigorous adherence
 ## 5. How to Work With This Code
 
 ### Running Tests
+
+#### Automation Suite (Recommended)
+
+* **Complete Test Suite with Coverage Report:**
+    ```bash
+    # Run all tests with comprehensive coverage reporting and open report in browser
+    ../Scripts/run-automation-suite.sh
+    
+    # Run without opening browser automatically
+    ../Scripts/run-automation-suite.sh --no-browser
+    
+    # Run only specific test categories
+    ../Scripts/run-automation-suite.sh --unit-only
+    ../Scripts/run-automation-suite.sh --integration-only
+    
+    # Skip build step for faster iteration (assumes solution already built)
+    ../Scripts/run-automation-suite.sh --skip-build
+    ```
+    
+    The automation suite script provides:
+    - ✅ Comprehensive test execution (unit + integration)
+    - 📊 Code coverage collection and HTML report generation
+    - 🌐 Automatic browser opening of coverage report
+    - 🔍 Test results in TRX format for detailed analysis
+    - 🐳 Smart Docker access handling for Testcontainers
+
+#### Individual Test Commands
 
 * **Unit Tests:**
     ```bash

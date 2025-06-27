@@ -60,6 +60,19 @@ Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskMan
     test-claude                     # AI-powered insights via Claude
     ```
 
+* **Run Automation Suite with Coverage Report:** (Comprehensive test execution with HTML report)
+    ```bash
+    # Run complete automation suite and open coverage report in browser
+    ./Scripts/run-automation-suite.sh
+    
+    # Run without opening browser
+    ./Scripts/run-automation-suite.sh --no-browser
+    
+    # Run only specific test types
+    ./Scripts/run-automation-suite.sh --unit-only
+    ./Scripts/run-automation-suite.sh --integration-only
+    ```
+
 * **Run All Tests (Traditional):** (Ensure Docker Desktop is running for integration tests)
     ```bash
     # Standard execution (if Docker group membership is active)
