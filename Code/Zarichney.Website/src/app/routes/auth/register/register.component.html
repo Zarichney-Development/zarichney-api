@@ -1,0 +1,108 @@
+<div class="register-container">
+  <h2>Create an Account</h2>
+
+  <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input
+        type="email"
+        id="email"
+        formControlName="email"
+        placeholder="Enter your email"
+      />
+      <div
+        class="error-message"
+        *ngIf="
+          registerForm.get('email')?.invalid &&
+          (registerForm.get('email')?.touched || registrationAttempted)
+        "
+      >
+        <span *ngIf="registerForm.get('email')?.errors?.['required']"
+          >Email is required</span
+        >
+        <span *ngIf="registerForm.get('email')?.errors?.['email']"
+          >Please enter a valid email address</span
+        >
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input
+        type="password"
+        id="password"
+        formControlName="password"
+        placeholder="Enter your password"
+      />
+      <div
+        class="error-message"
+        *ngIf="
+          registerForm.get('password')?.invalid &&
+          (registerForm.get('password')?.touched || registrationAttempted)
+        "
+      >
+        <span *ngIf="registerForm.get('password')?.errors?.['required']"
+          >Password is required</span
+        >
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="confirmPassword">Confirm Password</label>
+      <input
+        type="password"
+        id="confirmPassword"
+        formControlName="confirmPassword"
+        placeholder="Confirm your password"
+      />
+      <div
+        class="error-message"
+        *ngIf="
+          registerForm.get('confirmPassword')?.invalid &&
+          (registerForm.get('confirmPassword')?.touched ||
+            registrationAttempted)
+        "
+      >
+        <span *ngIf="registerForm.get('confirmPassword')?.errors?.['required']"
+          >Please confirm your password</span
+        >
+      </div>
+      <div
+        class="error-message"
+        *ngIf="
+          registerForm.hasError('passwordMismatch') &&
+          (registerForm.get('confirmPassword')?.touched ||
+            registrationAttempted)
+        "
+      >
+        Passwords do not match
+      </div>
+    </div>
+
+    <div class="form-feedback">
+      <!-- Error message from API -->
+      <div class="auth-error" *ngIf="(error$ | async) && registrationAttempted">
+        {{ error$ | async }}
+      </div>
+
+      <!-- Success message -->
+      <div
+        class="auth-success"
+        *ngIf="
+          registrationAttempted && !(error$ | async) && !(loading$ | async)
+        "
+      >
+        Registration submitted. Please check your email for a confirmation link.
+      </div>
+    </div>
+
+    <button type="submit" [disabled]="loading$ | async">
+      <span *ngIf="loading$ | async">Registering...</span>
+      <span *ngIf="!(loading$ | async)">Register</span>
+    </button>
+  </form>
+
+  <div class="login-link">
+    Already have an account? <a routerLink="../login">Login</a>
+  </div>
+</div>

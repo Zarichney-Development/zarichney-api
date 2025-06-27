@@ -1,0 +1,32 @@
+<div class="dynamic-container">
+  <!-- Debug information if this is the admin-simple debug route -->
+  <div *ngIf="isDebugRoute" class="debug-info">
+    <h1>Route Debugging Information</h1>
+    <p>This is a diagnostic page to help troubleshoot route issues.</p>
+
+    <h2>Authentication State</h2>
+    <pre>{{ authDebugInfo | json }}</pre>
+
+    <h2>Current Route</h2>
+    <pre>{{ routeDebugInfo | json }}</pre>
+
+    <h2>Try Admin Routes</h2>
+    <div>
+      <a [routerLink]="['/admin']">Admin Dashboard</a> |
+      <a [routerLink]="['/admin/api-keys']">Admin API Keys</a>
+    </div>
+  </div>
+
+  <!-- 404 page displayed by default when not in debug mode -->
+  <div *ngIf="!isDebugRoute" class="not-found-container">
+    <div class="not-found-content">
+      <h1 class="not-found-title">404</h1>
+      <h2 class="not-found-subtitle">Page Not Found</h2>
+      <p class="not-found-message">
+        Sorry, the page you are looking for could not be found or has been
+        moved.
+      </p>
+      <a (click)="navigateHome($event)" class="home-button">Go Home</a>
+    </div>
+  </div>
+</div>

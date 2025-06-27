@@ -1,0 +1,24 @@
+$min-vp: 570px;
+$max-vp: 715px;
+
+// Actual color values for Sass functions
+$primary-color-value: #E67A00;
+$secondary-color-value: #073BDA;
+$text-color-value: #D6D4CB;
+$background-color-value: #0E1115;
+$section-background-value: #2B2725;
+$border-color-value: #333;
+
+// Sass variables for compatibility with component styles
+$primary-color: var(--primary-accent);
+$secondary-color: var(--secondary-accent);
+$text-color: var(--font-color);
+$background-color: var(--website-background);
+$section-background: var(--section-background);
+$border-color: var(--border-color);
+
+// Additional common variables used in component styles
+$error-color: #dc3545;
+$success-color: #28a745;
+$warning-color: #ffc107;
+$info-color: #17a2b8;

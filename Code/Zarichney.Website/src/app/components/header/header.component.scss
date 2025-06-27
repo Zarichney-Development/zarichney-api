@@ -1,0 +1,56 @@
+:host {
+    display: block;
+    padding: 20px;
+
+    .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+
+    .logo-container {
+        flex-basis: 500px;
+        min-width: 275px;
+    }
+
+    .auth-container {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .welcome-message {
+        font-size: 14px;
+        margin-right: 10px;
+    }
+
+    .logout-button, .login-button {
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .logout-button {
+        background-color: #f44336;
+        color: white;
+        border: none;
+        
+        &:hover {
+            background-color: #d32f2f;
+        }
+    }
+
+    .login-button {
+        background-color: #2196f3;
+        color: white;
+        display: inline-block;
+        
+        &:hover {
+            background-color: #0b7dda;
+        }
+    }
+}

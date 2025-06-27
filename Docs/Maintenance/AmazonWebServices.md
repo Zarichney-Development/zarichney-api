@@ -14,12 +14,12 @@ mkdir ~/.ssh -Force
 Host cookbook-api
     HostName <EC2_ELASTIC_IP_DNS>
     User ec2-user
-    IdentityFile ~/.ssh/aws-ec2-api-server.pem
+    IdentityFile ~/.ssh/aws-ec2-Zarichney.Server.pem
 "@ | Add-Content ~/.ssh/config
 
 # Move key to SSH directory and set permissions
-Copy-Item aws-ec2-api-server.pem ~/.ssh/
-icacls ~/.ssh/aws-ec2-api-server.pem /inheritance:r /grant:r "$($env:USERNAME):(R)"
+Copy-Item aws-ec2-Zarichney.Server.pem ~/.ssh/
+icacls ~/.ssh/aws-ec2-Zarichney.Server.pem /inheritance:r /grant:r "$($env:USERNAME):(R)"
 ```
 
 ### AWS Configuration Overview
@@ -124,7 +124,7 @@ aws cloudfront update-distribution --id $cfDistId --distribution-config file://c
 ### Service Control
 ```bash
 # SSH into instance
-ssh api-server
+ssh Zarichney.Server
 
 # View real-time logs
 sudo journalctl -u cookbook-api -f
@@ -251,7 +251,7 @@ aws ssm put-parameter \
 ### Refresh Token Management (Direct SQL)
 ```powershell
 # Connect to PostgreSQL on the EC2 instance
-ssh api-server "sudo -i -u postgres psql -d zarichney_identity"
+ssh Zarichney.Server "sudo -i -u postgres psql -d zarichney_identity"
 
 # View token statistics
 \x on

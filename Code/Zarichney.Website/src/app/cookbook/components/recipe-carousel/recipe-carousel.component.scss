@@ -1,0 +1,167 @@
+.carousel-container {
+    position: relative;
+    width: 100%;
+    max-width: min(90vw, 800px);
+    margin: 0 auto;
+    overflow: hidden;
+    outline: none;
+    touch-action: pan-y pinch-zoom;
+}
+
+.carousel-track {
+    display: flex;
+    transition: transform 0.3s ease-in-out;
+}
+
+.carousel-slide {
+    min-width: 100%;
+    opacity: 0.4;
+    transition: opacity 0.3s ease;
+
+    &.active {
+        opacity: 1;
+    }
+}
+
+.nav-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    background: var(--card-bg);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    opacity: 0.8;
+    transition: opacity 0.2s;
+
+    &:hover {
+        opacity: 1;
+    }
+
+    &.hidden {
+        display: none;
+    }
+
+    &.prev {
+        left: 1rem;
+    }
+
+    &.next {
+        right: 1rem;
+    }
+
+    span {
+        color: var(--text-primary);
+        font-size: 1.5rem;
+        line-height: 1;
+    }
+}
+
+.carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+
+    button {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        border: none;
+        background: var(--text-secondary);
+        opacity: 0.5;
+        cursor: pointer;
+        padding: 0;
+        transition: opacity 0.2s;
+
+        &.active {
+            opacity: 1;
+        }
+    }
+}
+
+.swipe-hint {
+    position: absolute;
+    bottom: 4rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.875rem;
+    pointer-events: none;
+}
+
+@media (min-width: 1200px) {
+    .carousel-container {
+        max-width: 1000px;
+    }
+}
+
+@media (max-width: 768px) {
+    .carousel-container {
+        max-width: 100%;
+    }
+
+    .nav-button {
+        width: 32px;
+        height: 32px;
+
+        &.prev {
+            left: 0.5rem;
+        }
+
+        &.next {
+            right: 0.5rem;
+        }
+    }
+}
+
+// Inherit recipe card styles from order-overview
+.recipe-card {
+    overflow: hidden;
+    padding: 0;
+    border-radius: 8px;
+    background: var(--card-bg);
+    box-shadow: var(--card-shadow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    .recipe-content {
+        padding: var(--spacing-unit, 1rem);
+    }
+
+    h4 {
+        margin: 0 0 0.5rem;
+        font-size: 1.25rem;
+        color: var(--text-primary);
+    }
+
+    .description {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .recipe-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+
+        span {
+            background: var(--surface-bg);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            color: var(--text-secondary);
+        }
+    }
+}

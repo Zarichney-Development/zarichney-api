@@ -1,0 +1,75 @@
+<div class="login-container">
+  <h2>Login</h2>
+
+  <div *ngIf="returnUrl" class="return-url-info">
+    You will be redirected to: {{ returnUrl }}
+  </div>
+
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input
+        type="email"
+        id="email"
+        formControlName="email"
+        placeholder="Enter your email"
+        class="form-control"
+      />
+      <div
+        *ngIf="
+          loginForm.get('email')?.invalid &&
+          (loginForm.get('email')?.dirty || loginForm.get('email')?.touched)
+        "
+        class="error-message"
+      >
+        <span *ngIf="loginForm.get('email')?.errors?.['required']"
+          >Email is required</span
+        >
+        <span *ngIf="loginForm.get('email')?.errors?.['email']"
+          >Please enter a valid email address</span
+        >
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input
+        type="password"
+        id="password"
+        formControlName="password"
+        placeholder="Enter your password"
+        class="form-control"
+      />
+      <div
+        *ngIf="
+          loginForm.get('password')?.invalid &&
+          (loginForm.get('password')?.dirty ||
+            loginForm.get('password')?.touched)
+        "
+        class="error-message"
+      >
+        <span *ngIf="loginForm.get('password')?.errors?.['required']"
+          >Password is required</span
+        >
+      </div>
+    </div>
+
+    <div *ngIf="error$ | async as error" class="auth-error-message">
+      {{ error }}
+    </div>
+
+    <button
+      type="submit"
+      [disabled]="loginForm.invalid || (loading$ | async)"
+      class="login-button"
+    >
+      <span *ngIf="loading$ | async">Logging in...</span>
+      <span *ngIf="!(loading$ | async)">Login</span>
+    </button>
+  </form>
+
+  <div class="auth-links">
+    <p>Don't have an account? <a routerLink="/auth/register">Register</a></p>
+    <p><a routerLink="/auth/forgot-password">Forgot Password?</a></p>
+  </div>
+</div>

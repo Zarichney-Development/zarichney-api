@@ -1,6 +1,6 @@
 # Generate API Client for Tests
 # This script automates the generation of strongly-typed Refit client interfaces for integration testing.
-# It builds the api-server project, generates swagger.json, and creates multiple Refit client interfaces grouped by OpenAPI tags.
+# It builds the Zarichney.Server project, generates swagger.json, and creates multiple Refit client interfaces grouped by OpenAPI tags.
 
 # Stop on first error
 $ErrorActionPreference = "Stop"
@@ -9,8 +9,8 @@ Write-Host "Starting API client generation process..." -ForegroundColor Cyan
 
 # Define paths
 $rootDir = Split-Path -Parent $PSScriptRoot
-$apiServerDir = Join-Path -Path $rootDir -ChildPath "api-server"
-$apiServerTestsDir = Join-Path -Path $rootDir -ChildPath "api-server.Tests"
+$apiServerDir = Join-Path -Path $rootDir -ChildPath "Code/Zarichney.Server"
+$apiServerTestsDir = Join-Path -Path $rootDir -ChildPath "Code/Zarichney.Server.Tests"
 $apiClientDir = Join-Path -Path $apiServerTestsDir -ChildPath "Framework\Client"
 $swaggerJsonPath = Join-Path -Path $apiServerDir -ChildPath "swagger.json"
 
@@ -20,11 +20,11 @@ if (-not (Test-Path -Path $apiClientDir)) {
     New-Item -Path $apiClientDir -ItemType Directory | Out-Null
 }
 
-# Step 1: Build the api-server project
-Write-Host "Building api-server project..." -ForegroundColor Green
-dotnet build "$apiServerDir/api-server.csproj" -c Debug
+# Step 1: Build the Zarichney.Server project
+Write-Host "Building Zarichney.Server project..." -ForegroundColor Green
+dotnet build "$apiServerDir/Zarichney.Server.csproj" -c Debug
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "Error building api-server project. Exiting." -ForegroundColor Red
+    Write-Host "Error building Zarichney.Server project. Exiting." -ForegroundColor Red
     exit 1
 }
 
@@ -45,7 +45,7 @@ Write-Host "Generating swagger.json by running the API server temporarily..." -F
 
 # Start the API server in the background to generate swagger.json
 Write-Host "Starting API server temporarily..." -ForegroundColor Green
-$apiProcess = Start-Process -FilePath "dotnet" -ArgumentList "run", "--project", "$apiServerDir/api-server.csproj", "--urls", "http://localhost:5000" -PassThru
+$apiProcess = Start-Process -FilePath "dotnet" -ArgumentList "run", "--project", "$apiServerDir/Zarichney.Server.csproj", "--urls", "http://localhost:5000" -PassThru
 $apiPid = $apiProcess.Id
 
 # Wait for the API to start up

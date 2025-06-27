@@ -20,7 +20,7 @@
 ## 3. Relevant Documentation
 
 * **MUST READ (Target Module Context):**
-    * {List full relative paths to `README.md`(s) for the primary production code module(s) being tested. Example: `/api-server/Cookbook/Recipes/README.md`}
+    * {List full relative paths to `README.md`(s) for the primary production code module(s) being tested. Example: `/Zarichney.Server/Cookbook/Recipes/README.md`}
 * **MUST CONSULT (Global Rules):**
     * Testing Rules: **[`/Docs/Standards/TestingStandards.md`](../../Standards/TestingStandards.md)** (*CRITICAL*)
     * Primary Code Rules: **[`/Docs/Standards/CodingStandards.md`](../../Standards/CodingStandards.md)** (For test code style)
@@ -38,9 +38,9 @@ You **MUST** execute the workflow detailed in the referenced file below. Follow 
 
 ## 5. Specific Testing Task
 
-* **Target Production Code:** {List the specific `.cs` file(s) or class(es) in `/api-server/` that are the focus for adding test coverage.}
+* **Target Production Code:** {List the specific `.cs` file(s) or class(es) in `/Zarichney.Server/` that are the focus for adding test coverage.}
 * **Instructions:**
-    * Review the target production code and existing tests in the corresponding `/api-server.Tests/` directory.
+    * Review the target production code and existing tests in the corresponding `/Zarichney.Server.Tests/` directory.
     * Identify specific methods, logic branches, error paths, or edge cases lacking adequate test coverage based on `/Docs/Standards/TestingStandards.md`.
     * Write new unit and/or integration tests (as appropriate for the target code) to cover these gaps.
     * Focus on validating the *existing* behavior. **Do NOT modify production code** unless explicitly instructed for testability and approved in the GitHub Issue.

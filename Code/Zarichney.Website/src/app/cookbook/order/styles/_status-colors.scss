@@ -1,0 +1,73 @@
+@mixin status-colors {
+    &.submitted {
+        @media (prefers-color-scheme: dark) {
+            background: #553600;
+            color: #ffd699;
+        }
+
+        @media (prefers-color-scheme: light) {
+            background: #fff3dc;
+            color: #b25e00;
+        }
+    }
+
+    &.in-progress {
+        @media (prefers-color-scheme: dark) {
+            background: #003557;
+            color: #99d6ff;
+        }
+
+        @media (prefers-color-scheme: light) {
+            background: #e3f5ff;
+            color: #0070c9;
+        }
+    }
+
+    &.completed {
+        @media (prefers-color-scheme: dark) {
+            background: #004d00;
+            color: #99ff99;
+        }
+
+        @media (prefers-color-scheme: light) {
+            background: #dcf7dc;
+            color: #0a5d0a;
+        }
+    }
+
+    &.failed {
+        @media (prefers-color-scheme: dark) {
+            background: #570000;
+            color: #ff9999;
+        }
+
+        @media (prefers-color-scheme: light) {
+            background: #ffe3e3;
+            color: #c90000;
+        }
+    }
+
+    &.paid {
+        @media (prefers-color-scheme: dark) {
+            background: #2d4a00;
+            color: #b3ff66;
+        }
+
+        @media (prefers-color-scheme: light) {
+            background: #f0f7e6;
+            color: #4d8000;
+        }
+    }
+
+    &.awaiting-payment {
+        @media (prefers-color-scheme: dark) {
+            background: #4a3600;
+            color: #ffd480;
+        }
+
+        @media (prefers-color-scheme: light) {
+            background: #fff7e6;
+            color: #805500;
+        }
+    }
+}

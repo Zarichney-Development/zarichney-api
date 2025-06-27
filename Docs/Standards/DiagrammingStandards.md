@@ -5,7 +5,7 @@
 
 ## 1. Purpose and Scope
 
-* **Purpose:** To define the mandatory standards, practices, and quality expectations for creating and maintaining architectural and workflow diagrams using Mermaid.js within the `api-server` solution. These standards ensure clarity, accuracy, consistency, and maintainability of visual documentation, supporting both human understanding and AI-assisted development.
+* **Purpose:** To define the mandatory standards, practices, and quality expectations for creating and maintaining architectural and workflow diagrams using Mermaid.js within the `Zarichney.Server` solution. These standards ensure clarity, accuracy, consistency, and maintainability of visual documentation, supporting both human understanding and AI-assisted development.
 * **Scope:** Applies to all diagrams created using Mermaid.js syntax, typically embedded within per-directory `README.md` files or potentially stored as separate `.mmd` files linked from READMEs.
 * **Relationship to Other Standards:**
     * This document complements **[`./DocumentationStandards.md`](./DocumentationStandards.md)**, which governs the overall structure and maintenance of README files where these diagrams are embedded.

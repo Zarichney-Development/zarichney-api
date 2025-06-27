@@ -1,0 +1,31 @@
+<div class="role-manager">
+  <h2>Role Management</h2>
+  
+  <div class="role-management-section">
+    <h3>View User Roles</h3>
+    <form [formGroup]="userRolesForm" (ngSubmit)="viewUserRoles()">
+      <div class="form-group">
+        <label for="userId">User ID:</label>
+        <input type="text" id="userId" formControlName="userId" placeholder="Enter user ID">
+        <div class="error" *ngIf="userRolesForm.get('userId')?.invalid && userRolesForm.get('userId')?.touched">
+          User ID is required
+        </div>
+      </div>
+      <button type="submit" [disabled]="userRolesForm.invalid">View Roles</button>
+    </form>
+  </div>
+
+  <div class="role-management-section">
+    <h3>View Users in Role</h3>
+    <form [formGroup]="roleUsersForm" (ngSubmit)="viewRoleUsers()">
+      <div class="form-group">
+        <label for="roleName">Role Name:</label>
+        <input type="text" id="roleName" formControlName="roleName" placeholder="Enter role name">
+        <div class="error" *ngIf="roleUsersForm.get('roleName')?.invalid && roleUsersForm.get('roleName')?.touched">
+          Role name is required
+        </div>
+      </div>
+      <button type="submit" [disabled]="roleUsersForm.invalid">View Users</button>
+    </form>
+  </div>
+</div>

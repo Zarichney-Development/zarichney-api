@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "outDir": "./dist/server",
+    "module": "ESNext",
+    "types": [
+      "node"
+    ],
+    "allowJs": true
+  },
+  "files": [
+    "src/startup/app.server.ts"
+  ],
+  "include": [
+    "src/**/*.d.ts",
+    "src/**/*.mjs",
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "server.mjs" // Exclude server.mjs
+  ]
+}

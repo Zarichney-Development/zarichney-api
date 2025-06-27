@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/spec",
+    "module": "CommonJS",
+    "target": "ES2015",
+    "types": [
+      "jest",
+      "node"
+    ],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": [
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "src/**/*.d.ts",
+    "../Zarichney.Website.Tests/**/*.test.ts"
+  ],
+  "exclude": [
+    "src/test.ts"
+  ]
+}

@@ -2,7 +2,7 @@ name: Test Results Reporter
 
 on:
   workflow_run:
-    workflows: ["Build, Test and Deploy Zarichney API"]
+    workflows: ["Unified CI/CD for Zarichney Fullstack"]
     types:
       - completed
 
@@ -15,31 +15,31 @@ permissions:
 jobs:
   report:
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.event == 'pull_request'
+    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
     
     steps:
-      - name: Download artifacts
+      - name: Download backend test results
         uses: actions/download-artifact@v4
         with:
-          name: test-results
+          name: backend-test-results
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
           
-      - name: Download coverage artifacts
+      - name: Download backend coverage artifacts
         uses: actions/download-artifact@v4
         with:
-          name: coverage-results
+          name: backend-coverage-results
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
-      - name: Publish Test Results
+      - name: Publish Backend Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           trx_files: "**/*.trx"
-          check_name: "Test Results"
-          comment_title: "Test Results"
+          check_name: "Backend Test Results"
+          comment_title: "Backend Test Results"
           
-      - name: Code Coverage Report
+      - name: Backend Code Coverage Report
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
           filename: "**/coverage.cobertura.xml"

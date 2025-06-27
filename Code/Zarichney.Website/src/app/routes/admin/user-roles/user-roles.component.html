@@ -1,0 +1,58 @@
+<div class="user-roles">
+  <h2>User Roles</h2>
+
+  <div class="back-link">
+    <a routerLink="/admin/roles">Back to Role Manager</a>
+  </div>
+
+  <div *ngIf="isLoading" class="loading">
+    Loading roles...
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    <p>{{ error }}</p>
+  </div>
+
+  <div *ngIf="!isLoading && !error && userId" class="roles-container">
+    <h3>Roles for User: {{ userId }}</h3>
+
+    <div class="add-role-section">
+      <h4>Add Role</h4>
+      <form [formGroup]="addRoleForm" (ngSubmit)="addRole()">
+        <div class="form-group">
+          <label for="roleName">Role Name:</label>
+          <input 
+            type="text" 
+            id="roleName" 
+            formControlName="roleName" 
+            class="form-control" 
+            placeholder="Enter role name">
+        </div>
+        <button 
+          type="submit" 
+          class="btn btn-primary" 
+          [disabled]="addRoleForm.invalid || isLoading">
+          Add Role
+        </button>
+      </form>
+    </div>
+
+    <ng-container *ngIf="(roles$ | async) as roles">
+      <div *ngIf="roles.length === 0" class="no-roles">
+        <p>This user has no assigned roles.</p>
+      </div>
+
+      <ul *ngIf="roles.length !== 0" class="roles-list">
+        <li *ngFor="let role of roles" class="role-item">
+          {{ role }}
+          <button 
+            type="button" 
+            class="btn btn-danger btn-sm" 
+            (click)="removeRole(role)">
+            Remove
+          </button>
+        </li>
+      </ul>
+    </ng-container>
+  </div>
+</div>

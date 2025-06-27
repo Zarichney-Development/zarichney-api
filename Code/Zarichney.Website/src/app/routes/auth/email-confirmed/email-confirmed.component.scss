@@ -1,0 +1,73 @@
+@use '../../../styles/variables' as vars;
+@use '../../../styles/mixins' as mix;
+
+.email-confirmed-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  padding: 20px;
+  width: 100%;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-align: center;
+
+  h2 {
+    margin-bottom: 24px;
+    color: vars.$primary-color;
+    font-weight: 600;
+  }
+}
+
+.loading-indicator,
+.redirecting-spinner {
+  // Unified style for spinner container
+  margin-top: 2rem;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(vars.$primary-color, 0.2);
+  border-radius: 50%;
+  border-top-color: vars.$primary-color;
+  animation: spin 1s ease-in-out infinite;
+  margin: 0 auto 16px;
+}
+
+.error-message,
+.success-message {
+  padding: 16px;
+  border-radius: 4px;
+  margin: 16px 0;
+}
+
+.error-message {
+  background-color: rgba(vars.$error-color, 0.1);
+  color: vars.$error-color;
+
+  a {
+    display: inline-block;
+    margin-top: 16px;
+    color: vars.$primary-color;
+    text-decoration: none;
+    font-weight: 500;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.success-message {
+  background-color: rgba(vars.$success-color, 0.1);
+  color: vars.$success-color;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,18 @@
+<div class="header-container">
+  <div class="logo-container">
+    <a routerLink="/">
+      <app-logo></app-logo>
+    </a>
+  </div>
+  
+  <div class="auth-container">
+    <ng-container *ngIf="isAuthenticated$ | async; else loginButton">
+      <span class="welcome-message">Welcome, {{ userEmail$ | async }}</span>
+      <button class="logout-button" (click)="logout()">Logout</button>
+    </ng-container>
+    
+    <ng-template #loginButton>
+      <a class="login-button" routerLink="/auth/login">Login</a>
+    </ng-template>
+  </div>
+</div>

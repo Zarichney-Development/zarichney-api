@@ -1,0 +1,17 @@
+@mixin status-colors {
+    &.success {
+        color: #28a745;
+    }
+
+    &.warning {
+        color: #ffc107;
+    }
+
+    &.error {
+        color: #dc3545;
+    }
+
+    &.info {
+        color: #17a2b8;
+    }
+}

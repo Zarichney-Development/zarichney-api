@@ -1,0 +1,57 @@
+<div class="container">
+  <!-- Microphone Permission State -->
+  <div
+    *ngIf="currentState === RecordingState.REQUESTING_PERMISSIONS"
+    class="permissions"
+  >
+    <p>Requesting microphone access...</p>
+  </div>
+
+  <!-- Recording State -->
+  <div *ngIf="currentState === RecordingState.RECORDING" class="recording">
+    <div class="timer">{{ formattedTime$ | async }}</div>
+    <button (click)="stopRecording()" class="stop-button">
+      Stop Recording
+    </button>
+  </div>
+
+  <!-- Upload State -->
+  <div *ngIf="currentState === RecordingState.UPLOADING" class="uploading">
+    <div class="spinner"></div>
+    <p>Processing recording...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="currentState === RecordingState.ERROR" class="error">
+    <p>{{ errorMessage }}</p>
+  </div>
+
+  <!-- Success/Complete State -->
+  <div *ngIf="currentState === RecordingState.COMPLETE" class="complete">
+    <div class="complete-content">
+      <div
+        class="success-message"
+        *ngIf="currentMode === RecordingMode.TRANSCRIBE"
+      >
+        <p>Transcript copied to clipboard</p>
+      </div>
+      <div class="response-container" *ngIf="responseText">
+        <div class="response-text">{{ responseText }}</div>
+      </div>
+    </div>
+    <div class="sticky-footer">
+      <div class="action-buttons">
+        <button (click)="resetRecording()" class="record-again">Record</button>
+        <button
+          (click)="copyResponse()"
+          class="copy-response"
+          *ngIf="currentMode === RecordingMode.PROMPT"
+        >
+          Copy
+        </button>
+        <button (click)="attemptToClose()" class="close-tab">Close</button>
+      </div>
+      <p *ngIf="closeMessage" class="close-message">{{ closeMessage }}</p>
+    </div>
+  </div>
+</div>

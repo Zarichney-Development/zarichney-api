@@ -22,20 +22,20 @@ The API supports two primary authentication methods, with JWT taking precedence 
 
 ### 2.1. JWT Authentication Flow (Cookie-Based)
 
-1.  User logs in with email/password via `/api/auth/login` [cite: api-server/Controllers/AuthController.cs].
-2.  Server validates credentials and checks email confirmation [cite: api-server/Services/Auth/Commands/LoginCommand.cs].
-3.  Server generates a short-lived JWT access token and a longer-lived refresh token [cite: api-server/Services/Auth/AuthService.cs].
-4.  Server sets these tokens in secure, HttpOnly cookies (`AuthAccessToken`, `AuthRefreshToken`) in the response [cite: api-server/Services/Auth/CookieAuthManager.cs, Docs/AuthRefactoring.md].
+1.  User logs in with email/password via `/api/auth/login` [cite: Zarichney.Server/Controllers/AuthController.cs].
+2.  Server validates credentials and checks email confirmation [cite: Zarichney.Server/Services/Auth/Commands/LoginCommand.cs].
+3.  Server generates a short-lived JWT access token and a longer-lived refresh token [cite: Zarichney.Server/Services/Auth/AuthService.cs].
+4.  Server sets these tokens in secure, HttpOnly cookies (`AuthAccessToken`, `AuthRefreshToken`) in the response [cite: Zarichney.Server/Services/Auth/CookieAuthManager.cs, Docs/AuthRefactoring.md].
 5.  The browser automatically includes these cookies in subsequent requests to the API.
-6.  When the access token expires (detected via a 401 response), the client calls `/api/auth/refresh` [cite: api-server/Controllers/AuthController.cs].
-7.  The server validates the refresh token cookie, issues new tokens, and updates the cookies [cite: api-server/Services/Auth/Commands/RefreshTokenCommand.cs, api-server/Services/Auth/CookieAuthManager.cs].
+6.  When the access token expires (detected via a 401 response), the client calls `/api/auth/refresh` [cite: Zarichney.Server/Controllers/AuthController.cs].
+7.  The server validates the refresh token cookie, issues new tokens, and updates the cookies [cite: Zarichney.Server/Services/Auth/Commands/RefreshTokenCommand.cs, Zarichney.Server/Services/Auth/CookieAuthManager.cs].
 
 ### 2.2. API Key Authentication Flow
 
 1.  An authenticated user (typically an admin) creates an API key via the `/api/auth/api-keys` endpoint [cite: Docs/ApiKeyAuthentication.md].
 2.  The generated API key value (returned only once) is stored securely by the client/service [cite: Docs/ApiKeyAuthentication.md].
 3.  For subsequent requests, the client includes the key in the `X-Api-Key` HTTP header [cite: Docs/ApiKeyAuthentication.md].
-4.  The `AuthenticationMiddleware` intercepts the request, validates the key against the database using `IApiKeyService`, and checks its active status and expiry [cite: api-server/Services/Auth/AuthenticationMiddleware.cs, api-server/Services/Auth/ApiKeyService.cs].
+4.  The `AuthenticationMiddleware` intercepts the request, validates the key against the database using `IApiKeyService`, and checks its active status and expiry [cite: Zarichney.Server/Services/Auth/AuthenticationMiddleware.cs, Zarichney.Server/Services/Auth/ApiKeyService.cs].
 5.  If valid, the middleware identifies the associated user and creates an authenticated `ClaimsPrincipal` for the request, allowing access similar to JWT authentication [cite: Docs/ApiKeyAuthentication.md].
 
 ### 2.3. Precedence Rules
@@ -91,19 +91,19 @@ Authentication settings are defined in `appsettings.json` and rely on secure con
 ### 4.1. JWT Access Tokens
 
 * **Purpose**: Short-lived tokens for API authentication [cite: Docs/AuthSystemMaintenance.md].
-* **Storage**: Client-side only in secure, HttpOnly `AuthAccessToken` cookie [cite: api-server/Services/Auth/CookieAuthManager.cs].
+* **Storage**: Client-side only in secure, HttpOnly `AuthAccessToken` cookie [cite: Zarichney.Server/Services/Auth/CookieAuthManager.cs].
 * **Expiration**: Configured via `JwtSettings:ExpiryMinutes` [cite: Docs/AuthSystemMaintenance.md].
-* **Claims**: Includes User ID, Email, Roles, and standard JWT claims (sub, jti, exp, iss, aud) [cite: api-server/Services/Auth/AuthService.cs].
+* **Claims**: Includes User ID, Email, Roles, and standard JWT claims (sub, jti, exp, iss, aud) [cite: Zarichney.Server/Services/Auth/AuthService.cs].
 
 ### 4.2. Refresh Tokens
 
 * **Purpose**: Long-lived tokens to obtain new access tokens without re-login [cite: Docs/AuthSystemMaintenance.md].
-* **Storage**: Server-side in the `RefreshTokens` database table; reference token stored in HttpOnly `AuthRefreshToken` cookie [cite: api-server/Services/Auth/Models/RefreshToken.cs, api-server/Services/Auth/CookieAuthManager.cs].
+* **Storage**: Server-side in the `RefreshTokens` database table; reference token stored in HttpOnly `AuthRefreshToken` cookie [cite: Zarichney.Server/Services/Auth/Models/RefreshToken.cs, Zarichney.Server/Services/Auth/CookieAuthManager.cs].
 * **Expiration**: Configured via `JwtSettings:RefreshTokenExpiryDays` [cite: Docs/AuthSystemMaintenance.md].
 * **Security Features**:
-    * One-time use (marked `IsUsed=true` after first use) [cite: api-server/Services/Auth/AuthService.cs].
-    * Can be revoked by user or admin (`IsRevoked=true`) [cite: api-server/Services/Auth/AuthService.cs].
-    * Automatically cleaned up by `RefreshTokenCleanupService` background task [cite: api-server/Services/Auth/RefreshTokenCleanupService.cs].
+    * One-time use (marked `IsUsed=true` after first use) [cite: Zarichney.Server/Services/Auth/AuthService.cs].
+    * Can be revoked by user or admin (`IsRevoked=true`) [cite: Zarichney.Server/Services/Auth/AuthService.cs].
+    * Automatically cleaned up by `RefreshTokenCleanupService` background task [cite: Zarichney.Server/Services/Auth/RefreshTokenCleanupService.cs].
 
 ## 5. API Key Management
 
@@ -118,7 +118,7 @@ Authentication settings are defined in `appsettings.json` and rely on secure con
 ### 5.2. Creating an API Key (Admin Only)
 
 * Endpoint: `POST /api/auth/api-keys` [cite: Docs/ApiKeyAuthentication.md]
-* Requires: JWT Authentication with 'admin' role [cite: api-server/Controllers/AuthController.cs].
+* Requires: JWT Authentication with 'admin' role [cite: Zarichney.Server/Controllers/AuthController.cs].
 * Request Body:
   ```json
   {
@@ -143,13 +143,13 @@ Authentication settings are defined in `appsettings.json` and rely on secure con
 ### 5.3. Listing API Keys (Admin Only)
 
 * Endpoint: `GET /api/auth/api-keys` [cite: Docs/ApiKeyAuthentication.md]
-* Requires: JWT Authentication with 'admin' role [cite: api-server/Controllers/AuthController.cs].
-* Response: Returns a list of API key metadata (ID, name, description, dates, status) for the calling admin's user ID. **Does not return the `keyValue`** [cite: api-server/Services/Auth/Commands/ApiKeyCommands.cs].
+* Requires: JWT Authentication with 'admin' role [cite: Zarichney.Server/Controllers/AuthController.cs].
+* Response: Returns a list of API key metadata (ID, name, description, dates, status) for the calling admin's user ID. **Does not return the `keyValue`** [cite: Zarichney.Server/Services/Auth/Commands/ApiKeyCommands.cs].
 
 ### 5.4. Revoking an API Key
 
 * Endpoint: `DELETE /api/auth/api-keys/{id}` [cite: Docs/ApiKeyAuthentication.md]
-* Requires: JWT Authentication. **Warning:** Current implementation allows any authenticated user to revoke *any* key by ID if they know it. This should likely be restricted to Admins or the key owner [cite: api-server/Controllers/AuthController.cs].
+* Requires: JWT Authentication. **Warning:** Current implementation allows any authenticated user to revoke *any* key by ID if they know it. This should likely be restricted to Admins or the key owner [cite: Zarichney.Server/Controllers/AuthController.cs].
 * Response: Success message [cite: Docs/ApiKeyAuthentication.md].
 
 ### 5.5. Using API Keys for Authentication
@@ -159,29 +159,29 @@ Authentication settings are defined in `appsettings.json` and rely on secure con
   GET /api/some-protected-endpoint
   X-Api-Key: your-api-key-value
   ```
-* The `AuthenticationMiddleware` validates the key [cite: api-server/Services/Auth/AuthenticationMiddleware.cs].
+* The `AuthenticationMiddleware` validates the key [cite: Zarichney.Server/Services/Auth/AuthenticationMiddleware.cs].
 
 ## 6. Email Verification
 
-* New users receive an email with a verification link upon registration [cite: api-server/Services/Auth/Commands/RegisterCommand.cs].
-* The link targets the `/api/auth/confirm-email` endpoint with `userId` and `token` parameters [cite: api-server/Controllers/AuthController.cs].
-* Users cannot log in until their email is confirmed (`EmailConfirmed = true` in `AspNetUsers` table) [cite: api-server/Services/Auth/Commands/LoginCommand.cs].
+* New users receive an email with a verification link upon registration [cite: Zarichney.Server/Services/Auth/Commands/RegisterCommand.cs].
+* The link targets the `/api/auth/confirm-email` endpoint with `userId` and `token` parameters [cite: Zarichney.Server/Controllers/AuthController.cs].
+* Users cannot log in until their email is confirmed (`EmailConfirmed = true` in `AspNetUsers` table) [cite: Zarichney.Server/Services/Auth/Commands/LoginCommand.cs].
 * Email templates are stored in the `EmailTemplates` directory (`email-verification.html`, `base.html`) [cite: Docs/AuthSystemMaintenance.md].
 
 ## 7. Password Reset
 
-* User initiates via `/api/auth/forgot-password` with their email [cite: api-server/Controllers/AuthController.cs].
-* System sends an email with a reset link containing a token (template: `password-reset.html`) [cite: api-server/Services/Auth/Commands/ForgotPasswordCommand.cs].
+* User initiates via `/api/auth/forgot-password` with their email [cite: Zarichney.Server/Controllers/AuthController.cs].
+* System sends an email with a reset link containing a token (template: `password-reset.html`) [cite: Zarichney.Server/Services/Auth/Commands/ForgotPasswordCommand.cs].
 * User clicks link, which redirects to the frontend application.
-* Frontend submits email, token, and new password to `/api/auth/reset-password` [cite: api-server/Controllers/AuthController.cs].
-* If successful, password is reset, and a confirmation email is sent (`password-reset-confirmation.html`) [cite: api-server/Services/Auth/Commands/ResetPasswordCommand.cs].
+* Frontend submits email, token, and new password to `/api/auth/reset-password` [cite: Zarichney.Server/Controllers/AuthController.cs].
+* If successful, password is reset, and a confirmation email is sent (`password-reset-confirmation.html`) [cite: Zarichney.Server/Services/Auth/Commands/ResetPasswordCommand.cs].
 
 ## 8. Role-Based Authorization
 
 * Uses ASP.NET Identity roles [cite: Docs/ApiKeyAuthentication.md].
 * Currently defined role: `admin` [cite: Docs/ApiKeyAuthentication.md].
 * Admin users can manage API keys for all users and manage roles via specific endpoints (`/api/auth/roles/*`) [cite: Docs/ApiKeyAuthentication.md].
-* Role management endpoints require JWT authentication with the 'admin' role [cite: api-server/Controllers/AuthController.cs].
+* Role management endpoints require JWT authentication with the 'admin' role [cite: Zarichney.Server/Controllers/AuthController.cs].
 
 ## 9. Database Maintenance
 
@@ -189,13 +189,13 @@ Authentication settings are defined in `appsettings.json` and rely on secure con
     * `AspNetUsers`: User accounts.
     * `AspNetRoles`, `AspNetUserRoles`: Role assignments.
     * `AspNetUserTokens`: Stores tokens like password reset tokens.
-    * `RefreshTokens`: Stores refresh tokens for session management [cite: api-server/Services/Auth/Models/RefreshToken.cs].
-    * `ApiKeys`: Stores API key metadata [cite: api-server/Services/Auth/Models/ApiKey.cs].
+    * `RefreshTokens`: Stores refresh tokens for session management [cite: Zarichney.Server/Services/Auth/Models/RefreshToken.cs].
+    * `ApiKeys`: Stores API key metadata [cite: Zarichney.Server/Services/Auth/Models/ApiKey.cs].
 * Refer to `Docs/PostgreSqlMaintenance.md` for details on migrations, backups, and direct SQL management [cite: Docs/PostgreSqlMaintenance.md].
 
 ## 10. Regular Maintenance Tasks
 
-* **Token Cleanup**: Verify the `RefreshTokenCleanupService` background task runs correctly (check logs). Manually clean up expired/used/revoked tokens via SQL if needed [cite: Docs/AuthSystemMaintenance.md, api-server/Services/Auth/RefreshTokenCleanupService.cs].
+* **Token Cleanup**: Verify the `RefreshTokenCleanupService` background task runs correctly (check logs). Manually clean up expired/used/revoked tokens via SQL if needed [cite: Docs/AuthSystemMaintenance.md, Zarichney.Server/Services/Auth/RefreshTokenCleanupService.cs].
 * **User Account Auditing**: Periodically review inactive accounts, unverified accounts, and failed login attempts [cite: Docs/AuthSystemMaintenance.md].
 * **Email Deliverability**: Monitor email delivery rates; verify DNS records (SPF, DKIM, DMARC) [cite: Docs/AuthSystemMaintenance.md].
 * **Configuration Review**: Periodically review and rotate sensitive keys (`JwtSettings:SecretKey`, API keys, `EmailConfig` secrets) [cite: Docs/AuthSystemMaintenance.md].
@@ -218,11 +218,11 @@ Authentication settings are defined in `appsettings.json` and rely on secure con
 
 ### API Key Authentication Issues
 
-1.  **Error: "API key or JWT authentication is required"**: Ensure `X-Api-Key` header is present and spelled correctly [cite: api-server/Services/Auth/AuthenticationMiddleware.cs].
+1.  **Error: "API key or JWT authentication is required"**: Ensure `X-Api-Key` header is present and spelled correctly [cite: Zarichney.Server/Services/Auth/AuthenticationMiddleware.cs].
 2.  **Error: "Invalid API key"**:
     * Verify the key value matches an entry in the `ApiKeys` table.
     * Check `IsActive` is `true` and `ExpiresAt` (if set) is in the future [cite: Docs/ApiKeyAuthentication.md].
-3.  **Error: "User associated with API key not found"**: The `UserId` linked to the API key in the `ApiKeys` table does not correspond to a valid user in `AspNetUsers` [cite: api-server/Services/Auth/AuthenticationMiddleware.cs].
+3.  **Error: "User associated with API key not found"**: The `UserId` linked to the API key in the `ApiKeys` table does not correspond to a valid user in `AspNetUsers` [cite: Zarichney.Server/Services/Auth/AuthenticationMiddleware.cs].
 4.  **Error: "Authorization failed. These requirements were not met..."**: The `AuthenticationMiddleware` successfully authenticated the key, but the user lacks the required roles/claims for the specific endpoint being accessed, OR the `ClaimsIdentity` wasn't properly created by the middleware (check `AuthenticationType` is non-null) [cite: Docs/ApiKeyAuthentication.md].
 5.  Use the `/api/test-auth` endpoint with the `X-Api-Key` header to check authentication status, assigned roles, and whether API key auth was recognized [cite: Docs/ApiKeyAuthentication.md].
 
@@ -246,7 +246,7 @@ Authentication settings are defined in `appsettings.json` and rely on secure con
     * Set expiration dates on keys where appropriate [cite: Docs/ApiKeyAuthentication.md].
     * Rotate keys periodically [cite: Docs/ApiKeyAuthentication.md].
     * Revoke keys when no longer needed or if compromised [cite: Docs/ApiKeyAuthentication.md].
-6.  **Use HttpOnly Cookies**: The system uses HttpOnly cookies for JWT and refresh tokens, mitigating XSS risks [cite: api-server/Services/Auth/CookieAuthManager.cs, Docs/AuthRefactoring.md].
+6.  **Use HttpOnly Cookies**: The system uses HttpOnly cookies for JWT and refresh tokens, mitigating XSS risks [cite: Zarichney.Server/Services/Auth/CookieAuthManager.cs, Docs/AuthRefactoring.md].
 7.  **Token Lifetimes**: Keep access tokens short-lived (e.g., 15-60 min). Balance refresh token lifetime based on security vs. user convenience [cite: Docs/AuthSystemMaintenance.md].
 
 ## 13. Testing

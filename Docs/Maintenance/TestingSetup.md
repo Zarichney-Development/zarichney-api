@@ -66,7 +66,7 @@ After making changes to API contracts (controllers, endpoints, models), you must
 ```
 
 This script generates:
-- Multiple granular interface files in `api-server.Tests/Framework/Client/` (e.g., `IAuthApi.cs`, `IAiApi.cs`, etc.) and supporting models in `Contracts.cs`
+- Multiple granular interface files in `Zarichney.Server.Tests/Framework/Client/` (e.g., `IAuthApi.cs`, `IAiApi.cs`, etc.) and supporting models in `Contracts.cs`
 
 This ensures integration tests use the most up-to-date API client.
 
@@ -76,7 +76,7 @@ This ensures integration tests use the most up-to-date API client.
 
 Integration tests that require a real database for authentication logic use Testcontainers to provision a PostgreSQL instance dynamically:
 
-- **Automatic Container Management**: The `DatabaseFixture` in `api-server.Tests/Framework/Fixtures/DatabaseFixture.cs` uses Testcontainers to start a PostgreSQL container automatically when needed.
+- **Automatic Container Management**: The `DatabaseFixture` in `Zarichney.Server.Tests/Framework/Fixtures/DatabaseFixture.cs` uses Testcontainers to start a PostgreSQL container automatically when needed.
 - **Migration Application**: EF Core migrations are automatically applied to the containerized database during fixture initialization.
 - **Test Isolation**: The `Respawn` library resets the database to a clean state between tests, ensuring test isolation.
 - **Dependency Skipping**: Tests requiring a database automatically skip if Docker is not available, with clear skip reasons.
@@ -122,9 +122,9 @@ The API includes a mock authentication system specifically designed for testing 
 
 1. **Automatic Activation**: When integration tests run with a missing Identity Database connection string, mock authentication is automatically enabled.
 
-2. **Test Authentication Handler**: The existing `TestAuthHandler` in `api-server.Tests/Framework/Helpers/TestAuthHandler.cs` is used by the `CustomWebApplicationFactory` to simulate authenticated users.
+2. **Test Authentication Handler**: The existing `TestAuthHandler` in `Zarichney.Server.Tests/Framework/Helpers/TestAuthHandler.cs` is used by the `CustomWebApplicationFactory` to simulate authenticated users.
 
-3. **Mock Authentication Handler**: For application-level mock authentication (used in development and some test scenarios), the `MockAuthHandler` in `api-server/Services/Auth/MockAuthHandler.cs` provides automatic authentication with configurable mock users.
+3. **Mock Authentication Handler**: For application-level mock authentication (used in development and some test scenarios), the `MockAuthHandler` in `Zarichney.Server/Services/Auth/MockAuthHandler.cs` provides automatic authentication with configurable mock users.
 
 ### Using Mock Authentication in Integration Tests
 
@@ -166,7 +166,7 @@ For tests that specifically test the mock authentication functionality:
 
 The test suite manages configuration through multiple layers:
 
-1. `appsettings.json`: Base configuration (from api-server)
+1. `appsettings.json`: Base configuration (from Zarichney.Server)
 2. `appsettings.{EnvironmentName}.json`: Environment-specific settings (e.g., Development)
 3. `appsettings.Testing.json`: Test-specific overrides
 4. User Secrets: Local developer settings (Development only)

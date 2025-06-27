@@ -1,0 +1,25 @@
+/* To learn more about this file see: https://angular.io/config/tsconfig. */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/app",
+    "declaration": false,
+    "declarationMap": false,
+    "types": [
+      "node"
+    ]
+  },
+  "files": [
+    "src/startup/app.client.ts",
+    "src/startup/app.server.ts",
+    "src/startup/server.ts"
+  ],
+  "include": [
+    "src/**/*.d.ts",
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/test.ts",
+    "src/**/*.spec.ts"
+  ]
+}

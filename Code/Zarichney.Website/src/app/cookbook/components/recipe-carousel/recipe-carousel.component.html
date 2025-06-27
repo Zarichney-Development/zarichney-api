@@ -1,0 +1,61 @@
+<div
+  class="carousel-container"
+  (keydown)="onKeyDown($event)"
+  (touchstart)="onTouchStart($event)"
+  (touchmove)="onTouchMove($event)"
+  (touchend)="onTouchEnd()"
+  tabindex="0"
+>
+  <button
+    class="nav-button prev"
+    (click)="previous()"
+    [class.hidden]="currentIndex === 0"
+  >
+    <span>←</span>
+  </button>
+
+  <div class="carousel-track" #track>
+    <div
+      class="carousel-slide"
+      *ngFor="let recipe of recipes; let i = index"
+      [class.active]="i === currentIndex"
+    >
+      <div class="recipe-card">
+        <app-recipe-image
+          [imageUrl]="recipe.imageUrls[0]"
+          [alt]="recipe.title"
+        ></app-recipe-image>
+        <div class="recipe-content">
+          <h4>{{ recipe.title }}</h4>
+          <p class="description">{{ recipe.description }}</p>
+          <div class="recipe-meta">
+            <span>Servings: {{ recipe.servings }}</span>
+            <span>Total Time: {{ recipe.totalTime }}</span>
+            <span>Quality Score: {{ recipe.qualityScore }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button
+    class="nav-button next"
+    (click)="next()"
+    [class.hidden]="currentIndex === recipes.length - 1"
+  >
+    <span>→</span>
+  </button>
+
+  <div class="carousel-dots">
+    <button
+      *ngFor="let recipe of recipes; let i = index"
+      [class.active]="i === currentIndex"
+      (click)="goToSlide(i)"
+      title="Go to slide {{ i + 1 }}"
+    ></button>
+  </div>
+
+  <div class="swipe-hint" *ngIf="showSwipeHint" [@fadeOut]>
+    <span>← Swipe to navigate →</span>
+  </div>
+</div>

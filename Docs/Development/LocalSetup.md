@@ -27,7 +27,7 @@ This document outlines the configuration and setup requirements for local develo
 
 * **Run Application:**
   ```bash
-  dotnet run --project api-server
+  dotnet run --project Zarichney.Server
   ```
 
 * **Run Tests:**
@@ -169,7 +169,7 @@ To run the application without setting up a PostgreSQL Identity Database:
    export ASPNETCORE_ENVIRONMENT="Development" # Linux/macOS
    
    # Run without configuring UserDatabase connection string
-   dotnet run --project api-server
+   dotnet run --project Zarichney.Server
    ```
 
 2. Verify the application starts successfully and check the status:
@@ -198,13 +198,13 @@ For full functionality, we recommend setting up a local PostgreSQL database:
 3. **Configure Connection String**:
    ```bash
    # Using .NET User Secrets
-   dotnet user-secrets set "ConnectionStrings:UserDatabase" "Host=localhost;Database=zarichney_identity;Username=postgres;Password=yourpassword" --project api-server
+   dotnet user-secrets set "ConnectionStrings:UserDatabase" "Host=localhost;Database=zarichney_identity;Username=postgres;Password=yourpassword" --project Zarichney.Server
    ```
 
 4. **Apply Migrations**:
    ```bash
    # Navigate to Migrations directory
-   cd api-server/Services/Auth/Migrations
+   cd Zarichney.Server/Services/Auth/Migrations
    
    # Run migration script
    ./ApplyMigrations.sh  # Linux/macOS
@@ -237,8 +237,8 @@ For full functionality, we recommend setting up a local PostgreSQL database:
 
 ## 7. Next Steps
 
-* Review [`/api-server/Services/Status/README.md`](../../api-server/Services/Status/README.md) for details on the Status Service implementation.
-* See [`/api-server/Controllers/AuthController.cs`](../../api-server/Controllers/AuthController.cs) for authentication endpoints.
+* Review [`/Zarichney.Server/Services/Status/README.md`](../../Zarichney.Server/Services/Status/README.md) for details on the Status Service implementation.
+* See [`/Zarichney.Server/Controllers/AuthController.cs`](../../Zarichney.Server/Controllers/AuthController.cs) for authentication endpoints.
 * Explore [`/Docs/Maintenance/PostgreSqlDatabase.md`](../Maintenance/PostgreSqlDatabase.md) for database maintenance guidance.
 
 ---
