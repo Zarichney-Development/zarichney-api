@@ -37,12 +37,15 @@ Whether you're interested in the platform's features or the cutting-edge develop
 
 ## Technology Highlights
 
-* **Frontend:** TypeScript, Angular 19, NgRx (state management), Angular Material (UI), SSR (Server-Side Rendering), Responsive Design
+* **Frontend:** TypeScript, Angular 19, NgRx (state management), Angular Material (UI), SSR (Server-Side Rendering), Responsive Design, Jest (unit/integration testing), Playwright (E2E testing)
 * **Backend:** C# 12, .NET 8, ASP.NET Core Web API
 * **AI:** OpenAI API integration
 * **Database:** PostgreSQL (primarily for Identity; application data currently file-based)
 * **Authentication:** ASP.NET Core Identity, JWT, Refresh Tokens (Cookies), API Keys
-* **Testing:** xUnit, Moq, FluentAssertions, Testcontainers (for isolated DB testing), Refit (for API client generation) - *Aiming for >90% coverage.*
+* **Testing:** 
+    * **Backend:** xUnit, Moq, FluentAssertions, Testcontainers (for isolated DB testing), Refit (for API client generation)
+    * **Frontend:** Jest, jest-preset-angular, Playwright (for E2E testing)
+    * *Aiming for >90% coverage across both frontend and backend.*
 * **API Documentation:** Swagger / OpenAPI
 * **Key Libraries:** 
     * **Backend:** Serilog, Polly, MediatR, AutoMapper, RestSharp, Stripe.net, Octokit, QuestPDF, PlaywrightSharp, AngleSharp
@@ -54,6 +57,7 @@ Whether you're interested in the platform's features or the cutting-edge develop
 * **`Code/Zarichney.Server/`:** Contains the main ASP.NET Core application code. Start with [`Code/Zarichney.Server/README.md`](./Code/Zarichney.Server/README.md) for an overview.
 * **`Code/Zarichney.Server.Tests/`:** Contains the unit and integration tests. See [`Code/Zarichney.Server.Tests/README.md`](./Code/Zarichney.Server.Tests/README.md).
 * **`Code/Zarichney.Website/`:** Contains the Angular frontend application. See [`Code/Zarichney.Website/README.md`](./Code/Zarichney.Website/README.md).
+* **`Code/Zarichney.Website.Tests/`:** Contains the frontend testing suite (unit, integration, E2E). See [`Code/Zarichney.Website.Tests/README.md`](./Code/Zarichney.Website.Tests/README.md).
 * **`Docs/`:** The heart of the documentation and AI workflow definitions.
     * **`Docs/Standards/`:** Defines the rules (coding, testing, docs, etc.).
     * **`Docs/Development/`:** Defines the AI-assisted workflow processes and roadmap.
@@ -75,6 +79,7 @@ Whether you're interested in the platform's features or the cutting-edge develop
     * Navigate to `Code/Zarichney.Website/` and run `npm install`.
     * Review `Code/Zarichney.Website/README.md` for configuration details.
     * Start development server (`npm start`) or build for production (`npm run build-prod`).
+    * Run tests (`npm test` for unit/integration, `npm run test:e2e` for end-to-end).
 
 *(Detailed setup and contribution guidelines are part of the internal documentation standards.)*
 

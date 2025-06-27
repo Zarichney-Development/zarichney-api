@@ -1,7 +1,7 @@
 # Overarching Automation Testing Standards
 
-**Version:** 1.6
-**Last Updated:** 2025-05-25
+**Version:** 1.7
+**Last Updated:** 2025-06-27
 
 ## 1. Introduction
 
@@ -183,7 +183,21 @@
     * **Changelog (Future):** A machine-readable `CHANGELOG.md` may be introduced to detail changes between versions, facilitating differential ingestion by AI agents.
     * **Feedback Loop:** AI-generated tests flagged during code review for non-adherence will serve as feedback to refine prompts or identify ambiguities in these standards.
 
-## 12. Document References
+## 12. Frontend Testing (Angular Application)
+
+The frontend application (`Code/Zarichney.Website`) uses a separate testing framework appropriate for Angular applications:
+
+* **Testing Framework:** Jest with jest-preset-angular for unit and integration tests
+* **E2E Framework:** Playwright for end-to-end browser automation tests
+* **Test Directory:** [`Code/Zarichney.Website.Tests/`](../../Code/Zarichney.Website.Tests/README.md)
+* **Test Commands:**
+  * Unit/Integration: `npm test` (from Code/Zarichney.Website directory)
+  * E2E: `npm run test:e2e`
+  * Coverage: `npm run test:coverage`
+
+Detailed frontend testing standards will be developed as the testing framework matures. For now, frontend tests should follow general testing principles outlined in this document, adapted for the Angular/TypeScript context.
+
+## 13. Document References
 
 * **Detailed Unit Testing Guide:** `Docs/Standards/UnitTestCaseDevelopment.md` (To be created)
 * **Detailed Integration Testing Guide:** `Docs/Standards/IntegrationTestCaseDevelopment.md` (To be created)

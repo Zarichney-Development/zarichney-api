@@ -123,9 +123,20 @@
     * **Serve SSR:** `npm run serve:ssr` (requires build first)
     * **Clean Build:** `npm run clean-dist`
 * **Testing:**
-    * **Location:** Tests should be co-located with components (`.spec.ts` files)
-    * **How to Run:** Use Angular CLI testing commands (Jasmine/Karma framework)
-    * **Testing Strategy:** Focus on component interaction, service integration, and state management testing
+    * **Test Locations:** 
+        * Unit/Integration tests: `src/**/*.spec.ts` (co-located with source files)
+        * Additional test suite: [`../Zarichney.Website.Tests/`](../Zarichney.Website.Tests/README.md)
+        * E2E tests: `e2e/**/*.spec.ts`
+    * **How to Run:** 
+        * Unit/Integration tests: `npm test` (watch mode: `npm run test:watch`)
+        * Test coverage: `npm run test:coverage`
+        * E2E tests: `npm run test:e2e` (requires application running)
+    * **Testing Strategy:**
+        * **Unit Tests:** Components and services tested in isolation with mocked dependencies using Jest
+        * **Integration Tests:** Component interactions and NgRx store operations
+        * **E2E Tests:** Full user workflows tested with Playwright across multiple browsers
+    * **Testing Framework:** Jest with jest-preset-angular for unit/integration, Playwright for E2E testing
+    * **Coverage Goals:** Aiming for 80%+ line coverage, 70%+ branch coverage
 * **Common Pitfalls / Gotchas:**
     * **SSR Compatibility:** Ensure code works in both browser and Node.js environments
     * **State Management:** Be cautious with NgRx store mutations and side effects
@@ -160,7 +171,7 @@
 
 ## 8. Known Issues & TODOs
 
-* **Testing Coverage:** Comprehensive test suite needs to be implemented for components and services
+* **Testing Framework:** Jest and Playwright testing infrastructure is now in place; additional test coverage needed for existing components and services
 * **Performance Optimization:** Bundle size optimization and lazy loading improvements
 * **Accessibility:** Full WCAG compliance audit and implementation
 * **Error Handling:** Enhanced error boundary implementation for better user experience

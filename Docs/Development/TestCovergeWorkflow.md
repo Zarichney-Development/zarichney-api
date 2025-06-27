@@ -1,7 +1,7 @@
 # Test Coverage Enhancement Workflow
 
-**Version:** 1.1
-**Last Updated:** 2025-05-23
+**Version:** 1.2
+**Last Updated:** 2025-06-27
 **Parent:** `../README.md`
 
 ## 1. Purpose and Goal
@@ -11,6 +11,10 @@
     * **>=90% unit test coverage** for all non-trivial business logic, services, and utility classes.
     * **Comprehensive integration test coverage** for all public API endpoints, critical workflows, and component interactions.
 * **Focus:** This workflow emphasizes not just adding tests, but adding *high-quality, maintainable tests* that adhere to all established project standards.
+
+## 1.1 Scope Note
+
+This workflow currently focuses on backend (.NET) test coverage enhancement. Frontend (Angular) test coverage follows similar principles but uses different tools (Jest, Playwright) and commands. See [`Code/Zarichney.Website.Tests/README.md`](../../Code/Zarichney.Website.Tests/README.md) for frontend testing details.
 
 ## 2. Prerequisites & Required Reading
 
