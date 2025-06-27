@@ -1,7 +1,7 @@
 # Project Context & Operating Guide for AI Coding Assistant (Claude)
 
-**Version:** 1.1
-**Last Updated:** 2025-05-25
+**Version:** 1.2
+**Last Updated:** 2025-06-26
 
 ## 1. My Purpose & Your Role
 
@@ -48,6 +48,18 @@ Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskMan
     
     # For environments where Docker group membership isn't active in current shell
     sg docker -c "dotnet test Zarichney.sln"
+    ```
+* **Run Automation Suite with Coverage Report:** (Comprehensive test execution with HTML report)
+    ```bash
+    # Run complete automation suite and open coverage report in browser
+    ./Scripts/run-automation-suite.sh
+    
+    # Run without opening browser
+    ./Scripts/run-automation-suite.sh --no-browser
+    
+    # Run only specific test types
+    ./Scripts/run-automation-suite.sh --unit-only
+    ./Scripts/run-automation-suite.sh --integration-only
     ```
 * **Run Specific Test Categories:**
     ```bash
