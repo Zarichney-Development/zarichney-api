@@ -6,7 +6,7 @@
 
 ## 1. Purpose & Responsibility
 
-This project, `Code/Zarichney.Server.Tests`, contains all automated tests for the `zarichney-api/Code/Zarichney.Server` project. Its primary purpose is to ensure the quality, stability, and correctness of the API server through comprehensive unit and integration testing.
+This project, `Code/Zarichney.Server.Tests`, contains all automated tests for the `Code/Zarichney.Server` project. Its primary purpose is to ensure the quality, stability, and correctness of the API server through comprehensive unit and integration testing.
 
 This project and its contents are governed by the strategies and requirements outlined in the following key documents:
 * **`./TechnicalDesignDocument.md`**: The blueprint for this test project's architecture, tools, and advanced strategies.
@@ -116,7 +116,7 @@ A commitment to high test coverage (>=90% for unit tests) and rigorous adherence
 
 ### Internal Dependencies
 
-* **`zarichney-api/Zarichney.Server`**: The primary dependency, as this project tests the API server.
+* **`Code/Zarichney.Server`**: The primary dependency, as this project tests the API server.
 
 ### Key External Libraries & Tools
 

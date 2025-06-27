@@ -6,7 +6,7 @@
 
 ## 1. Purpose & Responsibility
 
-This directory, `/Integration/`, houses all **integration tests** for the `zarichney-api/Zarichney.Server` project. The core purpose of these tests is to verify that different components of the application interact correctly to deliver end-to-end functionalities as expected.
+This directory, `/Integration/`, houses all **integration tests** for the `Code/Zarichney.Server` project. The core purpose of these tests is to verify that different components of the application interact correctly to deliver end-to-end functionalities as expected.
 
 Integration tests in this project typically focus on:
 * **API Endpoint Contracts:** Validating request/response behavior, status codes, and DTO serialization for all public API endpoints.

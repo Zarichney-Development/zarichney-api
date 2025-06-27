@@ -6,7 +6,7 @@
 
 ## 1. Purpose and Goal
 
-* **Purpose:** This document defines the systematic workflow for increasing and maintaining automated test coverage for the `zarichney-api/Zarichney.Server` project. It is particularly tailored for AI Coding Assistants assigned tasks related to test coverage enhancement but is applicable to all developers.
+* **Purpose:** This document defines the systematic workflow for increasing and maintaining automated test coverage for the `Code/Zarichney.Server` project. It is particularly tailored for AI Coding Assistants assigned tasks related to test coverage enhancement but is applicable to all developers.
 * **Project Goal:** To achieve and maintain:
     * **>=90% unit test coverage** for all non-trivial business logic, services, and utility classes.
     * **Comprehensive integration test coverage** for all public API endpoints, critical workflows, and component interactions.
