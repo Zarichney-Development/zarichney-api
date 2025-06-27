@@ -5,9 +5,9 @@
 
 ## 1. Introduction
 
-* **Purpose:** To define the foundational philosophy, mandatory tools, project-wide conventions, and general workflow for all automated testing activities within the `api-server` solution. This document serves as the primary guide for both human and AI developers, ensuring code quality, stability, and maintainability. It links to detailed guides for specific types of testing.
-* **Scope:** Applies to all **unit** and **integration** tests within the `api-server.Tests` project. Performance, security, and manual testing are out of scope for this document but may be addressed elsewhere. Detailed "how-to" instructions for unit and integration testing are provided in separate, linked documents.
-* **Mandate:** Adherence is **mandatory** for all development tasks (features, fixes, refactoring), especially those performed by AI coders. Tests are a critical part of the definition-of-done. All testing activities must align with the `api-server.Tests/TechnicalDesignDocument.md`.
+* **Purpose:** To define the foundational philosophy, mandatory tools, project-wide conventions, and general workflow for all automated testing activities within the `Zarichney.Server` solution. This document serves as the primary guide for both human and AI developers, ensuring code quality, stability, and maintainability. It links to detailed guides for specific types of testing.
+* **Scope:** Applies to all **unit** and **integration** tests within the `Zarichney.Server.Tests` project. Performance, security, and manual testing are out of scope for this document but may be addressed elsewhere. Detailed "how-to" instructions for unit and integration testing are provided in separate, linked documents.
+* **Mandate:** Adherence is **mandatory** for all development tasks (features, fixes, refactoring), especially those performed by AI coders. Tests are a critical part of the definition-of-done. All testing activities must align with the `Zarichney.Server.Tests/TechnicalDesignDocument.md`.
 
 ## 2. Core Testing Philosophy
 
@@ -25,18 +25,18 @@
 * **Assertion Library:** FluentAssertions (*Mandatory*)
 * **Mocking Library:** Moq (*Mandatory*)
 * **Test Data:** AutoFixture, Custom Test Data Builders
-* **Integration Host:** `CustomWebApplicationFactory<Program>` (in `api-server.Tests/Framework/Fixtures/`)
-* **Integration API Client:** Refit (Multiple granular interfaces generated via `Scripts/generate-api-client.sh` into `api-server.Tests/Framework/Client/`)
+* **Integration Host:** `CustomWebApplicationFactory<Program>` (in `Zarichney.Server.Tests/Framework/Fixtures/`)
+* **Integration API Client:** Refit (Multiple granular interfaces generated via `Scripts/generate-api-client.sh` into `Zarichney.Server.Tests/Framework/Client/`)
 * **Integration Database:** Testcontainers (PostgreSQL) via `DatabaseFixture`
-* **External HTTP Service Virtualization:** WireMock.Net (as per `api-server.Tests/TechnicalDesignDocument.md` roadmap)
+* **External HTTP Service Virtualization:** WireMock.Net (as per `Zarichney.Server.Tests/TechnicalDesignDocument.md` roadmap)
 * **Database Cleanup:** Respawn (within `DatabaseFixture`)
 * **Code Coverage:** Coverlet
-* **Contract Testing (Future Consideration):** PactNet (as per `api-server.Tests/TechnicalDesignDocument.md` roadmap)
+* **Contract Testing (Future Consideration):** PactNet (as per `Zarichney.Server.Tests/TechnicalDesignDocument.md` roadmap)
 
 ## 4. Test Project Structure & Naming
 
-* **Test Project:** All tests **must** reside in the `api-server.Tests` project.
-* **Folder Structure:** Strictly adhere to the structure defined in the `api-server.Tests/TechnicalDesignDocument.md`. Key directories include:
+* **Test Project:** All tests **must** reside in the `Zarichney.Server.Tests` project.
+* **Folder Structure:** Strictly adhere to the structure defined in the `Zarichney.Server.Tests/TechnicalDesignDocument.md`. Key directories include:
     * `Framework/Client/` (Generated Refit client)
     * `Framework/Configuration/`
     * `Framework/Attributes/`
@@ -45,8 +45,8 @@
     * `Framework/Mocks/Factories/`
     * `Framework/Mocks/Virtualization/` (For WireMock.Net configurations)
     * `Framework/TestData/AutoFixtureCustomizations/` (New location for advanced AutoFixture setups)
-    * `Unit/` (Mirrors `api-server` structure)
-    * `Integration/` (Mirrors `api-server` structure)
+    * `Unit/` (Mirrors `Zarichney.Server` structure)
+    * `Integration/` (Mirrors `Zarichney.Server` structure)
     * `TestData/Builders/`
 * **Class Naming:** `[SystemUnderTest]Tests.cs` (e.g., `OrderServiceTests.cs`, `PaymentControllerTests.cs`).
 * **Method Naming:** `[MethodName]_[Scenario]_[ExpectedOutcome]` (e.g., `CreateOrder_ValidInput_ReturnsCreatedResult`, `Login_IncorrectPassword_ReturnsBadRequest`). Names must be descriptive.
@@ -55,11 +55,11 @@
 
 * All test methods **must** use `[Trait("Category", "...")]`.
 * **Mandatory Base Traits:** `"Unit"`, `"Integration"`.
-* **Mandatory Dependency Traits (Apply *all* relevant, as defined in `api-server.Tests/TechnicalDesignDocument.md` and `TestCategories.cs`):**
+* **Mandatory Dependency Traits (Apply *all* relevant, as defined in `Zarichney.Server.Tests/TechnicalDesignDocument.md` and `TestCategories.cs`):**
     * `"Database"` (For integration tests using `DatabaseFixture`)
     * `"ExternalHttp:[ServiceName]"` (e.g., `"ExternalHttp:Stripe"`, `"ExternalHttp:OpenAI"`) for tests relying on virtualized HTTP services.
     * *(Add others as needed, ensuring alignment with `TestCategories.cs`)*
-* **Mutability Traits:** `"ReadOnly"`, `"DataMutating"` (as defined in `api-server.Tests/TechnicalDesignDocument.md`).
+* **Mutability Traits:** `"ReadOnly"`, `"DataMutating"` (as defined in `Zarichney.Server.Tests/TechnicalDesignDocument.md`).
 * **Purpose:** Enables granular test execution filtering for development efficiency and CI optimization.
 
 ## 6. Unit Test Standards
@@ -187,7 +187,7 @@
 
 * **Detailed Unit Testing Guide:** `Docs/Standards/UnitTestCaseDevelopment.md` (To be created)
 * **Detailed Integration Testing Guide:** `Docs/Standards/IntegrationTestCaseDevelopment.md` (To be created)
-* **Testing Framework Blueprint:** `api-server.Tests/TechnicalDesignDocument.md`
+* **Testing Framework Blueprint:** `Zarichney.Server.Tests/TechnicalDesignDocument.md`
 * **Development Workflows:** See files in `Docs/Development/` (e.g., `StandardWorkflow.md`, `TestCovergeWorkflow.md`).
 * **Code Standards:** `Docs/Standards/CodingStandards.md`
 * **Task Management Standards:** `Docs/Standards/TaskManagementStandards.md`

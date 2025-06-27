@@ -177,7 +177,7 @@ Log levels are controlled through the `"Serilog"` section in your `appsettings.j
 }
 ```
 
-### Production Configuration (`api-server/appsettings.json`)
+### Production Configuration (`Zarichney.Server/appsettings.json`)
 
 The production configuration maintains quiet defaults while allowing more detailed logging for application-specific namespaces:
 
@@ -196,7 +196,7 @@ The production configuration maintains quiet defaults while allowing more detail
 }
 ```
 
-### Development Configuration (`api-server/appsettings.Development.json`)
+### Development Configuration (`Zarichney.Server/appsettings.Development.json`)
 
 Development environments can use more verbose logging for easier debugging:
 
@@ -249,7 +249,7 @@ Development environments can use more verbose logging for easier debugging:
 
 ## Logging in the Test Environment
 
-### Test Configuration (`api-server/appsettings.Testing.json`)
+### Test Configuration (`Zarichney.Server/appsettings.Testing.json`)
 
 The test environment also defaults to Warning level to keep test output clean:
 
@@ -270,7 +270,7 @@ The test environment also defaults to Warning level to keep test output clean:
 
 ### Debugging Tests with Verbose Logging
 
-When debugging specific tests, you can temporarily modify `api-server/appsettings.Testing.json` to get more detailed output from the system under test (SUT). The test logs will appear in your test runner's output window.
+When debugging specific tests, you can temporarily modify `Zarichney.Server/appsettings.Testing.json` to get more detailed output from the system under test (SUT). The test logs will appear in your test runner's output window.
 
 **Current Test Configuration:**
 ```json
@@ -471,7 +471,7 @@ Logs can be viewed through several channels depending on your environment and co
 - Default development URL: `http://localhost:5341/`
 
 ### File Logging
-- When Seq is not available, logs are written to `logs/api-server.log`
+- When Seq is not available, logs are written to `logs/Zarichney.Server.log`
 - Files are rotated daily with 7 days retention
 
 ### Test Output
@@ -570,5 +570,5 @@ This allows you to override logging settings at any level without modifying the 
 ---
 
 For implementation details and technical specifications, refer to:
-- [`../../api-server/Startup/README.md`](../../api-server/Startup/README.md) - Core logging configuration
-- [`../../api-server.Tests/README.md`](../../api-server.Tests/README.md) - Test environment logging setup
+- [`../../Zarichney.Server/Startup/README.md`](../../Zarichney.Server/Startup/README.md) - Core logging configuration
+- [`../../Zarichney.Server.Tests/README.md`](../../Zarichney.Server.Tests/README.md) - Test environment logging setup

@@ -1,0 +1,41 @@
+<div class="resend-confirmation-container">
+  <div class="form-container">
+    <h2>Resend Confirmation Email</h2>
+    <p class="form-description">Enter your email address and we'll send a new confirmation link.</p>
+    
+    <form [formGroup]="resendForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input 
+          type="email" 
+          id="email" 
+          formControlName="email" 
+          placeholder="Enter your email address"
+          [class.is-invalid]="submitted && resendForm.get('email')?.errors"
+        />
+        
+        <div class="error-message" *ngIf="submitted && resendForm.get('email')?.errors">
+          <span *ngIf="resendForm.get('email')?.errors?.['required']">Email is required</span>
+          <span *ngIf="resendForm.get('email')?.errors?.['email']">Please enter a valid email address</span>
+        </div>
+      </div>
+      
+      <button 
+        type="submit" 
+        [disabled]="isLoading || (submitted && resendForm.invalid)"
+        class="submit-button"
+      >
+        <span *ngIf="isLoading" class="loading-spinner"></span>
+        <span>Resend Confirmation Email</span>
+      </button>
+    </form>
+    
+    <div class="success-message" *ngIf="submitted && !isLoading">
+      <p>If an account requiring confirmation exists for that email, a new confirmation link has been sent. Please check your inbox.</p>
+    </div>
+    
+    <div class="auth-links">
+      <a routerLink="/auth/login">Back to Login</a>
+    </div>
+  </div>
+</div>

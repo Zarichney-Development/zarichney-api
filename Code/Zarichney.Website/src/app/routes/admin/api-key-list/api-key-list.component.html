@@ -1,0 +1,64 @@
+<div class="api-keys-container">
+  <h2>API Keys</h2>
+
+  <div class="actions">
+    <a routerLink="/admin/api-keys/create" class="create-key-button"
+      >Create New API Key</a
+    >
+  </div>
+
+  <div *ngIf="isLoading" class="loading">Loading API keys...</div>
+
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <div
+    *ngIf="!isLoading && !error && (apiKeys$ | async) as apiKeys"
+    class="empty-state"
+    [hidden]="apiKeys.length > 0"
+  >
+    No API keys found. Create your first API key.
+  </div>
+
+  <table
+    *ngIf="!isLoading && !error && (apiKeys$ | async) as apiKeys"
+    class="api-keys-table"
+    [hidden]="apiKeys.length === 0"
+  >
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Description</th>
+        <th>Created</th>
+        <th>Expires</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let key of apiKeys">
+        <td>{{ key.id }}</td>
+        <td>{{ key.description }}</td>
+        <td>{{ key.createdAt | date: "medium" }}</td>
+        <td>
+          {{ key.expiresAt ? (key.expiresAt | date: "medium") : "Never" }}
+        </td>
+        <td>
+          <span [class.active]="key.isActive" [class.inactive]="!key.isActive">
+            {{ key.isActive ? "Active" : "Inactive" }}
+          </span>
+        </td>
+        <td>
+          <button
+            class="revoke-button"
+            (click)="revokeKey(key.id)"
+            [disabled]="revokingKeyId === key.id || !key.isActive"
+          >
+            {{ revokingKeyId === key.id ? "Revoking..." : "Revoke" }}
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

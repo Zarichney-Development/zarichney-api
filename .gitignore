@@ -1,18 +1,46 @@
+# Node.js
 node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+# Environment files
 env
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDEs
 .idea
 .vscode
 *.DotSettings.user
-bin
-obj
+
+# .NET
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Application specific
 Data
 appsettings.Development.json
 !appsettings.json
 backup*
 test_results
 **/Migrations/*.sql
-api-server/logs
+Zarichney.Server/logs
 
 
 **/.claude/settings.local.json

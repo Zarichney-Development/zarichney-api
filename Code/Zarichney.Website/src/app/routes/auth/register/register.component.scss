@@ -1,0 +1,118 @@
+@use '../../../styles/variables' as vars;
+@use '../../../styles/mixins' as mix;
+@use 'sass:color';
+
+.register-container {
+  max-width: 450px;
+  margin: 2rem auto;
+  padding: 2rem;
+  border-radius: 8px;
+  background-color: #fff; // Use hardcoded value instead of undefined vars.$card-bg
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+  h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: vars.$text-color; // Use defined text-color instead of text-primary
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: vars.$text-color; // Use defined text-color instead of text-primary
+    }
+
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid vars.$border-color;
+      border-radius: 4px;
+      font-size: 1rem;
+      background-color: #fff; // Use hardcoded value instead of undefined vars.$input-bg
+      color: vars.$text-color; // Use defined text-color instead of text-primary
+      transition: border-color 0.2s, box-shadow 0.2s;
+
+      &:focus {
+        outline: none;
+        border-color: vars.$primary-color; // Use defined primary-color instead of primary
+        box-shadow: 0 0 0 2px rgba(230, 122, 0, 0.2); // Use rgba value directly instead of vars.$primary-rgb
+      }
+
+      &::placeholder {
+        color: mix.darken-text(20%); // Use darken-text mixin instead of darken function
+      }
+    }
+
+    .error-message {
+      color: vars.$error-color; // Use defined error-color instead of error
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+    }
+  }
+
+  .form-feedback {
+    margin-bottom: 1.5rem;
+    min-height: 1.5rem;
+
+    .auth-error {
+      color: vars.$error-color; // Use defined error-color instead of error
+      font-size: 0.875rem;
+      padding: 0.5rem;
+      background-color: rgba(220, 53, 69, 0.1); // Use rgba value directly instead of vars.$error-rgb
+      border-radius: 4px;
+      text-align: center;
+    }
+
+    .auth-success {
+      color: vars.$success-color; // Use defined success-color instead of success
+      font-size: 0.875rem;
+      padding: 0.5rem;
+      background-color: rgba(40, 167, 69, 0.1); // Use rgba value directly instead of vars.$success-rgb
+      border-radius: 4px;
+      text-align: center;
+    }
+  }
+
+  button {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: vars.$primary-color; // Use defined primary-color instead of primary
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    &:hover:not(:disabled) {
+      background-color: mix.darken-primary(10%);
+    }
+
+    &:disabled {
+      background-color: mix.lighten-primary(20%);
+      cursor: not-allowed;
+    }
+  }
+
+  .login-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.875rem;
+    color: mix.darken-text(20%); // Use darken-text mixin instead of darken function
+
+    a {
+      color: vars.$primary-color; // Use defined primary-color instead of primary
+      text-decoration: none;
+      font-weight: 500;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}

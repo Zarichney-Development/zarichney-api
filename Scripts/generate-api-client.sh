@@ -1,7 +1,7 @@
 #!/bin/bash
 # Generate API Client for Tests
 # This script automates the generation of strongly-typed Refit client interfaces for integration testing.
-# It builds the api-server project, generates swagger.json, and creates multiple Refit client interfaces grouped by OpenAPI tags.
+# It builds the Zarichney.Server project, generates swagger.json, and creates multiple Refit client interfaces grouped by OpenAPI tags.
 
 # Exit on error
 set -e
@@ -10,8 +10,8 @@ echo -e "\e[36mStarting API client generation process...\e[0m"
 
 # Define paths
 ROOT_DIR="$(dirname "$(dirname "$(readlink -f "$0")")")"
-API_SERVER_DIR="$ROOT_DIR/api-server"
-API_SERVER_TESTS_DIR="$ROOT_DIR/api-server.Tests"
+API_SERVER_DIR="$ROOT_DIR/Code/Zarichney.Server"
+API_SERVER_TESTS_DIR="$ROOT_DIR/Code/Zarichney.Server.Tests"
 API_CLIENT_DIR="$API_SERVER_TESTS_DIR/Framework/Client"
 SWAGGER_JSON_PATH="$API_SERVER_DIR/swagger.json"
 
@@ -21,11 +21,11 @@ if [ ! -d "$API_CLIENT_DIR" ]; then
     mkdir -p "$API_CLIENT_DIR"
 fi
 
-# Step 1: Build the api-server project
-echo -e "\e[32mBuilding api-server project...\e[0m"
-dotnet build "$API_SERVER_DIR/api-server.csproj" -c Debug
+# Step 1: Build the Zarichney.Server project
+echo -e "\e[32mBuilding Zarichney.Server project...\e[0m"
+dotnet build "$API_SERVER_DIR/Zarichney.Server.csproj" -c Debug
 if [ $? -ne 0 ]; then
-    echo -e "\e[31mError building api-server project. Exiting.\e[0m"
+    echo -e "\e[31mError building Zarichney.Server project. Exiting.\e[0m"
     exit 1
 fi
 
@@ -45,7 +45,7 @@ echo -e "\e[32mGenerating swagger.json by running the API server temporarily...\
 
 # Start the API server in the background to generate swagger.json
 echo -e "\e[32mStarting API server temporarily...\e[0m"
-dotnet run --project "$API_SERVER_DIR/api-server.csproj" --urls "http://localhost:5000" > /dev/null 2>&1 &
+dotnet run --project "$API_SERVER_DIR/Zarichney.Server.csproj" --urls "http://localhost:5000" > /dev/null 2>&1 &
 API_PID=$!
 
 # Wait for the API to start up

@@ -1,0 +1,106 @@
+<div class="create-api-key-container">
+  <h2>Create New API Key</h2>
+
+  <div class="actions">
+    <a routerLink="/admin/api-keys" class="back-button">Back to API Keys</a>
+  </div>
+
+  <div *ngIf="isLoading" class="loading">Creating API key...</div>
+
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <form
+    *ngIf="!newApiKey && !isLoading"
+    [formGroup]="apiKeyForm"
+    (ngSubmit)="onSubmit()"
+    class="api-key-form"
+  >
+    <div class="form-group">
+      <label for="description">Description *</label>
+      <input
+        type="text"
+        id="description"
+        formControlName="description"
+        placeholder="Enter a description for this API key"
+        required
+      />
+      <div
+        *ngIf="
+          apiKeyForm.get('description')?.invalid &&
+          apiKeyForm.get('description')?.touched
+        "
+        class="validation-error"
+      >
+        Description is required
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="expiresInDays">Expires in (days)</label>
+      <input
+        type="number"
+        id="expiresInDays"
+        formControlName="expiresInDays"
+        placeholder="Leave empty for no expiration"
+        min="1"
+      />
+      <div class="hint">If left empty, the key will not expire</div>
+    </div>
+
+    <button
+      type="submit"
+      [disabled]="apiKeyForm.invalid || isLoading"
+      class="submit-button"
+    >
+      Create API Key
+    </button>
+  </form>
+
+  <div *ngIf="newApiKey" class="new-key-container">
+    <div class="success-message">
+      <h3>API Key Created Successfully</h3>
+      <p class="important-notice">
+        Important: Copy this key now. You won't be able to see it again!
+      </p>
+    </div>
+
+    <div class="key-details">
+      <div class="key-value">
+        <label>API Key:</label>
+        <div class="key-display">
+          <code>{{ newApiKey.key }}</code>
+          <button
+            *ngIf="newApiKey?.key"
+            (click)="copyToClipboard(newApiKey.key!)"
+            class="copy-button"
+          >
+            Copy
+          </button>
+        </div>
+      </div>
+
+      <div class="key-info">
+        <div class="info-row">
+          <span class="info-label">ID:</span>
+          <span>{{ newApiKey.id }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Description:</span>
+          <span>{{ newApiKey.description }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Created:</span>
+          <span>{{ newApiKey.createdAt | date: "medium" }}</span>
+        </div>
+        <div class="info-row" *ngIf="newApiKey.expiresAt">
+          <span class="info-label">Expires:</span>
+          <span>{{ newApiKey.expiresAt | date: "medium" }}</span>
+        </div>
+      </div>
+    </div>
+
+    <button (click)="navigateToList()" class="done-button">Done</button>
+  </div>
+</div>

@@ -1,0 +1,60 @@
+@use '../../../styles/mixins' as mix;
+
+:host {
+
+  // border: 1px solid#62ff00;
+  display: flex;
+  flex-direction: column;
+  margin: 0 1rem;
+  max-width: calc(100vw - 2rem);
+
+  img {
+    max-width: min(160px, 22vw);
+    min-width: clamp(60px, 13vw, 160px);
+    width: 100%;
+    margin-right: 5px;
+    height: auto;
+  }
+
+  h1,
+  h2 {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  h1 {
+    align-self: flex-end;
+    display: inline-block;
+    position: relative;
+    top: -5px;
+    // min-vp: 530px
+    // max-vp: 715px
+    // min-fs: 55px 3.43rem
+    // max-fx: 88px 5.5rem
+    // preferredValue = yAxisIntersection[rem] + (slope * 100)[vw]
+    // calculator: https://css-tricks.com/linearly-scale-font-size-with-css-clamp-based-on-the-viewport/#aa-for-those-who-dont-mind-that-edge-case
+    // font-size: clamp(3.43rem, -2.5003rem + 17.9027vw, 5.5rem);
+    @include mix.responsive-font-size(60px, 88px);
+
+    // border: 1px solid orange;
+    .logo {
+      & {
+        align-self: flex-end;
+      }
+    }
+  }
+
+  h2 {
+    // border: 1px solid red;
+    // min-vp: 485px
+    // mid-vp: 530px
+    // max-vp: 715px
+    // min-fs: 2.85rem
+    // mid-fs: 3.15rem
+    // max-fx: 5.2rem
+    //first slope: font-size: clamp(3.3rem, -0.4rem + 11.8vw, 5.2rem);
+    //second slope: font-size: clamp(3.3rem, -2.3rem + 16.9vw, 5.2rem);
+    font-size: clamp(3.3rem, max(-0.4rem + 11.8vw, -2.3rem + 16.9vw), 5.2rem);
+  }
+
+}

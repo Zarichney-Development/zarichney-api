@@ -1,0 +1,40 @@
+<div class="role-users">
+  <h2>Users in Role</h2>
+
+  <div class="back-link">
+    <a routerLink="/admin/roles">Back to Role Manager</a>
+  </div>
+
+  <div *ngIf="isLoading" class="loading">
+    Loading users...
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    <p>{{ error }}</p>
+  </div>
+
+  <div *ngIf="!isLoading && !error && roleName" class="users-container">
+    <h3>Users in Role: {{ roleName }}</h3>
+
+    <ng-container *ngIf="(users$ | async) as users">
+      <div *ngIf="users.length === 0" class="no-users">
+        <p>No users are assigned to this role.</p>
+      </div>
+
+      <table *ngIf="users.length !== 0" class="users-table">
+        <thead>
+          <tr>
+            <th>User ID</th>
+            <th>Email</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of users" class="user-row">
+            <td>{{ user.userId }}</td>
+            <td>{{ user.email }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </ng-container>
+  </div>
+</div>

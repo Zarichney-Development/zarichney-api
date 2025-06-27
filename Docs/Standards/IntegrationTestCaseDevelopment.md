@@ -5,12 +5,12 @@
 
 ## 1. Introduction
 
-* **Purpose:** This document provides detailed, actionable guidance on how to write effective integration tests for the `api-server` project. It focuses on verifying interactions between different components of the application, including API endpoints, services, repositories, and direct infrastructure dependencies like databases (via Testcontainers) and virtualized external HTTP services (via WireMock.Net).
-* **Scope:** This guide applies specifically to integration testing within the `api-server.Tests` project, typically under the `/Integration` directory. These tests ensure that different parts of the system work together as intended.
+* **Purpose:** This document provides detailed, actionable guidance on how to write effective integration tests for the `Code/Zarichney.Server` project. It focuses on verifying interactions between different components of the application, including API endpoints, services, repositories, and direct infrastructure dependencies like databases (via Testcontainers) and virtualized external HTTP services (via WireMock.Net).
+* **Scope:** This guide applies specifically to integration testing within the `Code/Zarichney.Server.Tests` project, typically under the `/Integration` directory. These tests ensure that different parts of the system work together as intended.
 * **Prerequisites:** Developers (human and AI) utilizing this guide **must** be thoroughly familiar with:
     * `Docs/Standards/TestingStandards.md` (the overarching testing philosophy and tooling).
     * `Docs/Standards/CodingStandards.md` (for principles on writing testable production code, which also impacts integration points).
-    * `api-server.Tests/TechnicalDesignDocument.md` (critically important for understanding the integration testing framework, fixtures, and tools).
+    * `Code/Zarichney.Server.Tests/TechnicalDesignDocument.md` (critically important for understanding the integration testing framework, fixtures, and tools).
 * **Goal:** To create a suite of integration tests that provide high confidence in the application's overall behavior, API contracts, data persistence, and interactions with external dependencies, ensuring the system functions correctly as a cohesive unit.
 
 ## 2. Core Principles of Integration Testing
@@ -27,9 +27,9 @@ Integration tests verify the interfaces and interactions between components or s
 
 ## 3. Overview of the Integration Testing Framework
 
-The `api-server.Tests` project utilizes a sophisticated framework for integration testing. Refer to the `api-server.Tests/TechnicalDesignDocument.md` for full architectural details. Key components include:
+The `Code/Zarichney.Server.Tests` project utilizes a sophisticated framework for integration testing. Refer to the `Code/Zarichney.Server.Tests/TechnicalDesignDocument.md` for full architectural details. Key components include:
 
-* **`CustomWebApplicationFactory<Program>`:** Manages an in-memory instance of the `api-server` using `TestServer`. It handles:
+* **`CustomWebApplicationFactory<Program>`:** Manages an in-memory instance of the `Zarichney.Server` using `TestServer`. It handles:
     * Test-specific application configuration (see TDD Section 9).
     * Overriding/mocking internal services if necessary for specific test scenarios (though generally, real services are preferred in integration tests unless a dependency is prohibitively complex or slow).
     * Registering test-specific authentication (`TestAuthHandler`).
@@ -51,7 +51,7 @@ The `api-server.Tests` project utilizes a sophisticated framework for integratio
 
 ## 4. Setting Up Integration Tests
 
-* **Project Structure:** Integration tests should reside in `api-server.Tests/Integration/` and mirror the `api-server`'s API structure where logical (e.g., `Integration/Controllers/MyControllerTests.cs`).
+* **Project Structure:** Integration tests should reside in `Zarichney.Server.Tests/Integration/` and mirror the `Zarichney.Server`'s API structure where logical (e.g., `Integration/Controllers/MyControllerTests.cs`).
 * **Test Class Naming:** `[ControllerName/FeatureName]IntegrationTests.cs` (e.g., `AuthControllerIntegrationTests.cs`, `RecipeWorkflowIntegrationTests.cs`).
 * **Test Method Naming:** `[EndpointName/ActionName]_[Scenario]_[ExpectedOutcome]` (e.g., `Login_WithValidCredentials_ReturnsOkAndToken`).
 * **xUnit Attributes:** Use `[Fact]` for single scenario tests. `[Theory]` can be used if multiple, similar API calls with varied data need to be tested against the same integrated setup.
@@ -93,7 +93,7 @@ The `api-server.Tests` project utilizes a sophisticated framework for integratio
 
 ## 5. Interacting with the API via Refit Client
 
-All interactions with the `api-server` under test **must** go through the granular Refit client interfaces.
+All interactions with the `Zarichney.Server` under test **must** go through the granular Refit client interfaces.
 
 * **Accessing the Clients:** Access specific client interfaces via the `ApiClientFixture` properties (e.g., `_apiClientFixture.UnauthenticatedAuthApi`, `_apiClientFixture.AuthenticatedCookbookApi`). Each interface provides access to a specific API area.
 * **Making API Calls:**
@@ -106,7 +106,7 @@ All interactions with the `api-server` under test **must** go through the granul
     var createResponse = await ApiClient.CreateRecipeAsync(createRequest);
     ```
 * **Handling API Responses:** The Refit client will typically return `IApiResponse<T>` or `IApiResponse` (if configured, or handle exceptions for non-success status codes). Check `response.StatusCode`, `response.IsSuccessStatusCode`, and deserialize `response.Content` or `response.Error.Content`.
-* **Client Generation:** Remember to run `Scripts/generate-api-client.ps1` (or `.sh`) after any changes to `api-server` controller signatures, routes, or DTOs to keep the client synchronized.
+* **Client Generation:** Remember to run `Scripts/generate-api-client.ps1` (or `.sh`) after any changes to `Zarichney.Server` controller signatures, routes, or DTOs to keep the client synchronized.
 
 ## 6. Managing Dependencies
 
@@ -200,7 +200,7 @@ Integration tests often require more complex and realistic data setups than unit
             .With(r => r.Title, "Specific Test Title")
             .Create();
         ```
-    * **Advanced Customizations:** For complex domain models (especially EF Core entities), project-specific `ICustomization` and `ISpecimenBuilder` implementations will be developed (see TDD FRMK-002). These will reside in `api-server.Tests/Framework/TestData/AutoFixtureCustomizations/` and help create valid, complex object graphs.
+    * **Advanced Customizations:** For complex domain models (especially EF Core entities), project-specific `ICustomization` and `ISpecimenBuilder` implementations will be developed (see TDD FRMK-002). These will reside in `Zarichney.Server.Tests/Framework/TestData/AutoFixtureCustomizations/` and help create valid, complex object graphs.
     * Ensure `OmitOnRecursionBehavior` is active for EF Core entities to prevent issues with circular navigation properties.
 * **Test Data Builders (`TestData/Builders/`):**
     * For scenarios requiring highly specific, repeatable, or complex data states that are cumbersome to create with AutoFixture alone.
@@ -282,7 +282,7 @@ Use FluentAssertions for all assertions. Include `.Because("...")` for clarity.
     * **Solution:** Break down complex scenarios into multiple, more focused integration tests. Use Test Data Builders and AutoFixture customizations effectively. Encapsulate common setup/teardown logic in base test classes or helper methods if truly generic.
 * **Test Scope Creep (Blurring with E2E Tests):**
     * **Cause:** Integration tests attempt to cover too broad a scope, potentially including UI elements or very distant third-party systems not directly interacted with by the API.
-    * **Solution:** Keep integration tests focused on the interactions between your `api-server`'s components and its directly managed/virtualized infrastructure (database, message queues, virtualized HTTP services).
+    * **Solution:** Keep integration tests focused on the interactions between your `Zarichney.Server`'s components and its directly managed/virtualized infrastructure (database, message queues, virtualized HTTP services).
 
 ## 11. Integration Test Checklist (Quick Reference)
 

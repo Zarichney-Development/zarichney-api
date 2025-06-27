@@ -10,13 +10,13 @@
 
 ## 2. Core Project Structure
 
-* **`/api-server/`**: Main ASP.NET 8 application code. ([View README](../api-server/README.md))
-* **`/api-server.Tests/`**: Unit and integration tests. ([View README](../api-server.Tests/README.md))
+* **`/Zarichney.Server/`**: Main ASP.NET 8 application code. ([View README](../Zarichney.Server/README.md))
+* **`/Zarichney.Server.Tests/`**: Unit and integration tests. ([View README](../Zarichney.Server.Tests/README.md))
 * **`/Docs/`**: All project documentation.
     * **`/Docs/Standards/`**: **CRITICAL STANDARDS** - Review these first. ([View README](../Docs/Standards/README.md))
     * **`/Docs/Development/`**: AI-assisted workflow definitions. ([View README](../Docs/Development/README.md))
     * **`/Docs/Templates/`**: Templates for prompts, issues, etc. ([View README](../Docs/Templates/README.md))
-* **Module-Specific `README.md` files:** Each significant directory within `/api-server/` and `/api-server.Tests/` has its own `README.md`. **Always review the local `README.md` for the specific module you are working on.**
+* **Module-Specific `README.md` files:** Each significant directory within `/Zarichney.Server/` and `/Zarichney.Server.Tests/` has its own `README.md`. **Always review the local `README.md` for the specific module you are working on.**
 
 ## 3. High-Level Development Workflow (When I give you a task)
 
@@ -39,7 +39,7 @@ Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskMan
     ```
 * **Run Project:**
     ```bash
-    dotnet run --project api-server
+    dotnet run --project Zarichney.Server
     ```
 * **Run All Tests:** (Ensure Docker Desktop is running for integration tests)
     ```bash
@@ -57,7 +57,7 @@ Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskMan
     * Create branch: `git checkout -b [branch-name]` (e.g., `feature/issue-123-my-feature`)
     * Commit: `git commit -m "<type>: <description> (#ISSUE_ID)"`
     * Create PR: `gh pr create --base [target-branch] --title "<type>: <description> (#ISSUE_ID)" --body "Closes #ISSUE_ID. [Summary]"`
-* **Regenerate API Client (for `/api-server.Tests/`):** If API contracts change.
+* **Regenerate API Client (for `/Zarichney.Server.Tests/`):** If API contracts change.
     ```powershell
     ./Scripts/GenerateApiClient.ps1
     ```
