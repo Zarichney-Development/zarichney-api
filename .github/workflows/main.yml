@@ -102,7 +102,7 @@ jobs:
           cache-dependency-path: Code/Zarichney.Website/package-lock.json
 
       - name: Install Frontend Dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
         working-directory: ./Code/Zarichney.Website
 
       - name: Build Frontend for Production
@@ -130,7 +130,7 @@ jobs:
 
       - name: Deploy Frontend to EC2
         env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_HOST: ${{ secrets.EC2_HOST_FRONTEND }}
           EC2_USERNAME: ec2-user
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
@@ -138,7 +138,7 @@ jobs:
           scp -r -o StrictHostKeyChecking=no -i private_key ./server-deploy/* ${EC2_USERNAME}@${EC2_HOST}:~/app/
           ssh -o StrictHostKeyChecking=no -i private_key ${EC2_USERNAME}@${EC2_HOST} '
             cd ~/app
-            npm ci --omit=dev
+            npm ci --omit=dev --legacy-peer-deps
             pm2 restart server || pm2 start "npm run serve:ssr" --name server
           '
         working-directory: ./Code/Zarichney.Website
@@ -185,7 +185,7 @@ jobs:
 
       - name: Deploy Backend to EC2 and Apply Migrations
         env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_HOST: ${{ secrets.EC2_HOST_BACKEND }}
           EC2_USERNAME: ec2-user
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
