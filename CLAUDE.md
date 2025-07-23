@@ -1,7 +1,7 @@
 # Project Context & Operating Guide for AI Coding Assistant (Claude)
 
-**Version:** 1.1
-**Last Updated:** 2025-05-25
+**Version:** 1.2
+**Last Updated:** 2025-07-23
 
 ## 1. My Purpose & Your Role
 
@@ -67,6 +67,10 @@ Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskMan
     * Create branch: `git checkout -b [branch-name]` (e.g., `feature/issue-123-my-feature`)
     * Commit: `git commit -m "<type>: <description> (#ISSUE_ID)"`
     * Create PR: `gh pr create --base [target-branch] --title "<type>: <description> (#ISSUE_ID)" --body "Closes #ISSUE_ID. [Summary]"`
+    * **Enhanced GitHub Operations** (See Section 7 for AI-powered alternatives):
+        * Issue analysis: `claude --dangerously-skip-permissions --print "Use GitHub MCP to analyze issue #ID"`
+        * PR enhancement: `claude --dangerously-skip-permissions --print "Use GitHub MCP to review and enhance my PR"`
+        * Repository health: `claude --dangerously-skip-permissions --print "Use GitHub MCP to check zarichney-api status"`
 * **Regenerate API Client (for `/Code/Zarichney.Server.Tests/`):** If API contracts change.
     ```powershell
     # PowerShell
@@ -94,4 +98,105 @@ Before implementing any significant code, test, or documentation changes, you **
 * **Adhere to Boundaries:** Respect any "what *not* to change" instructions in the prompt, you're at liberty if not specified.
 * **Update Documentation:** Changes to code or tests that impact documented purpose, architecture, contracts, or diagrams **MUST** be accompanied by updates to the relevant `README.md` and diagrams.
 
+## 7. GitHub Integration & Automation
+
+### GitHub Repository Context
+This project operates within the **Zarichney-Development** organization:
+- **Repository**: `Zarichney-Development/zarichney-api`
+- **Status**: Public repository
+- **Current Issues**: 5 open issues requiring attention
+- **Recent Focus**: Monorepo consolidation and CI/CD unification
+
+### GitHub Connection Methods (Reference System Documentation)
+For comprehensive GitHub setup information, reference the system-wide documentation:
+- **System GitHub Setup**: `@/home/zarichney/CLAUDE.md` (GitHub Integration section)
+- **Connection Hierarchy**: MCP → GitHub CLI → Direct API
+- **Authentication Status**: All methods configured and working
+
+### Project-Specific GitHub Operations
+
+#### **Enhanced Pull Request Workflow**
+Beyond the basic `gh pr create` command, leverage AI-powered GitHub operations:
+
+```bash
+# Standard PR creation (existing workflow step 8)
+gh pr create --base main --title "feat: implement feature (#ISSUE_ID)" --body "Closes #ISSUE_ID. [Summary]"
+
+# AI-enhanced PR creation with comprehensive analysis
+claude --dangerously-skip-permissions --print "Use GitHub MCP to analyze my recent commits and create a detailed PR description for the zarichney-api repository"
+
+# Automated PR review preparation
+claude --dangerously-skip-permissions --print "Use GitHub MCP to review open PRs in zarichney-api and suggest improvements"
+```
+
+#### **Issue-Driven Development Integration**
+Since workflow step 1 references "related github issue", enhance issue management:
+
+```bash
+# Standard issue analysis
+gh issue view ISSUE_ID
+
+# AI-powered issue analysis and task planning
+claude --dangerously-skip-permissions --print "Use GitHub MCP to analyze issue #ISSUE_ID in zarichney-api and create an implementation plan"
+
+# Cross-issue pattern analysis
+claude --dangerously-skip-permissions --print "Use GitHub MCP to analyze all open issues in zarichney-api and identify common themes"
+```
+
+#### **Repository Health Monitoring**
+Integrate GitHub monitoring into development workflow:
+
+```bash
+# Project status before starting work
+claude --dangerously-skip-permissions --print "Use GitHub MCP to provide a status summary of zarichney-api including recent activity and open issues"
+
+# Pre-development environment check
+claude --dangerously-skip-permissions --print "Use GitHub MCP to check if there are any security alerts or critical updates needed for zarichney-api"
+```
+
+### Claude Self-Delegation for Project Tasks
+
+#### **Development Workflow Enhancement**
+Integrate GitHub AI operations into the standard workflow steps:
+
+1. **Enhanced Task Understanding** (Step 1 expansion):
+   ```bash
+   # After reviewing task prompt and issue
+   claude --dangerously-skip-permissions --print "Use GitHub MCP to provide context for issue #ISSUE_ID including related issues and recent commits in zarichney-api"
+   ```
+
+2. **Intelligent Branch Strategy** (Step 3 enhancement):
+   ```bash
+   # Before creating feature branch
+   claude --dangerously-skip-permissions --print "Use GitHub MCP to suggest an appropriate branch naming strategy based on the current issue and repository conventions"
+   ```
+
+3. **Pre-PR Validation** (Between steps 7-8):
+   ```bash
+   # Before creating PR
+   claude --dangerously-skip-permissions --print "Use GitHub MCP to review my changes and suggest an appropriate PR title and description for zarichney-api"
+   ```
+
+#### **Project-Specific Automation Patterns**
+```bash
+# Monorepo-specific analysis
+claude --dangerously-skip-permissions --print "Use GitHub MCP to analyze the impact of my changes across both Code/Zarichney.Server and Code/Zarichney.Website"
+
+# CI/CD pipeline awareness
+claude --dangerously-skip-permissions --print "Use GitHub MCP to check the status of GitHub Actions workflows for zarichney-api and identify any failures"
+
+# Documentation impact assessment
+claude --dangerously-skip-permissions --print "Use GitHub MCP to identify which documentation files might need updates based on my code changes"
+```
+
+### Integration with Existing Standards
+- **TaskManagementStandards.md**: GitHub operations complement conventional commit and branching strategies
+- **TestingStandards.md**: Use GitHub MCP to analyze test coverage and suggest additional test scenarios
+- **DocumentationStandards.md**: Leverage GitHub MCP to ensure documentation stays current with code changes
+
 ---
+# important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.

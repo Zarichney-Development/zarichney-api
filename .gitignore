@@ -33,6 +33,9 @@ x86/
 *.userosscache
 *.sln.docstates
 
+# Angular
+Code/Zarichney.Website/.angular/
+
 # Application specific
 Data
 appsettings.Development.json
