@@ -7,12 +7,18 @@ on:
       - 'Code/Zarichney.Server/**'
       - 'Code/Zarichney.Server.Tests/**'
       - 'Code/Zarichney.Website/**'
+      - '*.sln'
+      - 'Scripts/**'
+      - '.github/workflows/**'
   pull_request:
     branches: [ main ]
     paths:
       - 'Code/Zarichney.Server/**'
       - 'Code/Zarichney.Server.Tests/**'
       - 'Code/Zarichney.Website/**'
+      - '*.sln'
+      - 'Scripts/**'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 env:
