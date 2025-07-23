@@ -26,7 +26,7 @@ Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskMan
 1.  **Understand Task:** Review the task prompt thoroughly, the related github issue and the project tree structure.
 2.  **Review Context:** Use read tool on all standards and relevant local `README.md` files.
 3.  **Branch:** Ensure you are on the correct branch, switch if needed or create a feature/test branch (`feature/issue-XXX-desc` or `test/issue-XXX-desc`), no committing on main.
-4.  **Code/Test:** Implement changes and add/update tests `dotnet test`.
+4.  **Code/Test:** Implement changes and add/update tests. **Use `/test-report summary` for quick validation or `/test-report` for comprehensive analysis with AI insights.**
 5.  **Format:** Verify and apply formatting (`dotnet format`).
 6.  **Document:** Update relevant `README.md` files and diagrams if architecture/behavior changed.
 7.  **Commit:** Use Conventional Commits referencing the Issue ID.
@@ -202,11 +202,37 @@ Integrate GitHub AI operations into the standard workflow steps:
    claude --dangerously-skip-permissions --print "Use GitHub MCP to suggest an appropriate branch naming strategy based on the current issue and repository conventions"
    ```
 
-3. **Pre-PR Validation** (Between steps 7-8):
+3. **Test Validation** (Step 4 enhancement):
    ```bash
-   # Before creating PR
-   claude --dangerously-skip-permissions --print "Use GitHub MCP to review my changes and suggest an appropriate PR title and description for zarichney-api"
+   # After implementing changes, validate with automated test analysis
+   claude --dangerously-skip-permissions --print "Run /test-report summary to validate my changes and ensure all tests pass"
    ```
+
+4. **Pre-PR Validation** (Between steps 7-8):
+   ```bash
+   # Before creating PR, run comprehensive test analysis
+   claude --dangerously-skip-permissions --print "Run /test-report and use GitHub MCP to review my changes and suggest an appropriate PR title and description for zarichney-api based on test results"
+   ```
+
+#### **Automated Test Suite Integration**
+Streamline test execution and analysis with intelligent automation:
+
+```bash
+# Comprehensive test analysis after code changes
+claude --dangerously-skip-permissions --print "Run /test-report to validate my changes and provide detailed analysis with recommendations"
+
+# Quick validation during development
+claude --dangerously-skip-permissions --print "Run /test-report summary to check test status and identify any immediate issues"
+
+# Pre-deployment quality gate
+claude --dangerously-skip-permissions --print "Run /test-report --performance and analyze results for production readiness"
+
+# CI/CD integration validation
+claude --dangerously-skip-permissions --print "Run /test-report json and validate that all quality gates pass for automated deployment"
+
+# Test failure investigation
+claude --dangerously-skip-permissions --print "Run /test-report and analyze any failing tests, providing root cause analysis and fix recommendations"
+```
 
 #### **Project-Specific Automation Patterns**
 ```bash
@@ -218,12 +244,16 @@ claude --dangerously-skip-permissions --print "Use GitHub MCP to check the statu
 
 # Documentation impact assessment
 claude --dangerously-skip-permissions --print "Use GitHub MCP to identify which documentation files might need updates based on my code changes"
+
+# Combined test and GitHub analysis
+claude --dangerously-skip-permissions --print "Run /test-report and then use GitHub MCP to check if there are related issues or PRs that need attention based on test results"
 ```
 
 ### Integration with Existing Standards
 - **TaskManagementStandards.md**: GitHub operations complement conventional commit and branching strategies
-- **TestingStandards.md**: Use GitHub MCP to analyze test coverage and suggest additional test scenarios
+- **TestingStandards.md**: Use `/test-report` for comprehensive test analysis and GitHub MCP to suggest additional test scenarios
 - **DocumentationStandards.md**: Leverage GitHub MCP to ensure documentation stays current with code changes
+- **Test Automation**: The `/test-report` command integrates with all development workflows to provide intelligent test analysis, coverage validation, and quality gate enforcement
 
 ---
 # important-instruction-reminders
