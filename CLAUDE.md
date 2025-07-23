@@ -42,13 +42,31 @@ Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskMan
     ```bash
     dotnet run --project Code/Zarichney.Server
     ```
-* **Run All Tests:** (Ensure Docker Desktop is running for integration tests)
+* **🧪 Automated Test Reporting:** (Recommended - Comprehensive analysis with AI insights)
+    ```bash
+    # Claude custom command - Full AI-powered analysis
+    /test-report                    # Detailed markdown report with recommendations
+    /test-report summary            # Quick executive summary
+    /test-report json               # Machine-readable output for CI/CD
+    /test-report --performance      # Include performance analysis
+    
+    # Direct script execution - Also available
+    ./Scripts/run-test-report.sh           # Same as /test-report
+    ./Scripts/run-test-report.sh summary   # Quick summary
+    
+    # Bash aliases (after sourcing Scripts/test-aliases.sh)
+    test-report                     # Full analysis
+    test-quick                      # Daily status check
+    test-claude                     # AI-powered insights via Claude
+    ```
+
+* **Run All Tests (Traditional):** (Ensure Docker Desktop is running for integration tests)
     ```bash
     # Standard execution (if Docker group membership is active)
-    dotnet test Zarichney.sln
+    dotnet test zarichney-api.sln
     
     # For environments where Docker group membership isn't active in current shell
-    sg docker -c "dotnet test Zarichney.sln"
+    sg docker -c "dotnet test zarichney-api.sln"
     ```
 * **Run Specific Test Categories:**
     ```bash
