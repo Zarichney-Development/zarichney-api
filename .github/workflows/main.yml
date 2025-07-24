@@ -28,7 +28,7 @@ env:
   SECRET_ID: cookbook-factory-secrets
   SECRET_DB_PASSWORD_KEY: DbPassword
   # Performance tracking
-  BUILD_START_TIME: ${{ github.run_id }}
+  BUILD_RUN_ID: ${{ github.run_id }}
 
 permissions:
   id-token: write
@@ -58,7 +58,7 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
@@ -177,7 +177,7 @@ jobs:
         working-directory: ./Code/Zarichney.Website
 
       - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
@@ -300,7 +300,7 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
@@ -324,7 +324,7 @@ jobs:
         run: dotnet publish Code/Zarichney.Server/Zarichney.Server.csproj -c Release -o ./publish
 
       - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
