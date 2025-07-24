@@ -43,7 +43,7 @@ appsettings.Development.json
 backup*
 test_results
 **/Migrations/*.sql
-Zarichney.Server/logs
+Code/Zarichney.Server/logs
 
 # Test Coverage
 TestResults/
