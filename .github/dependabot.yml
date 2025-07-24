@@ -24,8 +24,8 @@ updates:
     allow:
       - dependency-type: "direct"
       - dependency-type: "indirect"
-    # Enable automatic security updates
-    insecure-external-code-execution: "allow"
+    # Security-focused versioning
+    versioning-strategy: "increase"
 
   # Test project dependencies  
   - package-ecosystem: "nuget"
@@ -80,6 +80,10 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
+    # Enable vulnerability alerts for all dependency types
+    target-branch: "main"
 
   # GitHub Actions dependencies
   - package-ecosystem: "github-actions"

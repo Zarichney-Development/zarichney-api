@@ -46,18 +46,32 @@ jobs:
 
     - name: Run .NET security audit
       run: |
-        dotnet list zarichney-api.sln package --vulnerable --include-transitive 2>&1 | tee dotnet-audit.log
+        for i in {1..3}; do
+          if dotnet list zarichney-api.sln package --vulnerable --include-transitive 2>&1 | tee dotnet-audit.log; then
+            break
+          else
+            echo "Audit attempt $i failed, retrying in 5 seconds..."
+            sleep 5
+          fi
+        done
+        
         if grep -q "has the following vulnerable packages" dotnet-audit.log; then
           echo "::warning::Vulnerable .NET packages found. Review dotnet-audit.log"
+          exit 1
         fi
 
     - name: Run Node.js security audit
       run: |
         cd Code/Zarichney.Website
         npm audit --audit-level moderate --json > npm-audit.json || true
+        
         if [ -s npm-audit.json ] && [ "$(jq '.metadata.vulnerabilities.total' npm-audit.json)" -gt 0 ]; then
-          echo "::warning::Vulnerable Node.js packages found. Review npm-audit.json"
+          echo "::error::Vulnerable Node.js packages found. Review npm-audit.json"
           jq '.metadata.vulnerabilities' npm-audit.json
+          # For security issues, we should fail the build
+          exit 1
+        else
+          echo "No vulnerable Node.js packages found"
         fi
 
     - name: Upload security audit results

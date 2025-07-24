@@ -54,7 +54,14 @@ jobs:
     - name: Build .NET application
       if: matrix.language == 'csharp'
       run: |
-        dotnet restore zarichney-api.sln
+        for i in {1..3}; do
+          if dotnet restore zarichney-api.sln; then
+            break
+          else
+            echo "Restore attempt $i failed, retrying in 5 seconds..."
+            sleep 5
+          fi
+        done
         dotnet build zarichney-api.sln --configuration Release --no-restore
 
     - name: Setup Node.js
