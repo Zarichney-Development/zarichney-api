@@ -2,9 +2,47 @@
 
 This guide covers maintenance tasks for the Zarichney API application hosted on AWS EC2, including infrastructure, application management, data, and monitoring.
 
+## Quick Reference
+
+### Common Commands
+```bash
+# SSH to EC2 instance
+ssh cookbook-api
+# alias
+ssh Zarichney.Server
+
+# Check service status
+ssh cookbook-api "sudo systemctl status cookbook-api"
+
+# View logs
+ssh cookbook-api "sudo journalctl -u cookbook-api -f"
+
+# Restart service
+ssh cookbook-api "sudo systemctl restart cookbook-api"
+
+# Check AWS identity
+aws sts get-caller-identity
+
+# Get instance info
+aws ec2 describe-instances --filters "Name=tag:Name,Values=cookbook-api" --query "Reservations[0].Instances[0].[InstanceId,PublicDnsName,State.Name]" --output table
+```
+
+### Key Information
+- **EC2 Instance ID:** `i-0b4bbb68afeded2e3`
+- **EC2 DNS:** `ec2-123.us-east-2.compute.amazonaws.com`
+- **Region:** `us-east-2`
+
 ## Initial Setup
 
+### Prerequisites
+- AWS CLI v2 installed
+- SSH client installed
+- AWS access credentials (IAM user with appropriate permissions)
+- SSH private key file (`.pem`) for EC2 access
+
 ### Workstation Configuration
+
+#### Windows Setup
 ```powershell
 # Create SSH directory if it doesn't exist
 mkdir ~/.ssh -Force
@@ -14,17 +52,64 @@ mkdir ~/.ssh -Force
 Host cookbook-api
     HostName <EC2_ELASTIC_IP_DNS>
     User ec2-user
-    IdentityFile ~/.ssh/aws-ec2-Zarichney.Server.pem
+    IdentityFile ~/.ssh/ssh-ec2.pem
 "@ | Add-Content ~/.ssh/config
 
-# Move key to SSH directory and set permissions
-Copy-Item aws-ec2-Zarichney.Server.pem ~/.ssh/
-icacls ~/.ssh/aws-ec2-Zarichney.Server.pem /inheritance:r /grant:r "$($env:USERNAME):(R)"
+```
+
+#### Linux/Unix Setup
+```bash
+# Install AWS CLI v2
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+./aws/install --install-dir ~/.local/aws-cli --bin-dir ~/.local/bin
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
+rm -rf awscliv2.zip aws/
+
+# Create SSH directory with proper permissions
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+
+# Create SSH config file
+
+chmod 600 ~/.ssh/config
+
+# Copy SSH key and set permissions
+cp /path/to/your-key.pem ~/.ssh/ssh-ec2.pem
+chmod 400 ~/.ssh/ssh-ec2.pem
+
+# Configure AWS credentials
+mkdir -p ~/.aws
+cat > ~/.aws/config << EOF
+[default]
+region = us-east-2
+output = json
+EOF
+
+cat > ~/.aws/credentials << EOF
+[default]
+aws_access_key_id = YOUR_ACCESS_KEY_ID
+aws_secret_access_key = YOUR_SECRET_ACCESS_KEY
+EOF
+
+chmod 600 ~/.aws/credentials
+
+# Add EC2 host to known hosts
+ssh-keyscan -H ec2-123.us-east-2.compute.amazonaws.com >> ~/.ssh/known_hosts
+
+# Test connectivity
+aws sts get-caller-identity
+ssh cookbook-api "echo 'SSH connection successful!'"
 ```
 
 ### AWS Configuration Overview
 * **Region:** us-east-2
-* **EC2 Instance:** Tag `Name=cookbook-api`. Role `cookbook-api-role`.
+* **EC2 Instance:** 
+  * Instance ID: `i-0b4bbb68afeded2e3`
+  * Instance Type: `t3.small` (2 vCPU, 2GB RAM)
+  * Public DNS: `ec2-123.us-east-2.compute.amazonaws.com`
+  * Tag: `Name=cookbook-api`
+  * IAM Role: `cookbook-api-role`
 * **Security Group:** Attached to EC2 instance (example ID `sg-00b18fae24f53e666`). Ensure ports 22 (SSH, restricted IPs recommended) and 443 (HTTPS) are open inbound.
 * **CloudFront:** Used for caching and potentially routing traffic to the EC2 instance (example distribution ID needed).
 * **Secrets Manager:** Used to store sensitive data like the database password (Secret ID: `cookbook-factory-secrets`, Key: `DbPassword`).
@@ -32,6 +117,8 @@ icacls ~/.ssh/aws-ec2-Zarichney.Server.pem /inheritance:r /grant:r "$($env:USERN
 * **PostgreSQL:** Running on the EC2 instance (or potentially RDS - adjust connection details if using RDS). Database `zarichney_identity`, user `zarichney_user`.
 
 ### AWS Session Variables
+
+#### PowerShell
 ```powershell
 # Core variables
 $region = "us-east-2"
@@ -48,9 +135,32 @@ Write-Host "Instance ID: ${instanceId}"
 Write-Host "EC2 Host: ${ec2Host}"
 ```
 
+#### Bash/Linux
+```bash
+# Core variables
+export AWS_REGION="us-east-2"
+export SG_ID=""
+export CF_DIST_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items[?contains(@, 'zarichney.com')]].Id" --output text)
+export INSTANCE_ID=""
+export EC2_HOST=""
+
+# Echo values for verification
+echo "Region: ${AWS_REGION}"
+echo "Security Group: ${SG_ID}"
+echo "CloudFront Distribution: ${CF_DIST_ID}"
+echo "Instance ID: ${INSTANCE_ID}"
+echo "EC2 Host: ${EC2_HOST}"
+
+# Alternative: Dynamic lookup (if instance DNS changes)
+export INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=cookbook-api" --query "Reservations[0].Instances[0].InstanceId" --output text)
+export EC2_HOST=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=cookbook-api" --query "Reservations[0].Instances[0].PublicDnsName" --output text)
+```
+
 ## Infrastructure Management
 
 ### EC2 Instance Management
+
+#### PowerShell
 ```powershell
 # Get instance details
 aws ec2 describe-instances --filters "Name=tag:Name,Values=cookbook-api" --query "Reservations[0].Instances[0]"
@@ -63,6 +173,28 @@ aws ec2 start-instances --instance-ids $instanceId
 
 # Check instance status
 aws ec2 describe-instance-status --instance-id $instanceId
+```
+
+#### Bash/Linux
+```bash
+# Get instance details
+aws ec2 describe-instances --filters "Name=tag:Name,Values=cookbook-api" --query "Reservations[0].Instances[0]"
+
+# Stop instance
+aws ec2 stop-instances --instance-ids ${INSTANCE_ID}
+
+# Start instance
+aws ec2 start-instances --instance-ids ${INSTANCE_ID}
+
+# Check instance status
+aws ec2 describe-instance-status --instance-id ${INSTANCE_ID}
+
+# Wait for instance to be running
+aws ec2 wait instance-running --instance-ids ${INSTANCE_ID}
+
+# Get updated DNS after restart
+export EC2_HOST=$(aws ec2 describe-instances --instance-ids ${INSTANCE_ID} --query "Reservations[0].Instances[0].PublicDnsName" --output text)
+echo "New EC2 Host: ${EC2_HOST}"
 ```
 
 ### Security Group Management
@@ -205,15 +337,33 @@ Refer to the `PostgreSQL Database Maintenance Guide` for `pg_dump` and `pg_resto
 
 ### Backup and Restore (Application Data)
 This applies if your application stores other data directly on the EC2 filesystem (e.g., under `/var/lib/cookbook-api/data/`).
+
+#### PowerShell
 ```powershell
 # Run from a machine with SSH access
 # Backup data directory
 $timestamp = Get-Date -Format "yyyy-MM-dd-HHmm"
 mkdir -Force "./app-data-backup-${timestamp}"
-scp -r cookbook-api:/var/lib/cookbook-api/data/* "./app-data-backup-${timestamp}/" # Assumes SSH alias 'cookbook-api' is set up
+scp -r cookbook-api:/var/lib/cookbook-api/data/* "./app-data-backup-${timestamp}/"
 
 # Restore data directory (use with caution!)
 # scp -r ./path/to/app-data-backup/* cookbook-api:/var/lib/cookbook-api/data/
+```
+
+#### Bash/Linux
+```bash
+# Backup data directory
+timestamp=$(date +"%Y-%m-%d-%H%M")
+mkdir -p "./app-data-backup-${timestamp}"
+scp -r cookbook-api:/var/lib/cookbook-api/data/* "./app-data-backup-${timestamp}/"
+
+# Create compressed backup
+tar -czf "app-data-backup-${timestamp}.tar.gz" "./app-data-backup-${timestamp}/"
+rm -rf "./app-data-backup-${timestamp}/"
+
+# Restore data directory (use with caution!)
+# tar -xzf app-data-backup-YYYY-MM-DD-HHMM.tar.gz
+# scp -r ./app-data-backup-YYYY-MM-DD-HHMM/* cookbook-api:/var/lib/cookbook-api/data/
 ```
 
 ### Configuration Management (Secrets & Parameters)
