@@ -1,0 +1,89 @@
+name: "Security Scanning Suite"
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 3 * * 2'  # Weekly on Tuesdays
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  dependency-check:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        cache-dependency-path: Code/Zarichney.Website/package-lock.json
+
+    - name: Install .NET dependencies
+      run: dotnet restore zarichney-api.sln
+
+    - name: Install Node.js dependencies
+      run: |
+        cd Code/Zarichney.Website
+        npm ci --legacy-peer-deps
+
+    - name: Run .NET security audit
+      run: |
+        dotnet list zarichney-api.sln package --vulnerable --include-transitive 2>&1 | tee dotnet-audit.log
+        if grep -q "has the following vulnerable packages" dotnet-audit.log; then
+          echo "::warning::Vulnerable .NET packages found. Review dotnet-audit.log"
+        fi
+
+    - name: Run Node.js security audit
+      run: |
+        cd Code/Zarichney.Website
+        npm audit --audit-level moderate --json > npm-audit.json || true
+        if [ -s npm-audit.json ] && [ "$(jq '.metadata.vulnerabilities.total' npm-audit.json)" -gt 0 ]; then
+          echo "::warning::Vulnerable Node.js packages found. Review npm-audit.json"
+          jq '.metadata.vulnerabilities' npm-audit.json
+        fi
+
+    - name: Upload security audit results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-audit-results
+        path: |
+          dotnet-audit.log
+          Code/Zarichney.Website/npm-audit.json
+
+  secrets-scan:
+    name: Secrets Detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Need full history for secret scanning
+
+    - name: Run TruffleHog OSS
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified
