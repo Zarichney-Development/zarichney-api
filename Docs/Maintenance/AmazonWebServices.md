@@ -1,36 +1,101 @@
-# Cookbook API AWS Maintenance Guide
+# Zarichney Full-Stack AWS Infrastructure Guide
 
-This guide covers maintenance tasks for the Zarichney API application hosted on AWS EC2, including infrastructure, application management, data, and monitoring.
+This comprehensive guide covers maintenance tasks for the complete Zarichney full-stack application hosted on AWS, including both the Angular frontend and ASP.NET 8 backend, infrastructure management, deployment processes, and monitoring.
 
 ## Quick Reference
 
-### Common Commands
+### Environment Setup
+
+Before running any commands, set up your environment variables. **For security, actual values are stored in `~/system-maintenance/README.md`**:
+
 ```bash
-# SSH to EC2 instance
+# Set these variables before running commands (replace with actual values from system-maintenance docs)
+export BACKEND_INSTANCE_ID="<backend-instance-id>"
+export BACKEND_EC2_DNS="<backend-ec2-dns>"
+export FRONTEND_INSTANCE_ID="<frontend-instance-id>"
+export FRONTEND_EC2_DNS="<frontend-ec2-dns>"
+export CLOUDFRONT_DIST_ID="<cloudfront-distribution-id>"
+export S3_BUCKET="<s3-bucket-name>"
+export BACKEND_SG_ID="<backend-security-group-id>"
+export FRONTEND_SG_ID="<frontend-security-group-id>"
+
+# Verify setup
+echo "Backend Instance: $BACKEND_INSTANCE_ID at $BACKEND_EC2_DNS"
+echo "Frontend Instance: $FRONTEND_INSTANCE_ID at $FRONTEND_EC2_DNS"
+echo "CloudFront: $CLOUDFRONT_DIST_ID"
+```
+
+> **Security Note:** Never commit actual instance IDs, DNS names, or other sensitive AWS resource identifiers to this public repository. Always reference `~/system-maintenance/README.md` for actual values.
+
+### Common Commands
+
+#### Backend (ASP.NET 8 API)
+```bash
+# SSH to backend instance
 ssh cookbook-api
-# alias
-ssh Zarichney.Server
+ssh Zarichney.Server  # alias
 
-# Check service status
+# Backend service management
 ssh cookbook-api "sudo systemctl status cookbook-api"
-
-# View logs
+ssh cookbook-api "sudo systemctl restart cookbook-api"
 ssh cookbook-api "sudo journalctl -u cookbook-api -f"
 
-# Restart service
-ssh cookbook-api "sudo systemctl restart cookbook-api"
+# Get backend instance info
+aws ec2 describe-instances --instance-ids $BACKEND_INSTANCE_ID --query "Reservations[0].Instances[0].[InstanceId,PublicDnsName,State.Name]" --output table
+```
 
+#### Frontend (Angular SSR)
+```bash
+# SSH to frontend instance
+ssh zarichney-frontend
+ssh zarichney-static  # alias
+
+# Frontend service management (PM2)
+ssh zarichney-frontend "pm2 status"
+ssh zarichney-frontend "pm2 restart server"
+ssh zarichney-frontend "pm2 logs server"
+
+# Get frontend instance info
+aws ec2 describe-instances --instance-ids $FRONTEND_INSTANCE_ID --query "Reservations[0].Instances[0].[InstanceId,PublicDnsName,State.Name]" --output table
+```
+
+#### General AWS Operations
+```bash
 # Check AWS identity
 aws sts get-caller-identity
 
-# Get instance info
-aws ec2 describe-instances --filters "Name=tag:Name,Values=cookbook-api" --query "Reservations[0].Instances[0].[InstanceId,PublicDnsName,State.Name]" --output table
+# S3 static assets management
+aws s3 ls s3://$S3_BUCKET
+aws s3 sync local-folder/ s3://$S3_BUCKET
+
+# CloudFront cache invalidation
+aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DIST_ID --paths "/*"
+aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DIST_ID --paths "/api/*"
 ```
 
-### Key Information
-- **EC2 Instance ID:** `i-0b4bbb68afeded2e3`
-- **EC2 DNS:** `ec2-123.us-east-2.compute.amazonaws.com`
-- **Region:** `us-east-2`
+### Infrastructure Overview
+
+#### Backend Infrastructure
+- **Instance Type:** `t3.small` (2 vCPU, 2GB RAM)
+- **Purpose:** ASP.NET 8 API + PostgreSQL database
+- **Service Management:** systemd service
+- **Security Group:** Allows SSH, HTTPS, and API port access
+- **IAM Role:** Configured for Secrets Manager and SSM access
+
+#### Frontend Infrastructure
+- **Instance Type:** `t2.micro` (1 vCPU, 1GB RAM)
+- **Purpose:** Angular SSR with Node.js
+- **Service Management:** PM2 process manager
+- **Security Group:** Allows SSH, HTTP, and HTTPS access
+- **Static Assets:** Deployed to S3 bucket
+
+#### Shared Infrastructure
+- **Region:** `us-east-2` (Ohio)
+- **CDN:** CloudFront distribution with dual origins
+- **Domain:** Custom domain with SSL certificate
+- **Configuration:** AWS Secrets Manager and SSM Parameter Store
+
+> **Note:** For specific instance IDs, DNS names, and other sensitive details, refer to `~/system-maintenance/README.md` on your local system.
 
 ## Initial Setup
 
@@ -50,9 +115,14 @@ mkdir ~/.ssh -Force
 # Add SSH config entry
 @"
 Host cookbook-api
-    HostName <EC2_ELASTIC_IP_DNS>
+    HostName <BACKEND_EC2_DNS>
     User ec2-user
-    IdentityFile ~/.ssh/ssh-ec2.pem
+    IdentityFile ~/.ssh/<BACKEND_SSH_KEY>
+
+Host zarichney-frontend
+    HostName <FRONTEND_EC2_DNS>
+    User ec2-user
+    IdentityFile ~/.ssh/<FRONTEND_SSH_KEY>
 "@ | Add-Content ~/.ssh/config
 
 ```
@@ -94,66 +164,99 @@ EOF
 
 chmod 600 ~/.aws/credentials
 
-# Add EC2 host to known hosts
-ssh-keyscan -H ec2-123.us-east-2.compute.amazonaws.com >> ~/.ssh/known_hosts
+# Add both EC2 hosts to known hosts (replace with actual DNS names)
+ssh-keyscan -H <BACKEND_EC2_DNS> >> ~/.ssh/known_hosts
+ssh-keyscan -H <FRONTEND_EC2_DNS> >> ~/.ssh/known_hosts
 
 # Test connectivity
 aws sts get-caller-identity
-ssh cookbook-api "echo 'SSH connection successful!'"
+ssh cookbook-api "echo 'Backend SSH connection successful!'"
+ssh zarichney-frontend "echo 'Frontend SSH connection successful!'"
+
+# Note: If frontend SSH fails, see troubleshooting section for key setup
 ```
 
 ### AWS Configuration Overview
+
+#### Backend Infrastructure (ASP.NET 8 API)
 * **Region:** us-east-2
 * **EC2 Instance:** 
-  * Instance ID: `i-0b4bbb68afeded2e3`
   * Instance Type: `t3.small` (2 vCPU, 2GB RAM)
-  * Public DNS: `ec2-123.us-east-2.compute.amazonaws.com`
   * Tag: `Name=cookbook-api`
-  * IAM Role: `cookbook-api-role`
-* **Security Group:** Attached to EC2 instance (example ID `sg-00b18fae24f53e666`). Ensure ports 22 (SSH, restricted IPs recommended) and 443 (HTTPS) are open inbound.
-* **CloudFront:** Used for caching and potentially routing traffic to the EC2 instance (example distribution ID needed).
-* **Secrets Manager:** Used to store sensitive data like the database password (Secret ID: `cookbook-factory-secrets`, Key: `DbPassword`).
-* **SSM Parameter Store:** May be used for other configuration (e.g., API keys, JWT secrets). Parameters prefixed with `/cookbook-api/`.
-* **PostgreSQL:** Running on the EC2 instance (or potentially RDS - adjust connection details if using RDS). Database `zarichney_identity`, user `zarichney_user`.
+  * IAM Role: Configured for AWS services access
+* **Security Group:** Allows ports 22 (SSH), 443 (HTTPS), 5000 (API)
+* **Database:** PostgreSQL running on the same instance
+
+#### Frontend Infrastructure (Angular SSR)
+* **EC2 Instance:**
+  * Instance Type: `t2.micro` (1 vCPU, 1GB RAM)
+  * Tag: `Name=zarichney-static`
+  * SSH Key: Same as backend (unified SSH access)
+* **Security Group:** Allows ports 22 (SSH), 80 (HTTP), 443 (HTTPS)
+* **Static Assets:** S3 bucket for Angular build artifacts
+* **Service Management:** PM2 process manager for Node.js SSR application
+* **Application Path:** `~/app/` on instance
+
+#### Shared Infrastructure
+* **CloudFront Distribution:** Custom domain with SSL
+  * Default Origin: S3 bucket for static files
+  * `/api/*` Origin: Backend EC2 instance on port 5000
+* **Secrets Manager:** Database password and application secrets
+* **SSM Parameter Store:** Configuration parameters for application settings
+* **SSL Certificate:** ACM certificate for HTTPS
 
 ### AWS Session Variables
 
 #### PowerShell
 ```powershell
-# Core variables
+# Set these variables with actual values from ~/system-maintenance/README.md
 $region = "us-east-2"
-$sgId = "sg-00b18fae24f53e666"
+$backendInstanceId = "<BACKEND_INSTANCE_ID>"
+$backendEc2Host = "<BACKEND_EC2_DNS>"
+$backendSgId = "<BACKEND_SG_ID>"
+$frontendInstanceId = "<FRONTEND_INSTANCE_ID>"
+$frontendEc2Host = "<FRONTEND_EC2_DNS>"
+$frontendSgId = "<FRONTEND_SG_ID>"
+$cfDistId = "<CLOUDFRONT_DIST_ID>"
+$s3Bucket = "<S3_BUCKET>"
+
+# Alternative: Dynamic lookup (requires AWS CLI)
 $cfDistId = (aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items[?contains(@, 'zarichney.com')]].Id" --output text)
-$instanceId = (aws ec2 describe-instances --filters "Name=tag:Name,Values=cookbook-api" --query "Reservations[0].Instances[0].InstanceId" --output text)
-$ec2Host = (aws ec2 describe-instances --filters "Name=tag:Name,Values=cookbook-api" --query "Reservations[0].Instances[0].PublicDnsName" --output text)
+$backendInstanceId = (aws ec2 describe-instances --filters "Name=tag:Name,Values=cookbook-api" --query "Reservations[0].Instances[0].InstanceId" --output text)
+$frontendInstanceId = (aws ec2 describe-instances --filters "Name=tag:Name,Values=zarichney-static" --query "Reservations[0].Instances[0].InstanceId" --output text)
 
 # Echo values for verification
 Write-Host "Region: ${region}"
-Write-Host "Security Group: ${sgId}"
-Write-Host "CloudFront Distribution: ${cfDistId}"
-Write-Host "Instance ID: ${instanceId}"
-Write-Host "EC2 Host: ${ec2Host}"
+Write-Host "Backend Instance: ${backendInstanceId} at ${backendEc2Host}"
+Write-Host "Frontend Instance: ${frontendInstanceId} at ${frontendEc2Host}"
+Write-Host "CloudFront: ${cfDistId}"
+Write-Host "S3 Bucket: ${s3Bucket}"
 ```
 
 #### Bash/Linux
 ```bash
-# Core variables
+# Set these variables with actual values from ~/system-maintenance/README.md
 export AWS_REGION="us-east-2"
-export SG_ID=""
-export CF_DIST_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items[?contains(@, 'zarichney.com')]].Id" --output text)
-export INSTANCE_ID=""
-export EC2_HOST=""
+export BACKEND_INSTANCE_ID="<BACKEND_INSTANCE_ID>"
+export BACKEND_EC2_DNS="<BACKEND_EC2_DNS>"
+export BACKEND_SG_ID="<BACKEND_SG_ID>"
+export FRONTEND_INSTANCE_ID="<FRONTEND_INSTANCE_ID>"
+export FRONTEND_EC2_DNS="<FRONTEND_EC2_DNS>"
+export FRONTEND_SG_ID="<FRONTEND_SG_ID>"
+export CLOUDFRONT_DIST_ID="<CLOUDFRONT_DIST_ID>"
+export S3_BUCKET="<S3_BUCKET>"
+
+# Alternative: Dynamic lookup (requires AWS CLI)
+export CLOUDFRONT_DIST_ID=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items[?contains(@, 'zarichney.com')]].Id" --output text)
+export BACKEND_INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=cookbook-api" --query "Reservations[0].Instances[0].InstanceId" --output text)
+export FRONTEND_INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=zarichney-static" --query "Reservations[0].Instances[0].InstanceId" --output text)
 
 # Echo values for verification
 echo "Region: ${AWS_REGION}"
-echo "Security Group: ${SG_ID}"
-echo "CloudFront Distribution: ${CF_DIST_ID}"
-echo "Instance ID: ${INSTANCE_ID}"
-echo "EC2 Host: ${EC2_HOST}"
-
-# Alternative: Dynamic lookup (if instance DNS changes)
-export INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=cookbook-api" --query "Reservations[0].Instances[0].InstanceId" --output text)
-export EC2_HOST=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=cookbook-api" --query "Reservations[0].Instances[0].PublicDnsName" --output text)
+echo "Backend Instance: ${BACKEND_INSTANCE_ID} at ${BACKEND_EC2_DNS}"
+echo "Frontend Instance: ${FRONTEND_INSTANCE_ID} at ${FRONTEND_EC2_DNS}"
+echo "CloudFront: ${CLOUDFRONT_DIST_ID}"
+echo "S3 Bucket: ${S3_BUCKET}"
 ```
 
 ## Infrastructure Management
@@ -162,39 +265,48 @@ export EC2_HOST=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=coo
 
 #### PowerShell
 ```powershell
-# Get instance details
-aws ec2 describe-instances --filters "Name=tag:Name,Values=cookbook-api" --query "Reservations[0].Instances[0]"
+# Backend instance management
+aws ec2 describe-instances --instance-ids $backendInstanceId
+aws ec2 stop-instances --instance-ids $backendInstanceId
+aws ec2 start-instances --instance-ids $backendInstanceId
+aws ec2 describe-instance-status --instance-id $backendInstanceId
 
-# Stop instance
-aws ec2 stop-instances --instance-ids $instanceId
+# Frontend instance management
+aws ec2 describe-instances --instance-ids $frontendInstanceId
+aws ec2 stop-instances --instance-ids $frontendInstanceId
+aws ec2 start-instances --instance-ids $frontendInstanceId
+aws ec2 describe-instance-status --instance-id $frontendInstanceId
 
-# Start instance
-aws ec2 start-instances --instance-ids $instanceId
-
-# Check instance status
-aws ec2 describe-instance-status --instance-id $instanceId
+# Both instances at once
+aws ec2 stop-instances --instance-ids $backendInstanceId $frontendInstanceId
+aws ec2 start-instances --instance-ids $backendInstanceId $frontendInstanceId
 ```
 
 #### Bash/Linux
 ```bash
-# Get instance details
-aws ec2 describe-instances --filters "Name=tag:Name,Values=cookbook-api" --query "Reservations[0].Instances[0]"
+# Backend instance management
+aws ec2 describe-instances --instance-ids ${BACKEND_INSTANCE_ID}
+aws ec2 stop-instances --instance-ids ${BACKEND_INSTANCE_ID}
+aws ec2 start-instances --instance-ids ${BACKEND_INSTANCE_ID}
+aws ec2 describe-instance-status --instance-id ${BACKEND_INSTANCE_ID}
+aws ec2 wait instance-running --instance-ids ${BACKEND_INSTANCE_ID}
 
-# Stop instance
-aws ec2 stop-instances --instance-ids ${INSTANCE_ID}
+# Frontend instance management
+aws ec2 describe-instances --instance-ids ${FRONTEND_INSTANCE_ID}
+aws ec2 stop-instances --instance-ids ${FRONTEND_INSTANCE_ID}
+aws ec2 start-instances --instance-ids ${FRONTEND_INSTANCE_ID}
+aws ec2 describe-instance-status --instance-id ${FRONTEND_INSTANCE_ID}
+aws ec2 wait instance-running --instance-ids ${FRONTEND_INSTANCE_ID}
 
-# Start instance
-aws ec2 start-instances --instance-ids ${INSTANCE_ID}
+# Both instances at once
+aws ec2 stop-instances --instance-ids ${BACKEND_INSTANCE_ID} ${FRONTEND_INSTANCE_ID}
+aws ec2 start-instances --instance-ids ${BACKEND_INSTANCE_ID} ${FRONTEND_INSTANCE_ID}
 
-# Check instance status
-aws ec2 describe-instance-status --instance-id ${INSTANCE_ID}
-
-# Wait for instance to be running
-aws ec2 wait instance-running --instance-ids ${INSTANCE_ID}
-
-# Get updated DNS after restart
-export EC2_HOST=$(aws ec2 describe-instances --instance-ids ${INSTANCE_ID} --query "Reservations[0].Instances[0].PublicDnsName" --output text)
-echo "New EC2 Host: ${EC2_HOST}"
+# Get updated DNS after restart (if needed)
+export BACKEND_EC2_DNS=$(aws ec2 describe-instances --instance-ids ${BACKEND_INSTANCE_ID} --query "Reservations[0].Instances[0].PublicDnsName" --output text)
+export FRONTEND_EC2_DNS=$(aws ec2 describe-instances --instance-ids ${FRONTEND_INSTANCE_ID} --query "Reservations[0].Instances[0].PublicDnsName" --output text)
+echo "Backend EC2 DNS: ${BACKEND_EC2_DNS}"
+echo "Frontend EC2 DNS: ${FRONTEND_EC2_DNS}"
 ```
 
 ### Security Group Management
@@ -242,7 +354,7 @@ aws cloudfront update-distribution --id $cfDistId --distribution-config file://c
 
 ## Application Management
 
-### Deployment Process (via GitHub Actions)
+### Backend Deployment Process (via GitHub Actions)
 * Code is checked out.
 * EF Core idempotent migration script (`ApplyAllMigrations.sql`) is generated.
 * Application is published (includes migration script and `.sh` runner).
@@ -251,12 +363,29 @@ aws cloudfront update-distribution --id $cfDistId --distribution-config file://c
     * Retrieves DB password from **AWS Secrets Manager**.
     * Runs `/opt/cookbook-api//Services/Auth/Migrations/ApplyMigrations.sh` (which executes the SQL script via `psql`).
     * Restarts the `cookbook-api` service (`sudo systemctl restart cookbook-api`).
-* CloudFront cache is invalidated.
+* CloudFront cache is invalidated for `/api/*` paths.
+
+### Frontend Deployment Process (via GitHub Actions)
+* Code is checked out and Node.js dependencies are installed.
+* Angular application is built for production with SSR enabled.
+* **Static Assets Deployment:**
+    * Built client files are deployed to S3 bucket `static.zarichney.com`.
+    * S3 sync deletes old files and uploads new ones.
+* **SSR Server Deployment:**
+    * Server-side files are prepared in a deployment folder.
+    * Files are copied to `~/app/` on the frontend EC2 instance via `scp`.
+    * SSH command executes on frontend EC2:
+        * Node.js dependencies are installed with `npm ci --omit=dev`.
+        * PM2 restarts the SSR server or starts it if not running.
+* CloudFront cache is invalidated for all paths (`/*`).
 
 ### Service Control
+
+#### Backend Service Control (ASP.NET 8 API)
 ```bash
-# SSH into instance
-ssh Zarichney.Server
+# SSH into backend instance
+ssh cookbook-api
+ssh Zarichney.Server  # alias
 
 # View real-time logs
 sudo journalctl -u cookbook-api -f
@@ -266,6 +395,32 @@ sudo systemctl restart cookbook-api
 
 # Check service status
 sudo systemctl status cookbook-api
+
+# Check database connection
+sudo -i -u postgres psql -d zarichney_identity -c "SELECT COUNT(*) FROM \"AspNetUsers\""
+```
+
+#### Frontend Service Control (Angular SSR)
+```bash
+# SSH into frontend instance
+ssh zarichney-frontend
+ssh zarichney-static  # alias
+
+# View PM2 process status
+pm2 status
+
+# View real-time logs
+pm2 logs server
+
+# Restart SSR server
+pm2 restart server
+
+# Check PM2 startup configuration
+pm2 startup
+pm2 save
+
+# Monitor PM2 processes
+pm2 monit
 ```
 
 ### Resource Monitoring
@@ -432,14 +587,29 @@ HAVING COUNT(r."Id") > 10;
 
 ## Health Checks and Monitoring
 
-### API Health Checks
+#### Frontend Health Checks
+```bash
+# Website accessibility
+curl -I "https://yourdomain.com"
+
+# Check if SSR server is responding
+ssh zarichney-frontend "curl -I http://localhost:4000"
+
+# Verify S3 static assets
+aws s3 ls s3://static.zarichney.com --recursive | head -10
+
+# Test CloudFront distribution
+curl -I "https://yourdomain.com/favicon.ico"
+```
+
+#### Backend API Health Checks
 ```powershell
 # Public health check
-curl "https://zarichney.com/api/factory/health"
+curl "https://yourdomain.com/api/factory/health"
 
 # Secure health check
 $apiKey = (aws ssm get-parameter --name "/cookbook-api/api-key" --with-decryption --query "Parameter.Value" --output text)
-curl -H "X-Api-Key: ${apiKey}" "https://zarichney.com/api/factory/health/secure"
+curl -H "X-Api-Key: ${apiKey}" "https://yourdomain.com/api/factory/health/secure"
 
 # Test Authentication Flow
 $testUserEmail = "testuser@example.com"
@@ -516,12 +686,57 @@ aws cloudwatch get-metric-statistics `
 
 ### Common Issues and Solutions
 
-1.  **Deployment Fails during Migration Step:**
-    * **Access Denied (Secrets Manager):** Check EC2 instance role (`cookbook-api-role`) IAM policy. Needs `secretsmanager:GetSecretValue` permission for the `cookbook-factory-secrets` ARN. [cite: image_a458a3.png]
+#### Full-Stack Deployment Issues
+
+1.  **GitHub Actions Pipeline Failures:**
+    * **Missing GitHub Secrets:** Ensure all required secrets are configured (refer to `GITHUB_SECRETS_REQUIRED.md` for details):
+      - `EC2_HOST_BACKEND` (backend instance DNS)
+      - `EC2_HOST_FRONTEND` (frontend instance DNS)
+      - `CLOUDFRONT_DISTRIBUTION_ID` (CloudFront distribution ID)
+      - `EC2_SSH_KEY` (private key content)
+    * **SSH Authentication Failures:** The frontend instance uses different key pair than backend. Verify SSH key is correct and accessible.
+
+#### Backend Deployment Issues
+
+2.  **Backend Deployment Fails during Migration Step:**
+    * **Access Denied (Secrets Manager):** Check EC2 instance role (`cookbook-api-role`) IAM policy. Needs `secretsmanager:GetSecretValue` permission for the `cookbook-factory-secrets` ARN.
     * **Ident/Password Authentication Failed (psql):** Check PostgreSQL `pg_hba.conf` on EC2. Ensure connections from `localhost` (127.0.0.1) for `zarichney_user` use `scram-sha-256` or `md5`, not `ident` or `peer`. Reload PostgreSQL service after changes.
     * **Permission Denied for Schema Public (psql):** Connect to `zarichney_identity` DB as superuser (e.g., `postgres`) and grant privileges: `GRANT USAGE, CREATE ON SCHEMA public TO zarichney_user;`
     * **Migration SQL Script Not Found:** Verify the GitHub Action generated `ApplyAllMigrations.sql` and the `scp` command copied it to the expected location (e.g., `/opt/cookbook-api/migrations/`). Check paths in `ApplyMigrations.sh`.
     * **SQL Error during Script Execution:** Examine the `psql` output in the pipeline logs. The error likely indicates an issue in the generated SQL or an unexpected database state.
+
+#### Frontend Deployment Issues
+
+3.  **Frontend SSH Connection Failures:**
+    * **Permission Denied:** Add your SSH public key to the instance authorized_keys file
+    * **Host Key Verification Failed:** Add frontend host to known_hosts: `ssh-keyscan -H $FRONTEND_EC2_DNS >> ~/.ssh/known_hosts`
+    * **Connection Timeout:** Check frontend security group allows SSH (port 22) from your IP.
+
+#### SSH Key Setup for Frontend (if needed)
+If SSH to frontend fails, add your public key via AWS Console:
+
+1. **Access EC2 via AWS Console**: Use EC2 Instance Connect or Session Manager
+2. **Add Public Key**: Run on the frontend instance:
+   ```bash
+   # Get your public key first (run locally)
+   ssh-keygen -y -f ~/.ssh/your-private-key.pem
+   
+   # Then on the EC2 instance:
+   mkdir -p ~/.ssh && chmod 700 ~/.ssh
+   echo "your-public-key-here" >> ~/.ssh/authorized_keys
+   chmod 600 ~/.ssh/authorized_keys
+   ```
+3. **Test Connection**: `ssh zarichney-frontend "echo 'Success'"`
+
+4.  **PM2 Process Management Issues:**
+    * **PM2 Not Found:** Install PM2 globally: `npm install -g pm2`
+    * **Process Won't Start:** Check Node.js version compatibility and dependencies: `node --version && npm list`
+    * **Memory Issues:** Monitor resources: `free -h` and adjust PM2 configuration for t2.micro limits
+
+5.  **S3 Static Asset Deployment Issues:**
+    * **Access Denied:** Verify AWS credentials have S3 write permissions for the static assets bucket
+    * **Sync Failures:** Check bucket policy and CORS configuration
+    * **CDN Cache Issues:** Ensure CloudFront invalidation is working: `aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DIST_ID --paths "/*"`
 
 2.  **Service Won't Start (Post-Deployment):**
     * Check service status and logs: `sudo systemctl status cookbook-api`, `sudo journalctl -u cookbook-api -n 100 -f`.
@@ -610,15 +825,32 @@ top -b -n 1
 sudo /opt/cookbook-api/cleanup-playwright.sh
 ```
 
-### Important Paths (on EC2)
+### Important Paths
+
+#### Backend Instance (cookbook-api)
 * Application Root: `/opt/cookbook-api/`
 * Published App Files: `/opt/cookbook-api/*` (DLLs, configs, etc.)
 * Migration Runner Script: `/opt/cookbook-api//Services/Auth/Migrations/ApplyMigrations.sh`
-* Generated Migration SQL: `/opt/cookbook-api/migrations/ApplyAllMigrations.sql` (Check `ApplyMigrations.sh` for exact path used)
+* Generated Migration SQL: `/opt/cookbook-api/migrations/ApplyAllMigrations.sql`
 * Other App Data (if any): `/var/lib/cookbook-api/data/`
 * Service Logs: `sudo journalctl -u cookbook-api`
 * Service File: `/etc/systemd/system/cookbook-api.service`
 * Cleanup Scripts: `/opt/cookbook-api/cleanup-playwright.sh`, `/opt/cookbook-api/monitor.sh`
+
+#### Frontend Instance (zarichney-static)
+* Application Root: `~/app/`
+* SSR Server Files: `~/app/server/` (Node.js application)
+* Static Build Files: Initially deployed to S3, then served via CloudFront
+* Node.js Dependencies: `~/app/node_modules/`
+* PM2 Configuration: `~/.pm2/`
+* PM2 Logs: `~/.pm2/logs/`
+* PM2 Process File: `~/.pm2/dump.pm2`
+
+#### Shared Resources
+* S3 Bucket: Static assets bucket (see system-maintenance docs for name)
+* CloudFront Distribution: (see system-maintenance docs for ID)
+* Secrets Manager: Application secrets storage
+* Parameter Store: Configuration parameters with `/cookbook-api/*` prefix
 
 ### Service Configuration
 The service configuration at `/etc/systemd/system/cookbook-api.service`:
@@ -686,6 +918,20 @@ Ensure `/etc/systemd/system/cookbook-api.service` is properly configured.
   ```bash
   sudo systemctl status cookbook-api.service
   ```
+
+---
+
+## **Security Note**
+
+This documentation uses placeholder values for security. For actual instance IDs, DNS names, security group IDs, and other sensitive AWS resource identifiers, refer to:
+
+**`~/system-maintenance/README.md`** (Local system only - never commit to public repository)
+
+The system-maintenance documentation contains:
+- Actual AWS resource IDs and DNS names
+- GitHub repository secrets configuration
+- SSH key troubleshooting information
+- Production environment details
 
 ---
 
