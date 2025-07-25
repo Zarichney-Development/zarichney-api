@@ -31,19 +31,23 @@ public class DatabaseFixture : IAsyncLifetime, IDisposable
   /// <summary>
   /// Initializes a new instance of the <see cref="DatabaseFixture"/> class.
   /// </summary>
+  /// <param name="databaseName">Optional unique database name for isolation. If null, uses a random GUID.</param>
   // Logger factory that will be properly disposed in Dispose method
   private readonly ILoggerFactory _loggerFactory;
 
-  public DatabaseFixture()
+  public DatabaseFixture(string? databaseName = null)
   {
     // Create a logger factory and logger for the fixture
     _loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
     _logger = _loggerFactory.CreateLogger<DatabaseFixture>();
 
+    // Use provided database name or generate a unique one for parallel isolation
+    var dbName = databaseName ?? $"zarichney_test_{Guid.NewGuid():N}";
+
     // Prepare the PostgreSQL container builder; actual build will be in InitializeAsync
     _builder = new PostgreSqlBuilder()
         .WithImage("postgres:15")
-        .WithDatabase("zarichney_test")
+        .WithDatabase(dbName)
         .WithUsername("postgres")
         .WithPassword("postgres")
         .WithCleanUp(true);

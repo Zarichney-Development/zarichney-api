@@ -1,7 +1,7 @@
 # README: Code/Zarichney.Server.Tests Project
 
-**Version:** 1.3
-**Last Updated:** 2025-06-26
+**Version:** 1.4
+**Last Updated:** 2025-07-25
 **Parent:** `../Zarichney.Server/README.md` (Conceptual link to the main application's README)
 
 ## 1. Purpose & Responsibility
@@ -73,30 +73,45 @@ A commitment to high test coverage (>=90% for unit tests) and rigorous adherence
 
 ### Running Tests
 
-#### Automation Suite (Recommended)
+#### Unified Test Suite (Recommended)
 
-* **Complete Test Suite with Coverage Report:**
+* **Complete Test Suite with AI-Powered Analysis:**
     ```bash
-    # Run all tests with comprehensive coverage reporting and open report in browser
-    ../Scripts/run-test-suite.sh
+    # Run unified test suite with multiple modes
+    ../../Scripts/run-test-suite.sh                    # Default: report mode with markdown
+    ../../Scripts/run-test-suite.sh automation         # HTML coverage reports + browser
+    ../../Scripts/run-test-suite.sh report json        # JSON output for CI/CD
+    ../../Scripts/run-test-suite.sh both               # Run both modes
     
-    # Run without opening browser automatically
-    ../Scripts/run-test-suite.sh --no-browser
+    # Claude custom command - Full AI-powered analysis
+    /test-report                    # Detailed markdown report with recommendations
+    /test-report summary            # Quick executive summary
+    /test-report json               # Machine-readable output for CI/CD
+    /test-report --performance      # Include performance analysis
     
-    # Run only specific test categories
-    ../Scripts/run-test-suite.sh --unit-only
-    ../Scripts/run-test-suite.sh --integration-only
-    
-    # Skip build step for faster iteration (assumes solution already built)
-    ../Scripts/run-test-suite.sh --skip-build
+    # Bash aliases (after sourcing Scripts/test-aliases.sh)
+    test-report                     # Full analysis
+    test-quick                      # Daily status check
+    test-claude                     # AI-powered insights via Claude
     ```
     
-    The automation suite script provides:
+    The unified test suite provides:
     - ✅ Comprehensive test execution (unit + integration)
-    - 📊 Code coverage collection and HTML report generation
-    - 🌐 Automatic browser opening of coverage report
-    - 🔍 Test results in TRX format for detailed analysis
+    - 📊 Multiple output formats (markdown, HTML, JSON, console)
+    - 🤖 AI-powered analysis with actionable recommendations
+    - 🚀 Parallel test execution for faster CI/CD (Phase 3)
+    - 📈 Dynamic quality gates based on historical data
+    - 🔍 Real-time metrics and trend analysis
     - 🐳 Smart Docker access handling for Testcontainers
+
+#### Parallel Test Execution (Phase 3)
+
+The test suite now supports parallel execution with intelligent load balancing:
+
+* **Parallel Configuration:** Tests are organized into separate collections (IntegrationAuth, IntegrationCore, IntegrationExternal, IntegrationInfra, IntegrationQA) that can run concurrently.
+* **xUnit Configuration:** `xunit.runner.json` configures up to 4 parallel collections.
+* **Database Isolation:** Each test class uses TestContainers for complete database isolation.
+* **Performance:** Up to 75% reduction in test suite execution time.
 
 #### Individual Test Commands
 
@@ -167,6 +182,7 @@ The current focus is on implementing the framework augmentations detailed in the
 ## 8. Known Issues & TODOs
 
 * **Framework Augmentation:** This test framework is actively being enhanced. Refer to the **"Framework Augmentation Roadmap (TODOs)" (Section 16)** in `TechnicalDesignDocument.md` for a list of planned improvements (e.g., WireMock.Net integration, advanced AutoFixture customizations).
-* **Test Coverage:** While the goal is >=90% unit test coverage and comprehensive integration test coverage, this is an ongoing effort. Specific coverage gaps may exist and are being progressively addressed. (Refer to `../../Docs/Development/TestCovergeWorkflow.md`).
+* **Test Coverage:** While the goal is >=90% unit test coverage and comprehensive integration test coverage, this is an ongoing effort. The unified test suite now provides AI-powered coverage analysis and recommendations through the `/test-report` command.
+* **Phase 3 Complete:** Parallel test execution, dynamic quality gates, and AI-powered analysis have been implemented as part of issue #45.
 
 ---

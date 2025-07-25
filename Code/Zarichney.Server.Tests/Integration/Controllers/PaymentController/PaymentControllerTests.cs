@@ -18,7 +18,7 @@ namespace Zarichney.Tests.Integration.Controllers.PaymentController;
 /// Integration tests for the PaymentController.
 /// Demonstrates database testing and external service mocking.
 /// </summary>
-[Collection("Integration")]
+[Collection("IntegrationExternal")]
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
 // Note: we're keeping the old trait for backward compatibility and demonstration, but we'll
@@ -112,7 +112,7 @@ public class PaymentControllerTests(ApiClientFixture apiClientFixture, ITestOutp
 /// Simple integration tests for Payment Controller service availability behavior.
 /// These tests verify 503 responses when Stripe is unavailable, without requiring database setup.
 /// </summary>
-[Collection("Integration")]
+[Collection("IntegrationExternal")]
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Component, TestCategories.Controller)]
 [Trait(TestCategories.Feature, TestCategories.Payment)]

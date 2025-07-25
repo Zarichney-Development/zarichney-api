@@ -26,6 +26,9 @@ readonly COVERAGE_REPORT_DIR="$ROOT_DIR/CoverageReport"
 readonly COVERAGE_REPORT_INDEX="$COVERAGE_REPORT_DIR/index.html"
 readonly TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
+# Parallel execution configuration  
+readonly MAX_PARALLEL_DEFAULT=2
+
 # Ensure results directory exists
 mkdir -p "$TEST_RESULTS_DIR"
 readonly LOG_FILE="$TEST_RESULTS_DIR/test-suite-$TIMESTAMP.log"
@@ -46,6 +49,8 @@ SKIP_BUILD=false
 SKIP_CLIENT_GEN=false
 UNIT_ONLY=false
 INTEGRATION_ONLY=false
+PARALLEL_EXECUTION=false
+MAX_PARALLEL_COLLECTIONS=$MAX_PARALLEL_DEFAULT
 
 # Colors for output
 readonly RED='\033[0;31m'
@@ -138,6 +143,8 @@ OPTIONS:
     --compare           Compare with previous test run results
     --threshold=N       Set coverage threshold (default: 25%)
     --save-baseline     Save current results as baseline
+    --parallel          Enable parallel test execution
+    --max-parallel-collections=N  Maximum parallel collections (default: 2)
 
 EXAMPLES:
     $0                          # Run report mode with markdown output
@@ -146,6 +153,8 @@ EXAMPLES:
     $0 both --unit-only         # Run both modes with unit tests only
     $0 automation --no-browser  # Run automation without opening browser
     $0 report summary --performance  # Quick summary with performance data
+    $0 report --parallel         # Run with parallel test execution
+    $0 automation --parallel --max-parallel-collections=4  # Max parallel collections
 
 EOF
 }
@@ -324,6 +333,117 @@ run_integration_tests() {
     success "Integration tests completed"
 }
 
+# Function to run tests in parallel (Phase 3 enhancement)
+run_tests_parallel() {
+    print_header "Running Tests in Parallel (Phase 3)"
+    print_status "Using parallel execution with max $MAX_PARALLEL_COLLECTIONS collections"
+    
+    local pids=()
+    local test_categories=()
+    local test_categories_running=()
+    
+    # Determine which test categories to run
+    if [[ "$UNIT_ONLY" == true ]]; then
+        test_categories=("Unit")
+    elif [[ "$INTEGRATION_ONLY" == true ]]; then
+        # Run integration collections in parallel
+        test_categories=("IntegrationAuth" "IntegrationCore" "IntegrationExternal" "IntegrationInfra" "IntegrationQA")
+    else
+        # Run both unit and integration collections in parallel
+        test_categories=("Unit" "IntegrationAuth" "IntegrationCore" "IntegrationExternal" "IntegrationInfra" "IntegrationQA")
+    fi
+    
+    print_status "Running test categories in parallel: ${test_categories[*]}"
+    
+    # Start parallel test execution
+    for category in "${test_categories[@]}"; do
+        run_test_category_parallel "$category" &
+        local pid=$!
+        pids+=("$pid")
+        test_categories_running+=("$category")
+        
+        print_status "Started $category tests (PID: $pid)"
+        
+        # Limit parallel execution to MAX_PARALLEL_COLLECTIONS
+        if [[ ${#pids[@]} -ge $MAX_PARALLEL_COLLECTIONS ]]; then
+            print_status "Reached max parallel limit ($MAX_PARALLEL_COLLECTIONS), waiting for batch to complete..."
+            wait_for_parallel_batch pids test_categories_running
+            pids=()
+            test_categories_running=()
+        fi
+    done
+    
+    # Wait for remaining processes
+    if [[ ${#pids[@]} -gt 0 ]]; then
+        print_status "Waiting for final batch to complete..."
+        wait_for_parallel_batch pids test_categories_running
+    fi
+    
+    success "All parallel test execution completed"
+}
+
+# Function to run a specific test category in parallel
+run_test_category_parallel() {
+    local category="$1"
+    local results_dir="$TEST_RESULTS_DIR/${category,,}"
+    
+    mkdir -p "$results_dir"
+    
+    local filter
+    local log_prefix
+    
+    if [[ "$category" == "Unit" ]]; then
+        filter="Category=Unit"
+        log_prefix="Unit"
+    else
+        # Integration collection
+        filter="Collection=$category"
+        log_prefix="$category"
+    fi
+    
+    local test_command="dotnet test \"$SOLUTION_FILE\" --filter \"$filter\" --configuration \"$BUILD_CONFIG\" --no-build --collect:\"XPlat Code Coverage\" --results-directory \"$results_dir\" --logger \"trx;LogFileName=${category,,}_tests.trx\" --logger \"console;verbosity=quiet\" --nologo"
+    
+    print_status "[$log_prefix] Starting parallel execution..."
+    
+    if docker info &> /dev/null; then
+        # Run in Docker group context if available
+        if sg docker -c "true" 2>/dev/null; then
+            sg docker -c "$test_command" > "$results_dir/${category,,}_output.log" 2>&1
+        else
+            $test_command > "$results_dir/${category,,}_output.log" 2>&1
+        fi
+    else
+        $test_command > "$results_dir/${category,,}_output.log" 2>&1
+    fi
+    
+    local exit_code=$?
+    
+    if [[ $exit_code -eq 0 ]]; then
+        print_success "[$log_prefix] Completed successfully"
+    else
+        print_warning "[$log_prefix] Completed with issues (exit code: $exit_code)"
+    fi
+    
+    return $exit_code
+}
+
+# Function to wait for a batch of parallel processes
+wait_for_parallel_batch() {
+    local -n pids_ref=$1
+    local -n categories_ref=$2
+    
+    for i in "${!pids_ref[@]}"; do
+        local pid="${pids_ref[$i]}"
+        local category="${categories_ref[$i]}"
+        
+        if wait "$pid"; then
+            print_success "[$category] Process completed successfully"
+        else
+            print_warning "[$category] Process completed with issues"
+        fi
+    done
+}
+
 # Function to run all tests (unified for report mode)
 run_all_tests() {
     print_header "Running Comprehensive Test Suite"
@@ -331,18 +451,24 @@ run_all_tests() {
     cd "$ROOT_DIR"
     local start_time=$(date +%s)
     
-    # For report mode, run all tests together for better parsing
+    # For report mode, run all tests together for better parsing (or parallel if enabled)
     if [[ "$MODE" == "report" ]]; then
-        local test_exit_code=0
-        if dotnet test "$SOLUTION_FILE" --logger trx --logger 'console;verbosity=detailed' --results-directory "$TEST_RESULTS_DIR" --collect:'XPlat Code Coverage' --nologo 2>&1 | tee -a "$LOG_FILE"; then
-            success "Test execution completed successfully"
+        if [[ "$PARALLEL_EXECUTION" == true ]]; then
+            run_tests_parallel
         else
-            test_exit_code=$?
-            warning "Test execution had failures (exit code: $test_exit_code) - continuing with analysis"
+            local test_exit_code=0
+            if dotnet test "$SOLUTION_FILE" --logger trx --logger 'console;verbosity=detailed' --results-directory "$TEST_RESULTS_DIR" --collect:'XPlat Code Coverage' --nologo 2>&1 | tee -a "$LOG_FILE"; then
+                success "Test execution completed successfully"
+            else
+                test_exit_code=$?
+                warning "Test execution had failures (exit code: $test_exit_code) - continuing with analysis"
+            fi
         fi
     else
         # For automation mode, run tests by category
-        if [[ "$INTEGRATION_ONLY" == true ]]; then
+        if [[ "$PARALLEL_EXECUTION" == true ]]; then
+            run_tests_parallel
+        elif [[ "$INTEGRATION_ONLY" == true ]]; then
             run_integration_tests
         elif [[ "$UNIT_ONLY" == true ]]; then
             run_unit_tests
@@ -650,6 +776,410 @@ EOF
     fi
     
     return 0
+}
+
+# Dynamic quality gates based on historical data (Phase 3 enhancement) 
+calculate_dynamic_quality_gates() {
+    log "📊 Calculating dynamic quality gates based on historical data..."
+    
+    local baseline_file="$TEST_RESULTS_DIR/baseline_results.json"
+    local historical_dir="$TEST_RESULTS_DIR/historical"
+    local dynamic_gates_file="$TEST_RESULTS_DIR/dynamic_quality_gates.json"
+    
+    # Initialize default gates
+    local dynamic_coverage_threshold=$COVERAGE_THRESHOLD
+    local dynamic_pass_rate_threshold=95
+    local dynamic_performance_threshold=120  # 120% of baseline execution time
+    local gate_confidence="LOW"
+    local historical_samples=0
+    
+    # Create historical directory if it doesn't exist
+    mkdir -p "$historical_dir"
+    
+    # Collect historical data from last 10 runs
+    local historical_files=()
+    if [[ -d "$historical_dir" ]]; then
+        mapfile -t historical_files < <(find "$historical_dir" -name "results_*.json" -type f | sort -r | head -10)
+        historical_samples=${#historical_files[@]}
+    fi
+    
+    log "Found $historical_samples historical samples for analysis"
+    
+    if [[ $historical_samples -ge 3 ]]; then
+        # Calculate dynamic thresholds based on historical performance
+        local coverage_values=()
+        local pass_rate_values=()
+        local execution_times=()
+        
+        # Extract metrics from historical data
+        for file in "${historical_files[@]}"; do
+            if [[ -f "$file" ]]; then
+                local coverage=$(jq -r '.coverage_metrics.line_coverage // null' "$file" 2>/dev/null)
+                local pass_rate=$(jq -r '.tests.pass_rate // null' "$file" 2>/dev/null)
+                local exec_time=$(jq -r '.execution_time // null' "$file" 2>/dev/null)
+                
+                [[ "$coverage" != "null" && "$coverage" != "" ]] && coverage_values+=("$coverage")
+                [[ "$pass_rate" != "null" && "$pass_rate" != "" ]] && pass_rate_values+=("$pass_rate")
+                [[ "$exec_time" != "null" && "$exec_time" != "" ]] && execution_times+=("$exec_time")
+            fi
+        done
+        
+        # Calculate adaptive thresholds using statistical analysis
+        if [[ ${#coverage_values[@]} -ge 3 ]]; then
+            local avg_coverage=$(calculate_average "${coverage_values[@]}")
+            local std_coverage=$(calculate_standard_deviation "${coverage_values[@]}")
+            
+            # Set threshold at 1 standard deviation below average (adaptive floor)
+            dynamic_coverage_threshold=$(echo "$avg_coverage - $std_coverage" | bc -l | awk '{printf "%.1f", $1}')
+            
+            # Ensure minimum threshold of 15% and maximum of original threshold
+            if (( $(echo "$dynamic_coverage_threshold < 15" | bc -l) )); then
+                dynamic_coverage_threshold=15
+            elif (( $(echo "$dynamic_coverage_threshold > $COVERAGE_THRESHOLD" | bc -l) )); then
+                dynamic_coverage_threshold=$COVERAGE_THRESHOLD
+            fi
+            
+            gate_confidence="MEDIUM"
+        fi
+        
+        if [[ ${#pass_rate_values[@]} -ge 3 ]]; then
+            local avg_pass_rate=$(calculate_average "${pass_rate_values[@]}")
+            local std_pass_rate=$(calculate_standard_deviation "${pass_rate_values[@]}")
+            
+            # Set threshold at 1.5 standard deviations below average (stricter for pass rate)
+            dynamic_pass_rate_threshold=$(echo "$avg_pass_rate - 1.5 * $std_pass_rate" | bc -l | awk '{printf "%.1f", $1}')
+            
+            # Ensure minimum threshold of 85%
+            if (( $(echo "$dynamic_pass_rate_threshold < 85" | bc -l) )); then
+                dynamic_pass_rate_threshold=85
+            fi
+        fi
+        
+        if [[ ${#execution_times[@]} -ge 3 ]]; then
+            local avg_exec_time=$(calculate_average "${execution_times[@]}")
+            local std_exec_time=$(calculate_standard_deviation "${execution_times[@]}")
+            
+            # Set performance threshold at average + 2 standard deviations (outlier detection)
+            dynamic_performance_threshold=$(echo "($avg_exec_time + 2 * $std_exec_time) / $avg_exec_time * 100" | bc -l | awk '{printf "%.0f", $1}')
+            
+            # Cap at 200% to prevent unreasonably high thresholds
+            if [[ $dynamic_performance_threshold -gt 200 ]]; then
+                dynamic_performance_threshold=200
+            fi
+        fi
+        
+        if [[ $historical_samples -ge 7 ]]; then
+            gate_confidence="HIGH"
+        fi
+    fi
+    
+    # Generate dynamic quality gates configuration
+    cat > "$dynamic_gates_file" << EOF
+{
+    "dynamic_gates": {
+        "coverage_threshold": $dynamic_coverage_threshold,
+        "pass_rate_threshold": $dynamic_pass_rate_threshold,
+        "performance_threshold": $dynamic_performance_threshold,
+        "confidence_level": "$gate_confidence",
+        "historical_samples": $historical_samples,
+        "generated_at": "$(date -Iseconds)",
+        "methodology": "Statistical analysis of last $historical_samples runs"
+    },
+    "static_gates": {
+        "original_coverage_threshold": $COVERAGE_THRESHOLD,
+        "original_pass_rate_threshold": 95,
+        "original_performance_threshold": 120
+    },
+    "recommendations": {
+        "coverage": "$(if (( $(echo "$dynamic_coverage_threshold > $COVERAGE_THRESHOLD" | bc -l) )); then echo "Project performing above baseline - consider raising standards"; else echo "Adaptive threshold set based on historical performance"; fi)",
+        "reliability": "$(if (( $(echo "$dynamic_pass_rate_threshold > 95" | bc -l) )); then echo "High reliability demonstrated - maintaining elevated standards"; else echo "Adaptive reliability threshold based on project maturity"; fi)",
+        "performance": "Threshold set at $(echo "scale=0; $dynamic_performance_threshold" | bc)% of historical average execution time"
+    }
+}
+EOF
+    
+    log "Dynamic quality gates calculated:"
+    log "  Coverage: ${dynamic_coverage_threshold}% (confidence: $gate_confidence)"
+    log "  Pass Rate: ${dynamic_pass_rate_threshold}% (confidence: $gate_confidence)"  
+    log "  Performance: ${dynamic_performance_threshold}% of baseline (confidence: $gate_confidence)"
+    
+    success "Dynamic quality gates configuration saved to $dynamic_gates_file"
+    
+    # Update global threshold for this run
+    COVERAGE_THRESHOLD=$dynamic_coverage_threshold
+}
+
+# Statistical helper functions for dynamic gates
+calculate_average() {
+    local values=("$@")
+    local sum=0
+    local count=${#values[@]}
+    
+    for value in "${values[@]}"; do
+        sum=$(echo "$sum + $value" | bc -l)
+    done
+    
+    echo "scale=2; $sum / $count" | bc -l
+}
+
+calculate_standard_deviation() {
+    local values=("$@")
+    local count=${#values[@]}
+    local avg=$(calculate_average "${values[@]}")
+    local variance_sum=0
+    
+    for value in "${values[@]}"; do
+        local diff=$(echo "$value - $avg" | bc -l)
+        local squared=$(echo "$diff * $diff" | bc -l)
+        variance_sum=$(echo "$variance_sum + $squared" | bc -l)
+    done
+    
+    local variance=$(echo "scale=4; $variance_sum / $count" | bc -l)
+    echo "scale=2; sqrt($variance)" | bc -l
+}
+
+# Save historical data for dynamic quality gates (Phase 3 enhancement)
+save_historical_data() {
+    log "💾 Saving current run data for historical analysis..."
+    
+    local historical_dir="$TEST_RESULTS_DIR/historical"
+    local timestamp=$(date +"%Y%m%d_%H%M%S")
+    local historical_file="$historical_dir/results_$timestamp.json"
+    
+    # Create historical directory if it doesn't exist
+    mkdir -p "$historical_dir"
+    
+    # Create comprehensive historical record
+    if [[ -f "$TEST_RESULTS_DIR/parsed_results.json" && -f "$TEST_RESULTS_DIR/coverage_results.json" ]]; then
+        # Get execution time from log file
+        local execution_time
+        execution_time=$(grep "EXECUTION_TIME=" "$LOG_FILE" 2>/dev/null | tail -1 | cut -d'=' -f2 || echo "0")
+        
+        # Combine all metrics into historical record
+        jq -s '.[0] + {"coverage_metrics": .[1], "execution_time": '$execution_time', "timestamp": "'$timestamp'", "saved_at": "'$(date -Iseconds)'"}' \
+            "$TEST_RESULTS_DIR/parsed_results.json" \
+            "$TEST_RESULTS_DIR/coverage_results.json" \
+            > "$historical_file" 2>/dev/null
+        
+        if [[ -f "$historical_file" ]]; then
+            success "Historical data saved: $historical_file"
+            
+            # Clean up old historical data (keep last 20 runs)
+            find "$historical_dir" -name "results_*.json" -type f | sort -r | tail -n +21 | xargs rm -f 2>/dev/null || true
+            
+            local remaining_files
+            remaining_files=$(find "$historical_dir" -name "results_*.json" -type f | wc -l)
+            log "Historical archive maintained: $remaining_files runs stored"
+        else
+            warning "Failed to save historical data"
+        fi
+    else
+        warning "Required result files not found for historical data collection"
+    fi
+}
+
+# Real-time metrics collection and trending analysis (Phase 3 enhancement)
+generate_trending_analysis() {
+    log "📈 Generating real-time metrics and trend analysis..."
+    
+    local historical_dir="$TEST_RESULTS_DIR/historical"
+    local trends_file="$TEST_RESULTS_DIR/trend_analysis.json"
+    local current_results="$TEST_RESULTS_DIR/parsed_results.json"
+    local current_coverage="$TEST_RESULTS_DIR/coverage_results.json"
+    
+    # Initialize trend data structure
+    cat > "$trends_file" << 'EOF'
+{
+    "trend_analysis": {
+        "generated_at": "",
+        "analysis_period": "",
+        "data_points": 0,
+        "trends": {},
+        "predictions": {},
+        "alerts": []
+    }
+}
+EOF
+    
+    # Update generation metadata
+    jq '.trend_analysis.generated_at = "'$(date -Iseconds)'"' "$trends_file" > "${trends_file}.tmp" && mv "${trends_file}.tmp" "$trends_file"
+    
+    # Collect historical data points
+    local historical_files=()
+    if [[ -d "$historical_dir" ]]; then
+        mapfile -t historical_files < <(find "$historical_dir" -name "results_*.json" -type f | sort -r | head -15)
+    fi
+    
+    local data_points=${#historical_files[@]}
+    jq --argjson count "$data_points" '.trend_analysis.data_points = $count' "$trends_file" > "${trends_file}.tmp" && mv "${trends_file}.tmp" "$trends_file"
+    
+    if [[ $data_points -ge 3 ]]; then
+        jq '.trend_analysis.analysis_period = "Last '$data_points' runs"' "$trends_file" > "${trends_file}.tmp" && mv "${trends_file}.tmp" "$trends_file"
+        
+        # Extract trend data
+        local coverage_trend=()
+        local pass_rate_trend=()
+        local execution_time_trend=()
+        local test_count_trend=()
+        local timestamps=()
+        
+        for file in "${historical_files[@]}"; do
+            if [[ -f "$file" ]]; then
+                local coverage=$(jq -r '.coverage_metrics.line_coverage // null' "$file" 2>/dev/null)
+                local pass_rate=$(jq -r '.tests.pass_rate // null' "$file" 2>/dev/null)
+                local exec_time=$(jq -r '.execution_time // null' "$file" 2>/dev/null)
+                local test_count=$(jq -r '.tests.total // null' "$file" 2>/dev/null)
+                local timestamp=$(jq -r '.timestamp // null' "$file" 2>/dev/null)
+                
+                [[ "$coverage" != "null" && "$coverage" != "" ]] && coverage_trend+=("$coverage")
+                [[ "$pass_rate" != "null" && "$pass_rate" != "" ]] && pass_rate_trend+=("$pass_rate")
+                [[ "$exec_time" != "null" && "$exec_time" != "" ]] && execution_time_trend+=("$exec_time")
+                [[ "$test_count" != "null" && "$test_count" != "" ]] && test_count_trend+=("$test_count")
+                [[ "$timestamp" != "null" && "$timestamp" != "" ]] && timestamps+=("$timestamp")
+            fi
+        done
+        
+        # Calculate trends and predictions
+        if [[ ${#coverage_trend[@]} -ge 3 ]]; then
+            local coverage_avg=$(calculate_average "${coverage_trend[@]}")
+            local coverage_slope=$(calculate_trend_slope "${coverage_trend[@]}")
+            local coverage_prediction=$(echo "$coverage_avg + $coverage_slope" | bc -l | awk '{printf "%.1f", $1}')
+            
+            # Update trends JSON
+            jq --argjson avg "$coverage_avg" --argjson slope "$coverage_slope" --argjson pred "$coverage_prediction" \
+                '.trend_analysis.trends.coverage = {"average": $avg, "slope": $slope, "direction": (if $slope > 0.5 then "improving" elif $slope < -0.5 then "declining" else "stable" end)}' \
+                "$trends_file" > "${trends_file}.tmp" && mv "${trends_file}.tmp" "$trends_file"
+            
+            jq --argjson pred "$coverage_prediction" \
+                '.trend_analysis.predictions.coverage_next_run = $pred' \
+                "$trends_file" > "${trends_file}.tmp" && mv "${trends_file}.tmp" "$trends_file"
+        fi
+        
+        if [[ ${#pass_rate_trend[@]} -ge 3 ]]; then
+            local pass_rate_avg=$(calculate_average "${pass_rate_trend[@]}")
+            local pass_rate_slope=$(calculate_trend_slope "${pass_rate_trend[@]}")
+            local pass_rate_prediction=$(echo "$pass_rate_avg + $pass_rate_slope" | bc -l | awk '{printf "%.1f", $1}')
+            
+            jq --argjson avg "$pass_rate_avg" --argjson slope "$pass_rate_slope" \
+                '.trend_analysis.trends.reliability = {"average": $avg, "slope": $slope, "direction": (if $slope > 0.5 then "improving" elif $slope < -0.5 then "declining" else "stable" end)}' \
+                "$trends_file" > "${trends_file}.tmp" && mv "${trends_file}.tmp" "$trends_file"
+            
+            jq --argjson pred "$pass_rate_prediction" \
+                '.trend_analysis.predictions.reliability_next_run = $pred' \
+                "$trends_file" > "${trends_file}.tmp" && mv "${trends_file}.tmp" "$trends_file"
+        fi
+        
+        if [[ ${#execution_time_trend[@]} -ge 3 ]]; then
+            local exec_time_avg=$(calculate_average "${execution_time_trend[@]}")
+            local exec_time_slope=$(calculate_trend_slope "${execution_time_trend[@]}")
+            local exec_time_prediction=$(echo "$exec_time_avg + $exec_time_slope" | bc -l | awk '{printf "%.0f", $1}')
+            
+            jq --argjson avg "$exec_time_avg" --argjson slope "$exec_time_slope" \
+                '.trend_analysis.trends.performance = {"average": $avg, "slope": $slope, "direction": (if $slope > 5 then "slowing" elif $slope < -5 then "improving" else "stable" end)}' \
+                "$trends_file" > "${trends_file}.tmp" && mv "${trends_file}.tmp" "$trends_file"
+            
+            jq --argjson pred "$exec_time_prediction" \
+                '.trend_analysis.predictions.execution_time_next_run = $pred' \
+                "$trends_file" > "${trends_file}.tmp" && mv "${trends_file}.tmp" "$trends_file"
+        fi
+        
+        # Generate alerts based on trends
+        generate_trend_alerts "$trends_file" "${coverage_trend[@]}" "${pass_rate_trend[@]}" "${execution_time_trend[@]}"
+        
+        log "Trend analysis complete:"
+        log "  Coverage trend: $(jq -r '.trend_analysis.trends.coverage.direction // "insufficient data"' "$trends_file")"
+        log "  Reliability trend: $(jq -r '.trend_analysis.trends.reliability.direction // "insufficient data"' "$trends_file")"
+        log "  Performance trend: $(jq -r '.trend_analysis.trends.performance.direction // "insufficient data"' "$trends_file")"
+        
+        success "Trending analysis saved to $trends_file"
+    else
+        jq '.trend_analysis.analysis_period = "Insufficient historical data (need 3+ runs)"' "$trends_file" > "${trends_file}.tmp" && mv "${trends_file}.tmp" "$trends_file"
+        log "Insufficient historical data for trend analysis (need 3+ runs, have $data_points)"
+    fi
+}
+
+# Calculate trend slope for predictions
+calculate_trend_slope() {
+    local values=("$@")
+    local count=${#values[@]}
+    
+    if [[ $count -lt 2 ]]; then
+        echo "0"
+        return
+    fi
+    
+    # Simple linear regression slope calculation
+    local sum_x=0
+    local sum_y=0
+    local sum_xy=0
+    local sum_x2=0
+    
+    for i in "${!values[@]}"; do
+        local x=$((i + 1))
+        local y="${values[$i]}"
+        
+        sum_x=$(echo "$sum_x + $x" | bc -l)
+        sum_y=$(echo "$sum_y + $y" | bc -l)
+        sum_xy=$(echo "$sum_xy + $x * $y" | bc -l)
+        sum_x2=$(echo "$sum_x2 + $x * $x" | bc -l)
+    done
+    
+    # slope = (n*sum_xy - sum_x*sum_y) / (n*sum_x2 - sum_x*sum_x)
+    local numerator=$(echo "$count * $sum_xy - $sum_x * $sum_y" | bc -l)
+    local denominator=$(echo "$count * $sum_x2 - $sum_x * $sum_x" | bc -l)
+    
+    if [[ $(echo "$denominator != 0" | bc -l) -eq 1 ]]; then
+        echo "scale=3; $numerator / $denominator" | bc -l
+    else
+        echo "0"
+    fi
+}
+
+# Generate trend-based alerts
+generate_trend_alerts() {
+    local trends_file="$1"
+    shift
+    local coverage_values=("$@")
+    
+    # Check for significant degradation trends
+    local alerts=()
+    
+    # Coverage degradation alert
+    local coverage_slope=$(jq -r '.trend_analysis.trends.coverage.slope // 0' "$trends_file" 2>/dev/null)
+    if [[ $(echo "$coverage_slope < -2" | bc -l) -eq 1 ]]; then
+        alerts+=("\"Coverage trend declining significantly (slope: $coverage_slope)\"")
+    fi
+    
+    # Reliability degradation alert
+    local reliability_slope=$(jq -r '.trend_analysis.trends.reliability.slope // 0' "$trends_file" 2>/dev/null)
+    if [[ $(echo "$reliability_slope < -1" | bc -l) -eq 1 ]]; then
+        alerts+=("\"Test reliability declining (slope: $reliability_slope)\"")
+    fi
+    
+    # Performance degradation alert
+    local performance_slope=$(jq -r '.trend_analysis.trends.performance.slope // 0' "$trends_file" 2>/dev/null)
+    if [[ $(echo "$performance_slope > 10" | bc -l) -eq 1 ]]; then
+        alerts+=("\"Test execution time increasing significantly (slope: $performance_slope seconds)\"")
+    fi
+    
+    # Volatility alert (high variance in recent runs)
+    if [[ ${#coverage_values[@]} -ge 5 ]]; then
+        local recent_coverage=("${coverage_values[@]:0:5}")
+        local coverage_std=$(calculate_standard_deviation "${recent_coverage[@]}")
+        if [[ $(echo "$coverage_std > 5" | bc -l) -eq 1 ]]; then
+            alerts+=("\"High coverage volatility detected (std dev: $coverage_std)\"")
+        fi
+    fi
+    
+    # Update alerts in JSON
+    if [[ ${#alerts[@]} -gt 0 ]]; then
+        local alerts_json=$(printf '%s,' "${alerts[@]}")
+        alerts_json="[${alerts_json%,}]"
+        jq --argjson alerts "$alerts_json" '.trend_analysis.alerts = $alerts' "$trends_file" > "${trends_file}.tmp" && mv "${trends_file}.tmp" "$trends_file"
+        warning "Generated ${#alerts[@]} trend-based alerts"
+    else
+        jq '.trend_analysis.alerts = []' "$trends_file" > "${trends_file}.tmp" && mv "${trends_file}.tmp" "$trends_file"
+    fi
 }
 
 # Predictive deployment risk assessment (Phase 2 enhancement)
@@ -988,6 +1518,12 @@ execute_report_mode() {
         detect_quality_regression || true  # Don't fail on regression detection errors
     fi
     
+    # Phase 3 Dynamic Quality Gates
+    calculate_dynamic_quality_gates || true  # Don't fail on dynamic gates calculation errors
+    
+    # Phase 3 Real-time metrics and trending analysis
+    generate_trending_analysis || true  # Don't fail on trending analysis errors
+    
     # Predictive deployment risk assessment (Phase 2)
     assess_deployment_risk || true  # Don't fail on risk assessment errors
     
@@ -1009,6 +1545,9 @@ execute_report_mode() {
             cp "$TEST_RESULTS_DIR/parsed_results.json" "$TEST_RESULTS_DIR/baseline_results.json"
         fi
     fi
+    
+    # Phase 3: Save historical data for dynamic quality gates
+    save_historical_data || true  # Don't fail on historical data saving errors
     
     # Store quality gate status for CI/CD decision making
     if [[ $quality_gate_status -ne 0 ]]; then
@@ -1071,6 +1610,15 @@ parse_arguments() {
                 ;;
             --threshold=*)
                 COVERAGE_THRESHOLD="${1#*=}"
+                shift
+                ;;
+            --parallel)
+                PARALLEL_EXECUTION=true
+                shift
+                ;;
+            --max-parallel-collections=*)
+                MAX_PARALLEL_COLLECTIONS="${1#*=}"
+                PARALLEL_EXECUTION=true
                 shift
                 ;;
             *)

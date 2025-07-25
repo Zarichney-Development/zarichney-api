@@ -11,7 +11,7 @@ using Zarichney.Tests.Framework.Fixtures;
 
 namespace Zarichney.Tests.Integration.Controllers.AuthController;
 
-[Collection("Integration")]
+[Collection("IntegrationAuth")]
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Feature, TestCategories.Auth)]
 // Using the infrastructure trait for XUnit test filtering - DependencyFact will check the actual dependency

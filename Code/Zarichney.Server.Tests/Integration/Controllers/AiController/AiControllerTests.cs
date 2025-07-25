@@ -14,7 +14,7 @@ namespace Zarichney.Tests.Integration.Controllers.AiController;
 /// These tests verify that the Refit client generation with addContentTypeHeaders: false
 /// resolves multipart/form-data Content-Type header conflicts.
 /// </summary>
-[Collection("Integration")]
+[Collection("IntegrationExternal")]
 public class AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHelper output)
   : IntegrationTestBase(apiClientFixture, output)
 {

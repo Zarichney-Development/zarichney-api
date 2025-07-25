@@ -9,7 +9,7 @@ namespace Zarichney.Tests.Integration.Performance;
 /// <summary>
 /// Performance tests for the API.
 /// </summary>
-[Collection("Integration")]
+[Collection("IntegrationQA")]
 [Trait(TestCategories.Category, TestCategories.Performance)]
 [Trait(TestCategories.Feature, TestCategories.Cookbook)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]

@@ -1,6 +1,6 @@
 # Zarichney Platform & AI Workflow Testbed
 
-**Last Updated:** 2025-06-27
+**Last Updated:** 2025-07-25
 
 ---
 
@@ -42,12 +42,12 @@ Whether you're interested in the platform's features or the cutting-edge develop
 * **AI:** OpenAI API integration
 * **Database:** PostgreSQL (primarily for Identity; application data currently file-based)
 * **Authentication:** ASP.NET Core Identity, JWT, Refresh Tokens (Cookies), API Keys
-* **Testing:** xUnit, Moq, FluentAssertions, Testcontainers (for isolated DB testing), Refit (for API client generation) - *Aiming for >90% coverage.*
+* **Testing:** xUnit, Moq, FluentAssertions, Testcontainers (for isolated DB testing), Refit (for API client generation), **AI-Powered Test Analysis** (unified test suite with parallel execution) - *Aiming for >90% coverage.*
 * **API Documentation:** Swagger / OpenAPI
 * **Key Libraries:** 
     * **Backend:** Serilog, Polly, MediatR, AutoMapper, RestSharp, Stripe.net, Octokit, QuestPDF, PlaywrightSharp, AngleSharp
     * **Frontend:** RxJS, Angular CDK, Stripe.js, Express (for SSR), Axios
-* **Development Process:** Git, **GitHub Actions (Advanced CI/CD with AI-powered QA)**, AI Agent Assistance (via custom prompts/workflows).
+* **Development Process:** Git, **GitHub Actions (Advanced CI/CD with AI-powered QA, Parallel Test Execution, Dynamic Quality Gates)**, AI Agent Assistance (via custom prompts/workflows).
 
 ## Exploring the Repository
 
@@ -59,7 +59,7 @@ Whether you're interested in the platform's features or the cutting-edge develop
     * **`Docs/Development/`:** Defines the AI-assisted workflow processes and roadmap.
     * **`Docs/Templates/`:** Contains templates for AI prompts and GitHub Issues.
     * Each module within `Code/` also has its own detailed `README.md`.
-* **`Scripts/`:** Utility scripts (e.g., regenerating the test API client).
+* **`Scripts/`:** Utility scripts including the unified test suite, API client generation, and various development tools. See [`Scripts/README.md`](./Scripts/README.md).
 
 ## Getting Started (High Level)
 
@@ -68,7 +68,7 @@ Whether you're interested in the platform's features or the cutting-edge develop
     * Ensure [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) and [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for integration tests) are installed.
     * Review `Code/Zarichney.Server/README.md` for configuration prerequisites (secrets, API keys).
     * Build the solution (`dotnet build`).
-    * Run the tests (`dotnet test`).
+    * Run the tests with AI-powered analysis (`/test-report` or `Scripts/run-test-suite.sh`).
     * Run the API (`dotnet run --project Code/Zarichney.Server`).
 3.  **Frontend Setup:**
     * Ensure [Node.js 18+](https://nodejs.org/) is installed.
