@@ -30,6 +30,13 @@ env:
   # Performance tracking
   BUILD_RUN_ID: ${{ github.run_id }}
 
+# Pipeline Control Options:
+# - Add 'skip-backend' label to PR to skip backend builds
+# - Add 'skip-frontend' label to PR to skip frontend builds  
+# - Add 'force-backend' label to PR to force backend builds
+# - Add 'force-frontend' label to PR to force frontend builds
+# - Include 'skip-frontend-deploy' in commit message to skip frontend deployment
+
 permissions:
   id-token: write
   contents: read
@@ -139,20 +146,21 @@ jobs:
           name: backend-coverage-results
           path: ./TestResults/**/coverage.cobertura.xml
 
-  frontend_build_and_deploy:
-    name: Frontend - Build and Deploy
+  frontend_build:
+    name: Frontend - Build
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && (contains(github.event.pull_request.labels.*.name, 'force-frontend') || !contains(github.event.pull_request.labels.*.name, 'skip-frontend'))) ||
       (github.event_name == 'push' && github.ref == 'refs/heads/main')
-    timeout-minutes: 25
+    timeout-minutes: 15
       
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -168,13 +176,59 @@ jobs:
               echo "npm install attempt $i failed, retrying in 10 seconds..."
               sleep 10
               npm cache clean --force || true
-          rm -rf node_modules package-lock.json || true
+              rm -rf node_modules package-lock.json || true
             fi
           done
 
       - name: Build Frontend for Production
         run: npm run build-prod
         working-directory: ./Code/Zarichney.Website
+        
+      - name: Display build summary
+        run: |
+          echo "✅ Frontend build completed successfully"
+          echo "Build artifacts created:"
+          ls -la dist/
+          echo "Bundle sizes:"
+          du -sh dist/browser/* | head -10
+        working-directory: ./Code/Zarichney.Website
+        
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build-artifacts
+          path: |
+            Code/Zarichney.Website/dist/
+            Code/Zarichney.Website/package.json
+            Code/Zarichney.Website/package-lock.json
+            Code/Zarichney.Website/scripts/
+          retention-days: 1
+
+  frontend_deploy:
+    name: Frontend - Deploy
+    runs-on: ubuntu-latest
+    needs: frontend_build
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main' && !contains(github.event.push.head_commit.message, 'skip-frontend-deploy'))
+    timeout-minutes: 20
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build-artifacts
+          path: ./Code/Zarichney.Website/
+          
+      - name: Display deployment info
+        run: |
+          echo "🚀 Starting frontend deployment"
+          echo "Build artifacts downloaded:"
+          ls -la ./Code/Zarichney.Website/dist/
+          echo "Deployment target: Production (S3 + EC2)"
 
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v2
