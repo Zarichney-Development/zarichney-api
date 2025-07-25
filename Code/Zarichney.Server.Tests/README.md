@@ -78,17 +78,17 @@ A commitment to high test coverage (>=90% for unit tests) and rigorous adherence
 * **Complete Test Suite with Coverage Report:**
     ```bash
     # Run all tests with comprehensive coverage reporting and open report in browser
-    ../Scripts/run-automation-suite.sh
+    ../Scripts/run-test-suite.sh
     
     # Run without opening browser automatically
-    ../Scripts/run-automation-suite.sh --no-browser
+    ../Scripts/run-test-suite.sh --no-browser
     
     # Run only specific test categories
-    ../Scripts/run-automation-suite.sh --unit-only
-    ../Scripts/run-automation-suite.sh --integration-only
+    ../Scripts/run-test-suite.sh --unit-only
+    ../Scripts/run-test-suite.sh --integration-only
     
     # Skip build step for faster iteration (assumes solution already built)
-    ../Scripts/run-automation-suite.sh --skip-build
+    ../Scripts/run-test-suite.sh --skip-build
     ```
     
     The automation suite script provides:
