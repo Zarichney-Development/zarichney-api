@@ -106,18 +106,18 @@ jobs:
 
       - name: Advanced Test Execution with Quality Gates
         run: |
-          echo "🚀 Running advanced test suite with AI-powered analysis..."
+          echo "🚀 Running unified test suite with AI-powered analysis..."
           
-          # Make script executable
-          chmod +x ./Scripts/run-test-report.sh
+          # Make unified script executable
+          chmod +x ./Scripts/run-test-suite.sh
           
           # Set quality gate thresholds
           export COVERAGE_THRESHOLD=24  # Current baseline, targeting 90%
           export QUALITY_GATE_ENABLED=true
           export CI_ENVIRONMENT=true
           
-          # Run comprehensive test suite with JSON output for CI/CD
-          if ./Scripts/run-test-report.sh json --threshold=24; then
+          # Run comprehensive test suite with JSON output for CI/CD using unified script
+          if ./Scripts/run-test-suite.sh report json --threshold=24; then
             echo "✅ All tests passed and quality gates met"
           else
             echo "❌ Tests failed or quality gates not met"
