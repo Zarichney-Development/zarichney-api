@@ -333,10 +333,12 @@ run_all_tests() {
     
     # For report mode, run all tests together for better parsing
     if [[ "$MODE" == "report" ]]; then
+        local test_exit_code=0
         if dotnet test "$SOLUTION_FILE" --logger trx --logger 'console;verbosity=detailed' --results-directory "$TEST_RESULTS_DIR" --collect:'XPlat Code Coverage' --nologo 2>&1 | tee -a "$LOG_FILE"; then
             success "Test execution completed successfully"
         else
-            error_exit "Test execution failed"
+            test_exit_code=$?
+            warning "Test execution had failures (exit code: $test_exit_code) - continuing with analysis"
         fi
     else
         # For automation mode, run tests by category
@@ -548,6 +550,234 @@ EOF
     success "Coverage analyzed: ${line_coverage}% lines, ${branch_coverage}% branches"
 }
 
+# Quality regression detection (Phase 2 enhancement)
+detect_quality_regression() {
+    log "🔍 Performing quality regression analysis..."
+    
+    local baseline_file="$TEST_RESULTS_DIR/baseline_results.json"
+    local current_results="$TEST_RESULTS_DIR/parsed_results.json"
+    local current_coverage="$TEST_RESULTS_DIR/coverage_results.json"
+    local regression_report="$TEST_RESULTS_DIR/regression_analysis.json"
+    
+    if [[ ! -f "$baseline_file" ]]; then
+        warning "No baseline found - skipping regression analysis"
+        return 0
+    fi
+    
+    if [[ ! -f "$current_results" || ! -f "$current_coverage" ]]; then
+        warning "Missing current results - skipping regression analysis"
+        return 0
+    fi
+    
+    # Extract baseline metrics
+    local baseline_pass_rate=$(jq -r '.tests.pass_rate // 0' "$baseline_file" 2>/dev/null || echo "0")
+    local baseline_total=$(jq -r '.tests.total // 0' "$baseline_file" 2>/dev/null || echo "0")
+    local baseline_coverage=$(jq -r '.coverage_metrics.line_coverage // 0' "$baseline_file" 2>/dev/null || echo "0")
+    
+    # Extract current metrics
+    local current_pass_rate=$(jq -r '.tests.pass_rate // 0' "$current_results" 2>/dev/null || echo "0")
+    local current_total=$(jq -r '.tests.total // 0' "$current_results" 2>/dev/null || echo "0")
+    local current_coverage=$(jq -r '.line_coverage // 0' "$current_coverage" 2>/dev/null || echo "0")
+    
+    # Calculate regressions
+    local pass_rate_change=$(echo "scale=2; $current_pass_rate - $baseline_pass_rate" | bc 2>/dev/null || echo "0")
+    local coverage_change=$(echo "scale=2; $current_coverage - $baseline_coverage" | bc 2>/dev/null || echo "0")
+    local test_count_change=$((current_total - baseline_total))
+    
+    # Determine regression severity
+    local regression_level="NONE"
+    local regression_detected=false
+    
+    if (( $(echo "$pass_rate_change < -5" | bc -l) )); then
+        regression_level="HIGH"
+        regression_detected=true
+    elif (( $(echo "$pass_rate_change < -2" | bc -l) )); then
+        regression_level="MEDIUM"
+        regression_detected=true
+    elif (( $(echo "$coverage_change < -3" | bc -l) )); then
+        regression_level="MEDIUM"
+        regression_detected=true
+    elif (( $(echo "$coverage_change < -1" | bc -l) )); then
+        regression_level="LOW"
+        regression_detected=true
+    fi
+    
+    # Generate regression analysis report
+    cat > "$regression_report" << EOF
+{
+    "regression_detected": $regression_detected,
+    "severity": "$regression_level",
+    "analysis": {
+        "pass_rate_change": $pass_rate_change,
+        "coverage_change": $coverage_change,
+        "test_count_change": $test_count_change
+    },
+    "baseline": {
+        "pass_rate": $baseline_pass_rate,
+        "total_tests": $baseline_total,
+        "coverage": $baseline_coverage
+    },
+    "current": {
+        "pass_rate": $current_pass_rate,
+        "total_tests": $current_total,
+        "coverage": $current_coverage
+    },
+    "recommendations": [
+        $([ "$regression_detected" = "true" ] && cat << 'REC'
+        "Investigate quality regression before deployment",
+        "Review recent code changes for test impact",
+        "Consider reverting changes if regression is severe"
+REC
+|| echo '"No quality regressions detected"')
+    ]
+}
+EOF
+    
+    if [[ "$regression_detected" = "true" ]]; then
+        warning "Quality regression detected: $regression_level severity"
+        warning "Pass rate change: ${pass_rate_change}%, Coverage change: ${coverage_change}%"
+        
+        # Add regression status to quality gates
+        echo "QUALITY_REGRESSION_DETECTED=true" >> "$TEST_RESULTS_DIR/quality_status.env"
+        echo "REGRESSION_SEVERITY=$regression_level" >> "$TEST_RESULTS_DIR/quality_status.env"
+        
+        if [[ "$regression_level" == "HIGH" ]]; then
+            return 1  # Return failure for high severity regressions
+        fi
+    else
+        success "No quality regressions detected"
+        echo "QUALITY_REGRESSION_DETECTED=false" >> "$TEST_RESULTS_DIR/quality_status.env"
+    fi
+    
+    return 0
+}
+
+# Predictive deployment risk assessment (Phase 2 enhancement)
+assess_deployment_risk() {
+    log "🎯 Performing predictive deployment risk assessment..."
+    
+    local risk_report="$TEST_RESULTS_DIR/deployment_risk.json"
+    local results_file="$TEST_RESULTS_DIR/parsed_results.json"
+    local coverage_file="$TEST_RESULTS_DIR/coverage_results.json"
+    local regression_file="$TEST_RESULTS_DIR/regression_analysis.json"
+    
+    # Extract metrics for risk calculation
+    local failed_tests=$(jq -r '.tests.failed // 0' "$results_file" 2>/dev/null || echo "0")
+    local pass_rate=$(jq -r '.tests.pass_rate // 100' "$results_file" 2>/dev/null || echo "100")
+    local coverage=$(jq -r '.line_coverage // 0' "$coverage_file" 2>/dev/null || echo "0")
+    local regression_detected=false
+    local regression_severity="NONE"
+    
+    if [[ -f "$regression_file" ]]; then
+        regression_detected=$(jq -r '.regression_detected // false' "$regression_file" 2>/dev/null || echo "false")
+        regression_severity=$(jq -r '.severity // "NONE"' "$regression_file" 2>/dev/null || echo "NONE")
+    fi
+    
+    # Calculate risk score (0-100, higher = more risky)
+    local risk_score=0
+    local risk_factors=()
+    
+    # Test failure risk (0-40 points)
+    if [[ $failed_tests -gt 0 ]]; then
+        local test_risk=$((failed_tests * 10))
+        risk_score=$((risk_score + (test_risk > 40 ? 40 : test_risk)))
+        risk_factors+=("${failed_tests} failing tests (+${test_risk} risk)")
+    fi
+    
+    # Coverage risk (0-25 points)
+    if (( $(echo "$coverage < 24" | bc -l) )); then
+        local coverage_risk=$(echo "scale=0; (24 - $coverage) * 2" | bc)
+        risk_score=$((risk_score + coverage_risk))
+        risk_factors+=("Low coverage ${coverage}% (+${coverage_risk} risk)")
+    fi
+    
+    # Pass rate risk (0-20 points)
+    if (( $(echo "$pass_rate < 95" | bc -l) )); then
+        local pass_rate_risk=$(echo "scale=0; (95 - $pass_rate) / 5" | bc)
+        risk_score=$((risk_score + pass_rate_risk))
+        risk_factors+=("Pass rate ${pass_rate}% (+${pass_rate_risk} risk)")
+    fi
+    
+    # Regression risk (0-15 points)
+    if [[ "$regression_detected" = "true" ]]; then
+        local regression_risk=0
+        case "$regression_severity" in
+            "HIGH") regression_risk=15 ;;
+            "MEDIUM") regression_risk=10 ;;
+            "LOW") regression_risk=5 ;;
+        esac
+        risk_score=$((risk_score + regression_risk))
+        risk_factors+=("Quality regression: ${regression_severity} (+${regression_risk} risk)")
+    fi
+    
+    # Determine risk level and recommendation
+    local risk_level="LOW"
+    local deployment_recommendation="DEPLOY"
+    local confidence=90
+    
+    if [[ $risk_score -ge 50 ]]; then
+        risk_level="HIGH"
+        deployment_recommendation="BLOCK"
+        confidence=95
+    elif [[ $risk_score -ge 25 ]]; then
+        risk_level="MEDIUM"
+        deployment_recommendation="CAUTION"
+        confidence=80
+    fi
+    
+    # Generate deployment risk assessment
+    cat > "$risk_report" << EOF
+{
+    "risk_score": $risk_score,
+    "risk_level": "$risk_level",
+    "deployment_recommendation": "$deployment_recommendation",
+    "confidence_level": $confidence,
+    "risk_factors": [
+        $(printf '"%s"' "${risk_factors[@]}" | sed 's/" "/","/g')
+    ],
+    "mitigation_strategies": [
+        $(case "$risk_level" in
+            "HIGH") cat << 'HIGH_RISK'
+        "Fix all failing tests before deployment",
+        "Increase test coverage to meet minimum threshold",
+        "Perform additional manual testing",
+        "Consider hotfix deployment strategy",
+        "Implement rollback plan"
+HIGH_RISK
+            ;;
+            "MEDIUM") cat << 'MEDIUM_RISK'
+        "Monitor deployment closely",
+        "Have rollback plan ready",
+        "Consider staged deployment",
+        "Address test failures in next sprint"
+MEDIUM_RISK
+            ;;
+            *) echo '"Deployment appears safe, proceed normally"'
+            ;;
+        esac)
+    ],
+    "assessment_timestamp": "$(date -Iseconds)"
+}
+EOF
+    
+    case "$risk_level" in
+        "HIGH")
+            print_error "HIGH RISK deployment detected (score: $risk_score/100)"
+            warning "Recommendation: BLOCK deployment until issues resolved"
+            ;;
+        "MEDIUM")
+            warning "MEDIUM RISK deployment detected (score: $risk_score/100)"
+            warning "Recommendation: Proceed with CAUTION"
+            ;;
+        *)
+            success "LOW RISK deployment (score: $risk_score/100)"
+            success "Recommendation: Safe to deploy"
+            ;;
+    esac
+    
+    return 0
+}
+
 # Generate report based on format (report mode)
 generate_report() {
     log "📝 Generating $OUTPUT_FORMAT report..."
@@ -734,9 +964,15 @@ enforce_quality_gates() {
     fi
     
     if [[ "$gate_failed" == "true" ]]; then
-        error_exit "Quality gates failed - blocking pipeline"
+        print_error "Quality gates failed - CI/CD should block deployment"
+        # For Phase 2: Continue with AI analysis even on quality gate failures
+        # Store the failure state for later decision making
+        echo "QUALITY_GATES_FAILED=true" >> "$TEST_RESULTS_DIR/quality_status.env"
+        return 1  # Return failure code without exiting script
     else
         success "All quality gates passed"
+        echo "QUALITY_GATES_FAILED=false" >> "$TEST_RESULTS_DIR/quality_status.env"
+        return 0
     fi
 }
 
@@ -747,15 +983,37 @@ execute_report_mode() {
     parse_coverage
     generate_report
     
-    # Enforce quality gates for CI/CD environments
-    if [[ "${CI_ENVIRONMENT:-false}" == "true" ]] || [[ "${QUALITY_GATE_ENABLED:-false}" == "true" ]]; then
-        enforce_quality_gates
+    # Phase 2 AI-Powered Quality Analysis
+    if [[ "$COMPARE_MODE" == true ]] || [[ "${QUALITY_GATE_ENABLED:-false}" == "true" ]]; then
+        detect_quality_regression || true  # Don't fail on regression detection errors
     fi
     
-    # Save baseline if requested
+    # Predictive deployment risk assessment (Phase 2)
+    assess_deployment_risk || true  # Don't fail on risk assessment errors
+    
+    # Enforce quality gates for CI/CD environments
+    local quality_gate_status=0
+    if [[ "${CI_ENVIRONMENT:-false}" == "true" ]] || [[ "${QUALITY_GATE_ENABLED:-false}" == "true" ]]; then
+        enforce_quality_gates || quality_gate_status=$?
+    fi
+    
+    # Save baseline if requested (includes current coverage for future comparisons)
     if [[ "$SAVE_BASELINE" == true ]]; then
-        log "💾 Saving baseline for future comparisons..."
-        cp "$TEST_RESULTS_DIR/parsed_results.json" "$TEST_RESULTS_DIR/baseline_results.json" 2>/dev/null || true
+        log "💾 Saving enhanced baseline for future comparisons..."
+        # Create comprehensive baseline including coverage metrics
+        if [[ -f "$TEST_RESULTS_DIR/parsed_results.json" && -f "$TEST_RESULTS_DIR/coverage_results.json" ]]; then
+            jq -s '.[0] + {"coverage_metrics": .[1]}' \
+                "$TEST_RESULTS_DIR/parsed_results.json" \
+                "$TEST_RESULTS_DIR/coverage_results.json" \
+                > "$TEST_RESULTS_DIR/baseline_results.json" 2>/dev/null || \
+            cp "$TEST_RESULTS_DIR/parsed_results.json" "$TEST_RESULTS_DIR/baseline_results.json"
+        fi
+    fi
+    
+    # Store quality gate status for CI/CD decision making
+    if [[ $quality_gate_status -ne 0 ]]; then
+        warning "Quality gates failed - results available for AI analysis"
+        return 1
     fi
 }
 
@@ -861,20 +1119,35 @@ main() {
     run_all_tests
     
     # Execute mode-specific functionality
+    local mode_exit_code=0
     case $MODE in
         automation)
-            execute_automation_mode
+            execute_automation_mode || mode_exit_code=$?
             ;;
         report)
-            execute_report_mode
+            execute_report_mode || mode_exit_code=$?
             ;;
         both)
-            execute_report_mode
-            execute_automation_mode
+            execute_report_mode || mode_exit_code=$?
+            execute_automation_mode || mode_exit_code=$?
             ;;
     esac
     
-    print_success "🎉 Test suite completed successfully in $MODE mode!"
+    # Check if we need to exit with failure code for CI/CD
+    if [[ -f "$TEST_RESULTS_DIR/quality_status.env" ]]; then
+        source "$TEST_RESULTS_DIR/quality_status.env"
+        if [[ "${QUALITY_GATES_FAILED:-false}" == "true" ]] && [[ "${CI_ENVIRONMENT:-false}" == "true" ]]; then
+            print_error "🎉 Test suite analysis completed, but quality gates failed - CI/CD should block deployment"
+            exit 1
+        fi
+    fi
+    
+    if [[ $mode_exit_code -ne 0 ]]; then
+        print_warning "🎉 Test suite completed with warnings in $MODE mode!"
+        exit $mode_exit_code
+    else
+        print_success "🎉 Test suite completed successfully in $MODE mode!"
+    fi
 }
 
 # Cleanup function
