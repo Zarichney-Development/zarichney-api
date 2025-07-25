@@ -1,0 +1,127 @@
+version: 2
+updates:
+  # .NET dependencies
+  - package-ecosystem: "nuget"
+    directory: "/Code/Zarichney.Server/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "ZarichneyDevelopment"
+    assignees:
+      - "ZarichneyDevelopment"
+    labels:
+      - "dependencies"
+      - "dotnet"
+      - "security"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    # Security updates for .NET
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    # Security-focused versioning
+    versioning-strategy: "increase"
+
+  # Test project dependencies  
+  - package-ecosystem: "nuget"
+    directory: "/Code/Zarichney.Server.Tests/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:30"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "ZarichneyDevelopment"
+    assignees:
+      - "ZarichneyDevelopment"
+    labels:
+      - "dependencies"
+      - "dotnet"
+      - "testing"
+    commit-message:
+      prefix: "deps-test"
+      include: "scope"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+
+  # Node.js dependencies for frontend
+  - package-ecosystem: "npm"
+    directory: "/Code/Zarichney.Website/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "06:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "ZarichneyDevelopment"
+    assignees:
+      - "ZarichneyDevelopment"
+    labels:
+      - "dependencies"
+      - "nodejs"
+      - "frontend"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    # Security and performance focused updates
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    # Ignore specific packages that require manual testing
+    ignore:
+      - dependency-name: "@angular/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
+    # Enable vulnerability alerts for all dependency types
+    target-branch: "main"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "06:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "ZarichneyDevelopment"
+    assignees:
+      - "ZarichneyDevelopment"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci-cd"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    allow:
+      - dependency-type: "direct"
+
+  # Docker dependencies (if any Dockerfiles exist)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "06:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "ZarichneyDevelopment"
+    assignees:
+      - "ZarichneyDevelopment"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "docker"
+      include: "scope"

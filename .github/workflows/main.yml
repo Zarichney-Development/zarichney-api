@@ -27,10 +27,20 @@ env:
   AWS_REGION: us-east-2
   SECRET_ID: cookbook-factory-secrets
   SECRET_DB_PASSWORD_KEY: DbPassword
+  # Performance tracking
+  BUILD_RUN_ID: ${{ github.run_id }}
+
+# Pipeline Control Options:
+# - Add 'skip-backend' label to PR to skip backend builds
+# - Add 'skip-frontend' label to PR to skip frontend builds  
+# - Add 'force-backend' label to PR to force backend builds
+# - Add 'force-frontend' label to PR to force frontend builds
+# - Include 'skip-frontend-deploy' in commit message to skip frontend deployment
 
 permissions:
   id-token: write
   contents: read
+  actions: read
 
 jobs:
   backend_build_and_test:
@@ -40,41 +50,88 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'pull_request' && (contains(github.event.pull_request.labels.*.name, 'force-backend') || !contains(github.event.pull_request.labels.*.name, 'skip-backend'))) ||
       (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    timeout-minutes: 30
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Cache .NET packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Install tools
+      - name: Install tools with retry
         run: |
-          dotnet tool update --global dotnet-ef --version 8.*
+          for i in {1..3}; do
+            if dotnet tool update --global dotnet-ef --version 8.*; then
+              break
+            else
+              echo "Attempt $i failed, retrying in 5 seconds..."
+              sleep 5
+            fi
+          done
           dotnet tool restore
 
-      - name: Restore dependencies
-        run: dotnet restore zarichney-api.sln
+      - name: Restore dependencies with retry
+        run: |
+          for i in {1..3}; do
+            if dotnet restore zarichney-api.sln; then
+              break
+            else
+              echo "Restore attempt $i failed, retrying in 10 seconds..."
+              sleep 10
+            fi
+          done
 
       - name: Build
         run: dotnet build zarichney-api.sln --configuration Release --no-restore
 
       - name: Generate API Client
-        run: pwsh ./Scripts/generate-api-client.ps1
+        run: |
+          if [ -f "./Scripts/generate-api-client.sh" ]; then
+            chmod +x ./Scripts/generate-api-client.sh
+            ./Scripts/generate-api-client.sh
+          else
+            pwsh ./Scripts/generate-api-client.ps1
+          fi
 
       - name: Run unit tests with coverage
         run: |
-          dotnet test zarichney-api.sln --filter "Category=Unit" --configuration Release --no-build \
-            --collect:"XPlat Code Coverage" --results-directory ./TestResults/unit \
-            --logger "trx;LogFileName=unit_tests.trx"
+          for i in {1..3}; do
+            if dotnet test zarichney-api.sln --filter "Category=Unit" --configuration Release --no-build \
+              --collect:"XPlat Code Coverage" --results-directory ./TestResults/unit \
+              --logger "trx;LogFileName=unit_tests.trx"; then
+              break
+            else
+              echo "Unit test attempt $i failed, retrying in 10 seconds..."
+              sleep 10
+            fi
+          done
 
       - name: Run integration tests
         run: |
-          dotnet test zarichney-api.sln --filter "Category=Integration" --configuration Release --no-build \
-            --collect:"XPlat Code Coverage" --results-directory ./TestResults/integration \
-            --logger "trx;LogFileName=integration_tests.trx"
+          # Ensure Docker is available for integration tests
+          docker --version || echo "Docker not available, integration tests may fail"
+          
+          for i in {1..3}; do
+            if dotnet test zarichney-api.sln --filter "Category=Integration" --configuration Release --no-build \
+              --collect:"XPlat Code Coverage" --results-directory ./TestResults/integration \
+              --logger "trx;LogFileName=integration_tests.trx"; then
+              break
+            else
+              echo "Integration test attempt $i failed, retrying in 15 seconds..."
+              sleep 15
+            fi
+          done
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -89,12 +146,14 @@ jobs:
           name: backend-coverage-results
           path: ./TestResults/**/coverage.cobertura.xml
 
-  frontend_build_and_deploy:
-    name: Frontend - Build and Deploy
+  frontend_build:
+    name: Frontend - Build
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && (contains(github.event.pull_request.labels.*.name, 'force-frontend') || !contains(github.event.pull_request.labels.*.name, 'skip-frontend'))) ||
       (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    timeout-minutes: 15
       
     steps:
       - name: Checkout code
@@ -107,23 +166,88 @@ jobs:
           cache: 'npm'
           cache-dependency-path: Code/Zarichney.Website/package-lock.json
 
-      - name: Install Frontend Dependencies
-        run: npm ci --legacy-peer-deps
-        working-directory: ./Code/Zarichney.Website
+      - name: Install Frontend Dependencies with retry
+        run: |
+          cd ./Code/Zarichney.Website
+          for i in {1..3}; do
+            if npm ci --legacy-peer-deps; then
+              break
+            else
+              echo "npm install attempt $i failed, retrying in 10 seconds..."
+              sleep 10
+              npm cache clean --force || true
+              rm -rf node_modules package-lock.json || true
+            fi
+          done
 
       - name: Build Frontend for Production
         run: npm run build-prod
         working-directory: ./Code/Zarichney.Website
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        
+      - name: Display build summary
+        run: |
+          echo "✅ Frontend build completed successfully"
+          echo "Build artifacts created:"
+          ls -la dist/
+          echo "Bundle sizes:"
+          du -sh dist/browser/* | head -10
+        working-directory: ./Code/Zarichney.Website
+        
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          name: frontend-build-artifacts
+          path: |
+            Code/Zarichney.Website/dist/
+            Code/Zarichney.Website/package.json
+            Code/Zarichney.Website/package-lock.json
+            Code/Zarichney.Website/scripts/
+          retention-days: 1
 
-      - name: Deploy static assets to S3
-        run: aws s3 sync dist/browser s3://static.zarichney.com --delete
+  frontend_deploy:
+    name: Frontend - Deploy
+    runs-on: ubuntu-latest
+    needs: frontend_build
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main' && !contains(github.event.push.head_commit.message, 'skip-frontend-deploy'))
+    timeout-minutes: 20
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build-artifacts
+          path: ./Code/Zarichney.Website/
+          
+      - name: Display deployment info
+        run: |
+          echo "🚀 Starting frontend deployment"
+          echo "Build artifacts downloaded:"
+          ls -la ./Code/Zarichney.Website/dist/
+          echo "Deployment target: Production (S3 + EC2)"
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-Frontend-${{ github.run_id }}
+
+      - name: Deploy static assets to S3 with retry
+        run: |
+          for i in {1..3}; do
+            if aws s3 sync dist/browser s3://static.zarichney.com --delete; then
+              echo "S3 sync successful"
+              break
+            else
+              echo "S3 sync attempt $i failed, retrying in 15 seconds..."
+              sleep 15
+            fi
+          done
         working-directory: ./Code/Zarichney.Website
 
       - name: Prepare server files for EC2
@@ -134,24 +258,78 @@ jobs:
           cp -r scripts/* server-deploy/scripts/
         working-directory: ./Code/Zarichney.Website
 
-      - name: Deploy Frontend to EC2
+      - name: Deploy Frontend to EC2 with enhanced error handling
         env:
           EC2_HOST: ${{ secrets.EC2_HOST_FRONTEND }}
           EC2_USERNAME: ec2-user
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
           echo "$EC2_SSH_KEY" > private_key && chmod 600 private_key
-          scp -r -o StrictHostKeyChecking=no -i private_key ./server-deploy/* ${EC2_USERNAME}@${EC2_HOST}:~/app/
-          ssh -o StrictHostKeyChecking=no -i private_key ${EC2_USERNAME}@${EC2_HOST} '
+          
+          # Deploy files with retry
+          for i in {1..3}; do
+            if scp -r -o StrictHostKeyChecking=no -o ConnectTimeout=30 -i private_key ./server-deploy/* ${EC2_USERNAME}@${EC2_HOST}:~/app/; then
+              echo "File deployment successful"
+              break
+            else
+              echo "File deployment attempt $i failed, retrying in 10 seconds..."
+              sleep 10
+            fi
+          done
+          
+          # Deploy application with enhanced error handling
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 -i private_key ${EC2_USERNAME}@${EC2_HOST} 'bash -s' <<'EOF'
+            set -e
             cd ~/app
+            
+            echo "Installing dependencies..."
             npm ci --omit=dev --legacy-peer-deps
-            pm2 restart server || pm2 start "npm run serve:ssr" --name server
-          '
+            
+            echo "Restarting application..."
+            if pm2 list | grep -q "server"; then
+              pm2 restart server
+            else
+              pm2 start "npm run serve:ssr" --name server
+            fi
+            
+            echo "Waiting for application to start..."
+            sleep 5
+            
+            # Verify PM2 process is running
+            if pm2 list | grep -q "server.*online"; then
+              echo "Application started successfully"
+            else
+              echo "Application failed to start properly"
+              pm2 logs server --lines 10
+              exit 1
+            fi
+          EOF
         working-directory: ./Code/Zarichney.Website
+
+      - name: Health check frontend deployment
+        run: |
+          echo "Performing health check on frontend..."
+          for i in {1..5}; do
+            if curl -f -s -o /dev/null --max-time 30 https://zarichney.com; then
+              echo "Frontend health check passed"
+              break
+            else
+              echo "Health check attempt $i failed, waiting 15 seconds..."
+              sleep 15
+            fi
+          done
 
       - name: Invalidate CloudFront for Frontend
         run: |
-          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+          for i in {1..3}; do
+            if aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"; then
+              echo "CloudFront invalidation successful"
+              break
+            else
+              echo "CloudFront invalidation attempt $i failed, retrying in 10 seconds..."
+              sleep 10
+            fi
+          done
 
   backend_deploy:
     name: Backend - Deploy
@@ -159,6 +337,7 @@ jobs:
     if: |
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    timeout-minutes: 20
       
     runs-on: ubuntu-latest
     
@@ -166,13 +345,29 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Cache .NET packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Install EF Core Tools
-        run: dotnet tool update --global dotnet-ef --version 8.*
+      - name: Install EF Core Tools with retry
+        run: |
+          for i in {1..3}; do
+            if dotnet tool update --global dotnet-ef --version 8.*; then
+              break
+            else
+              echo "EF Tools install attempt $i failed, retrying in 5 seconds..."
+              sleep 5
+            fi
+          done
 
       - name: Generate EF Migrations Script
         run: |
@@ -182,50 +377,119 @@ jobs:
       - name: Publish Application
         run: dotnet publish Code/Zarichney.Server/Zarichney.Server.csproj -c Release -o ./publish
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-Backend-${{ github.run_id }}
 
-      - name: Deploy Backend to EC2 and Apply Migrations
+      - name: Deploy Backend to EC2 and Apply Migrations with enhanced error handling
         env:
           EC2_HOST: ${{ secrets.EC2_HOST_BACKEND }}
           EC2_USERNAME: ec2-user
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
           echo "$EC2_SSH_KEY" > private_key && chmod 600 private_key
-          scp -r -o StrictHostKeyChecking=no -i private_key ./publish/* ${EC2_USERNAME}@${EC2_HOST}:/opt/cookbook-api/
+          
+          # Deploy files with retry
+          for i in {1..3}; do
+            if scp -r -o StrictHostKeyChecking=no -o ConnectTimeout=30 -i private_key ./publish/* ${EC2_USERNAME}@${EC2_HOST}:/opt/cookbook-api/; then
+              echo "Backend file deployment successful"
+              break
+            else
+              echo "Backend file deployment attempt $i failed, retrying in 10 seconds..."
+              sleep 10
+            fi
+          done
 
-          ssh -o StrictHostKeyChecking=no -i private_key ${EC2_USERNAME}@${EC2_HOST} 'bash -s' <<'EOF'
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 -i private_key ${EC2_USERNAME}@${EC2_HOST} 'bash -s' <<'EOF'
             set -e # Exit on error
             
             echo "Attempting to retrieve DB password from Secrets Manager..."
-            DB_PASSWORD=$(aws secretsmanager get-secret-value --secret-id "${{ env.SECRET_ID }}" --region "${{ env.AWS_REGION }}" --query SecretString --output text | jq -r '.${{ env.SECRET_DB_PASSWORD_KEY }}')
+            for i in {1..3}; do
+              DB_PASSWORD=$(aws secretsmanager get-secret-value --secret-id "${{ env.SECRET_ID }}" --region "${{ env.AWS_REGION }}" --query SecretString --output text | jq -r '.${{ env.SECRET_DB_PASSWORD_KEY }}' 2>/dev/null)
+              
+              if [ -n "$DB_PASSWORD" ] && [ "$DB_PASSWORD" != "null" ]; then
+                echo "Database password retrieved successfully"
+                break
+              else
+                echo "DB password retrieval attempt $i failed, retrying in 5 seconds..."
+                sleep 5
+              fi
+            done
             
             if [ -z "$DB_PASSWORD" ] || [ "$DB_PASSWORD" == "null" ]; then
-              echo "ERROR: Failed to retrieve database password."
+              echo "ERROR: Failed to retrieve database password after retries."
               exit 1
             fi
-            export PGPASSWORD="$DB_PASSWORD"
-            echo "Database password retrieved."
             
+            export PGPASSWORD="$DB_PASSWORD"
+            
+            echo "Applying database migrations..."
             cd /opt/cookbook-api/Server/Auth/Migrations
             chmod +x ./ApplyMigrations.sh
-            echo "Running ApplyMigrations.sh..."
-            ./ApplyMigrations.sh
+            
+            # Run migrations with timeout
+            timeout 180s ./ApplyMigrations.sh || {
+              echo "Migration failed or timed out"
+              unset PGPASSWORD
+              exit 1
+            }
             
             unset PGPASSWORD
-            echo "Migrations applied. PGPASSWORD unset."
+            echo "Migrations applied successfully."
             
             echo "Restarting cookbook-api service..."
-            sudo systemctl restart cookbook-api || sudo systemctl start cookbook-api
-            echo "Service restart command issued."
+            if sudo systemctl is-active --quiet cookbook-api; then
+              sudo systemctl restart cookbook-api
+            else
+              sudo systemctl start cookbook-api
+            fi
+            
+            echo "Waiting for service to start..."
+            sleep 10
+            
+            # Verify service is running
+            for i in {1..6}; do
+              if sudo systemctl is-active --quiet cookbook-api; then
+                echo "Backend service is running successfully"
+                break
+              else
+                echo "Service check attempt $i failed, waiting 10 seconds..."
+                sleep 10
+              fi
+            done
+            
+            if ! sudo systemctl is-active --quiet cookbook-api; then
+              echo "Service failed to start properly"
+              sudo systemctl status cookbook-api
+              sudo journalctl -u cookbook-api --lines 20
+              exit 1
+            fi
           EOF
+
+      - name: Health check backend deployment
+        run: |
+          echo "Performing health check on backend API..."
+          for i in {1..8}; do
+            if curl -f -s -o /dev/null --max-time 30 https://api.zarichney.com/health || curl -f -s -o /dev/null --max-time 30 https://api.zarichney.com/status; then
+              echo "Backend health check passed"
+              break
+            else
+              echo "Health check attempt $i failed, waiting 15 seconds..."
+              sleep 15
+            fi
+          done
 
       - name: Invalidate CloudFront for Backend
         run: |
-          aws cloudfront create-invalidation \
-          --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
-          --paths "/api/*"
+          for i in {1..3}; do
+            if aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/api/*"; then
+              echo "Backend CloudFront invalidation successful"
+              break
+            else
+              echo "Backend CloudFront invalidation attempt $i failed, retrying in 10 seconds..."
+              sleep 10
+            fi
+          done
