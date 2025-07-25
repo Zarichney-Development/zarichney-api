@@ -660,8 +660,8 @@ parse_coverage() {
     local branch_rate=$(grep -o 'branch-rate="[0-9.]*"' "$coverage_file" | head -1 | grep -o '[0-9.]*' || echo "0")
     
     # Convert to percentages
-    local line_coverage=$(echo "scale=1; $line_rate * 100" | bc 2>/dev/null || echo "0.0")
-    local branch_coverage=$(echo "scale=1; $branch_rate * 100" | bc 2>/dev/null || echo "0.0")
+    local line_coverage=$(awk -v lr="$line_rate" 'BEGIN {printf "%.1f", lr * 100}')
+    local branch_coverage=$(awk -v br="$branch_rate" 'BEGIN {printf "%.1f", br * 100}')
     
     # Store coverage results
     cat > "$TEST_RESULTS_DIR/coverage_results.json" << EOF
@@ -669,7 +669,7 @@ parse_coverage() {
     "line_coverage": $line_coverage,
     "branch_coverage": $branch_coverage,
     "threshold": $COVERAGE_THRESHOLD,
-    "meets_threshold": $(echo "$line_coverage >= $COVERAGE_THRESHOLD" | bc 2>/dev/null || echo "0")
+    "meets_threshold": $(awk -v lc="$line_coverage" -v ct="$COVERAGE_THRESHOLD" 'BEGIN {print (lc >= ct) ? 1 : 0}')
 }
 EOF
     
@@ -706,24 +706,24 @@ detect_quality_regression() {
     local current_coverage=$(jq -r '.line_coverage // 0' "$current_coverage" 2>/dev/null || echo "0")
     
     # Calculate regressions
-    local pass_rate_change=$(echo "scale=2; $current_pass_rate - $baseline_pass_rate" | bc 2>/dev/null || echo "0")
-    local coverage_change=$(echo "scale=2; $current_coverage - $baseline_coverage" | bc 2>/dev/null || echo "0")
+    local pass_rate_change=$(awk -v cp="$current_pass_rate" -v bp="$baseline_pass_rate" 'BEGIN {printf "%.2f", cp - bp}')
+    local coverage_change=$(awk -v cc="$current_coverage" -v bc="$baseline_coverage" 'BEGIN {printf "%.2f", cc - bc}')
     local test_count_change=$((current_total - baseline_total))
     
     # Determine regression severity
     local regression_level="NONE"
     local regression_detected=false
     
-    if (( $(echo "$pass_rate_change < -5" | bc -l) )); then
+    if (( $(awk -v prc="$pass_rate_change" 'BEGIN {print (prc < -5) ? 1 : 0}') )); then
         regression_level="HIGH"
         regression_detected=true
-    elif (( $(echo "$pass_rate_change < -2" | bc -l) )); then
+    elif (( $(awk -v prc="$pass_rate_change" 'BEGIN {print (prc < -2) ? 1 : 0}') )); then
         regression_level="MEDIUM"
         regression_detected=true
-    elif (( $(echo "$coverage_change < -3" | bc -l) )); then
+    elif (( $(awk -v cc="$coverage_change" 'BEGIN {print (cc < -3) ? 1 : 0}') )); then
         regression_level="MEDIUM"
         regression_detected=true
-    elif (( $(echo "$coverage_change < -1" | bc -l) )); then
+    elif (( $(awk -v cc="$coverage_change" 'BEGIN {print (cc < -1) ? 1 : 0}') )); then
         regression_level="LOW"
         regression_detected=true
     fi
@@ -830,12 +830,12 @@ calculate_dynamic_quality_gates() {
             local std_coverage=$(calculate_standard_deviation "${coverage_values[@]}")
             
             # Set threshold at 1 standard deviation below average (adaptive floor)
-            dynamic_coverage_threshold=$(echo "$avg_coverage - $std_coverage" | bc -l | awk '{printf "%.1f", $1}')
+            dynamic_coverage_threshold=$(awk -v avg="$avg_coverage" -v std="$std_coverage" 'BEGIN {printf "%.1f", avg - std}')
             
             # Ensure minimum threshold of 15% and maximum of original threshold
-            if (( $(echo "$dynamic_coverage_threshold < 15" | bc -l) )); then
+            if (( $(awk -v dct="$dynamic_coverage_threshold" 'BEGIN {print (dct < 15) ? 1 : 0}') )); then
                 dynamic_coverage_threshold=15
-            elif (( $(echo "$dynamic_coverage_threshold > $COVERAGE_THRESHOLD" | bc -l) )); then
+            elif (( $(awk -v dct="$dynamic_coverage_threshold" -v ct="$COVERAGE_THRESHOLD" 'BEGIN {print (dct > ct) ? 1 : 0}') )); then
                 dynamic_coverage_threshold=$COVERAGE_THRESHOLD
             fi
             
@@ -847,10 +847,10 @@ calculate_dynamic_quality_gates() {
             local std_pass_rate=$(calculate_standard_deviation "${pass_rate_values[@]}")
             
             # Set threshold at 1.5 standard deviations below average (stricter for pass rate)
-            dynamic_pass_rate_threshold=$(echo "$avg_pass_rate - 1.5 * $std_pass_rate" | bc -l | awk '{printf "%.1f", $1}')
+            dynamic_pass_rate_threshold=$(awk -v avg="$avg_pass_rate" -v std="$std_pass_rate" 'BEGIN {printf "%.1f", avg - 1.5 * std}')
             
             # Ensure minimum threshold of 85%
-            if (( $(echo "$dynamic_pass_rate_threshold < 85" | bc -l) )); then
+            if (( $(awk -v dprt="$dynamic_pass_rate_threshold" 'BEGIN {print (dprt < 85) ? 1 : 0}') )); then
                 dynamic_pass_rate_threshold=85
             fi
         fi
@@ -860,7 +860,7 @@ calculate_dynamic_quality_gates() {
             local std_exec_time=$(calculate_standard_deviation "${execution_times[@]}")
             
             # Set performance threshold at average + 2 standard deviations (outlier detection)
-            dynamic_performance_threshold=$(echo "($avg_exec_time + 2 * $std_exec_time) / $avg_exec_time * 100" | bc -l | awk '{printf "%.0f", $1}')
+            dynamic_performance_threshold=$(awk -v avg="$avg_exec_time" -v std="$std_exec_time" 'BEGIN {printf "%.0f", (avg + 2 * std) / avg * 100}')
             
             # Cap at 200% to prevent unreasonably high thresholds
             if [[ $dynamic_performance_threshold -gt 200 ]]; then
@@ -891,9 +891,9 @@ calculate_dynamic_quality_gates() {
         "original_performance_threshold": 120
     },
     "recommendations": {
-        "coverage": "$(if (( $(echo "$dynamic_coverage_threshold > $COVERAGE_THRESHOLD" | bc -l) )); then echo "Project performing above baseline - consider raising standards"; else echo "Adaptive threshold set based on historical performance"; fi)",
-        "reliability": "$(if (( $(echo "$dynamic_pass_rate_threshold > 95" | bc -l) )); then echo "High reliability demonstrated - maintaining elevated standards"; else echo "Adaptive reliability threshold based on project maturity"; fi)",
-        "performance": "Threshold set at $(echo "scale=0; $dynamic_performance_threshold" | bc)% of historical average execution time"
+        "coverage": "$(if (( $(awk -v dct="$dynamic_coverage_threshold" -v ct="$COVERAGE_THRESHOLD" 'BEGIN {print (dct > ct) ? 1 : 0}') )); then echo "Project performing above baseline - consider raising standards"; else echo "Adaptive threshold set based on historical performance"; fi)",
+        "reliability": "$(if (( $(awk -v dprt="$dynamic_pass_rate_threshold" 'BEGIN {print (dprt > 95) ? 1 : 0}') )); then echo "High reliability demonstrated - maintaining elevated standards"; else echo "Adaptive reliability threshold based on project maturity"; fi)",
+        "performance": "Threshold set at $(awk -v dpt="$dynamic_performance_threshold" 'BEGIN {printf "%.0f", dpt}')% of historical average execution time"
     }
 }
 EOF
@@ -916,10 +916,10 @@ calculate_average() {
     local count=${#values[@]}
     
     for value in "${values[@]}"; do
-        sum=$(echo "$sum + $value" | bc -l)
+        sum=$(awk -v sum="$sum" -v val="$value" 'BEGIN {print sum + val}')
     done
     
-    echo "scale=2; $sum / $count" | bc -l
+    awk -v sum="$sum" -v cnt="$count" 'BEGIN {printf "%.2f", sum / cnt}'
 }
 
 calculate_standard_deviation() {
@@ -929,13 +929,13 @@ calculate_standard_deviation() {
     local variance_sum=0
     
     for value in "${values[@]}"; do
-        local diff=$(echo "$value - $avg" | bc -l)
-        local squared=$(echo "$diff * $diff" | bc -l)
-        variance_sum=$(echo "$variance_sum + $squared" | bc -l)
+        local diff=$(awk -v val="$value" -v avg="$avg" 'BEGIN {print val - avg}')
+        local squared=$(awk -v d="$diff" 'BEGIN {print d * d}')
+        variance_sum=$(awk -v vs="$variance_sum" -v sq="$squared" 'BEGIN {print vs + sq}')
     done
     
-    local variance=$(echo "scale=4; $variance_sum / $count" | bc -l)
-    echo "scale=2; sqrt($variance)" | bc -l
+    local variance=$(awk -v vs="$variance_sum" -v cnt="$count" 'BEGIN {printf "%.4f", vs / cnt}')
+    awk -v var="$variance" 'BEGIN {printf "%.2f", sqrt(var)}'
 }
 
 # Save historical data for dynamic quality gates (Phase 3 enhancement)
@@ -1043,7 +1043,7 @@ EOF
         if [[ ${#coverage_trend[@]} -ge 3 ]]; then
             local coverage_avg=$(calculate_average "${coverage_trend[@]}")
             local coverage_slope=$(calculate_trend_slope "${coverage_trend[@]}")
-            local coverage_prediction=$(echo "$coverage_avg + $coverage_slope" | bc -l | awk '{printf "%.1f", $1}')
+            local coverage_prediction=$(awk -v avg="$coverage_avg" -v slope="$coverage_slope" 'BEGIN {printf "%.1f", avg + slope}')
             
             # Update trends JSON
             jq --argjson avg "$coverage_avg" --argjson slope "$coverage_slope" --argjson pred "$coverage_prediction" \
@@ -1058,7 +1058,7 @@ EOF
         if [[ ${#pass_rate_trend[@]} -ge 3 ]]; then
             local pass_rate_avg=$(calculate_average "${pass_rate_trend[@]}")
             local pass_rate_slope=$(calculate_trend_slope "${pass_rate_trend[@]}")
-            local pass_rate_prediction=$(echo "$pass_rate_avg + $pass_rate_slope" | bc -l | awk '{printf "%.1f", $1}')
+            local pass_rate_prediction=$(awk -v avg="$pass_rate_avg" -v slope="$pass_rate_slope" 'BEGIN {printf "%.1f", avg + slope}')
             
             jq --argjson avg "$pass_rate_avg" --argjson slope "$pass_rate_slope" \
                 '.trend_analysis.trends.reliability = {"average": $avg, "slope": $slope, "direction": (if $slope > 0.5 then "improving" elif $slope < -0.5 then "declining" else "stable" end)}' \
@@ -1072,7 +1072,7 @@ EOF
         if [[ ${#execution_time_trend[@]} -ge 3 ]]; then
             local exec_time_avg=$(calculate_average "${execution_time_trend[@]}")
             local exec_time_slope=$(calculate_trend_slope "${execution_time_trend[@]}")
-            local exec_time_prediction=$(echo "$exec_time_avg + $exec_time_slope" | bc -l | awk '{printf "%.0f", $1}')
+            local exec_time_prediction=$(awk -v avg="$exec_time_avg" -v slope="$exec_time_slope" 'BEGIN {printf "%.0f", avg + slope}')
             
             jq --argjson avg "$exec_time_avg" --argjson slope "$exec_time_slope" \
                 '.trend_analysis.trends.performance = {"average": $avg, "slope": $slope, "direction": (if $slope > 5 then "slowing" elif $slope < -5 then "improving" else "stable" end)}' \
@@ -1118,18 +1118,18 @@ calculate_trend_slope() {
         local x=$((i + 1))
         local y="${values[$i]}"
         
-        sum_x=$(echo "$sum_x + $x" | bc -l)
-        sum_y=$(echo "$sum_y + $y" | bc -l)
-        sum_xy=$(echo "$sum_xy + $x * $y" | bc -l)
-        sum_x2=$(echo "$sum_x2 + $x * $x" | bc -l)
+        sum_x=$(awk -v sum="$sum_x" -v x="$x" 'BEGIN {print sum + x}')
+        sum_y=$(awk -v sum="$sum_y" -v y="$y" 'BEGIN {print sum + y}')
+        sum_xy=$(awk -v sum="$sum_xy" -v x="$x" -v y="$y" 'BEGIN {print sum + x * y}')
+        sum_x2=$(awk -v sum="$sum_x2" -v x="$x" 'BEGIN {print sum + x * x}')
     done
     
     # slope = (n*sum_xy - sum_x*sum_y) / (n*sum_x2 - sum_x*sum_x)
-    local numerator=$(echo "$count * $sum_xy - $sum_x * $sum_y" | bc -l)
-    local denominator=$(echo "$count * $sum_x2 - $sum_x * $sum_x" | bc -l)
+    local numerator=$(awk -v cnt="$count" -v sxy="$sum_xy" -v sx="$sum_x" -v sy="$sum_y" 'BEGIN {print cnt * sxy - sx * sy}')
+    local denominator=$(awk -v cnt="$count" -v sx2="$sum_x2" -v sx="$sum_x" 'BEGIN {print cnt * sx2 - sx * sx}')
     
-    if [[ $(echo "$denominator != 0" | bc -l) -eq 1 ]]; then
-        echo "scale=3; $numerator / $denominator" | bc -l
+    if [[ $(awk -v den="$denominator" 'BEGIN {print (den != 0) ? 1 : 0}') -eq 1 ]]; then
+        awk -v num="$numerator" -v den="$denominator" 'BEGIN {printf "%.3f", num / den}'
     else
         echo "0"
     fi
@@ -1146,19 +1146,19 @@ generate_trend_alerts() {
     
     # Coverage degradation alert
     local coverage_slope=$(jq -r '.trend_analysis.trends.coverage.slope // 0' "$trends_file" 2>/dev/null)
-    if [[ $(echo "$coverage_slope < -2" | bc -l) -eq 1 ]]; then
+    if [[ $(awk -v cs="$coverage_slope" 'BEGIN {print (cs < -2) ? 1 : 0}') -eq 1 ]]; then
         alerts+=("\"Coverage trend declining significantly (slope: $coverage_slope)\"")
     fi
     
     # Reliability degradation alert
     local reliability_slope=$(jq -r '.trend_analysis.trends.reliability.slope // 0' "$trends_file" 2>/dev/null)
-    if [[ $(echo "$reliability_slope < -1" | bc -l) -eq 1 ]]; then
+    if [[ $(awk -v rs="$reliability_slope" 'BEGIN {print (rs < -1) ? 1 : 0}') -eq 1 ]]; then
         alerts+=("\"Test reliability declining (slope: $reliability_slope)\"")
     fi
     
     # Performance degradation alert
     local performance_slope=$(jq -r '.trend_analysis.trends.performance.slope // 0' "$trends_file" 2>/dev/null)
-    if [[ $(echo "$performance_slope > 10" | bc -l) -eq 1 ]]; then
+    if [[ $(awk -v ps="$performance_slope" 'BEGIN {print (ps > 10) ? 1 : 0}') -eq 1 ]]; then
         alerts+=("\"Test execution time increasing significantly (slope: $performance_slope seconds)\"")
     fi
     
@@ -1166,7 +1166,7 @@ generate_trend_alerts() {
     if [[ ${#coverage_values[@]} -ge 5 ]]; then
         local recent_coverage=("${coverage_values[@]:0:5}")
         local coverage_std=$(calculate_standard_deviation "${recent_coverage[@]}")
-        if [[ $(echo "$coverage_std > 5" | bc -l) -eq 1 ]]; then
+        if [[ $(awk -v cs="$coverage_std" 'BEGIN {print (cs > 5) ? 1 : 0}') -eq 1 ]]; then
             alerts+=("\"High coverage volatility detected (std dev: $coverage_std)\"")
         fi
     fi
@@ -1215,14 +1215,14 @@ assess_deployment_risk() {
     fi
     
     # Coverage risk (0-25 points)
-    if (( $(echo "$coverage < 24" | bc -l) )); then
-        local coverage_risk=$(echo "scale=0; (24 - $coverage) * 2" | bc)
+    if (( $(awk -v cov="$coverage" 'BEGIN {print (cov < 24) ? 1 : 0}') )); then
+        local coverage_risk=$(awk -v cov="$coverage" 'BEGIN {printf "%.0f", (24 - cov) * 2}')
         risk_score=$((risk_score + coverage_risk))
         risk_factors+=("Low coverage ${coverage}% (+${coverage_risk} risk)")
     fi
     
     # Pass rate risk (0-20 points)
-    if (( $(echo "$pass_rate < 95" | bc -l) )); then
+    if (( $(awk -v pr="$pass_rate" 'BEGIN {print (pr < 95) ? 1 : 0}') )); then
         local pass_rate_risk=$(echo "scale=0; (95 - $pass_rate) / 5" | bc)
         risk_score=$((risk_score + pass_rate_risk))
         risk_factors+=("Pass rate ${pass_rate}% (+${pass_rate_risk} risk)")
@@ -1432,7 +1432,7 @@ $(if [[ $failed -eq 0 ]]; then echo "✅ **ALL TESTS PASSING** - Excellent stabi
 | Coverage Type | Percentage | Threshold | Status |
 |---------------|------------|-----------|--------|
 | Line Coverage | ${line_cov}% | ${COVERAGE_THRESHOLD}% | $(if [[ "$meets_threshold" == "Yes" ]]; then echo "✅ Meets Target"; else echo "⚠️ Below Target"; fi) |
-| Branch Coverage | ${branch_cov}% | 20% | $(if command -v bc >/dev/null && [[ $(echo "${branch_cov/N\/A/0} >= 20" | bc 2>/dev/null || echo 0) -eq 1 ]]; then echo "✅ Meets Target"; else echo "⚠️ Below Target"; fi) |
+| Branch Coverage | ${branch_cov}% | 20% | $(if [[ $(awk -v bc="${branch_cov/N\/A/0}" 'BEGIN {print (bc >= 20) ? 1 : 0}') -eq 1 ]]; then echo "✅ Meets Target"; else echo "⚠️ Below Target"; fi) |
 
 ## 🎯 Recommendations
 
