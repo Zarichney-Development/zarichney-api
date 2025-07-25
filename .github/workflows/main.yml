@@ -104,47 +104,81 @@ jobs:
             pwsh ./Scripts/generate-api-client.ps1
           fi
 
-      - name: Run unit tests with coverage
+      - name: Advanced Test Execution with Quality Gates
         run: |
-          for i in {1..3}; do
-            if dotnet test zarichney-api.sln --filter "Category=Unit" --configuration Release --no-build \
-              --collect:"XPlat Code Coverage" --results-directory ./TestResults/unit \
-              --logger "trx;LogFileName=unit_tests.trx"; then
-              break
-            else
-              echo "Unit test attempt $i failed, retrying in 10 seconds..."
-              sleep 10
-            fi
-          done
-
-      - name: Run integration tests
-        run: |
-          # Ensure Docker is available for integration tests
-          docker --version || echo "Docker not available, integration tests may fail"
+          echo "🚀 Running advanced test suite with AI-powered analysis..."
           
-          for i in {1..3}; do
-            if dotnet test zarichney-api.sln --filter "Category=Integration" --configuration Release --no-build \
-              --collect:"XPlat Code Coverage" --results-directory ./TestResults/integration \
-              --logger "trx;LogFileName=integration_tests.trx"; then
-              break
-            else
-              echo "Integration test attempt $i failed, retrying in 15 seconds..."
-              sleep 15
-            fi
-          done
+          # Make script executable
+          chmod +x ./Scripts/run-test-report.sh
+          
+          # Set quality gate thresholds
+          export COVERAGE_THRESHOLD=24  # Current baseline, targeting 90%
+          export QUALITY_GATE_ENABLED=true
+          export CI_ENVIRONMENT=true
+          
+          # Run comprehensive test suite with JSON output for CI/CD
+          if ./Scripts/run-test-report.sh json --threshold=24; then
+            echo "✅ All tests passed and quality gates met"
+          else
+            echo "❌ Tests failed or quality gates not met"
+            exit 1
+          fi
 
-      - name: Upload test results
+      - name: Parse and validate test results
+        if: always()
+        run: |
+          echo "📊 Analyzing test results for quality gate validation..."
+          
+          if [ -f "./TestResults/parsed_results.json" ]; then
+            echo "Test results found, extracting metrics..."
+            
+            # Extract key metrics for quality gates
+            TOTAL_TESTS=$(jq -r '.tests.total // 0' ./TestResults/parsed_results.json)
+            FAILED_TESTS=$(jq -r '.tests.failed // 0' ./TestResults/parsed_results.json)
+            PASS_RATE=$(jq -r '.tests.pass_rate // 0' ./TestResults/parsed_results.json)
+            
+            echo "📈 Test Metrics:"
+            echo "  Total Tests: $TOTAL_TESTS"
+            echo "  Failed Tests: $FAILED_TESTS"
+            echo "  Pass Rate: $PASS_RATE%"
+            
+            # Quality gate enforcement
+            if [ "$FAILED_TESTS" -gt 0 ]; then
+              echo "❌ Quality Gate FAILED: $FAILED_TESTS test(s) are failing"
+              exit 1
+            fi
+            
+            if [ "$PASS_RATE" -lt 95 ]; then
+              echo "⚠️  Quality Gate WARNING: Pass rate ($PASS_RATE%) below 95%"
+            fi
+            
+            echo "✅ Quality gates validated successfully"
+          else
+            echo "❌ No test results found - pipeline failure"
+            exit 1
+          fi
+
+      - name: Upload enhanced test artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: backend-test-results
-          path: ./TestResults/**/*.trx
+          name: advanced-test-results-${{ github.run_id }}
+          path: |
+            ./TestResults/**/*.trx
+            ./TestResults/**/*.json
+            ./TestResults/**/*.md
+            ./TestResults/**/*.log
+          retention-days: 30
 
-      - name: Upload coverage results
+      - name: Upload coverage results with trend analysis
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: backend-coverage-results
-          path: ./TestResults/**/coverage.cobertura.xml
+          name: coverage-analysis-${{ github.run_id }}
+          path: |
+            ./TestResults/**/coverage.cobertura.xml
+            ./TestResults/coverage_results.json
+          retention-days: 30
 
   frontend_build:
     name: Frontend - Build

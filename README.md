@@ -47,7 +47,7 @@ Whether you're interested in the platform's features or the cutting-edge develop
 * **Key Libraries:** 
     * **Backend:** Serilog, Polly, MediatR, AutoMapper, RestSharp, Stripe.net, Octokit, QuestPDF, PlaywrightSharp, AngleSharp
     * **Frontend:** RxJS, Angular CDK, Stripe.js, Express (for SSR), Axios
-* **Development Process:** Git, GitHub Actions (planned for CI/CD), AI Agent Assistance (via custom prompts/workflows).
+* **Development Process:** Git, **GitHub Actions (Advanced CI/CD with AI-powered QA)**, AI Agent Assistance (via custom prompts/workflows).
 
 ## Exploring the Repository
 

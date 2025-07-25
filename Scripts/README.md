@@ -1,6 +1,6 @@
 # Module/Directory: Scripts
 
-**Last Updated:** 2025-06-27
+**Last Updated:** 2025-07-25
 
 **(Optional: Link to Parent Directory's README)**
 > **Parent:** [`zarichney-api`](../README.md)
@@ -21,7 +21,7 @@
 ## 2. Architecture & Key Concepts
 
 * **High-Level Design:** The scripts are organized into four main categories:
-    * **Development & Testing Scripts:** `generate-api-client.*`, `run-automation-suite.sh`, `test-auth-endpoints.*`
+    * **Development & Testing Scripts:** `generate-api-client.*`, `run-automation-suite.sh`, `run-test-report.sh`, `test-auth-endpoints.*`
     * **Deployment & Service Management:** `start-server.sh`, `cookbook-api.service`, `cleanup-playwright.sh`
     * **Domain-Specific Testing:** `test_sites.sh` (recipe scraping validation)
     * **Configuration Files:** `.refitter` (API client generation settings)
@@ -46,6 +46,11 @@
         * **Critical Preconditions:** `Docker running for integration tests`, `.NET 8 SDK`, `ReportGenerator tool`
         * **Critical Postconditions:** Test results in `TestResults/`, HTML coverage report in `CoverageReport/`, browser opens coverage report
         * **Non-Obvious Error Handling:** Handles Docker group membership detection; supports `sg docker` fallback for Linux/WSL2
+    * `run-test-report.sh`:
+        * **Purpose:** Advanced test execution with AI-powered analysis, quality gates, and comprehensive reporting
+        * **Critical Preconditions:** `Docker available for integration tests`, `.NET 8 SDK`, `jq for JSON processing`
+        * **Critical Postconditions:** JSON results in `TestResults/`, markdown reports, quality gate enforcement for CI/CD
+        * **Non-Obvious Error Handling:** Supports multiple output formats (JSON, markdown, summary); enforces quality gates in CI environments
     * `test-auth-endpoints.*`:
         * **Purpose:** Comprehensive end-to-end testing of authentication API endpoints
         * **Critical Preconditions:** `API server running on localhost:5173`, valid test credentials configured

@@ -9,6 +9,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 RESULTS_DIR="$PROJECT_ROOT/TestResults"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+
+# Ensure results directory exists
+mkdir -p "$RESULTS_DIR"
 LOG_FILE="$RESULTS_DIR/test-report-$TIMESTAMP.log"
 
 # Default settings
@@ -119,11 +122,16 @@ check_prerequisites() {
         error_exit "Not in zarichney-api project root directory"
     fi
     
-    # Check Docker service
-    if ! systemctl is-active --quiet docker; then
-        error_exit "Docker service is not running. Please start Docker for integration tests."
+    # Check Docker availability (flexible for different environments)
+    if command -v docker &> /dev/null; then
+        if docker info &> /dev/null; then
+            success "Docker is available and running"
+        else
+            warning "Docker is installed but may not be running - integration tests may be affected"
+        fi
+    else
+        warning "Docker not found - integration tests will be skipped"
     fi
-    success "Docker service is running"
     
     # Check dotnet
     if ! command -v dotnet &> /dev/null; then
@@ -147,8 +155,8 @@ run_tests() {
     
     local start_time=$(date +%s)
     
-    # Run tests with coverage
-    if sg docker -c "dotnet test zarichney-api.sln --logger trx --logger 'console;verbosity=detailed' --results-directory '$RESULTS_DIR' --collect:'XPlat Code Coverage' --nologo" 2>&1 | tee -a "$LOG_FILE"; then
+    # Run tests with coverage (CI-compatible)
+    if dotnet test zarichney-api.sln --logger trx --logger 'console;verbosity=detailed' --results-directory "$RESULTS_DIR" --collect:'XPlat Code Coverage' --nologo 2>&1 | tee -a "$LOG_FILE"; then
         success "Test execution completed successfully"
     else
         error_exit "Test execution failed"
@@ -441,6 +449,60 @@ EOF
     fi
 }
 
+# Quality gate enforcement for CI/CD
+enforce_quality_gates() {
+    log "🚪 Enforcing quality gates..."
+    
+    local results_file="$RESULTS_DIR/parsed_results.json"
+    local coverage_file="$RESULTS_DIR/coverage_results.json"
+    local gate_failed=false
+    
+    if [[ ! -f "$results_file" ]]; then
+        error_exit "Quality gate enforcement failed: No test results found"
+    fi
+    
+    # Extract test metrics
+    local total_tests=$(jq -r '.tests.total // 0' "$results_file" 2>/dev/null || echo "0")
+    local failed_tests=$(jq -r '.tests.failed // 0' "$results_file" 2>/dev/null || echo "0")
+    local pass_rate=$(jq -r '.tests.pass_rate // 0' "$results_file" 2>/dev/null || echo "0")
+    
+    # Test failure gate
+    if [[ $failed_tests -gt 0 ]]; then
+        error "QUALITY GATE FAILED: $failed_tests test(s) are failing"
+        gate_failed=true
+    fi
+    
+    # Coverage gate (if coverage data available)
+    if [[ -f "$coverage_file" ]]; then
+        local line_coverage=$(jq -r '.line_coverage // 0' "$coverage_file" 2>/dev/null || echo "0")
+        local meets_threshold=$(jq -r '.meets_threshold // 0' "$coverage_file" 2>/dev/null || echo "0")
+        
+        if [[ "$meets_threshold" != "1" ]] && [[ "${QUALITY_GATE_ENABLED:-false}" == "true" ]]; then
+            warning "QUALITY GATE WARNING: Coverage ${line_coverage}% below threshold ${COVERAGE_THRESHOLD}%"
+            # Note: For Phase 1, we warn but don't fail on coverage to establish baseline
+        fi
+        
+        info "Coverage analysis: ${line_coverage}% (threshold: ${COVERAGE_THRESHOLD}%)"
+    fi
+    
+    # CI environment specific checks
+    if [[ "${CI_ENVIRONMENT:-false}" == "true" ]]; then
+        if [[ $total_tests -lt 100 ]]; then
+            warning "QUALITY GATE WARNING: Test count ($total_tests) may be insufficient for comprehensive coverage"
+        fi
+        
+        if [[ $pass_rate -lt 95 ]]; then
+            warning "QUALITY GATE WARNING: Pass rate ($pass_rate%) below recommended 95%"
+        fi
+    fi
+    
+    if [[ "$gate_failed" == "true" ]]; then
+        error_exit "Quality gates failed - blocking pipeline"
+    else
+        success "All quality gates passed"
+    fi
+}
+
 # Cleanup function
 cleanup() {
     log "🧹 Cleaning up temporary files..."
@@ -466,6 +528,11 @@ main() {
     
     # Generate report
     generate_report
+    
+    # Enforce quality gates for CI/CD environments
+    if [[ "${CI_ENVIRONMENT:-false}" == "true" ]] || [[ "${QUALITY_GATE_ENABLED:-false}" == "true" ]]; then
+        enforce_quality_gates
+    fi
     
     # Cleanup
     cleanup
