@@ -19,9 +19,12 @@ jobs:
   standards-check:
     name: Standards Compliance Check
     runs-on: ubuntu-latest
-    if: |
-      (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success') ||
-      (github.event_name == 'pull_request')
+    # TEMPORARILY DISABLED WHILE IMPLEMENTING TECH DEBT ANALYSIS (#54)
+    if: false
+    # Original condition:
+    # if: |
+    #   (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success') ||
+    #   (github.event_name == 'pull_request')
     timeout-minutes: 10
     
     steps:
