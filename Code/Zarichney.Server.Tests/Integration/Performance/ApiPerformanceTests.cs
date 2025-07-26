@@ -31,7 +31,7 @@ public class ApiPerformanceTests(ApiClientFixture apiClientFixture, ITestOutputH
 
     // Act
     stopwatch.Start();
-    var recipes = await client.Recipe("burger", false, null, null);
+    var recipes = await client.Recipe("burger", false, default(int?), default(int?));
     stopwatch.Stop();
 
     // Assert
@@ -56,7 +56,7 @@ public class ApiPerformanceTests(ApiClientFixture apiClientFixture, ITestOutputH
     for (int i = 0; i < requestCount; i++)
     {
       var stopwatch = Stopwatch.StartNew();
-      var recipes = await client.Recipe("burger", false, null, null);
+      var recipes = await client.Recipe("burger", false, default(int?), default(int?));
       stopwatch.Stop();
 
       Assert.NotNull(recipes);

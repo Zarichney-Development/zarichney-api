@@ -70,7 +70,7 @@ public class PublicControllerTests(ApiClientFixture apiClientFixture, ITestOutpu
     configResponse.Should().NotBeNull(
       because: "response should contain a list of configuration statuses");
 
-    configItems.Should().NotBeEmpty(
+    configItems.Should().NotBeNull().And.NotBeEmpty(
       because: "response should contain at least some configuration items");
 
     configItems.Select(item => item.Name).Should().BeEquivalentTo(expectedConfigItemNames,

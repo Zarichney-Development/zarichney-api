@@ -1,0 +1,86 @@
+name: Standards Compliance Check
+
+on:
+  workflow_run:
+    workflows: ["Unified CI/CD for Zarichney Fullstack"]
+    types:
+      - completed
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  id-token: write
+  checks: write
+  pull-requests: write
+  contents: read
+  actions: read
+
+jobs:
+  standards-check:
+    name: Standards Compliance Check
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'pull_request')
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Checkout the PR branch for analysis
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install .NET tools
+        run: |
+          dotnet tool restore
+          
+      - name: Get PR number
+        id: pr-number
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # Direct PR trigger
+            PR_NUMBER="${{ github.event.number }}"
+          else
+            # workflow_run trigger - extract PR number from the workflow run
+            PR_NUMBER=$(gh run view ${{ github.event.workflow_run.id }} --json headRepository,headBranch | jq -r '.headBranch' | grep -o 'pull/[0-9]*' | cut -d'/' -f2 || echo "")
+            if [ -z "$PR_NUMBER" ]; then
+              # Alternative approach: get PR number from API
+              PR_NUMBER=$(gh api repos/${{ github.repository }}/pulls --jq ".[] | select(.head.sha==\"${{ github.event.workflow_run.head_sha }}\") | .number")
+            fi
+          fi
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "Found PR number: $PR_NUMBER"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Standards Compliance Check
+        id: standards-check
+        uses: ./.github/actions/check-standards
+        with:
+          pr-number: ${{ steps.pr-number.outputs.pr_number }}
+          base-branch: ${{ github.event_name == 'pull_request' && github.base_ref || github.event.workflow_run.pull_requests[0].base.ref || 'develop' }}
+          head-sha: ${{ github.event_name == 'pull_request' && github.sha || github.event.workflow_run.head_sha }}
+          claude-oauth-token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post Standards Report
+        if: steps.pr-number.outputs.pr_number != ''
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ steps.pr-number.outputs.pr_number }}
+          recreate: true
+          path: standards-report.md
+
+      - name: Check Quality Gates
+        if: steps.standards-check.outputs.mandatory-violations-count > 0
+        run: |
+          echo "❌ Standards compliance check failed with ${{ steps.standards-check.outputs.mandatory-violations-count }} mandatory violations"
+          echo "Mandatory violations must be fixed before merging"
+          exit 1

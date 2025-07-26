@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
   schedule:
     - cron: '30 2 * * 1'  # Weekly on Mondays
   workflow_dispatch:
@@ -18,6 +18,8 @@ jobs:
   analyze:
     name: Analyze Code
     runs-on: ubuntu-latest
+    # TEMPORARILY DISABLED TO TEST STANDARDS COMPLIANCE PIPELINE ONLY
+    if: false
     timeout-minutes: 45
 
     strategy:

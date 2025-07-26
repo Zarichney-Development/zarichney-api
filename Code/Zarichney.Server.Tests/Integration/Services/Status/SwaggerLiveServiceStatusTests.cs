@@ -31,10 +31,10 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
     var serviceStatuses = statusResponse.Content;
 
     // Find unavailable services - we now expect a list of ServiceStatusInfo objects
-    var unavailableServices = serviceStatuses
+    var unavailableServices = serviceStatuses?
       .Where(s => !(s.IsAvailable ?? false))
       .Select(s => s.ServiceName?.ToString() ?? "Unknown")
-      .ToList();
+      .ToList() ?? new List<string>();
 
     // Skip test if no services are unavailable (unlikely in a test environment, but possible)
     if (unavailableServices.Count == 0)

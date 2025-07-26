@@ -264,6 +264,45 @@ claude --dangerously-skip-permissions --print "Run /test-report and then use Git
 - **DocumentationStandards.md**: Leverage GitHub MCP to ensure documentation stays current with code changes
 - **Test Automation**: The `/test-report` command integrates with all development workflows to provide intelligent test analysis, coverage validation, and quality gate enforcement
 
+## 8. Automated Standards Compliance Check
+
+### Overview
+The project includes an automated Standards Compliance Check that runs on every pull request to ensure adherence to all project standards defined in `/Docs/Standards/`. This system provides immediate feedback to contributors and enforces quality gates.
+
+### How It Works
+- **Trigger**: Automatically runs after the main CI/CD workflow completes for pull requests
+- **Scope**: Validates code formatting, Git standards, testing practices, and documentation
+- **Output**: Detailed PR comment with categorized violations and remediation guidance
+
+### Violation Categories
+- **🚫 Mandatory**: Critical violations that block merging (formatting, missing tests, etc.)
+- **⚠️ Recommended**: Important quality improvements that should be addressed
+- **💡 Optional**: Suggestions for code quality enhancement and best practices
+
+### Standards Checked
+1. **Code Formatting & Style**: `.editorconfig` compliance, modern C# features, logging patterns
+2. **Git & Task Management**: Conventional commits, branch naming, issue references
+3. **Testing Standards**: Test naming, categorization, framework usage, coverage
+4. **Documentation**: README.md coverage, XML docs, linking structure
+
+### Quality Gates
+- PRs with mandatory violations are automatically blocked from merging
+- Compliance score calculated based on violation severity
+- Clear remediation instructions provided for each violation type
+
+### Integration with Development Workflow
+- Complements existing test reporter and AI-powered analysis
+- Uses same infrastructure pattern as other automated checks
+- Provides actionable feedback linked to specific standards documentation
+
+### For Developers
+- Address mandatory violations to unblock PR merging
+- Review recommended improvements for enhanced code quality
+- Use provided links to standards documentation for detailed guidance
+- Run `dotnet format` locally to fix most formatting violations
+
+**Workflow File**: [`.github/workflows/standards-compliance-check.yml`](.github/workflows/standards-compliance-check.yml)
+
 ---
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
