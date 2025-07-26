@@ -273,7 +273,7 @@ jobs:
           echo "  - Coverage: $LINE_COVERAGE% lines, $BRANCH_COVERAGE% branches"
           echo "  - Quality Gates: $QUALITY_GATES_STATUS"
 
-      - name: Real Claude AI Test Analysis (Max Subscription)
+      - name: Claude AI Test Analysis (Max Subscription)
         if: always()
         uses: anthropics/claude-code-action@beta
         with:
