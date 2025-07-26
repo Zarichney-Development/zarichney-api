@@ -14,7 +14,8 @@ using Zarichney.Client.Contracts;
 
 namespace Zarichney.Client
 {
-    [System.CodeDom.Compiler.GeneratedCode("Refitter", "1.5.5.0")]
+    /// <summary>No summary available</summary>
+    [System.CodeDom.Compiler.GeneratedCode("Refitter", "1.6.1.0")]
     public partial interface IPublicApi
     {
         /// <returns>

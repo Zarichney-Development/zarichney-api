@@ -16,7 +16,7 @@ namespace Zarichney.Tests.Integration.Controllers.PublicController;
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Component, TestCategories.Controller)]
 [Trait(TestCategories.Feature, "Public")]
-[Collection("Integration")]
+[Collection("IntegrationCore")]
 public class PublicControllerTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper) : IntegrationTestBase(apiClientFixture, testOutputHelper)
 {
   /// <summary>

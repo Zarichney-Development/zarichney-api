@@ -42,17 +42,19 @@ Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskMan
     ```bash
     dotnet run --project Code/Zarichney.Server
     ```
-* **🧪 Automated Test Reporting:** (Recommended - Comprehensive analysis with AI insights)
+* **🧪 Unified Test Suite:** (Comprehensive testing with multiple modes)
     ```bash
+    # Unified script with mode selection
+    ./Scripts/run-test-suite.sh                    # Default: report mode with markdown
+    ./Scripts/run-test-suite.sh automation         # HTML coverage reports + browser
+    ./Scripts/run-test-suite.sh report json        # JSON output for CI/CD
+    ./Scripts/run-test-suite.sh both               # Run both modes
+    
     # Claude custom command - Full AI-powered analysis
     /test-report                    # Detailed markdown report with recommendations
     /test-report summary            # Quick executive summary
     /test-report json               # Machine-readable output for CI/CD
     /test-report --performance      # Include performance analysis
-    
-    # Direct script execution - Also available
-    ./Scripts/run-test-report.sh           # Same as /test-report
-    ./Scripts/run-test-report.sh summary   # Quick summary
     
     # Bash aliases (after sourcing Scripts/test-aliases.sh)
     test-report                     # Full analysis
@@ -60,17 +62,24 @@ Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskMan
     test-claude                     # AI-powered insights via Claude
     ```
 
-* **Run Automation Suite with Coverage Report:** (Comprehensive test execution with HTML report)
+* **Unified Test Suite Options:** (All-in-one testing solution)
     ```bash
-    # Run complete automation suite and open coverage report in browser
-    ./Scripts/run-automation-suite.sh
+    # Mode selection
+    ./Scripts/run-test-suite.sh automation         # HTML reports, browser opening
+    ./Scripts/run-test-suite.sh report             # AI analysis, quality gates
+    ./Scripts/run-test-suite.sh both               # Execute both modes
     
-    # Run without opening browser
-    ./Scripts/run-automation-suite.sh --no-browser
+    # Output format options (report mode)
+    ./Scripts/run-test-suite.sh report markdown    # Detailed markdown report
+    ./Scripts/run-test-suite.sh report json        # Machine-readable JSON
+    ./Scripts/run-test-suite.sh report summary     # Quick executive summary
+    ./Scripts/run-test-suite.sh report console     # Terminal-optimized output
     
-    # Run only specific test types
-    ./Scripts/run-automation-suite.sh --unit-only
-    ./Scripts/run-automation-suite.sh --integration-only
+    # Common options
+    ./Scripts/run-test-suite.sh automation --no-browser     # Skip browser opening
+    ./Scripts/run-test-suite.sh report --unit-only          # Unit tests only
+    ./Scripts/run-test-suite.sh both --integration-only     # Integration tests only
+    ./Scripts/run-test-suite.sh report --performance        # Include performance analysis
     ```
 
 * **Run All Tests (Traditional):** (Ensure Docker Desktop is running for integration tests)

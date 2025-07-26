@@ -14,14 +14,12 @@ using Zarichney.Client.Contracts;
 
 namespace Zarichney.Client
 {
-    /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Registers a new user account.</summary>
-    [System.CodeDom.Compiler.GeneratedCode("Refitter", "1.5.5.0")]
+    /// <summary>Registers a new user account.</summary>
+    [System.CodeDom.Compiler.GeneratedCode("Refitter", "1.6.1.0")]
     public partial interface IAuthApi
     {
-        /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Registers a new user account.</summary>
+        /// <summary>Registers a new user account.</summary>
         /// <remarks>
-        /// **This endpoint is currently unavailable** due to missing configuration for: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)
-        /// 
         /// Creates a new user with the provided email and password.
         /// Requires email confirmation before the user can log in. An email with a confirmation link will be sent to the provided address.
         /// </remarks>
@@ -55,10 +53,8 @@ namespace Zarichney.Client
         [Post("/api/auth/register")]
         Task<IApiResponse<AuthResponse>> Register([Body] RegisterRequest? body = default, CancellationToken cancellationToken = default);
 
-        /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Logs in a user and sets authentication cookies.</summary>
+        /// <summary>Logs in a user and sets authentication cookies.</summary>
         /// <remarks>
-        /// **This endpoint is currently unavailable** due to missing configuration for: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)
-        /// 
         /// Authenticates the user with the provided email and password.
         /// If successful, sets HttpOnly `access_token` and `refresh_token` cookies in the response.
         /// The response body only contains success status and a message, not the tokens themselves.
@@ -94,10 +90,8 @@ namespace Zarichney.Client
         [Post("/api/auth/login")]
         Task<IApiResponse<AuthResponse>> Login([Body] LoginRequest? body = default, CancellationToken cancellationToken = default);
 
-        /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Refreshes the access token using the refresh token cookie.</summary>
+        /// <summary>Refreshes the access token using the refresh token cookie.</summary>
         /// <remarks>
-        /// **This endpoint is currently unavailable** due to missing configuration for: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)
-        /// 
         /// Uses the `refresh_token` cookie (sent automatically by the browser) to obtain a new `access_token` and potentially a new `refresh_token`.
         /// Updates the respective HttpOnly cookies in the response if successful.
         /// This should be called by the front-end when an API request returns a 401 Unauthorized status, indicating the access token has expired.
@@ -132,10 +126,8 @@ namespace Zarichney.Client
         [Post("/api/auth/refresh")]
         Task<IApiResponse<AuthResponse>> Refresh(CancellationToken cancellationToken = default);
 
-        /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Revokes the current refresh token associated with the session.</summary>
+        /// <summary>Revokes the current refresh token associated with the session.</summary>
         /// <remarks>
-        /// **This endpoint is currently unavailable** due to missing configuration for: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)
-        /// 
         /// Invalidates the refresh token stored in the `refresh_token` cookie. This effectively logs the user out on that device the next time a refresh is attempted.
         /// Requires the user to be authenticated (valid `access_token` cookie).
         /// Clears the authentication cookies (`access_token`, `refresh_token`) upon successful revocation.
@@ -174,10 +166,8 @@ namespace Zarichney.Client
         [Post("/api/auth/revoke")]
         Task<IApiResponse<AuthResponse>> Revoke(CancellationToken cancellationToken = default);
 
-        /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Initiates the password reset process for a given email address.</summary>
+        /// <summary>Initiates the password reset process for a given email address.</summary>
         /// <remarks>
-        /// **This endpoint is currently unavailable** due to missing configuration for: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)
-        /// 
         /// Sends an email containing a password reset link (with a token) to the specified user, if the email exists.
         /// Always returns a success response to prevent email enumeration attacks, even if the email is not found.
         /// </remarks>
@@ -211,12 +201,8 @@ namespace Zarichney.Client
         [Post("/api/auth/email-forgot-password")]
         Task<IApiResponse<AuthResponse>> EmailForgotPassword([Body] ForgotPasswordRequest? body = default, CancellationToken cancellationToken = default);
 
-        /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Resets the user's password using a token received via email.</summary>
-        /// <remarks>
-        /// **This endpoint is currently unavailable** due to missing configuration for: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)
-        /// 
-        /// Sets a new password using the email, a valid reset token, and the new password.
-        /// </remarks>
+        /// <summary>Resets the user's password using a token received via email.</summary>
+        /// <remarks>Sets a new password using the email, a valid reset token, and the new password.</remarks>
         /// <param name="body">The request containing the email, reset token, and new password.</param>
         /// <returns>
         /// A <see cref="Task"/> representing the <see cref="IApiResponse"/> instance containing the result:
@@ -247,10 +233,8 @@ namespace Zarichney.Client
         [Post("/api/auth/reset-password")]
         Task<IApiResponse<AuthResponse>> ResetPassword([Body] ResetPasswordRequest? body = default, CancellationToken cancellationToken = default);
 
-        /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Confirms a user's email address using a token sent via email.</summary>
+        /// <summary>Confirms a user's email address using a token sent via email.</summary>
         /// <remarks>
-        /// **This endpoint is currently unavailable** due to missing configuration for: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)
-        /// 
         /// This endpoint is typically accessed via a link clicked by the user in a confirmation email.
         /// Validates the user ID and token. If successful, marks the user's email as confirmed.
         /// Upon successful confirmation, it may automatically log the user in by setting authentication cookies (`access_token`, `refresh_token`).
@@ -291,10 +275,8 @@ namespace Zarichney.Client
         [Get("/api/auth/confirm-email")]
         Task<IApiResponse<AuthResponse>> ConfirmEmail([Query, AliasAs("UserId")] string? userId = default, [Query, AliasAs("Token")] string? token = default, CancellationToken cancellationToken = default);
 
-        /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Resends the email confirmation link to the specified email address.</summary>
+        /// <summary>Resends the email confirmation link to the specified email address.</summary>
         /// <remarks>
-        /// **This endpoint is currently unavailable** due to missing configuration for: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)
-        /// 
         /// Useful if the user didn't receive the initial confirmation email or it expired.
         /// Finds the user by email and sends a new confirmation link.
         /// Always returns a success response to prevent email enumeration, even if the email doesn't exist or is already confirmed.
@@ -360,10 +342,8 @@ namespace Zarichney.Client
         [Post("/api/auth/logout")]
         Task<IApiResponse<AuthResponse>> Logout(CancellationToken cancellationToken = default);
 
-        /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Creates a new API key (Admin only).</summary>
+        /// <summary>Creates a new API key (Admin only).</summary>
         /// <remarks>
-        /// **This endpoint is currently unavailable** due to missing configuration for: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)
-        /// 
         /// Generates an API key that can be used for non-interactive authentication, typically for server-to-server communication or specific client integrations.
         /// Requires the user performing this action to have the 'admin' role.
         /// Authentication using the generated key is handled by separate middleware, typically expecting an `Authorization: ApiKey YOUR_API_KEY` header.
@@ -407,10 +387,8 @@ namespace Zarichney.Client
         [Post("/api/auth/api-keys")]
         Task<IApiResponse<ApiKeyResponse>> ApiKeysPOST([Body] CreateApiKeyCommand? body = default, CancellationToken cancellationToken = default);
 
-        /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Retrieves a list of all active API keys (Admin only).</summary>
+        /// <summary>Retrieves a list of all active API keys (Admin only).</summary>
         /// <remarks>
-        /// **This endpoint is currently unavailable** due to missing configuration for: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)
-        /// 
         /// Returns metadata about existing API keys (ID, description, creation/expiry dates), but **does not** return the key values themselves for security reasons.
         /// Requires the user performing this action to have the 'admin' role.
         /// </remarks>
@@ -447,10 +425,8 @@ namespace Zarichney.Client
         [Get("/api/auth/api-keys")]
         Task<IApiResponse<ICollection<ApiKeyResponse>>> ApiKeysAll(CancellationToken cancellationToken = default);
 
-        /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Retrieves metadata for a specific API key by ID (Admin only).</summary>
+        /// <summary>Retrieves metadata for a specific API key by ID (Admin only).</summary>
         /// <remarks>
-        /// **This endpoint is currently unavailable** due to missing configuration for: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)
-        /// 
         /// Returns metadata (ID, description, dates) for a single API key. **Does not** return the key value.
         /// Requires the user performing this action to have the 'admin' role.
         /// </remarks>
@@ -492,10 +468,8 @@ namespace Zarichney.Client
         [Get("/api/auth/api-keys/{id}")]
         Task<IApiResponse<ApiKeyResponse>> ApiKeysGET(int id, CancellationToken cancellationToken = default);
 
-        /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Revokes (deactivates) an existing API key (Admin or Key Owner - adjust as needed).</summary>
+        /// <summary>Revokes (deactivates) an existing API key (Admin or Key Owner - adjust as needed).</summary>
         /// <remarks>
-        /// **This endpoint is currently unavailable** due to missing configuration for: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)
-        /// 
         /// Marks the specified API key as inactive, preventing it from being used for authentication. This is generally irreversible.
         /// Requires appropriate authorization (e.g., 'admin' role, or potentially the user associated with the key if applicable). The current implementation uses `[Authorize]` which implies any authenticated user can revoke *any* key by ID - this should likely be restricted further, perhaps to Admins or the key's creator if tracked. **Current setup allows any logged-in user to revoke any key.**
         /// </remarks>
@@ -537,10 +511,8 @@ namespace Zarichney.Client
         [Delete("/api/auth/api-keys/{id}")]
         Task<IApiResponse<object>> ApiKeysDELETE(int id, CancellationToken cancellationToken = default);
 
-        /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Assigns a specified role to a user (Admin only).</summary>
+        /// <summary>Assigns a specified role to a user (Admin only).</summary>
         /// <remarks>
-        /// **This endpoint is currently unavailable** due to missing configuration for: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)
-        /// 
         /// Requires the user performing this action to have the 'admin' role.
         /// Adds the user to the role if they are not already in it.
         /// </remarks>
@@ -582,10 +554,8 @@ namespace Zarichney.Client
         [Post("/api/auth/roles/add")]
         Task<IApiResponse<RoleCommandResult>> Add([Body] RoleRequest? body = default, CancellationToken cancellationToken = default);
 
-        /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Removes a specified role from a user (Admin only).</summary>
+        /// <summary>Removes a specified role from a user (Admin only).</summary>
         /// <remarks>
-        /// **This endpoint is currently unavailable** due to missing configuration for: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)
-        /// 
         /// Requires the user performing this action to have the 'admin' role.
         /// Removes the user from the role if they are currently in it.
         /// </remarks>
@@ -627,10 +597,8 @@ namespace Zarichney.Client
         [Post("/api/auth/roles/remove")]
         Task<IApiResponse<RoleCommandResult>> Remove([Body] RoleRequest? body = default, CancellationToken cancellationToken = default);
 
-        /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Gets all roles assigned to a specific user (Admin only).</summary>
+        /// <summary>Gets all roles assigned to a specific user (Admin only).</summary>
         /// <remarks>
-        /// **This endpoint is currently unavailable** due to missing configuration for: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)
-        /// 
         /// Requires the user performing this action to have the 'admin' role.
         /// The user can be identified either by their ID or email address.
         /// </remarks>
@@ -676,12 +644,8 @@ namespace Zarichney.Client
         [Get("/api/auth/roles/user/{identifier}")]
         Task<IApiResponse<RoleCommandResult>> User(string identifier, CancellationToken cancellationToken = default);
 
-        /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Gets all users assigned to a specific role (Admin only).</summary>
-        /// <remarks>
-        /// **This endpoint is currently unavailable** due to missing configuration for: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)
-        /// 
-        /// Requires the user performing this action to have the 'admin' role.
-        /// </remarks>
+        /// <summary>Gets all users assigned to a specific role (Admin only).</summary>
+        /// <remarks>Requires the user performing this action to have the 'admin' role.</remarks>
         /// <param name="roleName">The name of the role.</param>
         /// <returns>
         /// A <see cref="Task"/> representing the <see cref="IApiResponse"/> instance containing the result:
@@ -724,10 +688,8 @@ namespace Zarichney.Client
         [Get("/api/auth/roles/{roleName}/users")]
         Task<IApiResponse<ICollection<UserRoleInfo>>> Users(string roleName, CancellationToken cancellationToken = default);
 
-        /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Refreshes the claims included in the user's access token. (Requires Authentication)</summary>
+        /// <summary>Refreshes the claims included in the user's access token. (Requires Authentication)</summary>
         /// <remarks>
-        /// **This endpoint is currently unavailable** due to missing configuration for: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)
-        /// 
         /// Use this endpoint if user details relevant to claims (like roles, email, or other profile information) have been updated externally, and you want the current session's access token to reflect these changes without requiring a full logout/login.
         /// It takes the existing valid authentication context (from the `access_token` cookie), fetches the latest user data, generates new access and refresh tokens with updated claims, and replaces the existing `access_token` and `refresh_token` cookies.
         /// Requires the user to be currently authenticated via a valid `access_token` cookie.
@@ -765,10 +727,8 @@ namespace Zarichney.Client
         [Post("/api/auth/refresh-claims")]
         Task<IApiResponse<AuthResponse>> RefreshClaims(CancellationToken cancellationToken = default);
 
-        /// <summary>⚠️ (Unavailable: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)) Checks the authentication status and basic claims of the current user. (Requires Authentication)</summary>
+        /// <summary>Checks the authentication status and basic claims of the current user. (Requires Authentication)</summary>
         /// <remarks>
-        /// **This endpoint is currently unavailable** due to missing configuration for: PostgresIdentityDb (Missing: ConnectionStrings:UserDatabase)
-        /// 
         /// Provides a simple way for the front-end to verify if the user is currently authenticated (based on the presence and validity of the `access_token` cookie) and retrieve basic information like User ID and roles directly from the validated token claims.
         /// Useful for initializing UI state after page load or confirming session validity.
         /// Requires the user to be currently authenticated. If the access token is missing or invalid, this endpoint will return a 401 Unauthorized status.

@@ -1,7 +1,7 @@
 # README: /Integration Tests Directory
 
-**Version:** 1.1
-**Last Updated:** 2025-05-22
+**Version:** 1.2
+**Last Updated:** 2025-07-25
 **Parent:** `../README.md`
 
 ## 1. Purpose & Responsibility
@@ -26,7 +26,7 @@ Our integration testing strategy is built upon a robust framework designed for r
 * **Type-Safe API Clients:** All API interactions are performed using **Refit clients** (multiple granular interfaces), auto-generated from the `Zarichney.Server`'s OpenAPI specification.
 * **Simulated Authentication:** The `TestAuthHandler` and `AuthTestHelper` enable simulation of various authenticated users, roles, and claims.
 * **External Service Virtualization (Planned):** External HTTP dependencies will be virtualized using **WireMock.Net** (TDD FRMK-004) to ensure deterministic test outcomes. Until fully implemented, interfaces for these services are mocked via DI using factories from `../Framework/Mocks/Factories/`.
-* **Shared Fixtures:** Expensive resources like `CustomWebApplicationFactory`, `DatabaseFixture`, and `ApiClientFixture` are shared across test classes using xUnit's `ICollectionFixture` mechanism within the `"Integration"` collection for optimal performance.
+* **Shared Fixtures:** Expensive resources like `CustomWebApplicationFactory`, `DatabaseFixture`, and `ApiClientFixture` are shared across test classes using xUnit's `ICollectionFixture` mechanism. **Phase 3 Update:** Tests are now organized into multiple collections (`"IntegrationAuth"`, `"IntegrationCore"`, `"IntegrationExternal"`, `"IntegrationInfra"`, `"IntegrationQA"`) enabling parallel execution for optimal performance.
 * **Base Test Classes:** `IntegrationTestBase` and `DatabaseIntegrationTestBase` provide common setup and access to shared fixtures.
 * **Conditional Test Execution:** The `[DependencyFact]` attribute is used to skip tests if their required configurations or infrastructure (like Docker) are unavailable.
 * **Core Tooling:** xUnit, FluentAssertions, AutoFixture (especially for DTOs and complex test data setup).
@@ -69,7 +69,12 @@ Supporting standards include:
 
 1.  **Identify Scenario:** Determine the specific interaction, API endpoint, or workflow to be tested.
 2.  **Create Test File:** Following the directory structure and naming conventions, create or locate the appropriate test file in `/Integration/`.
-3.  **Inherit Base Class:** Inherit from `IntegrationTestBase` or `DatabaseIntegrationTestBase` (if database interaction is involved). Ensure the class is part of the `[Collection("Integration")]`.
+3.  **Inherit Base Class:** Inherit from `IntegrationTestBase` or `DatabaseIntegrationTestBase` (if database interaction is involved). Ensure the class is part of the appropriate collection based on the feature area:
+    * `[Collection("IntegrationAuth")]` - Authentication/authorization tests
+    * `[Collection("IntegrationCore")]` - Core API functionality tests  
+    * `[Collection("IntegrationExternal")]` - External service integration tests
+    * `[Collection("IntegrationInfra")]` - Infrastructure/status tests
+    * `[Collection("IntegrationQA")]` - Quality assurance/smoke tests
 4.  **Follow `IntegrationTestCaseDevelopment.md`:**
     * Apply the AAA pattern.
     * Use the `ApiClient` (or an authenticated version via `AuthHelper`) for all API calls.
@@ -84,14 +89,30 @@ Supporting standards include:
 * **Prerequisites:**
     * **Docker:** Must be running if tests use `DatabaseFixture` or other Testcontainer-based resources.
     * **Configuration:** Ensure necessary configurations (e.g., in `../appsettings.Testing.json` or user secrets for local development) are available for tests that might be skipped by `[DependencyFact]`.
-* **Run all integration tests:**
+
+* **Recommended: Unified Test Suite with AI Analysis:**
   ```bash
+  # Full test suite with AI-powered recommendations
+  /test-report
+  
+  # Integration tests only
+  ../../Scripts/run-test-suite.sh report --integration-only
+  
+  # With parallel execution (Phase 3)
+  ../../Scripts/run-test-suite.sh report --parallel --max-parallel-collections=4
+  ```
+
+* **Traditional Commands:**
+  ```bash
+  # Run all integration tests
   dotnet test --filter "Category=Integration"
+  
+  # Run specific integration test collection
+  dotnet test --filter "Category=Integration&Collection=IntegrationAuth"
   ```
-* **Run specific integration tests:** Use more specific filters:
-  ```bash
-  dotnet test --filter "FullyQualifiedName~MyNamespace.MyIntegrationTestsClass"
-  ```
+
+* **Parallel Execution:** With Phase 3 implementation, integration tests now run in parallel across collections by default, significantly reducing execution time.
+
 * Ensure all relevant integration tests pass locally before committing code, as per the workflow in `../../../Docs/Standards/TestingStandards.md`. Remember to run `Scripts/generate-api-client.ps1` if API contracts were changed.
 
 ## 6. Dependencies
@@ -129,6 +150,7 @@ These tests bridge the gap between fast, isolated unit tests and potentially slo
 * **Coverage Expansion:** Continuously expand integration test coverage for all critical API endpoints, workflows, and error conditions. (Tracked via tasks referencing the `../../../Docs/Templates/GHTestCoverageTask.md` template).
 * **Performance Monitoring:** While the shared fixture model helps, the overall execution time of the integration test suite should be monitored, especially as more tests are added.
 * **Complex Scenarios:** Developing robust data setup and verification for very complex multi-step business workflows can be challenging and may require further refinement of Test Data Builder patterns or advanced AutoFixture customizations.
+* **Phase 3 Completed:** Parallel test execution is now fully operational with tests organized into separate collections. The unified test suite provides AI-powered analysis and recommendations.
 * Refer to the "Framework Augmentation Roadmap (TODOs)" in `../TechnicalDesignDocument.md` for broader framework enhancements.
 
 ---

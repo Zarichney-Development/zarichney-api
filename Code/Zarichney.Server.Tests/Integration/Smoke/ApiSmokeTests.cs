@@ -16,7 +16,7 @@ namespace Zarichney.Tests.Integration.Smoke;
 [Trait(TestCategories.Dependency, TestCategories.Database)]
 [Trait(TestCategories.Dependency, TestCategories.Docker)]
 [Trait(TestCategories.Dependency, TestCategories.ExternalStripe)]
-[Collection("Integration")]
+[Collection("IntegrationQA")]
 public class ApiSmokeTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper) : IntegrationTestBase(apiClientFixture, testOutputHelper)
 {
   [DependencyFact]

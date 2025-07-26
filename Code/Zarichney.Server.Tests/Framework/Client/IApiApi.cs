@@ -14,9 +14,12 @@ using Zarichney.Client.Contracts;
 
 namespace Zarichney.Client
 {
-    [System.CodeDom.Compiler.GeneratedCode("Refitter", "1.5.5.0")]
+    /// <summary>⚠️ (Unavailable: MailCheck (Missing: EmailConfig:MailCheckApiKey))</summary>
+    [System.CodeDom.Compiler.GeneratedCode("Refitter", "1.6.1.0")]
     public partial interface IApiApi
     {
+        /// <summary>⚠️ (Unavailable: MailCheck (Missing: EmailConfig:MailCheckApiKey))</summary>
+        /// <remarks>**This endpoint is currently unavailable** due to missing configuration for: MailCheck (Missing: EmailConfig:MailCheckApiKey)</remarks>
         /// <returns>
         /// A <see cref="Task"/> representing the <see cref="IApiResponse"/> instance containing the result:
         /// <list type="table">

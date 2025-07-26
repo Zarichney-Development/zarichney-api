@@ -136,7 +136,7 @@
 * **Workflow:** Must run on PRs to `main` and merges to `main`.
 * **Steps:** Must include Checkout, Setup .NET SDK, Restore, Build, Run Unit Tests (filtered), Run Integration Tests (filtered, potentially parallelized by category), Publish Test Results (TRX), Generate & Publish Coverage Report (Cobertura). Consider adding a step to run the client generation script.
 * **Production Check Scenario:** A potential future step in a deployment workflow could involve running tests against a production-like environment. This step **must** filter tests to exclude those marked with `[Trait("Mutability", "DataMutating")]` (e.g., using `--filter "Category=Integration&Mutability!=DataMutating"`) to prevent unintended state changes.
-* **Local Development Automation:** The `/Scripts/run-automation-suite.sh` script provides a comprehensive local testing workflow that mirrors CI/CD steps:
+* **Local Development Automation:** The `/Scripts/run-test-suite.sh` script provides a comprehensive local testing workflow that mirrors CI/CD steps:
     * Builds the solution in Release configuration
     * Generates API clients using the generation script
     * Executes both unit and integration tests with code coverage collection
@@ -146,7 +146,7 @@
     * Handles Docker access requirements for Testcontainers integration tests
 * **Deliverables:**
     * Updated `/.github/workflows/main.yml` file implementing the workflow.
-    * Automation suite script at `/Scripts/run-automation-suite.sh` for local development.
+    * Automation suite script at `/Scripts/run-test-suite.sh` for local development.
     * Documentation in `/Docs/Maintenance/TestingSetup.md` for any manual setup or maintenance procedures.
 
 **12. Reliability & Performance (Requirements)**

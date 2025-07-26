@@ -13,7 +13,7 @@ namespace Zarichney.Tests.Integration.Services.Status;
 /// checking that unavailable services are correctly marked in the Swagger UI.
 /// </summary>
 [Trait(TestCategories.Category, TestCategories.Integration)]
-[Collection("Integration")]
+[Collection("IntegrationInfra")]
 public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper) : IntegrationTestBase(apiClientFixture, testOutputHelper)
 {
   private const string _swaggerJsonUrl = "/api/swagger/swagger.json";

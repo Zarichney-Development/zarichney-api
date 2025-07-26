@@ -23,7 +23,7 @@ namespace Zarichney.Tests.Integration.Services.Status;
 /// HTTP 503 responses with appropriate error details.
 /// </summary>
 [Trait(TestCategories.Category, TestCategories.Integration)]
-[Collection("Integration")]
+[Collection("IntegrationInfra")]
 public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper)
   : IntegrationTestBase(apiClientFixture, testOutputHelper)
 {

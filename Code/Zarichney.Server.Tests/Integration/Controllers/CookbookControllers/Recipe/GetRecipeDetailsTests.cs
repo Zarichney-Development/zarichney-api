@@ -9,7 +9,7 @@ namespace Zarichney.Tests.Integration.Controllers.CookbookControllers.Recipe;
 /// <summary>
 /// Integration tests for the CookbookController.
 /// </summary>
-[Collection("Integration")]
+[Collection("IntegrationCore")]
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Component, TestCategories.Controller)]
 [Trait(TestCategories.Feature, TestCategories.Cookbook)]

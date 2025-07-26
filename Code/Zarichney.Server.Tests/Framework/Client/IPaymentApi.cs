@@ -15,7 +15,7 @@ using Zarichney.Client.Contracts;
 namespace Zarichney.Client
 {
     /// <summary>Creates a Stripe checkout session for the specified order</summary>
-    [System.CodeDom.Compiler.GeneratedCode("Refitter", "1.5.5.0")]
+    [System.CodeDom.Compiler.GeneratedCode("Refitter", "1.6.1.0")]
     public partial interface IPaymentApi
     {
         /// <summary>Creates a Stripe checkout session for the specified order</summary>

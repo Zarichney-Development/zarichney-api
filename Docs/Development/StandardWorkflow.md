@@ -1,7 +1,7 @@
 # AI Coder Workflow Steps: Standard
 
-**Version:** 1.1
-**Last Updated:** 2025-05-04
+**Version:** 1.2
+**Last Updated:** 2025-07-25
 
 ## Overview
 
@@ -52,12 +52,28 @@ This document details the mandatory step-by-step workflow for an AI Coder agent 
     * Tests **MUST** adhere strictly to `/Docs/Standards/TestingStandards.md`. Focus on testing behavior and ensuring resilience.
 
 7.  **Verify New/Updated Tests:**
-    * Run the specific tests you added or modified.
+    * Run the specific tests you added or modified using the unified test suite:
+      ```bash
+      # Quick validation
+      /test-report summary
+      
+      # Or for specific test categories
+      ../../Scripts/run-test-suite.sh report --unit-only
+      ```
     * Ensure they **PASS** consistently. Debug and fix any failures in the code or tests until they pass.
 
 8.  **Verify All Tests:**
-    * Run the **entire test suite** using the command: `dotnet test`.
-    * Ensure **ALL** unit and integration tests pass. Fix any failures caused by your changes.
+    * Run the **entire test suite** with AI-powered analysis:
+      ```bash
+      # Full test suite with recommendations
+      /test-report
+      
+      # Or using the script directly
+      ../../Scripts/run-test-suite.sh report
+      ```
+    * Ensure **ALL** unit and integration tests pass and quality gates are met.
+    * Review any recommendations from the AI analysis and address critical issues.
+    * Fix any failures caused by your changes.
 
 9.  **Update Documentation & Diagrams:**
     * Review the `README.md` file(s) listed in Section 3 of the prompt and the rules in `/Docs/Standards/DocumentationStandards.md` and `/Docs/Standards/DiagrammingStandards.md`.
