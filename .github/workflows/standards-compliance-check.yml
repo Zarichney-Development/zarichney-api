@@ -66,6 +66,7 @@ jobs:
           pr-number: ${{ steps.pr-number.outputs.pr_number }}
           base-branch: ${{ github.event_name == 'pull_request' && github.base_ref || github.event.workflow_run.pull_requests[0].base.ref || 'develop' }}
           head-sha: ${{ github.event_name == 'pull_request' && github.sha || github.event.workflow_run.head_sha }}
+          claude-oauth-token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
       - name: Post Standards Report
         if: steps.pr-number.outputs.pr_number != ''

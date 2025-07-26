@@ -17,6 +17,9 @@ inputs:
     description: 'Minimum severity level to report (mandatory, recommended, optional)'
     required: false
     default: 'optional'
+  claude-oauth-token:
+    description: 'Claude Code OAuth token for AI analysis'
+    required: true
 
 outputs:
   mandatory-violations-count:
@@ -84,7 +87,7 @@ runs:
     - name: Real Claude AI Standards Analysis
       uses: anthropics/claude-code-action@beta
       with:
-        claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        claude_code_oauth_token: ${{ inputs.claude-oauth-token }}
         direct_prompt: |
           # Expert Standards Compliance Analysis for zarichney-api
           
