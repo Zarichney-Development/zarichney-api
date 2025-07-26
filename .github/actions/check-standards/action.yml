@@ -1,0 +1,121 @@
+name: 'Standards Compliance Check'
+description: 'Comprehensive standards compliance validation for pull requests'
+author: 'Zarichney Development'
+
+inputs:
+  pr-number:
+    description: 'Pull request number'
+    required: true
+  base-branch:
+    description: 'Base branch for comparison'
+    required: true
+    default: 'develop'
+  head-sha:
+    description: 'Head commit SHA for analysis'
+    required: true
+  severity-level:
+    description: 'Minimum severity level to report (mandatory, recommended, optional)'
+    required: false
+    default: 'optional'
+
+outputs:
+  mandatory-violations-count:
+    description: 'Number of mandatory violations found'
+    value: ${{ steps.aggregate-results.outputs.mandatory-violations }}
+  recommended-violations-count:
+    description: 'Number of recommended violations found'
+    value: ${{ steps.aggregate-results.outputs.recommended-violations }}
+  optional-violations-count:
+    description: 'Number of optional violations found'
+    value: ${{ steps.aggregate-results.outputs.optional-violations }}
+  compliance-score:
+    description: 'Overall compliance score (0-100)'
+    value: ${{ steps.aggregate-results.outputs.compliance-score }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Initialize Standards Check
+      shell: bash
+      run: |
+        echo "🔍 Starting Standards Compliance Check"
+        echo "PR Number: ${{ inputs.pr-number }}"
+        echo "Base Branch: ${{ inputs.base-branch }}"
+        echo "Head SHA: ${{ inputs.head-sha }}"
+        echo "Severity Level: ${{ inputs.severity-level }}"
+        
+        # Create results directory
+        mkdir -p standards-results
+        
+        # Initialize violation counters
+        echo "0" > standards-results/mandatory-count
+        echo "0" > standards-results/recommended-count
+        echo "0" > standards-results/optional-count
+        
+        # Initialize report sections
+        echo "# 🛡️ Standards Compliance Report" > standards-report.md
+        echo "" >> standards-report.md
+        echo "**Pull Request:** #${{ inputs.pr-number }} | **Commit:** \`${{ inputs.head-sha }}\` | **Base:** \`${{ inputs.base-branch }}\`" >> standards-report.md
+        echo "" >> standards-report.md
+
+    - name: Check Code Formatting Standards
+      shell: bash
+      run: ${{ github.action_path }}/scripts/check-formatting.sh
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+
+    - name: Check Git & Task Management Standards
+      shell: bash
+      run: ${{ github.action_path }}/scripts/check-git-standards.sh
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+        BASE_BRANCH: ${{ inputs.base-branch }}
+        HEAD_SHA: ${{ inputs.head-sha }}
+
+    - name: Check Testing Standards
+      shell: bash
+      run: ${{ github.action_path }}/scripts/check-testing-standards.sh
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+
+    - name: Check Documentation Standards
+      shell: bash
+      run: ${{ github.action_path }}/scripts/check-documentation.sh
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        BASE_BRANCH: ${{ inputs.base-branch }}
+
+    - name: Generate Compliance Report
+      shell: bash
+      run: ${{ github.action_path }}/scripts/generate-report.sh
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+        SEVERITY_LEVEL: ${{ inputs.severity-level }}
+
+    - name: Aggregate Results
+      id: aggregate-results
+      shell: bash
+      run: |
+        MANDATORY_COUNT=$(cat standards-results/mandatory-count)
+        RECOMMENDED_COUNT=$(cat standards-results/recommended-count)
+        OPTIONAL_COUNT=$(cat standards-results/optional-count)
+        
+        # Calculate compliance score (100 - penalty for violations)
+        TOTAL_VIOLATIONS=$((MANDATORY_COUNT * 10 + RECOMMENDED_COUNT * 3 + OPTIONAL_COUNT * 1))
+        COMPLIANCE_SCORE=$((100 - TOTAL_VIOLATIONS))
+        if [ $COMPLIANCE_SCORE -lt 0 ]; then
+          COMPLIANCE_SCORE=0
+        fi
+        
+        echo "mandatory-violations=$MANDATORY_COUNT" >> $GITHUB_OUTPUT
+        echo "recommended-violations=$RECOMMENDED_COUNT" >> $GITHUB_OUTPUT
+        echo "optional-violations=$OPTIONAL_COUNT" >> $GITHUB_OUTPUT
+        echo "compliance-score=$COMPLIANCE_SCORE" >> $GITHUB_OUTPUT
+        
+        echo "📊 Standards Check Results:"
+        echo "  Mandatory Violations: $MANDATORY_COUNT"
+        echo "  Recommended Violations: $RECOMMENDED_COUNT"
+        echo "  Optional Violations: $OPTIONAL_COUNT"
+        echo "  Compliance Score: $COMPLIANCE_SCORE/100"
