@@ -49,6 +49,10 @@ runs:
         # Create analysis directory
         mkdir -p standards-analysis
         
+        # Fetch base branch for comparison
+        echo "📋 Fetching base branch for comparison..."
+        git fetch origin ${{ inputs.base-branch }}:${{ inputs.base-branch }} || echo "Branch already exists"
+        
         # Get list of changed files
         echo "📋 Collecting changed files for analysis..."
         git diff --name-only ${{ inputs.base-branch }}..HEAD > standards-analysis/changed-files.txt
