@@ -31,7 +31,7 @@ public class AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHel
     var textPrompt = "What is the capital of France?";
 
     // Act
-    var response = await client.Completion(textPrompt, default(CancellationToken));
+    var response = await client.Completion(textPrompt, default(StreamPart?));
 
     // Assert
     response.IsSuccessStatusCode.Should().BeTrue(
@@ -49,7 +49,7 @@ public class AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHel
     var textPrompt = "What is the capital of France?";
 
     // Act
-    var response = await client.Completion(textPrompt, default(CancellationToken));
+    var response = await client.Completion(textPrompt, default(StreamPart?));
 
     // Assert
     response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
@@ -71,7 +71,7 @@ public class AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHel
     var audioPrompt = new StreamPart(new MemoryStream(audioData), "test.wav", "audio/wav");
 
     // Act
-    var response = await client.Completion(null!, audioPrompt);
+    var response = await client.Completion(default(string?), audioPrompt);
 
     // Assert
     response.IsSuccessStatusCode.Should().BeTrue(
@@ -90,7 +90,7 @@ public class AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHel
     var audioPrompt = new StreamPart(new MemoryStream(audioData), "test.wav", "audio/wav");
 
     // Act
-    var response = await client.Completion(null!, audioPrompt);
+    var response = await client.Completion(default(string?), audioPrompt);
 
     // Assert
     response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
@@ -154,7 +154,7 @@ public class AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHel
     var textPrompt = "What is the capital of France?";
 
     // Act
-    var response = await client.Completion(textPrompt, default(CancellationToken));
+    var response = await client.Completion(textPrompt, default(StreamPart?));
 
     // Assert
     Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);

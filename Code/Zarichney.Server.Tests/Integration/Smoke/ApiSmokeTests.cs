@@ -56,7 +56,7 @@ public class ApiSmokeTests(ApiClientFixture apiClientFixture, ITestOutputHelper 
     var client = _apiClientFixture.AuthenticatedCookbookApi;
 
     // Act
-    var recipes = await client.Recipe("burger", false, default(int?), default(CancellationToken));
+    var recipes = await client.Recipe("burger", false, default(int?), default(int?));
 
     // Assert
     Assert.NotNull(recipes);
