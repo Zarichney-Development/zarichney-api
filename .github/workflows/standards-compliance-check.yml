@@ -5,6 +5,8 @@ on:
     workflows: ["Unified CI/CD for Zarichney Fullstack"]
     types:
       - completed
+  pull_request:
+    branches: [ main, develop ]
 
 permissions:
   checks: write
@@ -16,7 +18,9 @@ jobs:
   standards-check:
     name: Standards Compliance Check
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
+    if: |
+      (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'pull_request')
     timeout-minutes: 10
     
     steps:
@@ -24,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           # Checkout the PR branch for analysis
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0
 
       - name: Setup .NET
@@ -39,11 +43,16 @@ jobs:
       - name: Get PR number
         id: pr-number
         run: |
-          # Extract PR number from the workflow run
-          PR_NUMBER=$(gh run view ${{ github.event.workflow_run.id }} --json headRepository,headBranch | jq -r '.headBranch' | grep -o 'pull/[0-9]*' | cut -d'/' -f2 || echo "")
-          if [ -z "$PR_NUMBER" ]; then
-            # Alternative approach: get PR number from API
-            PR_NUMBER=$(gh api repos/${{ github.repository }}/pulls --jq ".[] | select(.head.sha==\"${{ github.event.workflow_run.head_sha }}\") | .number")
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # Direct PR trigger
+            PR_NUMBER="${{ github.event.number }}"
+          else
+            # workflow_run trigger - extract PR number from the workflow run
+            PR_NUMBER=$(gh run view ${{ github.event.workflow_run.id }} --json headRepository,headBranch | jq -r '.headBranch' | grep -o 'pull/[0-9]*' | cut -d'/' -f2 || echo "")
+            if [ -z "$PR_NUMBER" ]; then
+              # Alternative approach: get PR number from API
+              PR_NUMBER=$(gh api repos/${{ github.repository }}/pulls --jq ".[] | select(.head.sha==\"${{ github.event.workflow_run.head_sha }}\") | .number")
+            fi
           fi
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
           echo "Found PR number: $PR_NUMBER"
@@ -55,8 +64,8 @@ jobs:
         uses: ./.github/actions/check-standards
         with:
           pr-number: ${{ steps.pr-number.outputs.pr_number }}
-          base-branch: ${{ github.event.workflow_run.pull_requests[0].base.ref || 'develop' }}
-          head-sha: ${{ github.event.workflow_run.head_sha }}
+          base-branch: ${{ github.event_name == 'pull_request' && github.base_ref || github.event.workflow_run.pull_requests[0].base.ref || 'develop' }}
+          head-sha: ${{ github.event_name == 'pull_request' && github.sha || github.event.workflow_run.head_sha }}
 
       - name: Post Standards Report
         if: steps.pr-number.outputs.pr_number != ''

@@ -4,7 +4,7 @@
 
 If you discover a security vulnerability in this repository, please report it responsibly:
 
-📧 **Email**: security@zarichney.com
+📧 **Email**: steven@zarichney.com
 
 ## Response Process
 
