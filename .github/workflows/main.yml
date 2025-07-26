@@ -326,48 +326,43 @@ jobs:
           ### 🚪 Quality Gates Status
           **Overall Status:** $QUALITY_GATES_STATUS $([ "$QUALITY_GATES_STATUS" = "PASSED" ] && echo "✅" || echo "❌")
           
-          $([ "$QUALITY_GATES_STATUS" = "FAILED" ] && cat << 'GATES_FAILED'
-          ⚠️ **Quality Gates Failed:**
-          - Failed tests: $FAILED_TESTS
-          - Coverage below threshold: $([ "$MEETS_THRESHOLD" = "0" ] && echo "Yes" || echo "No")
-          
-          **Deployment Status:** 🚫 **BLOCKED** - Fix quality issues before merging
-          GATES_FAILED
-          || cat << 'GATES_PASSED'
-          ✅ **All Quality Gates Passed**
-          
-          **Deployment Status:** 🚀 **READY** - Safe to merge and deploy
-          GATES_PASSED
-          )
+          $(if [ "$QUALITY_GATES_STATUS" = "FAILED" ]; then
+            echo "⚠️ **Quality Gates Failed:**"
+            echo "- Failed tests: $FAILED_TESTS"
+            echo "- Coverage below threshold: $([ "$MEETS_THRESHOLD" = "0" ] && echo "Yes" || echo "No")"
+            echo ""
+            echo "**Deployment Status:** 🚫 **BLOCKED** - Fix quality issues before merging"
+          else
+            echo "✅ **All Quality Gates Passed**"
+            echo ""
+            echo "**Deployment Status:** 🚀 **READY** - Safe to merge and deploy"
+          fi)
           
           ### 🔍 AI Insights & Recommendations
           
           Based on the test results analysis:
           
-          $([ "$FAILED_TESTS" -gt 0 ] && cat << 'FAILED_TESTS'
-          #### ❌ Test Failures Detected
-          - **Priority:** HIGH - Address failing tests before deployment
-          - **Impact:** CI/CD pipeline blocked until resolved
-          - **Action:** Review test logs and fix underlying issues
-          FAILED_TESTS
-          )
+          $(if [ "$FAILED_TESTS" -gt 0 ]; then
+            echo "#### ❌ Test Failures Detected"
+            echo "- **Priority:** HIGH - Address failing tests before deployment"
+            echo "- **Impact:** CI/CD pipeline blocked until resolved"
+            echo "- **Action:** Review test logs and fix underlying issues"
+          fi)
           
-          $([ "$SKIPPED_TESTS" -gt 0 ] && cat << 'SKIPPED_TESTS'
-          #### ⏸️ Skipped Tests Analysis
-          - **Count:** $SKIPPED_TESTS tests skipped
-          - **Common Causes:** Missing dependencies (Docker, external services)
-          - **Recommendation:** Consider integration test environment improvements
-          SKIPPED_TESTS
-          )
+          $(if [ "$SKIPPED_TESTS" -gt 0 ]; then
+            echo "#### ⏸️ Skipped Tests Analysis"
+            echo "- **Count:** $SKIPPED_TESTS tests skipped"
+            echo "- **Common Causes:** Missing dependencies (Docker, external services)"
+            echo "- **Recommendation:** Consider integration test environment improvements"
+          fi)
           
-          $([ "$MEETS_THRESHOLD" = "0" ] && cat << 'COVERAGE_LOW'
-          #### 📉 Coverage Below Threshold
-          - **Current:** $LINE_COVERAGE% (Target: 24%)
-          - **Gap:** $(awk -v lc="$LINE_COVERAGE" 'BEGIN {printf "%.0f", 24 - lc}')% coverage deficit
-          - **Priority:** Add tests for critical code paths
-          - **Focus Areas:** Business logic, error handling, edge cases
-          COVERAGE_LOW
-          )
+          $(if [ "$MEETS_THRESHOLD" = "0" ]; then
+            echo "#### 📉 Coverage Below Threshold"
+            echo "- **Current:** $LINE_COVERAGE% (Target: 24%)"
+            echo "- **Gap:** $(awk -v lc="$LINE_COVERAGE" 'BEGIN {printf "%.0f", 24 - lc}')% coverage deficit"
+            echo "- **Priority:** Add tests for critical code paths"
+            echo "- **Focus Areas:** Business logic, error handling, edge cases"
+          fi)
           
           ### 📋 Next Steps
           
