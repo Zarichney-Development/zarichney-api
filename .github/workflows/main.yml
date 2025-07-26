@@ -274,7 +274,7 @@ jobs:
         if: always()
         uses: anthropics/claude-code-action@beta
         with:
-          oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           direct_prompt: |
             # Expert Test Analysis for zarichney-api Project
             
