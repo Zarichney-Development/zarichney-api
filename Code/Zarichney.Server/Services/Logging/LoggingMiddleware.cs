@@ -1,8 +1,11 @@
 using Microsoft.Extensions.Options;
 using Zarichney.Services.Sessions;
 
-namespace Zarichney.Config;
+namespace Zarichney.Services.Logging;
 
+/// <summary>
+/// Configuration options for request/response logging middleware
+/// </summary>
 public class RequestResponseLoggerOptions
 {
   public bool LogRequests { get; set; } = true;
@@ -12,16 +15,33 @@ public class RequestResponseLoggerOptions
   public string LogDirectory { get; set; } = "Logs";
 }
 
-public class RequestResponseLoggerMiddleware(RequestDelegate next, IOptions<RequestResponseLoggerOptions> options, ILogger<RequestResponseLoggerMiddleware> logger)
+/// <summary>
+/// Enhanced middleware for logging HTTP requests and responses with correlation tracking
+/// </summary>
+public class RequestResponseLoggerMiddleware
 {
-  private readonly ILogger<RequestResponseLoggerMiddleware> _logger = logger;
-  private readonly RequestResponseLoggerOptions _options = options.Value;
+  private readonly RequestDelegate _next;
+  private readonly ILogger<RequestResponseLoggerMiddleware> _logger;
+  private readonly RequestResponseLoggerOptions _options;
+  private readonly ILoggingService _loggingService;
+
+  public RequestResponseLoggerMiddleware(
+    RequestDelegate next,
+    IOptions<RequestResponseLoggerOptions> options,
+    ILogger<RequestResponseLoggerMiddleware> logger,
+    ILoggingService loggingService)
+  {
+    _next = next;
+    _logger = logger;
+    _options = options.Value;
+    _loggingService = loggingService;
+  }
 
   public async Task InvokeAsync(HttpContext context)
   {
     if (!_options.RequestFilter(context))
     {
-      await next(context);
+      await _next(context);
       return;
     }
 
@@ -29,9 +49,13 @@ public class RequestResponseLoggerMiddleware(RequestDelegate next, IOptions<Requ
     var scopeId = scopeContainer?.Id;
     var sessionId = scopeContainer?.SessionId;
 
+    // Add logging method to context for enhanced diagnostics
+    var loggingMethod = await _loggingService.GetLoggingMethodAsync(context.RequestAborted);
+
     // Replace the current logger in the logging context
     using (Serilog.Context.LogContext.PushProperty("ScopeId", scopeId))
     using (Serilog.Context.LogContext.PushProperty("SessionId", sessionId))
+    using (Serilog.Context.LogContext.PushProperty("LoggingMethod", loggingMethod))
     {
       if (_options.LogRequests)
       {
@@ -44,7 +68,7 @@ public class RequestResponseLoggerMiddleware(RequestDelegate next, IOptions<Requ
 
       try
       {
-        await next(context);
+        await _next(context);
       }
       finally
       {
@@ -98,7 +122,7 @@ public class RequestResponseLoggerMiddleware(RequestDelegate next, IOptions<Requ
       ResponseBody = responseContent
     };
 
-    _logger.LogInformation("HTTP Response: {@RequestDetails}", logContext);
+    _logger.LogInformation("HTTP Response: {@ResponseDetails}", logContext);
   }
 
   private object MaskSensitiveHeaders(IHeaderDictionary headers)
@@ -109,7 +133,10 @@ public class RequestResponseLoggerMiddleware(RequestDelegate next, IOptions<Requ
   }
 }
 
-public static partial class ServiceCollectionExtensions
+/// <summary>
+/// Service collection extensions for logging middleware
+/// </summary>
+public static partial class LoggingServiceCollectionExtensions
 {
   public static void AddRequestResponseLogger(this IServiceCollection services,
     Action<RequestResponseLoggerOptions>? configureOptions = null)
