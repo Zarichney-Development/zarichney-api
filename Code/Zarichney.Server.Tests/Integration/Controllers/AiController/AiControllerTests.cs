@@ -31,7 +31,7 @@ public class AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHel
     var textPrompt = "What is the capital of France?";
 
     // Act
-    var response = await client.Completion(textPrompt, null!);
+    var response = await client.Completion(textPrompt, default(CancellationToken));
 
     // Assert
     response.IsSuccessStatusCode.Should().BeTrue(
@@ -49,7 +49,7 @@ public class AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHel
     var textPrompt = "What is the capital of France?";
 
     // Act
-    var response = await client.Completion(textPrompt, null!);
+    var response = await client.Completion(textPrompt, default(CancellationToken));
 
     // Assert
     response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
@@ -154,7 +154,7 @@ public class AiControllerTests(ApiClientFixture apiClientFixture, ITestOutputHel
     var textPrompt = "What is the capital of France?";
 
     // Act
-    var response = await client.Completion(textPrompt, null!);
+    var response = await client.Completion(textPrompt, default(CancellationToken));
 
     // Assert
     Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);

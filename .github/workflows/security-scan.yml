@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
   schedule:
     - cron: '0 3 * * 2'  # Weekly on Tuesdays
   workflow_dispatch:
