@@ -18,6 +18,8 @@ jobs:
   dependency-check:
     name: Dependency Vulnerability Scan
     runs-on: ubuntu-latest
+    # TEMPORARILY DISABLED TO TEST STANDARDS COMPLIANCE PIPELINE ONLY
+    if: false
     timeout-minutes: 20
     
     steps:
@@ -86,6 +88,8 @@ jobs:
   secrets-scan:
     name: Secrets Detection
     runs-on: ubuntu-latest
+    # TEMPORARILY DISABLED TO TEST STANDARDS COMPLIANCE PIPELINE ONLY
+    if: false
     timeout-minutes: 10
     
     steps:

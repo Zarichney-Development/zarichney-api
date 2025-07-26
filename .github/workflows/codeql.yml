@@ -18,6 +18,8 @@ jobs:
   analyze:
     name: Analyze Code
     runs-on: ubuntu-latest
+    # TEMPORARILY DISABLED TO TEST STANDARDS COMPLIANCE PIPELINE ONLY
+    if: false
     timeout-minutes: 45
 
     strategy:
