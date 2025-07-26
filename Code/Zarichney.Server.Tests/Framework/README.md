@@ -1,7 +1,7 @@
 # README: /Framework Directory
 
-**Version:** 1.1
-**Last Updated:** 2025-05-22
+**Version:** 1.2
+**Last Updated:** 2025-07-25
 **Parent:** `../README.md`
 
 ## 1. Purpose & Responsibility
@@ -37,7 +37,8 @@ The framework components are designed to be composable and to integrate seamless
 ## 3. Interface Contract & Assumptions
 
 * **For Test Writers:**
-    * Fixtures (e.g., `ApiClientFixture`, `DatabaseFixture`) are primarily consumed via constructor injection into test classes that are part of the `"Integration"` collection or through properties exposed by base test classes (`IntegrationTestBase`, `DatabaseIntegrationTestBase`).
+    * Fixtures (e.g., `ApiClientFixture`, `DatabaseFixture`) are primarily consumed via constructor injection into test classes that are part of the various integration test collections (`"IntegrationAuth"`, `"IntegrationCore"`, `"IntegrationExternal"`, `"IntegrationInfra"`, `"IntegrationQA"`) or through properties exposed by base test classes (`IntegrationTestBase`, `DatabaseIntegrationTestBase`).
+    * **Phase 3 Update:** All integration test collections now use the simplified `ApiClientFixture` for consistency and reliability in parallel execution scenarios.
     * Helper classes in `./Helpers/` are typically static or designed to be instantiated directly within tests or fixture setup.
     * Custom attributes from `./Attributes/` are applied directly to test methods or classes as per xUnit conventions.
 * **Assumptions Made by Framework Components:**
@@ -98,6 +99,7 @@ The `DependencyFactAttribute` was introduced to handle conditional test executio
 * **Framework Augmentation:** This framework is actively being enhanced based on the roadmap in `../TechnicalDesignDocument.md` (Section 16). Key upcoming additions/enhancements include:
     * Full integration of WireMock.Net for external HTTP service virtualization (TDD FRMK-004).
     * Development of advanced AutoFixture customizations (TDD FRMK-002).
+* **Phase 3 Completed:** Parallel test execution infrastructure is now fully operational with separate test collections and simplified fixture strategy. The unified test suite (`Scripts/run-test-suite.sh`) provides AI-powered analysis and dynamic quality gates.
     * Further enhancements to Testcontainers usage (TDD FRMK-003).
 * Refer to the issues tracker in the repository for any specific bugs or minor improvements planned for framework components.
 

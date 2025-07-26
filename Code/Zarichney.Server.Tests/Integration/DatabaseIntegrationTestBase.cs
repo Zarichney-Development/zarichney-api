@@ -10,7 +10,7 @@ namespace Zarichney.Tests.Integration;
 /// </summary>
 public abstract class DatabaseIntegrationTestBase : IntegrationTestBase
 {
-  private DatabaseFixture DatabaseFixture => _apiClientFixture.DatabaseFixture;
+  private DatabaseFixture? DatabaseFixture => _apiClientFixture.DatabaseFixture;
   protected readonly new ApiClientFixture _apiClientFixture;
 
   /// <summary>
@@ -22,7 +22,7 @@ public abstract class DatabaseIntegrationTestBase : IntegrationTestBase
     : base(apiClientFixture, testOutputHelper)
   {
     _apiClientFixture = apiClientFixture;
-    if (!DatabaseFixture.IsContainerAvailable)
+    if (DatabaseFixture?.IsContainerAvailable != true)
     {
       // Skip all database-backed tests if container is unavailable
       SetSkipReason("Database unavailable, skipping database-backed integration tests.");
@@ -35,6 +35,9 @@ public abstract class DatabaseIntegrationTestBase : IntegrationTestBase
   /// </summary>
   protected async Task ResetDatabaseAsync()
   {
-    await DatabaseFixture.ResetDatabaseAsync();
+    if (DatabaseFixture != null)
+    {
+      await DatabaseFixture.ResetDatabaseAsync();
+    }
   }
 }

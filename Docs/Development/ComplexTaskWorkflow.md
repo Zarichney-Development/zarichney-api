@@ -1,7 +1,7 @@
 # AI Coder Workflow Steps: TDD / Plan-First
 
-**Version:** 1.1
-**Last Updated:** 2025-05-04
+**Version:** 1.2
+**Last Updated:** 2025-07-25
 
 ## Overview
 
@@ -52,7 +52,11 @@ This document details the mandatory step-by-step workflow for an AI Coder agent 
     * Tests **MUST** adhere strictly to `/Docs/Standards/TestingStandards.md`.
 
 7.  **Verify New/Updated Tests Fail as Expected:**
-    * Run the specific tests you added or modified in step 6.
+    * Run the specific tests you added or modified in step 6 using the unified test suite:
+      ```bash
+      # Quick validation of specific tests
+      /test-report summary --unit-only
+      ```
     * Ensure they **FAIL** for the expected reasons (e.g., `NotImplementedException`, incorrect output, missing components). Debug test setup if they fail unexpectedly or pass prematurely.
 
 8.  **Implement Code Changes:**
@@ -63,12 +67,25 @@ This document details the mandatory step-by-step workflow for an AI Coder agent 
     * Adhere to any specified boundaries (what *not* to change).
 
 9.  **Verify New/Updated Tests Pass:**
-    * Run the specific tests you added or modified in step 6 *again*.
+    * Run the specific tests you added or modified in step 6 *again* using the unified test suite:
+      ```bash
+      # Validate specific test categories
+      ../../Scripts/run-test-suite.sh report --unit-only
+      ```
     * Ensure they now **PASS** consistently. Debug and fix any failures in the implementation code or tests until they pass.
 
 10. **Verify All Tests:**
-    * Run the **entire test suite** using the command: `dotnet test`.
-    * Ensure **ALL** unit and integration tests pass. Fix any failures caused by your changes, potentially iterating steps 8 and 9.
+    * Run the **entire test suite** with AI-powered analysis:
+      ```bash
+      # Full test suite with quality gates and recommendations
+      /test-report
+      
+      # Or using the script with performance analysis
+      ../../Scripts/run-test-suite.sh report --performance
+      ```
+    * Ensure **ALL** unit and integration tests pass and dynamic quality gates are met.
+    * Review AI recommendations for any test improvements or coverage gaps.
+    * Fix any failures caused by your changes, potentially iterating steps 8 and 9.
 
 11. **Refactor (Optional but Recommended):**
     * Review the code written in step 8. Refactor for clarity, conciseness, and adherence to principles (DRY, SOLID) *without changing the behavior verified by the tests*.
