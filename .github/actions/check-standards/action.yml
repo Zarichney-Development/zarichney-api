@@ -44,6 +44,9 @@ runs:
         echo "Head SHA: ${{ inputs.head-sha }}"
         echo "Severity Level: ${{ inputs.severity-level }}"
         
+        # Make scripts executable
+        chmod +x ${{ github.action_path }}/scripts/*.sh
+        
         # Create results directory
         mkdir -p standards-results
         
