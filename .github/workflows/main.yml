@@ -41,6 +41,7 @@ permissions:
   id-token: write
   contents: read
   actions: read
+  pull-requests: write  # Required for posting PR comments
 
 jobs:
   backend_build_and_test:
