@@ -363,7 +363,7 @@ jobs:
           $([ "$MEETS_THRESHOLD" = "0" ] && cat << 'COVERAGE_LOW'
           #### 📉 Coverage Below Threshold
           - **Current:** $LINE_COVERAGE% (Target: 24%)
-          - **Gap:** $(echo "24 - $LINE_COVERAGE" | bc)% coverage deficit
+          - **Gap:** $(awk -v lc="$LINE_COVERAGE" 'BEGIN {printf "%.0f", 24 - lc}')% coverage deficit
           - **Priority:** Add tests for critical code paths
           - **Focus Areas:** Business logic, error handling, edge cases
           COVERAGE_LOW
