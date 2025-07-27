@@ -31,38 +31,55 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Ensure base ref exists
-      id: ensure-base-ref
+    - name: Resolve base reference
+      id: resolve-base-ref
       shell: bash
       run: |
-        # Ensure the base reference exists in the local repo
         BASE_REF="${{ inputs.base-ref }}"
-        echo "Checking base reference: $BASE_REF"
+        echo "Input base reference: $BASE_REF"
         
-        # Strip 'origin/' prefix if present for local operations
-        LOCAL_BASE_REF="${BASE_REF#origin/}"
-        
-        # Fetch the base branch to ensure it exists
-        if [[ "$BASE_REF" == origin/* ]]; then
-          echo "Fetching remote reference: $BASE_REF"
-          git fetch origin "$LOCAL_BASE_REF:$LOCAL_BASE_REF" 2>/dev/null || true
-          git fetch origin "$LOCAL_BASE_REF" 2>/dev/null || true
-        fi
-        
-        # Verify the reference exists
-        if git show-ref --verify --quiet "refs/heads/$LOCAL_BASE_REF" || git show-ref --verify --quiet "refs/remotes/$BASE_REF"; then
-          echo "Base reference found: $BASE_REF"
-          echo "base_ref_resolved=$BASE_REF" >> $GITHUB_OUTPUT
+        # Handle different reference types
+        if [[ "$BASE_REF" == "HEAD~1" ]]; then
+          # For HEAD~1, check if it exists
+          if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+            echo "Using HEAD~1 for comparison"
+            echo "base_ref_resolved=HEAD~1" >> $GITHUB_OUTPUT
+          else
+            echo "HEAD~1 doesn't exist (possibly first commit), treating as all files changed"
+            # Use an empty tree to compare against (will show all files as changed)
+            echo "base_ref_resolved=4b825dc642cb6eb9a060e54bf8d69288fbee4904" >> $GITHUB_OUTPUT
+          fi
+        elif [[ "$BASE_REF" == origin/* ]]; then
+          # For origin/ references, fetch the remote branch
+          LOCAL_BASE_REF="${BASE_REF#origin/}"
+          echo "Fetching remote branch: $LOCAL_BASE_REF"
+          
+          # Fetch the remote branch
+          if git fetch origin "$LOCAL_BASE_REF" 2>/dev/null; then
+            echo "Successfully fetched $LOCAL_BASE_REF"
+            echo "base_ref_resolved=$BASE_REF" >> $GITHUB_OUTPUT
+          else
+            echo "Failed to fetch $LOCAL_BASE_REF, falling back to HEAD~1"
+            echo "base_ref_resolved=HEAD~1" >> $GITHUB_OUTPUT
+          fi
         else
-          echo "Base reference not found, falling back to HEAD~1"
-          echo "base_ref_resolved=HEAD~1" >> $GITHUB_OUTPUT
+          # For local references, check if they exist
+          if git show-ref --verify --quiet "refs/heads/$BASE_REF" 2>/dev/null; then
+            echo "Local reference found: $BASE_REF"
+            echo "base_ref_resolved=$BASE_REF" >> $GITHUB_OUTPUT
+          else
+            echo "Reference not found, falling back to HEAD~1"
+            echo "base_ref_resolved=HEAD~1" >> $GITHUB_OUTPUT
+          fi
         fi
 
     - name: Check for path changes
       id: check-changes
       uses: dorny/paths-filter@v2
       with:
-        base: ${{ steps.ensure-base-ref.outputs.base_ref_resolved }}
+        base: ${{ steps.resolve-base-ref.outputs.base_ref_resolved }}
+        list-files: none
+        initial-fetch-depth: 0
         filters: |
           backend:
             - 'Code/Zarichney.Server/**'
