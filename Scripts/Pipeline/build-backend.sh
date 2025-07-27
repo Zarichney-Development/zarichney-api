@@ -22,18 +22,20 @@ USAGE:
     $0 [OPTIONS]
 
 OPTIONS:
-    --config CONFIG     Build configuration (default: Release)
-    --threshold NUM     Coverage threshold percentage (default: $COVERAGE_THRESHOLD)
-    --parallel         Enable parallel test execution
-    --max-parallel NUM  Maximum parallel collections (default: 4)
-    --skip-tests       Skip test execution (build only)
-    --help             Show this help message
+    --config CONFIG        Build configuration (default: Release)
+    --threshold NUM        Coverage threshold percentage (default: $COVERAGE_THRESHOLD)
+    --parallel            Enable parallel test execution
+    --max-parallel NUM     Maximum parallel collections (default: 4)
+    --skip-tests          Skip test execution (build only)
+    --allow-low-coverage  Allow build to succeed even with low coverage (warning only)
+    --help                Show this help message
 
 ENVIRONMENT VARIABLES:
-    DOTNET_VERSION      .NET version to use (default: 8.0.x)
-    COVERAGE_THRESHOLD  Code coverage threshold
-    QUALITY_GATE_ENABLED Enable quality gate validation
-    CI_ENVIRONMENT      Set to true in CI/CD environment
+    DOTNET_VERSION         .NET version to use (default: 8.0.x)
+    COVERAGE_THRESHOLD     Code coverage threshold
+    QUALITY_GATE_ENABLED   Enable quality gate validation
+    CI_ENVIRONMENT         Set to true in CI/CD environment
+    COVERAGE_FLEXIBLE      Allow low coverage (true/false) - same as --allow-low-coverage
 
 EXAMPLES:
     $0                          # Standard build and test
@@ -47,6 +49,7 @@ PARALLEL_MODE=false
 MAX_PARALLEL=4
 SKIP_TESTS=false
 BUILD_CONFIG="Release"
+ALLOW_LOW_COVERAGE="${COVERAGE_FLEXIBLE:-false}"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -68,6 +71,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --skip-tests)
             SKIP_TESTS=true
+            shift
+            ;;
+        --allow-low-coverage)
+            ALLOW_LOW_COVERAGE=true
             shift
             ;;
         --help)
@@ -238,6 +245,7 @@ parse_test_results() {
     log_section "Parsing and Validating Test Results"
     
     local results_file="./TestResults/parsed_results.json"
+    local coverage_file="./TestResults/coverage_results.json"
     
     if [[ ! -f "$results_file" ]]; then
         log_warning "Test results file not found: $results_file"
@@ -251,7 +259,14 @@ parse_test_results() {
     total_tests=$(jq -r '.tests.total // 0' "$results_file")
     failed_tests=$(jq -r '.tests.failed // 0' "$results_file")
     pass_rate=$(jq -r '.tests.pass_rate // 0' "$results_file")
-    coverage_percentage=$(jq -r '.coverage.line_rate_percentage // 0' "$results_file")
+    
+    # Extract coverage from separate coverage file
+    if [[ -f "$coverage_file" ]]; then
+        coverage_percentage=$(jq -r '.line_coverage // 0' "$coverage_file")
+    else
+        log_warning "Coverage results file not found: $coverage_file - setting coverage to 0%"
+        coverage_percentage=0
+    fi
     
     # Log test metrics
     log_info "Test Metrics:"
@@ -278,6 +293,7 @@ validate_quality_gates() {
     log_section "Validating Quality Gates"
     
     local results_file="./TestResults/parsed_results.json"
+    local coverage_file="./TestResults/coverage_results.json"
     
     if [[ ! -f "$results_file" ]]; then
         log_warning "Cannot validate quality gates - results file missing"
@@ -286,7 +302,14 @@ validate_quality_gates() {
     
     local pass_rate coverage_percentage
     pass_rate=$(jq -r '.tests.pass_rate // 0' "$results_file")
-    coverage_percentage=$(jq -r '.coverage.line_rate_percentage // 0' "$results_file")
+    
+    # Extract coverage from separate coverage file
+    if [[ -f "$coverage_file" ]]; then
+        coverage_percentage=$(jq -r '.line_coverage // 0' "$coverage_file")
+    else
+        log_warning "Coverage file not found - treating as 0% coverage"
+        coverage_percentage=0
+    fi
     
     local quality_gate_failed=false
     
@@ -298,8 +321,12 @@ validate_quality_gates() {
     
     # Validate coverage threshold
     if (( $(echo "$coverage_percentage < $COVERAGE_THRESHOLD" | bc -l) )); then
-        log_error "Quality gate failed: Coverage $coverage_percentage% < $COVERAGE_THRESHOLD%"
-        quality_gate_failed=true
+        if [[ "$ALLOW_LOW_COVERAGE" == "true" ]]; then
+            log_warning "Quality gate warning: Coverage $coverage_percentage% < $COVERAGE_THRESHOLD% (allowed due to flexibility setting)"
+        else
+            log_error "Quality gate failed: Coverage $coverage_percentage% < $COVERAGE_THRESHOLD%"
+            quality_gate_failed=true
+        fi
     fi
     
     if [[ "$quality_gate_failed" == "true" ]]; then

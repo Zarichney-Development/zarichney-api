@@ -87,8 +87,20 @@ jobs:
           export QUALITY_GATE_ENABLED=true
           export COVERAGE_THRESHOLD=24
           
+          # Determine coverage flexibility based on branch/PR context
+          COVERAGE_FLAGS=""
+          if [[ "${{ github.head_ref }}" == test/* ]] || [[ "${{ github.ref_name }}" == test/* ]]; then
+            echo "🧪 Test branch detected - enabling coverage flexibility"
+            COVERAGE_FLAGS="--allow-low-coverage"
+            export COVERAGE_FLEXIBLE=true
+          elif [[ "${{ github.event_name }}" == "pull_request" ]] && [[ "${{ contains(github.event.pull_request.labels.*.name, 'low-coverage-allowed') }}" == "true" ]]; then
+            echo "🏷️ low-coverage-allowed label detected - enabling coverage flexibility"
+            COVERAGE_FLAGS="--allow-low-coverage"
+            export COVERAGE_FLEXIBLE=true
+          fi
+          
           # Execute the pipeline script
-          ./Scripts/Pipeline/build-backend.sh --parallel --threshold 24
+          ./Scripts/Pipeline/build-backend.sh --parallel --threshold 24 $COVERAGE_FLAGS
         
       - name: Upload backend artifacts
         if: always()
