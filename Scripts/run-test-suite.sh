@@ -1525,10 +1525,15 @@ enforce_quality_gates() {
         local meets_threshold=$(jq -r '.meets_threshold // 0' "$coverage_file" 2>/dev/null || echo "0")
         
         if [[ "$meets_threshold" != "1" ]] && [[ "${QUALITY_GATE_ENABLED:-false}" == "true" ]]; then
-            warning "QUALITY GATE WARNING: Coverage ${line_coverage}% below threshold ${COVERAGE_THRESHOLD}%"
+            if [[ "${COVERAGE_FLEXIBLE:-false}" == "true" ]]; then
+                warning "QUALITY GATE WARNING: Coverage ${line_coverage}% below threshold ${COVERAGE_THRESHOLD}% (allowed due to flexibility setting)"
+            else
+                print_error "QUALITY GATE FAILED: Coverage ${line_coverage}% below threshold ${COVERAGE_THRESHOLD}%"
+                gate_failed=true
+            fi
         fi
         
-        info "Coverage analysis: ${line_coverage}% (threshold: ${COVERAGE_THRESHOLD}%)"
+        info "Coverage analysis: ${line_coverage}% (threshold: ${COVERAGE_THRESHOLD}%, flexible: ${COVERAGE_FLEXIBLE:-false})"
     fi
     
     if [[ "$gate_failed" == "true" ]]; then

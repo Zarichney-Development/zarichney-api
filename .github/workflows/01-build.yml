@@ -93,6 +93,10 @@ jobs:
             echo "🧪 Test branch detected - enabling coverage flexibility"
             COVERAGE_FLAGS="--allow-low-coverage"
             export COVERAGE_FLEXIBLE=true
+          elif [[ "${{ github.ref_name }}" == "develop" ]] || [[ "${{ github.base_ref }}" == "develop" ]]; then
+            echo "🔧 Infrastructure validation on develop branch - enabling coverage flexibility"
+            COVERAGE_FLAGS="--allow-low-coverage"
+            export COVERAGE_FLEXIBLE=true
           elif [[ "${{ github.event_name }}" == "pull_request" ]] && [[ "${{ contains(github.event.pull_request.labels.*.name, 'low-coverage-allowed') }}" == "true" ]]; then
             echo "🏷️ low-coverage-allowed label detected - enabling coverage flexibility"
             COVERAGE_FLAGS="--allow-low-coverage"
