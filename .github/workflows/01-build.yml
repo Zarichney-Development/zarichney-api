@@ -49,7 +49,7 @@ jobs:
         id: check-paths
         uses: ./.github/actions/shared/check-paths
         with:
-          base-ref: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.event.pull_request.base.ref) || github.event_name == 'push' && 'HEAD~1' || 'origin/main' }}
+          base-ref: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.event.pull_request.base.ref) || github.event_name == 'push' && github.ref_name == 'main' && 'HEAD~1' || github.event_name == 'push' && github.ref_name == 'develop' && 'origin/main' || 'origin/main' }}
 
       - name: Display path analysis
         run: |
