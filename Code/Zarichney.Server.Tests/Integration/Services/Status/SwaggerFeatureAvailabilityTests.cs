@@ -20,7 +20,7 @@ namespace Zarichney.Tests.Integration.Services.Status;
 /// and descriptions when endpoints are unavailable due to missing configuration.
 /// </summary>
 [Trait(TestCategories.Category, TestCategories.Integration)]
-[Collection("Integration")]
+[Collection("IntegrationInfra")]
 // These tests are skipped as they require a real environment to properly test the
 // ServiceAvailabilityOperationFilter in context of the Swagger UI.
 // The live service tests in SwaggerLiveServiceStatusTests.cs provide similar verification using real services.

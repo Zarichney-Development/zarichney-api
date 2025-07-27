@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "refitter": {
+      "version": "1.6.1",
+      "commands": [
+        "refitter"
+      ],
+      "rollForward": false
+    }
+  }
+}

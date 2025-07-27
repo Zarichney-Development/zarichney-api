@@ -1,0 +1,43 @@
+name: "Zarichney API CodeQL Config"
+
+# Disable default queries and enable security-focused query suites
+disable-default-queries: false
+
+# Additional query suites to run
+queries:
+  - uses: security-extended  # Extended security queries
+  - uses: security-and-quality  # Security and code quality queries
+
+# Paths to include in analysis
+paths:
+  - Code/Zarichney.Server
+  - Code/Zarichney.Website
+  - Code/Zarichney.Server.Tests
+
+# Paths to exclude from analysis
+paths-ignore:
+  - '**/node_modules/**'
+  - '**/bin/**'
+  - '**/obj/**'
+  - '**/TestResults/**'
+  - '**/coverage/**'
+  - '**/*.min.js'
+  - '**/*.min.css'
+  - '**/dist/**'
+  - Code/Zarichney.Server/wwwroot/lib/**
+  - Code/Zarichney.Website/.angular/**
+  - '**/migrations/**/*.sql'
+
+# Specific configuration for C#
+csharp:
+  # Enable additional security rules
+  queries:
+    - security-extended
+    - security-and-quality
+  
+# Specific configuration for JavaScript/TypeScript  
+javascript:
+  # Enable additional security rules
+  queries:
+    - security-extended
+    - security-and-quality

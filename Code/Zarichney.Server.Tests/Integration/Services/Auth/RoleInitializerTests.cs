@@ -16,7 +16,7 @@ namespace Zarichney.Tests.Integration.Services.Auth;
 /// Integration tests for the RoleInitializer admin user seeding functionality.
 /// These tests use Testcontainers to provide a real PostgreSQL database.
 /// </summary>
-[Collection("Integration")]
+[Collection("IntegrationAuth")]
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Feature, TestCategories.Auth)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]

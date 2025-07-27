@@ -15,7 +15,7 @@ using Zarichney.Client.Contracts;
 namespace Zarichney.Client
 {
     /// <summary>Gets a completion from the configured Language Model (LLM) based on either text or audio input.</summary>
-    [System.CodeDom.Compiler.GeneratedCode("Refitter", "1.5.5.0")]
+    [System.CodeDom.Compiler.GeneratedCode("Refitter", "1.6.1.0")]
     public partial interface IAiApi
     {
         /// <summary>Gets a completion from the configured Language Model (LLM) based on either text or audio input.</summary>

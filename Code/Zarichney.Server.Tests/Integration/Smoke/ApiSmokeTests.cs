@@ -16,7 +16,7 @@ namespace Zarichney.Tests.Integration.Smoke;
 [Trait(TestCategories.Dependency, TestCategories.Database)]
 [Trait(TestCategories.Dependency, TestCategories.Docker)]
 [Trait(TestCategories.Dependency, TestCategories.ExternalStripe)]
-[Collection("Integration")]
+[Collection("IntegrationQA")]
 public class ApiSmokeTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper) : IntegrationTestBase(apiClientFixture, testOutputHelper)
 {
   [DependencyFact]
@@ -41,7 +41,7 @@ public class ApiSmokeTests(ApiClientFixture apiClientFixture, ITestOutputHelper 
 
     // Assert
     Assert.True(loginResult.Success);
-    Assert.NotEmpty(loginResult.Email);
+    Assert.NotEmpty(loginResult.Email ?? string.Empty);
     Assert.True(logoutResult.Success);
   }
 
@@ -56,7 +56,7 @@ public class ApiSmokeTests(ApiClientFixture apiClientFixture, ITestOutputHelper 
     var client = _apiClientFixture.AuthenticatedCookbookApi;
 
     // Act
-    var recipes = await client.Recipe("burger", false, null, null);
+    var recipes = await client.Recipe("burger", false, default(int?), default(int?));
 
     // Assert
     Assert.NotNull(recipes);

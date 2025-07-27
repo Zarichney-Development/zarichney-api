@@ -17,7 +17,7 @@ namespace Zarichney.Tests.Integration.Services.Status;
 /// blocks endpoints when their required features are unavailable.
 /// </summary>
 [Trait(TestCategories.Category, TestCategories.Integration)]
-[Collection("Integration")]
+[Collection("IntegrationInfra")]
 public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper)
     : IntegrationTestBase(apiClientFixture, testOutputHelper)
 {

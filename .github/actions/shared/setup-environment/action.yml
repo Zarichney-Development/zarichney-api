@@ -1,0 +1,82 @@
+name: 'Setup Development Environment'
+description: 'Shared setup for .NET and Node.js development environment'
+author: 'Zarichney Development'
+
+inputs:
+  dotnet-version:
+    description: '.NET SDK version to install'
+    required: false
+    default: '8.0.x'
+  node-version:
+    description: 'Node.js version to install'
+    required: false
+    default: '18.x'
+  setup-dotnet:
+    description: 'Whether to setup .NET SDK'
+    required: false
+    default: 'true'
+  setup-node:
+    description: 'Whether to setup Node.js'
+    required: false
+    default: 'false'
+  cache-dependencies:
+    description: 'Whether to cache dependencies'
+    required: false
+    default: 'true'
+
+outputs:
+  dotnet-cache-hit:
+    description: 'Whether .NET cache was hit'
+    value: ${{ steps.cache-dotnet.outputs.cache-hit }}
+  node-cache-hit:
+    description: 'Whether Node.js cache was hit'
+    value: ${{ steps.cache-node.outputs.cache-hit }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup .NET SDK
+      if: inputs.setup-dotnet == 'true'
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ inputs.dotnet-version }}
+
+    - name: Cache .NET packages
+      if: inputs.setup-dotnet == 'true' && inputs.cache-dependencies == 'true'
+      id: cache-dotnet
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Setup Node.js
+      if: inputs.setup-node == 'true'
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'npm'
+        cache-dependency-path: Code/Zarichney.Website/package-lock.json
+
+    - name: Cache Node.js modules
+      if: inputs.setup-node == 'true' && inputs.cache-dependencies == 'true'
+      id: cache-node
+      uses: actions/cache@v4
+      with:
+        path: Code/Zarichney.Website/node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('Code/Zarichney.Website/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+
+    - name: Verify installations
+      shell: bash
+      run: |
+        echo "Environment setup completed:"
+        if [ "${{ inputs.setup-dotnet }}" = "true" ]; then
+          echo "  .NET version: $(dotnet --version)"
+        fi
+        if [ "${{ inputs.setup-node }}" = "true" ]; then
+          echo "  Node.js version: $(node --version)"
+          echo "  npm version: $(npm --version)"
+        fi

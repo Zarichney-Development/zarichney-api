@@ -42,17 +42,19 @@ Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskMan
     ```bash
     dotnet run --project Code/Zarichney.Server
     ```
-* **🧪 Automated Test Reporting:** (Recommended - Comprehensive analysis with AI insights)
+* **🧪 Unified Test Suite:** (Comprehensive testing with multiple modes)
     ```bash
+    # Unified script with mode selection
+    ./Scripts/run-test-suite.sh                    # Default: report mode with markdown
+    ./Scripts/run-test-suite.sh automation         # HTML coverage reports + browser
+    ./Scripts/run-test-suite.sh report json        # JSON output for CI/CD
+    ./Scripts/run-test-suite.sh both               # Run both modes
+    
     # Claude custom command - Full AI-powered analysis
     /test-report                    # Detailed markdown report with recommendations
     /test-report summary            # Quick executive summary
     /test-report json               # Machine-readable output for CI/CD
     /test-report --performance      # Include performance analysis
-    
-    # Direct script execution - Also available
-    ./Scripts/run-test-report.sh           # Same as /test-report
-    ./Scripts/run-test-report.sh summary   # Quick summary
     
     # Bash aliases (after sourcing Scripts/test-aliases.sh)
     test-report                     # Full analysis
@@ -60,17 +62,24 @@ Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskMan
     test-claude                     # AI-powered insights via Claude
     ```
 
-* **Run Automation Suite with Coverage Report:** (Comprehensive test execution with HTML report)
+* **Unified Test Suite Options:** (All-in-one testing solution)
     ```bash
-    # Run complete automation suite and open coverage report in browser
-    ./Scripts/run-automation-suite.sh
+    # Mode selection
+    ./Scripts/run-test-suite.sh automation         # HTML reports, browser opening
+    ./Scripts/run-test-suite.sh report             # AI analysis, quality gates
+    ./Scripts/run-test-suite.sh both               # Execute both modes
     
-    # Run without opening browser
-    ./Scripts/run-automation-suite.sh --no-browser
+    # Output format options (report mode)
+    ./Scripts/run-test-suite.sh report markdown    # Detailed markdown report
+    ./Scripts/run-test-suite.sh report json        # Machine-readable JSON
+    ./Scripts/run-test-suite.sh report summary     # Quick executive summary
+    ./Scripts/run-test-suite.sh report console     # Terminal-optimized output
     
-    # Run only specific test types
-    ./Scripts/run-automation-suite.sh --unit-only
-    ./Scripts/run-automation-suite.sh --integration-only
+    # Common options
+    ./Scripts/run-test-suite.sh automation --no-browser     # Skip browser opening
+    ./Scripts/run-test-suite.sh report --unit-only          # Unit tests only
+    ./Scripts/run-test-suite.sh both --integration-only     # Integration tests only
+    ./Scripts/run-test-suite.sh report --performance        # Include performance analysis
     ```
 
 * **Run All Tests (Traditional):** (Ensure Docker Desktop is running for integration tests)
@@ -254,6 +263,307 @@ claude --dangerously-skip-permissions --print "Run /test-report and then use Git
 - **TestingStandards.md**: Use `/test-report` for comprehensive test analysis and GitHub MCP to suggest additional test scenarios
 - **DocumentationStandards.md**: Leverage GitHub MCP to ensure documentation stays current with code changes
 - **Test Automation**: The `/test-report` command integrates with all development workflows to provide intelligent test analysis, coverage validation, and quality gate enforcement
+
+## 8. Automated Standards Compliance Check
+
+### Overview
+The project includes an automated Standards Compliance Check that runs on every pull request to ensure adherence to all project standards defined in `/Docs/Standards/`. This system provides immediate feedback to contributors and enforces quality gates.
+
+### How It Works
+- **Trigger**: Automatically runs after the main CI/CD workflow completes for pull requests
+- **Scope**: Validates code formatting, Git standards, testing practices, and documentation
+- **Output**: Detailed PR comment with categorized violations and remediation guidance
+
+### Violation Categories
+- **🚫 Mandatory**: Critical violations that block merging (formatting, missing tests, etc.)
+- **⚠️ Recommended**: Important quality improvements that should be addressed
+- **💡 Optional**: Suggestions for code quality enhancement and best practices
+
+### Standards Checked
+1. **Code Formatting & Style**: `.editorconfig` compliance, modern C# features, logging patterns
+2. **Git & Task Management**: Conventional commits, branch naming, issue references
+3. **Testing Standards**: Test naming, categorization, framework usage, coverage
+4. **Documentation**: README.md coverage, XML docs, linking structure
+
+### Quality Gates
+- PRs with mandatory violations are automatically blocked from merging
+- Compliance score calculated based on violation severity
+- Clear remediation instructions provided for each violation type
+
+### Integration with Development Workflow
+- Complements existing test reporter and AI-powered analysis
+- Uses same infrastructure pattern as other automated checks
+- Provides actionable feedback linked to specific standards documentation
+
+### For Developers
+- Address mandatory violations to unblock PR merging
+- Review recommended improvements for enhanced code quality
+- Use provided links to standards documentation for detailed guidance
+- Run `dotnet format` locally to fix most formatting violations
+
+**Workflow File**: [`.github/workflows/standards-compliance-check.yml`](.github/workflows/standards-compliance-check.yml)
+
+## 9. Automated Tech Debt Analysis
+
+### Overview
+The project includes an AI-powered tech debt analysis system that automatically evaluates pull requests for technical debt across multiple dimensions and provides actionable recommendations for both immediate fixes and future improvements.
+
+### How It Works
+- **Trigger**: Automatically runs after the main CI/CD workflow completes for pull requests
+- **AI Analysis**: Uses Claude AI to provide expert-level technical debt assessment
+- **Multi-Dimensional**: Analyzes complexity, performance, security, maintainability, and documentation
+- **Auto-Issue Creation**: Generates GitHub issues for significant tech debt items requiring future work
+
+### Analysis Categories
+
+#### **🔍 Code Complexity Assessment**
+- Cyclomatic and cognitive complexity analysis
+- Method length and class size violations  
+- Nesting depth and parameter count evaluation
+- SOLID principle adherence checking
+
+#### **⚡ Performance Debt Analysis**
+- Inefficient algorithms and patterns identification
+- Resource leak detection (missing using statements)
+- Database query optimization opportunities
+- Memory allocation and async/await pattern analysis
+
+#### **🛡️ Security & Quality Issues**
+- Potential security vulnerabilities (SQL injection, XSS, hard-coded secrets)
+- Error handling gaps and input validation missing
+- Authentication/authorization pattern violations
+- Logging and monitoring deficiencies
+
+#### **📚 Documentation & Testing Debt**
+- Missing XML documentation for public APIs
+- Inadequate test coverage for new complexity
+- TODO/FIXME/HACK comment accumulation
+- README and documentation update requirements
+
+### Tech Debt Scoring
+- **Debt Score**: 0-100 (lower is better) based on weighted categories
+- **Quality Gates**: Critical issues block merge, high/medium issues create follow-up work
+- **Trend Tracking**: Historical debt progression monitoring
+- **Impact Assessment**: Business and development velocity impact analysis
+
+### Auto-Issue Creation
+The system automatically creates GitHub issues for identified tech debt:
+
+#### **🚨 Critical Issues** (Block Merge)
+- Immediate security vulnerabilities
+- Critical performance regressions
+- Architecture violations breaking existing patterns
+
+#### **⚠️ High Priority** (Current Sprint)
+- Significant complexity increases
+- Performance bottlenecks affecting user experience
+- Maintainability risks requiring prompt attention
+
+#### **💡 Medium Priority** (Next Sprint)
+- Code duplication opportunities for refactoring
+- Missing abstractions improving design
+- Documentation gaps impacting maintainability
+
+#### **📝 Low Priority** (Technical Roadmap)
+- Minor optimizations and improvements
+- Code style and consistency enhancements
+- Future enhancement opportunities
+
+### Configuration
+Tech debt analysis behavior is controlled by [`.github/config/tech-debt-config.yml`](.github/config/tech-debt-config.yml):
+
+#### **Thresholds**
+```yaml
+complexity:
+  method_max_cyclomatic: 10    # Maximum method complexity
+  class_max_lines: 500         # Maximum class size
+  nesting_max_depth: 4         # Maximum nesting levels
+
+performance:
+  query_timeout_warn_ms: 30000 # Database query timeout warnings
+  memory_allocation_warn_mb: 100 # Memory allocation warnings
+```
+
+#### **Issue Creation Rules**
+```yaml
+issue_creation:
+  auto_create_threshold: "medium"    # Minimum severity for auto-issues
+  max_issues_per_pr: 10             # Limit issues per analysis
+  labels: ["tech-debt", "auto-generated"]
+```
+
+#### **Analysis Patterns**
+- **Include Patterns**: `**/*.cs`, `**/*.ts`, `**/*.sql`
+- **Exclude Patterns**: `**/bin/**`, `**/Migrations/**`, `**/*.g.cs`
+- **Security Rules**: Hard-coded passwords, SQL injection risks, HTTP URLs
+- **Performance Rules**: Blocking async calls, string concatenation, uninitialized collections
+
+### Quality Gates
+- **Critical Issues**: Block PR merge until resolved
+- **High Priority**: Must be addressed within current sprint
+- **Medium Priority**: Plan for next sprint or milestone  
+- **Low Priority**: Include in technical roadmap
+
+### Integration with Development Workflow
+1. **Automatic Analysis**: Runs on every PR targeting main/develop branches
+2. **AI-Powered Insights**: Claude AI provides expert-level architectural review
+3. **Structured Reporting**: Detailed markdown reports with specific recommendations
+4. **Issue Tracking**: Auto-generated GitHub issues with proper labeling and milestones
+5. **Quality Gate Enforcement**: Prevents merging PRs with critical tech debt
+
+### AI Analysis Capabilities
+- **Expert-Level Assessment**: Senior software architect quality analysis
+- **Context-Aware**: Understands business impact and development velocity effects
+- **Actionable Recommendations**: Specific file paths, line numbers, and remediation steps
+- **Pattern Recognition**: Identifies complex architectural debt beyond simple pattern matching
+- **Impact Analysis**: Evaluates cumulative effect on system maintainability
+
+### Usage Commands
+```bash
+# View tech debt analysis for specific PR
+gh pr view <PR_NUMBER> --comments | grep -A 50 "Tech Debt Analysis"
+
+# Check tech debt workflow status
+gh run list --workflow="Tech Debt Analysis" --limit 5
+
+# Review auto-generated tech debt issues
+gh issue list --label="tech-debt,auto-generated" --state=open
+```
+
+### Benefits
+- **Proactive Debt Management**: Identifies debt before it becomes critical
+- **Informed Decision Making**: Clear severity levels and impact assessment
+- **Automated Tracking**: GitHub issues ensure tech debt doesn't get forgotten
+- **Quality Improvement**: Continuous improvement through measurable debt reduction
+- **Team Education**: AI insights help developers learn best practices
+
+**Workflow File**: [`.github/workflows/tech-debt-analysis.yml`](.github/workflows/tech-debt-analysis.yml)  
+**Configuration**: [`.github/config/tech-debt-config.yml`](.github/config/tech-debt-config.yml)
+
+## 10. Security: Comprehensive Analysis
+
+### Overview
+The project includes a comprehensive security analysis system that follows the established workflow pattern used by standards compliance and tech debt analysis. Security scanning is integrated into the main CI/CD pipeline, with AI-powered analysis performed by a separate workflow that posts consolidated security insights to PR comments.
+
+### Architecture Pattern (Consistent with Project Standards)
+1. **Security Scans in Build Workflow**: Security scanning jobs run alongside build/test in `01-build.yml`
+2. **Security Analysis Workflow**: `03-security.yml` triggers on workflow completion
+3. **AI-Powered Analysis**: Custom GitHub Action analyzes all security data with Claude
+4. **Single PR Comment**: Consolidated security analysis posted to PR (like standards compliance)
+
+### How It Works
+- **Security Scans**: Run as parallel jobs in main CI/CD workflow alongside existing build/test jobs
+- **Artifact Collection**: Security results uploaded as artifacts for analysis workflow
+- **AI Analysis**: Triggered on `workflow_run` completion, downloads artifacts, runs Claude analysis
+- **PR Integration**: Single comprehensive security comment posted to PR with deployment decision
+
+### Security Scanning Jobs (Integrated in Main CI/CD)
+
+#### **🔍 CodeQL Analysis** (`security_codeql_analysis`)
+- Multi-language static analysis (C# and JavaScript) 
+- Security-extended and security-and-quality query suites
+- Uses `.github/codeql/codeql-config.yml` configuration
+- Matrix strategy for parallel language analysis
+
+#### **🔒 Dependency Security Scanning** (`security_dependency_scan`)
+- .NET vulnerability scanning with `dotnet list package --vulnerable`
+- Node.js vulnerability scanning with `npm audit`
+- Comprehensive vulnerability categorization (Critical, High, Moderate, Low)
+- Automated vulnerability counting and impact assessment
+
+#### **📋 Security Policy Compliance** (`security_policy_compliance`)
+- SECURITY.md file validation
+- GitHub Actions workflow permission auditing
+- Hard-coded secrets detection (basic patterns)
+- HTTPS enforcement checking
+
+#### **🕵️ Secrets Detection** (`security_secrets_detection`)
+- TruffleHog OSS integration for comprehensive secret scanning
+- Historical commit analysis with full git history
+- Verified secrets detection with detailed reporting
+
+### AI-Powered Security Analysis Workflow
+
+#### **🤖 Security Analysis Workflow** (`security-analysis.yml`)
+- **Trigger**: `workflow_run` after main CI/CD completion (consistent with project pattern)
+- **Custom Action**: `.github/actions/analyze-security` consolidates all security data
+- **Claude Integration**: Expert cybersecurity assessment using Claude Code Action
+- **Comprehensive Analysis**:
+  - Security posture evaluation (Excellent/Good/Fair/Poor/Critical)
+  - Vulnerability impact analysis and prioritization
+  - Policy compliance assessment and recommendations
+  - Threat modeling and risk evaluation
+  - Actionable remediation roadmap with priority ranking
+  - Deployment security decision (DEPLOY/BLOCK/CONDITIONAL)
+
+#### **🚨 Auto-Issue Creation** (`.github/actions/create-security-issues`)
+- **Critical Vulnerabilities**: Creates urgent issues for immediate attention
+- **Secrets Detection**: Creates issues for credential management
+- **High Volume Dependencies**: Creates tracking issues for dependency updates
+
+### Security Decision Matrix
+- **Critical Issues**: Block deployment for secrets or critical vulnerabilities
+- **High Risk**: Require security review for high-severity findings
+- **Medium Risk**: Track and plan remediation for moderate issues
+- **AI Validation**: Expert security assessment for all deployment decisions
+
+### Quality Gates
+- Automated deployment blocking for critical security issues
+- AI-driven security gates for production deployments
+- PR comment integration with detailed security analysis
+- Security artifact generation for downstream consumption
+
+### Performance & Architecture Benefits
+- **Integrated Execution**: Security scans run alongside build/test jobs in main CI/CD
+- **Parallel Processing**: All security jobs run simultaneously for optimal performance
+- **Consistent Pattern**: Follows same architecture as standards compliance and tech debt analysis
+- **Resource Efficiency**: No separate workflow scheduling - runs with every build
+
+### Integration Points
+- **Dependabot Integration**: Enhanced security labels (`security`, `vulnerability-fix`)
+- **Main CI/CD Pipeline**: Security gates before deployment decisions
+- **Standards Compliance**: Complements existing quality workflows
+- **Test Reporter**: Security metrics in unified reporting
+
+### For Developers
+- **PR Comments**: Review comprehensive security analysis in PR comments (single consolidated comment)
+- **Critical Issues**: Address critical security issues to unblock deployments  
+- **Auto-Generated Issues**: Monitor and address security issues automatically created for significant findings
+- **Consistent Experience**: Same workflow pattern as standards compliance and tech debt analysis
+
+**Security Analysis Workflow**: [`.github/workflows/security-analysis.yml`](.github/workflows/security-analysis.yml)  
+**Security Analysis Action**: [`.github/actions/analyze-security/action.yml`](.github/actions/analyze-security/action.yml)  
+**Issue Creation Action**: [`.github/actions/create-security-issues/action.yml`](.github/actions/create-security-issues/action.yml)  
+**CodeQL Configuration**: [`.github/codeql/codeql-config.yml`](.github/codeql/codeql-config.yml)
+
+## 11. Workflow Organization & Naming
+
+### Professional Pipeline Structure
+All workflows follow a consistent naming convention for clarity and organization:
+
+#### **Core Workflows**
+- **`01 • Build & Test`** (`01-build.yml`) - Foundation build, test, and artifact generation
+
+#### **Analysis Workflows** (Triggered on workflow_run)
+- **`02 • Quality Analysis`** (`02-quality.yml`) - AI-powered quality analysis and standards compliance
+- **`03 • Security Analysis`** (`03-security.yml`) - Comprehensive security scanning and tech debt assessment
+
+#### **Deployment & Maintenance Workflows**
+- **`04 • Deploy`** (`04-deploy.yml`) - Conditional deployment based on analysis results
+- **`05 • Maintenance`** (`05-maintenance.yml`) - Scheduled maintenance and cleanup tasks
+
+### Workflow Dependencies
+- **Analysis workflows** trigger on `workflow_run` after build completion
+- **Security scans** integrated directly into build workflow for efficiency  
+- **Consistent pattern** across all analysis workflows using AI-powered insights
+- All workflows support manual dispatch for debugging and testing
+
+### Benefits of Organization
+- **Clear Purpose**: Each workflow name immediately indicates its function
+- **Logical Grouping**: Related workflows grouped by category (Core, Analysis, Deployment)
+- **Professional Presentation**: Consistent, enterprise-grade workflow organization
+- **Enhanced Discoverability**: Easy to find and understand workflow purposes
+- **Maintainability**: Clear separation of concerns for easier maintenance
 
 ---
 # important-instruction-reminders
