@@ -12,6 +12,7 @@ on:
     workflows: ["01 • Build & Test"]
     types:
       - completed
+    branches: [main, develop]  # Allow security analysis for both main and develop branches
   schedule:
     - cron: '0 2 * * 1'  # Weekly on Mondays at 2 AM
   workflow_dispatch:
