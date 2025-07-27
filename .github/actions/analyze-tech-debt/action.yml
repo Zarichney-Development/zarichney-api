@@ -184,39 +184,56 @@ EOF
         
         # Security pattern analysis
         echo "🔒 Analyzing security patterns..."
-        cat > tech-debt-analysis/security/security-analysis.txt << 'EOF'
-        # Security Pattern Analysis
         
-        ## Potential Security Issues
-        Hard-coded strings: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*=.*"[^"]*[pP]ass[wW]ord[^"]*"' || echo "0")
-        SQL string concatenation: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*".*SELECT.*".*+' || echo "0")
-        HTTP URLs in code: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*http://' || echo "0")
+        # Calculate security metrics
+        HARDCODED_STRINGS=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*=.*"[^"]*[pP]ass[wW]ord[^"]*"' || echo "0")
+        SQL_CONCAT=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*".*SELECT.*".*+' || echo "0")
+        HTTP_URLS=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*http://' || echo "0")
+        NEW_CONTROLLERS=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*\[Http' || echo "0")
         
-        ## Input Validation
-        Missing validation attributes: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*public.*string.*{.*get.*set.*}' | awk '{if($1>0) print "Potential missing validation on new string properties"}' || echo "No obvious validation issues")
-        
-        ## Authentication/Authorization
-        New controller actions: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*\[Http' || echo "0")
-        Missing authorization: $(git diff ${{ inputs.base-branch }}..HEAD | grep -A5 '^\+.*\[Http' | grep -c '\[Authorize\]' | awk '{if($1==0) print "Some new endpoints may lack authorization"}' || echo "Authorization patterns need review")
-        EOF
+        # Create security analysis file
+        cat > tech-debt-analysis/security/security-analysis.txt << EOF
+# Security Pattern Analysis
+
+## Potential Security Issues
+Hard-coded strings: $HARDCODED_STRINGS
+SQL string concatenation: $SQL_CONCAT
+HTTP URLs in code: $HTTP_URLS
+
+## Input Validation
+Missing validation attributes: Check new string properties for validation
+
+## Authentication/Authorization
+New controller actions: $NEW_CONTROLLERS
+Missing authorization: Manual review required for new endpoints
+EOF
         
         # Quality pattern analysis
         echo "📋 Analyzing code quality patterns..."
-        cat > tech-debt-analysis/security/quality-analysis.txt << 'EOF'
-        # Code Quality Pattern Analysis
         
-        ## Error Handling
-        Try-catch blocks added: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*try\s*{' || echo "0")
-        Exception types: $(git diff ${{ inputs.base-branch }}..HEAD | grep '^\+.*catch.*(' | sed 's/.*catch.*(\([^)]*\)).*/\1/' | sort | uniq -c || echo "No new exception handling")
+        # Calculate quality metrics
+        TRY_CATCH_ADDED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*try\s*{' || echo "0")
+        ILOGGER_USAGE=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*_logger\.' || echo "0")
+        CONSOLE_USAGE=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*Console\.WriteLine' || echo "0")
+        ASYNC_METHODS=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*async.*Task' || echo "0")
+        CONFIGURE_AWAIT=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*\.ConfigureAwait' || echo "0")
         
-        ## Logging
-        ILogger usage: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*_logger\.' || echo "0")
-        Console.WriteLine usage: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*Console\.WriteLine' || echo "0")
-        
-        ## Async Patterns
-        Async methods added: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*async.*Task' || echo "0")
-        ConfigureAwait usage: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*\.ConfigureAwait' || echo "0")
-        EOF
+        # Create quality analysis file
+        cat > tech-debt-analysis/security/quality-analysis.txt << EOF
+# Code Quality Pattern Analysis
+
+## Error Handling
+Try-catch blocks added: $TRY_CATCH_ADDED
+Exception types: Check manually for proper exception handling
+
+## Logging
+ILogger usage: $ILOGGER_USAGE
+Console.WriteLine usage: $CONSOLE_USAGE
+
+## Async Patterns
+Async methods added: $ASYNC_METHODS
+ConfigureAwait usage: $CONFIGURE_AWAIT
+EOF
         
         echo "✅ Security and quality analysis completed"
 
@@ -229,39 +246,58 @@ EOF
         
         # Performance pattern analysis
         echo "🚀 Analyzing performance patterns..."
-        cat > tech-debt-analysis/performance/performance-analysis.txt << 'EOF'
-        # Performance Analysis
         
-        ## Database Patterns
-        Entity Framework queries: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*\.Where.*\.' || echo "0")
-        Potential N+1 queries: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*\.Include.*\.' || echo "Check for proper eager loading")
+        # Calculate performance metrics
+        EF_QUERIES=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*\.Where.*\.' || echo "0")
+        LIST_INIT=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*new List<' || echo "0")
+        STRING_CONCAT=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*string.*+.*string' || echo "0")
+        USING_STATEMENTS=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*using.*(' || echo "0")
+        CACHE_USAGE=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*Cache' || echo "0")
         
-        ## Memory Patterns
-        List initialization: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*new List<' || echo "0")
-        String concatenation: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*string.*+.*string' || echo "0")
-        Using statements: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*using.*(' || echo "0")
-        
-        ## Caching Patterns
-        Cache usage: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*Cache' || echo "0")
-        Memory cache: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*IMemoryCache' || echo "0")
-        EOF
+        # Create performance analysis file
+        cat > tech-debt-analysis/performance/performance-analysis.txt << EOF
+# Performance Analysis
+
+## Database Patterns
+Entity Framework queries: $EF_QUERIES
+Potential N+1 queries: Check for proper eager loading
+
+## Memory Patterns
+List initialization: $LIST_INIT
+String concatenation: $STRING_CONCAT
+Using statements: $USING_STATEMENTS
+
+## Caching Patterns
+Cache usage: $CACHE_USAGE
+Memory cache: Check for IMemoryCache usage
+EOF
         
         # Architecture pattern analysis
         echo "🏗️ Analyzing architecture patterns..."
-        cat > tech-debt-analysis/performance/architecture-analysis.txt << 'EOF'
-        # Architecture Analysis
         
-        ## Dependency Injection
-        New services registered: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*services\.Add' || echo "0")
-        Interface implementations: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*: I[A-Z]' || echo "0")
+        # Calculate architecture metrics
+        SERVICES_ADDED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*services\.Add' || echo "0")
+        INTERFACES_IMPL=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*: I[A-Z]' || echo "0")
+        CLASSES_ADDED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*class.*{' || echo "0")
+        TEST_FILES=$(git diff --name-only ${{ inputs.base-branch }}..HEAD | grep -c 'Test.*\.cs$' || echo "0")
+        TEST_METHODS=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*\[Test\]\|\[Fact\]' || echo "0")
         
-        ## SOLID Principles
-        Single responsibility: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*class.*{' | awk '{if($1>3) print "Multiple classes added - review SRP"}' || echo "Class additions look reasonable")
-        
-        ## Testing Architecture
-        New test files: $(git diff --name-only ${{ inputs.base-branch }}..HEAD | grep -c 'Test.*\.cs$' || echo "0")
-        Test coverage for new code: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*\[Test\]\|\[Fact\]' || echo "0")
-        EOF
+        # Create architecture analysis file
+        cat > tech-debt-analysis/performance/architecture-analysis.txt << EOF
+# Architecture Analysis
+
+## Dependency Injection
+New services registered: $SERVICES_ADDED
+Interface implementations: $INTERFACES_IMPL
+
+## SOLID Principles
+Classes added: $CLASSES_ADDED
+Single responsibility: Review if multiple classes maintain SRP
+
+## Testing Architecture
+New test files: $TEST_FILES
+Test coverage for new code: $TEST_METHODS test methods added
+EOF
         
         echo "✅ Performance and architecture analysis completed"
 
