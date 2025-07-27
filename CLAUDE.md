@@ -303,6 +303,143 @@ The project includes an automated Standards Compliance Check that runs on every 
 
 **Workflow File**: [`.github/workflows/standards-compliance-check.yml`](.github/workflows/standards-compliance-check.yml)
 
+## 9. Automated Tech Debt Analysis
+
+### Overview
+The project includes an AI-powered tech debt analysis system that automatically evaluates pull requests for technical debt across multiple dimensions and provides actionable recommendations for both immediate fixes and future improvements.
+
+### How It Works
+- **Trigger**: Automatically runs after the main CI/CD workflow completes for pull requests
+- **AI Analysis**: Uses Claude AI to provide expert-level technical debt assessment
+- **Multi-Dimensional**: Analyzes complexity, performance, security, maintainability, and documentation
+- **Auto-Issue Creation**: Generates GitHub issues for significant tech debt items requiring future work
+
+### Analysis Categories
+
+#### **🔍 Code Complexity Assessment**
+- Cyclomatic and cognitive complexity analysis
+- Method length and class size violations  
+- Nesting depth and parameter count evaluation
+- SOLID principle adherence checking
+
+#### **⚡ Performance Debt Analysis**
+- Inefficient algorithms and patterns identification
+- Resource leak detection (missing using statements)
+- Database query optimization opportunities
+- Memory allocation and async/await pattern analysis
+
+#### **🛡️ Security & Quality Issues**
+- Potential security vulnerabilities (SQL injection, XSS, hard-coded secrets)
+- Error handling gaps and input validation missing
+- Authentication/authorization pattern violations
+- Logging and monitoring deficiencies
+
+#### **📚 Documentation & Testing Debt**
+- Missing XML documentation for public APIs
+- Inadequate test coverage for new complexity
+- TODO/FIXME/HACK comment accumulation
+- README and documentation update requirements
+
+### Tech Debt Scoring
+- **Debt Score**: 0-100 (lower is better) based on weighted categories
+- **Quality Gates**: Critical issues block merge, high/medium issues create follow-up work
+- **Trend Tracking**: Historical debt progression monitoring
+- **Impact Assessment**: Business and development velocity impact analysis
+
+### Auto-Issue Creation
+The system automatically creates GitHub issues for identified tech debt:
+
+#### **🚨 Critical Issues** (Block Merge)
+- Immediate security vulnerabilities
+- Critical performance regressions
+- Architecture violations breaking existing patterns
+
+#### **⚠️ High Priority** (Current Sprint)
+- Significant complexity increases
+- Performance bottlenecks affecting user experience
+- Maintainability risks requiring prompt attention
+
+#### **💡 Medium Priority** (Next Sprint)
+- Code duplication opportunities for refactoring
+- Missing abstractions improving design
+- Documentation gaps impacting maintainability
+
+#### **📝 Low Priority** (Technical Roadmap)
+- Minor optimizations and improvements
+- Code style and consistency enhancements
+- Future enhancement opportunities
+
+### Configuration
+Tech debt analysis behavior is controlled by [`.github/config/tech-debt-config.yml`](.github/config/tech-debt-config.yml):
+
+#### **Thresholds**
+```yaml
+complexity:
+  method_max_cyclomatic: 10    # Maximum method complexity
+  class_max_lines: 500         # Maximum class size
+  nesting_max_depth: 4         # Maximum nesting levels
+
+performance:
+  query_timeout_warn_ms: 30000 # Database query timeout warnings
+  memory_allocation_warn_mb: 100 # Memory allocation warnings
+```
+
+#### **Issue Creation Rules**
+```yaml
+issue_creation:
+  auto_create_threshold: "medium"    # Minimum severity for auto-issues
+  max_issues_per_pr: 10             # Limit issues per analysis
+  labels: ["tech-debt", "auto-generated"]
+```
+
+#### **Analysis Patterns**
+- **Include Patterns**: `**/*.cs`, `**/*.ts`, `**/*.sql`
+- **Exclude Patterns**: `**/bin/**`, `**/Migrations/**`, `**/*.g.cs`
+- **Security Rules**: Hard-coded passwords, SQL injection risks, HTTP URLs
+- **Performance Rules**: Blocking async calls, string concatenation, uninitialized collections
+
+### Quality Gates
+- **Critical Issues**: Block PR merge until resolved
+- **High Priority**: Must be addressed within current sprint
+- **Medium Priority**: Plan for next sprint or milestone  
+- **Low Priority**: Include in technical roadmap
+
+### Integration with Development Workflow
+1. **Automatic Analysis**: Runs on every PR targeting main/develop branches
+2. **AI-Powered Insights**: Claude AI provides expert-level architectural review
+3. **Structured Reporting**: Detailed markdown reports with specific recommendations
+4. **Issue Tracking**: Auto-generated GitHub issues with proper labeling and milestones
+5. **Quality Gate Enforcement**: Prevents merging PRs with critical tech debt
+
+### AI Analysis Capabilities
+- **Expert-Level Assessment**: Senior software architect quality analysis
+- **Context-Aware**: Understands business impact and development velocity effects
+- **Actionable Recommendations**: Specific file paths, line numbers, and remediation steps
+- **Pattern Recognition**: Identifies complex architectural debt beyond simple pattern matching
+- **Impact Analysis**: Evaluates cumulative effect on system maintainability
+
+### Usage Commands
+```bash
+# View tech debt analysis for specific PR
+gh pr view <PR_NUMBER> --comments | grep -A 50 "Tech Debt Analysis"
+
+# Check tech debt workflow status
+gh run list --workflow="Tech Debt Analysis" --limit 5
+
+# Review auto-generated tech debt issues
+gh issue list --label="tech-debt,auto-generated" --state=open
+```
+
+### Benefits
+- **Proactive Debt Management**: Identifies debt before it becomes critical
+- **Informed Decision Making**: Clear severity levels and impact assessment
+- **Automated Tracking**: GitHub issues ensure tech debt doesn't get forgotten
+- **Quality Improvement**: Continuous improvement through measurable debt reduction
+- **Team Education**: AI insights help developers learn best practices
+
+**Workflow File**: [`.github/workflows/tech-debt-analysis.yml`](.github/workflows/tech-debt-analysis.yml)  
+**Configuration**: [`.github/config/tech-debt-config.yml`](.github/config/tech-debt-config.yml)
+
 ---
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
