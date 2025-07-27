@@ -1,0 +1,339 @@
+name: 'Create Tech Debt Issues'
+description: 'Automatically create GitHub issues for identified tech debt items'
+author: 'Zarichney Development'
+
+inputs:
+  pr-number:
+    description: 'Pull request number that generated the tech debt'
+    required: true
+  analysis-results:
+    description: 'Path to the tech debt analysis results JSON file'
+    required: true
+    default: 'tech-debt-analysis.json'
+  github-token:
+    description: 'GitHub token for issue creation'
+    required: true
+  dry-run:
+    description: 'If true, only shows what issues would be created without creating them'
+    required: false
+    default: 'false'
+  min-priority:
+    description: 'Minimum priority level to create issues for (high, medium, low)'
+    required: false
+    default: 'medium'
+
+outputs:
+  issues-created:
+    description: 'Number of GitHub issues created'
+    value: ${{ steps.create-issues.outputs.issues-created }}
+  issue-numbers:
+    description: 'Comma-separated list of created issue numbers'
+    value: ${{ steps.create-issues.outputs.issue-numbers }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Analyze Tech Debt Results
+      id: analyze-results
+      shell: bash
+      run: |
+        echo "📋 Analyzing tech debt results for issue creation..."
+        
+        if [ ! -f "${{ inputs.analysis-results }}" ]; then
+          echo "⚠️ Analysis results file not found: ${{ inputs.analysis-results }}"
+          echo "issues-to-create=0" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        # Extract metrics from analysis results
+        TOTAL_ISSUES=$(jq -r '.findings.high + .findings.medium + .findings.low' ${{ inputs.analysis-results }})
+        HIGH_ISSUES=$(jq -r '.findings.high // 0' ${{ inputs.analysis-results }})
+        MEDIUM_ISSUES=$(jq -r '.findings.medium // 0' ${{ inputs.analysis-results }})
+        LOW_ISSUES=$(jq -r '.findings.low // 0' ${{ inputs.analysis-results }})
+        DEBT_SCORE=$(jq -r '.metrics.debt_score // 50' ${{ inputs.analysis-results }})
+        
+        # Determine which issues to create based on min-priority
+        ISSUES_TO_CREATE=0
+        case "${{ inputs.min-priority }}" in
+          "high")
+            ISSUES_TO_CREATE=$HIGH_ISSUES
+            ;;
+          "medium")
+            ISSUES_TO_CREATE=$((HIGH_ISSUES + MEDIUM_ISSUES))
+            ;;
+          "low")
+            ISSUES_TO_CREATE=$TOTAL_ISSUES
+            ;;
+        esac
+        
+        echo "📊 Tech Debt Issue Analysis:"
+        echo "  Total Issues Found: $TOTAL_ISSUES"
+        echo "  High Priority: $HIGH_ISSUES"
+        echo "  Medium Priority: $MEDIUM_ISSUES"
+        echo "  Low Priority: $LOW_ISSUES"
+        echo "  Issues to Create (min: ${{ inputs.min-priority }}): $ISSUES_TO_CREATE"
+        echo "  Debt Score: $DEBT_SCORE/100"
+        
+        # Output for next step
+        echo "issues-to-create=$ISSUES_TO_CREATE" >> $GITHUB_OUTPUT
+        echo "high-issues=$HIGH_ISSUES" >> $GITHUB_OUTPUT
+        echo "medium-issues=$MEDIUM_ISSUES" >> $GITHUB_OUTPUT
+        echo "low-issues=$LOW_ISSUES" >> $GITHUB_OUTPUT
+        echo "debt-score=$DEBT_SCORE" >> $GITHUB_OUTPUT
+
+    - name: Create GitHub Issues for Tech Debt
+      id: create-issues
+      shell: bash
+      run: |
+        echo "🎯 Creating GitHub issues for tech debt items..."
+        
+        ISSUES_TO_CREATE=${{ steps.analyze-results.outputs.issues-to-create }}
+        if [ "$ISSUES_TO_CREATE" -eq 0 ]; then
+          echo "ℹ️ No issues meet the criteria for automatic creation"
+          echo "issues-created=0" >> $GITHUB_OUTPUT
+          echo "issue-numbers=" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        # Read analysis data for context
+        PR_NUMBER=${{ inputs.pr-number }}
+        DEBT_SCORE=${{ steps.analyze-results.outputs.debt-score }}
+        HIGH_COUNT=${{ steps.analyze-results.outputs.high-issues }}
+        MEDIUM_COUNT=${{ steps.analyze-results.outputs.medium-issues }}
+        LOW_COUNT=${{ steps.analyze-results.outputs.low-issues }}
+        
+        CREATED_ISSUES=()
+        ISSUES_CREATED_COUNT=0
+        
+        # Create high priority issues
+        if [ "$HIGH_COUNT" -gt 0 ] && [[ "${{ inputs.min-priority }}" =~ ^(high|medium|low)$ ]]; then
+          echo "🔥 Creating high priority tech debt issues..."
+          
+          for i in $(seq 1 $HIGH_COUNT); do
+            if [ "${{ inputs.dry-run }}" = "true" ]; then
+              echo "DRY RUN: Would create high priority issue #$i"
+              ISSUE_NUMBER="dry-run-$i"
+            else
+              # Create actual GitHub issue
+              ISSUE_TITLE="Tech Debt: High Priority Issue #$i from PR #$PR_NUMBER"
+              ISSUE_BODY=$(cat << EOF
+        ## 🚨 High Priority Tech Debt
+        
+        **Identified in PR**: #$PR_NUMBER
+        **Severity**: High
+        **Debt Score Impact**: $DEBT_SCORE/100
+        **Priority**: Address within current sprint
+        
+        ### Description
+        This tech debt issue was automatically identified during analysis of PR #$PR_NUMBER. High priority issues typically involve:
+        
+        - Code complexity that significantly impacts maintainability
+        - Performance bottlenecks that affect user experience
+        - Security vulnerabilities that need immediate attention
+        - Architecture violations that break established patterns
+        
+        ### Impact Assessment
+        - **Maintainability**: High impact on code readability and modification ease
+        - **Performance**: Potential performance degradation
+        - **Security**: May introduce security risks
+        - **Team Velocity**: Could slow down future development
+        
+        ### Recommended Actions
+        1. Review the specific code changes in PR #$PR_NUMBER
+        2. Identify the root cause of the complexity/debt
+        3. Plan refactoring approach that maintains functionality
+        4. Implement solution with proper test coverage
+        5. Validate that the change improves the debt score
+        
+        ### Related Changes
+        - **Source PR**: #$PR_NUMBER
+        - **Files Affected**: See tech debt analysis report
+        - **Analysis Date**: $(date -Iseconds)
+        
+        ### Acceptance Criteria
+        - [ ] Code complexity reduced to acceptable levels
+        - [ ] Performance impact mitigated
+        - [ ] Security concerns addressed
+        - [ ] Proper test coverage added
+        - [ ] Documentation updated if needed
+        
+        ---
+        🤖 *Auto-generated by Tech Debt Analysis*
+        📊 *Original Debt Score: $DEBT_SCORE/100*
+        EOF
+              )
+              
+              ISSUE_NUMBER=$(gh issue create \
+                --title "$ISSUE_TITLE" \
+                --body "$ISSUE_BODY" \
+                --label "tech-debt,high-priority,auto-generated" \
+                --assignee "@me" \
+                --milestone "Tech Debt Backlog" \
+                --project "zarichney-api" \
+                --repo "${{ github.repository }}" \
+                --json number --jq .number)
+              
+              if [ $? -eq 0 ]; then
+                echo "✅ Created high priority issue #$ISSUE_NUMBER"
+                CREATED_ISSUES+=($ISSUE_NUMBER)
+                ISSUES_CREATED_COUNT=$((ISSUES_CREATED_COUNT + 1))
+              else
+                echo "❌ Failed to create high priority issue #$i"
+              fi
+            fi
+          done
+        fi
+        
+        # Create medium priority issues
+        if [ "$MEDIUM_COUNT" -gt 0 ] && [[ "${{ inputs.min-priority }}" =~ ^(medium|low)$ ]]; then
+          echo "⚠️ Creating medium priority tech debt issues..."
+          
+          for i in $(seq 1 $MEDIUM_COUNT); do
+            if [ "${{ inputs.dry-run }}" = "true" ]; then
+              echo "DRY RUN: Would create medium priority issue #$i"
+              ISSUE_NUMBER="dry-run-medium-$i"
+            else
+              # Create actual GitHub issue
+              ISSUE_TITLE="Tech Debt: Medium Priority Improvement #$i from PR #$PR_NUMBER"
+              ISSUE_BODY=$(cat << EOF
+        ## ⚠️ Medium Priority Tech Debt
+        
+        **Identified in PR**: #$PR_NUMBER
+        **Severity**: Medium
+        **Debt Score Impact**: $DEBT_SCORE/100
+        **Priority**: Address in next sprint or milestone
+        
+        ### Description
+        This tech debt issue was automatically identified during analysis of PR #$PR_NUMBER. Medium priority issues typically involve:
+        
+        - Code duplication that should be refactored
+        - Missing abstractions that could improve design
+        - Performance optimizations that would benefit users
+        - Documentation gaps that impact maintainability
+        
+        ### Impact Assessment
+        - **Maintainability**: Moderate impact on code quality
+        - **Performance**: Minor performance considerations
+        - **Security**: Low security implications
+        - **Team Velocity**: May slow future development if left unaddressed
+        
+        ### Recommended Timeline
+        - **Planning**: Include in next sprint planning
+        - **Implementation**: Within 2-4 weeks
+        - **Priority**: After critical and high priority items
+        
+        ### Suggested Approach
+        1. Analyze the specific patterns identified in PR #$PR_NUMBER
+        2. Design a refactoring strategy that improves code quality
+        3. Implement changes incrementally to minimize risk
+        4. Ensure adequate test coverage for refactored code
+        5. Measure improvement in code metrics
+        
+        ### Related Information
+        - **Source PR**: #$PR_NUMBER
+        - **Analysis Context**: See full tech debt report
+        - **Detection Date**: $(date -Iseconds)
+        
+        ### Definition of Done
+        - [ ] Code duplication eliminated or abstracted appropriately
+        - [ ] Design patterns improved where applicable
+        - [ ] Performance optimizations implemented if relevant
+        - [ ] Documentation updated to reflect changes
+        - [ ] Tech debt score improvement validated
+        
+        ---
+        🤖 *Auto-generated by Tech Debt Analysis*
+        📈 *Target: Improve debt score from $DEBT_SCORE/100*
+        EOF
+              )
+              
+              ISSUE_NUMBER=$(gh issue create \
+                --title "$ISSUE_TITLE" \
+                --body "$ISSUE_BODY" \
+                --label "tech-debt,medium-priority,auto-generated,enhancement" \
+                --milestone "Tech Debt Backlog" \
+                --project "zarichney-api" \
+                --repo "${{ github.repository }}" \
+                --json number --jq .number)
+              
+              if [ $? -eq 0 ]; then
+                echo "✅ Created medium priority issue #$ISSUE_NUMBER"
+                CREATED_ISSUES+=($ISSUE_NUMBER)
+                ISSUES_CREATED_COUNT=$((ISSUES_CREATED_COUNT + 1))
+              else
+                echo "❌ Failed to create medium priority issue #$i"
+              fi
+            fi
+          done
+        fi
+        
+        # Create summary issue if multiple items were created
+        if [ "$ISSUES_CREATED_COUNT" -gt 2 ] && [ "${{ inputs.dry-run }}" = "false" ]; then
+          echo "📋 Creating summary issue for tech debt from PR #$PR_NUMBER..."
+          
+          SUMMARY_TITLE="Tech Debt Summary: PR #$PR_NUMBER Analysis Results"
+          SUMMARY_BODY=$(cat << EOF
+        ## 📊 Tech Debt Analysis Summary
+        
+        **Source PR**: #$PR_NUMBER
+        **Analysis Date**: $(date -Iseconds)
+        **Overall Debt Score**: $DEBT_SCORE/100
+        **Total Issues Created**: $ISSUES_CREATED_COUNT
+        
+        ### Issues Created
+        $(printf "- #%s\n" "${CREATED_ISSUES[@]}")
+        
+        ### Priority Breakdown
+        - **High Priority**: $HIGH_COUNT issues
+        - **Medium Priority**: $MEDIUM_COUNT issues  
+        - **Low Priority**: $LOW_COUNT issues
+        
+        ### Recommended Action Plan
+        1. **Immediate (High Priority)**: Address critical issues first
+        2. **Short-term (Medium Priority)**: Plan for next sprint
+        3. **Long-term (Low Priority)**: Include in technical roadmap
+        
+        ### Tracking
+        This summary issue will be closed when all related tech debt issues are resolved.
+        
+        ### Related Analysis
+        - Full tech debt report available in PR #$PR_NUMBER comments
+        - Detailed analysis includes file-specific recommendations
+        - Follow-up analysis recommended after debt resolution
+        
+        ---
+        🤖 *Auto-generated Tech Debt Summary*
+        EOF
+          )
+          
+          SUMMARY_ISSUE=$(gh issue create \
+            --title "$SUMMARY_TITLE" \
+            --body "$SUMMARY_BODY" \
+            --label "tech-debt,summary,auto-generated,tracking" \
+            --milestone "Tech Debt Backlog" \
+            --project "zarichney-api" \
+            --repo "${{ github.repository }}" \
+            --json number --jq .number)
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ Created tech debt summary issue #$SUMMARY_ISSUE"
+            CREATED_ISSUES+=($SUMMARY_ISSUE)
+            ISSUES_CREATED_COUNT=$((ISSUES_CREATED_COUNT + 1))
+          fi
+        fi
+        
+        # Output results
+        if [ ${#CREATED_ISSUES[@]} -gt 0 ]; then
+          ISSUE_LIST=$(IFS=,; echo "${CREATED_ISSUES[*]}")
+          echo "issues-created=$ISSUES_CREATED_COUNT" >> $GITHUB_OUTPUT
+          echo "issue-numbers=$ISSUE_LIST" >> $GITHUB_OUTPUT
+          
+          echo "🎉 Successfully created $ISSUES_CREATED_COUNT tech debt issues:"
+          printf "  - Issue #%s\n" "${CREATED_ISSUES[@]}"
+        else
+          echo "issues-created=0" >> $GITHUB_OUTPUT
+          echo "issue-numbers=" >> $GITHUB_OUTPUT
+          echo "ℹ️ No issues were created"
+        fi
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}

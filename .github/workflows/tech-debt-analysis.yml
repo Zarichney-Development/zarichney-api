@@ -1,0 +1,111 @@
+name: Tech Debt Analysis
+
+on:
+  workflow_run:
+    workflows: ["Unified CI/CD for Zarichney Fullstack"]
+    types:
+      - completed
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  id-token: write
+  checks: write
+  pull-requests: write
+  contents: read
+  actions: read
+  issues: write  # For auto-issue creation
+
+jobs:
+  tech-debt-analysis:
+    name: Tech Debt Analysis
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'pull_request')
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Checkout the PR branch for analysis
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0  # Full history for comparison analysis
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install .NET tools
+        run: |
+          dotnet tool restore
+          
+          # Install additional analysis tools
+          dotnet tool install -g Microsoft.CodeAnalysis.Metrics || echo "Metrics tool already installed"
+          dotnet tool install -g dotnet-outdated-tool || echo "Outdated tool already installed"
+
+      - name: Get PR number
+        id: pr-number
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # Direct PR trigger
+            PR_NUMBER="${{ github.event.number }}"
+          else
+            # workflow_run trigger - extract PR number from the workflow run
+            PR_NUMBER=$(gh run view ${{ github.event.workflow_run.id }} --json headRepository,headBranch | jq -r '.headBranch' | grep -o 'pull/[0-9]*' | cut -d'/' -f2 || echo "")
+            if [ -z "$PR_NUMBER" ]; then
+              # Alternative approach: get PR number from API
+              PR_NUMBER=$(gh api repos/${{ github.repository }}/pulls --jq ".[] | select(.head.sha==\"${{ github.event.workflow_run.head_sha }}\") | .number")
+            fi
+          fi
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "Found PR number: $PR_NUMBER"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Tech Debt Analysis
+        id: tech-debt-analysis
+        uses: ./.github/actions/analyze-tech-debt
+        with:
+          pr-number: ${{ steps.pr-number.outputs.pr_number }}
+          base-branch: ${{ github.event_name == 'pull_request' && github.base_ref || github.event.workflow_run.pull_requests[0].base.ref || 'develop' }}
+          head-sha: ${{ github.event_name == 'pull_request' && github.sha || github.event.workflow_run.head_sha }}
+          claude-oauth-token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post Tech Debt Report
+        if: steps.pr-number.outputs.pr_number != ''
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          number: ${{ steps.pr-number.outputs.pr_number }}
+          recreate: true
+          path: tech-debt-report.md
+
+      - name: Create Tech Debt Issues
+        if: steps.tech-debt-analysis.outputs.future-work-count > 0
+        uses: ./.github/actions/create-tech-debt-issues
+        with:
+          pr-number: ${{ steps.pr-number.outputs.pr_number }}
+          analysis-results: tech-debt-analysis.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check Quality Gates
+        if: steps.tech-debt-analysis.outputs.critical-issues-count > 0
+        run: |
+          echo "❌ Tech debt analysis failed with ${{ steps.tech-debt-analysis.outputs.critical-issues-count }} critical issues"
+          echo "Critical tech debt issues must be addressed before merging"
+          exit 1
+
+      - name: Upload Analysis Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tech-debt-analysis-${{ github.run_id }}
+          path: |
+            tech-debt-analysis.json
+            tech-debt-report.md
+            complexity-metrics.json
+            remediation-plan.md
+          retention-days: 30
