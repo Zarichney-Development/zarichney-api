@@ -678,7 +678,103 @@ parse_results() {
 }
 EOF
     
+    # Extract detailed failure information if tests failed
+    if [[ $failed_tests -gt 0 ]]; then
+        extract_detailed_failures
+    fi
+    
     success "Test results parsed: $passed_tests passed, $failed_tests failed, $skipped_tests skipped"
+}
+
+# Extract detailed information about failing tests
+extract_detailed_failures() {
+    log "🚨 Extracting detailed failure information..."
+    
+    local failures_file="$TEST_RESULTS_DIR/test_failures.json"
+    local failures_found=0
+    
+    # Initialize failures array
+    echo '{"failed_tests": []}' > "$failures_file"
+    
+    # Find ALL TRX files and extract failure details
+    local trx_files=$(find "$TEST_RESULTS_DIR" -name "*.trx")
+    while IFS= read -r trx_file; do
+        if [[ -f "$trx_file" ]]; then
+            # Check if this file has failed tests
+            local file_failed=$(grep -o 'outcome="Failed"' "$trx_file" | wc -l)
+            if [[ $file_failed -gt 0 ]]; then
+                log "Extracting failures from: $trx_file"
+                
+                # Extract test categories from file path
+                local test_category
+                if [[ "$trx_file" =~ /([^/]+)_tests\.trx$ ]]; then
+                    test_category="${BASH_REMATCH[1]}"
+                else
+                    test_category="unknown"
+                fi
+                
+                # Extract individual failed test information using XML parsing
+                # Look for UnitTestResult elements with outcome="Failed"
+                while IFS= read -r line; do
+                    if [[ "$line" =~ \<UnitTestResult.*outcome=\"Failed\" ]]; then
+                        # Extract test name
+                        local test_name=""
+                        if [[ "$line" =~ testName=\"([^\"]+)\" ]]; then
+                            test_name="${BASH_REMATCH[1]}"
+                        fi
+                        
+                        # Extract execution id to find error details
+                        local execution_id=""
+                        if [[ "$line" =~ executionId=\"([^\"]+)\" ]]; then
+                            execution_id="${BASH_REMATCH[1]}"
+                        fi
+                        
+                        # Look for error message in the same or nearby lines
+                        local error_message=""
+                        local next_lines=$(grep -A 10 "executionId=\"$execution_id\"" "$trx_file" 2>/dev/null || echo "")
+                        if [[ "$next_lines" =~ \<Message\>([^<]+)\</Message\> ]]; then
+                            error_message="${BASH_REMATCH[1]}"
+                        elif [[ "$next_lines" =~ \<ErrorInfo\>.*\<Message\>([^<]+)\</Message\> ]]; then
+                            error_message="${BASH_REMATCH[1]}"
+                        fi
+                        
+                        # Add to failures JSON (append to array)
+                        if [[ -n "$test_name" ]]; then
+                            local failure_entry=$(cat << EOF
+{
+  "test_name": "$test_name",
+  "category": "$test_category",
+  "file": "$trx_file",
+  "error_message": "$error_message",
+  "execution_id": "$execution_id"
+}
+EOF
+                            )
+                            
+                            # Add to the JSON array
+                            local temp_file=$(mktemp)
+                            jq --argjson failure "$failure_entry" '.failed_tests += [$failure]' "$failures_file" > "$temp_file" && mv "$temp_file" "$failures_file"
+                            failures_found=$((failures_found + 1))
+                            
+                            log "  ❌ Failed test: $test_name (category: $test_category)"
+                            if [[ -n "$error_message" ]]; then
+                                log "     Error: $error_message"
+                            fi
+                        fi
+                    fi
+                done < "$trx_file"
+            fi
+        fi
+    done <<< "$trx_files"
+    
+    # Update the main results JSON with failure details
+    if [[ $failures_found -gt 0 ]]; then
+        local temp_file=$(mktemp)
+        jq --slurpfile failures "$failures_file" '.failures = $failures[0]' "$TEST_RESULTS_DIR/parsed_results.json" > "$temp_file" && mv "$temp_file" "$TEST_RESULTS_DIR/parsed_results.json"
+        log "Extracted details for $failures_found failing test(s)"
+    else
+        log "Could not extract detailed failure information from TRX files"
+    fi
 }
 
 # Parse coverage data (report mode)
@@ -1460,13 +1556,58 @@ generate_summary_report() {
         
         echo -e "${BOLD}🎯 Test Suite Summary${NC}"
         echo "=========================="
+        
+        # Highlight test failures prominently if any exist
+        if [[ "$failed" != "N/A" && "$failed" != "0" ]]; then
+            echo -e "${RED}${BOLD}🚨 CRITICAL: $failed TEST(S) FAILING${NC}"
+            echo -e "${RED}❌ Tests must pass before deployment${NC}"
+            echo ""
+        fi
+        
         echo -e "📊 Total Tests: ${BLUE}$total${NC}"
         echo -e "✅ Passed: ${GREEN}$passed${NC}"
-        echo -e "❌ Failed: ${RED}$failed${NC}"
-        echo -e "📈 Pass Rate: ${BOLD}$pass_rate%${NC}"
         
+        # Make failed tests very prominent
+        if [[ "$failed" != "N/A" && "$failed" != "0" ]]; then
+            echo -e "❌ Failed: ${RED}${BOLD}$failed ⚠️  BLOCKING DEPLOYMENT${NC}"
+        else
+            echo -e "❌ Failed: ${GREEN}$failed${NC}"
+        fi
+        
+        # Show pass rate with appropriate color
+        if [[ "$pass_rate" != "N/A" ]]; then
+            if [[ $(echo "$pass_rate < 100" | bc -l 2>/dev/null || echo "1") -eq 1 ]]; then
+                echo -e "📈 Pass Rate: ${RED}${BOLD}$pass_rate%${NC}"
+            else
+                echo -e "📈 Pass Rate: ${GREEN}${BOLD}$pass_rate%${NC}"
+            fi
+        else
+            echo -e "📈 Pass Rate: ${BOLD}$pass_rate%${NC}"
+        fi
+        
+        # Show failed test details if available
+        if [[ "$failed" != "N/A" && "$failed" != "0" ]]; then
+            local failures_data=$(jq -r '.failures.failed_tests[]?' "$results_file" 2>/dev/null || echo "")
+            if [[ -n "$failures_data" ]]; then
+                echo ""
+                echo -e "${RED}${BOLD}🔍 Failed Test Details:${NC}"
+                local failure_count=0
+                while IFS= read -r failure; do
+                    if [[ -n "$failure" ]]; then
+                        local test_name=$(echo "$failure" | jq -r '.test_name // "Unknown"')
+                        local category=$(echo "$failure" | jq -r '.category // "Unknown"')
+                        
+                        failure_count=$((failure_count + 1))
+                        echo -e "${RED}   $failure_count. $test_name (${category})${NC}"
+                    fi
+                done <<< "$(jq -c '.failures.failed_tests[]?' "$results_file" 2>/dev/null || echo "")"
+            fi
+        fi
+        
+        # Coverage info (secondary)
         if [[ -f "$TEST_RESULTS_DIR/coverage_results.json" ]]; then
             local line_cov=$(jq -r '.line_coverage' "$TEST_RESULTS_DIR/coverage_results.json" 2>/dev/null || echo "N/A")
+            echo ""
             echo -e "🎯 Coverage: ${BLUE}$line_cov%${NC}"
         fi
     fi
@@ -1568,6 +1709,7 @@ enforce_quality_gates() {
     local results_file="$TEST_RESULTS_DIR/parsed_results.json"
     local coverage_file="$TEST_RESULTS_DIR/coverage_results.json"
     local gate_failed=false
+    local critical_failures=false
     
     if [[ ! -f "$results_file" ]]; then
         error_exit "Quality gate enforcement failed: No test results found"
@@ -1578,38 +1720,122 @@ enforce_quality_gates() {
     local failed_tests=$(jq -r '.tests.failed // 0' "$results_file" 2>/dev/null || echo "0")
     local pass_rate=$(jq -r '.tests.pass_rate // 0' "$results_file" 2>/dev/null || echo "0")
     
-    # Test failure gate
+    # ============================================================================
+    # 🚨 CRITICAL: TEST FAILURES (HIGHEST PRIORITY)
+    # ============================================================================
     if [[ $failed_tests -gt 0 ]]; then
-        print_error "QUALITY GATE FAILED: $failed_tests test(s) are failing"
+        critical_failures=true
         gate_failed=true
+        
+        echo ""
+        print_error "🚨 CRITICAL FAILURE: $failed_tests TEST(S) ARE FAILING"
+        print_error "==============================================="
+        print_error "❌ Cannot proceed with deployment while tests are failing"
+        print_error "❌ Failed tests must be fixed before quality gates can pass"
+        echo ""
+        
+        # Display detailed failure information if available
+        local failures_data=$(jq -r '.failures.failed_tests[]?' "$results_file" 2>/dev/null || echo "")
+        if [[ -n "$failures_data" ]]; then
+            print_error "🔍 DETAILED FAILURE INFORMATION:"
+            print_error "--------------------------------"
+            
+            local failure_count=0
+            while IFS= read -r failure; do
+                if [[ -n "$failure" ]]; then
+                    local test_name=$(echo "$failure" | jq -r '.test_name // "Unknown"')
+                    local category=$(echo "$failure" | jq -r '.category // "Unknown"')
+                    local error_msg=$(echo "$failure" | jq -r '.error_message // "No error message available"')
+                    
+                    failure_count=$((failure_count + 1))
+                    print_error "❌ Test #$failure_count: $test_name"
+                    print_error "   Category: $category"
+                    if [[ "$error_msg" != "No error message available" && -n "$error_msg" ]]; then
+                        print_error "   Error: $error_msg"
+                    fi
+                    print_error ""
+                fi
+            done <<< "$(jq -c '.failures.failed_tests[]?' "$results_file" 2>/dev/null || echo "")"
+            
+            if [[ $failure_count -eq 0 ]]; then
+                print_error "❌ Could not extract detailed failure information"
+                print_error "   Check TRX files in TestResults/ directory for details"
+                print_error ""
+            fi
+        else
+            print_error "❌ No detailed failure information available"
+            print_error "   Check TRX files in TestResults/ directory for details"
+            print_error ""
+        fi
+        
+        print_error "🔧 REQUIRED ACTIONS:"
+        print_error "   1. Investigate and fix the failing test(s)"
+        print_error "   2. Ensure all tests pass locally before pushing"
+        print_error "   3. Re-run the pipeline after fixes"
+        echo ""
     fi
     
-    # Coverage gate (if coverage data available)
+    # ============================================================================
+    # 📊 SECONDARY: COVERAGE ANALYSIS
+    # ============================================================================
     if [[ -f "$coverage_file" ]]; then
         local line_coverage=$(jq -r '.line_coverage // 0' "$coverage_file" 2>/dev/null || echo "0")
         local meets_threshold=$(jq -r '.meets_threshold // 0' "$coverage_file" 2>/dev/null || echo "0")
         
         if [[ "$meets_threshold" != "1" ]] && [[ "${QUALITY_GATE_ENABLED:-false}" == "true" ]]; then
             if [[ "${COVERAGE_FLEXIBLE:-false}" == "true" ]]; then
-                warning "QUALITY GATE WARNING: Coverage ${line_coverage}% below threshold ${COVERAGE_THRESHOLD}% (allowed due to flexibility setting)"
+                if [[ $critical_failures == false ]]; then
+                    warning "📊 COVERAGE WARNING: ${line_coverage}% below threshold ${COVERAGE_THRESHOLD}%"
+                    warning "   (Allowed due to test branch or flexibility setting)"
+                else
+                    info "📊 Coverage: ${line_coverage}% below threshold ${COVERAGE_THRESHOLD}% (secondary to test failures)"
+                fi
             else
-                print_error "QUALITY GATE FAILED: Coverage ${line_coverage}% below threshold ${COVERAGE_THRESHOLD}%"
-                gate_failed=true
+                if [[ $critical_failures == false ]]; then
+                    print_error "📊 QUALITY GATE FAILED: Coverage ${line_coverage}% below threshold ${COVERAGE_THRESHOLD}%"
+                    gate_failed=true
+                else
+                    info "📊 Coverage: ${line_coverage}% below threshold ${COVERAGE_THRESHOLD}% (secondary to test failures)"
+                fi
             fi
+        else
+            info "📊 Coverage: ${line_coverage}% (threshold: ${COVERAGE_THRESHOLD}%, flexible: ${COVERAGE_FLEXIBLE:-false})"
         fi
-        
-        info "Coverage analysis: ${line_coverage}% (threshold: ${COVERAGE_THRESHOLD}%, flexible: ${COVERAGE_FLEXIBLE:-false})"
     fi
     
+    # ============================================================================
+    # 📋 FINAL QUALITY GATE DECISION
+    # ============================================================================
     if [[ "$gate_failed" == "true" ]]; then
-        print_error "Quality gates failed - CI/CD should block deployment"
+        echo ""
+        if [[ $critical_failures == true ]]; then
+            print_error "🚫 QUALITY GATES FAILED: CRITICAL TEST FAILURES DETECTED"
+            print_error "   Primary issue: $failed_tests failing test(s) must be fixed"
+            print_error "   Deployment blocked until all tests pass"
+        else
+            print_error "🚫 QUALITY GATES FAILED: Quality standards not met"
+            print_error "   All quality issues must be resolved before deployment"
+        fi
+        echo ""
+        
         # For Phase 2: Continue with AI analysis even on quality gate failures
         # Store the failure state for later decision making
         echo "QUALITY_GATES_FAILED=true" >> "$TEST_RESULTS_DIR/quality_status.env"
+        echo "CRITICAL_TEST_FAILURES=$critical_failures" >> "$TEST_RESULTS_DIR/quality_status.env"
         return 1  # Return failure code without exiting script
     else
-        success "All quality gates passed"
+        echo ""
+        success "✅ ALL QUALITY GATES PASSED"
+        success "   Tests: $total_tests total, $failed_tests failed ($pass_rate% pass rate)"
+        if [[ -f "$coverage_file" ]]; then
+            local line_coverage=$(jq -r '.line_coverage // 0' "$coverage_file" 2>/dev/null || echo "0")
+            success "   Coverage: ${line_coverage}% (meets requirements)"
+        fi
+        success "   ✅ Ready for deployment"
+        echo ""
+        
         echo "QUALITY_GATES_FAILED=false" >> "$TEST_RESULTS_DIR/quality_status.env"
+        echo "CRITICAL_TEST_FAILURES=false" >> "$TEST_RESULTS_DIR/quality_status.env"
         return 0
     fi
 }
