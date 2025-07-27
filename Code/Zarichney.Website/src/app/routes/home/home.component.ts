@@ -15,7 +15,7 @@ import { SeoService } from '../../services/seo.service';
 export class HomeScreenComponent implements OnInit {
   
   // Version for end-to-end testing
-  readonly version = '1.0.0';
+  readonly version = '1.0.1';
 
   constructor(
     private log: LoggingService,

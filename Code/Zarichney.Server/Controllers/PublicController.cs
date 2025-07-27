@@ -18,7 +18,7 @@ public class PublicController(
     {
       Success = true,
       Time = DateTime.Now.ToLocalTime(),
-      Version = "1.0.0",
+      Version = "1.0.1",
       Environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"
     });
   }
