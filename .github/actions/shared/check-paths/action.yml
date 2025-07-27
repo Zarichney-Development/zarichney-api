@@ -1,0 +1,112 @@
+name: 'Check Changed Paths'
+description: 'Intelligent path filtering to determine what components changed'
+author: 'Zarichney Development'
+
+inputs:
+  base-ref:
+    description: 'Base branch reference for comparison'
+    required: false
+    default: 'origin/develop'
+
+outputs:
+  backend-changed:
+    description: 'Whether backend code changed'
+    value: ${{ steps.categorize.outputs.backend-changed }}
+  frontend-changed:
+    description: 'Whether frontend code changed'
+    value: ${{ steps.categorize.outputs.frontend-changed }}
+  pipeline-changed:
+    description: 'Whether pipeline scripts changed'
+    value: ${{ steps.categorize.outputs.pipeline-changed }}
+  docs-only:
+    description: 'Whether only documentation changed'
+    value: ${{ steps.categorize.outputs.docs-only }}
+  tests-changed:
+    description: 'Whether test files changed'
+    value: ${{ steps.categorize.outputs.tests-changed }}
+  changed-files:
+    description: 'List of changed files'
+    value: ${{ steps.categorize.outputs.changed-files }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Check for path changes
+      id: check-changes
+      uses: dorny/paths-filter@v2
+      with:
+        base: ${{ inputs.base-ref }}
+        filters: |
+          backend:
+            - 'Code/Zarichney.Server/**'
+            - '*.sln'
+            - '**/*.csproj'
+          frontend:
+            - 'Code/Zarichney.Website/**'
+            - 'Code/Zarichney.Website/package*.json'
+          pipeline:
+            - 'Scripts/Pipeline/**'
+            - '.github/workflows/**'
+            - '.github/actions/**'
+          tests:
+            - '**/*Tests/**'
+            - '**/*.Tests/**'
+            - '**/*Test.cs'
+            - '**/*Tests.cs'
+          docs:
+            - '**/*.md'
+            - 'Docs/**'
+            - '**/*.txt'
+          config:
+            - '.editorconfig'
+            - '.gitignore'
+            - 'Scripts/*.sh'
+            - 'Scripts/*.ps1'
+
+    - name: Determine change categories
+      id: categorize
+      shell: bash
+      run: |
+        echo "Categorizing changes..."
+        
+        # Check if only documentation changed
+        if [ "${{ steps.check-changes.outputs.docs }}" = "true" ] && \
+           [ "${{ steps.check-changes.outputs.backend }}" = "false" ] && \
+           [ "${{ steps.check-changes.outputs.frontend }}" = "false" ] && \
+           [ "${{ steps.check-changes.outputs.pipeline }}" = "false" ] && \
+           [ "${{ steps.check-changes.outputs.tests }}" = "false" ]; then
+          echo "docs-only=true" >> $GITHUB_OUTPUT
+          echo "📚 Only documentation files changed"
+        else
+          echo "docs-only=false" >> $GITHUB_OUTPUT
+        fi
+        
+        # Pass through the individual checks
+        echo "backend-changed=${{ steps.check-changes.outputs.backend }}" >> $GITHUB_OUTPUT
+        echo "frontend-changed=${{ steps.check-changes.outputs.frontend }}" >> $GITHUB_OUTPUT
+        echo "pipeline-changed=${{ steps.check-changes.outputs.pipeline }}" >> $GITHUB_OUTPUT
+        echo "tests-changed=${{ steps.check-changes.outputs.tests }}" >> $GITHUB_OUTPUT
+        
+        # Create summary of changes
+        CHANGES_SUMMARY=""
+        if [ "${{ steps.check-changes.outputs.backend }}" = "true" ]; then
+          CHANGES_SUMMARY="$CHANGES_SUMMARY backend"
+        fi
+        if [ "${{ steps.check-changes.outputs.frontend }}" = "true" ]; then
+          CHANGES_SUMMARY="$CHANGES_SUMMARY frontend"
+        fi
+        if [ "${{ steps.check-changes.outputs.pipeline }}" = "true" ]; then
+          CHANGES_SUMMARY="$CHANGES_SUMMARY pipeline"
+        fi
+        if [ "${{ steps.check-changes.outputs.tests }}" = "true" ]; then
+          CHANGES_SUMMARY="$CHANGES_SUMMARY tests"
+        fi
+        if [ "${{ steps.check-changes.outputs.docs }}" = "true" ]; then
+          CHANGES_SUMMARY="$CHANGES_SUMMARY docs"
+        fi
+        if [ "${{ steps.check-changes.outputs.config }}" = "true" ]; then
+          CHANGES_SUMMARY="$CHANGES_SUMMARY config"
+        fi
+        
+        echo "changed-files=$CHANGES_SUMMARY" >> $GITHUB_OUTPUT
+        echo "🔍 Changed components:$CHANGES_SUMMARY"

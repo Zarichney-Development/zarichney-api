@@ -44,6 +44,7 @@ backup*
 test_results
 **/Migrations/*.sql
 Code/Zarichney.Server/logs
+Code/Zarichney.Website/dist/
 
 # Test Coverage
 TestResults/

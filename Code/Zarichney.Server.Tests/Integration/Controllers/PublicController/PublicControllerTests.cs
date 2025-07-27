@@ -16,7 +16,7 @@ namespace Zarichney.Tests.Integration.Controllers.PublicController;
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Component, TestCategories.Controller)]
 [Trait(TestCategories.Feature, "Public")]
-[Collection("Integration")]
+[Collection("IntegrationCore")]
 public class PublicControllerTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper) : IntegrationTestBase(apiClientFixture, testOutputHelper)
 {
   /// <summary>
@@ -70,7 +70,7 @@ public class PublicControllerTests(ApiClientFixture apiClientFixture, ITestOutpu
     configResponse.Should().NotBeNull(
       because: "response should contain a list of configuration statuses");
 
-    configItems.Should().NotBeEmpty(
+    configItems.Should().NotBeNull().And.NotBeEmpty(
       because: "response should contain at least some configuration items");
 
     configItems.Select(item => item.Name).Should().BeEquivalentTo(expectedConfigItemNames,

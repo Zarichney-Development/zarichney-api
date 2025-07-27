@@ -1,13 +1,13 @@
 # Module/Directory: Scripts
 
-**Last Updated:** 2025-06-27
+**Last Updated:** 2025-07-27
 
 **(Optional: Link to Parent Directory's README)**
 > **Parent:** [`zarichney-api`](../README.md)
 
 ## 1. Purpose & Responsibility
 
-* **What it is:** This directory contains utility scripts that automate essential development, testing, deployment, and operational tasks for the zarichney-api project.
+* **What it is:** This directory contains utility scripts that automate essential development, testing, deployment, and operational tasks for the zarichney-api project, including CI/CD pipeline logic and AI analysis prompts.
 * **Key Responsibilities:** 
     * API client generation and synchronization between server and test projects
     * Comprehensive test automation with coverage reporting
@@ -16,15 +16,19 @@
     * Development environment setup and maintenance
     * Recipe scraping functionality testing
     * Playwright browser automation setup
-* **Why it exists:** To provide standardized, automated workflows that ensure consistency across development, testing, and deployment phases while reducing manual effort and potential human error.
+    * **CI/CD Pipeline Logic:** [`Pipeline/`](./Pipeline/README.md) - Core automation scripts for GitHub Actions workflows
+    * **AI Analysis Prompts:** [`Prompts/`](./Prompts/README.md) - Claude AI prompts for security, quality, and standards analysis
+* **Why it exists:** To provide standardized, automated workflows that ensure consistency across development, testing, deployment, and CI/CD phases while reducing manual effort and potential human error. The modular structure separates workflow orchestration from business logic for better maintainability.
 
 ## 2. Architecture & Key Concepts
 
-* **High-Level Design:** The scripts are organized into four main categories:
-    * **Development & Testing Scripts:** `generate-api-client.*`, `run-automation-suite.sh`, `test-auth-endpoints.*`
+* **High-Level Design:** The scripts are organized into six main categories:
+    * **Development & Testing Scripts:** `generate-api-client.*`, `run-test-suite.sh` (unified testing), `test-auth-endpoints.*`
     * **Deployment & Service Management:** `start-server.sh`, `cookbook-api.service`, `cleanup-playwright.sh`
     * **Domain-Specific Testing:** `test_sites.sh` (recipe scraping validation)
     * **Configuration Files:** `.refitter` (API client generation settings)
+    * **CI/CD Pipeline Logic:** [`Pipeline/`](./Pipeline/README.md) - Extracted GitHub Actions workflow logic for maintainable automation
+    * **AI Analysis Prompts:** [`Prompts/`](./Prompts/README.md) - Version-controlled Claude AI prompts for consistent analysis
 * **Core Workflow Integration:** Scripts integrate with the CI/CD pipeline and support local development workflows by:
     1. Generating strongly-typed API clients from OpenAPI specifications
     2. Running comprehensive test suites with coverage reporting
@@ -41,11 +45,14 @@
         * **Critical Preconditions:** `.NET 8 SDK installed`, `api-server project buildable`, `refitter tool available`
         * **Critical Postconditions:** `api-server.Tests/Framework/Client/` populated with generated client interfaces grouped by OpenAPI tags
         * **Non-Obvious Error Handling:** Temporarily starts API server to generate swagger.json; cleans up process on failure
-    * `run-automation-suite.sh`:
-        * **Purpose:** Execute comprehensive test suite with coverage reporting and browser visualization
-        * **Critical Preconditions:** `Docker running for integration tests`, `.NET 8 SDK`, `ReportGenerator tool`
-        * **Critical Postconditions:** Test results in `TestResults/`, HTML coverage report in `CoverageReport/`, browser opens coverage report
-        * **Non-Obvious Error Handling:** Handles Docker group membership detection; supports `sg docker` fallback for Linux/WSL2
+    * `run-test-suite.sh` (Unified Testing):
+        * **Purpose:** Consolidated test execution with multiple modes - automation (HTML reports), report (AI analysis), or both
+        * **Critical Preconditions:** `Docker running for integration tests`, `.NET 8 SDK`, `ReportGenerator tool (automation mode)`, `jq for JSON processing (report mode)`
+        * **Critical Postconditions:** 
+            - **Automation Mode:** HTML coverage report in `CoverageReport/`, browser opens report
+            - **Report Mode:** JSON/Markdown results in `TestResults/`, quality gate enforcement for CI/CD
+            - **Both Mode:** All outputs from both modes
+        * **Non-Obvious Error Handling:** Unified Docker group membership detection; supports `sg docker` fallback; mode-specific error handling and logging
     * `test-auth-endpoints.*`:
         * **Purpose:** Comprehensive end-to-end testing of authentication API endpoints
         * **Critical Preconditions:** `API server running on localhost:5173`, valid test credentials configured
@@ -96,7 +103,12 @@
     ```bash
     # Complete development workflow
     ./Scripts/generate-api-client.sh
-    ./Scripts/run-automation-suite.sh
+    ./Scripts/run-test-suite.sh both                   # Run comprehensive testing
+    
+    # Mode-specific testing
+    ./Scripts/run-test-suite.sh automation             # HTML coverage reports
+    ./Scripts/run-test-suite.sh report                 # AI-powered analysis
+    ./Scripts/run-test-suite.sh report json            # CI/CD integration
     
     # Testing specific components
     ./Scripts/test-auth-endpoints.sh
@@ -125,14 +137,16 @@
     * `curl` and `jq` - REST API testing in shell scripts
     * `Playwright` - Browser automation dependencies
 * **Dependents (Impact of Changes):**
-    * [`CI/CD Pipeline`](../.github/workflows/main.yml) - Automation scripts mirror CI/CD workflow steps
+    * [`CI/CD Pipeline`](../.github/workflows/01-build.yml) - Automation scripts mirror CI/CD workflow steps
     * [Local Development Workflow](../CLAUDE.md) - Scripts provide essential development commands
     * Production deployment processes rely on service management scripts
 
 ## 7. Rationale & Key Historical Context
 
 * **Cross-Platform Script Pairs:** Both PowerShell and Bash versions exist to support development on Windows, macOS, and Linux without requiring developers to install additional runtimes
-* **Comprehensive Automation Suite:** The `run-automation-suite.sh` script was created to provide local development experience that mirrors CI/CD pipeline execution, ensuring consistency between local and remote testing
+* **Unified Test Suite Consolidation:** The `run-test-suite.sh` script consolidates functionality from `run-automation-suite.sh`, eliminating ~300 lines of duplicate code while providing mode-based architecture for different testing needs
+* **Mode-Based Architecture:** Three modes (automation, report, both) provide flexibility for different use cases while maintaining a single, maintainable codebase
+* **Backward Compatibility:** Legacy script names are preserved as simple forwarders to maintain existing workflows and CI/CD integrations
 * **Docker Access Handling:** Special handling for Docker group membership reflects common issues in Linux/WSL2 environments where Testcontainers require Docker socket access
 * **Service Management Design:** Production scripts follow systemd best practices with resource limits appropriate for t3.small EC2 instances and proper cleanup handling
 

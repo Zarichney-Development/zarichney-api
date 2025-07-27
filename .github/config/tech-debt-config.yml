@@ -1,0 +1,221 @@
+# Tech Debt Analysis Configuration
+# This file defines thresholds, rules, and settings for automated tech debt analysis
+
+version: "1.0"
+last_updated: "2025-07-26"
+
+# Analysis Thresholds
+thresholds:
+  # Code Complexity Limits
+  complexity:
+    method_max_cyclomatic: 10          # Maximum cyclomatic complexity per method
+    method_max_cognitive: 15           # Maximum cognitive complexity per method  
+    method_max_lines: 50               # Maximum lines per method
+    class_max_lines: 500               # Maximum lines per class
+    nesting_max_depth: 4               # Maximum nesting depth
+    parameter_max_count: 7             # Maximum parameters per method
+    
+  # Performance Thresholds
+  performance:
+    query_timeout_warn_ms: 30000       # Warn if DB queries might exceed 30s
+    memory_allocation_warn_mb: 100     # Warn if allocating >100MB
+    collection_size_warn: 10000        # Warn if collections exceed 10k items
+    string_concat_warn: 5              # Warn if >5 string concatenations
+    
+  # Security and Quality
+  security:
+    max_hardcoded_strings: 3           # Maximum hard-coded sensitive strings
+    max_todo_comments: 10              # Maximum TODO/FIXME comments per PR
+    min_test_coverage_change: -5       # Alert if coverage drops by >5%
+    
+  # Documentation Requirements
+  documentation:
+    xml_docs_required: true            # Require XML docs for public APIs
+    readme_update_required_kb: 50      # Require README update if >50KB changes
+    comment_density_min: 0.1           # Minimum comment-to-code ratio
+
+# Debt Scoring System (0-100, lower is better)
+scoring:
+  weights:
+    complexity: 30                     # 30% weight for complexity issues
+    performance: 25                    # 25% weight for performance issues
+    security: 25                       # 25% weight for security issues  
+    maintainability: 20               # 20% weight for maintainability issues
+    
+  penalties:
+    critical_issue: 20                 # +20 points per critical issue
+    high_issue: 10                     # +10 points per high issue
+    medium_issue: 5                    # +5 points per medium issue
+    low_issue: 1                       # +1 point per low issue
+    
+  bonuses:
+    test_coverage_increase: -5         # -5 points for increasing test coverage
+    documentation_added: -3            # -3 points for adding documentation
+    dependency_updated: -2             # -2 points for updating dependencies
+
+# Issue Creation Rules
+issue_creation:
+  enabled: true
+  
+  # Minimum severity levels that trigger issue creation
+  auto_create_threshold: "medium"      # Create issues for medium priority and above
+  
+  # Issue labeling and assignment
+  labels:
+    default: ["tech-debt", "auto-generated"]
+    critical: ["tech-debt", "critical", "auto-generated", "urgent"]
+    high: ["tech-debt", "high-priority", "auto-generated"]
+    medium: ["tech-debt", "medium-priority", "auto-generated", "enhancement"]
+    low: ["tech-debt", "low-priority", "auto-generated", "good-first-issue"]
+    
+  # Issue assignment rules
+  assignment:
+    assignee: "@me"                    # Default assignee for created issues
+    team_mention: "@team/maintainers" # Team to mention in issue body
+    milestone: "Tech Debt Backlog"    # Default milestone for tech debt issues
+    project: "zarichney-api"          # Project to add issues to
+    
+  # Issue templates
+  templates:
+    summary_threshold: 3               # Create summary issue if >3 issues created
+    max_issues_per_pr: 10             # Maximum issues to create per PR analysis
+
+# Analysis Rules and Patterns
+analysis_rules:
+  # File patterns to analyze (glob patterns)
+  include_patterns:
+    - "**/*.cs"                        # All C# files
+    - "**/*.csproj"                    # Project files
+    - "**/*.sln"                       # Solution files
+    - "**/*.sql"                       # SQL files
+    - "**/*.ts"                        # TypeScript files
+    - "**/*.js"                        # JavaScript files
+    
+  # File patterns to exclude from analysis
+  exclude_patterns:
+    - "**/bin/**"                      # Build outputs
+    - "**/obj/**"                      # Temporary build files
+    - "**/node_modules/**"             # Node dependencies
+    - "**/*.Designer.cs"               # Auto-generated designer files
+    - "**/Migrations/**"               # EF Core migrations
+    - "**/*.g.cs"                      # Auto-generated files
+    
+  # Specific pattern detection rules
+  patterns:
+    # Security patterns
+    security_violations:
+      - pattern: "password.*=.*\""     # Hard-coded passwords
+        severity: "critical"
+        message: "Hard-coded password detected"
+      - pattern: "http://"             # HTTP URLs
+        severity: "medium"
+        message: "HTTP URL should use HTTPS"
+      - pattern: "SELECT.*\\+.*\\+"    # SQL concatenation
+        severity: "high"
+        message: "SQL injection risk - use parameterized queries"
+        
+    # Performance patterns  
+    performance_violations:
+      - pattern: "new List<.*>\\(\\)"  # Uninitialized lists
+        severity: "low"
+        message: "Consider specifying initial capacity"
+      - pattern: "\\.Result"           # Blocking async calls
+        severity: "high"
+        message: "Avoid blocking async calls - use await"
+      - pattern: "string.*\\+.*string" # String concatenation
+        severity: "medium"
+        message: "Consider using StringBuilder or string interpolation"
+        
+    # Code quality patterns
+    quality_violations:
+      - pattern: "TODO|FIXME|HACK"     # Code debt comments
+        severity: "low"
+        message: "Code debt comment should be addressed"
+      - pattern: "catch\\s*\\(\\s*\\)" # Empty catch blocks
+        severity: "medium"
+        message: "Empty catch block should handle or log exception"
+
+# AI Analysis Configuration
+ai_analysis:
+  # Claude AI prompt engineering settings
+  prompt_complexity: "expert"          # Level of detail in AI prompts
+  context_window_size: "large"         # Amount of context to provide
+  output_format: "structured_markdown" # Format for AI responses
+  
+  # Analysis focus areas
+  focus_areas:
+    - "architectural_patterns"         # Focus on architecture debt
+    - "performance_bottlenecks"        # Focus on performance issues
+    - "security_vulnerabilities"       # Focus on security gaps
+    - "maintainability_risks"          # Focus on maintenance difficulty
+    - "testing_gaps"                   # Focus on test coverage
+    
+  # Quality gates for AI analysis
+  quality_gates:
+    min_confidence_threshold: 0.7      # Minimum AI confidence for recommendations
+    max_analysis_time_minutes: 10      # Maximum time for AI analysis
+    fallback_to_patterns: true         # Use pattern matching if AI fails
+
+# Reporting and Output
+reporting:
+  # Output formats
+  formats:
+    - "json"                          # Machine-readable results
+    - "markdown"                      # Human-readable report
+    
+  # Report sections to include
+  sections:
+    executive_summary: true           # High-level assessment
+    detailed_analysis: true           # Per-category breakdown
+    metrics_dashboard: true           # Quantitative metrics
+    remediation_plan: true            # Action items and recommendations
+    trend_analysis: false             # Historical comparison (future)
+    
+  # Retention and archiving
+  retention:
+    artifact_days: 30                 # Keep analysis artifacts for 30 days
+    trend_data_months: 12             # Keep trend data for 12 months
+
+# Integration Settings
+integration:
+  # Workflow integration
+  workflow:
+    timeout_minutes: 15               # Maximum workflow execution time
+    retry_attempts: 2                 # Number of retries for failed analysis
+    parallel_execution: true          # Allow parallel with other workflows
+    
+  # External tool integration
+  tools:
+    sonarqube:
+      enabled: false                  # SonarQube integration (future)
+      url: ""
+      project_key: ""
+    
+    codeclimate:
+      enabled: false                  # CodeClimate integration (future)
+      repo_token: ""
+      
+  # Notification settings
+  notifications:
+    slack_webhook: ""                 # Slack notification webhook (future)
+    email_recipients: []              # Email notification list (future)
+    teams_webhook: ""                 # Microsoft Teams webhook (future)
+
+# Environment-specific overrides
+environments:
+  development:
+    thresholds:
+      complexity:
+        method_max_cyclomatic: 15     # More lenient in development
+    issue_creation:
+      auto_create_threshold: "high"   # Only create high+ issues in dev
+      
+  staging:
+    # Use default thresholds
+    
+  production:
+    thresholds:
+      complexity:
+        method_max_cyclomatic: 8      # Stricter in production
+    issue_creation:
+      auto_create_threshold: "medium" # Create medium+ issues for production

@@ -1,7 +1,7 @@
 # Overarching Automation Testing Standards
 
-**Version:** 1.6
-**Last Updated:** 2025-05-25
+**Version:** 1.7
+**Last Updated:** 2025-07-25
 
 ## 1. Introduction
 
@@ -139,16 +139,54 @@
 * **Requirement:** New/updated tests **must** be included in the *same Pull Request* as the code changes they cover.
 * **Local Testing (Mandatory Pre-PR):**
     1.  Run `Scripts/generate-api-client.ps1` (or `.sh`) if API contracts changed.
-    2.  Run the specific tests added/modified.
-    3.  Run **all unit tests** (`dotnet test --filter "Category=Unit"` or `sg docker -c "dotnet test --filter 'Category=Unit'"` if Docker group membership isn't active).
-    4.  Run relevant integration tests (e.g., `dotnet test --filter "Category=Integration&Feature=Auth"` or `sg docker -c "dotnet test --filter 'Category=Integration&Feature=Auth'"` if Docker group membership isn't active).
-    5.  Ensure **all** locally run tests pass.
-* **CI/CD (GitHub Actions):**
-    * Workflow runs on Pull Requests and merges to `main`.
-    * Workflow **must** include: Build, Unit Tests, Integration Tests (potentially parallelized by category), Coverage Report generation/publishing.
-    * PRs **must** pass all CI checks to be mergeable. CI failures must be fixed.
+    2.  Run the unified test suite for comprehensive validation:
+        ```bash
+        # Quick validation with AI-powered analysis
+        /test-report summary
+        
+        # Full test suite with detailed recommendations
+        Scripts/run-test-suite.sh report
+        
+        # Traditional HTML coverage report
+        Scripts/run-test-suite.sh automation
+        ```
+    3.  For specific test categories during development:
+        ```bash
+        Scripts/run-test-suite.sh report --unit-only
+        Scripts/run-test-suite.sh report --integration-only
+        ```
+    4.  Ensure **all** locally run tests pass and quality gates are met.
+* **CI/CD (GitHub Actions - Phase 3 Enhanced):**
+    * Workflow runs on Pull Requests and merges to both `main` and `develop` branches.
+    * **Parallel Test Execution:** Tests run in parallel collections (IntegrationAuth, IntegrationCore, etc.) with up to 4 concurrent threads.
+    * **Dynamic Quality Gates:** Adaptive thresholds based on historical project data and statistical analysis.
+    * **AI-Powered Analysis:** Automated test result analysis with trend detection and performance insights.
+    * Workflow **must** include: Build, Parallel Test Execution, AI Analysis Reports, Coverage Metrics with Historical Trending.
+    * PRs **must** pass all CI checks including dynamic quality gates. CI failures must be fixed.
 
-## 10. Quality & Maintenance
+## 10. Unified Test Suite & AI-Powered Analysis
+
+* **Primary Testing Interface:** The unified test suite (`Scripts/run-test-suite.sh`) is the recommended method for running tests.
+* **Multiple Modes:**
+    * **automation**: Traditional HTML coverage reports with browser opening
+    * **report**: AI-powered markdown analysis with recommendations
+    * **both**: Runs both modes for comprehensive coverage
+* **Claude Integration:** Use `/test-report` commands for instant AI-powered test analysis:
+    * `/test-report`: Full detailed analysis with actionable recommendations
+    * `/test-report summary`: Quick executive summary for daily checks
+    * `/test-report json`: Machine-readable output for CI/CD integration
+    * `/test-report --performance`: Include performance analysis and trends
+* **Quality Gates:**
+    * Dynamic thresholds based on historical data (Phase 3)
+    * Statistical analysis using standard deviation for adaptive limits
+    * Linear regression for trend prediction
+    * Customizable thresholds via `--threshold` parameter
+* **Parallel Execution:**
+    * Configured via `xunit.runner.json` with up to 4 parallel collections
+    * Test collections organized by feature area for optimal parallelization
+    * Complete database isolation using TestContainers
+
+## 11. Quality & Maintenance
 
 * **Avoid Brittle Tests:** Test behavior, not implementation details.
 * **Avoid Trivial Tests:** Don't test basic framework/language features. Focus on logic, boundaries, and integrations.
