@@ -440,6 +440,116 @@ gh issue list --label="tech-debt,auto-generated" --state=open
 **Workflow File**: [`.github/workflows/tech-debt-analysis.yml`](.github/workflows/tech-debt-analysis.yml)  
 **Configuration**: [`.github/config/tech-debt-config.yml`](.github/config/tech-debt-config.yml)
 
+## 10. Security: Comprehensive Analysis Suite
+
+### Overview
+The project includes a unified security analysis system that consolidates all security scanning capabilities into a single, AI-powered workflow. This replaces the previous three separate security workflows (`codeql.yml`, `security-policy.yml`, `security-scan.yml`) with one comprehensive suite.
+
+### How It Works
+- **Trigger**: Runs on push/PR to main/develop branches, weekly schedule (Monday 2:00 AM), and manual dispatch
+- **Parallel Execution**: 4 security jobs run simultaneously for optimal performance
+- **AI Analysis**: Uses Claude Code Action for expert-level security assessment and deployment decisions
+- **Unified Reporting**: Consolidated security artifacts with 30-day retention
+
+### Security Analysis Components
+
+#### **🔍 CodeQL Analysis**
+- Multi-language static analysis (C# and JavaScript)
+- Security-extended and security-and-quality query suites
+- Uses `.github/codeql/codeql-config.yml` configuration
+- Matrix strategy for parallel language analysis
+
+#### **🔒 Dependency Security Scanning**
+- .NET vulnerability scanning with `dotnet list package --vulnerable`
+- Node.js vulnerability scanning with `npm audit`
+- Comprehensive vulnerability categorization (Critical, High, Moderate, Low)
+- Automated vulnerability counting and impact assessment
+
+#### **📋 Security Policy Compliance**
+- SECURITY.md file validation
+- GitHub Actions workflow permission auditing
+- Hard-coded secrets detection (basic patterns)
+- Dependabot configuration validation
+- HTTPS enforcement checking
+
+#### **🕵️ Secrets Detection**
+- TruffleHog OSS integration for comprehensive secret scanning
+- Historical commit analysis with full git history
+- Verified secrets detection with detailed reporting
+- Integration with security decision matrix
+
+#### **🤖 AI-Powered Security Analysis**
+- Expert cybersecurity assessment using Claude Code Action
+- Multi-section analysis covering:
+  - Security posture evaluation (Excellent/Good/Fair/Poor/Critical)
+  - Vulnerability impact analysis and prioritization
+  - Policy compliance assessment and recommendations
+  - Threat modeling and risk evaluation
+  - Actionable remediation roadmap with priority ranking
+  - Deployment security decision (DEPLOY/BLOCK/CONDITIONAL)
+
+### Security Decision Matrix
+- **Critical Issues**: Block deployment for secrets or critical vulnerabilities
+- **High Risk**: Require security review for high-severity findings
+- **Medium Risk**: Track and plan remediation for moderate issues
+- **AI Validation**: Expert security assessment for all deployment decisions
+
+### Quality Gates
+- Automated deployment blocking for critical security issues
+- AI-driven security gates for production deployments
+- PR comment integration with detailed security analysis
+- Security artifact generation for downstream consumption
+
+### Performance & Efficiency
+- **Execution Time**: ~60 minutes total (45min parallel + 15min reporting)
+- **Resource Optimization**: Single workflow vs 3 separate workflows
+- **Unified Scheduling**: Monday 2:00 AM vs 3 different schedules
+- **Enhanced Coverage**: Combined insights from all security tools with AI analysis
+
+### Integration Points
+- **Dependabot Integration**: Enhanced security labels (`security`, `vulnerability-fix`)
+- **Main CI/CD Pipeline**: Security gates before deployment decisions
+- **Standards Compliance**: Complements existing quality workflows
+- **Test Reporter**: Security metrics in unified reporting
+
+### For Developers
+- Review security analysis in PR comments for expert insights
+- Address critical security issues to unblock deployments
+- Use security recommendations for proactive vulnerability management
+- Monitor security posture through unified dashboard
+
+**Workflow File**: [`.github/workflows/security-comprehensive.yml`](.github/workflows/security-comprehensive.yml)  
+**CodeQL Configuration**: [`.github/codeql/codeql-config.yml`](.github/codeql/codeql-config.yml)  
+**Migration Documentation**: [`.github/SECURITY_WORKFLOW_MIGRATION.md`](.github/SECURITY_WORKFLOW_MIGRATION.md)
+
+## 11. Workflow Organization & Naming
+
+### Professional Pipeline Structure
+All workflows follow a consistent naming convention for clarity and organization:
+
+#### **Core Workflows**
+- **`CI/CD: Build, Test & Deploy`** (`main.yml`) - Primary build, test, and deployment pipeline
+- **`Security: Comprehensive Analysis Suite`** (`security-comprehensive.yml`) - Unified security scanning and analysis
+
+#### **Quality Assurance Workflows**  
+- **`Quality: Standards Compliance Check`** (`standards-compliance-check.yml`) - Code standards and formatting validation
+- **`Quality: Tech Debt Analysis`** (`tech-debt-analysis.yml`) - AI-powered technical debt assessment
+
+#### **Reporting & Analytics Workflows**
+- **`Reports: Test Results Analysis`** (`test-reporter.yml`) - Comprehensive test result analysis and reporting
+
+### Workflow Dependencies
+- Quality and reporting workflows trigger after main CI/CD completion
+- Security workflow runs independently for comprehensive coverage
+- All workflows support manual dispatch for debugging and testing
+
+### Benefits of Organization
+- **Clear Purpose**: Each workflow name immediately indicates its function
+- **Logical Grouping**: Related workflows grouped by category (Core, Quality, Reports, Security)
+- **Professional Presentation**: Consistent, enterprise-grade workflow organization
+- **Enhanced Discoverability**: Easy to find and understand workflow purposes
+- **Maintainability**: Clear separation of concerns for easier maintenance
+
 ---
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
