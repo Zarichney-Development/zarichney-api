@@ -636,7 +636,7 @@ parse_results() {
         "passed": $passed_tests,
         "failed": $failed_tests,
         "skipped": $skipped_tests,
-        "pass_rate": $(( total_tests > 0 ? (passed_tests * 100) / total_tests : 0 ))
+        "pass_rate": $(awk -v tt="$total_tests" -v pt="$passed_tests" 'BEGIN {print (tt > 0) ? (pt * 100) / tt : 0}')
     }
 }
 EOF
@@ -1210,7 +1210,7 @@ assess_deployment_risk() {
     # Test failure risk (0-40 points)
     if [[ $failed_tests -gt 0 ]]; then
         local test_risk=$((failed_tests * 10))
-        risk_score=$((risk_score + (test_risk > 40 ? 40 : test_risk)))
+        risk_score=$((risk_score + $(awk -v tr="$test_risk" 'BEGIN {print (tr > 40) ? 40 : tr}')))
         risk_factors+=("${failed_tests} failing tests (+${test_risk} risk)")
     fi
     
