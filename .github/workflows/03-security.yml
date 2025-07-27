@@ -1,18 +1,11 @@
 name: "03 • Security Analysis"
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'Code/**'
-      - 'Scripts/Pipeline/**'
-      - '.github/workflows/**'
-      - '*.sln'
   workflow_run:
     workflows: ["01 • Build & Test"]
     types:
       - completed
-    branches: [main, develop]  # Allow security analysis for both main and develop branches
+    branches: [main, develop]  # Security analysis for PR validation only
   schedule:
     - cron: '0 2 * * 1'  # Weekly on Mondays at 2 AM
   workflow_dispatch:
@@ -29,7 +22,7 @@ jobs:
   security-scanning:
     name: "Security Scanning"
     runs-on: ubuntu-latest
-    if: always()
+    if: always() && github.event.workflow_run.event == 'pull_request'
     timeout-minutes: 45
 
     strategy:
@@ -121,7 +114,7 @@ jobs:
     name: "Security Analysis & Reporting"
     runs-on: ubuntu-latest
     needs: security-scanning
-    if: always() && !cancelled()
+    if: always() && !cancelled() && github.event.workflow_run.event == 'pull_request'
     timeout-minutes: 20
 
     steps:
@@ -261,7 +254,7 @@ jobs:
     name: "Security Summary"
     runs-on: ubuntu-latest
     needs: [security-scanning, security-analysis]
-    if: always() && !cancelled()
+    if: always() && !cancelled() && github.event.workflow_run.event == 'pull_request'
     
     steps:
       - name: Generate security summary

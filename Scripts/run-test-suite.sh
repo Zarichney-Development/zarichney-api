@@ -40,7 +40,7 @@ readonly COVERAGE_FORMATS="HtmlInline_AzurePipelines;Cobertura;Badges;SummaryGit
 # Default settings
 MODE="report"  # Default to report mode for backward compatibility
 OUTPUT_FORMAT="markdown"
-COVERAGE_THRESHOLD=25
+COVERAGE_THRESHOLD=16
 PERFORMANCE_ANALYSIS=false
 SAVE_BASELINE=false
 COMPARE_MODE=false

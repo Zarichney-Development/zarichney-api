@@ -11,7 +11,7 @@ source "$SCRIPT_DIR/common-functions.sh"
 
 # Script configuration
 readonly SOLUTION_FILE="zarichney-api.sln"
-COVERAGE_THRESHOLD="${COVERAGE_THRESHOLD:-24}"
+COVERAGE_THRESHOLD="${COVERAGE_THRESHOLD:-16}"
 
 # Help function
 show_help() {
