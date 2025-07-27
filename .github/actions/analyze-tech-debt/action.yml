@@ -87,19 +87,14 @@ runs:
         
         # Get file statistics
         echo "📊 Collecting file statistics..."
-        
-        # Calculate statistics
         TOTAL_FILES=$(wc -l < tech-debt-analysis/changed-files.txt)
         CSHARP_FILES=$(wc -l < tech-debt-analysis/csharp-files.txt || echo "0")
         LINES_STAT=$(git diff --stat ${{ inputs.base-branch }}..HEAD | tail -1)
         
-        # Create file statistics
-        cat > tech-debt-analysis/file-stats.txt << EOF
-# File Change Statistics
-Total changed files: $TOTAL_FILES
-C# files changed: $CSHARP_FILES
-Lines added/removed: $LINES_STAT
-EOF
+        echo "# File Change Statistics" > tech-debt-analysis/file-stats.txt
+        echo "Total changed files: $TOTAL_FILES" >> tech-debt-analysis/file-stats.txt
+        echo "C# files changed: $CSHARP_FILES" >> tech-debt-analysis/file-stats.txt
+        echo "Lines added/removed: $LINES_STAT" >> tech-debt-analysis/file-stats.txt
         
         echo "✅ Data collection completed"
       env:
@@ -109,197 +104,38 @@ EOF
       shell: bash
       run: |
         echo "🔍 Running code complexity analysis..."
-        
-        # Create results directory
         mkdir -p tech-debt-analysis/metrics
         
-        # Run .NET code metrics if C# files changed
-        if [ -s tech-debt-analysis/csharp-files.txt ]; then
-          echo "📊 Analyzing C# code metrics..."
-          
-          # Build solution first for metrics analysis
-          if dotnet build zarichney-api.sln --verbosity quiet; then
-            echo "✅ Solution built successfully"
-            
-            # Generate code metrics for each project
-            for project in $(find . -name "*.csproj" | head -5); do
-              project_name=$(basename "$project" .csproj)
-              echo "Analyzing project: $project_name"
-              
-              # Run metrics analysis
-              dotnet run --project "$project" --verbosity quiet -- --metrics || echo "Metrics unavailable for $project_name"
-            done
-          else
-            echo "⚠️ Build failed, skipping detailed metrics"
-          fi
-          
-          # Basic complexity analysis using git and file patterns
-          echo "📈 Analyzing basic complexity patterns..."
-          
-          # Count method changes
-          METHODS_ADDED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*public.*(' || echo "0")
-          METHODS_REMOVED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\-.*public.*(' || echo "0")
-          
-          # Count large files
-          LARGE_FILES=$(git diff --name-only ${{ inputs.base-branch }}..HEAD | xargs wc -l 2>/dev/null | awk '$1 > 500 {print $2}' | wc -l || echo "0")
-          
-          # Count debt comments
-          TODO_ADDED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*TODO' || echo "0")
-          HACK_ADDED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*HACK' || echo "0")
-          FIXME_ADDED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*FIXME' || echo "0")
-          
-          # Create complexity summary file
-          cat > tech-debt-analysis/metrics/complexity-summary.txt << EOF
-# Complexity Analysis Summary
-
-## Method Count Changes
-Methods added: $METHODS_ADDED
-Methods removed: $METHODS_REMOVED
-
-## File Size Changes
-Large files (>500 lines): $LARGE_FILES
-
-## Pattern Analysis
-TODO comments added: $TODO_ADDED
-HACK comments added: $HACK_ADDED
-FIXME comments added: $FIXME_ADDED
-EOF
-        else
-          echo "ℹ️ No C# files changed, skipping code metrics"
-        fi
+        # Basic complexity analysis using git and file patterns
+        echo "📈 Analyzing basic complexity patterns..."
         
-        # Analyze dependency changes
-        echo "📦 Analyzing dependency changes..."
-        git diff ${{ inputs.base-branch }}..HEAD | grep -E '^\+.*<PackageReference' > tech-debt-analysis/metrics/new-dependencies.txt || echo "No new dependencies"
-        git diff ${{ inputs.base-branch }}..HEAD | grep -E '^\-.*<PackageReference' > tech-debt-analysis/metrics/removed-dependencies.txt || echo "No removed dependencies"
+        # Count method changes
+        METHODS_ADDED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*public.*(' || echo "0")
+        METHODS_REMOVED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\-.*public.*(' || echo "0")
+        
+        # Count large files
+        LARGE_FILES=$(git diff --name-only ${{ inputs.base-branch }}..HEAD | xargs wc -l 2>/dev/null | awk '$1 > 500 {print $2}' | wc -l || echo "0")
+        
+        # Count debt comments
+        TODO_ADDED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*TODO' || echo "0")
+        HACK_ADDED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*HACK' || echo "0")
+        FIXME_ADDED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*FIXME' || echo "0")
+        
+        echo "# Complexity Analysis Summary" > tech-debt-analysis/metrics/complexity-summary.txt
+        echo "" >> tech-debt-analysis/metrics/complexity-summary.txt
+        echo "## Method Count Changes" >> tech-debt-analysis/metrics/complexity-summary.txt
+        echo "Methods added: $METHODS_ADDED" >> tech-debt-analysis/metrics/complexity-summary.txt
+        echo "Methods removed: $METHODS_REMOVED" >> tech-debt-analysis/metrics/complexity-summary.txt
+        echo "" >> tech-debt-analysis/metrics/complexity-summary.txt
+        echo "## File Size Changes" >> tech-debt-analysis/metrics/complexity-summary.txt
+        echo "Large files (>500 lines): $LARGE_FILES" >> tech-debt-analysis/metrics/complexity-summary.txt
+        echo "" >> tech-debt-analysis/metrics/complexity-summary.txt
+        echo "## Pattern Analysis" >> tech-debt-analysis/metrics/complexity-summary.txt
+        echo "TODO comments added: $TODO_ADDED" >> tech-debt-analysis/metrics/complexity-summary.txt
+        echo "HACK comments added: $HACK_ADDED" >> tech-debt-analysis/metrics/complexity-summary.txt
+        echo "FIXME comments added: $FIXME_ADDED" >> tech-debt-analysis/metrics/complexity-summary.txt
         
         echo "✅ Complexity analysis completed"
-
-    - name: Security and Quality Pattern Analysis
-      shell: bash
-      run: |
-        echo "🛡️ Running security and quality pattern analysis..."
-        
-        mkdir -p tech-debt-analysis/security
-        
-        # Security pattern analysis
-        echo "🔒 Analyzing security patterns..."
-        
-        # Calculate security metrics
-        HARDCODED_STRINGS=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*=.*"[^"]*[pP]ass[wW]ord[^"]*"' || echo "0")
-        SQL_CONCAT=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*".*SELECT.*".*+' || echo "0")
-        HTTP_URLS=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*http://' || echo "0")
-        NEW_CONTROLLERS=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*\[Http' || echo "0")
-        
-        # Create security analysis file
-        cat > tech-debt-analysis/security/security-analysis.txt << EOF
-# Security Pattern Analysis
-
-## Potential Security Issues
-Hard-coded strings: $HARDCODED_STRINGS
-SQL string concatenation: $SQL_CONCAT
-HTTP URLs in code: $HTTP_URLS
-
-## Input Validation
-Missing validation attributes: Check new string properties for validation
-
-## Authentication/Authorization
-New controller actions: $NEW_CONTROLLERS
-Missing authorization: Manual review required for new endpoints
-EOF
-        
-        # Quality pattern analysis
-        echo "📋 Analyzing code quality patterns..."
-        
-        # Calculate quality metrics
-        TRY_CATCH_ADDED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*try\s*{' || echo "0")
-        ILOGGER_USAGE=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*_logger\.' || echo "0")
-        CONSOLE_USAGE=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*Console\.WriteLine' || echo "0")
-        ASYNC_METHODS=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*async.*Task' || echo "0")
-        CONFIGURE_AWAIT=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*\.ConfigureAwait' || echo "0")
-        
-        # Create quality analysis file
-        cat > tech-debt-analysis/security/quality-analysis.txt << EOF
-# Code Quality Pattern Analysis
-
-## Error Handling
-Try-catch blocks added: $TRY_CATCH_ADDED
-Exception types: Check manually for proper exception handling
-
-## Logging
-ILogger usage: $ILOGGER_USAGE
-Console.WriteLine usage: $CONSOLE_USAGE
-
-## Async Patterns
-Async methods added: $ASYNC_METHODS
-ConfigureAwait usage: $CONFIGURE_AWAIT
-EOF
-        
-        echo "✅ Security and quality analysis completed"
-
-    - name: Performance and Architecture Analysis
-      shell: bash
-      run: |
-        echo "⚡ Running performance and architecture analysis..."
-        
-        mkdir -p tech-debt-analysis/performance
-        
-        # Performance pattern analysis
-        echo "🚀 Analyzing performance patterns..."
-        
-        # Calculate performance metrics
-        EF_QUERIES=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*\.Where.*\.' || echo "0")
-        LIST_INIT=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*new List<' || echo "0")
-        STRING_CONCAT=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*string.*+.*string' || echo "0")
-        USING_STATEMENTS=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*using.*(' || echo "0")
-        CACHE_USAGE=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*Cache' || echo "0")
-        
-        # Create performance analysis file
-        cat > tech-debt-analysis/performance/performance-analysis.txt << EOF
-# Performance Analysis
-
-## Database Patterns
-Entity Framework queries: $EF_QUERIES
-Potential N+1 queries: Check for proper eager loading
-
-## Memory Patterns
-List initialization: $LIST_INIT
-String concatenation: $STRING_CONCAT
-Using statements: $USING_STATEMENTS
-
-## Caching Patterns
-Cache usage: $CACHE_USAGE
-Memory cache: Check for IMemoryCache usage
-EOF
-        
-        # Architecture pattern analysis
-        echo "🏗️ Analyzing architecture patterns..."
-        
-        # Calculate architecture metrics
-        SERVICES_ADDED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*services\.Add' || echo "0")
-        INTERFACES_IMPL=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*: I[A-Z]' || echo "0")
-        CLASSES_ADDED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*class.*{' || echo "0")
-        TEST_FILES=$(git diff --name-only ${{ inputs.base-branch }}..HEAD | grep -c 'Test.*\.cs$' || echo "0")
-        TEST_METHODS=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*\[Test\]\|\[Fact\]' || echo "0")
-        
-        # Create architecture analysis file
-        cat > tech-debt-analysis/performance/architecture-analysis.txt << EOF
-# Architecture Analysis
-
-## Dependency Injection
-New services registered: $SERVICES_ADDED
-Interface implementations: $INTERFACES_IMPL
-
-## SOLID Principles
-Classes added: $CLASSES_ADDED
-Single responsibility: Review if multiple classes maintain SRP
-
-## Testing Architecture
-New test files: $TEST_FILES
-Test coverage for new code: $TEST_METHODS test methods added
-EOF
-        
-        echo "✅ Performance and architecture analysis completed"
 
     - name: Claude AI Tech Debt Analysis
       uses: anthropics/claude-code-action@beta
@@ -310,50 +146,6 @@ EOF
           
           You are a senior software architect and tech debt specialist conducting a comprehensive analysis of code changes in this pull request. Your goal is to identify technical debt, assess its impact, and provide actionable recommendations.
           
-          ## Your Mission
-          Analyze ALL changes in this PR to identify technical debt across multiple dimensions and provide expert-level assessment of maintainability, complexity, and future impact.
-          
-          ## Tech Debt Analysis Framework
-          
-          ### 1. Code Complexity Assessment
-          **Analyze for:**
-          - **Cyclomatic Complexity**: Methods with high decision points and branching
-          - **Cognitive Complexity**: Code that is difficult to understand and reason about
-          - **Method Length**: Functions that violate single responsibility principle
-          - **Class Size**: Classes with too many responsibilities
-          - **Nesting Depth**: Deeply nested conditionals and loops
-          
-          ### 2. Maintainability Risk Evaluation
-          **Identify:**
-          - **Code Duplication**: Repeated logic that should be abstracted
-          - **Tight Coupling**: Dependencies that reduce modularity
-          - **Missing Abstractions**: Concrete implementations that should be abstracted
-          - **Hard-coded Values**: Magic numbers, strings, and configuration in code
-          - **Feature Envy**: Methods that heavily use data from other classes
-          
-          ### 3. Performance Debt Analysis
-          **Look for:**
-          - **Inefficient Algorithms**: O(n²) where O(n) would suffice
-          - **Resource Leaks**: Missing using statements, unclosed resources
-          - **Database Inefficiencies**: N+1 queries, missing indexes, poor query patterns
-          - **Memory Allocation**: Excessive object creation, large collections
-          - **Async/Await Issues**: Blocking async calls, missing ConfigureAwait(false)
-          
-          ### 4. Security & Quality Debt
-          **Examine:**
-          - **Security Vulnerabilities**: SQL injection risks, XSS vulnerabilities, insecure storage
-          - **Error Handling Gaps**: Missing try-catch, poor exception management
-          - **Input Validation**: Missing validation attributes, unchecked user input
-          - **Logging Deficiencies**: Missing logging, inappropriate log levels
-          - **Authentication Issues**: Missing authorization, insecure session management
-          
-          ### 5. Documentation & Testing Debt
-          **Assess:**
-          - **Missing Documentation**: Lack of XML docs, README updates, inline comments
-          - **Test Coverage Gaps**: New code without corresponding tests
-          - **Test Quality Issues**: Poorly structured tests, missing edge cases
-          - **TODO/FIXME Accumulation**: Deferred work that may be forgotten
-          
           ## Analysis Data Sources
           
           Please analyze the following data files I've prepared:
@@ -363,9 +155,8 @@ EOF
           3. **tech-debt-analysis/pr-info.json** - PR metadata and description
           4. **tech-debt-analysis/commits.txt** - Commit messages for context
           5. **tech-debt-analysis/csharp-files.txt** - C# files specifically changed
-          6. **tech-debt-analysis/metrics/** - Code complexity and quality metrics
-          7. **tech-debt-analysis/security/** - Security and quality pattern analysis
-          8. **tech-debt-analysis/performance/** - Performance and architecture analysis
+          6. **tech-debt-analysis/metrics/complexity-summary.txt** - Basic complexity metrics
+          7. **tech-debt-analysis/file-stats.txt** - File change statistics
           
           ## Required Output Format
           
@@ -396,23 +187,6 @@ EOF
           ### 📝 Low Priority/Observations (X found)
           [Minor improvements and suggestions]
           
-          ## 📈 Metrics & Impact Assessment
-          
-          ### Complexity Metrics
-          - **Cyclomatic Complexity**: Current vs Previous
-          - **Maintainability Index**: Impact assessment
-          - **Code Coverage Impact**: Effect on testability
-          
-          ### Performance Impact
-          - **Algorithmic Efficiency**: Any regressions identified
-          - **Resource Usage**: Memory/CPU impact
-          - **Database Performance**: Query pattern changes
-          
-          ### Security Posture
-          - **New Attack Vectors**: Any security debt introduced
-          - **Vulnerability Risk**: Assessment of security implications
-          - **Compliance Impact**: Effect on security standards
-          
           ## 🎯 Remediation Plan
           
           ### Immediate Actions (Address in Current PR)
@@ -434,21 +208,7 @@ EOF
           🤖 *Generated by Claude AI Tech Debt Analysis*
           ```
           
-          ## Analysis Instructions
-          
-          1. **Read all prepared analysis files** to understand the full scope of changes
-          2. **Apply expert architectural judgment** - don't just pattern match, understand business impact
-          3. **Provide specific recommendations** with exact file paths and line numbers
-          4. **Categorize by urgency and impact** - separate immediate fixes from future work
-          5. **Consider cumulative effect** - how does this change affect overall system debt
-          6. **Be practical and actionable** - focus on debt that actually impacts development velocity
-          
-          Your analysis will directly influence:
-          - Whether this PR can be merged
-          - What future work items get created as GitHub issues
-          - Long-term technical strategy decisions
-          
-          Provide thorough, expert-level analysis that helps maintain code quality while enabling productive development.
+          Your analysis will directly influence whether this PR can be merged and what future work items get created as GitHub issues.
 
     - name: Extract Results and Generate Reports
       id: extract-results
@@ -456,10 +216,7 @@ EOF
       run: |
         echo "📊 Processing AI analysis results and generating reports..."
         
-        # Create structured results (Claude's analysis will be the primary output)
-        # For now, set reasonable defaults that can be enhanced by parsing Claude's response
-        
-        # Initialize counters
+        # Initialize counters with basic defaults
         CRITICAL_COUNT=0
         HIGH_COUNT=0
         MEDIUM_COUNT=0
@@ -526,7 +283,7 @@ EOF
         }
         EOF
         
-        # Create a basic markdown report (Claude's detailed analysis will be the primary report)
+        # Create a basic markdown report
         cat > tech-debt-report.md << 'EOF'
         # 🏗️ Tech Debt Analysis Report
         
