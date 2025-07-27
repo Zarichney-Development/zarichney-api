@@ -11,7 +11,6 @@ public class Program
     ConfigureBuilder(builder);
 
     var app = builder.Build();
-    // VALIDATION: Testing DevOps infrastructure trigger for backend changes
 
     await ConfigureApplication(app);
     try
