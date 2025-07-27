@@ -11,22 +11,22 @@ inputs:
 outputs:
   backend-changed:
     description: 'Whether backend code changed'
-    value: ${{ steps.check-changes.outputs.backend-changed }}
+    value: ${{ steps.categorize.outputs.backend-changed }}
   frontend-changed:
     description: 'Whether frontend code changed'
-    value: ${{ steps.check-changes.outputs.frontend-changed }}
+    value: ${{ steps.categorize.outputs.frontend-changed }}
   pipeline-changed:
     description: 'Whether pipeline scripts changed'
-    value: ${{ steps.check-changes.outputs.pipeline-changed }}
+    value: ${{ steps.categorize.outputs.pipeline-changed }}
   docs-only:
     description: 'Whether only documentation changed'
-    value: ${{ steps.check-changes.outputs.docs-only }}
+    value: ${{ steps.categorize.outputs.docs-only }}
   tests-changed:
     description: 'Whether test files changed'
-    value: ${{ steps.check-changes.outputs.tests-changed }}
+    value: ${{ steps.categorize.outputs.tests-changed }}
   changed-files:
     description: 'List of changed files'
-    value: ${{ steps.check-changes.outputs.changed-files }}
+    value: ${{ steps.categorize.outputs.changed-files }}
 
 runs:
   using: 'composite'

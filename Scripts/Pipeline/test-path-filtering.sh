@@ -93,7 +93,7 @@ list_scenarios() {
 # Simulate file changes for testing
 simulate_changes() {
     local files="$1"
-    local temp_dir="test-changes-$$"
+    local temp_dir=$(mktemp -d -t test-changes-XXXXXX)
     
     log_info "Simulating changes to: $files"
     

@@ -297,7 +297,7 @@ EOF
         cd "Code/Zarichney.Website" || die "Failed to change to frontend directory"
         
         # Run npm audit
-        if npm audit --json > "../$SECURITY_DIR/npm-audit-raw.json" 2>/dev/null; then
+        if npm audit --json > "../$SECURITY_DIR/npm-audit-raw.json" 2>"../$SECURITY_DIR/npm-audit-errors.log"; then
             # Process the results
             local npm_total npm_critical npm_high npm_moderate npm_low
             npm_total=$(jq '.metadata.totalVulnerabilities // 0' "../$SECURITY_DIR/npm-audit-raw.json")
