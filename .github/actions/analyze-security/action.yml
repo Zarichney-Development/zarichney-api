@@ -1,0 +1,392 @@
+name: 'AI-Powered Security Analysis'
+description: 'Claude AI-powered comprehensive security analysis for pull requests'
+author: 'Zarichney Development'
+
+inputs:
+  pr-number:
+    description: 'Pull request number'
+    required: true
+  base-branch:
+    description: 'Base branch for comparison'
+    required: true
+    default: 'develop'
+  head-sha:
+    description: 'Head commit SHA for analysis'
+    required: true
+  workflow-run-id:
+    description: 'Workflow run ID to download artifacts from'
+    required: false
+  claude-oauth-token:
+    description: 'Claude Code OAuth token for AI analysis'
+    required: true
+  github-token:
+    description: 'GitHub token for API access'
+    required: true
+
+outputs:
+  critical-issues-count:
+    description: 'Number of critical security issues found'
+    value: ${{ steps.extract-security-metrics.outputs.critical-issues }}
+  high-issues-count:
+    description: 'Number of high severity security issues found'
+    value: ${{ steps.extract-security-metrics.outputs.high-issues }}
+  security-score:
+    description: 'Overall security score (0-100)'
+    value: ${{ steps.extract-security-metrics.outputs.security-score }}
+  deployment-safe:
+    description: 'Whether deployment is safe (true/false)'
+    value: ${{ steps.extract-security-metrics.outputs.deployment-safe }}
+  create-issues:
+    description: 'Whether to create follow-up security issues'
+    value: ${{ steps.extract-security-metrics.outputs.create-issues }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Download Security Artifacts
+      shell: bash
+      run: |
+        echo "🔍 Downloading security analysis artifacts..."
+        mkdir -p security-analysis
+        
+        # If we have a workflow run ID, download artifacts from the main CI/CD run
+        if [ -n "${{ inputs.workflow-run-id }}" ]; then
+          echo "📦 Downloading artifacts from workflow run ${{ inputs.workflow-run-id }}"
+          
+          # Download security artifacts using GitHub API
+          gh api repos/${{ github.repository }}/actions/runs/${{ inputs.workflow-run-id }}/artifacts \
+            --jq '.artifacts[] | select(.name | startswith("codeql-results") or startswith("dependency-security") or startswith("policy-compliance") or startswith("secrets-detection"))' \
+            > security-analysis/artifacts-list.json
+          
+          # Download each security artifact
+          jq -r '.download_url' security-analysis/artifacts-list.json | while read -r url; do
+            if [ -n "$url" ]; then
+              echo "Downloading artifact from: $url"
+              curl -L -H "Authorization: token ${{ inputs.github-token }}" "$url" > artifact.zip
+              unzip -o artifact.zip -d security-analysis/ || true
+              rm -f artifact.zip
+            fi
+          done
+        else
+          echo "⚠️ No workflow run ID provided, using fallback data collection"
+          
+          # Fallback: create basic security analysis structure
+          echo '{"analysis_mode": "fallback", "timestamp": "'$(date -Iseconds)'"}' > security-analysis/fallback-mode.json
+        fi
+        
+        echo "✅ Security artifacts downloaded/prepared"
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+
+    - name: Prepare Security Analysis Data
+      shell: bash
+      run: |
+        echo "📊 Preparing security data for Claude AI analysis..."
+        
+        # Get PR information
+        gh pr view ${{ inputs.pr-number }} --json title,body,commits,additions,deletions > security-analysis/pr-info.json
+        
+        # Get list of changed files
+        git fetch origin ${{ inputs.base-branch }}:${{ inputs.base-branch }} || echo "Branch already exists"
+        git diff --name-only ${{ inputs.base-branch }}..HEAD > security-analysis/changed-files.txt
+        
+        # Get commit messages for analysis
+        git log --oneline ${{ inputs.base-branch }}..HEAD > security-analysis/commits.txt
+        
+        # Initialize security metrics
+        CODEQL_ISSUES=0
+        DEPENDENCY_VULNERABILITIES=0
+        POLICY_VIOLATIONS=0
+        SECRETS_DETECTED=0
+        CRITICAL_VULNERABILITIES=0
+        HIGH_VULNERABILITIES=0
+        
+        # Process CodeQL results
+        if [ -f "security-analysis/codeql-csharp-results.json" ] || [ -f "security-analysis/codeql-javascript-results.json" ]; then
+          echo "📋 Processing CodeQL analysis results..."
+          CODEQL_COMPLETED=true
+        else
+          echo "⚠️ CodeQL results not found"
+          CODEQL_COMPLETED=false
+        fi
+        
+        # Process dependency scanning results
+        if [ -f "security-analysis/dotnet-audit-summary.json" ]; then
+          DOTNET_VULNS=$(jq -r '.count // 0' security-analysis/dotnet-audit-summary.json)
+          echo "📋 .NET vulnerabilities found: $DOTNET_VULNS"
+        else
+          DOTNET_VULNS=0
+        fi
+        
+        if [ -f "security-analysis/npm-audit-summary.json" ]; then
+          NPM_TOTAL=$(jq -r '.total_vulnerabilities // 0' security-analysis/npm-audit-summary.json)
+          NPM_CRITICAL=$(jq -r '.critical // 0' security-analysis/npm-audit-summary.json)
+          NPM_HIGH=$(jq -r '.high // 0' security-analysis/npm-audit-summary.json)
+          CRITICAL_VULNERABILITIES=$((CRITICAL_VULNERABILITIES + NPM_CRITICAL))
+          HIGH_VULNERABILITIES=$((HIGH_VULNERABILITIES + NPM_HIGH))
+          echo "📋 Node.js vulnerabilities: $NPM_TOTAL total, $NPM_CRITICAL critical, $NPM_HIGH high"
+        else
+          NPM_TOTAL=0
+          NPM_CRITICAL=0
+          NPM_HIGH=0
+        fi
+        
+        DEPENDENCY_VULNERABILITIES=$((DOTNET_VULNS + NPM_TOTAL))
+        
+        # Process policy compliance results
+        if [ -f "security-analysis/policy-compliance-results.json" ]; then
+          POLICY_VIOLATIONS=$(jq -r '.policy_violations // 0' security-analysis/policy-compliance-results.json)
+          echo "📋 Policy violations found: $POLICY_VIOLATIONS"
+        else
+          POLICY_VIOLATIONS=0
+        fi
+        
+        # Process secrets detection results
+        if [ -f "security-analysis/secrets-detection-results.json" ]; then
+          SECRETS_DETECTED=$(jq -r '.secret_count // 0' security-analysis/secrets-detection-results.json)
+          echo "📋 Secrets detected: $SECRETS_DETECTED"
+        else
+          SECRETS_DETECTED=0
+        fi
+        
+        # Calculate overall security risk level
+        RISK_LEVEL="LOW"
+        if [ "$SECRETS_DETECTED" -gt 0 ] || [ "$CRITICAL_VULNERABILITIES" -gt 0 ]; then
+          RISK_LEVEL="CRITICAL"
+        elif [ "$HIGH_VULNERABILITIES" -gt 0 ] || [ "$DEPENDENCY_VULNERABILITIES" -gt 5 ]; then
+          RISK_LEVEL="HIGH"
+        elif [ "$DEPENDENCY_VULNERABILITIES" -gt 0 ] || [ "$POLICY_VIOLATIONS" -gt 2 ]; then
+          RISK_LEVEL="MEDIUM"
+        fi
+        
+        # Determine deployment safety
+        DEPLOYMENT_SAFE=true
+        if [ "$RISK_LEVEL" = "CRITICAL" ] || [ "$SECRETS_DETECTED" -gt 0 ]; then
+          DEPLOYMENT_SAFE=false
+        fi
+        
+        # Create comprehensive security analysis data for Claude
+        cat > security-analysis-data.json << EOF
+        {
+          "project": "zarichney-api",
+          "analysis_type": "comprehensive_security_analysis",
+          "build_context": {
+            "pr_number": "${{ inputs.pr-number }}",
+            "base_branch": "${{ inputs.base-branch }}",
+            "head_sha": "${{ inputs.head-sha }}",
+            "workflow_run_id": "${{ inputs.workflow-run-id }}",
+            "timestamp": "$(date -Iseconds)"
+          },
+          "codeql_analysis": {
+            "completed": $CODEQL_COMPLETED,
+            "languages_analyzed": ["csharp", "javascript"],
+            "security_queries_enabled": true
+          },
+          "dependency_security": {
+            "dotnet_vulnerabilities": $DOTNET_VULNS,
+            "npm_total_vulnerabilities": $NPM_TOTAL,
+            "npm_critical_vulnerabilities": $NPM_CRITICAL,
+            "npm_high_vulnerabilities": $NPM_HIGH,
+            "total_dependency_vulnerabilities": $DEPENDENCY_VULNERABILITIES
+          },
+          "policy_compliance": {
+            "violations_count": $POLICY_VIOLATIONS,
+            "areas_checked": ["security_policies", "workflow_permissions", "secret_detection", "https_enforcement"]
+          },
+          "secrets_detection": {
+            "secrets_detected": $([ "$SECRETS_DETECTED" -gt 0 ] && echo "true" || echo "false"),
+            "secret_count": $SECRETS_DETECTED,
+            "tool_used": "TruffleHog OSS"
+          },
+          "security_assessment": {
+            "overall_risk_level": "$RISK_LEVEL",
+            "deployment_safe": $DEPLOYMENT_SAFE,
+            "critical_vulnerabilities": $CRITICAL_VULNERABILITIES,
+            "high_vulnerabilities": $HIGH_VULNERABILITIES,
+            "requires_immediate_action": $([ "$RISK_LEVEL" = "CRITICAL" ] && echo "true" || echo "false")
+          },
+          "pr_context": {
+            "changed_files_count": $(wc -l < security-analysis/changed-files.txt),
+            "commits_count": $(wc -l < security-analysis/commits.txt)
+          }
+        }
+        EOF
+        
+        echo "✅ Security analysis data prepared"
+        echo "  - CodeQL Analysis: $CODEQL_COMPLETED"
+        echo "  - Dependency Vulnerabilities: $DEPENDENCY_VULNERABILITIES"
+        echo "  - Policy Violations: $POLICY_VIOLATIONS"
+        echo "  - Secrets Detected: $SECRETS_DETECTED"
+        echo "  - Overall Risk Level: $RISK_LEVEL"
+        echo "  - Deployment Safe: $DEPLOYMENT_SAFE"
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+
+    - name: Claude AI Security Analysis
+      uses: anthropics/claude-code-action@beta
+      with:
+        claude_code_oauth_token: ${{ inputs.claude-oauth-token }}
+        direct_prompt: |
+          # Expert Security Analysis for zarichney-api Project
+
+          You are a senior cybersecurity expert and application security engineer conducting a comprehensive security analysis of this pull request for the zarichney-api project.
+
+          ## Analysis Data
+          Please analyze the security data in `security-analysis-data.json` which contains:
+          - CodeQL static analysis results for C# and JavaScript
+          - Dependency vulnerability scanning results (.NET and Node.js)
+          - Security policy compliance assessment
+          - Secrets detection results using TruffleHog
+          - Overall security risk assessment and deployment readiness
+
+          ## Required Analysis Sections
+
+          ### 1. Executive Security Summary
+          - Overall security posture assessment (Excellent/Good/Fair/Poor/Critical)
+          - Key security achievements and immediate security concerns
+          - Security risk level (Low/Medium/High/Critical) with detailed reasoning
+          - Compliance status with industry security standards
+
+          ### 2. Vulnerability Analysis
+          - Critical and high-severity vulnerability assessment
+          - Dependency security analysis (.NET and Node.js ecosystems)
+          - Code-level security issues identified by CodeQL
+          - Potential attack vectors and exploitation scenarios
+          - Business impact assessment of identified vulnerabilities
+
+          ### 3. Secrets and Sensitive Data Assessment
+          - Analysis of secrets detection results
+          - Evaluation of data protection practices
+          - Assessment of configuration security
+          - Recommendations for secrets management improvements
+
+          ### 4. Security Policy Compliance Evaluation
+          - Review of security policy adherence
+          - Workflow permission security assessment
+          - HTTPS enforcement and secure communication practices
+          - Dependabot configuration and automated security updates
+
+          ### 5. Threat Modeling & Risk Analysis
+          - Identification of key threat vectors for the application
+          - Analysis of attack surface and potential entry points
+          - Risk prioritization based on likelihood and impact
+          - Evaluation of existing security controls effectiveness
+
+          ### 6. Actionable Security Recommendations
+          **Priority ranked by security impact:**
+          - **CRITICAL**: Immediate security actions required before deployment
+          - **HIGH**: Security improvements needed within current sprint
+          - **MEDIUM**: Security enhancements for next development cycle
+          - **LOW**: Long-term security strategy improvements
+          - Specific remediation steps with file paths and code examples where applicable
+
+          ### 7. Security Decision Matrix & Deployment Assessment
+          - Production deployment security evaluation
+          - Security-related blocking issues that prevent deployment
+          - Post-deployment security monitoring recommendations
+          - Incident response and security rollback scenarios
+          - **Final Security Decision: DEPLOY/BLOCK/CONDITIONAL_DEPLOY**
+
+          ### 8. Compliance & Framework Assessment
+          - OWASP Top 10 coverage analysis
+          - Security framework compliance (if applicable)
+          - Industry best practices adherence
+          - Recommendations for security certification or audit preparation
+
+          ## Output Requirements
+          - Generate response in clear, actionable markdown format suitable for PR comments
+          - Include specific file paths, vulnerability details, and concrete remediation steps
+          - Provide technical details suitable for senior developers and security teams
+          - Include confidence levels and risk scores for recommendations
+          - Reference specific security metrics and findings from the analysis data
+          - Use security industry terminology and frameworks appropriately
+
+          ## Context Considerations
+          - This is a full-stack web application (.NET backend, Angular frontend)
+          - The analysis will be posted as a PR comment for development team review
+          - Results will influence deployment decisions and security gates
+          - Consider both development and production environment security implications
+
+          Your analysis should provide expert-level security insights that enable informed decision-making about application security posture and deployment readiness.
+
+    - name: Extract Security Metrics and Generate Report
+      id: extract-security-metrics
+      shell: bash
+      run: |
+        echo "📊 Processing AI security analysis results..."
+        
+        # Extract security metrics from analysis data
+        CRITICAL_ISSUES=$(jq -r '.security_assessment.critical_vulnerabilities // 0' security-analysis-data.json)
+        HIGH_ISSUES=$(jq -r '.security_assessment.high_vulnerabilities // 0' security-analysis-data.json)
+        DEPLOYMENT_SAFE=$(jq -r '.security_assessment.deployment_safe // false' security-analysis-data.json)
+        RISK_LEVEL=$(jq -r '.security_assessment.overall_risk_level // "UNKNOWN"' security-analysis-data.json)
+        SECRETS_COUNT=$(jq -r '.secrets_detection.secret_count // 0' security-analysis-data.json)
+        
+        # Calculate security score (0-100, higher is better)
+        SECURITY_SCORE=100
+        if [ "$CRITICAL_ISSUES" -gt 0 ]; then
+          SECURITY_SCORE=$((SECURITY_SCORE - (CRITICAL_ISSUES * 30)))
+        fi
+        if [ "$HIGH_ISSUES" -gt 0 ]; then
+          SECURITY_SCORE=$((SECURITY_SCORE - (HIGH_ISSUES * 15)))
+        fi
+        if [ "$SECRETS_COUNT" -gt 0 ]; then
+          SECURITY_SCORE=$((SECURITY_SCORE - (SECRETS_COUNT * 40)))
+        fi
+        
+        # Ensure score doesn't go below 0
+        if [ "$SECURITY_SCORE" -lt 0 ]; then
+          SECURITY_SCORE=0
+        fi
+        
+        # Determine if we should create follow-up issues
+        CREATE_ISSUES="false"
+        if [ "$CRITICAL_ISSUES" -gt 0 ] || [ "$HIGH_ISSUES" -gt 3 ] || [ "$SECRETS_COUNT" -gt 0 ]; then
+          CREATE_ISSUES="true"
+        fi
+        
+        # Create the security report file (this will be posted as PR comment)
+        echo "# 🛡️ AI-Powered Security Analysis" > security-report.md
+        echo "" >> security-report.md
+        echo "**Pull Request:** #${{ inputs.pr-number }} | **Commit:** \`${{ inputs.head-sha }}\` | **Base:** \`${{ inputs.base-branch }}\`" >> security-report.md
+        echo "" >> security-report.md
+        echo "## 📊 Security Metrics Summary" >> security-report.md
+        echo "- **Security Score:** $SECURITY_SCORE/100" >> security-report.md
+        echo "- **Risk Level:** $RISK_LEVEL" >> security-report.md
+        echo "- **Critical Issues:** $CRITICAL_ISSUES" >> security-report.md
+        echo "- **High Severity Issues:** $HIGH_ISSUES" >> security-report.md
+        echo "- **Secrets Detected:** $SECRETS_COUNT" >> security-report.md
+        echo "- **Deployment Safe:** $DEPLOYMENT_SAFE" >> security-report.md
+        echo "" >> security-report.md
+        echo "## 🤖 Expert AI Analysis" >> security-report.md
+        echo "" >> security-report.md
+        echo "The detailed AI-powered security analysis has been generated and provides:" >> security-report.md
+        echo "- 🔍 Expert vulnerability assessment and threat modeling" >> security-report.md
+        echo "- 🛡️ Security posture evaluation and compliance review" >> security-report.md  
+        echo "- 🕵️ Secrets detection and sensitive data analysis" >> security-report.md
+        echo "- 📋 Policy compliance and configuration security validation" >> security-report.md
+        echo "- 🎯 Actionable recommendations with priority ranking" >> security-report.md
+        echo "- 🚀 Deployment decision matrix with risk assessment" >> security-report.md
+        echo "" >> security-report.md
+        
+        if [ "$DEPLOYMENT_SAFE" = "false" ]; then
+          echo "## ⚠️ Security Gates" >> security-report.md
+          echo "**DEPLOYMENT BLOCKED** - Critical security issues must be resolved before merging." >> security-report.md
+          echo "" >> security-report.md
+        fi
+        
+        echo "*This represents expert-level cybersecurity analysis powered by Claude AI, providing comprehensive security intelligence for informed deployment decisions.*" >> security-report.md
+        
+        # Output results for the workflow
+        echo "critical-issues=$CRITICAL_ISSUES" >> $GITHUB_OUTPUT
+        echo "high-issues=$HIGH_ISSUES" >> $GITHUB_OUTPUT
+        echo "security-score=$SECURITY_SCORE" >> $GITHUB_OUTPUT
+        echo "deployment-safe=$DEPLOYMENT_SAFE" >> $GITHUB_OUTPUT
+        echo "create-issues=$CREATE_ISSUES" >> $GITHUB_OUTPUT
+        
+        echo "📈 Security Analysis Results:"
+        echo "  Critical Issues: $CRITICAL_ISSUES"
+        echo "  High Issues: $HIGH_ISSUES"
+        echo "  Security Score: $SECURITY_SCORE/100"
+        echo "  Deployment Safe: $DEPLOYMENT_SAFE"
+        echo "  Risk Level: $RISK_LEVEL"

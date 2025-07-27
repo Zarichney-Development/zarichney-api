@@ -440,53 +440,66 @@ gh issue list --label="tech-debt,auto-generated" --state=open
 **Workflow File**: [`.github/workflows/tech-debt-analysis.yml`](.github/workflows/tech-debt-analysis.yml)  
 **Configuration**: [`.github/config/tech-debt-config.yml`](.github/config/tech-debt-config.yml)
 
-## 10. Security: Comprehensive Analysis Suite
+## 10. Security: Comprehensive Analysis
 
 ### Overview
-The project includes a unified security analysis system that consolidates all security scanning capabilities into a single, AI-powered workflow. This replaces the previous three separate security workflows (`codeql.yml`, `security-policy.yml`, `security-scan.yml`) with one comprehensive suite.
+The project includes a comprehensive security analysis system that follows the established workflow pattern used by standards compliance and tech debt analysis. Security scanning is integrated into the main CI/CD pipeline, with AI-powered analysis performed by a separate workflow that posts consolidated security insights to PR comments.
+
+### Architecture Pattern (Consistent with Project Standards)
+1. **Security Scans in Main CI/CD**: Security scanning jobs run alongside build/test in `main.yml`
+2. **Security Analysis Workflow**: `security-analysis.yml` triggers on workflow completion
+3. **AI-Powered Analysis**: Custom GitHub Action analyzes all security data with Claude
+4. **Single PR Comment**: Consolidated security analysis posted to PR (like standards compliance)
 
 ### How It Works
-- **Trigger**: Runs on push/PR to main/develop branches, weekly schedule (Monday 2:00 AM), and manual dispatch
-- **Parallel Execution**: 4 security jobs run simultaneously for optimal performance
-- **AI Analysis**: Uses Claude Code Action for expert-level security assessment and deployment decisions
-- **Unified Reporting**: Consolidated security artifacts with 30-day retention
+- **Security Scans**: Run as parallel jobs in main CI/CD workflow alongside existing build/test jobs
+- **Artifact Collection**: Security results uploaded as artifacts for analysis workflow
+- **AI Analysis**: Triggered on `workflow_run` completion, downloads artifacts, runs Claude analysis
+- **PR Integration**: Single comprehensive security comment posted to PR with deployment decision
 
-### Security Analysis Components
+### Security Scanning Jobs (Integrated in Main CI/CD)
 
-#### **🔍 CodeQL Analysis**
-- Multi-language static analysis (C# and JavaScript)
+#### **🔍 CodeQL Analysis** (`security_codeql_analysis`)
+- Multi-language static analysis (C# and JavaScript) 
 - Security-extended and security-and-quality query suites
 - Uses `.github/codeql/codeql-config.yml` configuration
 - Matrix strategy for parallel language analysis
 
-#### **🔒 Dependency Security Scanning**
+#### **🔒 Dependency Security Scanning** (`security_dependency_scan`)
 - .NET vulnerability scanning with `dotnet list package --vulnerable`
 - Node.js vulnerability scanning with `npm audit`
 - Comprehensive vulnerability categorization (Critical, High, Moderate, Low)
 - Automated vulnerability counting and impact assessment
 
-#### **📋 Security Policy Compliance**
+#### **📋 Security Policy Compliance** (`security_policy_compliance`)
 - SECURITY.md file validation
 - GitHub Actions workflow permission auditing
 - Hard-coded secrets detection (basic patterns)
-- Dependabot configuration validation
 - HTTPS enforcement checking
 
-#### **🕵️ Secrets Detection**
+#### **🕵️ Secrets Detection** (`security_secrets_detection`)
 - TruffleHog OSS integration for comprehensive secret scanning
 - Historical commit analysis with full git history
 - Verified secrets detection with detailed reporting
-- Integration with security decision matrix
 
-#### **🤖 AI-Powered Security Analysis**
-- Expert cybersecurity assessment using Claude Code Action
-- Multi-section analysis covering:
+### AI-Powered Security Analysis Workflow
+
+#### **🤖 Security Analysis Workflow** (`security-analysis.yml`)
+- **Trigger**: `workflow_run` after main CI/CD completion (consistent with project pattern)
+- **Custom Action**: `.github/actions/analyze-security` consolidates all security data
+- **Claude Integration**: Expert cybersecurity assessment using Claude Code Action
+- **Comprehensive Analysis**:
   - Security posture evaluation (Excellent/Good/Fair/Poor/Critical)
   - Vulnerability impact analysis and prioritization
   - Policy compliance assessment and recommendations
   - Threat modeling and risk evaluation
   - Actionable remediation roadmap with priority ranking
   - Deployment security decision (DEPLOY/BLOCK/CONDITIONAL)
+
+#### **🚨 Auto-Issue Creation** (`.github/actions/create-security-issues`)
+- **Critical Vulnerabilities**: Creates urgent issues for immediate attention
+- **Secrets Detection**: Creates issues for credential management
+- **High Volume Dependencies**: Creates tracking issues for dependency updates
 
 ### Security Decision Matrix
 - **Critical Issues**: Block deployment for secrets or critical vulnerabilities
@@ -500,11 +513,11 @@ The project includes a unified security analysis system that consolidates all se
 - PR comment integration with detailed security analysis
 - Security artifact generation for downstream consumption
 
-### Performance & Efficiency
-- **Execution Time**: ~60 minutes total (45min parallel + 15min reporting)
-- **Resource Optimization**: Single workflow vs 3 separate workflows
-- **Unified Scheduling**: Monday 2:00 AM vs 3 different schedules
-- **Enhanced Coverage**: Combined insights from all security tools with AI analysis
+### Performance & Architecture Benefits
+- **Integrated Execution**: Security scans run alongside build/test jobs in main CI/CD
+- **Parallel Processing**: All security jobs run simultaneously for optimal performance
+- **Consistent Pattern**: Follows same architecture as standards compliance and tech debt analysis
+- **Resource Efficiency**: No separate workflow scheduling - runs with every build
 
 ### Integration Points
 - **Dependabot Integration**: Enhanced security labels (`security`, `vulnerability-fix`)
@@ -513,14 +526,15 @@ The project includes a unified security analysis system that consolidates all se
 - **Test Reporter**: Security metrics in unified reporting
 
 ### For Developers
-- Review security analysis in PR comments for expert insights
-- Address critical security issues to unblock deployments
-- Use security recommendations for proactive vulnerability management
-- Monitor security posture through unified dashboard
+- **PR Comments**: Review comprehensive security analysis in PR comments (single consolidated comment)
+- **Critical Issues**: Address critical security issues to unblock deployments  
+- **Auto-Generated Issues**: Monitor and address security issues automatically created for significant findings
+- **Consistent Experience**: Same workflow pattern as standards compliance and tech debt analysis
 
-**Workflow File**: [`.github/workflows/security-comprehensive.yml`](.github/workflows/security-comprehensive.yml)  
-**CodeQL Configuration**: [`.github/codeql/codeql-config.yml`](.github/codeql/codeql-config.yml)  
-**Migration Documentation**: [`.github/SECURITY_WORKFLOW_MIGRATION.md`](.github/SECURITY_WORKFLOW_MIGRATION.md)
+**Security Analysis Workflow**: [`.github/workflows/security-analysis.yml`](.github/workflows/security-analysis.yml)  
+**Security Analysis Action**: [`.github/actions/analyze-security/action.yml`](.github/actions/analyze-security/action.yml)  
+**Issue Creation Action**: [`.github/actions/create-security-issues/action.yml`](.github/actions/create-security-issues/action.yml)  
+**CodeQL Configuration**: [`.github/codeql/codeql-config.yml`](.github/codeql/codeql-config.yml)
 
 ## 11. Workflow Organization & Naming
 
@@ -528,10 +542,10 @@ The project includes a unified security analysis system that consolidates all se
 All workflows follow a consistent naming convention for clarity and organization:
 
 #### **Core Workflows**
-- **`CI/CD: Build, Test & Deploy`** (`main.yml`) - Primary build, test, and deployment pipeline
-- **`Security: Comprehensive Analysis Suite`** (`security-comprehensive.yml`) - Unified security scanning and analysis
+- **`CI/CD: Build, Test & Deploy`** (`main.yml`) - Primary build, test, deployment, and security scanning pipeline
 
-#### **Quality Assurance Workflows**  
+#### **Analysis Workflows** (Triggered on workflow_run)
+- **`Security: Comprehensive Analysis`** (`security-analysis.yml`) - AI-powered security analysis and PR comments
 - **`Quality: Standards Compliance Check`** (`standards-compliance-check.yml`) - Code standards and formatting validation
 - **`Quality: Tech Debt Analysis`** (`tech-debt-analysis.yml`) - AI-powered technical debt assessment
 
@@ -539,13 +553,14 @@ All workflows follow a consistent naming convention for clarity and organization
 - **`Reports: Test Results Analysis`** (`test-reporter.yml`) - Comprehensive test result analysis and reporting
 
 ### Workflow Dependencies
-- Quality and reporting workflows trigger after main CI/CD completion
-- Security workflow runs independently for comprehensive coverage
+- **Analysis workflows** trigger on `workflow_run` after main CI/CD completion
+- **Security scans** integrated directly into main CI/CD pipeline for efficiency
+- **Consistent pattern** across all analysis workflows (security, standards, tech debt)
 - All workflows support manual dispatch for debugging and testing
 
 ### Benefits of Organization
 - **Clear Purpose**: Each workflow name immediately indicates its function
-- **Logical Grouping**: Related workflows grouped by category (Core, Quality, Reports, Security)
+- **Logical Grouping**: Related workflows grouped by category (Core, Analysis, Reports)
 - **Professional Presentation**: Consistent, enterprise-grade workflow organization
 - **Enhanced Discoverability**: Easy to find and understand workflow purposes
 - **Maintainability**: Clear separation of concerns for easier maintenance
