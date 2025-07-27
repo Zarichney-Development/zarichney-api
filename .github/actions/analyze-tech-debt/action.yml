@@ -147,7 +147,7 @@ runs:
         echo "✅ Complexity analysis completed"
 
     - name: Claude AI Tech Debt Analysis
-      uses: grll/claude-code-action-with-oauth@v1
+      uses: grll/claude-code-action@beta
       with:
         use_oauth: true
         claude_access_token: ${{ inputs.claude-oauth-token }}
