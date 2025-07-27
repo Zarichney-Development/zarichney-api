@@ -7,7 +7,7 @@ on:
       - 'Code/**'
       - 'Scripts/Pipeline/**'
       - '*.sln'
-      - '.github/workflows/01-build.yml'
+      - '.github/workflows/**'
       - '.github/actions/shared/**'
   pull_request:
     branches: [main, develop]
@@ -15,7 +15,7 @@ on:
       - 'Code/**'
       - 'Scripts/Pipeline/**'
       - '*.sln'
-      - '.github/workflows/01-build.yml'
+      - '.github/workflows/**'
       - '.github/actions/shared/**'
   workflow_dispatch:
 
