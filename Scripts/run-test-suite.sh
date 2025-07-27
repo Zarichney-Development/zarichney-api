@@ -626,8 +626,6 @@ parse_results() {
         total_tests=$(echo "$stats_line" | grep -o "Total:[[:space:]]*[0-9]*" | grep -o "[0-9]*" || echo "0")
     fi
     
-<<<<<<< HEAD
-=======
     # Calculate pass rate using if statement
     local pass_rate
     if [[ $total_tests -gt 0 ]]; then
@@ -635,8 +633,6 @@ parse_results() {
     else
         pass_rate=0
     fi
-    
->>>>>>> 35d5fd7610bfa46cea3563dea862bd3f5b42232d
     # Store results
     cat > "$TEST_RESULTS_DIR/parsed_results.json" << EOF
 {
@@ -647,11 +643,7 @@ parse_results() {
         "passed": $passed_tests,
         "failed": $failed_tests,
         "skipped": $skipped_tests,
-<<<<<<< HEAD
-        "pass_rate": $(( total_tests > 0 ? (passed_tests * 100) / total_tests : 0 ))
-=======
         "pass_rate": $pass_rate
->>>>>>> 35d5fd7610bfa46cea3563dea862bd3f5b42232d
     }
 }
 EOF
@@ -920,13 +912,8 @@ EOF
     
     success "Dynamic quality gates configuration saved to $dynamic_gates_file"
     
-<<<<<<< HEAD
     # Update global threshold for this run
     COVERAGE_THRESHOLD=$dynamic_coverage_threshold
-=======
-    # Return the new coverage threshold for this run
-    echo "$dynamic_coverage_threshold"
->>>>>>> 35d5fd7610bfa46cea3563dea862bd3f5b42232d
 }
 
 # Statistical helper functions for dynamic gates
@@ -976,12 +963,8 @@ save_historical_data() {
         execution_time=$(grep "EXECUTION_TIME=" "$LOG_FILE" 2>/dev/null | tail -1 | cut -d'=' -f2 || echo "0")
         
         # Combine all metrics into historical record
-<<<<<<< HEAD
-        jq -s '.[0] + {"coverage_metrics": .[1], "execution_time": '$execution_time', "timestamp": "'$timestamp'", "saved_at": "'$(date -Iseconds)'"}' \
-=======
         jq -s --argjson exec_time "$execution_time" --arg ts "$timestamp" --arg saved_at "$(date -Iseconds)" \
             '.[0] + {"coverage_metrics": .[1], "execution_time": $exec_time, "timestamp": $ts, "saved_at": $saved_at}' \
->>>>>>> 35d5fd7610bfa46cea3563dea862bd3f5b42232d
             "$TEST_RESULTS_DIR/parsed_results.json" \
             "$TEST_RESULTS_DIR/coverage_results.json" \
             > "$historical_file" 2>/dev/null
@@ -1235,11 +1218,7 @@ assess_deployment_risk() {
     # Test failure risk (0-40 points)
     if [[ $failed_tests -gt 0 ]]; then
         local test_risk=$((failed_tests * 10))
-<<<<<<< HEAD
-        risk_score=$((risk_score + (test_risk > 40 ? 40 : test_risk)))
-=======
         risk_score=$((risk_score + $(awk -v tr="$test_risk" 'BEGIN {print (tr > 40) ? 40 : tr}')))
->>>>>>> 35d5fd7610bfa46cea3563dea862bd3f5b42232d
         risk_factors+=("${failed_tests} failing tests (+${test_risk} risk)")
     fi
     
@@ -1548,12 +1527,7 @@ execute_report_mode() {
     fi
     
     # Phase 3 Dynamic Quality Gates
-<<<<<<< HEAD
     calculate_dynamic_quality_gates || true  # Don't fail on dynamic gates calculation errors
-=======
-    # Update global threshold for this run by calling the function
-    COVERAGE_THRESHOLD=$(calculate_dynamic_quality_gates) || true  # Don't fail on dynamic gates calculation errors
->>>>>>> 35d5fd7610bfa46cea3563dea862bd3f5b42232d
     
     # Phase 3 Real-time metrics and trending analysis
     generate_trending_analysis || true  # Don't fail on trending analysis errors
@@ -1586,11 +1560,7 @@ execute_report_mode() {
     # Store quality gate status for CI/CD decision making
     if [[ $quality_gate_status -ne 0 ]]; then
         warning "Quality gates failed - results available for AI analysis"
-<<<<<<< HEAD
         return 1
-=======
-        exit 1
->>>>>>> 35d5fd7610bfa46cea3563dea862bd3f5b42232d
     fi
 }
 
