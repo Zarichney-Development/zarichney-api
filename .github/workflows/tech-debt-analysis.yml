@@ -1,8 +1,8 @@
-name: Tech Debt Analysis
+name: "Quality: Tech Debt Analysis"
 
 on:
   workflow_run:
-    workflows: ["Unified CI/CD for Zarichney Fullstack"]
+    workflows: ["CI/CD: Build, Test & Deploy"]
     types:
       - completed
   pull_request:

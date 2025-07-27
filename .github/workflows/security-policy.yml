@@ -18,6 +18,8 @@ jobs:
   security-policy-check:
     name: Security Policy Compliance
     runs-on: ubuntu-latest
+    # DISABLED: Replaced by Security: Comprehensive Analysis Suite workflow
+    if: false
     timeout-minutes: 15
     
     steps:

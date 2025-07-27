@@ -18,7 +18,7 @@ jobs:
   analyze:
     name: Analyze Code
     runs-on: ubuntu-latest
-    # TEMPORARILY DISABLED TO TEST STANDARDS COMPLIANCE PIPELINE ONLY
+    # DISABLED: Replaced by Security: Comprehensive Analysis Suite workflow
     if: false
     timeout-minutes: 45
 

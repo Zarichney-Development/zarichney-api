@@ -1,4 +1,4 @@
-name: Unified CI/CD for Zarichney Fullstack
+name: "CI/CD: Build, Test & Deploy"
 
 on:
   push:
