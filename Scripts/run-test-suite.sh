@@ -611,19 +611,35 @@ parse_results() {
         error_exit "No TRX test results file found"
     fi
     
-    # Extract test statistics using grep and basic parsing
+    # Extract test statistics from TRX file
     local total_tests=0
     local passed_tests=0
     local failed_tests=0
     local skipped_tests=0
     
-    # Parse from the console output in log file
-    if grep -q "Passed:" "$LOG_FILE"; then
-        local stats_line=$(grep "Passed:" "$LOG_FILE" | tail -1)
-        failed_tests=$(echo "$stats_line" | grep -o "Failed:[[:space:]]*[0-9]*" | grep -o "[0-9]*" || echo "0")
-        passed_tests=$(echo "$stats_line" | grep -o "Passed:[[:space:]]*[0-9]*" | grep -o "[0-9]*" || echo "0")
-        skipped_tests=$(echo "$stats_line" | grep -o "Skipped:[[:space:]]*[0-9]*" | grep -o "[0-9]*" || echo "0")
-        total_tests=$(echo "$stats_line" | grep -o "Total:[[:space:]]*[0-9]*" | grep -o "[0-9]*" || echo "0")
+    # Parse TRX file for actual test results
+    if [[ -f "$trx_file" ]]; then
+        log "Parsing TRX file: $trx_file"
+        
+        # Count test results by outcome
+        passed_tests=$(grep -o 'outcome="Passed"' "$trx_file" | wc -l)
+        failed_tests=$(grep -o 'outcome="Failed"' "$trx_file" | wc -l)
+        skipped_tests=$(grep -o 'outcome="NotExecuted"' "$trx_file" | wc -l)
+        
+        # Calculate total tests
+        total_tests=$((passed_tests + failed_tests + skipped_tests))
+        
+        log "TRX parsing results: Total=$total_tests, Passed=$passed_tests, Failed=$failed_tests, Skipped=$skipped_tests"
+    else
+        # Fallback: try to parse from console output in log file
+        log "No TRX file found, attempting console output parsing..."
+        if grep -q "Passed:" "$LOG_FILE"; then
+            local stats_line=$(grep "Passed:" "$LOG_FILE" | tail -1)
+            failed_tests=$(echo "$stats_line" | grep -o "Failed:[[:space:]]*[0-9]*" | grep -o "[0-9]*" || echo "0")
+            passed_tests=$(echo "$stats_line" | grep -o "Passed:[[:space:]]*[0-9]*" | grep -o "[0-9]*" || echo "0")
+            skipped_tests=$(echo "$stats_line" | grep -o "Skipped:[[:space:]]*[0-9]*" | grep -o "[0-9]*" || echo "0")
+            total_tests=$(echo "$stats_line" | grep -o "Total:[[:space:]]*[0-9]*" | grep -o "[0-9]*" || echo "0")
+        fi
     fi
     
     # Calculate pass rate using if statement
