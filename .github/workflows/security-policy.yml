@@ -18,6 +18,8 @@ jobs:
   security-policy-check:
     name: Security Policy Compliance
     runs-on: ubuntu-latest
+    # DISABLED: Replaced by integrated security scans in main CI/CD + Security: Comprehensive Analysis workflow
+    if: false
     timeout-minutes: 15
     
     steps:

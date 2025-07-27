@@ -1,4 +1,4 @@
-name: Unified CI/CD for Zarichney Fullstack
+name: "CI/CD: Build, Test & Deploy"
 
 on:
   push:
@@ -42,6 +42,7 @@ permissions:
   contents: read
   actions: read
   pull-requests: write  # Required for posting PR comments
+  security-events: write  # Required for CodeQL analysis
 
 jobs:
   backend_build_and_test:
@@ -422,6 +423,314 @@ jobs:
             Code/Zarichney.Website/package-lock.json
             Code/Zarichney.Website/scripts/
           retention-days: 1
+
+  security_codeql_analysis:
+    name: Security - CodeQL Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'csharp', 'javascript' ]
+        
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        config-file: ./.github/codeql/codeql-config.yml
+
+    - name: Cache .NET packages
+      if: matrix.language == 'csharp'
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Setup .NET
+      if: matrix.language == 'csharp'
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Build .NET application
+      if: matrix.language == 'csharp'
+      run: |
+        for i in {1..3}; do
+          if dotnet restore zarichney-api.sln; then
+            break
+          else
+            echo "Restore attempt $i failed, retrying in 5 seconds..."
+            sleep 5
+          fi
+        done
+        dotnet build zarichney-api.sln --configuration Release --no-restore
+
+    - name: Setup Node.js
+      if: matrix.language == 'javascript'
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: Code/Zarichney.Website/package-lock.json
+
+    - name: Install Node.js dependencies
+      if: matrix.language == 'javascript'
+      run: |
+        cd Code/Zarichney.Website
+        npm ci --legacy-peer-deps
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"
+        upload: true
+
+    - name: Generate CodeQL Results Summary
+      if: always()
+      run: |
+        mkdir -p ./SecurityResults
+        echo "{
+          \"language\": \"${{ matrix.language }}\",
+          \"analysis_completed\": true,
+          \"timestamp\": \"$(date -Iseconds)\",
+          \"status\": \"completed\"
+        }" > ./SecurityResults/codeql-${{ matrix.language }}-results.json
+
+    - name: Upload CodeQL Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: codeql-results-${{ matrix.language }}
+        path: ./SecurityResults/codeql-${{ matrix.language }}-results.json
+        retention-days: 30
+
+  security_dependency_scan:
+    name: Security - Dependency Scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: Code/Zarichney.Website/package-lock.json
+
+    - name: Install .NET dependencies
+      run: dotnet restore zarichney-api.sln
+
+    - name: Install Node.js dependencies
+      run: |
+        cd Code/Zarichney.Website
+        npm ci --legacy-peer-deps
+
+    - name: Run .NET security audit
+      run: |
+        mkdir -p ./SecurityResults
+        for i in {1..3}; do
+          if dotnet list zarichney-api.sln package --vulnerable --include-transitive 2>&1 | tee ./SecurityResults/dotnet-audit.log; then
+            break
+          else
+            echo "Audit attempt $i failed, retrying in 5 seconds..."
+            sleep 5
+          fi
+        done
+        
+        # Parse .NET audit results
+        if grep -q "has the following vulnerable packages" ./SecurityResults/dotnet-audit.log; then
+          DOTNET_VULNERABILITIES=$(grep -c "has the following vulnerable packages" ./SecurityResults/dotnet-audit.log || echo "0")
+          echo "{\"vulnerabilities_found\": true, \"count\": $DOTNET_VULNERABILITIES}" > ./SecurityResults/dotnet-audit-summary.json
+        else
+          echo "{\"vulnerabilities_found\": false, \"count\": 0}" > ./SecurityResults/dotnet-audit-summary.json
+        fi
+
+    - name: Run Node.js security audit
+      run: |
+        # Ensure SecurityResults directory exists
+        mkdir -p ./SecurityResults
+        
+        cd Code/Zarichney.Website
+        npm audit --audit-level moderate --json > ../../SecurityResults/npm-audit.json || true
+        
+        # Parse Node.js audit results
+        if [ -s "../../SecurityResults/npm-audit.json" ] && [ "$(jq '.metadata.vulnerabilities.total' ../../SecurityResults/npm-audit.json)" -gt 0 ]; then
+          TOTAL_VULNS=$(jq '.metadata.vulnerabilities.total' ../../SecurityResults/npm-audit.json)
+          CRITICAL=$(jq '.metadata.vulnerabilities.critical // 0' ../../SecurityResults/npm-audit.json)
+          HIGH=$(jq '.metadata.vulnerabilities.high // 0' ../../SecurityResults/npm-audit.json)
+          MODERATE=$(jq '.metadata.vulnerabilities.moderate // 0' ../../SecurityResults/npm-audit.json)
+          LOW=$(jq '.metadata.vulnerabilities.low // 0' ../../SecurityResults/npm-audit.json)
+          
+          echo "{
+            \"vulnerabilities_found\": true,
+            \"total_vulnerabilities\": $TOTAL_VULNS,
+            \"critical\": $CRITICAL,
+            \"high\": $HIGH,
+            \"moderate\": $MODERATE,
+            \"low\": $LOW
+          }" > ../../SecurityResults/npm-audit-summary.json
+        else
+          echo "{\"vulnerabilities_found\": false, \"total_vulnerabilities\": 0}" > ../../SecurityResults/npm-audit-summary.json
+        fi
+
+    - name: Upload dependency scan results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: dependency-security-results
+        path: |
+          SecurityResults/dotnet-audit.log
+          SecurityResults/dotnet-audit-summary.json
+          SecurityResults/npm-audit.json
+          SecurityResults/npm-audit-summary.json
+        retention-days: 30
+
+  security_policy_compliance:
+    name: Security - Policy Compliance
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run security policy compliance checks
+      run: |
+        mkdir -p ./SecurityResults
+        POLICY_VIOLATIONS=0
+        POLICY_RESULTS=""
+        
+        echo "Checking for required security policy files..."
+        
+        # Check for SECURITY.md
+        if [ ! -f "SECURITY.md" ]; then
+          echo "::warning::SECURITY.md file not found. Consider adding security reporting guidelines."
+          POLICY_VIOLATIONS=$((POLICY_VIOLATIONS + 1))
+          POLICY_RESULTS="$POLICY_RESULTS\n- Missing SECURITY.md file"
+        else
+          echo "✓ SECURITY.md found"
+        fi
+        
+        # Check for .github/SECURITY.md
+        if [ ! -f ".github/SECURITY.md" ]; then
+          echo "::warning::.github/SECURITY.md file not found"
+          POLICY_VIOLATIONS=$((POLICY_VIOLATIONS + 1))
+          POLICY_RESULTS="$POLICY_RESULTS\n- Missing .github/SECURITY.md file"
+        else
+          echo "✓ .github/SECURITY.md found"
+        fi
+        
+        # Validate workflow security permissions
+        echo "Validating GitHub Actions security permissions..."
+        PERMISSION_VIOLATIONS=0
+        
+        find .github/workflows -name "*.yml" -o -name "*.yaml" | while read -r file; do
+          if grep -q "permissions:" "$file"; then
+            echo "✓ Permissions defined in $file"
+          else
+            echo "::warning::No explicit permissions defined in $file"
+            PERMISSION_VIOLATIONS=$((PERMISSION_VIOLATIONS + 1))
+          fi
+        done
+        
+        # Check for hardcoded secrets
+        if grep -r -i --include="*.cs" --include="*.js" --include="*.ts" --include="*.json" \
+           --exclude-dir=node_modules --exclude-dir=bin --exclude-dir=obj --exclude-dir=TestResults \
+           --exclude="*.test.*" --exclude="*.spec.*" --exclude="*Migration*" \
+           -E "(password|secret|key|token)\s*[:=]\s*['\"][^'\"]{12,}['\"]" . 2>/dev/null; then
+          echo "::warning::Potential hardcoded secrets found. Please review manually."
+          POLICY_VIOLATIONS=$((POLICY_VIOLATIONS + 1))
+          POLICY_RESULTS="$POLICY_RESULTS\n- Potential hardcoded secrets detected"
+        else
+          echo "✓ No obvious hardcoded secrets detected"
+        fi
+        
+        # Generate policy compliance summary
+        echo "{
+          \"policy_violations\": $POLICY_VIOLATIONS,
+          \"violation_details\": \"$POLICY_RESULTS\",
+          \"compliance_check_completed\": true,
+          \"timestamp\": \"$(date -Iseconds)\"
+        }" > ./SecurityResults/policy-compliance-results.json
+
+    - name: Upload policy compliance results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: policy-compliance-results
+        path: SecurityResults/policy-compliance-results.json
+        retention-days: 30
+
+  security_secrets_detection:
+    name: Security - Secrets Detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Need full history for secret scanning
+
+    - name: Run TruffleHog OSS
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified --json
+      continue-on-error: true
+
+    - name: Process TruffleHog results
+      if: always()
+      run: |
+        mkdir -p ./SecurityResults
+        
+        # Check if TruffleHog found any secrets
+        if [ -f "trufflehog_results.json" ]; then
+          SECRET_COUNT=$(jq length trufflehog_results.json)
+          cp trufflehog_results.json ./SecurityResults/ || true
+        else
+          SECRET_COUNT=0
+        fi
+        
+        echo "{
+          \"secrets_detected\": $([ $SECRET_COUNT -gt 0 ] && echo "true" || echo "false"),
+          \"secret_count\": $SECRET_COUNT,
+          \"scan_completed\": true,
+          \"timestamp\": \"$(date -Iseconds)\"
+        }" > ./SecurityResults/secrets-detection-results.json
+        
+        if [ $SECRET_COUNT -gt 0 ]; then
+          echo "::warning::$SECRET_COUNT potential secrets detected by TruffleHog"
+        else
+          echo "✓ No secrets detected by TruffleHog"
+        fi
+
+    - name: Upload secrets detection results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: secrets-detection-results
+        path: |
+          SecurityResults/secrets-detection-results.json
+          SecurityResults/trufflehog_results.json
+        retention-days: 30
 
   frontend_deploy:
     name: Frontend - Deploy

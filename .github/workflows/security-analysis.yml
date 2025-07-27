@@ -1,12 +1,11 @@
-name: "Quality: Standards Compliance Check"
+name: "Security: Comprehensive Analysis"
 
 on:
   workflow_run:
     workflows: ["CI/CD: Build, Test & Deploy"]
     types:
       - completed
-  pull_request:
-    branches: [ main, develop ]
+  workflow_dispatch:
 
 permissions:
   id-token: write
@@ -14,37 +13,20 @@ permissions:
   pull-requests: write
   contents: read
   actions: read
+  issues: write  # For auto-issue creation of security findings
 
 jobs:
-  standards-check:
-    name: Standards Compliance Check
+  security-analysis:
+    name: Security Analysis
     runs-on: ubuntu-latest
-    # TEMPORARILY DISABLED WHILE IMPLEMENTING TECH DEBT ANALYSIS (#54)
-    if: false
-    # Original condition:
-    # if: |
-    #   (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success') ||
-    #   (github.event_name == 'pull_request')
-    timeout-minutes: 10
-    
+    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
+    timeout-minutes: 20
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          # Checkout the PR branch for analysis
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
-          fetch-depth: 0
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
-
-      - name: Install .NET tools
-        run: |
-          dotnet tool restore
-          
-      - name: Get PR number
+      - name: Get PR Number
         id: pr-number
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
@@ -63,27 +45,36 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run Standards Compliance Check
-        id: standards-check
-        uses: ./.github/actions/check-standards
+      - name: Run Security Analysis
+        id: security-analysis
+        uses: ./.github/actions/analyze-security
         with:
           pr-number: ${{ steps.pr-number.outputs.pr_number }}
           base-branch: ${{ github.event_name == 'pull_request' && github.base_ref || github.event.workflow_run.pull_requests[0].base.ref || 'develop' }}
           head-sha: ${{ github.event_name == 'pull_request' && github.sha || github.event.workflow_run.head_sha }}
+          workflow-run-id: ${{ github.event.workflow_run.id || '' }}
           claude-oauth-token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Post Standards Report
+      - name: Post Security Report
         if: steps.pr-number.outputs.pr_number != ''
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           number: ${{ steps.pr-number.outputs.pr_number }}
           recreate: true
-          path: standards-report.md
+          path: security-report.md
 
-      - name: Check Quality Gates
-        if: steps.standards-check.outputs.mandatory-violations-count > 0
+      - name: Check Security Gates
+        if: steps.security-analysis.outputs.critical-issues-count > 0
         run: |
-          echo "❌ Standards compliance check failed with ${{ steps.standards-check.outputs.mandatory-violations-count }} mandatory violations"
-          echo "Mandatory violations must be fixed before merging"
+          echo "❌ Security analysis failed with ${{ steps.security-analysis.outputs.critical-issues-count }} critical security issue(s)"
+          echo "Critical security issues must be resolved before merging"
           exit 1
+
+      - name: Create Security Issues
+        if: always() && steps.security-analysis.outputs.create-issues == 'true' && steps.pr-number.outputs.pr_number != ''
+        uses: ./.github/actions/create-security-issues
+        with:
+          pr-number: ${{ steps.pr-number.outputs.pr_number }}
+          security-data-file: security-analysis-data.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}

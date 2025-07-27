@@ -1,8 +1,8 @@
-name: Test Results Reporter
+name: "Reports: Test Results Analysis"
 
 on:
   workflow_run:
-    workflows: ["Unified CI/CD for Zarichney Fullstack"]
+    workflows: ["CI/CD: Build, Test & Deploy"]
     types:
       - completed
 

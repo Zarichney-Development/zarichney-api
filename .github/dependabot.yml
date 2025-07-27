@@ -16,6 +16,7 @@ updates:
       - "dependencies"
       - "dotnet"
       - "security"
+      - "vulnerability-fix"
     commit-message:
       prefix: "deps"
       prefix-development: "deps-dev"
@@ -66,6 +67,8 @@ updates:
       - "dependencies"
       - "nodejs"
       - "frontend"
+      - "security"
+      - "vulnerability-fix"
     commit-message:
       prefix: "deps"
       prefix-development: "deps-dev"
@@ -101,6 +104,7 @@ updates:
       - "dependencies"
       - "github-actions"
       - "ci-cd"
+      - "security"
     commit-message:
       prefix: "ci"
       include: "scope"

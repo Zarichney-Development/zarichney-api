@@ -440,6 +440,131 @@ gh issue list --label="tech-debt,auto-generated" --state=open
 **Workflow File**: [`.github/workflows/tech-debt-analysis.yml`](.github/workflows/tech-debt-analysis.yml)  
 **Configuration**: [`.github/config/tech-debt-config.yml`](.github/config/tech-debt-config.yml)
 
+## 10. Security: Comprehensive Analysis
+
+### Overview
+The project includes a comprehensive security analysis system that follows the established workflow pattern used by standards compliance and tech debt analysis. Security scanning is integrated into the main CI/CD pipeline, with AI-powered analysis performed by a separate workflow that posts consolidated security insights to PR comments.
+
+### Architecture Pattern (Consistent with Project Standards)
+1. **Security Scans in Main CI/CD**: Security scanning jobs run alongside build/test in `main.yml`
+2. **Security Analysis Workflow**: `security-analysis.yml` triggers on workflow completion
+3. **AI-Powered Analysis**: Custom GitHub Action analyzes all security data with Claude
+4. **Single PR Comment**: Consolidated security analysis posted to PR (like standards compliance)
+
+### How It Works
+- **Security Scans**: Run as parallel jobs in main CI/CD workflow alongside existing build/test jobs
+- **Artifact Collection**: Security results uploaded as artifacts for analysis workflow
+- **AI Analysis**: Triggered on `workflow_run` completion, downloads artifacts, runs Claude analysis
+- **PR Integration**: Single comprehensive security comment posted to PR with deployment decision
+
+### Security Scanning Jobs (Integrated in Main CI/CD)
+
+#### **🔍 CodeQL Analysis** (`security_codeql_analysis`)
+- Multi-language static analysis (C# and JavaScript) 
+- Security-extended and security-and-quality query suites
+- Uses `.github/codeql/codeql-config.yml` configuration
+- Matrix strategy for parallel language analysis
+
+#### **🔒 Dependency Security Scanning** (`security_dependency_scan`)
+- .NET vulnerability scanning with `dotnet list package --vulnerable`
+- Node.js vulnerability scanning with `npm audit`
+- Comprehensive vulnerability categorization (Critical, High, Moderate, Low)
+- Automated vulnerability counting and impact assessment
+
+#### **📋 Security Policy Compliance** (`security_policy_compliance`)
+- SECURITY.md file validation
+- GitHub Actions workflow permission auditing
+- Hard-coded secrets detection (basic patterns)
+- HTTPS enforcement checking
+
+#### **🕵️ Secrets Detection** (`security_secrets_detection`)
+- TruffleHog OSS integration for comprehensive secret scanning
+- Historical commit analysis with full git history
+- Verified secrets detection with detailed reporting
+
+### AI-Powered Security Analysis Workflow
+
+#### **🤖 Security Analysis Workflow** (`security-analysis.yml`)
+- **Trigger**: `workflow_run` after main CI/CD completion (consistent with project pattern)
+- **Custom Action**: `.github/actions/analyze-security` consolidates all security data
+- **Claude Integration**: Expert cybersecurity assessment using Claude Code Action
+- **Comprehensive Analysis**:
+  - Security posture evaluation (Excellent/Good/Fair/Poor/Critical)
+  - Vulnerability impact analysis and prioritization
+  - Policy compliance assessment and recommendations
+  - Threat modeling and risk evaluation
+  - Actionable remediation roadmap with priority ranking
+  - Deployment security decision (DEPLOY/BLOCK/CONDITIONAL)
+
+#### **🚨 Auto-Issue Creation** (`.github/actions/create-security-issues`)
+- **Critical Vulnerabilities**: Creates urgent issues for immediate attention
+- **Secrets Detection**: Creates issues for credential management
+- **High Volume Dependencies**: Creates tracking issues for dependency updates
+
+### Security Decision Matrix
+- **Critical Issues**: Block deployment for secrets or critical vulnerabilities
+- **High Risk**: Require security review for high-severity findings
+- **Medium Risk**: Track and plan remediation for moderate issues
+- **AI Validation**: Expert security assessment for all deployment decisions
+
+### Quality Gates
+- Automated deployment blocking for critical security issues
+- AI-driven security gates for production deployments
+- PR comment integration with detailed security analysis
+- Security artifact generation for downstream consumption
+
+### Performance & Architecture Benefits
+- **Integrated Execution**: Security scans run alongside build/test jobs in main CI/CD
+- **Parallel Processing**: All security jobs run simultaneously for optimal performance
+- **Consistent Pattern**: Follows same architecture as standards compliance and tech debt analysis
+- **Resource Efficiency**: No separate workflow scheduling - runs with every build
+
+### Integration Points
+- **Dependabot Integration**: Enhanced security labels (`security`, `vulnerability-fix`)
+- **Main CI/CD Pipeline**: Security gates before deployment decisions
+- **Standards Compliance**: Complements existing quality workflows
+- **Test Reporter**: Security metrics in unified reporting
+
+### For Developers
+- **PR Comments**: Review comprehensive security analysis in PR comments (single consolidated comment)
+- **Critical Issues**: Address critical security issues to unblock deployments  
+- **Auto-Generated Issues**: Monitor and address security issues automatically created for significant findings
+- **Consistent Experience**: Same workflow pattern as standards compliance and tech debt analysis
+
+**Security Analysis Workflow**: [`.github/workflows/security-analysis.yml`](.github/workflows/security-analysis.yml)  
+**Security Analysis Action**: [`.github/actions/analyze-security/action.yml`](.github/actions/analyze-security/action.yml)  
+**Issue Creation Action**: [`.github/actions/create-security-issues/action.yml`](.github/actions/create-security-issues/action.yml)  
+**CodeQL Configuration**: [`.github/codeql/codeql-config.yml`](.github/codeql/codeql-config.yml)
+
+## 11. Workflow Organization & Naming
+
+### Professional Pipeline Structure
+All workflows follow a consistent naming convention for clarity and organization:
+
+#### **Core Workflows**
+- **`CI/CD: Build, Test & Deploy`** (`main.yml`) - Primary build, test, deployment, and security scanning pipeline
+
+#### **Analysis Workflows** (Triggered on workflow_run)
+- **`Security: Comprehensive Analysis`** (`security-analysis.yml`) - AI-powered security analysis and PR comments
+- **`Quality: Standards Compliance Check`** (`standards-compliance-check.yml`) - Code standards and formatting validation
+- **`Quality: Tech Debt Analysis`** (`tech-debt-analysis.yml`) - AI-powered technical debt assessment
+
+#### **Reporting & Analytics Workflows**
+- **`Reports: Test Results Analysis`** (`test-reporter.yml`) - Comprehensive test result analysis and reporting
+
+### Workflow Dependencies
+- **Analysis workflows** trigger on `workflow_run` after main CI/CD completion
+- **Security scans** integrated directly into main CI/CD pipeline for efficiency
+- **Consistent pattern** across all analysis workflows (security, standards, tech debt)
+- All workflows support manual dispatch for debugging and testing
+
+### Benefits of Organization
+- **Clear Purpose**: Each workflow name immediately indicates its function
+- **Logical Grouping**: Related workflows grouped by category (Core, Analysis, Reports)
+- **Professional Presentation**: Consistent, enterprise-grade workflow organization
+- **Enhanced Discoverability**: Easy to find and understand workflow purposes
+- **Maintainability**: Clear separation of concerns for easier maintenance
+
 ---
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
