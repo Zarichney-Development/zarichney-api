@@ -58,6 +58,7 @@ jobs:
           echo "  - Frontend changed: ${{ steps.check-paths.outputs.frontend-changed }}"
           echo "  - Documentation only: ${{ steps.check-paths.outputs.docs-only }}"
           echo "  - Changed components: ${{ steps.check-paths.outputs.changed-files }}"
+          echo "  - Test run: End-to-end validation"
 
   backend-build:
     name: "Backend • Build & Test"
