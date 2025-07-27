@@ -24,6 +24,7 @@ jobs:
     name: "Quality Analysis"
     runs-on: ubuntu-latest
     if: |
+      github.event_name == 'workflow_run' && 
       github.event.workflow_run.event == 'pull_request'
     timeout-minutes: 20
 
