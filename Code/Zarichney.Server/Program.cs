@@ -11,7 +11,6 @@ public class Program
     ConfigureBuilder(builder);
 
     var app = builder.Build();
-    // TEMPORARY: Force trigger analysis workflows
 
     await ConfigureApplication(app);
     try

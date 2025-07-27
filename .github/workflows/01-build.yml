@@ -1,5 +1,4 @@
 name: "01 • Build & Test"
-# FORCE TRIGGER: Testing all analysis workflows
 
 on:
   push:
