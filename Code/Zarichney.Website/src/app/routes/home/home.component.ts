@@ -13,6 +13,9 @@ import { SeoService } from '../../services/seo.service';
   styleUrls: ['./home.component.scss']
 })
 export class HomeScreenComponent implements OnInit {
+  
+  // Version for end-to-end testing
+  readonly version = '1.0.0';
 
   constructor(
     private log: LoggingService,

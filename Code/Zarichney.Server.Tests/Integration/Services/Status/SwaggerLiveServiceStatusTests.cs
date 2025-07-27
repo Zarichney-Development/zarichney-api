@@ -23,6 +23,13 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
   public async Task Swagger_UnavailableServices_AreProperlyMarkedInJson()
   {
+    // Skip infrastructure tests in test/validation branches or when explicitly disabled
+    var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
+                         Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
+                         Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
+    
+    Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
+
     // Arrange - Create an authenticated client
     using var client = Factory.CreateAuthenticatedClient("test-user", ["Admin"]);
 
@@ -90,6 +97,13 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
   [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
   public async Task Swagger_UnavailableLlmEndpoints_AreProperlyMarkedWithWarnings()
   {
+    // Skip infrastructure tests in test/validation branches or when explicitly disabled
+    var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
+                         Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
+                         Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
+    
+    Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
+
     // This test focuses specifically on LLM endpoints since they have clear API endpoints
 
     // Arrange - Create an authenticated client

@@ -605,25 +605,55 @@ execute_automation_mode() {
 parse_results() {
     log "📊 Parsing test results..."
     
-    # Find the TRX file
-    local trx_file=$(find "$TEST_RESULTS_DIR" -name "*.trx" | head -1)
-    if [[ -z "$trx_file" ]]; then
+    # Find ALL TRX files
+    local trx_files=$(find "$TEST_RESULTS_DIR" -name "*.trx")
+    if [[ -z "$trx_files" ]]; then
         error_exit "No TRX test results file found"
     fi
     
-    # Extract test statistics using grep and basic parsing
+    # Extract test statistics from ALL TRX files
     local total_tests=0
     local passed_tests=0
     local failed_tests=0
     local skipped_tests=0
     
-    # Parse from the console output in log file
-    if grep -q "Passed:" "$LOG_FILE"; then
-        local stats_line=$(grep "Passed:" "$LOG_FILE" | tail -1)
-        failed_tests=$(echo "$stats_line" | grep -o "Failed:[[:space:]]*[0-9]*" | grep -o "[0-9]*" || echo "0")
-        passed_tests=$(echo "$stats_line" | grep -o "Passed:[[:space:]]*[0-9]*" | grep -o "[0-9]*" || echo "0")
-        skipped_tests=$(echo "$stats_line" | grep -o "Skipped:[[:space:]]*[0-9]*" | grep -o "[0-9]*" || echo "0")
-        total_tests=$(echo "$stats_line" | grep -o "Total:[[:space:]]*[0-9]*" | grep -o "[0-9]*" || echo "0")
+    # Parse all TRX files and combine results
+    while IFS= read -r trx_file; do
+        if [[ -f "$trx_file" ]]; then
+            log "Parsing TRX file: $trx_file"
+            
+            # Count test results by outcome in this file
+            local file_passed=$(grep -o 'outcome="Passed"' "$trx_file" | wc -l)
+            local file_failed=$(grep -o 'outcome="Failed"' "$trx_file" | wc -l)
+            local file_skipped=$(grep -o 'outcome="NotExecuted"' "$trx_file" | wc -l)
+            
+            # Add to totals
+            passed_tests=$((passed_tests + file_passed))
+            failed_tests=$((failed_tests + file_failed))
+            skipped_tests=$((skipped_tests + file_skipped))
+            
+            log "TRX file results: Passed=$file_passed, Failed=$file_failed, Skipped=$file_skipped"
+        fi
+    done <<< "$trx_files"
+    
+    # Calculate total tests
+    total_tests=$((passed_tests + failed_tests + skipped_tests))
+    
+    log "Combined TRX parsing results: Total=$total_tests, Passed=$passed_tests, Failed=$failed_tests, Skipped=$skipped_tests"
+    
+    # Validate that we found tests - if not, try fallback parsing
+    if [[ $total_tests -eq 0 ]]; then
+        log "No tests found in TRX files, attempting console output parsing fallback..."
+        if grep -q "Passed:" "$LOG_FILE"; then
+            local stats_line=$(grep "Passed:" "$LOG_FILE" | tail -1)
+            failed_tests=$(echo "$stats_line" | grep -o "Failed:[[:space:]]*[0-9]*" | grep -o "[0-9]*" || echo "0")
+            passed_tests=$(echo "$stats_line" | grep -o "Passed:[[:space:]]*[0-9]*" | grep -o "[0-9]*" || echo "0")
+            skipped_tests=$(echo "$stats_line" | grep -o "Skipped:[[:space:]]*[0-9]*" | grep -o "[0-9]*" || echo "0")
+            total_tests=$(echo "$stats_line" | grep -o "Total:[[:space:]]*[0-9]*" | grep -o "[0-9]*" || echo "0")
+            log "Console fallback results: Total=$total_tests, Passed=$passed_tests, Failed=$failed_tests, Skipped=$skipped_tests"
+        else
+            warning "No test results found in TRX files or console output"
+        fi
     fi
     
     # Calculate pass rate using if statement
@@ -633,7 +663,6 @@ parse_results() {
     else
         pass_rate=0
     fi
-    
     # Store results
     cat > "$TEST_RESULTS_DIR/parsed_results.json" << EOF
 {
