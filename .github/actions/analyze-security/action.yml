@@ -43,40 +43,80 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Download Security Artifacts
+    - name: Download Dependency Security Artifacts
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        name: dependency-security-results
+        path: security-analysis/
+        github-token: ${{ inputs.github-token }}
+        run-id: ${{ inputs.workflow-run-id }}
+
+    - name: Download CodeQL C# Results
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        name: codeql-results-csharp
+        path: security-analysis/
+        github-token: ${{ inputs.github-token }}
+        run-id: ${{ inputs.workflow-run-id }}
+
+    - name: Download CodeQL JavaScript Results
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        name: codeql-results-javascript
+        path: security-analysis/
+        github-token: ${{ inputs.github-token }}
+        run-id: ${{ inputs.workflow-run-id }}
+
+    - name: Download Policy Compliance Results
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        name: policy-compliance-results
+        path: security-analysis/
+        github-token: ${{ inputs.github-token }}
+        run-id: ${{ inputs.workflow-run-id }}
+
+    - name: Download Secrets Detection Results
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        name: secrets-detection-results
+        path: security-analysis/
+        github-token: ${{ inputs.github-token }}
+        run-id: ${{ inputs.workflow-run-id }}
+
+    - name: Verify Downloaded Artifacts
       shell: bash
       run: |
-        echo "🔍 Downloading security analysis artifacts..."
+        echo "🔍 Verifying downloaded security artifacts..."
         mkdir -p security-analysis
         
-        # If we have a workflow run ID, download artifacts from the main CI/CD run
-        if [ -n "${{ inputs.workflow-run-id }}" ]; then
-          echo "📦 Downloading artifacts from workflow run ${{ inputs.workflow-run-id }}"
-          
-          # Download security artifacts using GitHub API
-          gh api repos/${{ github.repository }}/actions/runs/${{ inputs.workflow-run-id }}/artifacts \
-            --jq '.artifacts[] | select(.name | startswith("codeql-results") or startswith("dependency-security") or startswith("policy-compliance") or startswith("secrets-detection"))' \
-            > security-analysis/artifacts-list.json
-          
-          # Download each security artifact
-          jq -r '.download_url' security-analysis/artifacts-list.json | while read -r url; do
-            if [ -n "$url" ]; then
-              echo "Downloading artifact from: $url"
-              curl -L -H "Authorization: token ${{ inputs.github-token }}" "$url" > artifact.zip
-              unzip -o artifact.zip -d security-analysis/ || true
-              rm -f artifact.zip
-            fi
-          done
+        echo "📁 Contents of security-analysis directory:"
+        ls -la security-analysis/ || echo "No artifacts downloaded"
+        
+        # Check for specific files
+        if [ -f "security-analysis/dotnet-audit-summary.json" ]; then
+          echo "✅ .NET audit summary found"
         else
-          echo "⚠️ No workflow run ID provided, using fallback data collection"
-          
-          # Fallback: create basic security analysis structure
+          echo "⚠️ .NET audit summary missing"
+        fi
+        
+        if [ -f "security-analysis/npm-audit-summary.json" ]; then
+          echo "✅ NPM audit summary found"
+        else
+          echo "⚠️ NPM audit summary missing"
+        fi
+        
+        # If no artifacts were downloaded, create fallback data
+        if [ ! "$(ls -A security-analysis/)" ]; then
+          echo "⚠️ No artifacts downloaded, creating fallback data"
           echo '{"analysis_mode": "fallback", "timestamp": "'$(date -Iseconds)'"}' > security-analysis/fallback-mode.json
         fi
         
-        echo "✅ Security artifacts downloaded/prepared"
-      env:
-        GITHUB_TOKEN: ${{ inputs.github-token }}
+        echo "✅ Security artifacts verification completed"
 
     - name: Prepare Security Analysis Data
       shell: bash
