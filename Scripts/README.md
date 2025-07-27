@@ -137,7 +137,7 @@
     * `curl` and `jq` - REST API testing in shell scripts
     * `Playwright` - Browser automation dependencies
 * **Dependents (Impact of Changes):**
-    * [`CI/CD Pipeline`](../.github/workflows/main.yml) - Automation scripts mirror CI/CD workflow steps
+    * [`CI/CD Pipeline`](../.github/workflows/01-build.yml) - Automation scripts mirror CI/CD workflow steps
     * [Local Development Workflow](../CLAUDE.md) - Scripts provide essential development commands
     * Production deployment processes rely on service management scripts
 
