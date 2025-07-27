@@ -75,37 +75,75 @@ runs:
 
     - name: Check for path changes
       id: check-changes
-      uses: dorny/paths-filter@v2
-      with:
-        base: ${{ steps.resolve-base-ref.outputs.base_ref_resolved }}
-        list-files: none
-        initial-fetch-depth: 0
-        filters: |
-          backend:
-            - 'Code/Zarichney.Server/**'
-            - '*.sln'
-            - '**/*.csproj'
-          frontend:
-            - 'Code/Zarichney.Website/**'
-            - 'Code/Zarichney.Website/package*.json'
-          pipeline:
-            - 'Scripts/Pipeline/**'
-            - '.github/workflows/**'
-            - '.github/actions/**'
-          tests:
-            - '**/*Tests/**'
-            - '**/*.Tests/**'
-            - '**/*Test.cs'
-            - '**/*Tests.cs'
-          docs:
-            - '**/*.md'
-            - 'Docs/**'
-            - '**/*.txt'
-          config:
-            - '.editorconfig'
-            - '.gitignore'
-            - 'Scripts/*.sh'
-            - 'Scripts/*.ps1'
+      shell: bash
+      run: |
+        BASE_REF="${{ steps.resolve-base-ref.outputs.base_ref_resolved }}"
+        echo "Checking changes against base: $BASE_REF"
+        
+        # Get the list of changed files
+        if [[ "$BASE_REF" == "4b825dc642cb6eb9a060e54bf8d69288fbee4904" ]]; then
+          # Empty tree - all files are changed
+          CHANGED_FILES=$(git ls-tree -r --name-only HEAD)
+        else
+          # Normal diff
+          CHANGED_FILES=$(git diff --name-only "$BASE_REF" HEAD 2>/dev/null || git ls-tree -r --name-only HEAD)
+        fi
+        
+        echo "Changed files:"
+        echo "$CHANGED_FILES"
+        
+        # Check each category
+        BACKEND_CHANGED=false
+        FRONTEND_CHANGED=false
+        PIPELINE_CHANGED=false
+        TESTS_CHANGED=false
+        DOCS_CHANGED=false
+        CONFIG_CHANGED=false
+        
+        while IFS= read -r file; do
+          [[ -z "$file" ]] && continue
+          echo "Checking file: $file"
+          
+          # Backend patterns
+          if [[ "$file" == Code/Zarichney.Server/* ]] || [[ "$file" == *.sln ]] || [[ "$file" == */*.csproj ]]; then
+            BACKEND_CHANGED=true
+          fi
+          
+          # Frontend patterns  
+          if [[ "$file" == Code/Zarichney.Website/* ]]; then
+            FRONTEND_CHANGED=true
+          fi
+          
+          # Pipeline patterns
+          if [[ "$file" == Scripts/Pipeline/* ]] || [[ "$file" == .github/workflows/* ]] || [[ "$file" == .github/actions/* ]]; then
+            PIPELINE_CHANGED=true
+          fi
+          
+          # Test patterns
+          if [[ "$file" == *Tests/* ]] || [[ "$file" == *.Tests/* ]] || [[ "$file" == *Test.cs ]] || [[ "$file" == *Tests.cs ]]; then
+            TESTS_CHANGED=true
+          fi
+          
+          # Documentation patterns
+          if [[ "$file" == *.md ]] || [[ "$file" == Docs/* ]] || [[ "$file" == *.txt ]]; then
+            DOCS_CHANGED=true
+          fi
+          
+          # Config patterns
+          if [[ "$file" == .editorconfig ]] || [[ "$file" == .gitignore ]] || [[ "$file" == Scripts/*.sh ]] || [[ "$file" == Scripts/*.ps1 ]]; then
+            CONFIG_CHANGED=true
+          fi
+        done <<< "$CHANGED_FILES"
+        
+        # Output results
+        echo "backend=$BACKEND_CHANGED" >> $GITHUB_OUTPUT
+        echo "frontend=$FRONTEND_CHANGED" >> $GITHUB_OUTPUT
+        echo "pipeline=$PIPELINE_CHANGED" >> $GITHUB_OUTPUT
+        echo "tests=$TESTS_CHANGED" >> $GITHUB_OUTPUT
+        echo "docs=$DOCS_CHANGED" >> $GITHUB_OUTPUT
+        echo "config=$CONFIG_CHANGED" >> $GITHUB_OUTPUT
+        
+        echo "Results: backend=$BACKEND_CHANGED, frontend=$FRONTEND_CHANGED, pipeline=$PIPELINE_CHANGED, tests=$TESTS_CHANGED, docs=$DOCS_CHANGED, config=$CONFIG_CHANGED"
 
     - name: Determine change categories
       id: categorize
