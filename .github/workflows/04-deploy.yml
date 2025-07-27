@@ -34,6 +34,7 @@ jobs:
   deployment-decision:
     name: "Deployment Decision"
     runs-on: ubuntu-latest
+    if: github.event.workflow_run.event == 'push'
     outputs:
       deploy-backend: ${{ steps.decision.outputs.deploy-backend }}
       deploy-frontend: ${{ steps.decision.outputs.deploy-frontend }}
