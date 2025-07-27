@@ -13,7 +13,6 @@ source "$SCRIPT_DIR/common-functions.sh"
 readonly SERVER_PROJECT="Code/Zarichney.Server"
 readonly EC2_USERNAME="ec2-user"
 readonly EC2_APP_PATH="/opt/cookbook-api"
-readonly BUILD_CONFIG="Release"
 
 # Help function
 show_help() {

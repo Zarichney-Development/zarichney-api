@@ -11,7 +11,6 @@ source "$SCRIPT_DIR/common-functions.sh"
 
 # Script configuration
 readonly SOLUTION_FILE="zarichney-api.sln"
-readonly BUILD_CONFIG="Release"
 readonly COVERAGE_THRESHOLD="${COVERAGE_THRESHOLD:-24}"
 
 # Help function
