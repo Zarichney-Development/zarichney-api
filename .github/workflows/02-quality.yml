@@ -23,7 +23,7 @@ jobs:
   quality-analysis:
     name: "Quality Analysis"
     runs-on: ubuntu-latest
-    if: always() && github.event.workflow_run.event == 'pull_request'
+    if: always() && (github.event.workflow_run.event == 'pull_request' || github.event_name == 'workflow_dispatch')
     timeout-minutes: 20
 
     steps:
@@ -87,6 +87,7 @@ jobs:
 
       - name: Run quality checks
         id: quality-checks
+        shell: bash
         run: |
           echo "🔍 Running comprehensive quality analysis..."
           
@@ -97,14 +98,30 @@ jobs:
           export CLAUDE_CODE_OAUTH_TOKEN="${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}"
           export GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}"
           
+          # Debug information
+          echo "Debug: PR_NUMBER=$PR_NUMBER"
+          echo "Debug: BASE_BRANCH=$BASE_BRANCH"
+          echo "Debug: HEAD_SHA=$HEAD_SHA"
+          echo "Debug: Current directory: $(pwd)"
+          echo "Debug: Script exists: $(ls -la ./Scripts/Pipeline/run-quality-checks.sh)"
+          
           # Make scripts executable and execute quality analysis
           chmod +x ./Scripts/Pipeline/run-quality-checks.sh
           chmod +x ./Scripts/Pipeline/*.sh
-          ./Scripts/Pipeline/run-quality-checks.sh \
-            ${PR_NUMBER:+--pr-number="$PR_NUMBER"} \
-            --base-branch="$BASE_BRANCH" \
-            --head-sha="$HEAD_SHA" \
-            --severity=medium
+          
+          # Execute with proper parameter handling
+          if [ -n "$PR_NUMBER" ]; then
+            ./Scripts/Pipeline/run-quality-checks.sh \
+              --pr-number="$PR_NUMBER" \
+              --base-branch="$BASE_BRANCH" \
+              --head-sha="$HEAD_SHA" \
+              --severity=medium
+          else
+            ./Scripts/Pipeline/run-quality-checks.sh \
+              --base-branch="$BASE_BRANCH" \
+              --head-sha="$HEAD_SHA" \
+              --severity=medium
+          fi
 
       - name: Post quality analysis results
         if: steps.pr-number.outputs.pr_number != ''
