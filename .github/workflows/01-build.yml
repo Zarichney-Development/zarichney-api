@@ -1,0 +1,177 @@
+name: "01 • Build & Test"
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'Code/**'
+      - 'Scripts/Pipeline/**'
+      - '*.sln'
+      - '.github/workflows/01-build.yml'
+      - '.github/actions/shared/**'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'Code/**'
+      - 'Scripts/Pipeline/**'
+      - '*.sln'
+      - '.github/workflows/01-build.yml'
+      - '.github/actions/shared/**'
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  NODE_VERSION: '18.x'
+
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  path-analysis:
+    name: "Analyze Changed Paths"
+    runs-on: ubuntu-latest
+    outputs:
+      backend-changed: ${{ steps.check-paths.outputs.backend-changed }}
+      frontend-changed: ${{ steps.check-paths.outputs.frontend-changed }}
+      docs-only: ${{ steps.check-paths.outputs.docs-only }}
+      changed-files: ${{ steps.check-paths.outputs.changed-files }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check changed paths
+        id: check-paths
+        uses: ./.github/actions/shared/check-paths
+        with:
+          base-ref: origin/${{ github.event.repository.default_branch }}
+
+      - name: Display path analysis
+        run: |
+          echo "🔍 Path Analysis Results:"
+          echo "  - Backend changed: ${{ steps.check-paths.outputs.backend-changed }}"
+          echo "  - Frontend changed: ${{ steps.check-paths.outputs.frontend-changed }}"
+          echo "  - Documentation only: ${{ steps.check-paths.outputs.docs-only }}"
+          echo "  - Changed components: ${{ steps.check-paths.outputs.changed-files }}"
+
+  backend-build:
+    name: "Backend • Build & Test"
+    runs-on: ubuntu-latest
+    needs: path-analysis
+    if: needs.path-analysis.outputs.backend-changed == 'true'
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup development environment
+        uses: ./.github/actions/shared/setup-environment
+        with:
+          setup-dotnet: 'true'
+          setup-node: 'false'
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Execute backend build and test
+        run: |
+          echo "🚀 Running backend build and test pipeline..."
+          
+          # Set CI environment variables
+          export CI_ENVIRONMENT=true
+          export QUALITY_GATE_ENABLED=true
+          export COVERAGE_THRESHOLD=24
+          
+          # Execute the pipeline script
+          ./Scripts/Pipeline/build-backend.sh --parallel --threshold=24
+        
+      - name: Upload backend artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-build-${{ github.run_number }}
+          path: artifacts/backend/
+          retention-days: 7
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ github.run_number }}
+          path: |
+            TestResults/
+            CoverageReport/
+          retention-days: 7
+
+  frontend-build:
+    name: "Frontend • Build & Test"
+    runs-on: ubuntu-latest
+    needs: path-analysis
+    if: needs.path-analysis.outputs.frontend-changed == 'true'
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup development environment
+        uses: ./.github/actions/shared/setup-environment
+        with:
+          setup-dotnet: 'false'
+          setup-node: 'true'
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Execute frontend build and test
+        run: |
+          echo "🚀 Running frontend build and test pipeline..."
+          
+          # Set CI environment variables
+          export CI_ENVIRONMENT=true
+          
+          # Execute the pipeline script
+          ./Scripts/Pipeline/build-frontend.sh --prod
+        
+      - name: Upload frontend artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build-${{ github.run_number }}
+          path: artifacts/frontend/
+          retention-days: 7
+
+  build-summary:
+    name: "Build Summary"
+    runs-on: ubuntu-latest
+    needs: [path-analysis, backend-build, frontend-build]
+    if: always() && !cancelled()
+    
+    steps:
+      - name: Generate build summary
+        run: |
+          echo "📊 Build Pipeline Summary"
+          echo "========================"
+          echo ""
+          echo "**Path Analysis:**"
+          echo "  - Backend changed: ${{ needs.path-analysis.outputs.backend-changed }}"
+          echo "  - Frontend changed: ${{ needs.path-analysis.outputs.frontend-changed }}"
+          echo "  - Documentation only: ${{ needs.path-analysis.outputs.docs-only }}"
+          echo "  - Components: ${{ needs.path-analysis.outputs.changed-files }}"
+          echo ""
+          echo "**Build Results:**"
+          echo "  - Backend build: ${{ needs.backend-build.result || 'skipped' }}"
+          echo "  - Frontend build: ${{ needs.frontend-build.result || 'skipped' }}"
+          echo ""
+          
+          # Check for failures
+          if [ "${{ needs.backend-build.result }}" = "failure" ] || [ "${{ needs.frontend-build.result }}" = "failure" ]; then
+            echo "❌ One or more builds failed"
+            exit 1
+          elif [ "${{ needs.path-analysis.outputs.docs-only }}" = "true" ]; then
+            echo "📚 Only documentation changed - no builds required"
+          else
+            echo "✅ All required builds completed successfully"
+          fi
