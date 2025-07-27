@@ -59,6 +59,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Create PR check run
+        id: create-check
+        if: steps.pr-number.outputs.pr_number != ''
+        run: |
+          CHECK_RUN_ID=$(gh api repos/${{ github.repository }}/check-runs \
+            --method POST \
+            --field name="Quality Analysis" \
+            --field head_sha="${{ github.event.workflow_run.head_sha || github.sha }}" \
+            --field status="in_progress" \
+            --field details_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --jq '.id')
+          echo "check_run_id=$CHECK_RUN_ID" >> $GITHUB_OUTPUT
+          echo "Created check run ID: $CHECK_RUN_ID"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Download test results
         if: github.event_name == 'workflow_run'
         uses: actions/download-artifact@v4
@@ -118,6 +134,33 @@ jobs:
           pr-number: ${{ steps.pr-number.outputs.pr_number }}
           quality-data-file: artifacts/quality/quality-analysis-data.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Complete PR check run
+        if: always() && steps.create-check.outputs.check_run_id != ''
+        run: |
+          # Determine conclusion based on job result
+          if [ "${{ job.status }}" = "success" ]; then
+            CONCLUSION="success"
+            TITLE="✅ Quality Analysis Passed"
+            SUMMARY="All quality gates passed successfully"
+          elif [ "${{ job.status }}" = "failure" ]; then
+            CONCLUSION="failure"
+            TITLE="❌ Quality Analysis Failed"
+            SUMMARY="Quality gates failed - review required"
+          else
+            CONCLUSION="neutral"
+            TITLE="⚠️ Quality Analysis Completed"
+            SUMMARY="Quality analysis completed with warnings"
+          fi
+          
+          gh api repos/${{ github.repository }}/check-runs/${{ steps.create-check.outputs.check_run_id }} \
+            --method PATCH \
+            --field status="completed" \
+            --field conclusion="$CONCLUSION" \
+            --field output[title]="$TITLE" \
+            --field output[summary]="$SUMMARY"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload quality artifacts
         if: always()

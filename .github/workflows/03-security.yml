@@ -148,6 +148,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Create PR check run
+        id: create-check
+        if: steps.pr-number.outputs.pr_number != ''
+        run: |
+          CHECK_RUN_ID=$(gh api repos/${{ github.repository }}/check-runs \
+            --method POST \
+            --field name="Security Analysis" \
+            --field head_sha="${{ github.event.workflow_run.head_sha || github.sha }}" \
+            --field status="in_progress" \
+            --field details_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --jq '.id')
+          echo "check_run_id=$CHECK_RUN_ID" >> $GITHUB_OUTPUT
+          echo "Created check run ID: $CHECK_RUN_ID"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run comprehensive security analysis
         id: security-analysis
         run: |
@@ -201,6 +217,37 @@ jobs:
           pr-number: ${{ steps.pr-number.outputs.pr_number || '' }}
           security-data-file: artifacts/security/security-analysis-data.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Complete PR check run
+        if: always() && steps.create-check.outputs.check_run_id != ''
+        run: |
+          # Determine conclusion based on job result and security gates
+          if [ "${{ job.status }}" = "success" ] && [ "${{ steps.security-analysis.outputs.deployment_safe }}" = "true" ]; then
+            CONCLUSION="success"
+            TITLE="✅ Security Analysis Passed"
+            SUMMARY="All security scans passed - deployment safe"
+          elif [ "${{ steps.security-analysis.outputs.deployment_safe }}" = "false" ]; then
+            CONCLUSION="failure"
+            TITLE="🚨 Security Issues Detected"
+            SUMMARY="Critical security issues found - deployment blocked"
+          elif [ "${{ job.status }}" = "failure" ]; then
+            CONCLUSION="failure"
+            TITLE="❌ Security Analysis Failed"
+            SUMMARY="Security analysis failed to complete"
+          else
+            CONCLUSION="neutral"
+            TITLE="⚠️ Security Analysis Completed"
+            SUMMARY="Security analysis completed with warnings"
+          fi
+          
+          gh api repos/${{ github.repository }}/check-runs/${{ steps.create-check.outputs.check_run_id }} \
+            --method PATCH \
+            --field status="completed" \
+            --field conclusion="$CONCLUSION" \
+            --field output[title]="$TITLE" \
+            --field output[summary]="$SUMMARY"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload security artifacts
         if: always()
