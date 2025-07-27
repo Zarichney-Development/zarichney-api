@@ -81,7 +81,8 @@ jobs:
           export CLAUDE_CODE_OAUTH_TOKEN="${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}"
           export GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}"
           
-          # Execute quality analysis
+          # Make script executable and execute quality analysis
+          chmod +x ./Scripts/Pipeline/run-quality-checks.sh
           ./Scripts/Pipeline/run-quality-checks.sh \
             --pr-number="$PR_NUMBER" \
             --base-branch="$BASE_BRANCH" \
