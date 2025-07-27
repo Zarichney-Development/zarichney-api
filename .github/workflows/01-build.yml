@@ -3,22 +3,20 @@ name: "01 • Build & Test"
 on:
   push:
     branches: [main, develop]
-    # TEMPORARY: Path filtering disabled for final verification testing
-    # paths:
-    #   - 'Code/**'
-    #   - 'Scripts/Pipeline/**'
-    #   - '*.sln'
-    #   - '.github/workflows/01-build.yml'
-    #   - '.github/actions/shared/**'
+    paths:
+      - 'Code/**'
+      - 'Scripts/Pipeline/**'
+      - '*.sln'
+      - '.github/workflows/01-build.yml'
+      - '.github/actions/shared/**'
   pull_request:
     branches: [main, develop]
-    # TEMPORARY: Path filtering disabled for final verification testing
-    # paths:
-    #   - 'Code/**'
-    #   - 'Scripts/Pipeline/**'
-    #   - '*.sln'
-    #   - '.github/workflows/01-build.yml'
-    #   - '.github/actions/shared/**'
+    paths:
+      - 'Code/**'
+      - 'Scripts/Pipeline/**'
+      - '*.sln'
+      - '.github/workflows/01-build.yml'
+      - '.github/actions/shared/**'
   workflow_dispatch:
 
 env:
