@@ -87,12 +87,19 @@ runs:
         
         # Get file statistics
         echo "📊 Collecting file statistics..."
-        cat > tech-debt-analysis/file-stats.txt << 'EOF'
-        # File Change Statistics
-        Total changed files: $(wc -l < tech-debt-analysis/changed-files.txt)
-        C# files changed: $(wc -l < tech-debt-analysis/csharp-files.txt)
-        Lines added/removed: $(git diff --stat ${{ inputs.base-branch }}..HEAD | tail -1)
-        EOF
+        
+        # Calculate statistics
+        TOTAL_FILES=$(wc -l < tech-debt-analysis/changed-files.txt)
+        CSHARP_FILES=$(wc -l < tech-debt-analysis/csharp-files.txt || echo "0")
+        LINES_STAT=$(git diff --stat ${{ inputs.base-branch }}..HEAD | tail -1)
+        
+        # Create file statistics
+        cat > tech-debt-analysis/file-stats.txt << EOF
+# File Change Statistics
+Total changed files: $TOTAL_FILES
+C# files changed: $CSHARP_FILES
+Lines added/removed: $LINES_STAT
+EOF
         
         echo "✅ Data collection completed"
       env:
@@ -128,21 +135,35 @@ runs:
           
           # Basic complexity analysis using git and file patterns
           echo "📈 Analyzing basic complexity patterns..."
-          cat > tech-debt-analysis/metrics/complexity-summary.txt << 'EOF'
-          # Complexity Analysis Summary
           
-          ## Method Count Changes
-          Methods added: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*public.*(' || echo "0")
-          Methods removed: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\-.*public.*(' || echo "0")
+          # Count method changes
+          METHODS_ADDED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*public.*(' || echo "0")
+          METHODS_REMOVED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\-.*public.*(' || echo "0")
           
-          ## File Size Changes
-          Large files (>500 lines): $(git diff --name-only ${{ inputs.base-branch }}..HEAD | xargs wc -l 2>/dev/null | awk '$1 > 500 {print $2}' | wc -l || echo "0")
+          # Count large files
+          LARGE_FILES=$(git diff --name-only ${{ inputs.base-branch }}..HEAD | xargs wc -l 2>/dev/null | awk '$1 > 500 {print $2}' | wc -l || echo "0")
           
-          ## Pattern Analysis
-          TODO comments added: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*TODO' || echo "0")
-          HACK comments added: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*HACK' || echo "0")
-          FIXME comments added: $(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*FIXME' || echo "0")
-          EOF
+          # Count debt comments
+          TODO_ADDED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*TODO' || echo "0")
+          HACK_ADDED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*HACK' || echo "0")
+          FIXME_ADDED=$(git diff ${{ inputs.base-branch }}..HEAD | grep -c '^\+.*FIXME' || echo "0")
+          
+          # Create complexity summary file
+          cat > tech-debt-analysis/metrics/complexity-summary.txt << EOF
+# Complexity Analysis Summary
+
+## Method Count Changes
+Methods added: $METHODS_ADDED
+Methods removed: $METHODS_REMOVED
+
+## File Size Changes
+Large files (>500 lines): $LARGE_FILES
+
+## Pattern Analysis
+TODO comments added: $TODO_ADDED
+HACK comments added: $HACK_ADDED
+FIXME comments added: $FIXME_ADDED
+EOF
         else
           echo "ℹ️ No C# files changed, skipping code metrics"
         fi
