@@ -15,7 +15,6 @@ permissions:
   contents: read
   actions: read
   issues: write  # For auto-issue creation
-  secrets: write  # For OAuth token refresh
 
 jobs:
   tech-debt-analysis:
