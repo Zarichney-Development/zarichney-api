@@ -87,7 +87,7 @@ jobs:
           export COVERAGE_THRESHOLD=24
           
           # Execute the pipeline script
-          ./Scripts/Pipeline/build-backend.sh --parallel --threshold=24
+          ./Scripts/Pipeline/build-backend.sh --parallel --threshold 24
         
       - name: Upload backend artifacts
         if: always()
