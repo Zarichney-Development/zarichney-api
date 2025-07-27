@@ -14,6 +14,13 @@
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <!-- To ignore warning: CS1591: Missing XML comment for publicly visible type or member -->
         <NoWarn>1591;OPENAI001</NoWarn>
+        
+        <!-- Code coverage configuration -->
+        <CoverletOutputFormat>cobertura</CoverletOutputFormat>
+        <CoverletOutput>$(OutputPath)coverage.cobertura.xml</CoverletOutput>
+        <Exclude>[*]*.Migrations.*,[*]*.Program,[*]*.Startup,[*.Tests]*,[*]System.*,[*]Microsoft.*</Exclude>
+        <ExcludeByAttribute>Obsolete,GeneratedCodeAttribute,CompilerGeneratedAttribute</ExcludeByAttribute>
+        <ExcludeByFile>**/Migrations/*.cs,**/wwwroot/**/*.cs</ExcludeByFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -59,6 +66,12 @@
         <!-- Security vulnerability fixes for transitive dependencies -->
         <PackageReference Include="System.Net.Http" Version="4.3.4" />
         <PackageReference Include="System.Security.Cryptography.X509Certificates" Version="4.3.2" />
+        
+        <!-- Code coverage instrumentation -->
+        <PackageReference Include="coverlet.msbuild" Version="6.0.4">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
     
     <ItemGroup>
