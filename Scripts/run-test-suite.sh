@@ -912,8 +912,8 @@ EOF
     
     success "Dynamic quality gates configuration saved to $dynamic_gates_file"
     
-    # Update global threshold for this run
-    COVERAGE_THRESHOLD=$dynamic_coverage_threshold
+    # Return the new coverage threshold for this run
+    echo "$dynamic_coverage_threshold"
 }
 
 # Statistical helper functions for dynamic gates
@@ -1527,7 +1527,8 @@ execute_report_mode() {
     fi
     
     # Phase 3 Dynamic Quality Gates
-    calculate_dynamic_quality_gates || true  # Don't fail on dynamic gates calculation errors
+    # Update global threshold for this run by calling the function
+    COVERAGE_THRESHOLD=$(calculate_dynamic_quality_gates) || true  # Don't fail on dynamic gates calculation errors
     
     # Phase 3 Real-time metrics and trending analysis
     generate_trending_analysis || true  # Don't fail on trending analysis errors
@@ -1560,7 +1561,7 @@ execute_report_mode() {
     # Store quality gate status for CI/CD decision making
     if [[ $quality_gate_status -ne 0 ]]; then
         warning "Quality gates failed - results available for AI analysis"
-        return 1
+        exit 1
     fi
 }
 
