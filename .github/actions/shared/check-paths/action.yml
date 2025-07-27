@@ -31,11 +31,38 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    - name: Ensure base ref exists
+      id: ensure-base-ref
+      shell: bash
+      run: |
+        # Ensure the base reference exists in the local repo
+        BASE_REF="${{ inputs.base-ref }}"
+        echo "Checking base reference: $BASE_REF"
+        
+        # Strip 'origin/' prefix if present for local operations
+        LOCAL_BASE_REF="${BASE_REF#origin/}"
+        
+        # Fetch the base branch to ensure it exists
+        if [[ "$BASE_REF" == origin/* ]]; then
+          echo "Fetching remote reference: $BASE_REF"
+          git fetch origin "$LOCAL_BASE_REF:$LOCAL_BASE_REF" 2>/dev/null || true
+          git fetch origin "$LOCAL_BASE_REF" 2>/dev/null || true
+        fi
+        
+        # Verify the reference exists
+        if git show-ref --verify --quiet "refs/heads/$LOCAL_BASE_REF" || git show-ref --verify --quiet "refs/remotes/$BASE_REF"; then
+          echo "Base reference found: $BASE_REF"
+          echo "base_ref_resolved=$BASE_REF" >> $GITHUB_OUTPUT
+        else
+          echo "Base reference not found, falling back to HEAD~1"
+          echo "base_ref_resolved=HEAD~1" >> $GITHUB_OUTPUT
+        fi
+
     - name: Check for path changes
       id: check-changes
       uses: dorny/paths-filter@v2
       with:
-        base: ${{ inputs.base-ref }}
+        base: ${{ steps.ensure-base-ref.outputs.base_ref_resolved }}
         filters: |
           backend:
             - 'Code/Zarichney.Server/**'
