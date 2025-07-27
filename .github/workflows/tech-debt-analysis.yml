@@ -15,6 +15,7 @@ permissions:
   contents: read
   actions: read
   issues: write  # For auto-issue creation
+  secrets: write  # For OAuth token refresh
 
 jobs:
   tech-debt-analysis:
@@ -73,6 +74,9 @@ jobs:
           base-branch: ${{ github.event_name == 'pull_request' && github.base_ref || github.event.workflow_run.pull_requests[0].base.ref || 'develop' }}
           head-sha: ${{ github.event_name == 'pull_request' && github.sha || github.event.workflow_run.head_sha }}
           claude-oauth-token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude-refresh-token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
+          claude-expires-at: ${{ secrets.CLAUDE_EXPIRES_AT }}
+          secrets-admin-pat: ${{ secrets.SECRETS_ADMIN_PAT }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Post Tech Debt Report

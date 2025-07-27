@@ -18,7 +18,16 @@ inputs:
     required: false
     default: 'low'
   claude-oauth-token:
-    description: 'Claude Code OAuth token for AI analysis'
+    description: 'Claude Code OAuth access token for AI analysis'
+    required: true
+  claude-refresh-token:
+    description: 'Claude Code OAuth refresh token'
+    required: true
+  claude-expires-at:
+    description: 'Claude Code OAuth token expiration timestamp'
+    required: true
+  secrets-admin-pat:
+    description: 'GitHub Personal Access Token with secrets:write permission'
     required: true
   github-token:
     description: 'GitHub token for API access'
@@ -138,9 +147,13 @@ runs:
         echo "✅ Complexity analysis completed"
 
     - name: Claude AI Tech Debt Analysis
-      uses: anthropics/claude-code-action@beta
+      uses: grll/claude-code-action-with-oauth@v1
       with:
-        claude_code_oauth_token: ${{ inputs.claude-oauth-token }}
+        use_oauth: true
+        claude_access_token: ${{ inputs.claude-oauth-token }}
+        claude_refresh_token: ${{ inputs.claude-refresh-token }}
+        claude_expires_at: ${{ inputs.claude-expires-at }}
+        secrets_admin_pat: ${{ inputs.secrets-admin-pat }}
         direct_prompt: |
           # Expert Tech Debt Analysis for zarichney-api Project
           
