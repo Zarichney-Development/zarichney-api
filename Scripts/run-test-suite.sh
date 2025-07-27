@@ -685,20 +685,82 @@ EOF
 parse_coverage() {
     log "📈 Analyzing code coverage..."
     
-    # Find coverage XML file
-    local coverage_file=$(find "$TEST_RESULTS_DIR" -name "coverage.cobertura.xml" | head -1)
-    if [[ -z "$coverage_file" ]]; then
-        warning "No coverage file found"
+    # Find coverage XML files (handles GUID-based directories from .NET XPlat Code Coverage)
+    local coverage_files=$(find "$TEST_RESULTS_DIR" -name "coverage.cobertura.xml" -type f)
+    if [[ -z "$coverage_files" ]]; then
+        log "No coverage.cobertura.xml files found, searching for alternative coverage file patterns..."
+        # Try alternative patterns that might be generated
+        coverage_files=$(find "$TEST_RESULTS_DIR" -name "*.cobertura.xml" -type f)
+        if [[ -z "$coverage_files" ]]; then
+            coverage_files=$(find "$TEST_RESULTS_DIR" -name "*coverage*.xml" -type f)
+        fi
+    fi
+    
+    if [[ -z "$coverage_files" ]]; then
+        warning "No coverage files found in $TEST_RESULTS_DIR"
+        log "Available files in test results directory:"
+        find "$TEST_RESULTS_DIR" -type f -name "*.xml" | head -10 | while read -r file; do
+            log "  Found XML file: $file"
+        done
+        
+        # Create empty coverage results for consistency
+        cat > "$TEST_RESULTS_DIR/coverage_results.json" << EOF
+{
+    "line_coverage": 0.0,
+    "branch_coverage": 0.0,
+    "threshold": $COVERAGE_THRESHOLD,
+    "meets_threshold": 0,
+    "error": "No coverage files found"
+}
+EOF
         return
     fi
     
-    # Extract coverage percentages using basic XML parsing
-    local line_rate=$(grep -o 'line-rate="[0-9.]*"' "$coverage_file" | head -1 | grep -o '[0-9.]*' || echo "0")
-    local branch_rate=$(grep -o 'branch-rate="[0-9.]*"' "$coverage_file" | head -1 | grep -o '[0-9.]*' || echo "0")
+    # Process coverage files (merge if multiple exist)
+    local total_line_rate=0
+    local total_branch_rate=0
+    local file_count=0
+    local coverage_file_list=""
+    
+    while IFS= read -r coverage_file; do
+        if [[ -f "$coverage_file" ]]; then
+            log "Processing coverage file: $coverage_file"
+            coverage_file_list="$coverage_file_list $coverage_file"
+            
+            # Extract coverage percentages using basic XML parsing
+            local line_rate=$(grep -o 'line-rate="[0-9.]*"' "$coverage_file" | head -1 | grep -o '[0-9.]*' || echo "0")
+            local branch_rate=$(grep -o 'branch-rate="[0-9.]*"' "$coverage_file" | head -1 | grep -o '[0-9.]*' || echo "0")
+            
+            # Add to totals for averaging
+            total_line_rate=$(awk -v total="$total_line_rate" -v rate="$line_rate" 'BEGIN {print total + rate}')
+            total_branch_rate=$(awk -v total="$total_branch_rate" -v rate="$branch_rate" 'BEGIN {print total + rate}')
+            file_count=$((file_count + 1))
+            
+            log "  Line rate: $line_rate, Branch rate: $branch_rate"
+        fi
+    done <<< "$coverage_files"
+    
+    if [[ $file_count -eq 0 ]]; then
+        warning "No valid coverage files could be processed"
+        cat > "$TEST_RESULTS_DIR/coverage_results.json" << EOF
+{
+    "line_coverage": 0.0,
+    "branch_coverage": 0.0,
+    "threshold": $COVERAGE_THRESHOLD,
+    "meets_threshold": 0,
+    "error": "No valid coverage files found"
+}
+EOF
+        return
+    fi
+    
+    # Calculate average coverage across files
+    local avg_line_rate=$(awk -v total="$total_line_rate" -v count="$file_count" 'BEGIN {printf "%.6f", total / count}')
+    local avg_branch_rate=$(awk -v total="$total_branch_rate" -v count="$file_count" 'BEGIN {printf "%.6f", total / count}')
     
     # Convert to percentages
-    local line_coverage=$(awk -v lr="$line_rate" 'BEGIN {printf "%.1f", lr * 100}')
-    local branch_coverage=$(awk -v br="$branch_rate" 'BEGIN {printf "%.1f", br * 100}')
+    local line_coverage=$(awk -v lr="$avg_line_rate" 'BEGIN {printf "%.1f", lr * 100}')
+    local branch_coverage=$(awk -v br="$avg_branch_rate" 'BEGIN {printf "%.1f", br * 100}')
     
     # Store coverage results
     cat > "$TEST_RESULTS_DIR/coverage_results.json" << EOF
@@ -706,10 +768,13 @@ parse_coverage() {
     "line_coverage": $line_coverage,
     "branch_coverage": $branch_coverage,
     "threshold": $COVERAGE_THRESHOLD,
-    "meets_threshold": $(awk -v lc="$line_coverage" -v ct="$COVERAGE_THRESHOLD" 'BEGIN {print (lc >= ct) ? 1 : 0}')
+    "meets_threshold": $(awk -v lc="$line_coverage" -v ct="$COVERAGE_THRESHOLD" 'BEGIN {print (lc >= ct) ? 1 : 0}'),
+    "files_processed": $file_count,
+    "coverage_files": "$coverage_file_list"
 }
 EOF
     
+    log "Processed $file_count coverage file(s)"
     success "Coverage analyzed: ${line_coverage}% lines, ${branch_coverage}% branches"
 }
 
@@ -1248,7 +1313,7 @@ assess_deployment_risk() {
     # Test failure risk (0-40 points)
     if [[ $failed_tests -gt 0 ]]; then
         local test_risk=$((failed_tests * 10))
-        risk_score=$((risk_score + $(awk -v tr="$test_risk" 'BEGIN {print (tr > 40) ? 40 : tr}')))
+        risk_score=$((risk_score + (test_risk > 40 ? 40 : test_risk)))
         risk_factors+=("${failed_tests} failing tests (+${test_risk} risk)")
     fi
     
@@ -1596,7 +1661,7 @@ execute_report_mode() {
     # Store quality gate status for CI/CD decision making
     if [[ $quality_gate_status -ne 0 ]]; then
         warning "Quality gates failed - results available for AI analysis"
-        exit 1
+        return 1
     fi
 }
 
