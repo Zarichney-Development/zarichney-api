@@ -562,16 +562,19 @@ jobs:
 
     - name: Run Node.js security audit
       run: |
+        # Ensure SecurityResults directory exists
+        mkdir -p ./SecurityResults
+        
         cd Code/Zarichney.Website
-        npm audit --audit-level moderate --json > ../SecurityResults/npm-audit.json || true
+        npm audit --audit-level moderate --json > ../../SecurityResults/npm-audit.json || true
         
         # Parse Node.js audit results
-        if [ -s "../SecurityResults/npm-audit.json" ] && [ "$(jq '.metadata.vulnerabilities.total' ../SecurityResults/npm-audit.json)" -gt 0 ]; then
-          TOTAL_VULNS=$(jq '.metadata.vulnerabilities.total' ../SecurityResults/npm-audit.json)
-          CRITICAL=$(jq '.metadata.vulnerabilities.critical // 0' ../SecurityResults/npm-audit.json)
-          HIGH=$(jq '.metadata.vulnerabilities.high // 0' ../SecurityResults/npm-audit.json)
-          MODERATE=$(jq '.metadata.vulnerabilities.moderate // 0' ../SecurityResults/npm-audit.json)
-          LOW=$(jq '.metadata.vulnerabilities.low // 0' ../SecurityResults/npm-audit.json)
+        if [ -s "../../SecurityResults/npm-audit.json" ] && [ "$(jq '.metadata.vulnerabilities.total' ../../SecurityResults/npm-audit.json)" -gt 0 ]; then
+          TOTAL_VULNS=$(jq '.metadata.vulnerabilities.total' ../../SecurityResults/npm-audit.json)
+          CRITICAL=$(jq '.metadata.vulnerabilities.critical // 0' ../../SecurityResults/npm-audit.json)
+          HIGH=$(jq '.metadata.vulnerabilities.high // 0' ../../SecurityResults/npm-audit.json)
+          MODERATE=$(jq '.metadata.vulnerabilities.moderate // 0' ../../SecurityResults/npm-audit.json)
+          LOW=$(jq '.metadata.vulnerabilities.low // 0' ../../SecurityResults/npm-audit.json)
           
           echo "{
             \"vulnerabilities_found\": true,
@@ -580,9 +583,9 @@ jobs:
             \"high\": $HIGH,
             \"moderate\": $MODERATE,
             \"low\": $LOW
-          }" > ../SecurityResults/npm-audit-summary.json
+          }" > ../../SecurityResults/npm-audit-summary.json
         else
-          echo "{\"vulnerabilities_found\": false, \"total_vulnerabilities\": 0}" > ../SecurityResults/npm-audit-summary.json
+          echo "{\"vulnerabilities_found\": false, \"total_vulnerabilities\": 0}" > ../../SecurityResults/npm-audit-summary.json
         fi
 
     - name: Upload dependency scan results
