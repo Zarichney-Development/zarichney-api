@@ -446,8 +446,8 @@ gh issue list --label="tech-debt,auto-generated" --state=open
 The project includes a comprehensive security analysis system that follows the established workflow pattern used by standards compliance and tech debt analysis. Security scanning is integrated into the main CI/CD pipeline, with AI-powered analysis performed by a separate workflow that posts consolidated security insights to PR comments.
 
 ### Architecture Pattern (Consistent with Project Standards)
-1. **Security Scans in Main CI/CD**: Security scanning jobs run alongside build/test in `main.yml`
-2. **Security Analysis Workflow**: `security-analysis.yml` triggers on workflow completion
+1. **Security Scans in Build Workflow**: Security scanning jobs run alongside build/test in `01-build.yml`
+2. **Security Analysis Workflow**: `03-security.yml` triggers on workflow completion
 3. **AI-Powered Analysis**: Custom GitHub Action analyzes all security data with Claude
 4. **Single PR Comment**: Consolidated security analysis posted to PR (like standards compliance)
 
@@ -542,25 +542,25 @@ The project includes a comprehensive security analysis system that follows the e
 All workflows follow a consistent naming convention for clarity and organization:
 
 #### **Core Workflows**
-- **`CI/CD: Build, Test & Deploy`** (`main.yml`) - Primary build, test, deployment, and security scanning pipeline
+- **`01 • Build & Test`** (`01-build.yml`) - Foundation build, test, and artifact generation
 
 #### **Analysis Workflows** (Triggered on workflow_run)
-- **`Security: Comprehensive Analysis`** (`security-analysis.yml`) - AI-powered security analysis and PR comments
-- **`Quality: Standards Compliance Check`** (`standards-compliance-check.yml`) - Code standards and formatting validation
-- **`Quality: Tech Debt Analysis`** (`tech-debt-analysis.yml`) - AI-powered technical debt assessment
+- **`02 • Quality Analysis`** (`02-quality.yml`) - AI-powered quality analysis and standards compliance
+- **`03 • Security Analysis`** (`03-security.yml`) - Comprehensive security scanning and tech debt assessment
 
-#### **Reporting & Analytics Workflows**
-- **`Reports: Test Results Analysis`** (`test-reporter.yml`) - Comprehensive test result analysis and reporting
+#### **Deployment & Maintenance Workflows**
+- **`04 • Deploy`** (`04-deploy.yml`) - Conditional deployment based on analysis results
+- **`05 • Maintenance`** (`05-maintenance.yml`) - Scheduled maintenance and cleanup tasks
 
 ### Workflow Dependencies
-- **Analysis workflows** trigger on `workflow_run` after main CI/CD completion
-- **Security scans** integrated directly into main CI/CD pipeline for efficiency
-- **Consistent pattern** across all analysis workflows (security, standards, tech debt)
+- **Analysis workflows** trigger on `workflow_run` after build completion
+- **Security scans** integrated directly into build workflow for efficiency  
+- **Consistent pattern** across all analysis workflows using AI-powered insights
 - All workflows support manual dispatch for debugging and testing
 
 ### Benefits of Organization
 - **Clear Purpose**: Each workflow name immediately indicates its function
-- **Logical Grouping**: Related workflows grouped by category (Core, Analysis, Reports)
+- **Logical Grouping**: Related workflows grouped by category (Core, Analysis, Deployment)
 - **Professional Presentation**: Consistent, enterprise-grade workflow organization
 - **Enhanced Discoverability**: Easy to find and understand workflow purposes
 - **Maintainability**: Clear separation of concerns for easier maintenance

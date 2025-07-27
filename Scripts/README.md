@@ -1,13 +1,13 @@
 # Module/Directory: Scripts
 
-**Last Updated:** 2025-07-25
+**Last Updated:** 2025-07-27
 
 **(Optional: Link to Parent Directory's README)**
 > **Parent:** [`zarichney-api`](../README.md)
 
 ## 1. Purpose & Responsibility
 
-* **What it is:** This directory contains utility scripts that automate essential development, testing, deployment, and operational tasks for the zarichney-api project.
+* **What it is:** This directory contains utility scripts that automate essential development, testing, deployment, and operational tasks for the zarichney-api project, including CI/CD pipeline logic and AI analysis prompts.
 * **Key Responsibilities:** 
     * API client generation and synchronization between server and test projects
     * Comprehensive test automation with coverage reporting
@@ -16,15 +16,19 @@
     * Development environment setup and maintenance
     * Recipe scraping functionality testing
     * Playwright browser automation setup
-* **Why it exists:** To provide standardized, automated workflows that ensure consistency across development, testing, and deployment phases while reducing manual effort and potential human error.
+    * **CI/CD Pipeline Logic:** [`Pipeline/`](./Pipeline/README.md) - Core automation scripts for GitHub Actions workflows
+    * **AI Analysis Prompts:** [`Prompts/`](./Prompts/README.md) - Claude AI prompts for security, quality, and standards analysis
+* **Why it exists:** To provide standardized, automated workflows that ensure consistency across development, testing, deployment, and CI/CD phases while reducing manual effort and potential human error. The modular structure separates workflow orchestration from business logic for better maintainability.
 
 ## 2. Architecture & Key Concepts
 
-* **High-Level Design:** The scripts are organized into four main categories:
+* **High-Level Design:** The scripts are organized into six main categories:
     * **Development & Testing Scripts:** `generate-api-client.*`, `run-test-suite.sh` (unified testing), `test-auth-endpoints.*`
     * **Deployment & Service Management:** `start-server.sh`, `cookbook-api.service`, `cleanup-playwright.sh`
     * **Domain-Specific Testing:** `test_sites.sh` (recipe scraping validation)
     * **Configuration Files:** `.refitter` (API client generation settings)
+    * **CI/CD Pipeline Logic:** [`Pipeline/`](./Pipeline/README.md) - Extracted GitHub Actions workflow logic for maintainable automation
+    * **AI Analysis Prompts:** [`Prompts/`](./Prompts/README.md) - Version-controlled Claude AI prompts for consistent analysis
 * **Core Workflow Integration:** Scripts integrate with the CI/CD pipeline and support local development workflows by:
     1. Generating strongly-typed API clients from OpenAPI specifications
     2. Running comprehensive test suites with coverage reporting
@@ -133,7 +137,7 @@
     * `curl` and `jq` - REST API testing in shell scripts
     * `Playwright` - Browser automation dependencies
 * **Dependents (Impact of Changes):**
-    * [`CI/CD Pipeline`](../.github/workflows/main.yml) - Automation scripts mirror CI/CD workflow steps
+    * [`CI/CD Pipeline`](../.github/workflows/01-build.yml) - Automation scripts mirror CI/CD workflow steps
     * [Local Development Workflow](../CLAUDE.md) - Scripts provide essential development commands
     * Production deployment processes rely on service management scripts
 
