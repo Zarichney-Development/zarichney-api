@@ -626,6 +626,14 @@ parse_results() {
         total_tests=$(echo "$stats_line" | grep -o "Total:[[:space:]]*[0-9]*" | grep -o "[0-9]*" || echo "0")
     fi
     
+    # Calculate pass rate using if statement
+    local pass_rate
+    if [[ $total_tests -gt 0 ]]; then
+        pass_rate=$((passed_tests * 100 / total_tests))
+    else
+        pass_rate=0
+    fi
+    
     # Store results
     cat > "$TEST_RESULTS_DIR/parsed_results.json" << EOF
 {
@@ -636,7 +644,7 @@ parse_results() {
         "passed": $passed_tests,
         "failed": $failed_tests,
         "skipped": $skipped_tests,
-        "pass_rate": $(awk -v tt="$total_tests" -v pt="$passed_tests" 'BEGIN {print (tt > 0) ? (pt * 100) / tt : 0}')
+        "pass_rate": $pass_rate
     }
 }
 EOF
@@ -905,8 +913,8 @@ EOF
     
     success "Dynamic quality gates configuration saved to $dynamic_gates_file"
     
-    # Update global threshold for this run
-    COVERAGE_THRESHOLD=$dynamic_coverage_threshold
+    # Return the new coverage threshold for this run
+    echo "$dynamic_coverage_threshold"
 }
 
 # Statistical helper functions for dynamic gates
@@ -956,7 +964,8 @@ save_historical_data() {
         execution_time=$(grep "EXECUTION_TIME=" "$LOG_FILE" 2>/dev/null | tail -1 | cut -d'=' -f2 || echo "0")
         
         # Combine all metrics into historical record
-        jq -s '.[0] + {"coverage_metrics": .[1], "execution_time": '$execution_time', "timestamp": "'$timestamp'", "saved_at": "'$(date -Iseconds)'"}' \
+        jq -s --argjson exec_time "$execution_time" --arg ts "$timestamp" --arg saved_at "$(date -Iseconds)" \
+            '.[0] + {"coverage_metrics": .[1], "execution_time": $exec_time, "timestamp": $ts, "saved_at": $saved_at}' \
             "$TEST_RESULTS_DIR/parsed_results.json" \
             "$TEST_RESULTS_DIR/coverage_results.json" \
             > "$historical_file" 2>/dev/null
@@ -1519,7 +1528,8 @@ execute_report_mode() {
     fi
     
     # Phase 3 Dynamic Quality Gates
-    calculate_dynamic_quality_gates || true  # Don't fail on dynamic gates calculation errors
+    # Update global threshold for this run by calling the function
+    COVERAGE_THRESHOLD=$(calculate_dynamic_quality_gates) || true  # Don't fail on dynamic gates calculation errors
     
     # Phase 3 Real-time metrics and trending analysis
     generate_trending_analysis || true  # Don't fail on trending analysis errors
@@ -1552,7 +1562,7 @@ execute_report_mode() {
     # Store quality gate status for CI/CD decision making
     if [[ $quality_gate_status -ne 0 ]]; then
         warning "Quality gates failed - results available for AI analysis"
-        return 1
+        exit 1
     fi
 }
 
