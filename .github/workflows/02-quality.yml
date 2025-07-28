@@ -127,144 +127,194 @@ jobs:
       - name: Standards Compliance AI Analysis
         if: steps.pr-number.outputs.pr_number != ''
         id: claude-standards
-        uses: anthropics/claude-code-base-action@beta
+        uses: grll/claude-code-action-with-oauth@v1
         continue-on-error: true
         with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          prompt_file: Scripts/Prompts/standards-compliance.md
-          allowed_tools: "Read,Glob,Grep,Bash"
-          timeout_minutes: 5
+          use_oauth: true
+          claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
+          claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
+          secrets_admin_pat: ${{ secrets.SECRETS_ADMIN_PAT }}
+          direct_prompt: |
+            # Standards Compliance Analysis for zarichney-api Project
+
+            You are a senior software architect and code quality expert conducting a comprehensive standards compliance analysis for this pull request in the zarichney-api project.
+
+            ## Analysis Data
+
+            Please analyze the standards compliance data in `quality-analysis-data.json` which contains:
+            - Code formatting compliance results
+            - Git commit message standards validation
+            - Testing standards adherence
+            - Documentation standards compliance
+            - Overall compliance score and violation categorization
+
+            ## Required Analysis Sections
+
+            ### 1. Executive Compliance Summary
+            - Overall compliance status (Excellent/Good/Fair/Poor/Critical)
+            - Key compliance achievements and immediate violations
+            - Compliance score interpretation and trend analysis
+            - Impact on code maintainability and team productivity
+
+            ### 2. Mandatory Standards Violations
+            - Critical formatting issues that block merging
+            - Required test coverage violations
+            - Essential documentation missing
+            - Security-related compliance failures
+            - Specific file paths and line numbers for each violation
+
+            ### 3. Recommended Standards Analysis
+            - Code style and formatting improvements
+            - Git workflow and commit message enhancement opportunities
+            - Documentation completeness assessment
+            - Testing strategy alignment with project standards
+
+            ### 4. Code Quality Assessment
+            - Architecture pattern adherence
+            - Naming convention compliance
+            - Method and class size violations
+            - Complexity metrics analysis
+            - Design principle adherence (SOLID, DRY, KISS)
+
+            ### 5. Documentation Standards Evaluation
+            - XML documentation coverage for public APIs
+            - README.md completeness and accuracy
+            - Code comment quality and appropriateness
+            - Architectural documentation alignment
+
+            ### 6. Testing Standards Compliance
+            - Test naming convention adherence
+            - Test categorization (Unit/Integration) proper usage
+            - Test coverage thresholds compliance
+            - Test organization and structure validation
+
+            ### 7. Actionable Remediation Plan
+
+            **Priority ranked by compliance impact:**
+            - **MANDATORY**: Critical violations that must be fixed before merging
+            - **RECOMMENDED**: Important improvements for code quality
+            - **OPTIONAL**: Nice-to-have enhancements for long-term maintainability
+
+            Provide specific remediation steps with:
+            - File paths and line numbers
+            - Exact commands to run (e.g., `dotnet format`)
+            - Code examples for complex fixes
+            - Timeline estimates for each remediation
+
+            ### 8. Compliance Decision Matrix
+            Recommend one of:
+            - **APPROVE**: All mandatory standards met, ready to merge
+            - **CONDITIONAL**: Minor violations acceptable with monitoring
+            - **REQUIRE_FIXES**: Mandatory violations must be resolved first
+
+            ## Context Considerations
+            - This is a full-stack .NET/Angular application
+            - The analysis will be posted as a PR comment for development team review
+            - Results will influence merge decisions and code quality gates
+            - Standards are defined in project documentation under `/Docs/Standards/`
+
+            Please analyze the code changes and provide your comprehensive standards compliance analysis.
 
       - name: Tech Debt AI Analysis  
         if: steps.pr-number.outputs.pr_number != ''
         id: claude-techdebt
-        uses: anthropics/claude-code-base-action@beta
+        uses: grll/claude-code-action-with-oauth@v1
         continue-on-error: true
         with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          prompt_file: Scripts/Prompts/tech-debt-analysis.md
-          allowed_tools: "Read,Glob,Grep,Bash"
-          timeout_minutes: 5
+          use_oauth: true
+          claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
+          claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
+          secrets_admin_pat: ${{ secrets.SECRETS_ADMIN_PAT }}
+          direct_prompt: |
+            # Technical Debt Analysis for zarichney-api Project
 
-      - name: Post Standards Compliance Comment
-        if: always() && steps.pr-number.outputs.pr_number != '' && steps.claude-standards.outcome == 'success'
-        uses: actions/github-script@v7
-        continue-on-error: true
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            try {
-              // Try multiple potential paths for Claude output
-              const possiblePaths = [
-                '${{ steps.claude-standards.outputs.execution_file || '' }}',
-                '/home/runner/work/_temp/claude-execution-output.json',
-                '/tmp/claude-execution-output.json',
-                './claude-execution-output.json'
-              ];
-              
-              let executionFile = '';
-              let analysisContent = '';
-              
-              // Find the actual execution file
-              for (const path of possiblePaths) {
-                if (path && fs.existsSync(path)) {
-                  executionFile = path;
-                  console.log('Found execution file at:', path);
-                  break;
-                }
-              }
-              
-              if (executionFile) {
-                const executionLog = JSON.parse(fs.readFileSync(executionFile, 'utf8'));
-                analysisContent = executionLog
-                  .filter(entry => entry.role === 'assistant' && entry.content)
-                  .map(entry => entry.content)
-                  .join('\n\n');
-              }
-              
-              // If no execution file found, create a basic comment with step outcome
-              if (!analysisContent) {
-                analysisContent = "Claude AI Standards Compliance Analysis completed successfully.\\n\\n" +
-                  "**Analysis Status:** ✅ Completed\\n" +
-                  "**Step Outcome:** ${{ steps.claude-standards.outcome }}\\n" +
-                  "**Tool Permissions:** Fixed - Claude can now access Read, Glob, Grep, and Bash tools\\n" +
-                  "**Quality Score:** Based on detected violations and compliance issues\\n\\n" +
-                  "*Note: This is a test validation that Claude AI analysis is working with OAuth authentication.*";
-              }
-              
-              await github.rest.issues.createComment({
-                issue_number: ${{ steps.pr-number.outputs.pr_number }},
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: "## 🛠️ Standards Compliance Analysis\\n\\n" + analysisContent
-              });
-              
-              console.log('Posted standards compliance comment successfully');
-            } catch (error) {
-              console.log('Could not post standards compliance comment:', error.message);
-              console.log('Error details:', error);
-            }
+            You are a senior software architect and technical debt specialist conducting a comprehensive technical debt analysis for this pull request in the zarichney-api project.
 
-      - name: Post Tech Debt Comment
-        if: always() && steps.pr-number.outputs.pr_number != '' && steps.claude-techdebt.outcome == 'success'
-        uses: actions/github-script@v7
-        continue-on-error: true
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            try {
-              // Try multiple potential paths for Claude output
-              const possiblePaths = [
-                '${{ steps.claude-techdebt.outputs.execution_file || '' }}',
-                '/home/runner/work/_temp/claude-execution-output.json',
-                '/tmp/claude-execution-output.json',
-                './claude-execution-output.json'
-              ];
-              
-              let executionFile = '';
-              let analysisContent = '';
-              
-              // Find the actual execution file
-              for (const path of possiblePaths) {
-                if (path && fs.existsSync(path)) {
-                  executionFile = path;
-                  console.log('Found execution file at:', path);
-                  break;
-                }
-              }
-              
-              if (executionFile) {
-                const executionLog = JSON.parse(fs.readFileSync(executionFile, 'utf8'));
-                analysisContent = executionLog
-                  .filter(entry => entry.role === 'assistant' && entry.content)
-                  .map(entry => entry.content)
-                  .join('\n\n');
-              }
-              
-              // If no execution file found, create a basic comment with step outcome
-              if (!analysisContent) {
-                analysisContent = "Claude AI Tech Debt Analysis completed successfully.\\n\\n" +
-                  "**Analysis Status:** ✅ Completed\\n" +
-                  "**Step Outcome:** ${{ steps.claude-techdebt.outcome }}\\n" +
-                  "**Tool Permissions:** Fixed - Claude can now access Read, Glob, Grep, and Bash tools\\n" +
-                  "**Debt Items Detected:** Based on code complexity, performance issues, and maintenance debt\\n\\n" +
-                  "*Note: This is a test validation that Claude AI analysis is working with OAuth authentication.*";
-              }
-              
-              await github.rest.issues.createComment({
-                issue_number: ${{ steps.pr-number.outputs.pr_number }},
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: "## 📈 Tech Debt Analysis\\n\\n" + analysisContent
-              });
-              
-              console.log('Posted tech debt comment successfully');
-            } catch (error) {
-              console.log('Could not post tech debt comment:', error.message);
-              console.log('Error details:', error);
-            }
+            ## Analysis Data
+
+            Please analyze the technical debt data in `quality-analysis-data.json` which contains:
+            - Code complexity metrics and violations
+            - Maintenance burden indicators
+            - Performance debt analysis
+            - Architecture pattern adherence
+            - Overall debt score and categorization
+
+            ## Required Analysis Sections
+
+            ### 1. Executive Debt Summary
+            - Overall technical debt level (Excellent/Good/Fair/Poor/Critical)
+            - Key debt accumulation areas and immediate concerns
+            - Debt score interpretation and velocity impact
+            - Long-term maintainability assessment
+
+            ### 2. Code Complexity Analysis
+            - Method length violations and cognitive complexity
+            - Class size and responsibility violations
+            - Cyclomatic complexity hotspots
+            - Nesting depth and parameter count issues
+            - SOLID principle violations
+
+            ### 3. Performance Debt Assessment
+            - Blocking async/await pattern violations
+            - Inefficient algorithms and data structures
+            - Resource leak potential (missing using statements)
+            - Database query optimization opportunities
+            - Memory allocation patterns
+
+            ### 4. Maintenance Burden Evaluation
+            - TODO/FIXME/HACK comment accumulation
+            - Code duplication and repeated patterns
+            - Hard-coded values and magic numbers
+            - Configuration and environment dependencies
+            - Error handling and logging gaps
+
+            ### 5. Architecture Debt Analysis
+            - Design pattern inconsistencies
+            - Abstraction level violations
+            - Dependency injection and coupling issues
+            - Layer separation and boundary violations
+            - API design and contract debt
+
+            ### 6. Testing Debt Assessment
+            - Test coverage gaps for complex code
+            - Test maintainability and brittleness
+            - Missing integration test scenarios
+            - Test data management debt
+            - Test performance and reliability issues
+
+            ### 7. Prioritized Debt Remediation Plan
+
+            **Priority ranked by business impact:**
+            - **CRITICAL**: Debt that blocks feature development or causes production issues
+            - **HIGH**: Debt that significantly slows development velocity
+            - **MEDIUM**: Debt that impacts code maintainability
+            - **LOW**: Debt that should be addressed during refactoring cycles
+
+            For each debt item provide:
+            - Business impact assessment
+            - Effort estimation (S/M/L/XL)
+            - Recommended remediation approach
+            - Risk of not addressing the debt
+            - Dependencies and prerequisites
+
+            ### 8. Technical Debt Decision Matrix
+            Recommend one of:
+            - **ACCEPT**: Low-impact debt, continue development
+            - **MONITOR**: Medium-impact debt, track and plan remediation
+            - **REMEDIATE**: High-impact debt, address in current/next sprint
+            - **BLOCK**: Critical debt, must be resolved before merge
+
+            ## Context Considerations
+            - This is a full-stack .NET/Angular application
+            - The analysis will guide technical debt management decisions
+            - Results will influence sprint planning and refactoring priorities
+            - Consider both immediate and long-term maintainability
+
+            Please analyze the code changes and provide your comprehensive technical debt analysis.
+
+
 
 
       - name: Quality metrics summary
