@@ -126,11 +126,10 @@ jobs:
 
       - name: Testing Analysis with Claude AI
         if: always() && github.event_name == 'pull_request'
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-base-action@beta
         with:
-          claude_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt_file: Scripts/Prompts/testing-analysis.md
-          working_directory: ${{ github.workspace }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           pr_number: ${{ github.event.number }}
           comment_header: "## 🧪 Testing Analysis"
