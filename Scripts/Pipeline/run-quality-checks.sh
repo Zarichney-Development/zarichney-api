@@ -192,7 +192,9 @@ run_standards_compliance() {
     if ! dotnet format --verify-no-changes --verbosity diagnostic > "$QUALITY_DIR/format-check.log" 2>&1; then
         local format_issues=0
         if [[ -f "$QUALITY_DIR/format-check.log" ]]; then
-            format_issues=$(grep -c "would be formatted" "$QUALITY_DIR/format-check.log" 2>/dev/null || echo "0")
+            # Use temp file approach to avoid command substitution issues
+            grep -c "Formatted code file" "$QUALITY_DIR/format-check.log" 2>/dev/null > "$QUALITY_DIR/format-count.tmp" || echo "0" > "$QUALITY_DIR/format-count.tmp"
+            format_issues=$(cat "$QUALITY_DIR/format-count.tmp")
             # Ensure format_issues is a valid number
             if ! [[ "$format_issues" =~ ^[0-9]+$ ]]; then
                 format_issues=0
@@ -276,7 +278,9 @@ run_standards_compliance() {
     # Get code formatting count safely
     local code_formatting_count=0
     if [[ -f "$QUALITY_DIR/format-check.log" ]]; then
-        code_formatting_count=$(grep -c "would be formatted" "$QUALITY_DIR/format-check.log" 2>/dev/null || echo "0")
+        # Use temp file approach to avoid command substitution issues
+        grep -c "Formatted code file" "$QUALITY_DIR/format-check.log" 2>/dev/null > "$QUALITY_DIR/format-count-json.tmp" || echo "0" > "$QUALITY_DIR/format-count-json.tmp"
+        code_formatting_count=$(cat "$QUALITY_DIR/format-count-json.tmp")
         # Ensure it's a valid number
         if ! [[ "$code_formatting_count" =~ ^[0-9]+$ ]]; then
             code_formatting_count=0
