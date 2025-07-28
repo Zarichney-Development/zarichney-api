@@ -125,14 +125,46 @@ jobs:
           retention-days: 7
 
       - name: Testing Analysis with Claude AI
-        if: always() && github.event_name == 'pull_request'
+        if: always() && github.event_name == 'pull_request' && (secrets.ANTHROPIC_API_KEY != '' || secrets.CLAUDE_CODE_OAUTH_TOKEN != '')
+        id: claude-testing
         uses: anthropics/claude-code-base-action@beta
+        continue-on-error: true
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY || '' }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
           prompt_file: Scripts/Prompts/testing-analysis.md
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          pr_number: ${{ github.event.number }}
-          comment_header: "## 🧪 Testing Analysis"
+          allowed_tools: "View,GlobTool,GrepTool,Bash(git:*)"
+          timeout_minutes: 5
+
+      - name: Post Testing Analysis Comment
+        if: always() && github.event_name == 'pull_request' && steps.claude-testing.outcome == 'success'
+        uses: actions/github-script@v7
+        continue-on-error: true
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            try {
+              const executionFile = '${{ steps.claude-testing.outputs.execution_file || '' }}';
+              if (executionFile && fs.existsSync(executionFile)) {
+                const executionLog = JSON.parse(fs.readFileSync(executionFile, 'utf8'));
+                const analysis = executionLog
+                  .filter(entry => entry.role === 'assistant' && entry.content)
+                  .map(entry => entry.content)
+                  .join('\n\n');
+                
+                if (analysis) {
+                  await github.rest.issues.createComment({
+                    issue_number: context.issue.number,
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    body: `## 🧪 Testing Analysis\n\n${analysis}`
+                  });
+                }
+              }
+            } catch (error) {
+              console.log('Could not post testing analysis comment:', error.message);
+            }
 
   frontend-build:
     name: "Frontend • Build & Test"
