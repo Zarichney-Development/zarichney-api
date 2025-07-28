@@ -18,6 +18,7 @@ permissions:
   actions: read
   pull-requests: write
   issues: write
+  checks: write
 
 jobs:
   quality-analysis:
