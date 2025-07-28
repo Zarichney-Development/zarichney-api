@@ -124,6 +124,28 @@ jobs:
               --severity medium
           fi
 
+      - name: Standards Compliance AI Analysis
+        if: steps.pr-number.outputs.pr_number != ''
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt_file: Scripts/Prompts/standards-compliance.md
+          working_directory: ${{ github.workspace }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          pr_number: ${{ steps.pr-number.outputs.pr_number }}
+          comment_header: "## 🛠️ Standards Compliance Analysis"
+
+      - name: Tech Debt AI Analysis  
+        if: steps.pr-number.outputs.pr_number != ''
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt_file: Scripts/Prompts/tech-debt-analysis.md
+          working_directory: ${{ github.workspace }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          pr_number: ${{ steps.pr-number.outputs.pr_number }}
+          comment_header: "## 📈 Tech Debt Analysis"
+
       - name: Post quality analysis results
         if: steps.pr-number.outputs.pr_number != ''
         uses: ./.github/actions/shared/post-results
@@ -147,14 +169,16 @@ jobs:
           
           if [[ "${SCORE:-0}" -lt 70 ]]; then
             echo "⚠️  Quality score below optimal threshold (70)"
-            echo "💡 AI analysis has been posted to PR with improvement recommendations"
+            echo "🤖 Claude AI analysis posted with standards compliance insights"
+            echo "🤖 Claude AI analysis posted with tech debt recommendations"
             echo "🎯 This is informational - see PR comments for actionable insights"
           else
             echo "✅ Quality score meets threshold"
+            echo "🤖 Claude AI analysis available with optimization recommendations"
           fi
           
           echo ""
-          echo "📝 Comprehensive AI analysis available in PR comments"
+          echo "📝 Real Claude AI analysis available in separate PR comments"
 
       - name: Create quality issues
         if: always() && steps.quality-checks.outputs.tech_debt_items > 10
@@ -229,11 +253,14 @@ jobs:
             echo "🔧 Check workflow logs for technical problems"
           elif [ "${{ needs.quality-analysis.result }}" = "success" ]; then
             echo "✅ Quality analysis completed successfully"
-            echo "📊 AI-powered insights and recommendations available in PR comments"
+            echo "🤖 Claude AI standards compliance analysis posted to PR"
+            echo "🤖 Claude AI tech debt analysis posted to PR"
+            echo "📊 Real AI-powered insights and recommendations available in PR comments"
           else
             echo "⚠️ Quality analysis was skipped or cancelled"
           fi
           
           echo ""
-          echo "ℹ️  Note: Quality analysis is informational and provides AI-powered"
+          echo "ℹ️  Note: Quality analysis is informational and provides real Claude AI-powered"
           echo "   recommendations for code improvement. It does not block deployments."
+          echo "🤖 Claude AI provides separate detailed analysis for standards compliance and tech debt."

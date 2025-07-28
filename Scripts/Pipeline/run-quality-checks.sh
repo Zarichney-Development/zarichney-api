@@ -264,6 +264,10 @@ run_standards_compliance() {
     
     if [[ -f "$QUALITY_DIR/doc-check.tmp" ]]; then
         missing_docs=$(cat "$QUALITY_DIR/doc-check.tmp" | wc -l)
+        # Ensure missing_docs is a valid number
+        if ! [[ "$missing_docs" =~ ^[0-9]+$ ]]; then
+            missing_docs=0
+        fi
         if [[ $missing_docs -gt 0 ]]; then
             recommended_violations=$((recommended_violations + missing_docs))
             violations=$((violations + missing_docs))
@@ -529,8 +533,8 @@ prepare_quality_data() {
         "severity_threshold": "$SEVERITY_LEVEL"
     },
     "pr_context": {
-        "changed_files_count": $changed_files_count,
-        "commits_count": $commits_count
+        "changed_files_count": ${changed_files_count:-0},
+        "commits_count": ${commits_count:-0}
     }
 }
 EOF
@@ -551,36 +555,16 @@ run_ai_quality_analysis() {
         return 0
     fi
     
-    log_info "Running Claude AI quality analysis..."
+    log_info "Real Claude AI analysis will be handled by workflow Claude action"
+    log_info "This script prepares data for Claude action to analyze using prompts:"
+    log_info "  - Standards compliance: $SCRIPT_DIR/../Prompts/standards-compliance.md"
+    log_info "  - Tech debt analysis: $SCRIPT_DIR/../Prompts/tech-debt-analysis.md"
     
-    # Create mock analysis result for now
-    cat > "$QUALITY_DIR/ai-quality-analysis.md" << 'EOF'
-# 🔍 AI-Powered Quality Analysis
-
-## 📊 Quality Assessment Summary
-The code quality is **GOOD** with minor improvements needed in documentation and code organization.
-
-## 🛠️ Standards Compliance Analysis
-- Code formatting standards: ✅ Compliant
-- Git commit standards: ⚠️ Minor violations detected
-- Testing standards: ✅ Adequate coverage
-- Documentation standards: ⚠️ Missing XML docs in some files
-
-## 📈 Tech Debt Analysis
-- Code complexity: Acceptable with some long methods
-- Performance considerations: No critical issues
-- Maintenance burden: Low with minimal TODO items
-
-## 🎯 Recommendations
-1. **HIGH**: Add XML documentation to public APIs
-2. **MEDIUM**: Refactor methods longer than 50 lines
-3. **LOW**: Address TODO comments in upcoming sprints
-
-## ✅ Quality Gates
-All critical quality gates passed. Code is ready for integration.
-EOF
+    # Note: The actual Claude AI analysis is performed by the GitHub workflow
+    # using the Claude action with the prepared quality data and appropriate prompts.
+    # This function just ensures the data is ready for analysis.
     
-    log_success "AI quality analysis completed"
+    log_success "Quality data prepared for Claude AI analysis"
 }
 
 generate_quality_report() {
@@ -627,11 +611,8 @@ The detailed AI-powered quality analysis provides:
 
 EOF
     
-    # Add AI analysis if available
-    if [[ -f "$QUALITY_DIR/ai-quality-analysis.md" ]]; then
-        echo "" >> "quality-report.md"
-        cat "$QUALITY_DIR/ai-quality-analysis.md" >> "quality-report.md"
-    fi
+    # Note: Real AI analysis will be added by Claude action in the workflow
+    # The Claude action will use the quality data and prompts to generate genuine insights
     
     # Set GitHub Actions outputs
     if [[ -n "${GITHUB_OUTPUT:-}" ]]; then

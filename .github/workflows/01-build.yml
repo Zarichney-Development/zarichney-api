@@ -124,6 +124,17 @@ jobs:
             CoverageReport/
           retention-days: 7
 
+      - name: Testing Analysis with Claude AI
+        if: always() && github.event_name == 'pull_request'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt_file: Scripts/Prompts/testing-analysis.md
+          working_directory: ${{ github.workspace }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          pr_number: ${{ github.event.number }}
+          comment_header: "## 🧪 Testing Analysis"
+
   frontend-build:
     name: "Frontend • Build & Test"
     runs-on: ubuntu-latest
