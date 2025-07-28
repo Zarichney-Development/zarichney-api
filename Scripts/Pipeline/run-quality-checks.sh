@@ -190,11 +190,13 @@ run_standards_compliance() {
     # Code formatting checks
     log_info "Checking code formatting..."
     if ! dotnet format --verify-no-changes --verbosity diagnostic > "$QUALITY_DIR/format-check.log" 2>&1; then
-        local format_issues
-        format_issues=$(grep -c "would be formatted" "$QUALITY_DIR/format-check.log" 2>/dev/null || echo "0")
-        # Ensure format_issues is a valid number
-        if ! [[ "$format_issues" =~ ^[0-9]+$ ]]; then
-            format_issues=0
+        local format_issues=0
+        if [[ -f "$QUALITY_DIR/format-check.log" ]]; then
+            format_issues=$(grep -c "would be formatted" "$QUALITY_DIR/format-check.log" 2>/dev/null || echo "0")
+            # Ensure format_issues is a valid number
+            if ! [[ "$format_issues" =~ ^[0-9]+$ ]]; then
+                format_issues=0
+            fi
         fi
         mandatory_violations=$((mandatory_violations + format_issues))
         violations=$((violations + format_issues))
@@ -271,6 +273,16 @@ run_standards_compliance() {
         fi
     fi
     
+    # Get code formatting count safely
+    local code_formatting_count=0
+    if [[ -f "$QUALITY_DIR/format-check.log" ]]; then
+        code_formatting_count=$(grep -c "would be formatted" "$QUALITY_DIR/format-check.log" 2>/dev/null || echo "0")
+        # Ensure it's a valid number
+        if ! [[ "$code_formatting_count" =~ ^[0-9]+$ ]]; then
+            code_formatting_count=0
+        fi
+    fi
+    
     # Create standards compliance summary
     cat > "$QUALITY_DIR/standards-compliance-summary.json" << EOF
 {
@@ -280,7 +292,7 @@ run_standards_compliance() {
     "recommended_violations": $recommended_violations,
     "optional_violations": $optional_violations,
     "categories": {
-        "code_formatting": $(grep -c "would be formatted" "$QUALITY_DIR/format-check.log" 2>/dev/null || echo "0"),
+        "code_formatting": $code_formatting_count,
         "git_standards": $git_violations,
         "testing_standards": $test_violations,
         "documentation": $missing_docs
@@ -472,6 +484,24 @@ prepare_quality_data() {
         quality_level="CRITICAL"
     fi
     
+    # Calculate PR context values safely
+    local changed_files_count=0
+    local commits_count=0
+    if [[ -f "$QUALITY_DIR/changed-files.txt" ]]; then
+        changed_files_count=$(wc -l < "$QUALITY_DIR/changed-files.txt" 2>/dev/null || echo "0")
+        # Ensure it's a valid number
+        if ! [[ "$changed_files_count" =~ ^[0-9]+$ ]]; then
+            changed_files_count=0
+        fi
+    fi
+    if [[ -f "$QUALITY_DIR/pr-info.json" ]]; then
+        commits_count=$(jq -r '.commits | length' "$QUALITY_DIR/pr-info.json" 2>/dev/null || echo "0")
+        # Ensure it's a valid number
+        if ! [[ "$commits_count" =~ ^[0-9]+$ ]]; then
+            commits_count=0
+        fi
+    fi
+    
     # Create comprehensive quality analysis data
     cat > "$QUALITY_DIR/quality-analysis-data.json" << EOF
 {
@@ -499,8 +529,8 @@ prepare_quality_data() {
         "severity_threshold": "$SEVERITY_LEVEL"
     },
     "pr_context": {
-        "changed_files_count": $([ -f "$QUALITY_DIR/changed-files.txt" ] && wc -l < "$QUALITY_DIR/changed-files.txt" || echo "0"),
-        "commits_count": $([ -f "$QUALITY_DIR/pr-info.json" ] && jq -r '.commits | length' "$QUALITY_DIR/pr-info.json" 2>/dev/null || echo "0")
+        "changed_files_count": ${changed_files_count:-0},
+        "commits_count": ${commits_count:-0}
     }
 }
 EOF
