@@ -127,7 +127,7 @@ jobs:
       - name: Testing Analysis with Claude AI
         if: always() && github.event_name == 'pull_request'
         id: claude-testing
-        uses: grll/claude-code-action-with-oauth@v1
+        uses: grll/claude-code-action@beta
         continue-on-error: true
         with:
           use_oauth: true

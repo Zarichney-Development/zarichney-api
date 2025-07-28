@@ -127,7 +127,7 @@ jobs:
       - name: Standards Compliance AI Analysis
         if: steps.pr-number.outputs.pr_number != ''
         id: claude-standards
-        uses: grll/claude-code-action-with-oauth@v1
+        uses: grll/claude-code-action@beta
         continue-on-error: true
         with:
           use_oauth: true
@@ -219,7 +219,7 @@ jobs:
       - name: Tech Debt AI Analysis  
         if: steps.pr-number.outputs.pr_number != ''
         id: claude-techdebt
-        uses: grll/claude-code-action-with-oauth@v1
+        uses: grll/claude-code-action@beta
         continue-on-error: true
         with:
           use_oauth: true
