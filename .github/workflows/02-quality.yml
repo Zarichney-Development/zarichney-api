@@ -170,7 +170,7 @@ jobs:
                     issue_number: ${{ steps.pr-number.outputs.pr_number }},
                     owner: context.repo.owner,
                     repo: context.repo.repo,
-                    body: `## 🛠️ Standards Compliance Analysis\n\n${analysis}`
+                    body: "## 🛠️ Standards Compliance Analysis\\n\\n" + analysis
                   });
                 }
               }
@@ -200,7 +200,7 @@ jobs:
                     issue_number: ${{ steps.pr-number.outputs.pr_number }},
                     owner: context.repo.owner,
                     repo: context.repo.repo,
-                    body: `## 📈 Tech Debt Analysis\n\n${analysis}`
+                    body: "## 📈 Tech Debt Analysis\\n\\n" + analysis
                   });
                 }
               }
