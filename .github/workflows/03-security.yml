@@ -178,10 +178,10 @@ jobs:
           chmod +x ./Scripts/Pipeline/run-security-scans.sh
           chmod +x ./Scripts/Pipeline/*.sh
           ./Scripts/Pipeline/run-security-scans.sh \
-            ${PR_NUMBER:+--pr-number="$PR_NUMBER"} \
-            --base-branch="$BASE_BRANCH" \
-            --head-sha="$HEAD_SHA" \
-            --skip-analysis=false
+            ${PR_NUMBER:+--pr-number "$PR_NUMBER"} \
+            --base-branch "$BASE_BRANCH" \
+            --head-sha "$HEAD_SHA" \
+            --skip-analysis false
 
       - name: Post security analysis to PR
         if: steps.pr-number.outputs.pr_number != ''

@@ -113,15 +113,15 @@ jobs:
           # Execute with proper parameter handling
           if [ -n "$PR_NUMBER" ]; then
             ./Scripts/Pipeline/run-quality-checks.sh \
-              --pr-number="$PR_NUMBER" \
-              --base-branch="$BASE_BRANCH" \
-              --head-sha="$HEAD_SHA" \
-              --severity=medium
+              --pr-number "$PR_NUMBER" \
+              --base-branch "$BASE_BRANCH" \
+              --head-sha "$HEAD_SHA" \
+              --severity medium
           else
             ./Scripts/Pipeline/run-quality-checks.sh \
-              --base-branch="$BASE_BRANCH" \
-              --head-sha="$HEAD_SHA" \
-              --severity=medium
+              --base-branch "$BASE_BRANCH" \
+              --head-sha "$HEAD_SHA" \
+              --severity medium
           fi
 
       - name: Post quality analysis results
