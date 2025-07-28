@@ -10,4 +10,5 @@ Expected behavior:
 - Token should refresh automatically if needed
 - Three separate Claude AI comments should appear on PR
 
-**Update**: All workflows now use grll/claude-code-action-with-oauth@v1 for real Claude analysis.
+**Update**: All workflows now use grll/claude-code-action@beta for real Claude analysis.
+**OAuth Fix**: Removed secrets_admin_pat parameter to prevent 403 token refresh errors.
