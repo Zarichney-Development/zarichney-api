@@ -192,6 +192,10 @@ run_standards_compliance() {
     if ! dotnet format --verify-no-changes --verbosity diagnostic > "$QUALITY_DIR/format-check.log" 2>&1; then
         local format_issues
         format_issues=$(grep -c "would be formatted" "$QUALITY_DIR/format-check.log" 2>/dev/null || echo "0")
+        # Ensure format_issues is a valid number
+        if ! [[ "$format_issues" =~ ^[0-9]+$ ]]; then
+            format_issues=0
+        fi
         mandatory_violations=$((mandatory_violations + format_issues))
         violations=$((violations + format_issues))
         log_warning "Code formatting issues found: $format_issues"
@@ -256,6 +260,10 @@ run_standards_compliance() {
     
     if [[ -f "$QUALITY_DIR/doc-check.tmp" ]]; then
         missing_docs=$(cat "$QUALITY_DIR/doc-check.tmp" | wc -l)
+        # Ensure missing_docs is a valid number
+        if ! [[ "$missing_docs" =~ ^[0-9]+$ ]]; then
+            missing_docs=0
+        fi
         if [[ $missing_docs -gt 0 ]]; then
             recommended_violations=$((recommended_violations + missing_docs))
             violations=$((violations + missing_docs))
