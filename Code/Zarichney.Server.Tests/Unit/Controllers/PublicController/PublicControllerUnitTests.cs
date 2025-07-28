@@ -123,4 +123,23 @@ public class PublicControllerUnitTests
 
     _mockStatusService.Verify();
   }
+
+  /// <summary>
+  /// Test for the validation endpoint - intentionally simple to test AI workflow analysis
+  /// </summary>
+  [Fact]
+  public async Task TestValidation_WithValidInput_ReturnsOkWithResults()
+  {
+    // Arrange
+    const string testInput = "test";
+
+    // Act
+    var result = await _controller.TestValidation(testInput);
+
+    // Assert
+    result.Should().BeOfType<OkObjectResult>(because: "valid input should return OK result");
+    var okResult = result as OkObjectResult;
+    okResult.Should().NotBeNull();
+    okResult.Value.Should().NotBeNull();
+  }
 }
