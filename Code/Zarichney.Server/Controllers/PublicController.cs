@@ -51,7 +51,7 @@ public class PublicController(
 
   /// <summary>
   /// Test endpoint for validating AI workflow analysis - intentionally includes various code quality issues
-  /// Updated: Testing Claude Max OAuth integration with corrected tool permissions
+  /// Updated: Testing improved Claude comment posting with fallback mechanisms
   /// </summary>
   [HttpGet("test-validation")]
   public async Task<IActionResult> TestValidation(string input)
