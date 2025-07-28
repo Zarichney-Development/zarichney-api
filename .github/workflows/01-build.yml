@@ -132,7 +132,7 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt_file: Scripts/Prompts/testing-analysis.md
-          allowed_tools: "View,GlobTool,GrepTool,Bash(git:*)"
+          allowed_tools: "Read,Glob,Grep,Bash"
           timeout_minutes: 5
 
       - name: Post Testing Analysis Comment
