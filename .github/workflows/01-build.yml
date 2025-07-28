@@ -134,7 +134,6 @@ jobs:
           claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
           claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
-          secrets_admin_pat: ${{ secrets.SECRETS_ADMIN_PAT }}
           direct_prompt: |
             # Testing Analysis for zarichney-api Project
 
