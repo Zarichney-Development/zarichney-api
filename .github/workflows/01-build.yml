@@ -125,13 +125,13 @@ jobs:
           retention-days: 7
 
       - name: Testing Analysis with Claude AI
-        if: always() && github.event_name == 'pull_request' && (secrets.ANTHROPIC_API_KEY != '' || secrets.CLAUDE_CODE_OAUTH_TOKEN != '')
+        if: always() && github.event_name == 'pull_request'
         id: claude-testing
         uses: anthropics/claude-code-base-action@beta
         continue-on-error: true
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY || '' }}
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt_file: Scripts/Prompts/testing-analysis.md
           allowed_tools: "View,GlobTool,GrepTool,Bash(git:*)"
           timeout_minutes: 5
