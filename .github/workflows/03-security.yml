@@ -1,18 +1,11 @@
 name: "03 • Security Analysis"
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'Code/**'
-      - 'Scripts/Pipeline/**'
-      - '.github/workflows/**'
-      - '*.sln'
   workflow_run:
     workflows: ["01 • Build & Test"]
     types:
       - completed
-    branches: [main]
+    branches: [main, develop]  # Security analysis for PR validation only
   schedule:
     - cron: '0 2 * * 1'  # Weekly on Mondays at 2 AM
   workflow_dispatch:
@@ -29,11 +22,7 @@ jobs:
   security-scanning:
     name: "Security Scanning"
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'push' ||
-      github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    if: always() && github.event.workflow_run.event == 'pull_request'
     timeout-minutes: 45
 
     strategy:
@@ -91,6 +80,10 @@ jobs:
           export BASE_BRANCH="${{ github.event.repository.default_branch }}"
           export HEAD_SHA="${{ github.sha }}"
           
+          # Make scripts executable
+          chmod +x ./Scripts/Pipeline/run-security-scans.sh
+          chmod +x ./Scripts/Pipeline/*.sh
+          
           # Execute security scanning based on matrix type
           case "${{ matrix.scan-type }}" in
             "codeql")
@@ -121,7 +114,7 @@ jobs:
     name: "Security Analysis & Reporting"
     runs-on: ubuntu-latest
     needs: security-scanning
-    if: always() && !cancelled()
+    if: always() && !cancelled() && github.event.workflow_run.event == 'pull_request'
     timeout-minutes: 20
 
     steps:
@@ -148,6 +141,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Create PR check run
+        id: create-check
+        if: steps.pr-number.outputs.pr_number != ''
+        run: |
+          CHECK_RUN_ID=$(gh api repos/${{ github.repository }}/check-runs \
+            --method POST \
+            --field name="Security Analysis" \
+            --field head_sha="${{ github.event.workflow_run.head_sha || github.sha }}" \
+            --field status="in_progress" \
+            --field details_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --jq '.id')
+          echo "check_run_id=$CHECK_RUN_ID" >> $GITHUB_OUTPUT
+          echo "Created check run ID: $CHECK_RUN_ID"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run comprehensive security analysis
         id: security-analysis
         run: |
@@ -164,7 +173,9 @@ jobs:
           mkdir -p security-analysis
           cp -r security-results/* security-analysis/ 2>/dev/null || true
           
-          # Execute comprehensive security analysis
+          # Make scripts executable and execute comprehensive security analysis
+          chmod +x ./Scripts/Pipeline/run-security-scans.sh
+          chmod +x ./Scripts/Pipeline/*.sh
           ./Scripts/Pipeline/run-security-scans.sh \
             ${PR_NUMBER:+--pr-number="$PR_NUMBER"} \
             --base-branch="$BASE_BRANCH" \
@@ -200,6 +211,37 @@ jobs:
           security-data-file: artifacts/security/security-analysis-data.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Complete PR check run
+        if: always() && steps.create-check.outputs.check_run_id != ''
+        run: |
+          # Determine conclusion based on job result and security gates
+          if [ "${{ job.status }}" = "success" ] && [ "${{ steps.security-analysis.outputs.deployment_safe }}" = "true" ]; then
+            CONCLUSION="success"
+            TITLE="✅ Security Analysis Passed"
+            SUMMARY="All security scans passed - deployment safe"
+          elif [ "${{ steps.security-analysis.outputs.deployment_safe }}" = "false" ]; then
+            CONCLUSION="failure"
+            TITLE="🚨 Security Issues Detected"
+            SUMMARY="Critical security issues found - deployment blocked"
+          elif [ "${{ job.status }}" = "failure" ]; then
+            CONCLUSION="failure"
+            TITLE="❌ Security Analysis Failed"
+            SUMMARY="Security analysis failed to complete"
+          else
+            CONCLUSION="neutral"
+            TITLE="⚠️ Security Analysis Completed"
+            SUMMARY="Security analysis completed with warnings"
+          fi
+          
+          gh api repos/${{ github.repository }}/check-runs/${{ steps.create-check.outputs.check_run_id }} \
+            --method PATCH \
+            --field status="completed" \
+            --field conclusion="$CONCLUSION" \
+            --field output[title]="$TITLE" \
+            --field output[summary]="$SUMMARY"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Upload security artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -212,7 +254,7 @@ jobs:
     name: "Security Summary"
     runs-on: ubuntu-latest
     needs: [security-scanning, security-analysis]
-    if: always() && !cancelled()
+    if: always() && !cancelled() && github.event.workflow_run.event == 'pull_request'
     
     steps:
       - name: Generate security summary
