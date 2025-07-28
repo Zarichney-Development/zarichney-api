@@ -17,6 +17,7 @@ permissions:
   security-events: write
   pull-requests: write
   issues: write
+  checks: write
 
 jobs:
   security-scanning:
