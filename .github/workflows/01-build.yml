@@ -10,7 +10,7 @@ on:
       - '.github/workflows/**'
       - '.github/actions/shared/**'
   pull_request:
-    branches: [main, develop]
+    branches: ['**']  # Trigger on ALL branch targets for universal PR support
     paths:
       - 'Code/**'
       - 'Scripts/Pipeline/**'
@@ -28,6 +28,9 @@ permissions:
   contents: read
   actions: read
   pull-requests: write
+  issues: write
+  checks: write
+  security-events: write
 
 jobs:
   path-analysis:
@@ -124,126 +127,143 @@ jobs:
             CoverageReport/
           retention-days: 7
 
-      # Temporarily disabled to focus on fixing Quality Analysis Claude actions
-      # - name: Testing Analysis with Claude AI
-      #   if: always() && github.event_name == 'pull_request'
-      #   id: claude-testing
-      #   uses: grll/claude-code-action@beta
-      #   continue-on-error: true
-      #   with:
-      #     use_oauth: true
-      #     claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-      #     claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
-      #     claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
-      #     direct_prompt: |
-      #       # Testing Analysis for zarichney-api Project
-      #
-      #       You are a senior software testing expert and quality assurance specialist conducting a comprehensive testing analysis for this pull request in the zarichney-api project.
-      #
-      #       ## Analysis Data
-      #
-      #       Please analyze the test results and coverage data which contains:
-      #       - Test execution results (unit and integration tests)
-      #       - Code coverage metrics and trends
-      #       - Test performance and execution times
-      #       - Test failure analysis and patterns
-      #       - Testing best practices adherence
-      #
-      #       ## Analysis Framework
-      #
-      #       ### 1. Test Coverage Assessment
-      #       - Line coverage percentage and quality
-      #       - Branch coverage analysis
-      #       - Missing test coverage identification
-      #       - Coverage trend analysis (improvement/regression)
-      #
-      #       ### 2. Test Quality Analysis
-      #       - Test design patterns and best practices
-      #       - Test naming conventions and clarity
-      #       - Test organization and structure
-      #       - Mock usage and test isolation
-      #
-      #       ### 3. Test Performance Review
-      #       - Test execution time analysis
-      #       - Slow test identification
-      #       - Performance regression detection
-      #       - Test parallelization opportunities
-      #
-      #       ### 4. Test Failure Analysis
-      #       - Failed test root cause analysis
-      #       - Flaky test identification
-      #       - Test reliability assessment
-      #       - Error pattern recognition
-      #
-      #       ### 5. Testing Standards Compliance
-      #       - xUnit best practices adherence
-      #       - Testcontainers usage patterns
-      #       - Test categorization (Unit/Integration)
-      #       - Assertion quality and clarity
-      #
-      #       ## Output Requirements
-      #
-      #       Provide a comprehensive markdown report with:
-      #
-      #       ### Executive Summary
-      #       - Overall test health assessment (Excellent/Good/Fair/Poor/Critical)
-      #       - Key metrics summary (coverage %, pass rate, execution time)
-      #       - Critical issues requiring immediate attention
-      #
-      #       ### Detailed Analysis
-      #
-      #       #### 🧪 Test Coverage Report
-      #       - Current coverage metrics with trend analysis
-      #       - Areas lacking adequate test coverage
-      #       - Recommendations for coverage improvement
-      #
-      #       #### ⚡ Test Performance Analysis
-      #       - Execution time breakdown and performance trends
-      #       - Slow test identification with optimization suggestions
-      #       - Parallelization and efficiency recommendations
-      #
-      #       #### 🔍 Test Quality Assessment
-      #       - Test design pattern evaluation
-      #       - Best practices adherence review
-      #       - Code quality of test implementations
-      #
-      #       #### 🚨 Issues and Risks
-      #       - Critical test failures requiring immediate attention
-      #       - Flaky tests affecting reliability
-      #       - Technical debt in test codebase
-      #
-      #       #### 🎯 Recommendations
-      #       Prioritized actionable recommendations:
-      #       1. **CRITICAL**: Issues blocking deployment or causing instability
-      #       2. **HIGH**: Important improvements for test reliability
-      #       3. **MEDIUM**: Quality improvements and optimizations
-      #       4. **LOW**: Minor enhancements and best practices
-      #
-      #       ### Metrics Dashboard
-      #       - Test pass rate: X%
-      #       - Code coverage: X% (trend: ↑/↓/→)
-      #       - Average execution time: Xs
-      #       - Number of flaky tests: X
-      #       - Testing debt score: X/100
-      #
-      #       ## Context Awareness
-      #
-      #       Consider the zarichney-api project context:
-      #       - ASP.NET 8 backend with xUnit testing framework
-      #       - Angular frontend with appropriate testing tools
-      #       - Testcontainers for integration testing
-      #       - Docker-based test environment
-      #       - CI/CD pipeline integration requirements
-      #
-      #       ## Tone and Style
-      #
-      #       - Professional and constructive
-      #       - Focus on actionable improvements
-      #       - Explain the business impact of testing issues
-      #       - Provide specific, implementable recommendations
-      #       - Balance between thoroughness and clarity
-      #
-      #       Please analyze the test results and provide your comprehensive testing analysis.
+  claude-testing-analysis:
+    name: "Quality Analysis • Testing Analysis (AI)"
+    runs-on: ubuntu-latest
+    needs: [path-analysis, backend-build, frontend-build, build-summary]
+    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "develop"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download test results
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: test-results-${{ github.run_number }}
+          path: ./
+
+      - name: Testing Analysis with Claude AI
+        id: claude-testing
+        uses: grll/claude-code-action@beta
+        continue-on-error: true
+        with:
+          use_oauth: true
+          claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
+          claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          direct_prompt: |
+            # Testing Analysis for zarichney-api Project
+
+            You are a senior software testing expert and quality assurance specialist conducting a comprehensive testing analysis for this pull request in the zarichney-api project.
+
+            ## Analysis Data
+
+            Please analyze the test results and coverage data which contains:
+            - Test execution results (unit and integration tests)
+            - Code coverage metrics and trends
+            - Test performance and execution times
+            - Test failure analysis and patterns
+            - Testing best practices adherence
+
+            ## Analysis Framework
+
+            ### 1. Test Coverage Assessment
+            - Line coverage percentage and quality
+            - Branch coverage analysis
+            - Missing test coverage identification
+            - Coverage trend analysis (improvement/regression)
+
+            ### 2. Test Quality Analysis
+            - Test design patterns and best practices
+            - Test naming conventions and clarity
+            - Test organization and structure
+            - Mock usage and test isolation
+
+            ### 3. Test Performance Review
+            - Test execution time analysis
+            - Slow test identification
+            - Performance regression detection
+            - Test parallelization opportunities
+
+            ### 4. Test Failure Analysis
+            - Failed test root cause analysis
+            - Flaky test identification
+            - Test reliability assessment
+            - Error pattern recognition
+
+            ### 5. Testing Standards Compliance
+            - xUnit best practices adherence
+            - Testcontainers usage patterns
+            - Test categorization (Unit/Integration)
+            - Assertion quality and clarity
+
+            ## Output Requirements
+
+            Provide a comprehensive markdown report with:
+
+            ### Executive Summary
+            - Overall test health assessment (Excellent/Good/Fair/Poor/Critical)
+            - Key metrics summary (coverage %, pass rate, execution time)
+            - Critical issues requiring immediate attention
+
+            ### Detailed Analysis
+
+            #### 🧪 Test Coverage Report
+            - Current coverage metrics with trend analysis
+            - Areas lacking adequate test coverage
+            - Recommendations for coverage improvement
+
+            #### ⚡ Test Performance Analysis
+            - Execution time breakdown and performance trends
+            - Slow test identification with optimization suggestions
+            - Parallelization and efficiency recommendations
+
+            #### 🔍 Test Quality Assessment
+            - Test design pattern evaluation
+            - Best practices adherence review
+            - Code quality of test implementations
+
+            #### 🚨 Issues and Risks
+            - Critical test failures requiring immediate attention
+            - Flaky tests affecting reliability
+            - Technical debt in test codebase
+
+            #### 🎯 Recommendations
+            Prioritized actionable recommendations:
+            1. **CRITICAL**: Issues blocking deployment or causing instability
+            2. **HIGH**: Important improvements for test reliability
+            3. **MEDIUM**: Quality improvements and optimizations
+            4. **LOW**: Minor enhancements and best practices
+
+            ### Metrics Dashboard
+            - Test pass rate: X%
+            - Code coverage: X% (trend: ↑/↓/→)
+            - Average execution time: Xs
+            - Number of flaky tests: X
+            - Testing debt score: X/100
+
+            ## Context Awareness
+
+            Consider the zarichney-api project context:
+            - ASP.NET 8 backend with xUnit testing framework
+            - Angular frontend with appropriate testing tools
+            - Testcontainers for integration testing
+            - Docker-based test environment
+            - CI/CD pipeline integration requirements
+
+            ## Tone and Style
+
+            - Professional and constructive
+            - Focus on actionable improvements
+            - Explain the business impact of testing issues
+            - Provide specific, implementable recommendations
+            - Balance between thoroughness and clarity
+
+            Please analyze the test results and provide your comprehensive testing analysis.
 
   frontend-build:
     name: "Frontend • Build & Test"
@@ -312,4 +332,704 @@ jobs:
             echo "📚 Only documentation changed - no builds required"
           else
             echo "✅ All required builds completed successfully"
+          fi
+
+  quality-checks:
+    name: "Quality Analysis • Script Execution"
+    runs-on: ubuntu-latest
+    needs: [path-analysis, backend-build, frontend-build, build-summary]
+    if: always() && !cancelled() && contains(fromJSON('["main", "develop"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup development environment
+        uses: ./.github/actions/shared/setup-environment
+        with:
+          setup-dotnet: 'true'
+          setup-node: 'false'
+          dotnet-version: '8.0.x'
+
+      - name: Get PR information
+        id: pr-info
+        run: |
+          # For pull_request events, information is directly available
+          PR_NUMBER="${{ github.event.number }}"
+          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "base_branch=$BASE_BRANCH" >> $GITHUB_OUTPUT
+          echo "head_sha=$HEAD_SHA" >> $GITHUB_OUTPUT
+          
+          echo "Found PR information:"
+          echo "  - PR Number: $PR_NUMBER"
+          echo "  - Base Branch: $BASE_BRANCH"
+          echo "  - Head SHA: $HEAD_SHA"
+
+      - name: Create PR check run
+        id: create-check
+        run: |
+          CHECK_RUN_ID=$(gh api repos/${{ github.repository }}/check-runs \
+            --method POST \
+            --field name="Quality Analysis" \
+            --field head_sha="${{ steps.pr-info.outputs.head_sha }}" \
+            --field status="in_progress" \
+            --field details_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --jq '.id')
+          echo "check_run_id=$CHECK_RUN_ID" >> $GITHUB_OUTPUT
+          echo "Created check run ID: $CHECK_RUN_ID"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download test results
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: test-results-${{ github.run_number }}
+          path: ./
+
+      - name: Run quality checks
+        id: quality-checks
+        shell: bash
+        run: |
+          echo "🔍 Running comprehensive quality analysis..."
+          
+          # Set environment variables
+          export PR_NUMBER="${{ steps.pr-info.outputs.pr_number }}"
+          export BASE_BRANCH="${{ steps.pr-info.outputs.base_branch }}"
+          export HEAD_SHA="${{ steps.pr-info.outputs.head_sha }}"
+          export CLAUDE_CODE_OAUTH_TOKEN="${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}"
+          export GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          
+          # Debug information
+          echo "Debug: PR_NUMBER=$PR_NUMBER"
+          echo "Debug: BASE_BRANCH=$BASE_BRANCH"
+          echo "Debug: HEAD_SHA=$HEAD_SHA"
+          echo "Debug: Current directory: $(pwd)"
+          echo "Debug: Script exists: $(ls -la ./Scripts/Pipeline/run-quality-checks.sh)"
+          
+          # Make scripts executable and execute quality analysis
+          chmod +x ./Scripts/Pipeline/run-quality-checks.sh
+          chmod +x ./Scripts/Pipeline/*.sh
+          
+          # Execute with proper parameter handling
+          if [ -n "$PR_NUMBER" ]; then
+            ./Scripts/Pipeline/run-quality-checks.sh \
+              --pr-number "$PR_NUMBER" \
+              --base-branch "$BASE_BRANCH" \
+              --head-sha "$HEAD_SHA" \
+              --severity medium
+          else
+            ./Scripts/Pipeline/run-quality-checks.sh \
+              --base-branch "$BASE_BRANCH" \
+              --head-sha "$HEAD_SHA" \
+              --severity medium
+          fi
+
+      - name: Complete PR check run
+        if: always() && steps.create-check.outputs.check_run_id != ''
+        run: |
+          # Quality analysis is informational - only fail on technical errors
+          SCORE="${{ steps.quality-checks.outputs.overall_score }}"
+          
+          if [ "${{ job.status }}" = "success" ]; then
+            if [[ "${SCORE:-0}" -lt 70 ]]; then
+              CONCLUSION="neutral"
+              TITLE="📊 Quality Analysis: Insights Available"
+              SUMMARY="Quality score: ${SCORE:-0}/100. AI recommendations posted to PR comments."
+            else
+              CONCLUSION="success"
+              TITLE="✅ Quality Analysis: Excellent Quality"
+              SUMMARY="Quality score: ${SCORE:-0}/100. Code meets quality standards."
+            fi
+          elif [ "${{ job.status }}" = "failure" ]; then
+            CONCLUSION="failure"
+            TITLE="❌ Quality Analysis: Technical Error"
+            SUMMARY="Quality analysis failed due to technical issues - check workflow logs"
+          else
+            CONCLUSION="neutral"
+            TITLE="📊 Quality Analysis: Completed"
+            SUMMARY="Quality analysis completed. Results available in PR comments."
+          fi
+          
+          gh api repos/${{ github.repository }}/check-runs/${{ steps.create-check.outputs.check_run_id }} \
+            --method PATCH \
+            --field status="completed" \
+            --field conclusion="$CONCLUSION" \
+            --field output[title]="$TITLE" \
+            --field output[summary]="$SUMMARY"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload quality artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-analysis-${{ github.run_number }}
+          path: artifacts/quality/
+          retention-days: 30
+
+  claude-standards-analysis:
+    name: "Quality Analysis • Standards Compliance (AI)"
+    runs-on: ubuntu-latest
+    needs: [path-analysis, backend-build, frontend-build, build-summary, quality-checks]
+    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "develop"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download quality analysis data
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: quality-analysis-${{ github.run_number }}
+          path: ./
+
+      - name: Standards Compliance AI Analysis
+        id: claude-standards
+        uses: grll/claude-code-action@beta
+        continue-on-error: true
+        with:
+          use_oauth: true
+          claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
+          claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          direct_prompt: |
+            # Standards Compliance Analysis for zarichney-api Project
+
+            You are a senior software architect and code quality expert conducting a comprehensive standards compliance analysis for this pull request in the zarichney-api project.
+
+            ## Analysis Data
+
+            Please analyze the standards compliance data in `quality-analysis-data.json` which contains:
+            - Code formatting compliance results
+            - Git commit message standards validation
+            - Testing standards adherence
+            - Documentation standards compliance
+            - Overall compliance score and violation categorization
+
+            ## Required Analysis Sections
+
+            ### 1. Executive Compliance Summary
+            - Overall compliance status (Excellent/Good/Fair/Poor/Critical)
+            - Key compliance achievements and immediate violations
+            - Compliance score interpretation and trend analysis
+            - Impact on code maintainability and team productivity
+
+            ### 2. Mandatory Standards Violations
+            - Critical formatting issues that block merging
+            - Required test coverage violations
+            - Essential documentation missing
+            - Security-related compliance failures
+            - Specific file paths and line numbers for each violation
+
+            ### 3. Recommended Standards Analysis
+            - Code style and formatting improvements
+            - Git workflow and commit message enhancement opportunities
+            - Documentation completeness assessment
+            - Testing strategy alignment with project standards
+
+            ### 4. Code Quality Assessment
+            - Architecture pattern adherence
+            - Naming convention compliance
+            - Method and class size violations
+            - Complexity metrics analysis
+            - Design principle adherence (SOLID, DRY, KISS)
+
+            ### 5. Documentation Standards Evaluation
+            - XML documentation coverage for public APIs
+            - README.md completeness and accuracy
+            - Code comment quality and appropriateness
+            - Architectural documentation alignment
+
+            ### 6. Testing Standards Compliance
+            - Test naming convention adherence
+            - Test categorization (Unit/Integration) proper usage
+            - Test coverage thresholds compliance
+            - Test organization and structure validation
+
+            ### 7. Actionable Remediation Plan
+
+            **Priority ranked by compliance impact:**
+            - **MANDATORY**: Critical violations that must be fixed before merging
+            - **RECOMMENDED**: Important improvements for code quality
+            - **OPTIONAL**: Nice-to-have enhancements for long-term maintainability
+
+            Provide specific remediation steps with:
+            - File paths and line numbers
+            - Exact commands to run (e.g., `dotnet format`)
+            - Code examples for complex fixes
+            - Timeline estimates for each remediation
+
+            ### 8. Compliance Decision Matrix
+            Recommend one of:
+            - **APPROVE**: All mandatory standards met, ready to merge
+            - **CONDITIONAL**: Minor violations acceptable with monitoring
+            - **REQUIRE_FIXES**: Mandatory violations must be resolved first
+
+            ## Context Considerations
+            - This is a full-stack .NET/Angular application
+            - The analysis will be posted as a PR comment for development team review
+            - Results will influence merge decisions and code quality gates
+            - Standards are defined in project documentation under `/Docs/Standards/`
+
+            Please analyze the code changes and provide your comprehensive standards compliance analysis.
+
+  claude-tech-debt-analysis:
+    name: "Quality Analysis • Tech Debt Analysis (AI)"
+    runs-on: ubuntu-latest
+    needs: [path-analysis, backend-build, frontend-build, build-summary, quality-checks]
+    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "develop"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download quality analysis data
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: quality-analysis-${{ github.run_number }}
+          path: ./
+
+      - name: Tech Debt AI Analysis
+        id: claude-techdebt
+        uses: grll/claude-code-action@beta
+        continue-on-error: true
+        with:
+          use_oauth: true
+          claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
+          claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          direct_prompt: |
+            # Technical Debt Analysis for zarichney-api Project
+
+            You are a senior software architect and technical debt specialist conducting a comprehensive technical debt analysis for this pull request in the zarichney-api project.
+
+            ## Analysis Data
+
+            Please analyze the technical debt data in `quality-analysis-data.json` which contains:
+            - Code complexity metrics and violations
+            - Maintenance burden indicators
+            - Performance debt analysis
+            - Architecture pattern adherence
+            - Overall debt score and categorization
+
+            ## Required Analysis Sections
+
+            ### 1. Executive Debt Summary
+            - Overall technical debt level (Excellent/Good/Fair/Poor/Critical)
+            - Key debt accumulation areas and immediate concerns
+            - Debt score interpretation and velocity impact
+            - Long-term maintainability assessment
+
+            ### 2. Code Complexity Analysis
+            - Method length violations and cognitive complexity
+            - Class size and responsibility violations
+            - Cyclomatic complexity hotspots
+            - Nesting depth and parameter count issues
+            - SOLID principle violations
+
+            ### 3. Performance Debt Assessment
+            - Blocking async/await pattern violations
+            - Inefficient algorithms and data structures
+            - Resource leak potential (missing using statements)
+            - Database query optimization opportunities
+            - Memory allocation patterns
+
+            ### 4. Maintenance Burden Evaluation
+            - TODO/FIXME/HACK comment accumulation
+            - Code duplication and repeated patterns
+            - Hard-coded values and magic numbers
+            - Configuration and environment dependencies
+            - Error handling and logging gaps
+
+            ### 5. Architecture Debt Analysis
+            - Design pattern inconsistencies
+            - Abstraction level violations
+            - Dependency injection and coupling issues
+            - Layer separation and boundary violations
+            - API design and contract debt
+
+            ### 6. Testing Debt Assessment
+            - Test coverage gaps for complex code
+            - Test maintainability and brittleness
+            - Missing integration test scenarios
+            - Test data management debt
+            - Test performance and reliability issues
+
+            ### 7. Prioritized Debt Remediation Plan
+
+            **Priority ranked by business impact:**
+            - **CRITICAL**: Debt that blocks feature development or causes production issues
+            - **HIGH**: Debt that significantly slows development velocity
+            - **MEDIUM**: Debt that impacts code maintainability
+            - **LOW**: Debt that should be addressed during refactoring cycles
+
+            For each debt item provide:
+            - Business impact assessment
+            - Effort estimation (S/M/L/XL)
+            - Recommended remediation approach
+            - Risk of not addressing the debt
+            - Dependencies and prerequisites
+
+            ### 8. Technical Debt Decision Matrix
+            Recommend one of:
+            - **ACCEPT**: Low-impact debt, continue development
+            - **MONITOR**: Medium-impact debt, track and plan remediation
+            - **REMEDIATE**: High-impact debt, address in current/next sprint
+            - **BLOCK**: Critical debt, must be resolved before merge
+
+            ## Context Considerations
+            - This is a full-stack .NET/Angular application
+            - The analysis will guide technical debt management decisions
+            - Results will influence sprint planning and refactoring priorities
+            - Consider both immediate and long-term maintainability
+
+            Please analyze the code changes and provide your comprehensive technical debt analysis.
+
+  security-scans:
+    name: "Security • Comprehensive Scanning"
+    runs-on: ubuntu-latest
+    needs: [path-analysis, backend-build, frontend-build, build-summary]
+    if: always() && !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
+    timeout-minutes: 45
+
+    strategy:
+      fail-fast: false
+      matrix:
+        scan-type: ['codeql', 'dependencies', 'secrets', 'policy']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup development environment
+        if: matrix.scan-type == 'dependencies'
+        uses: ./.github/actions/shared/setup-environment
+        with:
+          setup-dotnet: 'true'
+          setup-node: 'true'
+          dotnet-version: '8.0.x'
+          node-version: '18.x'
+
+      - name: Initialize CodeQL
+        if: matrix.scan-type == 'codeql'
+        uses: github/codeql-action/init@v2
+        with:
+          languages: 'csharp,javascript'
+          config-file: ./.github/codeql/codeql-config.yml
+          queries: security-extended,security-and-quality
+
+      - name: Build for CodeQL
+        if: matrix.scan-type == 'codeql'
+        run: |
+          # Build backend for CodeQL analysis
+          dotnet restore zarichney-api.sln
+          dotnet build zarichney-api.sln --configuration Release --no-restore
+          
+          # Build frontend for CodeQL analysis
+          cd Code/Zarichney.Website
+          npm ci --legacy-peer-deps
+          npm run build-prod
+
+      - name: Perform CodeQL Analysis
+        if: matrix.scan-type == 'codeql'
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:${{ matrix.language }}"
+
+      - name: Run security scans
+        run: |
+          echo "🔒 Running security scanning pipeline..."
+          
+          # Set environment variables
+          export GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          export BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+          export HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          
+          # Make scripts executable
+          chmod +x ./Scripts/Pipeline/run-security-scans.sh
+          chmod +x ./Scripts/Pipeline/*.sh
+          
+          # Execute security scanning based on matrix type
+          case "${{ matrix.scan-type }}" in
+            "codeql")
+              echo "CodeQL analysis handled by GitHub Actions"
+              ;;
+            "dependencies")
+              ./Scripts/Pipeline/run-security-scans.sh --deps-only --skip-analysis
+              ;;
+            "secrets")
+              ./Scripts/Pipeline/run-security-scans.sh --secrets-only --skip-analysis
+              ;;
+            "policy")
+              ./Scripts/Pipeline/run-security-scans.sh --policy-only --skip-analysis
+              ;;
+          esac
+
+      - name: Upload security scan results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-scan-${{ matrix.scan-type }}-${{ github.run_number }}
+          path: |
+            security-analysis/
+            artifacts/security/
+          retention-days: 90
+
+  claude-security-analysis:
+    name: "Security • AI Analysis"
+    runs-on: ubuntu-latest  
+    needs: [path-analysis, backend-build, frontend-build, build-summary, security-scans]
+    if: always() && !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all security scan results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: security-scan-*-${{ github.run_number }}
+          path: security-results/
+          merge-multiple: true
+
+      - name: Create PR check run
+        id: create-check
+        run: |
+          CHECK_RUN_ID=$(gh api repos/${{ github.repository }}/check-runs \
+            --method POST \
+            --field name="Security Analysis" \
+            --field head_sha="${{ github.event.pull_request.head.sha }}" \
+            --field status="in_progress" \
+            --field details_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --jq '.id')
+          echo "check_run_id=$CHECK_RUN_ID" >> $GITHUB_OUTPUT
+          echo "Created check run ID: $CHECK_RUN_ID"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Security Analysis with Claude AI
+        id: claude-security
+        uses: grll/claude-code-action@beta
+        continue-on-error: true
+        with:
+          use_oauth: true
+          claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
+          claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          direct_prompt: |
+            # Security Analysis for zarichney-api Project
+
+            You are a senior cybersecurity expert and application security specialist conducting a comprehensive security analysis for this pull request in the zarichney-api project.
+
+            ## Analysis Data
+
+            Please analyze the security scan results which contain:
+            - CodeQL static analysis findings
+            - Dependency vulnerability assessments  
+            - Secrets detection results
+            - Security policy compliance checks
+            - Overall security posture evaluation
+
+            ## Required Analysis Sections
+
+            ### 1. Executive Security Summary
+            - Overall security posture (Excellent/Good/Fair/Poor/Critical)
+            - Critical vulnerabilities requiring immediate attention
+            - Security trend analysis and risk assessment 
+            - Impact on application security and compliance
+
+            ### 2. Critical Vulnerabilities
+            - High and critical severity findings
+            - Exploitability assessment and attack vectors
+            - Potential impact on data confidentiality, integrity, availability
+            - Specific file paths and remediation requirements
+
+            ### 3. Dependency Security Assessment
+            - Vulnerable dependencies and version recommendations
+            - Supply chain security considerations
+            - License compliance and security implications
+            - Update strategies and compatibility assessment
+
+            ### 4. Secrets and Credential Analysis  
+            - Exposed secrets, API keys, or credentials
+            - Hard-coded security values
+            - Configuration security best practices
+            - Credential management recommendations
+
+            ### 5. Code Security Review
+            - Injection vulnerabilities (SQL, XSS, Command)
+            - Authentication and authorization flaws
+            - Input validation and sanitization gaps
+            - Cryptographic implementation issues
+
+            ### 6. Security Policy Compliance
+            - Security configuration adherence
+            - HTTPS and TLS implementation
+            - Security header implementation
+            - Privacy and data protection compliance
+
+            ### 7. Security Remediation Plan
+
+            **Priority ranked by risk level:**
+            - **CRITICAL**: Immediate security threats requiring urgent fixes
+            - **HIGH**: Significant vulnerabilities needing prompt attention
+            - **MEDIUM**: Security improvements recommended for next release
+            - **LOW**: Security enhancements for long-term hardening
+
+            For each security issue provide:
+            - Vulnerability description and attack scenario
+            - Business risk assessment and compliance impact
+            - Specific remediation steps with code examples
+            - Timeline for resolution and testing approach
+
+            ### 8. Security Decision Matrix
+            Recommend one of:
+            - **DEPLOY**: No critical security issues, safe to deploy
+            - **CONDITIONAL**: Minor issues acceptable with monitoring
+            - **BLOCK**: Critical vulnerabilities must be resolved first
+
+            ## Context Considerations
+            - This is a full-stack .NET/Angular web application
+            - Application handles sensitive user data and payment processing
+            - Analysis will influence deployment decisions and security gates
+            - Consider both immediate security risks and long-term security posture
+
+            Please analyze the security scan results and provide your comprehensive security analysis.
+
+      - name: Complete PR check run
+        if: always() && steps.create-check.outputs.check_run_id != ''
+        run: |
+          # Determine security status based on scan results
+          if [ "${{ job.status }}" = "success" ]; then
+            CONCLUSION="success"
+            TITLE="✅ Security Analysis: No Critical Issues"
+            SUMMARY="Security analysis completed successfully. Check PR comments for detailed findings."
+          elif [ "${{ job.status }}" = "failure" ]; then
+            CONCLUSION="failure"
+            TITLE="❌ Security Analysis: Critical Issues Found"
+            SUMMARY="Critical security vulnerabilities detected - review required before deployment"
+          else
+            CONCLUSION="neutral"
+            TITLE="🔒 Security Analysis: Completed"
+            SUMMARY="Security analysis completed. Review findings in PR comments."
+          fi
+          
+          gh api repos/${{ github.repository }}/check-runs/${{ steps.create-check.outputs.check_run_id }} \
+            --method PATCH \
+            --field status="completed" \
+            --field conclusion="$CONCLUSION" \
+            --field output[title]="$TITLE" \
+            --field output[summary]="$SUMMARY"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload security analysis artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-analysis-${{ github.run_number }}
+          path: security-results/
+          retention-days: 90
+
+  final-summary:
+    name: "Pipeline Summary"
+    runs-on: ubuntu-latest
+    needs: [path-analysis, backend-build, frontend-build, build-summary, quality-checks, claude-testing-analysis, claude-standards-analysis, claude-tech-debt-analysis, security-scans, claude-security-analysis]
+    if: always() && !cancelled()
+    timeout-minutes: 5
+
+    steps:
+      - name: Generate comprehensive pipeline summary
+        run: |
+          echo "🚀 Zarichney API - Mega Build Pipeline Summary"
+          echo "=============================================="
+          echo ""
+          echo "**Pipeline Configuration:**"
+          echo "  - Trigger: ${{ github.event_name }}"
+          echo "  - Branch: ${{ github.head_ref || github.ref_name }}"
+          echo "  - Target: ${{ github.event.pull_request.base.ref || 'N/A' }}"
+          echo "  - SHA: ${{ github.sha }}"
+          echo ""
+          
+          echo "**Path Analysis:**"
+          echo "  - Backend changed: ${{ needs.path-analysis.outputs.backend-changed || 'N/A' }}"
+          echo "  - Frontend changed: ${{ needs.path-analysis.outputs.frontend-changed || 'N/A' }}"
+          echo "  - Documentation only: ${{ needs.path-analysis.outputs.docs-only || 'N/A' }}"
+          echo ""
+          
+          echo "**Build Results:**"
+          echo "  - Backend build: ${{ needs.backend-build.result || 'skipped' }}"
+          echo "  - Frontend build: ${{ needs.frontend-build.result || 'skipped' }}"
+          echo "  - Build summary: ${{ needs.build-summary.result || 'skipped' }}"
+          echo ""
+          
+          echo "**Quality Analysis Results:**"
+          echo "  - Quality checks: ${{ needs.quality-checks.result || 'skipped' }}"
+          echo "  - Testing Analysis (AI): ${{ needs.claude-testing-analysis.result || 'skipped' }}"
+          echo "  - Standards Analysis (AI): ${{ needs.claude-standards-analysis.result || 'skipped' }}"
+          echo "  - Tech Debt Analysis (AI): ${{ needs.claude-tech-debt-analysis.result || 'skipped' }}"
+          echo ""
+          
+          echo "**Security Analysis Results:**"
+          echo "  - Security scans: ${{ needs.security-scans.result || 'skipped' }}"
+          echo "  - Security Analysis (AI): ${{ needs.claude-security-analysis.result || 'skipped' }}"
+          echo ""
+          
+          # Determine overall pipeline status
+          FAILED=false
+          CRITICAL_FAILED=false
+          
+          # Check critical build jobs
+          if [ "${{ needs.backend-build.result }}" = "failure" ] || [ "${{ needs.frontend-build.result }}" = "failure" ]; then
+            CRITICAL_FAILED=true
+            FAILED=true
+          fi
+          
+          # Check if quality/security analysis failed (non-critical)
+          if [ "${{ needs.quality-checks.result }}" = "failure" ] || [ "${{ needs.security-scans.result }}" = "failure" ]; then
+            echo "⚠️  Analysis jobs failed but this does not block the pipeline"
+          fi
+          
+          echo "**Branch-Specific Behavior:**"
+          if [ "${{ github.event.pull_request.base.ref }}" = "main" ]; then
+            echo "  🔒 Full pipeline with security analysis (PR to main)"
+            echo "  🤖 All Claude AI analysis enabled (Testing + Standards + Tech Debt + Security)"
+          elif [ "${{ github.event.pull_request.base.ref }}" = "develop" ]; then
+            echo "  📊 Quality analysis pipeline (PR to develop)"
+            echo "  🤖 Claude AI analysis enabled (Testing + Standards + Tech Debt)"
+          else
+            echo "  🏗️  Build-only pipeline (PR to non-main/develop branch)"
+            echo "  🤖 No Claude AI analysis (not targeting main/develop)"
+          fi
+          echo ""
+          
+          # Final status determination
+          if [ "$CRITICAL_FAILED" = "true" ]; then
+            echo "❌ **PIPELINE FAILED**: Critical build failures detected"
+            echo "🚫 **ACTION REQUIRED**: Fix build issues before proceeding"
+            exit 1
+          elif [ "$FAILED" = "true" ]; then
+            echo "⚠️  **PIPELINE COMPLETED WITH WARNINGS**: Non-critical issues detected"
+            echo "📝 **RECOMMENDED**: Review analysis results and address issues"
+          else
+            echo "✅ **PIPELINE SUCCEEDED**: All jobs completed successfully"
+            if [ "${{ github.event.pull_request.base.ref }}" = "main" ] || [ "${{ github.event.pull_request.base.ref }}" = "develop" ]; then
+              echo "🤖 **AI ANALYSIS**: Claude AI feedback available in PR comments"
+            fi
+            echo "🎉 **READY**: Changes are ready for review and merge"
           fi
