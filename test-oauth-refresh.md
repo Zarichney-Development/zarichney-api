@@ -1,14 +1,17 @@
-# OAuth Auto-refresh Test - Final grll Action Validation
+# OAuth Authentication Fix Test - Quality Analysis Focus
 
-This commit tests the automatic OAuth token refresh functionality implemented in the tech debt analysis workflow.
+This commit tests the OAuth authentication fixes applied to the Quality Analysis workflow.
 
-The workflow now uses grll/claude-code-action-with-oauth@v1 which automatically refreshes expired tokens using the provided refresh token and GitHub PAT.
+## Changes Applied
+- Added `github_token: ${{ secrets.GITHUB_TOKEN }}` parameter to both Claude actions in 02-quality.yml
+- Standards Compliance AI Analysis and Tech Debt AI Analysis now have proper GitHub token authentication
+- Temporarily disabled Testing Analysis to focus debugging on Quality Analysis workflow
 
-Expected behavior:
-- Real Claude AI analysis for Testing, Standards Compliance, and Tech Debt
-- No fake fallback messages or hardcoded success comments
-- Token should refresh automatically if needed
-- Three separate Claude AI comments should appear on PR
+## Expected Behavior
+- Standards Compliance AI Analysis should complete successfully and post real Claude comment
+- Tech Debt AI Analysis should complete successfully and post real Claude comment  
+- No more OAuth authentication errors: "App token exchange failed: 401 Unauthorized - Invalid OIDC token"
+- Both Claude actions should use OAuth tokens properly with GitHub token fallback
 
-**Update**: All workflows now use grll/claude-code-action@beta for real Claude analysis.
-**OAuth Fix**: Removed secrets_admin_pat parameter to prevent 403 token refresh errors.
+## Testing Focus
+Currently testing **Quality Analysis workflow only** (Testing Analysis temporarily disabled)
