@@ -51,7 +51,7 @@ public class PublicController(
 
   /// <summary>
   /// Test endpoint for validating AI workflow analysis - intentionally includes various code quality issues
-  /// Updated: Testing YAML syntax fixes - workflows should start without startup_failure
+  /// Updated: Testing GitHub Actions syntax fixes - resolved 'Unrecognized named-value: secrets' error
   /// </summary>
   [HttpGet("test-validation")]
   public async Task<IActionResult> TestValidation(string input)
