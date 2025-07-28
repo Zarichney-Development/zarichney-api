@@ -35,7 +35,7 @@ OPTIONS:
 
 ENVIRONMENT VARIABLES:
     GITHUB_TOKEN            GitHub API token
-    CLAUDE_CODE_OAUTH_TOKEN Claude AI OAuth token
+    ANTHROPIC_API_KEY       Anthropic API key for Claude AI
     BASE_BRANCH             Base branch for comparison (default: develop)
 
 EXAMPLES:
@@ -54,7 +54,7 @@ SEVERITY_LEVEL="low"
 PR_NUMBER=""
 BASE_BRANCH="${BASE_BRANCH:-develop}"
 HEAD_SHA="${HEAD_SHA:-$(git rev-parse HEAD)}"
-CLAUDE_TOKEN="${CLAUDE_CODE_OAUTH_TOKEN:-}"
+CLAUDE_TOKEN="${ANTHROPIC_API_KEY:-}"
 
 while [[ $# -gt 0 ]]; do
     case $1 in

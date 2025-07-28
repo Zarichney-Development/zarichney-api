@@ -96,7 +96,7 @@ jobs:
           export PR_NUMBER="${{ steps.pr-number.outputs.pr_number }}"
           export BASE_BRANCH="${{ github.event.workflow_run.pull_requests[0].base.ref || 'develop' }}"
           export HEAD_SHA="${{ github.event.workflow_run.head_sha || github.sha }}"
-          export CLAUDE_CODE_OAUTH_TOKEN="${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}"
+          export ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}"
           export GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}"
           
           # Debug information
@@ -126,22 +126,20 @@ jobs:
 
       - name: Standards Compliance AI Analysis
         if: steps.pr-number.outputs.pr_number != ''
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-base-action@beta
         with:
-          claude_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt_file: Scripts/Prompts/standards-compliance.md
-          working_directory: ${{ github.workspace }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           pr_number: ${{ steps.pr-number.outputs.pr_number }}
           comment_header: "## 🛠️ Standards Compliance Analysis"
 
       - name: Tech Debt AI Analysis  
         if: steps.pr-number.outputs.pr_number != ''
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-base-action@beta
         with:
-          claude_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt_file: Scripts/Prompts/tech-debt-analysis.md
-          working_directory: ${{ github.workspace }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           pr_number: ${{ steps.pr-number.outputs.pr_number }}
           comment_header: "## 📈 Tech Debt Analysis"
