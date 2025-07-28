@@ -35,7 +35,7 @@ OPTIONS:
 
 ENVIRONMENT VARIABLES:
     GITHUB_TOKEN            GitHub API token
-    ANTHROPIC_API_KEY       Anthropic API key for Claude AI
+    CLAUDE_CODE_OAUTH_TOKEN Claude OAuth token for Claude Max plan
     BASE_BRANCH             Base branch for comparison (default: develop)
 
 EXAMPLES:
@@ -54,7 +54,7 @@ SEVERITY_LEVEL="low"
 PR_NUMBER=""
 BASE_BRANCH="${BASE_BRANCH:-develop}"
 HEAD_SHA="${HEAD_SHA:-$(git rev-parse HEAD)}"
-CLAUDE_TOKEN="${ANTHROPIC_API_KEY:-}"
+CLAUDE_TOKEN="${CLAUDE_CODE_OAUTH_TOKEN:-}"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -586,13 +586,13 @@ generate_quality_report() {
     overall_score=$(jq -r '.quality_assessment.overall_score // 100' "$quality_data")
     quality_level=$(jq -r '.quality_assessment.quality_level // "UNKNOWN"' "$quality_data")
     
-    # Create quality report
+    # Create quality report (internal metrics only - no fake AI analysis)
     cat > "quality-report.md" << EOF
-# 🔍 AI-Powered Quality Analysis
+# 📊 Quality Metrics Report
 
 **Pull Request:** #${PR_NUMBER:-unknown} | **Commit:** \`$HEAD_SHA\` | **Base:** \`$BASE_BRANCH\`
 
-## 📊 Quality Metrics Summary
+## Quality Metrics Summary
 - **Overall Quality Score:** $overall_score/100
 - **Quality Level:** $quality_level
 - **Standards Violations:** $standards_violations
@@ -600,14 +600,7 @@ generate_quality_report() {
 - **Tech Debt Items:** $tech_debt_items
 - **Debt Score:** $debt_score/100
 
-## 🤖 Expert AI Analysis
-
-The detailed AI-powered quality analysis provides:
-- 🛠️ Standards compliance evaluation with specific violations
-- 📈 Tech debt assessment with prioritized recommendations
-- 🎯 Code quality metrics and improvement suggestions
-- 🔍 Architectural analysis and design pattern evaluation
-- 📋 Maintainability assessment and refactoring opportunities
+*Note: AI-powered analysis provided by Claude in separate PR comments*
 
 EOF
     
