@@ -125,25 +125,25 @@ jobs:
           fi
 
       - name: Standards Compliance AI Analysis
-        if: steps.pr-number.outputs.pr_number != '' && (secrets.ANTHROPIC_API_KEY != '' || secrets.CLAUDE_CODE_OAUTH_TOKEN != '')
+        if: steps.pr-number.outputs.pr_number != ''
         id: claude-standards
         uses: anthropics/claude-code-base-action@beta
         continue-on-error: true
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY || '' }}
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt_file: Scripts/Prompts/standards-compliance.md
           allowed_tools: "View,GlobTool,GrepTool,Bash(git:*)"
           timeout_minutes: 5
 
       - name: Tech Debt AI Analysis  
-        if: steps.pr-number.outputs.pr_number != '' && (secrets.ANTHROPIC_API_KEY != '' || secrets.CLAUDE_CODE_OAUTH_TOKEN != '')
+        if: steps.pr-number.outputs.pr_number != ''
         id: claude-techdebt
         uses: anthropics/claude-code-base-action@beta
         continue-on-error: true
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY || '' }}
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt_file: Scripts/Prompts/tech-debt-analysis.md
           allowed_tools: "View,GlobTool,GrepTool,Bash(git:*)"
           timeout_minutes: 5
