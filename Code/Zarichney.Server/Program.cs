@@ -8,7 +8,7 @@ public class Program
   public static async Task Main(string[] args)
   {
     var builder = WebApplication.CreateBuilder(args);
-    ConfigureBuilder(builder); 
+    ConfigureBuilder(builder);
 
     var app = builder.Build();
 

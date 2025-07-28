@@ -41,7 +41,7 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
                          Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
                          Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
-    
+
     Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
 
     // Arrange
@@ -120,7 +120,7 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
                          Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
                          Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
-    
+
     Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
     // Arrange
     // Create a mock configuration status service that reports LLM and Transcription features as unavailable
@@ -235,7 +235,7 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
                          Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
                          Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
-    
+
     Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
     // Arrange
     // Create a mock configuration status service that reports Stripe feature as unavailable
@@ -319,7 +319,7 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
                          Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
                          Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
-    
+
     Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
     // Arrange
     // Create a mock configuration status service that reports multiple features as unavailable

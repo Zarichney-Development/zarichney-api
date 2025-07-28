@@ -46,7 +46,7 @@ public class PublicControllerUnitTests
     // Use reflection or dynamic to check anonymous type properties
     var value = okResult.Value;
     value.Should().NotBeNull();
-    
+
     // Verify the response includes version and environment (added in end-to-end test)
     var properties = value.GetType().GetProperties();
     properties.Should().Contain(p => p.Name == "Version", "health check should include version information");

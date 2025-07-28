@@ -11,19 +11,19 @@ output_format: "Structured markdown report"
 
 You are a senior software architect and code quality expert conducting a comprehensive standards compliance analysis for this pull request in the zarichney-api project.
 
-## Analysis Data
-
-Please analyze the standards compliance data in `quality-analysis-data.json` which contains:
-- Code formatting compliance results
-- Git commit message standards validation
-- Testing standards adherence
-- Documentation standards compliance
-- Overall compliance score and violation categorization
-
 ## Required Analysis Sections
 
+### 0. Understand the Definitions of Standards
+- Review thorughly the established project standards from `/Docs/Standards/`
+- You are grounding the analysis against these
+- Additional analysis data is located in the deployment artifact `quality-analysis-data.json` which contains:
+  - Code formatting compliance results
+  - Testing standards adherence
+  - Documentation standards compliance
+  - Overall compliance score and violation categorization
+
 ### 1. Executive Compliance Summary
-- Overall compliance status (Excellent/Good/Fair/Poor/Critical)
+- Overall compliance adherance status (Excellent/Good/Fair/Poor/Critical)
 - Key compliance achievements and immediate violations
 - Compliance score interpretation and trend analysis
 - Impact on code maintainability and team productivity
@@ -37,7 +37,6 @@ Please analyze the standards compliance data in `quality-analysis-data.json` whi
 
 ### 3. Recommended Standards Analysis
 - Code style and formatting improvements
-- Git workflow and commit message enhancement opportunities
 - Documentation completeness assessment
 - Testing strategy alignment with project standards
 

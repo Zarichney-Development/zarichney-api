@@ -1,8 +1,8 @@
-name: "04 • Deployment"
+name: "Deployment"
 
 on:
   workflow_run:
-    workflows: ["01 • Build & Test"]
+    workflows: ["Build & Test"]
     types:
       - completed
     branches: [main]

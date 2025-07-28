@@ -536,34 +536,72 @@ The project includes a comprehensive security analysis system that follows the e
 **Issue Creation Action**: [`.github/actions/create-security-issues/action.yml`](.github/actions/create-security-issues/action.yml)  
 **CodeQL Configuration**: [`.github/codeql/codeql-config.yml`](.github/codeql/codeql-config.yml)
 
-## 11. Workflow Organization & Naming
+## 11. Consolidated CI/CD Pipeline Architecture
 
-### Professional Pipeline Structure
-All workflows follow a consistent naming convention for clarity and organization:
+### Current Architecture (Post-Consolidation)
+**Last Updated:** 2025-07-28
 
-#### **Core Workflows**
-- **`01 • Build & Test`** (`01-build.yml`) - Foundation build, test, and artifact generation
+As of the mega build workflow consolidation, the project uses a streamlined CI/CD pipeline that integrates all analysis capabilities into a single comprehensive workflow for optimal Claude AI integration and performance.
 
-#### **Analysis Workflows** (Triggered on workflow_run)
-- **`02 • Quality Analysis`** (`02-quality.yml`) - AI-powered quality analysis and standards compliance
-- **`03 • Security Analysis`** (`03-security.yml`) - Comprehensive security scanning and tech debt assessment
+#### **Active Workflows**
+- **`Build & Test`** (`build.yml`) - **Consolidated mega build pipeline**
+  - Universal PR triggering with `branches: ['**']`
+  - Branch-aware conditional logic for different analysis scenarios
+  - All Claude AI analysis integrated (Testing, Standards, Tech Debt, Security)
+  - Automatic concurrency control to prevent duplicate runs
+- **`Deployment`** (`deploy.yml`) - Conditional deployment based on build results and security gates
+- **`Maintenance`** (`maintenance.yml`) - Scheduled system maintenance and health monitoring
 
-#### **Deployment & Maintenance Workflows**
-- **`04 • Deploy`** (`04-deploy.yml`) - Conditional deployment based on analysis results
-- **`05 • Maintenance`** (`05-maintenance.yml`) - Scheduled maintenance and cleanup tasks
+### Branch-Aware Execution Logic
+The consolidated build workflow provides intelligent analysis based on PR target branches:
+
+- **Feature → Epic Branch PRs**: Build + Test only (no AI analysis)
+- **Epic → Develop Branch PRs**: Build + Test + Quality Analysis (Testing, Standards, Tech Debt AI)
+- **Any → Main Branch PRs**: Build + Test + Quality + Security Analysis (Full AI suite)
+
+### Concurrency Control
+The consolidated workflow includes automatic concurrency control to optimize resource usage:
+
+```yaml
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+```
+
+**Benefits:**
+- **Resource Efficiency**: Automatically cancels previous runs when new commits are pushed
+- **Faster Feedback**: Focuses CI resources on the latest changes
+- **Handles Edge Cases**: Gracefully manages rapid commits, rebases, or force pushes
+- **Clean History**: Prevents cluttered workflow run logs
+
+**Behavior:**
+- When a new commit is pushed to a PR, any running workflow for that PR is automatically cancelled
+- Only the latest workflow run continues, providing feedback on the most recent changes
+- Applies per-branch/PR, so workflows on different branches run independently
+
+### Architecture Benefits
+- **Claude AI Compatibility**: Single workflow enables proper Claude AI integration via `pull_request` events
+- **Sequential Dependencies**: Proper build gates with `needs:` declarations ensure quality control
+- **Performance Optimized**: Parallel execution where safe, sequential where dependencies exist
+- **Comprehensive Coverage**: All analysis types (quality, security, testing) in one pipeline
+- **Developer Experience**: Single workflow to monitor with consolidated feedback
 
 ### Workflow Dependencies
-- **Analysis workflows** trigger on `workflow_run` after build completion
-- **Security scans** integrated directly into build workflow for efficiency  
-- **Consistent pattern** across all analysis workflows using AI-powered insights
+```
+Build & Test (on PR/push) → Deployment (on main only) → Maintenance (scheduled)
+```
+
+- **Build workflow** runs on all PRs and pushes with branch-appropriate analysis
+- **Deployment workflow** triggers only on successful main branch builds
+- **Maintenance workflow** runs on scheduled intervals for system health
 - All workflows support manual dispatch for debugging and testing
 
-### Benefits of Organization
-- **Clear Purpose**: Each workflow name immediately indicates its function
-- **Logical Grouping**: Related workflows grouped by category (Core, Analysis, Deployment)
-- **Professional Presentation**: Consistent, enterprise-grade workflow organization
-- **Enhanced Discoverability**: Easy to find and understand workflow purposes
-- **Maintainability**: Clear separation of concerns for easier maintenance
+### For Developers
+- **Single Workflow**: Monitor one comprehensive pipeline instead of multiple separate workflows
+- **Automatic Cancellation**: No need to manually cancel old runs - happens automatically
+- **Real Claude AI**: All AI analysis uses genuine Claude insights, no fake fallback content
+- **Branch-Appropriate**: Different analysis depths based on PR target (feature/epic/develop/main)
+- **Clean Interface**: Simple workflow names without numbering for easy navigation
 
 ---
 # important-instruction-reminders

@@ -44,7 +44,7 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
     var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
                          Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
                          Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
-    
+
     Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
 
     // Arrange
@@ -119,7 +119,7 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
     var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
                          Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
                          Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
-    
+
     Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
     // Arrange
     // Create a custom factory that indicates mixed service availability
@@ -195,7 +195,7 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
     var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
                          Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
                          Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
-    
+
     Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
     // Arrange
     // Create a custom factory with a mock configuration status service

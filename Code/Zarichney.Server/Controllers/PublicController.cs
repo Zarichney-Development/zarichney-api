@@ -49,40 +49,4 @@ public class PublicController(
     return Ok(result);
   }
 
-  /// <summary>
-  /// Test endpoint for validating AI workflow analysis - intentionally includes various code quality issues
-  /// Updated: Final test of YAML-fixed Claude comment posting with proper string concatenation
-  /// </summary>
-  [HttpGet("test-validation")]
-  public async Task<IActionResult> TestValidation(string input)
-  {
-    // TODO: This method needs proper validation and error handling
-    var results = new List<object>();
-    
-    // Potential security issue: SQL injection risk (for security analysis)
-    var query = $"SELECT * FROM test WHERE value = '{input}'";
-    
-    // Code complexity issue: nested loops and conditions (for tech debt analysis)
-    for (int i = 0; i < 100; i++)
-    {
-      for (int j = 0; j < 50; j++)
-      {
-        if (i % 2 == 0)
-        {
-          if (j % 3 == 0)
-          {
-            if (input != null && input.Length > 0)
-            {
-              results.Add(new { Index = i, Value = j, Query = query });
-            }
-          }
-        }
-      }
-    }
-    
-    // Performance issue: blocking call without timeout (for quality analysis)
-    await Task.Delay(5000);
-    
-    return Ok(results);
-  }
 }
