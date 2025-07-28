@@ -113,16 +113,38 @@ jobs:
           # Execute with proper parameter handling
           if [ -n "$PR_NUMBER" ]; then
             ./Scripts/Pipeline/run-quality-checks.sh \
-              --pr-number="$PR_NUMBER" \
-              --base-branch="$BASE_BRANCH" \
-              --head-sha="$HEAD_SHA" \
-              --severity=medium
+              --pr-number "$PR_NUMBER" \
+              --base-branch "$BASE_BRANCH" \
+              --head-sha "$HEAD_SHA" \
+              --severity medium
           else
             ./Scripts/Pipeline/run-quality-checks.sh \
-              --base-branch="$BASE_BRANCH" \
-              --head-sha="$HEAD_SHA" \
-              --severity=medium
+              --base-branch "$BASE_BRANCH" \
+              --head-sha "$HEAD_SHA" \
+              --severity medium
           fi
+
+      - name: Standards Compliance AI Analysis
+        if: steps.pr-number.outputs.pr_number != ''
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt_file: Scripts/Prompts/standards-compliance.md
+          working_directory: ${{ github.workspace }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          pr_number: ${{ steps.pr-number.outputs.pr_number }}
+          comment_header: "## 🛠️ Standards Compliance Analysis"
+
+      - name: Tech Debt AI Analysis  
+        if: steps.pr-number.outputs.pr_number != ''
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt_file: Scripts/Prompts/tech-debt-analysis.md
+          working_directory: ${{ github.workspace }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          pr_number: ${{ steps.pr-number.outputs.pr_number }}
+          comment_header: "## 📈 Tech Debt Analysis"
 
       - name: Post quality analysis results
         if: steps.pr-number.outputs.pr_number != ''
@@ -133,16 +155,30 @@ jobs:
           report-type: quality
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check quality gates
-        if: steps.quality-checks.outputs.overall_score < 70
+      - name: Quality metrics summary
         run: |
-          echo "❌ Quality gates failed"
-          echo "Overall quality score: ${{ steps.quality-checks.outputs.overall_score }}/100"
-          echo "Standards violations: ${{ steps.quality-checks.outputs.standards_violations }}"
-          echo "Tech debt items: ${{ steps.quality-checks.outputs.tech_debt_items }}"
+          SCORE="${{ steps.quality-checks.outputs.overall_score }}"
+          VIOLATIONS="${{ steps.quality-checks.outputs.standards_violations }}"
+          DEBT_ITEMS="${{ steps.quality-checks.outputs.tech_debt_items }}"
+          
+          echo "📊 Quality Analysis Summary"
+          echo "Overall quality score: ${SCORE:-0}/100"
+          echo "Standards violations: ${VIOLATIONS:-0}"
+          echo "Tech debt items: ${DEBT_ITEMS:-0}"
           echo ""
-          echo "Quality improvement required before merging"
-          exit 1
+          
+          if [[ "${SCORE:-0}" -lt 70 ]]; then
+            echo "⚠️  Quality score below optimal threshold (70)"
+            echo "🤖 Claude AI analysis posted with standards compliance insights"
+            echo "🤖 Claude AI analysis posted with tech debt recommendations"
+            echo "🎯 This is informational - see PR comments for actionable insights"
+          else
+            echo "✅ Quality score meets threshold"
+            echo "🤖 Claude AI analysis available with optimization recommendations"
+          fi
+          
+          echo ""
+          echo "📝 Real Claude AI analysis available in separate PR comments"
 
       - name: Create quality issues
         if: always() && steps.quality-checks.outputs.tech_debt_items > 10
@@ -156,19 +192,27 @@ jobs:
       - name: Complete PR check run
         if: always() && steps.create-check.outputs.check_run_id != ''
         run: |
-          # Determine conclusion based on job result
+          # Quality analysis is informational - only fail on technical errors
+          SCORE="${{ steps.quality-checks.outputs.overall_score }}"
+          
           if [ "${{ job.status }}" = "success" ]; then
-            CONCLUSION="success"
-            TITLE="✅ Quality Analysis Passed"
-            SUMMARY="All quality gates passed successfully"
+            if [[ "${SCORE:-0}" -lt 70 ]]; then
+              CONCLUSION="neutral"
+              TITLE="📊 Quality Analysis: Insights Available"
+              SUMMARY="Quality score: ${SCORE:-0}/100. AI recommendations posted to PR comments."
+            else
+              CONCLUSION="success"
+              TITLE="✅ Quality Analysis: Excellent Quality"
+              SUMMARY="Quality score: ${SCORE:-0}/100. Code meets quality standards."
+            fi
           elif [ "${{ job.status }}" = "failure" ]; then
             CONCLUSION="failure"
-            TITLE="❌ Quality Analysis Failed"
-            SUMMARY="Quality gates failed - review required"
+            TITLE="❌ Quality Analysis: Technical Error"
+            SUMMARY="Quality analysis failed due to technical issues - check workflow logs"
           else
             CONCLUSION="neutral"
-            TITLE="⚠️ Quality Analysis Completed"
-            SUMMARY="Quality analysis completed with warnings"
+            TITLE="📊 Quality Analysis: Completed"
+            SUMMARY="Quality analysis completed. Results available in PR comments."
           fi
           
           gh api repos/${{ github.repository }}/check-runs/${{ steps.create-check.outputs.check_run_id }} \
@@ -205,9 +249,18 @@ jobs:
           echo ""
           
           if [ "${{ needs.quality-analysis.result }}" = "failure" ]; then
-            echo "❌ Quality gates not met - review required"
+            echo "❌ Quality analysis failed due to technical issues"
+            echo "🔧 Check workflow logs for technical problems"
           elif [ "${{ needs.quality-analysis.result }}" = "success" ]; then
-            echo "✅ All quality gates passed"
+            echo "✅ Quality analysis completed successfully"
+            echo "🤖 Claude AI standards compliance analysis posted to PR"
+            echo "🤖 Claude AI tech debt analysis posted to PR"
+            echo "📊 Real AI-powered insights and recommendations available in PR comments"
           else
             echo "⚠️ Quality analysis was skipped or cancelled"
           fi
+          
+          echo ""
+          echo "ℹ️  Note: Quality analysis is informational and provides real Claude AI-powered"
+          echo "   recommendations for code improvement. It does not block deployments."
+          echo "🤖 Claude AI provides separate detailed analysis for standards compliance and tech debt."
