@@ -174,14 +174,12 @@ jobs:
               
               // If no execution file found, create a basic comment with step outcome
               if (!analysisContent) {
-                analysisContent = `Claude AI Testing Analysis completed successfully.
-                
-**Analysis Status:** ✅ Completed
-**Step Outcome:** ${{ steps.claude-testing.outcome }}
-**Tool Permissions:** Fixed - Claude can now access Read, Glob, Grep, and Bash tools
-**Test Coverage:** Analysis of test results and coverage data
-
-*Note: This is a test validation that Claude AI analysis is working with OAuth authentication.*`;
+                analysisContent = "Claude AI Testing Analysis completed successfully.\\n\\n" +
+                  "**Analysis Status:** ✅ Completed\\n" +
+                  "**Step Outcome:** ${{ steps.claude-testing.outcome }}\\n" +
+                  "**Tool Permissions:** Fixed - Claude can now access Read, Glob, Grep, and Bash tools\\n" +
+                  "**Test Coverage:** Analysis of test results and coverage data\\n\\n" +
+                  "*Note: This is a test validation that Claude AI analysis is working with OAuth authentication.*";
               }
               
               await github.rest.issues.createComment({
