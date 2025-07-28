@@ -1,6 +1,8 @@
-# Consolidated Mega Build Workflow Test
+# Concurrency Control Test
 
-This commit tests the consolidated mega build workflow implementation.
+This commit tests the concurrency control implementation to prevent duplicate workflow runs.
+
+**Rapid sequential push test in progress...**
 
 ## Changes Applied
 - Consolidated all workflows into single mega build pipeline (01-build.yml)
