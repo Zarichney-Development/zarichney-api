@@ -19,6 +19,12 @@ on:
       - '.github/actions/shared/**'
   workflow_dispatch:
 
+# Automatically cancel previous runs when new commits are pushed
+# This prevents resource waste from duplicate runs during rapid development
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   DOTNET_VERSION: '8.0.x'
   NODE_VERSION: '18.x'
