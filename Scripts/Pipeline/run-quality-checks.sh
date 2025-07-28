@@ -137,9 +137,6 @@ main() {
         run_ai_quality_analysis
     fi
     
-    # Generate quality report
-    generate_quality_report
-    
     # Create quality artifacts
     create_quality_artifacts
     
@@ -565,61 +562,6 @@ run_ai_quality_analysis() {
     # This function just ensures the data is ready for analysis.
     
     log_success "Quality data prepared for Claude AI analysis"
-}
-
-generate_quality_report() {
-    log_section "Generating Quality Report"
-    
-    local quality_data="$QUALITY_DIR/quality-analysis-data.json"
-    
-    if [[ ! -f "$quality_data" ]]; then
-        log_error "Quality analysis data not found"
-        return 1
-    fi
-    
-    # Extract metrics from quality data
-    local standards_violations compliance_score tech_debt_items debt_score overall_score quality_level
-    standards_violations=$(jq -r '.standards_compliance.total_violations // 0' "$quality_data")
-    compliance_score=$(jq -r '.standards_compliance.compliance_score // 100' "$quality_data")
-    tech_debt_items=$(jq -r '.tech_debt_analysis.total_debt_items // 0' "$quality_data")
-    debt_score=$(jq -r '.tech_debt_analysis.debt_score // 100' "$quality_data")
-    overall_score=$(jq -r '.quality_assessment.overall_score // 100' "$quality_data")
-    quality_level=$(jq -r '.quality_assessment.quality_level // "UNKNOWN"' "$quality_data")
-    
-    # Create quality report (internal metrics only - no fake AI analysis)
-    cat > "quality-report.md" << EOF
-# 📊 Quality Metrics Report
-
-**Pull Request:** #${PR_NUMBER:-unknown} | **Commit:** \`$HEAD_SHA\` | **Base:** \`$BASE_BRANCH\`
-
-## Quality Metrics Summary
-- **Overall Quality Score:** $overall_score/100
-- **Quality Level:** $quality_level
-- **Standards Violations:** $standards_violations
-- **Compliance Score:** $compliance_score/100
-- **Tech Debt Items:** $tech_debt_items
-- **Debt Score:** $debt_score/100
-
-*Note: AI-powered analysis provided by Claude in separate PR comments*
-
-EOF
-    
-    # Note: Real AI analysis will be added by Claude action in the workflow
-    # The Claude action will use the quality data and prompts to generate genuine insights
-    
-    # Set GitHub Actions outputs
-    if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
-        {
-            echo "standards_violations=$standards_violations"
-            echo "compliance_score=$compliance_score"
-            echo "tech_debt_items=$tech_debt_items"
-            echo "debt_score=$debt_score"
-            echo "overall_score=$overall_score"
-            echo "quality_level=$quality_level"
-        } >> "$GITHUB_OUTPUT"
-    fi
-    
-    log_success "Quality report generated"
 }
 
 create_quality_artifacts() {

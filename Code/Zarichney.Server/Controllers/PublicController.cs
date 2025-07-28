@@ -51,7 +51,7 @@ public class PublicController(
 
   /// <summary>
   /// Test endpoint for validating AI workflow analysis - intentionally includes various code quality issues
-  /// Updated: Testing improved Claude comment posting with fallback mechanisms
+  /// Updated: Final test of YAML-fixed Claude comment posting with proper string concatenation
   /// </summary>
   [HttpGet("test-validation")]
   public async Task<IActionResult> TestValidation(string input)
