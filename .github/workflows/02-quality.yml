@@ -1,16 +1,25 @@
-name: "02 • Quality Analysis"
+name: "02 • Quality Analysis [DEPRECATED]"
+
+# ⚠️ DEPRECATED WORKFLOW ⚠️
+# This workflow has been consolidated into the mega build workflow (01-build.yml)
+# All quality analysis (Testing, Standards Compliance, Tech Debt) now runs in 01-build.yml
+# This file is maintained for reference but will not execute
+#
+# Consolidation completed: 2025-07-28
+# Issue: #70 - Validate AI workflows for PR analysis
 
 on:
-  workflow_run:
-    workflows: ["01 • Build & Test"]
-    types:
-      - completed
-  workflow_dispatch:
-    inputs:
-      pr-number:
-        description: 'Pull request number'
-        required: false
-        type: string
+  # Disabled - all functionality moved to 01-build.yml
+  # workflow_run:
+  #   workflows: ["01 • Build & Test"]
+  #   types:
+  #     - completed
+  # workflow_dispatch:
+  #   inputs:
+  #     pr-number:
+  #       description: 'Pull request number'
+  #       required: false
+  #       type: string
 
 permissions:
   id-token: write

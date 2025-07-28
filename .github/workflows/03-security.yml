@@ -1,14 +1,23 @@
-name: "03 • Security Analysis"
+name: "03 • Security Analysis [DEPRECATED]"
+
+# ⚠️ DEPRECATED WORKFLOW ⚠️
+# This workflow has been consolidated into the mega build workflow (01-build.yml)
+# All security analysis (Scanning, AI Analysis) now runs in 01-build.yml for main branch PRs
+# This file is maintained for reference but will not execute
+#
+# Consolidation completed: 2025-07-28
+# Issue: #70 - Validate AI workflows for PR analysis
 
 on:
-  workflow_run:
-    workflows: ["01 • Build & Test"]
-    types:
-      - completed
-    branches: [main]  # Security analysis only for PRs targeting main branch
+  # Disabled - all functionality moved to 01-build.yml with branch-aware conditions
+  # workflow_run:
+  #   workflows: ["01 • Build & Test"]
+  #   types:
+  #     - completed
+  #   branches: [main]  # Security analysis only for PRs targeting main branch
   schedule:
-    - cron: '0 2 * * 1'  # Weekly on Mondays at 2 AM
-  workflow_dispatch:
+    - cron: '0 2 * * 1'  # Weekly on Mondays at 2 AM (still active for scheduled scans)
+  # workflow_dispatch:
 
 permissions:
   id-token: write
