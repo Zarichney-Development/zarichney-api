@@ -46,7 +46,7 @@ public class PublicControllerUnitTests
     // Use reflection or dynamic to check anonymous type properties
     var value = okResult.Value;
     value.Should().NotBeNull();
-
+    
     // Verify the response includes version and environment (added in end-to-end test)
     var properties = value.GetType().GetProperties();
     properties.Should().Contain(p => p.Name == "Version", "health check should include version information");
@@ -122,24 +122,5 @@ public class PublicControllerUnitTests
       .WithMessage(expectedException.Message);
 
     _mockStatusService.Verify();
-  }
-
-  /// <summary>
-  /// Test for the validation endpoint - intentionally simple to test AI workflow analysis
-  /// </summary>
-  [Fact]
-  public async Task TestValidation_WithValidInput_ReturnsOkWithResults()
-  {
-    // Arrange
-    const string testInput = "test";
-
-    // Act
-    var result = await _controller.TestValidation(testInput);
-
-    // Assert
-    result.Should().BeOfType<OkObjectResult>(because: "valid input should return OK result");
-    var okResult = result as OkObjectResult;
-    okResult.Should().NotBeNull();
-    okResult.Value.Should().NotBeNull();
   }
 }

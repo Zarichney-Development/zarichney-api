@@ -48,5 +48,4 @@ public class PublicController(
     var result = await statusService.GetConfigurationStatusAsync();
     return Ok(result);
   }
-
 }
