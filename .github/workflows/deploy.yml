@@ -186,7 +186,7 @@ jobs:
           export SECRET_DB_PASSWORD_KEY="${{ secrets.SECRET_DB_PASSWORD_KEY }}"
           
           # Execute deployment
-          ./Scripts/Pipeline/deploy-backend.sh "${{ needs.deployment-decision.outputs.environment }}"
+          ./.github/scripts/deploy-backend.sh "${{ needs.deployment-decision.outputs.environment }}"
 
       - name: Run health checks
         run: |
@@ -263,7 +263,7 @@ jobs:
           export S3_BUCKET="${{ secrets.S3_BUCKET }}"
           
           # Execute deployment
-          ./Scripts/Pipeline/deploy-frontend.sh "${{ needs.deployment-decision.outputs.environment }}"
+          ./.github/scripts/deploy-frontend.sh "${{ needs.deployment-decision.outputs.environment }}"
 
       - name: Run health checks
         run: |

@@ -21,7 +21,7 @@ Successfully restructured the GitHub Actions CI/CD pipeline from 8 complex workf
 ### After (New Architecture)  
 - **5 focused workflows** with single responsibilities
 - **~400 lines total** in workflow files (75% reduction)
-- **Script-based logic** in `Scripts/Pipeline/` for maintainability
+- **Script-based logic** in `.github/scripts/` for maintainability
 - **Intelligent path filtering** prevents unnecessary runs
 - **Easy local testing** of pipeline logic
 - **Clean separation of concerns**
@@ -29,8 +29,8 @@ Successfully restructured the GitHub Actions CI/CD pipeline from 8 complex workf
 ## 🏗️ New Architecture Components
 
 ### 1. Foundation Infrastructure
-- **`Scripts/Pipeline/`** - All workflow logic extracted to testable scripts
-- **`Scripts/Prompts/`** - Version-controlled AI analysis prompts
+- **`.github/scripts/`** - All workflow logic extracted to testable scripts
+- **Inline prompts** - AI analysis prompts integrated directly in workflows
 - **`.github/actions/shared/`** - Reusable composite actions
 - **Common functions** - Shared utilities for logging, error handling, Docker access
 
@@ -43,10 +43,10 @@ Successfully restructured the GitHub Actions CI/CD pipeline from 8 complex workf
 - **`run-quality-checks.sh`** - Standards compliance + tech debt analysis
 - **`test-path-filtering.sh`** - Testing utility for path filtering logic
 
-### 3. AI Analysis Prompts (Version Controlled)
-- **`security-analysis.md`** - Comprehensive security analysis prompt
-- **`standards-compliance.md`** - Code standards validation prompt
-- **`tech-debt-analysis.md`** - Technical debt assessment prompt
+### 3. AI Analysis Prompts (Inline Integration)
+- **Security analysis** - Comprehensive security analysis integrated in workflows
+- **Standards compliance** - Code standards validation integrated in workflows
+- **Tech debt analysis** - Technical debt assessment integrated in workflows
 
 ### 4. Shared Composite Actions
 - **`setup-environment`** - Unified .NET/Node.js environment setup
@@ -56,7 +56,7 @@ Successfully restructured the GitHub Actions CI/CD pipeline from 8 complex workf
 ### 5. Clean Workflow Architecture
 
 #### **`01-build.yml`** - Build & Test
-- **Trigger:** Code changes in `Code/**`, `Scripts/Pipeline/**`
+- **Trigger:** Code changes in `Code/**`, `.github/scripts/**`
 - **Logic:** Path analysis → conditional backend/frontend builds
 - **Smart filtering:** Only builds what changed
 
@@ -86,7 +86,7 @@ Successfully restructured the GitHub Actions CI/CD pipeline from 8 complex workf
 - **Documentation changes** (`*.md`, `Docs/**`) → Skip all builds
 - **Backend changes** (`Code/Zarichney.Server/**`) → Backend build + quality + security
 - **Frontend changes** (`Code/Zarichney.Website/**`) → Frontend build + quality + security  
-- **Pipeline changes** (`Scripts/Pipeline/**`, `.github/**`) → Full pipeline validation
+- **Pipeline changes** (`.github/scripts/**`, `.github/**`) → Full pipeline validation
 - **Mixed changes** → Run all applicable workflows
 
 ### Performance Benefits
@@ -99,24 +99,24 @@ Successfully restructured the GitHub Actions CI/CD pipeline from 8 complex workf
 ### Path Filtering Tests
 ```bash
 # Test all scenarios
-./Scripts/Pipeline/test-path-filtering.sh
+./.github/scripts/test-path-filtering.sh
 
 # Test specific scenarios  
-./Scripts/Pipeline/test-path-filtering.sh --scenario docs-only
-./Scripts/Pipeline/test-path-filtering.sh --scenario backend-only
+./.github/scripts/test-path-filtering.sh --scenario docs-only
+./.github/scripts/test-path-filtering.sh --scenario backend-only
 ```
 
 ### Pipeline Script Testing
 ```bash
 # Test backend build locally
-./Scripts/Pipeline/build-backend.sh --help
-./Scripts/Pipeline/build-backend.sh --dry-run
+./.github/scripts/build-backend.sh --help
+./.github/scripts/build-backend.sh --dry-run
 
 # Test security scanning
-./Scripts/Pipeline/run-security-scans.sh --skip-analysis
+./.github/scripts/run-security-scans.sh --skip-analysis
 
 # Test quality checks
-./Scripts/Pipeline/run-quality-checks.sh --standards-only
+./.github/scripts/run-quality-checks.sh --standards-only
 ```
 
 ## 📋 Quality Gates & Compliance
@@ -204,8 +204,8 @@ All 85+ checklist items from GitHub issue #59 have been completed:
 
 All documentation created following `Docs/Standards/DocumentationStandards.md`:
 
-- **`Scripts/Pipeline/README.md`** - Pipeline scripts documentation
-- **`Scripts/Prompts/README.md`** - AI prompts documentation  
+- **`.github/scripts/README.md`** - Pipeline scripts documentation
+- **Workflow documentation** - AI prompts integrated in workflow files  
 - **`Scripts/README.md`** - Updated with new subdirectories
 - **`CLAUDE.md`** - Updated with new workflow structure
 

@@ -115,7 +115,7 @@ runs:
           fi
           
           # Pipeline patterns
-          if [[ "$file" == Scripts/Pipeline/* ]] || [[ "$file" == .github/workflows/* ]] || [[ "$file" == .github/actions/* ]]; then
+          if [[ "$file" == .github/scripts/* ]] || [[ "$file" == .github/workflows/* ]] || [[ "$file" == .github/actions/* ]]; then
             PIPELINE_CHANGED=true
           fi
           
@@ -130,7 +130,7 @@ runs:
           fi
           
           # Config patterns
-          if [[ "$file" == .editorconfig ]] || [[ "$file" == .gitignore ]] || [[ "$file" == Scripts/*.sh ]] || [[ "$file" == Scripts/*.ps1 ]]; then
+          if [[ "$file" == .editorconfig ]] || [[ "$file" == .gitignore ]] || [[ "$file" == .github/scripts/*.sh ]] || [[ "$file" == .github/scripts/*.ps1 ]]; then
             CONFIG_CHANGED=true
           fi
         done <<< "$CHANGED_FILES"
