@@ -35,7 +35,7 @@ OPTIONS:
 
 ENVIRONMENT VARIABLES:
     GITHUB_TOKEN            GitHub API token
-    CLAUDE_CODE_OAUTH_TOKEN Claude OAuth token for Claude Max plan
+    CLAUDE_CODE_OAUTH_TOKEN Claude OAuth token for accessing Claude AI services
     BASE_BRANCH             Base branch for comparison (default: develop)
 
 EXAMPLES:
