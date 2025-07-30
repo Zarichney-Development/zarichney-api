@@ -536,23 +536,25 @@ The project includes a comprehensive security analysis system that follows the e
 **Issue Creation Action**: [`.github/actions/create-security-issues/action.yml`](.github/actions/create-security-issues/action.yml)  
 **CodeQL Configuration**: [`.github/codeql/codeql-config.yml`](.github/codeql/codeql-config.yml)
 
-## 11. Consolidated Mega Build Workflow Architecture
+## 11. Consolidated CI/CD Pipeline Architecture
 
 ### Current Architecture (Post-Consolidation)
-As of 2025-07-28, all CI/CD functionality has been consolidated into a single comprehensive workflow for optimal Claude AI integration and performance.
+**Last Updated:** 2025-07-28
 
-#### **Active Workflow**
-- **`01 • Build & Test`** (`01-build.yml`) - **Consolidated mega build pipeline**
+As of the mega build workflow consolidation, the project uses a streamlined CI/CD pipeline that integrates all analysis capabilities into a single comprehensive workflow for optimal Claude AI integration and performance.
+
+#### **Active Workflows**
+- **`Build & Test`** (`build.yml`) - **Consolidated mega build pipeline**
   - Universal PR triggering with `branches: ['**']`
   - Branch-aware conditional logic for different analysis scenarios
   - All Claude AI analysis integrated (Testing, Standards, Tech Debt, Security)
   - Automatic concurrency control to prevent duplicate runs
-
-#### **Deprecated Workflows** (Maintained for Reference)
-- **`02 • Quality Analysis [DEPRECATED]`** (`02-quality.yml`) - Functionality moved to 01-build.yml
-- **`03 • Security Analysis [DEPRECATED]`** (`03-security.yml`) - Functionality moved to 01-build.yml
+- **`Deployment`** (`deploy.yml`) - Conditional deployment based on build results and security gates
+- **`Maintenance`** (`maintenance.yml`) - Scheduled system maintenance and health monitoring
 
 ### Branch-Aware Execution Logic
+The consolidated build workflow provides intelligent analysis based on PR target branches:
+
 - **Feature → Epic Branch PRs**: Build + Test only (no AI analysis)
 - **Epic → Develop Branch PRs**: Build + Test + Quality Analysis (Testing, Standards, Tech Debt AI)
 - **Any → Main Branch PRs**: Build + Test + Quality + Security Analysis (Full AI suite)
@@ -584,11 +586,22 @@ concurrency:
 - **Comprehensive Coverage**: All analysis types (quality, security, testing) in one pipeline
 - **Developer Experience**: Single workflow to monitor with consolidated feedback
 
+### Workflow Dependencies
+```
+Build & Test (on PR/push) → Deployment (on main only) → Maintenance (scheduled)
+```
+
+- **Build workflow** runs on all PRs and pushes with branch-appropriate analysis
+- **Deployment workflow** triggers only on successful main branch builds
+- **Maintenance workflow** runs on scheduled intervals for system health
+- All workflows support manual dispatch for debugging and testing
+
 ### For Developers
 - **Single Workflow**: Monitor one comprehensive pipeline instead of multiple separate workflows
 - **Automatic Cancellation**: No need to manually cancel old runs - happens automatically
 - **Real Claude AI**: All AI analysis uses genuine Claude insights, no fake fallback content
 - **Branch-Appropriate**: Different analysis depths based on PR target (feature/epic/develop/main)
+- **Clean Interface**: Simple workflow names without numbering for easy navigation
 
 ---
 # important-instruction-reminders

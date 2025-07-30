@@ -3,7 +3,7 @@
 # Test Script for Path Filtering Logic
 # Tests the path filtering functionality without running full workflows
 # Version: 1.0
-# Last Updated: 2025-07-27
+# Last Updated: 2025-07-28
 
 # Source common functions
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -14,7 +14,7 @@ readonly TEST_SCENARIOS=(
     "backend-only:Code/Zarichney.Server/Controllers/RecipeController.cs"
     "frontend-only:Code/Zarichney.Website/src/app/app.component.ts"
     "docs-only:README.md Docs/Standards/CodingStandards.md"
-    "pipeline-only:Scripts/Pipeline/build-backend.sh .github/workflows/01-build.yml"
+    "pipeline-only:Scripts/Pipeline/build-backend.sh .github/workflows/build.yml"
     "mixed-changes:Code/Zarichney.Server/Program.cs Code/Zarichney.Website/package.json README.md"
     "config-only:.editorconfig .gitignore"
     "tests-only:Code/Zarichney.Server.Tests/Controllers/RecipeControllerTests.cs"

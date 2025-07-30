@@ -1,6 +1,6 @@
 # Module/Directory: .github/codeql
 
-**Last Updated:** 2025-07-27
+**Last Updated:** 2025-07-28
 
 **Parent:** [`.github`](../README.md)
 
@@ -135,7 +135,7 @@ graph TD
 ## 6. Dependencies
 
 * **Internal Code Dependencies:**
-    * [`.github/workflows/03-security.yml`](../workflows/README.md) - Security workflow that uses this configuration
+    * [`build.yml`](../workflows/build.yml) - Consolidated workflow that runs security scanning
     * [`Scripts/Pipeline/run-security-scans.sh`](../../Scripts/Pipeline/README.md) - Security scanning script
     * [`Code/Zarichney.Server/`](../../Code/Zarichney.Server/README.md) - C# codebase analyzed by CodeQL
     * [`Code/Zarichney.Website/`](../../Code/Zarichney.Website/README.md) - JavaScript/TypeScript codebase analyzed
@@ -144,8 +144,8 @@ graph TD
     * `CodeQL Query Packs` - Security query definitions and rules
     * `GitHub Security Dashboard` - Results visualization and management
 * **Dependents (Impact of Changes):**
-    * [Security Analysis Workflow] - Configuration changes affect security scanning behavior
-    * [AI Security Analysis] - CodeQL results feed into AI-powered security assessment
+    * [Security Scanning Jobs] - Configuration changes affect security scanning behavior
+    * [Claude AI Security Analysis] - CodeQL results feed into AI-powered security assessment
     * [Deployment Gates] - Security findings influence deployment decisions
 
 ## 7. Rationale & Key Historical Context
