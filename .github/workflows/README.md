@@ -133,6 +133,9 @@ graph TD
     
     # Check deployment status
     gh workflow view deploy.yml
+    
+    # Test path filtering locally
+    ./.github/scripts/test-path-filtering.sh
     ```
 * **Common Pitfalls / Gotchas:**
     * Claude AI analysis only runs on PRs to develop/main branches
@@ -143,7 +146,7 @@ graph TD
 ## 6. Dependencies
 
 * **Internal Code Dependencies:**
-    * [`Scripts/Pipeline/`](../../Scripts/Pipeline/README.md) - Core automation scripts
+    * [`.github/scripts/`](../scripts/README.md) - Core automation logic executed by workflows
     * [`.github/actions/shared/`](../actions/shared/README.md) - Shared utility actions
     * [`Code/Zarichney.Server/`](../../Code/Zarichney.Server/README.md) - Backend application
     * [`Code/Zarichney.Website/`](../../Code/Zarichney.Website/README.md) - Frontend application
@@ -167,6 +170,7 @@ graph TD
 * **Branch-Aware Logic:** Progressive analysis depth based on PR target prevents unnecessary analysis on feature branches
 * **Concurrency Control:** Added to prevent duplicate runs and optimize resource usage
 * **Simplified Naming:** Removed workflow numbering for cleaner, more intuitive interface
+* **Logic Extraction:** Moving complex logic to `.github/scripts/` enables local testing and easier debugging
 
 ## 8. Known Issues & TODOs
 
