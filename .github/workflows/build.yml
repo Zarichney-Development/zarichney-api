@@ -144,6 +144,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Extract PR Context
+        id: pr-context
+        run: |
+          # Extract issue numbers from PR body
+          PR_BODY="${{ github.event.pull_request.body }}"
+          ISSUE_NUMBERS=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo "")
+          
+          if [ -n "$ISSUE_NUMBERS" ]; then
+            echo "issue_ref=#$ISSUE_NUMBERS" >> $GITHUB_OUTPUT
+          else
+            echo "issue_ref=No linked issue" >> $GITHUB_OUTPUT
+          fi
+          
+          # Output PR context
+          echo "pr_number=${{ github.event.number }}" >> $GITHUB_OUTPUT
+          echo "pr_author=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
+          echo "source_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
+          echo "target_branch=${{ github.event.pull_request.base.ref }}" >> $GITHUB_OUTPUT
+
       - name: Download test results
         uses: actions/download-artifact@v4
         continue-on-error: true
@@ -162,114 +181,51 @@ jobs:
           claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           direct_prompt: |
-            # Testing Analysis for zarichney-api Project
-
-            You are a senior software testing expert and quality assurance specialist conducting a comprehensive testing analysis for this pull request in the zarichney-api project.
-
-            ## Analysis Data
-
-            Please analyze the test results and coverage data which contains:
-            - Test execution results (unit and integration tests)
-            - Code coverage metrics and trends
-            - Test performance and execution times
-            - Test failure analysis and patterns
-            - Testing best practices adherence
-
-            ## Analysis Framework
-
-            ### 1. Test Coverage Assessment
-            - Line coverage percentage and quality
-            - Branch coverage analysis
-            - Missing test coverage identification
-            - Coverage trend analysis (improvement/regression)
-
-            ### 2. Test Quality Analysis
-            - Test design patterns and best practices
-            - Test naming conventions and clarity
-            - Test organization and structure
-            - Mock usage and test isolation
-
-            ### 3. Test Performance Review
-            - Test execution time analysis
-            - Slow test identification
-            - Performance regression detection
-            - Test parallelization opportunities
-
-            ### 4. Test Failure Analysis
-            - Failed test root cause analysis
-            - Flaky test identification
-            - Test reliability assessment
-            - Error pattern recognition
-
-            ### 5. Testing Standards Compliance
-            - xUnit best practices adherence
-            - Testcontainers usage patterns
-            - Test categorization (Unit/Integration)
-            - Assertion quality and clarity
-
-            ## Output Requirements
-
-            Provide a comprehensive markdown report with:
-
-            ### Executive Summary
-            - Overall test health assessment (Excellent/Good/Fair/Poor/Critical)
-            - Key metrics summary (coverage %, pass rate, execution time)
-            - Critical issues requiring immediate attention
-
-            ### Detailed Analysis
-
-            #### 🧪 Test Coverage Report
-            - Current coverage metrics with trend analysis
-            - Areas lacking adequate test coverage
-            - Recommendations for coverage improvement
-
-            #### ⚡ Test Performance Analysis
-            - Execution time breakdown and performance trends
-            - Slow test identification with optimization suggestions
-            - Parallelization and efficiency recommendations
-
-            #### 🔍 Test Quality Assessment
-            - Test design pattern evaluation
-            - Best practices adherence review
-            - Code quality of test implementations
-
-            #### 🚨 Issues and Risks
-            - Critical test failures requiring immediate attention
-            - Flaky tests affecting reliability
-            - Technical debt in test codebase
-
-            #### 🎯 Recommendations
-            Prioritized actionable recommendations:
-            1. **CRITICAL**: Issues blocking deployment or causing instability
-            2. **HIGH**: Important improvements for test reliability
-            3. **MEDIUM**: Quality improvements and optimizations
-            4. **LOW**: Minor enhancements and best practices
-
-            ### Metrics Dashboard
-            - Test pass rate: X%
-            - Code coverage: X% (trend: ↑/↓/→)
-            - Average execution time: Xs
-            - Number of flaky tests: X
-            - Testing debt score: X/100
-
-            ## Context Awareness
-
-            Consider the zarichney-api project context:
-            - ASP.NET 8 backend with xUnit testing framework
-            - Angular frontend with appropriate testing tools
-            - Testcontainers for integration testing
-            - Docker-based test environment
-            - CI/CD pipeline integration requirements
-
-            ## Tone and Style
-
-            - Professional and constructive
-            - Focus on actionable improvements
-            - Explain the business impact of testing issues
-            - Provide specific, implementable recommendations
-            - Balance between thoroughness and clarity
-
-            Please analyze the test results and provide your comprehensive testing analysis.
+            # Testing Analysis for PR #${{ github.event.number }}
+            
+            **PR Context:**
+            - Pull Request: #${{ github.event.number }} by @${{ github.event.pull_request.user.login }}
+            - Issue: ${{ steps.pr-context.outputs.issue_ref }}
+            - Branch: ${{ github.event.pull_request.head.ref }} → ${{ github.event.pull_request.base.ref }}
+            
+            **Your Mission:**
+            You are reviewing the test changes and coverage impact of THIS SPECIFIC pull request.
+            
+            **Analysis Focus:**
+            1. Review the git diff/changes in this PR
+            2. Identify any new code that lacks test coverage
+            3. Assess test quality for changed/added code
+            4. Check if existing tests were broken or removed
+            
+            **What to Analyze:**
+            - Test files added/modified in this PR
+            - Coverage changes for modified code
+            - Test patterns and best practices in NEW tests only
+            - Test execution results in TestResults/ and CoverageReport/
+            
+            **Output Format:**
+            ### 🎯 PR Test Summary
+            - What test changes were made
+            - Coverage impact (improved/degraded/maintained)
+            - Test execution results (passed/failed/skipped)
+            
+            ### ❌ Issues Found
+            - Untested new code (file:line references)
+            - Broken or removed tests
+            - Poor test practices in new tests
+            - Failed tests that need fixing
+            
+            ### ✅ Action Items
+            1. Specific files needing tests
+            2. Tests that need fixing
+            3. Coverage targets to meet
+            
+            ### 💚 Good Practices
+            - Positive test additions
+            - Coverage improvements
+            - Well-structured new tests
+            
+            Keep feedback concise and actionable. Focus ONLY on changes in this PR.
 
   frontend-build:
     name: "Frontend • Build & Test"
@@ -489,6 +445,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Extract PR Context
+        id: pr-context
+        run: |
+          # Extract issue numbers from PR body
+          PR_BODY="${{ github.event.pull_request.body }}"
+          ISSUE_NUMBERS=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo "")
+          
+          if [ -n "$ISSUE_NUMBERS" ]; then
+            echo "issue_ref=#$ISSUE_NUMBERS" >> $GITHUB_OUTPUT
+          else
+            echo "issue_ref=No linked issue" >> $GITHUB_OUTPUT
+          fi
+          
+          # Output PR context
+          echo "pr_number=${{ github.event.number }}" >> $GITHUB_OUTPUT
+          echo "pr_author=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
+          echo "source_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
+          echo "target_branch=${{ github.event.pull_request.base.ref }}" >> $GITHUB_OUTPUT
+
       - name: Download quality analysis data
         uses: actions/download-artifact@v4
         continue-on-error: true
@@ -507,85 +482,57 @@ jobs:
           claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           direct_prompt: |
-            # Standards Compliance Analysis for zarichney-api Project
-
-            You are a senior software architect and code quality expert conducting a comprehensive standards compliance analysis for this pull request in the zarichney-api project.
-
-            ## Analysis Data
-
-            Please analyze the standards compliance data in `quality-analysis-data.json` which contains:
-            - Code formatting compliance results
-            - Git commit message standards validation
-            - Testing standards adherence
-            - Documentation standards compliance
-            - Overall compliance score and violation categorization
-
-            ## Required Analysis Sections
-
-            ### 1. Executive Compliance Summary
-            - Overall compliance status (Excellent/Good/Fair/Poor/Critical)
-            - Key compliance achievements and immediate violations
-            - Compliance score interpretation and trend analysis
-            - Impact on code maintainability and team productivity
-
-            ### 2. Mandatory Standards Violations
-            - Critical formatting issues that block merging
-            - Required test coverage violations
-            - Essential documentation missing
-            - Security-related compliance failures
-            - Specific file paths and line numbers for each violation
-
-            ### 3. Recommended Standards Analysis
-            - Code style and formatting improvements
-            - Git workflow and commit message enhancement opportunities
-            - Documentation completeness assessment
-            - Testing strategy alignment with project standards
-
-            ### 4. Code Quality Assessment
-            - Architecture pattern adherence
-            - Naming convention compliance
-            - Method and class size violations
-            - Complexity metrics analysis
-            - Design principle adherence (SOLID, DRY, KISS)
-
-            ### 5. Documentation Standards Evaluation
-            - XML documentation coverage for public APIs
-            - README.md completeness and accuracy
-            - Code comment quality and appropriateness
-            - Architectural documentation alignment
-
-            ### 6. Testing Standards Compliance
-            - Test naming convention adherence
-            - Test categorization (Unit/Integration) proper usage
-            - Test coverage thresholds compliance
-            - Test organization and structure validation
-
-            ### 7. Actionable Remediation Plan
-
-            **Priority ranked by compliance impact:**
-            - **MANDATORY**: Critical violations that must be fixed before merging
-            - **RECOMMENDED**: Important improvements for code quality
-            - **OPTIONAL**: Nice-to-have enhancements for long-term maintainability
-
-            Provide specific remediation steps with:
-            - File paths and line numbers
-            - Exact commands to run (e.g., `dotnet format`)
-            - Code examples for complex fixes
-            - Timeline estimates for each remediation
-
-            ### 8. Compliance Decision Matrix
-            Recommend one of:
-            - **APPROVE**: All mandatory standards met, ready to merge
-            - **CONDITIONAL**: Minor violations acceptable with monitoring
-            - **REQUIRE_FIXES**: Mandatory violations must be resolved first
-
-            ## Context Considerations
-            - This is a full-stack .NET/Angular application
-            - The analysis will be posted as a PR comment for development team review
-            - Results will influence merge decisions and code quality gates
-            - Standards are defined in project documentation under `/Docs/Standards/`
-
-            Please analyze the code changes and provide your comprehensive standards compliance analysis.
+            # Standards Compliance for PR #${{ github.event.number }}
+            
+            **PR Context:**
+            - Pull Request: #${{ github.event.number }} by @${{ github.event.pull_request.user.login }}
+            - Issue: ${{ steps.pr-context.outputs.issue_ref }}
+            - Branch: ${{ github.event.pull_request.head.ref }} → ${{ github.event.pull_request.base.ref }}
+            
+            **Your Mission:**
+            Review THIS PR's changes for compliance with project standards.
+            
+            **Analysis Focus:**
+            1. Check formatting violations in changed files (from quality-analysis-data.json)
+            2. Review commit messages for this PR
+            3. Verify documentation updates if APIs changed
+            4. Check naming conventions in new code
+            
+            **Standards to Check:**
+            - Code formatting (.editorconfig compliance)
+            - Commit message format (conventional commits)
+            - Test naming conventions
+            - Documentation requirements for public APIs
+            - File organization standards
+            
+            **Output Format:**
+            ### 🎯 Compliance Summary
+            - Overall compliance level
+            - Key violations found in this PR
+            
+            ### 🚫 Mandatory Fixes (Blocks Merge)
+            - Formatting violations (file:line)
+            - Missing required documentation
+            - Invalid commit messages
+            - Run: `dotnet format` to fix
+            
+            ### ⚠️ Recommended Fixes
+            - Naming improvements
+            - Documentation enhancements
+            - Code organization issues
+            
+            ### ✅ Quick Fix Commands
+            ```bash
+            # Commands to fix issues
+            dotnet format
+            # Other specific commands
+            ```
+            
+            ### 💚 Compliance Wins
+            - Good practices followed
+            - Standards properly implemented
+            
+            Focus on actionable fixes for THIS PR only. Reference specific files and lines from the PR changes.
 
   claude-tech-debt-analysis:
     name: "Quality Analysis • Tech Debt Analysis (AI)"
@@ -597,6 +544,25 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Extract PR Context
+        id: pr-context
+        run: |
+          # Extract issue numbers from PR body
+          PR_BODY="${{ github.event.pull_request.body }}"
+          ISSUE_NUMBERS=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo "")
+          
+          if [ -n "$ISSUE_NUMBERS" ]; then
+            echo "issue_ref=#$ISSUE_NUMBERS" >> $GITHUB_OUTPUT
+          else
+            echo "issue_ref=No linked issue" >> $GITHUB_OUTPUT
+          fi
+          
+          # Output PR context
+          echo "pr_number=${{ github.event.number }}" >> $GITHUB_OUTPUT
+          echo "pr_author=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
+          echo "source_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
+          echo "target_branch=${{ github.event.pull_request.base.ref }}" >> $GITHUB_OUTPUT
 
       - name: Download quality analysis data
         uses: actions/download-artifact@v4
@@ -616,38 +582,51 @@ jobs:
           claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           direct_prompt: |
-            # Technical Debt Analysis for zarichney-api Project
-
-            You are a senior software architect and technical debt specialist conducting a comprehensive technical debt analysis for this pull request in the zarichney-api project.
-
-            ## Analysis Data
-
-            Please analyze the technical debt data in `quality-analysis-data.json` which contains:
-            - Code complexity metrics and violations
-            - Maintenance burden indicators
-            - Performance debt analysis
-            - Architecture pattern adherence
-            - Overall debt score and categorization
-
-            ## Required Analysis Sections
-
-            ### 1. Executive Debt Summary
-            - Overall technical debt level (Excellent/Good/Fair/Poor/Critical)
-            - Key debt accumulation areas and immediate concerns
-            - Debt score interpretation and velocity impact
-            - Long-term maintainability assessment
-
-            ### 2. Code Complexity Analysis
-            - Method length violations and cognitive complexity
-            - Class size and responsibility violations
-            - Cyclomatic complexity hotspots
-            - Nesting depth and parameter count issues
-            - SOLID principle violations
-
-            ### 3. Performance Debt Assessment
-            - Blocking async/await pattern violations
-            - Inefficient algorithms and data structures
-            - Resource leak potential (missing using statements)
+            # Tech Debt Analysis for PR #${{ github.event.number }}
+            
+            **PR Context:**
+            - Pull Request: #${{ github.event.number }} by @${{ github.event.pull_request.user.login }}
+            - Issue: ${{ steps.pr-context.outputs.issue_ref }}
+            - Branch: ${{ github.event.pull_request.head.ref }} → ${{ github.event.pull_request.base.ref }}
+            
+            **Your Mission:**
+            Assess technical debt introduced or resolved by THIS PR.
+            
+            **Analysis Focus:**
+            1. Complexity added by new code
+            2. Code duplication introduced
+            3. Performance implications of changes
+            4. Debt RESOLVED by refactoring
+            
+            **What to Check:**
+            - Method complexity in new/modified code (from quality-analysis-data.json)
+            - New dependencies or coupling
+            - TODOs or FIXMEs added
+            - Refactoring improvements
+            - Performance patterns in changed code
+            
+            **Output Format:**
+            ### 🎯 Debt Impact Summary
+            - Net debt change: [Increased/Decreased/Neutral]
+            - Key concerns in new code
+            
+            ### 🚨 New Debt Introduced
+            - Complex methods (file:line, complexity score)
+            - Code duplication detected
+            - Performance concerns
+            - New TODOs/FIXMEs
+            
+            ### 🎉 Debt Resolved
+            - Refactoring wins
+            - Complexity reduced
+            - Performance improved
+            - Old TODOs resolved
+            
+            ### 📋 Recommendations
+            1. Immediate fixes for this PR
+            2. Future refactoring opportunities created
+            
+            Be constructive and focus on THIS PR's impact. Celebrate debt reduction!
             - Database query optimization opportunities
             - Memory allocation patterns
 
@@ -805,6 +784,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Extract PR Context
+        id: pr-context
+        run: |
+          # Extract issue numbers from PR body
+          PR_BODY="${{ github.event.pull_request.body }}"
+          ISSUE_NUMBERS=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo "")
+          
+          if [ -n "$ISSUE_NUMBERS" ]; then
+            echo "issue_ref=#$ISSUE_NUMBERS" >> $GITHUB_OUTPUT
+          else
+            echo "issue_ref=No linked issue" >> $GITHUB_OUTPUT
+          fi
+          
+          # Output PR context
+          echo "pr_number=${{ github.event.number }}" >> $GITHUB_OUTPUT
+          echo "pr_author=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
+          echo "source_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
+          echo "target_branch=${{ github.event.pull_request.base.ref }}" >> $GITHUB_OUTPUT
+
       - name: Download all security scan results
         uses: actions/download-artifact@v4
         with:
@@ -838,22 +836,64 @@ jobs:
           claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           direct_prompt: |
-            # Security Analysis for zarichney-api Project
-
-            You are a senior cybersecurity expert and application security specialist conducting a comprehensive security analysis for this pull request in the zarichney-api project.
-
-            ## Analysis Data
-
-            Please analyze the security scan results which contain:
-            - CodeQL static analysis findings
-            - Dependency vulnerability assessments  
-            - Secrets detection results
-            - Security policy compliance checks
-            - Overall security posture evaluation
-
-            ## Required Analysis Sections
-
-            ### 1. Executive Security Summary
+            # Security Analysis for PR #${{ github.event.number }}
+            
+            **PR Context:**
+            - Pull Request: #${{ github.event.number }} by @${{ github.event.pull_request.user.login }}
+            - Issue: ${{ steps.pr-context.outputs.issue_ref }}
+            - Branch: ${{ github.event.pull_request.head.ref }} → ${{ github.event.pull_request.base.ref }}
+            - Target: ${{ github.event.pull_request.base.ref }} (Production deployment)
+            
+            **Your Mission:**
+            Assess security implications of THIS PR's changes.
+            
+            **Analysis Focus:**
+            1. New code for vulnerabilities
+            2. Dependencies added/updated
+            3. Authentication/authorization changes
+            4. Data handling modifications
+            
+            **Security Data Available:**
+            - CodeQL analysis results
+            - Dependency vulnerability scan results
+            - Secrets detection findings
+            - Security policy compliance status
+            
+            **Security Checks:**
+            - Input validation in new endpoints
+            - SQL injection risks
+            - XSS vulnerabilities
+            - Secrets/credentials exposure
+            - CORS/security header changes
+            - Authentication bypasses
+            
+            **Output Format:**
+            ### 🔒 Security Assessment
+            - Risk Level: [Critical/High/Medium/Low/None]
+            - Key findings summary
+            
+            ### 🚨 Critical Issues (Block Deployment)
+            - Vulnerabilities requiring immediate fix
+            - Exposed secrets or credentials
+            - Authentication/authorization flaws
+            
+            ### ⚠️ Security Concerns
+            - Medium risk issues
+            - Best practice violations
+            - Dependency vulnerabilities
+            
+            ### ✅ Remediation Steps
+            1. Specific fixes needed
+            2. Code examples where helpful
+            3. Commands to run
+            
+            ### 🛡️ Security Improvements
+            - Positive security changes
+            - Vulnerabilities fixed
+            
+            **Deployment Decision: [DEPLOY/BLOCK/CONDITIONAL]**
+            
+            Focus on security impact of THIS PR's changes only. Be specific about what was introduced or changed.
             - Overall security posture (Excellent/Good/Fair/Poor/Critical)
             - Critical vulnerabilities requiring immediate attention
             - Security trend analysis and risk assessment 
