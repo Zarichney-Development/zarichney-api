@@ -186,7 +186,7 @@ jobs:
           export SECRET_DB_PASSWORD_KEY="${{ secrets.SECRET_DB_PASSWORD_KEY }}"
           
           # Execute deployment
-          ./.github/scripts/deploy-backend.sh "${{ needs.deployment-decision.outputs.environment }}"
+          .github/scripts/deploy-backend.sh "${{ needs.deployment-decision.outputs.environment }}"
 
       - name: Run health checks
         run: |
