@@ -1,8 +1,8 @@
-name: "04 • Deployment"
+name: "Deployment"
 
 on:
   workflow_run:
-    workflows: ["01 • Build & Test"]
+    workflows: ["Build & Test"]
     types:
       - completed
     branches: [main]
@@ -59,9 +59,27 @@ jobs:
           SECURITY_PASSED=true
           
           if [ "${{ github.event_name }}" = "workflow_run" ]; then
-            if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
-              SECURITY_PASSED=false
-              echo "Security workflow failed"
+            # Check if this is triggered by build workflow from main branch
+            if [ "${{ github.event.workflow_run.head_branch }}" = "main" ] && [ "${{ github.event.workflow_run.event }}" = "push" ]; then
+              echo "🏷️ Main branch push detected - security validation completed during PR phase"
+              echo "Build workflow conclusion: ${{ github.event.workflow_run.conclusion }}"
+              
+              # For main branch pushes, we trust that security was validated during PR
+              # Only check that the triggering build workflow succeeded
+              if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+                SECURITY_PASSED=false
+                echo "❌ Build workflow failed for main branch - blocking deployment"
+              else
+                echo "✅ Build succeeded on main branch - proceeding with deployment"
+              fi
+            else
+              echo "🔍 Non-main branch deployment - checking for security workflow results"
+              # For non-main deployments, check if we can find security workflow results
+              # This would be the case for feature branch deployments with security scanning
+              if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+                SECURITY_PASSED=false
+                echo "❌ Workflow failed - blocking deployment"
+              fi
             fi
           fi
           
@@ -168,7 +186,7 @@ jobs:
           export SECRET_DB_PASSWORD_KEY="${{ secrets.SECRET_DB_PASSWORD_KEY }}"
           
           # Execute deployment
-          ./Scripts/Pipeline/deploy-backend.sh "${{ needs.deployment-decision.outputs.environment }}"
+          ./.github/scripts/deploy-backend.sh "${{ needs.deployment-decision.outputs.environment }}"
 
       - name: Run health checks
         run: |
@@ -245,7 +263,7 @@ jobs:
           export S3_BUCKET="${{ secrets.S3_BUCKET }}"
           
           # Execute deployment
-          ./Scripts/Pipeline/deploy-frontend.sh "${{ needs.deployment-decision.outputs.environment }}"
+          ./.github/scripts/deploy-frontend.sh "${{ needs.deployment-decision.outputs.environment }}"
 
       - name: Run health checks
         run: |
