@@ -627,59 +627,6 @@ jobs:
             2. Future refactoring opportunities created
             
             Be constructive and focus on THIS PR's impact. Celebrate debt reduction!
-            - Database query optimization opportunities
-            - Memory allocation patterns
-
-            ### 4. Maintenance Burden Evaluation
-            - TODO/FIXME/HACK comment accumulation
-            - Code duplication and repeated patterns
-            - Hard-coded values and magic numbers
-            - Configuration and environment dependencies
-            - Error handling and logging gaps
-
-            ### 5. Architecture Debt Analysis
-            - Design pattern inconsistencies
-            - Abstraction level violations
-            - Dependency injection and coupling issues
-            - Layer separation and boundary violations
-            - API design and contract debt
-
-            ### 6. Testing Debt Assessment
-            - Test coverage gaps for complex code
-            - Test maintainability and brittleness
-            - Missing integration test scenarios
-            - Test data management debt
-            - Test performance and reliability issues
-
-            ### 7. Prioritized Debt Remediation Plan
-
-            **Priority ranked by business impact:**
-            - **CRITICAL**: Debt that blocks feature development or causes production issues
-            - **HIGH**: Debt that significantly slows development velocity
-            - **MEDIUM**: Debt that impacts code maintainability
-            - **LOW**: Debt that should be addressed during refactoring cycles
-
-            For each debt item provide:
-            - Business impact assessment
-            - Effort estimation (S/M/L/XL)
-            - Recommended remediation approach
-            - Risk of not addressing the debt
-            - Dependencies and prerequisites
-
-            ### 8. Technical Debt Decision Matrix
-            Recommend one of:
-            - **ACCEPT**: Low-impact debt, continue development
-            - **MONITOR**: Medium-impact debt, track and plan remediation
-            - **REMEDIATE**: High-impact debt, address in current/next sprint
-            - **BLOCK**: Critical debt, must be resolved before merge
-
-            ## Context Considerations
-            - This is a full-stack .NET/Angular application
-            - The analysis will guide technical debt management decisions
-            - Results will influence sprint planning and refactoring priorities
-            - Consider both immediate and long-term maintainability
-
-            Please analyze the code changes and provide your comprehensive technical debt analysis.
 
   security-scans:
     name: "Security • Comprehensive Scanning"
@@ -894,7 +841,8 @@ jobs:
             **Deployment Decision: [DEPLOY/BLOCK/CONDITIONAL]**
             
             Focus on security impact of THIS PR's changes only. Be specific about what was introduced or changed.
-            - Overall security posture (Excellent/Good/Fair/Poor/Critical)
+
+      - name: Complete PR check run
             - Critical vulnerabilities requiring immediate attention
             - Security trend analysis and risk assessment 
             - Impact on application security and compliance
