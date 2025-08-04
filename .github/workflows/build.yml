@@ -183,6 +183,24 @@ jobs:
           name: test-results-${{ github.run_number }}
           path: ./
 
+      - name: Load testing analysis prompt
+        id: load-testing-prompt
+        run: |
+          # Read the markdown template
+          PROMPT_TEMPLATE=$(cat .github/prompts/testing-analysis.md)
+          
+          # Replace placeholders with actual values
+          PROMPT="${PROMPT_TEMPLATE//\{\{PR_NUMBER\}\}/${{ github.event.number }}}"
+          PROMPT="${PROMPT//\{\{PR_AUTHOR\}\}/${{ github.event.pull_request.user.login }}}"
+          PROMPT="${PROMPT//\{\{ISSUE_REF\}\}/${{ steps.pr-context.outputs.issue_ref }}}"
+          PROMPT="${PROMPT//\{\{SOURCE_BRANCH\}\}/${{ github.event.pull_request.head.ref }}}"
+          PROMPT="${PROMPT//\{\{TARGET_BRANCH\}\}/${{ github.event.pull_request.base.ref }}}"
+          
+          # Output for use in Claude action
+          echo "prompt<<EOF" >> $GITHUB_OUTPUT
+          echo "$PROMPT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Testing Analysis with Claude AI
         id: claude-testing
         uses: grll/claude-code-action@beta
@@ -193,52 +211,7 @@ jobs:
           claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
           claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          direct_prompt: |
-            # Testing Analysis for PR #${{ github.event.number }}
-            
-            **PR Context:**
-            - Pull Request: #${{ github.event.number }} by @${{ github.event.pull_request.user.login }}
-            - Issue: ${{ steps.pr-context.outputs.issue_ref }}
-            - Branch: ${{ github.event.pull_request.head.ref }} → ${{ github.event.pull_request.base.ref }}
-            
-            **Your Mission:**
-            You are reviewing the test changes and coverage impact of THIS SPECIFIC pull request.
-            
-            **Analysis Focus:**
-            1. Review the git diff/changes in this PR
-            2. Identify any new code that lacks test coverage
-            3. Assess test quality for changed/added code
-            4. Check if existing tests were broken or removed
-            
-            **What to Analyze:**
-            - Test files added/modified in this PR
-            - Coverage changes for modified code
-            - Test patterns and best practices in NEW tests only
-            - Test execution results in TestResults/ and CoverageReport/
-            
-            **Output Format:**
-            ### 🎯 PR Test Summary
-            - What test changes were made
-            - Coverage impact (improved/degraded/maintained)
-            - Test execution results (passed/failed/skipped)
-            
-            ### ❌ Issues Found
-            - Untested new code (file:line references)
-            - Broken or removed tests
-            - Poor test practices in new tests
-            - Failed tests that need fixing
-            
-            ### ✅ Action Items
-            1. Specific files needing tests
-            2. Tests that need fixing
-            3. Coverage targets to meet
-            
-            ### 💚 Good Practices
-            - Positive test additions
-            - Coverage improvements
-            - Well-structured new tests
-            
-            Keep feedback concise and actionable. Focus ONLY on changes in this PR.
+          direct_prompt: ${{ steps.load-testing-prompt.outputs.prompt }}
 
   frontend-build:
     name: "Frontend • Build & Test"
@@ -484,6 +457,24 @@ jobs:
           name: quality-analysis-${{ github.run_number }}
           path: ./
 
+      - name: Load standards compliance prompt
+        id: load-standards-prompt
+        run: |
+          # Read the markdown template
+          PROMPT_TEMPLATE=$(cat .github/prompts/standards-compliance.md)
+          
+          # Replace placeholders with actual values
+          PROMPT="${PROMPT_TEMPLATE//\{\{PR_NUMBER\}\}/${{ github.event.number }}}"
+          PROMPT="${PROMPT//\{\{PR_AUTHOR\}\}/${{ github.event.pull_request.user.login }}}"
+          PROMPT="${PROMPT//\{\{ISSUE_REF\}\}/${{ steps.pr-context.outputs.issue_ref }}}"
+          PROMPT="${PROMPT//\{\{SOURCE_BRANCH\}\}/${{ github.event.pull_request.head.ref }}}"
+          PROMPT="${PROMPT//\{\{TARGET_BRANCH\}\}/${{ github.event.pull_request.base.ref }}}"
+          
+          # Output for use in Claude action
+          echo "prompt<<EOF" >> $GITHUB_OUTPUT
+          echo "$PROMPT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Standards Compliance AI Analysis
         id: claude-standards
         uses: grll/claude-code-action@beta
@@ -494,58 +485,7 @@ jobs:
           claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
           claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          direct_prompt: |
-            # Standards Compliance for PR #${{ github.event.number }}
-            
-            **PR Context:**
-            - Pull Request: #${{ github.event.number }} by @${{ github.event.pull_request.user.login }}
-            - Issue: ${{ steps.pr-context.outputs.issue_ref }}
-            - Branch: ${{ github.event.pull_request.head.ref }} → ${{ github.event.pull_request.base.ref }}
-            
-            **Your Mission:**
-            Review THIS PR's changes for compliance with project standards.
-            
-            **Analysis Focus:**
-            1. Check formatting violations in changed files (from quality-analysis-data.json)
-            2. Review commit messages for this PR
-            3. Verify documentation updates if APIs changed
-            4. Check naming conventions in new code
-            
-            **Standards to Check:**
-            - Code formatting (.editorconfig compliance)
-            - Commit message format (conventional commits)
-            - Test naming conventions
-            - Documentation requirements for public APIs
-            - File organization standards
-            
-            **Output Format:**
-            ### 🎯 Compliance Summary
-            - Overall compliance level
-            - Key violations found in this PR
-            
-            ### 🚫 Mandatory Fixes (Blocks Merge)
-            - Formatting violations (file:line)
-            - Missing required documentation
-            - Invalid commit messages
-            - Run: `dotnet format` to fix
-            
-            ### ⚠️ Recommended Fixes
-            - Naming improvements
-            - Documentation enhancements
-            - Code organization issues
-            
-            ### ✅ Quick Fix Commands
-            ```bash
-            # Commands to fix issues
-            dotnet format
-            # Other specific commands
-            ```
-            
-            ### 💚 Compliance Wins
-            - Good practices followed
-            - Standards properly implemented
-            
-            Focus on actionable fixes for THIS PR only. Reference specific files and lines from the PR changes.
+          direct_prompt: ${{ steps.load-standards-prompt.outputs.prompt }}
 
   claude-tech-debt-analysis:
     name: "Quality Analysis • Tech Debt Analysis (AI)"
@@ -584,6 +524,24 @@ jobs:
           name: quality-analysis-${{ github.run_number }}
           path: ./
 
+      - name: Load tech debt analysis prompt
+        id: load-techdebt-prompt
+        run: |
+          # Read the markdown template
+          PROMPT_TEMPLATE=$(cat .github/prompts/tech-debt-analysis.md)
+          
+          # Replace placeholders with actual values
+          PROMPT="${PROMPT_TEMPLATE//\{\{PR_NUMBER\}\}/${{ github.event.number }}}"
+          PROMPT="${PROMPT//\{\{PR_AUTHOR\}\}/${{ github.event.pull_request.user.login }}}"
+          PROMPT="${PROMPT//\{\{ISSUE_REF\}\}/${{ steps.pr-context.outputs.issue_ref }}}"
+          PROMPT="${PROMPT//\{\{SOURCE_BRANCH\}\}/${{ github.event.pull_request.head.ref }}}"
+          PROMPT="${PROMPT//\{\{TARGET_BRANCH\}\}/${{ github.event.pull_request.base.ref }}}"
+          
+          # Output for use in Claude action
+          echo "prompt<<EOF" >> $GITHUB_OUTPUT
+          echo "$PROMPT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Tech Debt AI Analysis
         id: claude-techdebt
         uses: grll/claude-code-action@beta
@@ -594,52 +552,7 @@ jobs:
           claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
           claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          direct_prompt: |
-            # Tech Debt Analysis for PR #${{ github.event.number }}
-            
-            **PR Context:**
-            - Pull Request: #${{ github.event.number }} by @${{ github.event.pull_request.user.login }}
-            - Issue: ${{ steps.pr-context.outputs.issue_ref }}
-            - Branch: ${{ github.event.pull_request.head.ref }} → ${{ github.event.pull_request.base.ref }}
-            
-            **Your Mission:**
-            Assess technical debt introduced or resolved by THIS PR.
-            
-            **Analysis Focus:**
-            1. Complexity added by new code
-            2. Code duplication introduced
-            3. Performance implications of changes
-            4. Debt RESOLVED by refactoring
-            
-            **What to Check:**
-            - Method complexity in new/modified code (from quality-analysis-data.json)
-            - New dependencies or coupling
-            - TODOs or FIXMEs added
-            - Refactoring improvements
-            - Performance patterns in changed code
-            
-            **Output Format:**
-            ### 🎯 Debt Impact Summary
-            - Net debt change: [Increased/Decreased/Neutral]
-            - Key concerns in new code
-            
-            ### 🚨 New Debt Introduced
-            - Complex methods (file:line, complexity score)
-            - Code duplication detected
-            - Performance concerns
-            - New TODOs/FIXMEs
-            
-            ### 🎉 Debt Resolved
-            - Refactoring wins
-            - Complexity reduced
-            - Performance improved
-            - Old TODOs resolved
-            
-            ### 📋 Recommendations
-            1. Immediate fixes for this PR
-            2. Future refactoring opportunities created
-            
-            Be constructive and focus on THIS PR's impact. Celebrate debt reduction!
+          direct_prompt: ${{ steps.load-techdebt-prompt.outputs.prompt }}
 
   security-scans:
     name: "Security • Comprehensive Scanning"
@@ -785,6 +698,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Load security analysis prompt
+        id: load-security-prompt
+        run: |
+          # Read the markdown template
+          PROMPT_TEMPLATE=$(cat .github/prompts/security-analysis.md)
+          
+          # Replace placeholders with actual values
+          PROMPT="${PROMPT_TEMPLATE//\{\{PR_NUMBER\}\}/${{ github.event.number }}}"
+          PROMPT="${PROMPT//\{\{PR_AUTHOR\}\}/${{ github.event.pull_request.user.login }}}"
+          PROMPT="${PROMPT//\{\{ISSUE_REF\}\}/${{ steps.pr-context.outputs.issue_ref }}}"
+          PROMPT="${PROMPT//\{\{SOURCE_BRANCH\}\}/${{ github.event.pull_request.head.ref }}}"
+          PROMPT="${PROMPT//\{\{TARGET_BRANCH\}\}/${{ github.event.pull_request.base.ref }}}"
+          
+          # Output for use in Claude action
+          echo "prompt<<EOF" >> $GITHUB_OUTPUT
+          echo "$PROMPT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Security Analysis with Claude AI
         id: claude-security
         uses: grll/claude-code-action@beta
@@ -795,65 +726,7 @@ jobs:
           claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
           claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          direct_prompt: |
-            # Security Analysis for PR #${{ github.event.number }}
-            
-            **PR Context:**
-            - Pull Request: #${{ github.event.number }} by @${{ github.event.pull_request.user.login }}
-            - Issue: ${{ steps.pr-context.outputs.issue_ref }}
-            - Branch: ${{ github.event.pull_request.head.ref }} → ${{ github.event.pull_request.base.ref }}
-            - Target: ${{ github.event.pull_request.base.ref }} (Production deployment)
-            
-            **Your Mission:**
-            Assess security implications of THIS PR's changes.
-            
-            **Analysis Focus:**
-            1. New code for vulnerabilities
-            2. Dependencies added/updated
-            3. Authentication/authorization changes
-            4. Data handling modifications
-            
-            **Security Data Available:**
-            - CodeQL analysis results
-            - Dependency vulnerability scan results
-            - Secrets detection findings
-            - Security policy compliance status
-            
-            **Security Checks:**
-            - Input validation in new endpoints
-            - SQL injection risks
-            - XSS vulnerabilities
-            - Secrets/credentials exposure
-            - CORS/security header changes
-            - Authentication bypasses
-            
-            **Output Format:**
-            ### 🔒 Security Assessment
-            - Risk Level: [Critical/High/Medium/Low/None]
-            - Key findings summary
-            
-            ### 🚨 Critical Issues (Block Deployment)
-            - Vulnerabilities requiring immediate fix
-            - Exposed secrets or credentials
-            - Authentication/authorization flaws
-            
-            ### ⚠️ Security Concerns
-            - Medium risk issues
-            - Best practice violations
-            - Dependency vulnerabilities
-            
-            ### ✅ Remediation Steps
-            1. Specific fixes needed
-            2. Code examples where helpful
-            3. Commands to run
-            
-            ### 🛡️ Security Improvements
-            - Positive security changes
-            - Vulnerabilities fixed
-            
-            **Deployment Decision: [DEPLOY/BLOCK/CONDITIONAL]**
-            
-            Focus on security impact of THIS PR's changes only. Be specific about what was introduced or changed.
+          direct_prompt: ${{ steps.load-security-prompt.outputs.prompt }}
 
       - name: Complete PR check run
         if: always() && steps.create-check.outputs.check_run_id != ''

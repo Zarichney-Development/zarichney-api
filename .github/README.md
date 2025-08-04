@@ -1,6 +1,6 @@
 # Module/Directory: .github
 
-**Last Updated:** 2025-07-27
+**Last Updated:** 2025-08-04
 
 **Parent:** [`zarichney-api`](../README.md)
 
@@ -18,6 +18,7 @@
 * **Submodules:**
     * **Actions:** [`actions/`](./actions/README.md) - Custom GitHub Actions for AI analysis and shared utilities
     * **Workflows:** [`workflows/`](./workflows/README.md) - Clean CI/CD pipeline with intelligent path filtering
+    * **Prompts:** [`prompts/`](./prompts/README.md) - Template-based Claude AI analysis prompt system
     * **Configuration:** [`config/`](./config/README.md) - Configuration files for analysis tools and quality gates
     * **Security:** [`codeql/`](./codeql/README.md) - CodeQL security scanning configuration
 
@@ -105,8 +106,8 @@ graph TD
     * Composite actions for reusable components
     * JSON/YAML for configuration management
 * **AI Integration Standards:**
-    * All AI prompts version-controlled in `Scripts/Prompts/`
-    * Consistent input/output formats across analysis workflows
+    * All AI prompts version-controlled in `.github/prompts/` with template-based system
+    * Consistent placeholder-based dynamic context injection across analysis workflows
     * Quality gates based on AI-generated scores and recommendations
     * Graceful degradation when AI services unavailable
 
@@ -145,7 +146,7 @@ graph TD
 
 * **Internal Code Dependencies:**
     * [`Scripts/Pipeline/`](../Scripts/Pipeline/README.md) - Core automation logic executed by workflows
-    * [`Scripts/Prompts/`](../Scripts/Prompts/README.md) - AI analysis prompts used by custom actions
+    * [`.github/prompts/`](./prompts/README.md) - Template-based AI analysis prompts with placeholder system
     * [`Code/Zarichney.Server/`](../Code/Zarichney.Server/README.md) - Backend application for build/test/deploy
     * [`Code/Zarichney.Website/`](../Code/Zarichney.Website/README.md) - Frontend application for build/test/deploy
 * **External Service Dependencies:**
@@ -163,7 +164,8 @@ graph TD
 ## 7. Rationale & Key Historical Context
 
 * **Clean Architecture Decision:** Replaced complex inline workflow logic with script-based approach to enable local testing, easier debugging, and better maintainability
-* **AI Integration Strategy:** Version-controlled prompts and custom actions provide consistent, improvable AI analysis without vendor lock-in
+* **AI Integration Strategy:** Template-based prompts in `.github/prompts/` provide consistent, version-controlled AI analysis with dynamic context injection
+* **Prompt Refactoring:** Extracted inline Claude AI prompts to separate template files for improved maintainability and workflow clarity
 * **Path-Based Optimization:** Intelligent filtering reduces unnecessary workflow runs by 30%+ while maintaining comprehensive coverage
 * **Workflow Separation:** Five focused workflows replace eight overlapping ones, each with single responsibility and clear dependencies
 * **Script Delegation:** Moving complex logic to `Scripts/Pipeline/` enables local development and testing of CI/CD components

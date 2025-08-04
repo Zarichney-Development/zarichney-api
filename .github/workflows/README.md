@@ -1,6 +1,6 @@
 # Module/Directory: .github/workflows
 
-**Last Updated:** 2025-07-28
+**Last Updated:** 2025-08-04
 
 **Parent:** [`.github`](../README.md)
 
@@ -17,7 +17,7 @@
 ## 2. Architecture & Key Concepts
 
 * **High-Level Design:** Three core workflows with clear responsibilities:
-    * **build.yml** - Consolidated mega build pipeline with all AI analysis
+    * **build.yml** - Consolidated mega build pipeline with all AI analysis using template-based prompts
     * **deploy.yml** - Conditional deployment based on build results
     * **maintenance.yml** - Scheduled system maintenance and monitoring
 * **Branch-Aware Execution Logic:**
@@ -36,6 +36,10 @@
     * Automatic cancellation of previous runs when new commits are pushed
     * Resource optimization and faster feedback
     * Clean workflow run history
+* **AI Prompt Management:**
+    * Template-based prompt system with dynamic context injection
+    * Centralized prompt files in `.github/prompts/` directory
+    * Consistent placeholder replacement pattern across all analysis jobs
 
 ```mermaid
 graph TD
@@ -67,11 +71,12 @@ graph TD
 
 * **Key Public Interfaces (for workflow orchestration):**
     * **build.yml**:
-        * **Purpose:** Consolidated build, test, and AI analysis with branch-aware logic
+        * **Purpose:** Consolidated build, test, and AI analysis with branch-aware logic using template-based prompts
         * **Triggers:** Pull requests to any branch, pushes to main
-        * **Critical Preconditions:** Valid source code, configured secrets (CLAUDE_CODE_OAUTH_TOKEN)
-        * **Critical Postconditions:** Build artifacts created, AI analysis posted to PRs
+        * **Critical Preconditions:** Valid source code, configured secrets (CLAUDE_CODE_OAUTH_TOKEN), prompt templates available
+        * **Critical Postconditions:** Build artifacts created, AI analysis posted to PRs using processed templates
         * **Concurrency:** Automatically cancels previous runs for same ref
+        * **Prompt Loading:** Each AI analysis job loads template from `.github/prompts/` and replaces placeholders
     * **deploy.yml**:
         * **Purpose:** Production deployment with security gates
         * **Triggers:** Successful build.yml completion on main branch
@@ -102,7 +107,8 @@ graph TD
 * **Claude AI Integration:**
     * Direct use of `grll/claude-code-action@beta` in workflow
     * OAuth authentication for Claude Max plan
-    * Separate jobs for each analysis type
+    * Separate jobs for each analysis type with template-based prompts
+    * Consistent prompt loading pattern: `cat .github/prompts/{type}.md` → placeholder replacement → Claude AI
 * **Concurrency Management:**
     ```yaml
     concurrency:
@@ -148,6 +154,7 @@ graph TD
 * **Internal Code Dependencies:**
     * [`.github/scripts/`](../scripts/README.md) - Core automation logic executed by workflows
     * [`.github/actions/shared/`](../actions/shared/README.md) - Shared utility actions
+    * [`.github/prompts/`](../prompts/README.md) - AI analysis prompt templates with placeholder system
     * [`Code/Zarichney.Server/`](../../Code/Zarichney.Server/README.md) - Backend application
     * [`Code/Zarichney.Website/`](../../Code/Zarichney.Website/README.md) - Frontend application
 * **External Service Dependencies:**
@@ -167,6 +174,8 @@ graph TD
 
 * **Workflow Consolidation:** Merged separate quality and security workflows into single mega build for Claude AI compatibility
 * **Claude AI Integration:** Moved from `workflow_run` triggers to direct `pull_request` events for proper OAuth support
+* **Prompt Refactoring:** Extracted inline Claude AI prompts to separate template files for maintainability and version control
+* **Template System:** Implemented placeholder-based prompt loading for consistent dynamic context injection
 * **Branch-Aware Logic:** Progressive analysis depth based on PR target prevents unnecessary analysis on feature branches
 * **Concurrency Control:** Added to prevent duplicate runs and optimize resource usage
 * **Simplified Naming:** Removed workflow numbering for cleaner, more intuitive interface
