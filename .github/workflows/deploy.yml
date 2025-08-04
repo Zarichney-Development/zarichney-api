@@ -195,10 +195,10 @@ jobs:
           # Health check URL based on environment
           case "${{ needs.deployment-decision.outputs.environment }}" in
             "production")
-              HEALTH_URL="https://api.zarichney.com/health"
+              HEALTH_URL="https://zarichney.com/api/health"
               ;;
             "staging")
-              HEALTH_URL="https://staging-api.zarichney.com/health"
+              HEALTH_URL="https://staging-zarichney.com/api/health"
               ;;
             *)
               HEALTH_URL="http://${{ secrets.EC2_HOST_BACKEND }}:5000/health"

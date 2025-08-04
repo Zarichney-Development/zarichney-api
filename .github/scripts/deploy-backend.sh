@@ -409,10 +409,10 @@ run_health_checks() {
     local health_url
     case "$TARGET_ENV" in
         "production")
-            health_url="https://api.zarichney.com/health"
+            health_url="https://zarichney.com/api/health"
             ;;
         "staging")
-            health_url="https://staging-api.zarichney.com/health"
+            health_url="https://staging-zarichney.com/api/health"
             ;;
         "dev")
             health_url="http://${EC2_HOST_BACKEND}:5000/health"

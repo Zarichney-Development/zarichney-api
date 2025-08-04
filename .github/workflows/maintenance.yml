@@ -255,7 +255,7 @@ jobs:
           
           # API health check
           echo "Checking API health..."
-          if curl -f -s --max-time 30 "https://api.zarichney.com/health"; then
+          if curl -f -s --max-time 30 "https://zarichney.com/api/health"; then
             echo "✅ API is healthy"
             API_STATUS="healthy"
           else
