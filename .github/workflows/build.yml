@@ -219,12 +219,10 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const path = require('path');
             
             // Check if this was a Claude usage limit failure
             let isUsageLimitFailure = false;
             try {
-              // Try to read any Claude output or error logs
               const logFiles = [
                 '/home/runner/work/_temp/claude-execution-output.json',
                 '/tmp/claude-error.log'
@@ -243,11 +241,30 @@ jobs:
               console.log('Could not read Claude output files:', error.message);
             }
             
-            // Create PR comment explaining the failure
-            const commentBody = isUsageLimitFailure ? 
-              `## 🚫 AI Analysis Failed - Usage Limit Reached
+            // Find existing Claude comment to update
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            // Look for Claude TestMaster comment (find the most recent one)
+            const claudeComments = comments.data.filter(comment => 
+              comment.body && (
+                comment.body.includes('TestMaster Analysis In Progress') ||
+                comment.body.includes('🧪 TestMaster') ||
+                comment.body.includes('Testing Analysis') ||
+                (comment.user.login.includes('github-actions') && comment.body.includes('TestMaster')) ||
+                comment.user.type === 'Bot'
+              )
+            );
+            // Get the most recent Claude comment for TestMaster
+            const claudeComment = claudeComments.length > 0 ? claudeComments[claudeComments.length - 1] : null;
+            
+            const failureCommentBody = isUsageLimitFailure ? 
+              `## 🚫 TestMaster Analysis Failed - Usage Limit Reached
               
-              **TestMaster Analysis Status:** ❌ **FAILED**
+              **Analysis Status:** ❌ **FAILED**
               
               The Testing Analysis could not be completed due to Claude AI usage limit being reached. This is a temporary issue that will resolve when the usage limit resets.
               
@@ -261,10 +278,13 @@ jobs:
               - Re-run the workflow or push a new commit to retry analysis
               - Consider manual testing review against [Testing Standards](https://github.com/Zarichney-Development/zarichney-api/blob/main/Docs/Standards/TestingStandards.md)
               
-              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.` :
-              `## 🚫 AI Analysis Failed - Technical Error
+              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.
               
-              **TestMaster Analysis Status:** ❌ **FAILED**
+              ---
+              *Workflow Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*` :
+              `## 🚫 TestMaster Analysis Failed - Technical Error
+              
+              **Analysis Status:** ❌ **FAILED**
               
               The Testing Analysis encountered a technical error and could not be completed.
               
@@ -278,14 +298,30 @@ jobs:
               - Re-run the workflow to retry analysis
               - Consider manual testing review against [Testing Standards](https://github.com/Zarichney-Development/zarichney-api/blob/main/Docs/Standards/TestingStandards.md)
               
-              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.`;
+              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.
+              
+              ---
+              *Workflow Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*`;
             
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: commentBody
-            });
+            if (claudeComment) {
+              // Update existing Claude comment
+              console.log(`Updating existing Claude comment ID: ${claudeComment.id}`);
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: claudeComment.id,
+                body: failureCommentBody
+              });
+            } else {
+              // Fallback: create new comment if Claude comment not found
+              console.log('Claude comment not found, creating new comment');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: failureCommentBody
+              });
+            }
             
             // Fail the workflow step to make the failure visible
             core.setFailed(isUsageLimitFailure ? 
@@ -450,10 +486,30 @@ jobs:
               console.log('Could not read Claude output files:', error.message);
             }
             
-            const commentBody = isUsageLimitFailure ? 
-              `## 🚫 AI Analysis Failed - Usage Limit Reached
+            // Find existing Claude comment to update
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            // Look for Claude StandardsGuardian comment (find the most recent one)
+            const claudeComments = comments.data.filter(comment => 
+              comment.body && (
+                comment.body.includes('StandardsGuardian Analysis In Progress') ||
+                comment.body.includes('🛡️ StandardsGuardian') ||
+                comment.body.includes('Standards Compliance') ||
+                (comment.user.login.includes('github-actions') && comment.body.includes('Standards')) ||
+                comment.user.type === 'Bot'
+              )
+            );
+            // Get the most recent Claude comment for StandardsGuardian
+            const claudeComment = claudeComments.length > 0 ? claudeComments[claudeComments.length - 1] : null;
+            
+            const failureCommentBody = isUsageLimitFailure ? 
+              `## 🚫 StandardsGuardian Analysis Failed - Usage Limit Reached
               
-              **StandardsGuardian Analysis Status:** ❌ **FAILED**
+              **Analysis Status:** ❌ **FAILED**
               
               The Standards Compliance Analysis could not be completed due to Claude AI usage limit being reached.
               
@@ -467,10 +523,13 @@ jobs:
               - Re-run the workflow or push a new commit to retry analysis
               - Consider manual standards review
               
-              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.` :
-              `## 🚫 AI Analysis Failed - Technical Error
+              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.
               
-              **StandardsGuardian Analysis Status:** ❌ **FAILED**
+              ---
+              *Workflow Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*` :
+              `## 🚫 StandardsGuardian Analysis Failed - Technical Error
+              
+              **Analysis Status:** ❌ **FAILED**
               
               The Standards Compliance Analysis encountered a technical error and could not be completed.
               
@@ -482,14 +541,30 @@ jobs:
               - Check workflow logs for specific error details
               - Re-run the workflow to retry analysis
               
-              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.`;
+              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.
+              
+              ---
+              *Workflow Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*`;
             
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: commentBody
-            });
+            if (claudeComment) {
+              // Update existing Claude comment
+              console.log(`Updating existing Claude comment ID: ${claudeComment.id}`);
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: claudeComment.id,
+                body: failureCommentBody
+              });
+            } else {
+              // Fallback: create new comment if Claude comment not found
+              console.log('Claude comment not found, creating new comment');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: failureCommentBody
+              });
+            }
             
             core.setFailed(isUsageLimitFailure ? 
               'StandardsGuardian analysis failed due to Claude AI usage limit' : 
@@ -583,10 +658,31 @@ jobs:
               console.log('Could not read Claude output files:', error.message);
             }
             
-            const commentBody = isUsageLimitFailure ? 
-              `## 🚫 AI Analysis Failed - Usage Limit Reached
+            // Find existing Claude comment to update
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            // Look for Claude DebtSentinel comment (find the most recent one)
+            const claudeComments = comments.data.filter(comment => 
+              comment.body && (
+                comment.body.includes('DebtSentinel Analysis In Progress') ||
+                comment.body.includes('🔍 DebtSentinel') ||
+                comment.body.includes('Technical Debt Analysis') ||
+                comment.body.includes('Tech Debt') ||
+                (comment.user.login.includes('github-actions') && comment.body.includes('Debt')) ||
+                comment.user.type === 'Bot'
+              )
+            );
+            // Get the most recent Claude comment for DebtSentinel
+            const claudeComment = claudeComments.length > 0 ? claudeComments[claudeComments.length - 1] : null;
+            
+            const failureCommentBody = isUsageLimitFailure ? 
+              `## 🚫 DebtSentinel Analysis Failed - Usage Limit Reached
               
-              **DebtSentinel Analysis Status:** ❌ **FAILED**
+              **Analysis Status:** ❌ **FAILED**
               
               The Technical Debt Analysis could not be completed due to Claude AI usage limit being reached.
               
@@ -600,10 +696,13 @@ jobs:
               - Re-run the workflow or push a new commit to retry analysis
               - Consider manual code quality review
               
-              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.` :
-              `## 🚫 AI Analysis Failed - Technical Error
+              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.
               
-              **DebtSentinel Analysis Status:** ❌ **FAILED**
+              ---
+              *Workflow Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*` :
+              `## 🚫 DebtSentinel Analysis Failed - Technical Error
+              
+              **Analysis Status:** ❌ **FAILED**
               
               The Technical Debt Analysis encountered a technical error and could not be completed.
               
@@ -615,14 +714,30 @@ jobs:
               - Check workflow logs for specific error details
               - Re-run the workflow to retry analysis
               
-              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.`;
+              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.
+              
+              ---
+              *Workflow Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*`;
             
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: commentBody
-            });
+            if (claudeComment) {
+              // Update existing Claude comment
+              console.log(`Updating existing Claude comment ID: ${claudeComment.id}`);
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: claudeComment.id,
+                body: failureCommentBody
+              });
+            } else {
+              // Fallback: create new comment if Claude comment not found
+              console.log('Claude comment not found, creating new comment');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: failureCommentBody
+              });
+            }
             
             core.setFailed(isUsageLimitFailure ? 
               'DebtSentinel analysis failed due to Claude AI usage limit' : 
@@ -830,10 +945,31 @@ jobs:
               console.log('Could not read Claude output files:', error.message);
             }
             
-            const commentBody = isUsageLimitFailure ? 
-              `## 🚫 AI Analysis Failed - Usage Limit Reached
+            // Find existing Claude comment to update
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            // Look for Claude SecuritySentinel comment (find the most recent one)
+            const claudeComments = comments.data.filter(comment => 
+              comment.body && (
+                comment.body.includes('SecuritySentinel Analysis In Progress') ||
+                comment.body.includes('🔍 SecuritySentinel') ||
+                comment.body.includes('Security Analysis') ||
+                comment.body.includes('Security') ||
+                (comment.user.login.includes('github-actions') && comment.body.includes('Security')) ||
+                comment.user.type === 'Bot'
+              )
+            );
+            // Get the most recent Claude comment for SecuritySentinel
+            const claudeComment = claudeComments.length > 0 ? claudeComments[claudeComments.length - 1] : null;
+            
+            const failureCommentBody = isUsageLimitFailure ? 
+              `## 🚫 SecuritySentinel Analysis Failed - Usage Limit Reached
               
-              **SecuritySentinel Analysis Status:** ❌ **FAILED**
+              **Analysis Status:** ❌ **FAILED**
               
               The Security Analysis could not be completed due to Claude AI usage limit being reached.
               
@@ -847,10 +983,13 @@ jobs:
               - Re-run the workflow or push a new commit to retry analysis
               - **IMPORTANT**: Manual security review is mandatory for production deployments
               
-              **Workflow Status:** This failure will block the pipeline to ensure proper security gates are maintained.` :
-              `## 🚫 AI Analysis Failed - Technical Error
+              **Workflow Status:** This failure will block the pipeline to ensure proper security gates are maintained.
               
-              **SecuritySentinel Analysis Status:** ❌ **FAILED**
+              ---
+              *Workflow Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*` :
+              `## 🚫 SecuritySentinel Analysis Failed - Technical Error
+              
+              **Analysis Status:** ❌ **FAILED**
               
               The Security Analysis encountered a technical error and could not be completed.
               
@@ -863,14 +1002,30 @@ jobs:
               - Re-run the workflow to retry analysis
               - **IMPORTANT**: Manual security review is mandatory
               
-              **Workflow Status:** This failure will block the pipeline to ensure proper security gates are maintained.`;
+              **Workflow Status:** This failure will block the pipeline to ensure proper security gates are maintained.
+              
+              ---
+              *Workflow Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*`;
             
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: commentBody
-            });
+            if (claudeComment) {
+              // Update existing Claude comment
+              console.log(`Updating existing Claude comment ID: ${claudeComment.id}`);
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: claudeComment.id,
+                body: failureCommentBody
+              });
+            } else {
+              // Fallback: create new comment if Claude comment not found
+              console.log('Claude comment not found, creating new comment');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: failureCommentBody
+              });
+            }
             
             core.setFailed(isUsageLimitFailure ? 
               'SecuritySentinel analysis failed due to Claude AI usage limit' : 
@@ -999,10 +1154,32 @@ jobs:
               console.log('Could not read Claude output files:', error.message);
             }
             
-            const commentBody = isUsageLimitFailure ? 
-              `## 🚫 AI Analysis Failed - Usage Limit Reached
+            // Find existing Claude comment to update
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            // Look for Claude MergeOrchestrator comment (find the most recent one)
+            const claudeComments = comments.data.filter(comment => 
+              comment.body && (
+                comment.body.includes('MergeOrchestrator Analysis In Progress') ||
+                comment.body.includes('🔍 MergeOrchestrator') ||
+                comment.body.includes('Merge Orchestrator') ||
+                comment.body.includes('Final Analysis') ||
+                comment.body.includes('Deployment Decision') ||
+                (comment.user.login.includes('github-actions') && comment.body.includes('Orchestrator')) ||
+                comment.user.type === 'Bot'
+              )
+            );
+            // Get the most recent Claude comment for MergeOrchestrator
+            const claudeComment = claudeComments.length > 0 ? claudeComments[claudeComments.length - 1] : null;
+            
+            const failureCommentBody = isUsageLimitFailure ? 
+              `## 🚫 MergeOrchestrator Analysis Failed - Usage Limit Reached
               
-              **MergeOrchestrator Analysis Status:** ❌ **FAILED**
+              **Analysis Status:** ❌ **FAILED**
               
               The final Merge Orchestrator Analysis could not be completed due to Claude AI usage limit being reached.
               
@@ -1017,10 +1194,13 @@ jobs:
               - **IMPORTANT**: Manual comprehensive review required for merge decision
               - Review all automated checks (build, tests, security scans) manually
               
-              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.` :
-              `## 🚫 AI Analysis Failed - Technical Error
+              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.
               
-              **MergeOrchestrator Analysis Status:** ❌ **FAILED**
+              ---
+              *Workflow Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*` :
+              `## 🚫 MergeOrchestrator Analysis Failed - Technical Error
+              
+              **Analysis Status:** ❌ **FAILED**
               
               The final Merge Orchestrator Analysis encountered a technical error and could not be completed.
               
@@ -1033,14 +1213,30 @@ jobs:
               - Re-run the workflow to retry analysis
               - **IMPORTANT**: Manual comprehensive review required for merge decision
               
-              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.`;
+              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.
+              
+              ---
+              *Workflow Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*`;
             
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: commentBody
-            });
+            if (claudeComment) {
+              // Update existing Claude comment
+              console.log(`Updating existing Claude comment ID: ${claudeComment.id}`);
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: claudeComment.id,
+                body: failureCommentBody
+              });
+            } else {
+              // Fallback: create new comment if Claude comment not found
+              console.log('Claude comment not found, creating new comment');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: failureCommentBody
+              });
+            }
             
             core.setFailed(isUsageLimitFailure ? 
               'MergeOrchestrator analysis failed due to Claude AI usage limit' : 
