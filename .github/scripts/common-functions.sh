@@ -88,8 +88,14 @@ check_docker_access() {
                 export DOCKER_PREFIX="sg docker -c"
                 return 0
             else
-                log_error "Docker access failed. Please ensure Docker is running and user has proper permissions"
-                return 1
+                local sg_exit_code=$?
+                if [[ $sg_exit_code -eq 123 ]]; then
+                    log_warning "Docker group switching failed (exit 123), proceeding without Docker access"
+                    return 1
+                else
+                    log_error "Docker access failed. Please ensure Docker is running and user has proper permissions"
+                    return 1
+                fi
             fi
         fi
     else
@@ -101,7 +107,17 @@ check_docker_access() {
 # Run command with optional Docker prefix
 run_with_docker() {
     if [[ -n "${DOCKER_PREFIX:-}" ]]; then
-        eval "$DOCKER_PREFIX \"$*\""
+        if eval "$DOCKER_PREFIX \"$*\""; then
+            return 0
+        else
+            local exit_code=$?
+            if [[ $exit_code -eq 123 ]]; then
+                log_warning "Docker group switching failed (exit 123), falling back to direct execution"
+                eval "$*"
+            else
+                return $exit_code
+            fi
+        fi
     else
         eval "$*"
     fi

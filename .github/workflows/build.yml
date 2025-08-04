@@ -204,7 +204,6 @@ jobs:
       - name: Testing Analysis with Claude AI
         id: claude-testing
         uses: grll/claude-code-action@beta
-        continue-on-error: true
         with:
           use_oauth: true
           claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -212,6 +211,86 @@ jobs:
           claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           direct_prompt: ${{ steps.load-testing-prompt.outputs.prompt }}
+
+      - name: Handle Claude AI Failure
+        if: failure() && steps.claude-testing.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Check if this was a Claude usage limit failure
+            let isUsageLimitFailure = false;
+            try {
+              // Try to read any Claude output or error logs
+              const logFiles = [
+                '/home/runner/work/_temp/claude-execution-output.json',
+                '/tmp/claude-error.log'
+              ];
+              
+              for (const logFile of logFiles) {
+                if (fs.existsSync(logFile)) {
+                  const content = fs.readFileSync(logFile, 'utf8');
+                  if (content.includes('Claude AI usage limit reached') || content.includes('usage limit')) {
+                    isUsageLimitFailure = true;
+                    break;
+                  }
+                }
+              }
+            } catch (error) {
+              console.log('Could not read Claude output files:', error.message);
+            }
+            
+            // Create PR comment explaining the failure
+            const commentBody = isUsageLimitFailure ? 
+              `## 🚫 AI Analysis Failed - Usage Limit Reached
+              
+              **TestMaster Analysis Status:** ❌ **FAILED**
+              
+              The Testing Analysis could not be completed due to Claude AI usage limit being reached. This is a temporary issue that will resolve when the usage limit resets.
+              
+              **Impact:**
+              - This PR cannot receive automated testing quality analysis at this time
+              - Manual review is recommended for testing standards compliance
+              - All other pipeline checks (build, tests, security) continue normally
+              
+              **Next Steps:**
+              - Wait for Claude usage limit to reset (typically resets daily)
+              - Re-run the workflow or push a new commit to retry analysis
+              - Consider manual testing review against [Testing Standards](https://github.com/Zarichney-Development/zarichney-api/blob/main/Docs/Standards/TestingStandards.md)
+              
+              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.` :
+              `## 🚫 AI Analysis Failed - Technical Error
+              
+              **TestMaster Analysis Status:** ❌ **FAILED**
+              
+              The Testing Analysis encountered a technical error and could not be completed.
+              
+              **Impact:**
+              - This PR cannot receive automated testing quality analysis at this time
+              - Manual review is recommended for testing standards compliance
+              - All other pipeline checks (build, tests, security) continue normally
+              
+              **Next Steps:**
+              - Check workflow logs for specific error details
+              - Re-run the workflow to retry analysis
+              - Consider manual testing review against [Testing Standards](https://github.com/Zarichney-Development/zarichney-api/blob/main/Docs/Standards/TestingStandards.md)
+              
+              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            });
+            
+            // Fail the workflow step to make the failure visible
+            core.setFailed(isUsageLimitFailure ? 
+              'TestMaster analysis failed due to Claude AI usage limit' : 
+              'TestMaster analysis failed due to technical error');
 
   frontend-build:
     name: "Frontend • Build & Test"
@@ -334,7 +413,6 @@ jobs:
       - name: Standards Compliance AI Analysis
         id: claude-standards
         uses: grll/claude-code-action@beta
-        continue-on-error: true
         with:
           use_oauth: true
           claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -342,6 +420,80 @@ jobs:
           claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           direct_prompt: ${{ steps.load-standards-prompt.outputs.prompt }}
+
+      - name: Handle Standards Analysis Failure
+        if: failure() && steps.claude-standards.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            
+            // Check if this was a Claude usage limit failure
+            let isUsageLimitFailure = false;
+            try {
+              const logFiles = [
+                '/home/runner/work/_temp/claude-execution-output.json',
+                '/tmp/claude-error.log'
+              ];
+              
+              for (const logFile of logFiles) {
+                if (fs.existsSync(logFile)) {
+                  const content = fs.readFileSync(logFile, 'utf8');
+                  if (content.includes('Claude AI usage limit reached') || content.includes('usage limit')) {
+                    isUsageLimitFailure = true;
+                    break;
+                  }
+                }
+              }
+            } catch (error) {
+              console.log('Could not read Claude output files:', error.message);
+            }
+            
+            const commentBody = isUsageLimitFailure ? 
+              `## 🚫 AI Analysis Failed - Usage Limit Reached
+              
+              **StandardsGuardian Analysis Status:** ❌ **FAILED**
+              
+              The Standards Compliance Analysis could not be completed due to Claude AI usage limit being reached.
+              
+              **Impact:**
+              - This PR cannot receive automated standards compliance analysis at this time
+              - Manual review is recommended against [Coding Standards](https://github.com/Zarichney-Development/zarichney-api/blob/main/Docs/Standards/CodingStandards.md)
+              - All other pipeline checks (build, tests, security) continue normally
+              
+              **Next Steps:**
+              - Wait for Claude usage limit to reset (typically resets daily)
+              - Re-run the workflow or push a new commit to retry analysis
+              - Consider manual standards review
+              
+              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.` :
+              `## 🚫 AI Analysis Failed - Technical Error
+              
+              **StandardsGuardian Analysis Status:** ❌ **FAILED**
+              
+              The Standards Compliance Analysis encountered a technical error and could not be completed.
+              
+              **Impact:**
+              - This PR cannot receive automated standards compliance analysis at this time
+              - Manual review is recommended against [Coding Standards](https://github.com/Zarichney-Development/zarichney-api/blob/main/Docs/Standards/CodingStandards.md)
+              
+              **Next Steps:**
+              - Check workflow logs for specific error details
+              - Re-run the workflow to retry analysis
+              
+              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            });
+            
+            core.setFailed(isUsageLimitFailure ? 
+              'StandardsGuardian analysis failed due to Claude AI usage limit' : 
+              'StandardsGuardian analysis failed due to technical error');
 
   claude-tech-debt-analysis:
     name: "Quality Analysis • Tech Debt Analysis (AI)"
@@ -394,7 +546,6 @@ jobs:
       - name: Tech Debt AI Analysis
         id: claude-techdebt
         uses: grll/claude-code-action@beta
-        continue-on-error: true
         with:
           use_oauth: true
           claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -402,6 +553,80 @@ jobs:
           claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           direct_prompt: ${{ steps.load-techdebt-prompt.outputs.prompt }}
+
+      - name: Handle Tech Debt Analysis Failure
+        if: failure() && steps.claude-techdebt.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            
+            // Check if this was a Claude usage limit failure
+            let isUsageLimitFailure = false;
+            try {
+              const logFiles = [
+                '/home/runner/work/_temp/claude-execution-output.json',
+                '/tmp/claude-error.log'
+              ];
+              
+              for (const logFile of logFiles) {
+                if (fs.existsSync(logFile)) {
+                  const content = fs.readFileSync(logFile, 'utf8');
+                  if (content.includes('Claude AI usage limit reached') || content.includes('usage limit')) {
+                    isUsageLimitFailure = true;
+                    break;
+                  }
+                }
+              }
+            } catch (error) {
+              console.log('Could not read Claude output files:', error.message);
+            }
+            
+            const commentBody = isUsageLimitFailure ? 
+              `## 🚫 AI Analysis Failed - Usage Limit Reached
+              
+              **DebtSentinel Analysis Status:** ❌ **FAILED**
+              
+              The Technical Debt Analysis could not be completed due to Claude AI usage limit being reached.
+              
+              **Impact:**
+              - This PR cannot receive automated technical debt analysis at this time
+              - Manual review is recommended for code quality and maintainability
+              - All other pipeline checks (build, tests, security) continue normally
+              
+              **Next Steps:**
+              - Wait for Claude usage limit to reset (typically resets daily)
+              - Re-run the workflow or push a new commit to retry analysis
+              - Consider manual code quality review
+              
+              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.` :
+              `## 🚫 AI Analysis Failed - Technical Error
+              
+              **DebtSentinel Analysis Status:** ❌ **FAILED**
+              
+              The Technical Debt Analysis encountered a technical error and could not be completed.
+              
+              **Impact:**
+              - This PR cannot receive automated technical debt analysis at this time
+              - Manual review is recommended for code quality and maintainability
+              
+              **Next Steps:**
+              - Check workflow logs for specific error details
+              - Re-run the workflow to retry analysis
+              
+              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            });
+            
+            core.setFailed(isUsageLimitFailure ? 
+              'DebtSentinel analysis failed due to Claude AI usage limit' : 
+              'DebtSentinel analysis failed due to technical error');
 
   security-scans:
     name: "Security • Comprehensive Scanning"
@@ -568,7 +793,6 @@ jobs:
       - name: Security Analysis with Claude AI
         id: claude-security
         uses: grll/claude-code-action@beta
-        continue-on-error: true
         with:
           use_oauth: true
           claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -576,6 +800,81 @@ jobs:
           claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           direct_prompt: ${{ steps.load-security-prompt.outputs.prompt }}
+
+      - name: Handle Security Analysis Failure
+        if: failure() && steps.claude-security.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            
+            // Check if this was a Claude usage limit failure
+            let isUsageLimitFailure = false;
+            try {
+              const logFiles = [
+                '/home/runner/work/_temp/claude-execution-output.json',
+                '/tmp/claude-error.log'
+              ];
+              
+              for (const logFile of logFiles) {
+                if (fs.existsSync(logFile)) {
+                  const content = fs.readFileSync(logFile, 'utf8');
+                  if (content.includes('Claude AI usage limit reached') || content.includes('usage limit')) {
+                    isUsageLimitFailure = true;
+                    break;
+                  }
+                }
+              }
+            } catch (error) {
+              console.log('Could not read Claude output files:', error.message);
+            }
+            
+            const commentBody = isUsageLimitFailure ? 
+              `## 🚫 AI Analysis Failed - Usage Limit Reached
+              
+              **SecuritySentinel Analysis Status:** ❌ **FAILED**
+              
+              The Security Analysis could not be completed due to Claude AI usage limit being reached.
+              
+              **Impact:**
+              - This PR cannot receive automated security analysis at this time
+              - Manual security review is **REQUIRED** for main branch merges
+              - All automated security scans (CodeQL, dependency scanning, secrets detection) continue normally
+              
+              **Next Steps:**
+              - Wait for Claude usage limit to reset (typically resets daily)
+              - Re-run the workflow or push a new commit to retry analysis
+              - **IMPORTANT**: Manual security review is mandatory for production deployments
+              
+              **Workflow Status:** This failure will block the pipeline to ensure proper security gates are maintained.` :
+              `## 🚫 AI Analysis Failed - Technical Error
+              
+              **SecuritySentinel Analysis Status:** ❌ **FAILED**
+              
+              The Security Analysis encountered a technical error and could not be completed.
+              
+              **Impact:**
+              - This PR cannot receive automated security analysis at this time
+              - Manual security review is **REQUIRED** for main branch merges
+              
+              **Next Steps:**
+              - Check workflow logs for specific error details
+              - Re-run the workflow to retry analysis
+              - **IMPORTANT**: Manual security review is mandatory
+              
+              **Workflow Status:** This failure will block the pipeline to ensure proper security gates are maintained.`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            });
+            
+            core.setFailed(isUsageLimitFailure ? 
+              'SecuritySentinel analysis failed due to Claude AI usage limit' : 
+              'SecuritySentinel analysis failed due to technical error');
 
       - name: Complete PR check run
         if: always() && steps.create-check.outputs.check_run_id != ''
@@ -663,7 +962,6 @@ jobs:
       - name: Merge Orchestrator AI Analysis
         id: claude-orchestrator
         uses: grll/claude-code-action@beta
-        continue-on-error: true
         with:
           use_oauth: true
           claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -671,6 +969,82 @@ jobs:
           claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           direct_prompt: ${{ steps.load-orchestrator-prompt.outputs.prompt }}
+
+      - name: Handle Merge Orchestrator Failure
+        if: failure() && steps.claude-orchestrator.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            
+            // Check if this was a Claude usage limit failure
+            let isUsageLimitFailure = false;
+            try {
+              const logFiles = [
+                '/home/runner/work/_temp/claude-execution-output.json',
+                '/tmp/claude-error.log'
+              ];
+              
+              for (const logFile of logFiles) {
+                if (fs.existsSync(logFile)) {
+                  const content = fs.readFileSync(logFile, 'utf8');
+                  if (content.includes('Claude AI usage limit reached') || content.includes('usage limit')) {
+                    isUsageLimitFailure = true;
+                    break;
+                  }
+                }
+              }
+            } catch (error) {
+              console.log('Could not read Claude output files:', error.message);
+            }
+            
+            const commentBody = isUsageLimitFailure ? 
+              `## 🚫 AI Analysis Failed - Usage Limit Reached
+              
+              **MergeOrchestrator Analysis Status:** ❌ **FAILED**
+              
+              The final Merge Orchestrator Analysis could not be completed due to Claude AI usage limit being reached.
+              
+              **Impact:**
+              - This PR cannot receive automated final deployment decision analysis
+              - **MANUAL REVIEW REQUIRED** before merging
+              - All individual analysis components (testing, standards, tech debt, security) may be unavailable
+              
+              **Next Steps:**
+              - Wait for Claude usage limit to reset (typically resets daily)
+              - Re-run the workflow or push a new commit to retry analysis
+              - **IMPORTANT**: Manual comprehensive review required for merge decision
+              - Review all automated checks (build, tests, security scans) manually
+              
+              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.` :
+              `## 🚫 AI Analysis Failed - Technical Error
+              
+              **MergeOrchestrator Analysis Status:** ❌ **FAILED**
+              
+              The final Merge Orchestrator Analysis encountered a technical error and could not be completed.
+              
+              **Impact:**
+              - This PR cannot receive automated final deployment decision analysis
+              - **MANUAL REVIEW REQUIRED** before merging
+              
+              **Next Steps:**
+              - Check workflow logs for specific error details
+              - Re-run the workflow to retry analysis
+              - **IMPORTANT**: Manual comprehensive review required for merge decision
+              
+              **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            });
+            
+            core.setFailed(isUsageLimitFailure ? 
+              'MergeOrchestrator analysis failed due to Claude AI usage limit' : 
+              'MergeOrchestrator analysis failed due to technical error');
 
   final-summary:
     name: "Pipeline Summary"

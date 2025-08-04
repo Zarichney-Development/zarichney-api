@@ -22,7 +22,7 @@ We take security vulnerabilities seriously and appreciate responsible disclosure
 ### 2. Report via Email
 
 If GitHub Security Advisories are not suitable, you can email security issues to:
-- **Email**: security@zarichney.com
+- **Email**: steven@zarichney.com
 - **Subject**: [SECURITY] Zarichney API - Brief Description
 
 ### What to Include in Your Report
@@ -100,7 +100,7 @@ Security updates are released through:
 
 For security-related questions or concerns:
 
-- **Security Team**: security@zarichney.com
+- **Security Team**: steven@zarichney.com
 - **Project Maintainer**: steven@zarichney.com
 - **GitHub Security**: Use GitHub Security Advisories for vulnerability reports
 

@@ -145,7 +145,7 @@ graph TD
 ## 6. Dependencies
 
 * **Internal Code Dependencies:**
-    * [`Scripts/Pipeline/`](../Scripts/Pipeline/README.md) - Core automation logic executed by workflows
+    * [`.github/scripts/`](../scripts/README.md) - Core automation logic executed by workflows
     * [`.github/prompts/`](./prompts/README.md) - Template-based AI analysis prompts with placeholder system
     * [`Code/Zarichney.Server/`](../Code/Zarichney.Server/README.md) - Backend application for build/test/deploy
     * [`Code/Zarichney.Website/`](../Code/Zarichney.Website/README.md) - Frontend application for build/test/deploy

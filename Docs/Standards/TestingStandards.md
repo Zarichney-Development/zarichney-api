@@ -226,6 +226,6 @@
 * **Detailed Unit Testing Guide:** `Docs/Standards/UnitTestCaseDevelopment.md` (To be created)
 * **Detailed Integration Testing Guide:** `Docs/Standards/IntegrationTestCaseDevelopment.md` (To be created)
 * **Testing Framework Blueprint:** `Zarichney.Server.Tests/TechnicalDesignDocument.md`
-* **Development Workflows:** See files in `Docs/Development/` (e.g., `StandardWorkflow.md`, `TestCovergeWorkflow.md`).
+* **Development Workflows:** See files in `Docs/Development/` (e.g., `StandardWorkflow.md`, `TestCoverageWorkflow.md`).
 * **Code Standards:** `Docs/Standards/CodingStandards.md`
 * **Task Management Standards:** `Docs/Standards/TaskManagementStandards.md`

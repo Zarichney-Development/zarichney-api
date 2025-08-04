@@ -315,13 +315,18 @@ validate_quality_gates() {
     local quality_gate_failed=false
     
     # Validate test pass rate (should be 100%)
-    if (( $(echo "$pass_rate < 100" | bc -l) )); then
+    # Convert to integer for comparison (multiply by 100 to handle decimals)
+    local pass_rate_int=$(echo "$pass_rate * 100" | bc -l 2>/dev/null || echo "${pass_rate%.*}00")
+    if (( pass_rate_int < 10000 )); then
         log_error "Quality gate failed: Test pass rate $pass_rate% < 100%"
         quality_gate_failed=true
     fi
     
     # Validate coverage threshold
-    if (( $(echo "$coverage_percentage < $COVERAGE_THRESHOLD" | bc -l) )); then
+    # Convert to integer for comparison (multiply by 100 to handle decimals)
+    local coverage_int=$(echo "$coverage_percentage * 100" | bc -l 2>/dev/null || echo "${coverage_percentage%.*}00")
+    local threshold_int=$(echo "$COVERAGE_THRESHOLD * 100" | bc -l 2>/dev/null || echo "${COVERAGE_THRESHOLD}00")
+    if (( coverage_int < threshold_int )); then
         if [[ "$ALLOW_LOW_COVERAGE" == "true" ]]; then
             log_warning "Quality gate warning: Coverage $coverage_percentage% < $COVERAGE_THRESHOLD% (allowed due to flexibility setting)"
         else

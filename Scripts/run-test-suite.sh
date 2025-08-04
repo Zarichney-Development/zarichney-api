@@ -285,9 +285,20 @@ execute_docker_command() {
         # Try with sg docker if available
         if command -v sg &> /dev/null; then
             print_status "Running with 'sg docker' for Docker access..."
-            sg docker -c "$test_command" || {
-                error_exit "$test_type tests failed"
-            }
+            if sg docker -c "$test_command" 2>/dev/null; then
+                # sg docker succeeded
+                true
+            else
+                local sg_exit_code=$?
+                if [[ $sg_exit_code -eq 123 ]]; then
+                    warning "Docker group switching failed (exit 123), falling back to direct execution"
+                    eval "$test_command" || {
+                        error_exit "$test_type tests failed"
+                    }
+                else
+                    error_exit "$test_type tests failed"
+                fi
+            fi
         else
             # Run normally and let it fail if Docker access is needed
             eval "$test_command" || {
@@ -408,7 +419,15 @@ run_test_category_parallel() {
     if docker info &> /dev/null; then
         # Run in Docker group context if available
         if sg docker -c "true" 2>/dev/null; then
-            sg docker -c "$test_command" > "$results_dir/${category,,}_output.log" 2>&1
+            sg docker -c "$test_command" > "$results_dir/${category,,}_output.log" 2>&1 || {
+                local sg_exit_code=$?
+                if [[ $sg_exit_code -eq 123 ]]; then
+                    warning "Docker group switching failed (exit 123), falling back to direct execution"
+                    $test_command > "$results_dir/${category,,}_output.log" 2>&1
+                else
+                    return $sg_exit_code
+                fi
+            }
         else
             $test_command > "$results_dir/${category,,}_output.log" 2>&1
         fi
