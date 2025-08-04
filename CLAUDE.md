@@ -22,13 +22,14 @@
 
 ## 2.1. AI-Powered Code Review System
 
-This project features a comprehensive AI-powered code review system that automatically analyzes pull requests using four specialized AI agents:
+This project features a comprehensive AI-powered code review system that automatically analyzes pull requests using five specialized AI agents:
 
-### **The Four AI Sentinels**
+### **The Five AI Sentinels**
 * **🔍 DebtSentinel** (`tech-debt-analysis.md`): Technical debt analysis and sustainability assessment
 * **🛡️ StandardsGuardian** (`standards-compliance.md`): Coding standards and architectural compliance
 * **🧪 TestMaster** (`testing-analysis.md`): Test coverage and quality analysis
 * **🔒 SecuritySentinel** (`security-analysis.md`): Security vulnerability and threat assessment
+* **🎯 MergeOrchestrator** (`merge-orchestrator-analysis.md`): Holistic PR analysis and final deployment decisions
 
 ### **Advanced Prompt Engineering Features**
 Each AI agent employs sophisticated prompt engineering techniques based on academic research:
@@ -63,7 +64,7 @@ Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskMan
 6.  **Document:** Update relevant `README.md` files and diagrams if architecture/behavior changed.
 7.  **Commit:** Use Conventional Commits referencing the Issue ID.
 8.  **Pull Request:** Utilize the open PR or create a new PR using `gh pr create`.
-9.  **AI Analysis:** The four AI Sentinels automatically analyze your PR and provide comprehensive feedback through GitHub comments. Review and address any critical findings before merge.
+9.  **AI Analysis:** The five AI Sentinels automatically analyze your PR and provide comprehensive feedback through GitHub comments. MergeOrchestrator provides the final deployment decision based on all agent findings and GitHub Issue alignment.
 
 ## 4. Essential Commands & Tools
 
@@ -167,6 +168,7 @@ Before implementing any significant code, test, or documentation changes, you **
 * **Clarity & Explicitness:** If instructions are unclear, state your interpretation or ask for clarification (if interacting with a human).
 * **Adhere to Boundaries:** Respect any "what *not* to change" instructions in the prompt, you're at liberty if not specified.
 * **Update Documentation:** Changes to code or tests that impact documented purpose, architecture, contracts, or diagrams **MUST** be accompanied by updates to the relevant `README.md` and diagrams.
+* **Time Estimation Policy:** Do not provide time estimates for any development, testing, or remediation tasks. AI coder execution timelines differ significantly from human developer estimates - focus on priority, complexity, and actionability instead.
 
 ## 7. GitHub Integration & Automation
 
@@ -571,8 +573,8 @@ The project uses a consolidated CI/CD pipeline with branch-aware AI analysis tha
 
 ### **Branch-Triggered Analysis (What You Need to Know)**
 - **Feature Branch PRs**: Build + Test only (no AI analysis for performance)
-- **PR to `develop`**: Build + Test + **Quality AI Analysis** (🧪 TestMaster + 🛡️ StandardsGuardian + 🔍 DebtSentinel)
-- **PR to `main`**: Build + Test + **Full AI Analysis** including 🔒 SecuritySentinel
+- **PR to `develop`**: Build + Test + **Quality AI Analysis** (🧪 TestMaster + 🛡️ StandardsGuardian + 🔍 DebtSentinel + 🎯 MergeOrchestrator)
+- **PR to `main`**: Build + Test + **Full AI Analysis** including 🔒 SecuritySentinel + 🎯 MergeOrchestrator
 
 ### **Quality Gates Impact**
 - **Critical findings** from AI analysis can block PR merging
@@ -580,7 +582,9 @@ The project uses a consolidated CI/CD pipeline with branch-aware AI analysis tha
 - **Security issues** require resolution before main branch merges
 
 ### **What This Means for Your Tasks**
-- Your PRs will automatically receive comprehensive AI feedback
+- Your PRs will automatically receive comprehensive AI feedback from all specialized agents
+- **MergeOrchestrator** provides the final deployment decision based on GitHub Issue alignment and business context
+- Only push all commits once the PR is ready, reducing unnecessary AI analysis triggers
 - Address any critical issues before expecting merge approval
 - Monitor GitHub Actions status for build and analysis results
 

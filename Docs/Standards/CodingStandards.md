@@ -114,7 +114,7 @@
     * Use inline comments (`//`) sparingly, only to clarify particularly complex, non-obvious, or potentially confusing sections of logic.
 * **Testing:**
     * **WHEN Code Changes Occur:** Any task (performed by human or AI) that modifies the code within a directory **MUST** also add or update relevant unit and/or integration tests within the same commit/change. This includes refactoring code for testability.
-    * **Effort Estimation (NEW):** When estimating tasks, the effort to write or update tests and to refactor for testability **must** be included.
+    * **Time Estimation Policy:** Time estimates are not required for AI coding tasks as AI execution timelines differ significantly from human developer estimates. Focus on complexity and priority rather than duration.
     * **HOW to Write Tests:** For specific standards, structure, frameworks, naming, and quality expectations for automated tests, you **MUST** consult and adhere to the following documents:
         * **`Docs/Standards/TestingStandards.md`** (Overarching testing principles)
         * **`Docs/Standards/UnitTestCaseDevelopment.md`** (Detailed unit testing guide)

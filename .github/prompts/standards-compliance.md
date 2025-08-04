@@ -88,11 +88,11 @@ Apply CodingStandards.md requirements to all new/modified code:
 - Confirm configuration pattern usage (`XConfig` classes vs hardcoded values)
 - Validate async/await patterns (no `async void`, no `.Result/.Wait()`)
 
-**Security & Best Practices:**
-- Check for hardcoded secrets or API keys
-- Verify input validation and null checking patterns
+**Code Quality & Best Practices:**
+- Verify proper null checking patterns (C# nullable reference types)
 - Confirm proper error handling and logging usage
 - Check XML documentation for public APIs
+- Validate consistent naming conventions throughout codebase
 
 Label findings as `[CODE_VIOLATION]` or `[CODE_COMPLIANT]`.
 </step_3_code_standards_compliance>
@@ -152,7 +152,7 @@ Label findings as `[DOC_VIOLATION]` or `[DOC_COMPLIANT]`.
 Categorize all identified violations using Zarichney API Compliance Matrix:
 
 **🚨 CRITICAL (Block Merge):**
-- Hardcoded secrets or security vulnerabilities
+- Critical architectural pattern violations
 - Breaking architectural violations in core components
 - Missing mandatory tests for new public APIs
 
@@ -182,6 +182,8 @@ Categorize all identified violations using Zarichney API Compliance Matrix:
 - Clear documentation updates
 
 Provide specific file:line references and actionable remediation steps for each violation.
+
+**IMPORTANT:** Do not provide time estimates for remediation. AI coder execution timelines differ significantly from human developer estimates - focus on priority and actionability instead.
 </step_6_prioritize_violations>
 </analysis_instructions>
 
@@ -209,7 +211,7 @@ Provide specific file:line references and actionable remediation steps for each 
 
 | File:Line | Standard | Violation | Remediation |
 |-----------|----------|-----------|-------------|
-| `service.cs:45` | Security | Hardcoded API key detected | Move to configuration using established XConfig pattern |
+| `service.cs:45` | Configuration | Hardcoded configuration detected | Move to XConfig pattern following established conventions |
 
 ### ⚠️ High Priority (Must Address)
 

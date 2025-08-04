@@ -68,6 +68,7 @@ You will then generate the specific prompts for delegation to **stateless AI Cod
     * Logically builds upon the defined *previous* state (if chaining sessions).
     * Clearly specifies success criteria (referencing the Issue's Acceptance Criteria) and stopping point.
     * Explicitly instructs the AI Coder to consult relevant `README.md`(s), standards, and the chosen workflow steps file.
+    * **Does not include time estimates** - AI coder execution timelines differ significantly from human developer estimates; focus on complexity and priority instead.
 * Maintain logical consistency across the sequence of prompts for a given Issue, and across related Issues within an Epic.
 
 ### 3.5. Incremental AI Coder Prompt Generation

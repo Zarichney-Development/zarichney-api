@@ -189,7 +189,7 @@ Categorize all testing issues using Zarichney API Testing Priority Matrix:
 - New public APIs without any test coverage
 - Failing tests that break core functionality
 - Test execution failures preventing CI/CD progression
-- Critical security or data integrity functions lacking tests
+- Critical business logic or data integrity functions lacking tests
 
 **⚠️ HIGH (Address in PR):**
 - Significant coverage drops below 16% threshold without justification
@@ -216,6 +216,8 @@ Categorize all testing issues using Zarichney API Testing Priority Matrix:
 - Coverage improvements and testing debt reduction
 
 Provide specific file:line references and actionable testing recommendations.
+
+**IMPORTANT:** Do not provide time estimates for testing improvements. AI coder execution timelines differ significantly from human developer estimates - focus on priority and testing impact instead.
 </step_6_prioritize_recommendations>
 </analysis_instructions>
 

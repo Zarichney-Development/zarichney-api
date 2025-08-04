@@ -120,7 +120,7 @@ Identify and celebrate improvements made by this PR:
 - **Test Coverage Improvements:** New tests for previously uncovered code
 - **Documentation Updates:** Improved README files, added XML comments
 - **Performance Optimizations:** More efficient algorithms, better async patterns
-- **Security Improvements:** Removed hardcoded values, improved error handling
+- **Code Quality Improvements:** Reduced complexity, improved patterns, enhanced maintainability
 
 Label each finding as `[DEBT_REDUCED]`.
 </step_4_analyze_debt_reduction>
@@ -131,8 +131,8 @@ Label each finding as `[DEBT_REDUCED]`.
 For each debt item identified, assign priority and recommendation using these rules:
 
 **CRITICAL (🚨 BLOCK_MERGE):**
-- Security vulnerabilities (hardcoded secrets, injection risks)
-- Breaking architectural violations in core components
+- Breaking architectural violations in core components (SOLID principles, separation of concerns)
+- Critical performance anti-patterns that impact system scalability
 - Test coverage dropping below threshold without justification
 
 **HIGH (⚠️ ADDRESS_IN_PR):**
@@ -159,6 +159,8 @@ For each debt item identified, assign priority and recommendation using these ru
 - Documentation enhancements
 
 Provide a one-sentence justification for each recommendation.
+
+**IMPORTANT:** Do not provide time estimates for any recommendations. AI coder execution timelines differ significantly from human developer estimates - focus on priority and complexity instead.
 </step_5_prioritize_and_recommend>
 </analysis_instructions>
 
@@ -186,7 +188,7 @@ Provide a one-sentence justification for each recommendation.
 
 | File:Line | Category | Issue | Recommendation |
 |-----------|----------|--------|----------------|
-| `file.cs:123` | Security | Hardcoded API key detected | Move to configuration/secrets |
+| `file.cs:123` | Architecture | SOLID principle violation detected | Refactor to improve separation of concerns |
 
 ### ⚠️ High Priority (Address in PR)
 
