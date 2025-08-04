@@ -145,10 +145,9 @@ main() {
     # Run AI analysis unless skipped
     if [[ "$SKIP_ANALYSIS" != "true" ]]; then
         run_ai_security_analysis
+        # Generate security report only if analysis was performed
+        generate_security_report
     fi
-    
-    # Generate security report
-    generate_security_report
     
     # Create security artifacts
     create_security_artifacts
