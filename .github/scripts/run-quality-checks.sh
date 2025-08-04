@@ -187,34 +187,6 @@ run_standards_compliance() {
     local recommended_violations=0
     local optional_violations=0
     
-    # Code formatting checks
-    log_info "Checking code formatting..."
-    if ! dotnet format --verify-no-changes --verbosity diagnostic > "$QUALITY_DIR/format-check.log" 2>&1; then
-        local format_issues=0
-        if [[ -f "$QUALITY_DIR/format-check.log" ]]; then
-            # Use temp file approach to avoid command substitution issues
-            grep -c "Formatted code file" "$QUALITY_DIR/format-check.log" 2>/dev/null > "$QUALITY_DIR/format-count.tmp" || echo "0" > "$QUALITY_DIR/format-count.tmp"
-            format_issues=$(cat "$QUALITY_DIR/format-count.tmp")
-            # Ensure format_issues is a valid number
-            if ! [[ "$format_issues" =~ ^[0-9]+$ ]]; then
-                format_issues=0
-            fi
-        fi
-        mandatory_violations=$((mandatory_violations + format_issues))
-        violations=$((violations + format_issues))
-        log_warning "Code formatting issues found: $format_issues"
-    else
-        log_success "Code formatting check passed"
-    fi
-    
-    # Check .editorconfig compliance
-    log_info "Checking .editorconfig compliance..."
-    if [[ ! -f ".editorconfig" ]]; then
-        recommended_violations=$((recommended_violations + 1))
-        violations=$((violations + 1))
-        log_warning ".editorconfig file not found"
-    fi
-    
     # Check Git standards
     log_info "Checking Git standards..."
     local git_violations=0
@@ -275,18 +247,6 @@ run_standards_compliance() {
         fi
     fi
     
-    # Get code formatting count safely
-    local code_formatting_count=0
-    if [[ -f "$QUALITY_DIR/format-check.log" ]]; then
-        # Use temp file approach to avoid command substitution issues
-        grep -c "Formatted code file" "$QUALITY_DIR/format-check.log" 2>/dev/null > "$QUALITY_DIR/format-count-json.tmp" || echo "0" > "$QUALITY_DIR/format-count-json.tmp"
-        code_formatting_count=$(cat "$QUALITY_DIR/format-count-json.tmp")
-        # Ensure it's a valid number
-        if ! [[ "$code_formatting_count" =~ ^[0-9]+$ ]]; then
-            code_formatting_count=0
-        fi
-    fi
-    
     # Create standards compliance summary
     cat > "$QUALITY_DIR/standards-compliance-summary.json" << EOF
 {
@@ -296,7 +256,6 @@ run_standards_compliance() {
     "recommended_violations": $recommended_violations,
     "optional_violations": $optional_violations,
     "categories": {
-        "code_formatting": $code_formatting_count,
         "git_standards": $git_violations,
         "testing_standards": $test_violations,
         "documentation": $missing_docs

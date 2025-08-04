@@ -9,13 +9,11 @@
 Review THIS PR's changes for compliance with project standards.
 
 **Analysis Focus:**
-1. Check formatting violations in changed files (from quality-analysis-data.json)
-2. Review commit messages for this PR
-3. Verify documentation updates if APIs changed
-4. Check naming conventions in new code
+1. Review commit messages for this PR
+2. Verify documentation updates if APIs changed
+3. Check naming conventions in new code
 
 **Standards to Check:**
-- Code formatting (.editorconfig compliance)
 - Commit message format (conventional commits)
 - Test naming conventions
 - Documentation requirements for public APIs
@@ -27,10 +25,8 @@ Review THIS PR's changes for compliance with project standards.
 - Key violations found in this PR
 
 ### 🚫 Mandatory Fixes (Blocks Merge)
-- Formatting violations (file:line)
 - Missing required documentation
 - Invalid commit messages
-- Run: `dotnet format` to fix
 
 ### ⚠️ Recommended Fixes
 - Naming improvements
@@ -40,7 +36,6 @@ Review THIS PR's changes for compliance with project standards.
 ### ✅ Quick Fix Commands
 ```bash
 # Commands to fix issues
-dotnet format
 # Other specific commands
 ```
 

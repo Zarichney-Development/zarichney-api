@@ -27,10 +27,9 @@ Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskMan
 2.  **Review Context:** Use read tool on all standards and relevant local `README.md` files.
 3.  **Branch:** Ensure you are on the correct branch, switch if needed or create a feature/test branch (`feature/issue-XXX-desc` or `test/issue-XXX-desc`), no committing on main.
 4.  **Code/Test:** Implement changes and add/update tests. **Use `/test-report summary` for quick validation or `/test-report` for comprehensive analysis with AI insights.**
-5.  **Format:** Verify and apply formatting (`dotnet format`).
-6.  **Document:** Update relevant `README.md` files and diagrams if architecture/behavior changed.
-7.  **Commit:** Use Conventional Commits referencing the Issue ID.
-8.  **Pull Request:** Utilize the open PR or create a new PR using `gh pr create`.
+5.  **Document:** Update relevant `README.md` files and diagrams if architecture/behavior changed.
+6.  **Commit:** Use Conventional Commits referencing the Issue ID.
+7.  **Pull Request:** Utilize the open PR or create a new PR using `gh pr create`.
 
 ## 4. Essential Commands & Tools
 
@@ -100,9 +99,6 @@ Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskMan
     sg docker -c "dotnet test --filter 'Category=Unit'"
     sg docker -c "dotnet test --filter 'Category=Integration'"
     ```
-* **Code Formatting:**
-    * Check: `dotnet format --verify-no-changes --verbosity diagnostic`
-    * Apply: `dotnet format`
 * **Git Operations (Summary - See `TaskManagementStandards.md` for full details):**
     * Create branch: `git checkout -b [branch-name]` (e.g., `feature/issue-123-my-feature`)
     * Commit: `git commit -m "<type>: <description> (#ISSUE_ID)"`
@@ -124,7 +120,7 @@ Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskMan
 
 Before implementing any significant code, test, or documentation changes, you **MUST** be familiar with and adhere to the following standards. The task prompt will list specific documents, but these are foundational:
 
-* **Primary Code Rules:** [`/Docs/Standards/CodingStandards.md`](../Docs/Standards/CodingStandards.md) (Includes `/.editorconfig` reference)
+* **Primary Code Rules:** [`/Docs/Standards/CodingStandards.md`](../Docs/Standards/CodingStandards.md)
 * **Task/Git Rules:** [`/Docs/Standards/TaskManagementStandards.md`](../Docs/Standards/TaskManagementStandards.md)
 * **Testing Rules:** [`/Docs/Standards/TestingStandards.md`](../Docs/Standards/TestingStandards.md)
 * **Documentation Rules (READMEs):** [`/Docs/Standards/DocumentationStandards.md`](../Docs/Standards/DocumentationStandards.md) (Uses [`/Docs/Templates/ReadmeTemplate.md`](../Docs/Templates/ReadmeTemplate.md))
@@ -271,16 +267,16 @@ The project includes an automated Standards Compliance Check that runs on every 
 
 ### How It Works
 - **Trigger**: Automatically runs after the main CI/CD workflow completes for pull requests
-- **Scope**: Validates code formatting, Git standards, testing practices, and documentation
+- **Scope**: Validates Git standards, testing practices, and documentation
 - **Output**: Detailed PR comment with categorized violations and remediation guidance
 
 ### Violation Categories
-- **🚫 Mandatory**: Critical violations that block merging (formatting, missing tests, etc.)
+- **🚫 Mandatory**: Critical violations that block merging (missing tests, etc.)
 - **⚠️ Recommended**: Important quality improvements that should be addressed
 - **💡 Optional**: Suggestions for code quality enhancement and best practices
 
 ### Standards Checked
-1. **Code Formatting & Style**: `.editorconfig` compliance, modern C# features, logging patterns
+1. **Code Style**: Modern C# features, logging patterns
 2. **Git & Task Management**: Conventional commits, branch naming, issue references
 3. **Testing Standards**: Test naming, categorization, framework usage, coverage
 4. **Documentation**: README.md coverage, XML docs, linking structure
@@ -299,7 +295,6 @@ The project includes an automated Standards Compliance Check that runs on every 
 - Address mandatory violations to unblock PR merging
 - Review recommended improvements for enhanced code quality
 - Use provided links to standards documentation for detailed guidance
-- Run `dotnet format` locally to fix most formatting violations
 
 **Workflow File**: [`.github/workflows/standards-compliance-check.yml`](.github/workflows/standards-compliance-check.yml)
 

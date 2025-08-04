@@ -16,7 +16,7 @@ readonly TEST_SCENARIOS=(
     "docs-only:README.md Docs/Standards/CodingStandards.md"
     "pipeline-only:Scripts/Pipeline/build-backend.sh .github/workflows/build.yml"
     "mixed-changes:Code/Zarichney.Server/Program.cs Code/Zarichney.Website/package.json README.md"
-    "config-only:.editorconfig .gitignore"
+    "config-only:.gitignore"
     "tests-only:Code/Zarichney.Server.Tests/Controllers/RecipeControllerTests.cs"
 )
 
@@ -143,7 +143,7 @@ test_path_filtering() {
                 # Only set config_changed for docs, we'll calculate docs_only later
                 config_changed=true
                 ;;
-            .editorconfig|.gitignore|Scripts/*.sh|Scripts/*.ps1)
+            .gitignore|Scripts/*.sh|Scripts/*.ps1)
                 config_changed=true
                 ;;
         esac

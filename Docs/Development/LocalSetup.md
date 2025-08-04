@@ -46,14 +46,6 @@ This document outlines the configuration and setup requirements for local develo
   sg docker -c "dotnet test --filter 'Category=Integration&Dependency=Database'"
   ```
 
-* **Format Code:**
-  ```bash
-  # Check formatting
-  dotnet format --verify-no-changes --verbosity diagnostic
-  
-  # Apply formatting
-  dotnet format
-  ```
 
 ## 3. Configuration & Environment Variables
 

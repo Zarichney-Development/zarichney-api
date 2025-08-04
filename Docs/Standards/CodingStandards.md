@@ -30,7 +30,6 @@
     * Utilize primary constructors where they simplify class definitions and initialization.
     * Use `record` types for immutable data transfer objects (DTOs) or simple data carriers where appropriate. This promotes immutability, which simplifies testing.
     * Keep methods concise and focused on a single responsibility (SRP). Aim for methods that fit on one screen.
-    * Adhere to standard C# formatting (indentation, spacing, braces) primarily enforced by the project's `.editorconfig` file.
     * Prefer comparing 'Count' to 0 rather than using `Any()`. Instead of `if (!allAttributes.Any())` use `if (allAttributes.Count == 0)`.
     * **Embrace Immutability (NEW):** Where practical, prefer immutable data structures and classes (e.g., using `readonly` fields/properties, `record` types, read-only collections). Objects that don't change state after creation are inherently simpler to reason about and test.
     * **Pure Functions (NEW):** Strive to write pure functions (functions whose output depends only on their input arguments and which have no side effects) for business logic where possible. Pure functions are the easiest to test due to their deterministic nature and lack of reliance on external state.
@@ -136,12 +135,7 @@ To ensure code remains highly testable, actively avoid the following common anti
 * **Overly Complex Constructors:** Constructors with excessive logic or too many parameters can make object creation difficult in tests. Consider using Factory patterns or refactoring the class.
 * **Time-Dependent Logic without Abstraction:** Directly using `DateTime.Now` or `DateTime.UtcNow` makes code hard to test deterministically. Inject `System.TimeProvider` instead (see `Code/Zarichney.Server.Tests/TechnicalDesignDocument.md` FRMK-001).
 
-## 12. Style Guide
-
-* **Spacing:** Use spaces, not tabs, with an indentation size of two spaces.
-* **Formatting:** Primarily rely on the project's `.editorconfig` file for detailed formatting rules. Ensure code formatting aligns with these rules.
-
-## 13. Security
+## 12. Security
 
 * Be mindful of potential security vulnerabilities:
     * Validate and sanitize inputs, especially those originating from external sources (user input, API requests, scraped data).
@@ -151,7 +145,7 @@ To ensure code remains highly testable, actively avoid the following common anti
 * Handle API keys and secrets securely. Do not hardcode them; use configuration providers like User Secrets, Environment Variables, AWS Secrets Manager, or Parameter Store.
 * Adhere to existing authentication (`[Authorize]`, `AuthenticationMiddleware`, `CookieAuthManager`) and authorization (`RoleManager`, `[Authorize(Roles = "...")]`) patterns.
 
-## 14. Logging Standards
+## 13. Logging Standards
 
 * **Logger Injection:**
     * **MUST** use constructor injection with the generic `ILogger<T>` type (e.g., `private readonly ILogger<MyService> _logger;`). This provides type safety, easier testing, and automatic source context.
@@ -204,7 +198,7 @@ To ensure code remains highly testable, actively avoid the following common anti
     * Prefer structured logging over string concatenation or interpolation for better performance and searchability.
     * Consider the performance impact of logging expensive-to-compute values and evaluate if the information is necessary at the chosen log level.
 
-## 15. External Libraries
+## 14. External Libraries
 
 * Utilize the existing libraries (e.g., Serilog, Polly, MediatR, AutoMapper, EF Core, OpenAI, Playwright, Octokit, QuestPDF, AngleSharp, RestSharp) according to established patterns within the codebase.
 * Do not add new major dependencies (NuGet packages) without prior architectural review/approval.
