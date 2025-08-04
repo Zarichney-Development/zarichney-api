@@ -147,10 +147,9 @@ main() {
         run_ai_security_analysis
         # Generate security report only if analysis was performed
         generate_security_report
+        # Create security artifacts only if analysis was performed
+        create_security_artifacts
     fi
-    
-    # Create security artifacts
-    create_security_artifacts
     
     end_timer "$start_time" "security-scanning"
     log_success "Security scanning completed successfully"
