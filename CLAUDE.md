@@ -1,7 +1,7 @@
 # Project Context & Operating Guide for AI Coding Assistant (Claude)
 
-**Version:** 1.2
-**Last Updated:** 2025-07-23
+**Version:** 1.3
+**Last Updated:** 2025-08-04
 
 ## 1. My Purpose & Your Role
 
@@ -18,6 +18,38 @@
     * **`/Docs/Development/`**: AI-assisted workflow definitions. ([View README](../Docs/Development/README.md))
     * **`/Docs/Templates/`**: Templates for prompts, issues, etc. ([View README](../Docs/Templates/README.md))
 * **Module-Specific `README.md` files:** Each significant directory within `/Code/Zarichney.Server/` and `/Code/Zarichney.Server.Tests/` has its own `README.md`. **Always review the local `README.md` for the specific module you are working on.**
+* **`/.github/prompts/`**: **AI-POWERED CODE REVIEW SYSTEM** - Advanced AI analysis prompts. ([View README](../.github/prompts/README.md))
+
+## 2.1. AI-Powered Code Review System
+
+This project features a comprehensive AI-powered code review system that automatically analyzes pull requests using four specialized AI agents:
+
+### **The Four AI Sentinels**
+* **🔍 DebtSentinel** (`tech-debt-analysis.md`): Technical debt analysis and sustainability assessment
+* **🛡️ StandardsGuardian** (`standards-compliance.md`): Coding standards and architectural compliance
+* **🧪 TestMaster** (`testing-analysis.md`): Test coverage and quality analysis
+* **🔒 SecuritySentinel** (`security-analysis.md`): Security vulnerability and threat assessment
+
+### **Advanced Prompt Engineering Features**
+Each AI agent employs sophisticated prompt engineering techniques based on academic research:
+- **Expert Personas**: Principal-level expertise (15-20+ years) with AI coder mentorship
+- **Context Ingestion**: Comprehensive project documentation analysis before evaluation
+- **Chain-of-Thought Analysis**: 5-6 step structured reasoning process
+- **Project-Specific Taxonomies**: Tailored to .NET 8/Angular 19 tech stack
+- **Decision Matrices**: Objective prioritization and remediation frameworks
+- **Educational Focus**: AI coder learning reinforcement and pattern guidance
+
+### **Automatic Activation**
+- **PR to `develop`**: Testing + Standards + Tech Debt analysis
+- **PR to `main`**: Full analysis including Security assessment
+- **Branch-Specific Logic**: Feature branches skip AI analysis for performance
+- **Quality Gates**: Critical findings can block deployment with specific remediation guidance
+
+### **Benefits Over Traditional Linting**
+- **Contextual Understanding**: AI comprehends intent, not just syntax
+- **Holistic Analysis**: Cross-cutting concerns and architectural awareness
+- **Educational Value**: Each analysis teaches better patterns for sustainable development
+- **Actionable Feedback**: Specific file:line references with remediation steps
 
 ## 3. High-Level Development Workflow (When I give you a task)
 
@@ -27,9 +59,11 @@ Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskMan
 2.  **Review Context:** Use read tool on all standards and relevant local `README.md` files.
 3.  **Branch:** Ensure you are on the correct branch, switch if needed or create a feature/test branch (`feature/issue-XXX-desc` or `test/issue-XXX-desc`), no committing on main.
 4.  **Code/Test:** Implement changes and add/update tests. **Use `/test-report summary` for quick validation or `/test-report` for comprehensive analysis with AI insights.**
-5.  **Document:** Update relevant `README.md` files and diagrams if architecture/behavior changed.
-6.  **Commit:** Use Conventional Commits referencing the Issue ID.
-7.  **Pull Request:** Utilize the open PR or create a new PR using `gh pr create`.
+5.  **Format:** Verify and apply formatting (`dotnet format`).
+6.  **Document:** Update relevant `README.md` files and diagrams if architecture/behavior changed.
+7.  **Commit:** Use Conventional Commits referencing the Issue ID.
+8.  **Pull Request:** Utilize the open PR or create a new PR using `gh pr create`.
+9.  **AI Analysis:** The four AI Sentinels automatically analyze your PR and provide comprehensive feedback through GitHub comments. Review and address any critical findings before merge.
 
 ## 4. Essential Commands & Tools
 
@@ -277,9 +311,8 @@ The project includes an automated Standards Compliance Check that runs on every 
 
 ### Standards Checked
 1. **Code Style**: Modern C# features, logging patterns
-2. **Git & Task Management**: Conventional commits, branch naming, issue references
-3. **Testing Standards**: Test naming, categorization, framework usage, coverage
-4. **Documentation**: README.md coverage, XML docs, linking structure
+2. **Testing Standards**: Test naming, categorization, framework usage, coverage
+3. **Documentation**: README.md coverage, XML docs, linking structure
 
 ### Quality Gates
 - PRs with mandatory violations are automatically blocked from merging
@@ -531,72 +564,27 @@ The project includes a comprehensive security analysis system that follows the e
 **Issue Creation Action**: [`.github/actions/create-security-issues/action.yml`](.github/actions/create-security-issues/action.yml)  
 **CodeQL Configuration**: [`.github/codeql/codeql-config.yml`](.github/codeql/codeql-config.yml)
 
-## 11. Consolidated CI/CD Pipeline Architecture
+## 11. CI/CD Pipeline Awareness
 
-### Current Architecture (Post-Consolidation)
-**Last Updated:** 2025-07-28
+### Essential Information for AI Coding Agents
+The project uses a consolidated CI/CD pipeline with branch-aware AI analysis that directly impacts your development workflow:
 
-As of the mega build workflow consolidation, the project uses a streamlined CI/CD pipeline that integrates all analysis capabilities into a single comprehensive workflow for optimal Claude AI integration and performance.
+### **Branch-Triggered Analysis (What You Need to Know)**
+- **Feature Branch PRs**: Build + Test only (no AI analysis for performance)
+- **PR to `develop`**: Build + Test + **Quality AI Analysis** (🧪 TestMaster + 🛡️ StandardsGuardian + 🔍 DebtSentinel)
+- **PR to `main`**: Build + Test + **Full AI Analysis** including 🔒 SecuritySentinel
 
-#### **Active Workflows**
-- **`Build & Test`** (`build.yml`) - **Consolidated mega build pipeline**
-  - Universal PR triggering with `branches: ['**']`
-  - Branch-aware conditional logic for different analysis scenarios
-  - All Claude AI analysis integrated (Testing, Standards, Tech Debt, Security)
-  - Automatic concurrency control to prevent duplicate runs
-- **`Deployment`** (`deploy.yml`) - Conditional deployment based on build results and security gates
-- **`Maintenance`** (`maintenance.yml`) - Scheduled system maintenance and health monitoring
+### **Quality Gates Impact**
+- **Critical findings** from AI analysis can block PR merging
+- **Build failures** prevent deployment automatically
+- **Security issues** require resolution before main branch merges
 
-### Branch-Aware Execution Logic
-The consolidated build workflow provides intelligent analysis based on PR target branches:
+### **What This Means for Your Tasks**
+- Your PRs will automatically receive comprehensive AI feedback
+- Address any critical issues before expecting merge approval
+- Monitor GitHub Actions status for build and analysis results
 
-- **Feature → Epic Branch PRs**: Build + Test only (no AI analysis)
-- **Epic → Develop Branch PRs**: Build + Test + Quality Analysis (Testing, Standards, Tech Debt AI)
-- **Any → Main Branch PRs**: Build + Test + Quality + Security Analysis (Full AI suite)
-
-### Concurrency Control
-The consolidated workflow includes automatic concurrency control to optimize resource usage:
-
-```yaml
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-```
-
-**Benefits:**
-- **Resource Efficiency**: Automatically cancels previous runs when new commits are pushed
-- **Faster Feedback**: Focuses CI resources on the latest changes
-- **Handles Edge Cases**: Gracefully manages rapid commits, rebases, or force pushes
-- **Clean History**: Prevents cluttered workflow run logs
-
-**Behavior:**
-- When a new commit is pushed to a PR, any running workflow for that PR is automatically cancelled
-- Only the latest workflow run continues, providing feedback on the most recent changes
-- Applies per-branch/PR, so workflows on different branches run independently
-
-### Architecture Benefits
-- **Claude AI Compatibility**: Single workflow enables proper Claude AI integration via `pull_request` events
-- **Sequential Dependencies**: Proper build gates with `needs:` declarations ensure quality control
-- **Performance Optimized**: Parallel execution where safe, sequential where dependencies exist
-- **Comprehensive Coverage**: All analysis types (quality, security, testing) in one pipeline
-- **Developer Experience**: Single workflow to monitor with consolidated feedback
-
-### Workflow Dependencies
-```
-Build & Test (on PR/push) → Deployment (on main only) → Maintenance (scheduled)
-```
-
-- **Build workflow** runs on all PRs and pushes with branch-appropriate analysis
-- **Deployment workflow** triggers only on successful main branch builds
-- **Maintenance workflow** runs on scheduled intervals for system health
-- All workflows support manual dispatch for debugging and testing
-
-### For Developers
-- **Single Workflow**: Monitor one comprehensive pipeline instead of multiple separate workflows
-- **Automatic Cancellation**: No need to manually cancel old runs - happens automatically
-- **Real Claude AI**: All AI analysis uses genuine Claude insights, no fake fallback content
-- **Branch-Appropriate**: Different analysis depths based on PR target (feature/epic/develop/main)
-- **Clean Interface**: Simple workflow names without numbering for easy navigation
+**For detailed CI/CD architecture and configuration:** Reference [`.github/workflows/`](.github/workflows/) and [`.github/prompts/README.md`](.github/prompts/README.md)
 
 ---
 # important-instruction-reminders

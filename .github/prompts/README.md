@@ -1,4 +1,4 @@
-# Module/Directory: .github/prompts
+# Module/Directory: AI-Powered Code Review System
 
 **Last Updated:** 2025-08-04
 
@@ -6,167 +6,216 @@
 
 ## 1. Purpose & Responsibility
 
-* **What it is:** Template-based prompt management system for Claude AI analysis workflows, providing centralized, maintainable prompt definitions with dynamic context injection.
+* **What it is:** Sophisticated AI-powered code review system featuring four specialized AI agents that provide comprehensive analysis of pull requests using advanced prompt engineering techniques.
 * **Key Responsibilities:** 
-    * Store reusable Claude AI analysis prompt templates for testing, standards, tech debt, and security analysis
-    * Provide consistent placeholder-based dynamic context injection across all AI workflows
-    * Enable version-controlled prompt evolution and maintenance separate from workflow logic
-    * Support template validation and reuse across multiple workflows or analysis contexts
-* **Why it exists:** To separate static prompt content from dynamic workflow logic, improving maintainability, enabling prompt versioning, and providing a single source of truth for AI analysis instructions. This refactoring supports the DevOps infrastructure consolidation by making prompts more manageable and workflows cleaner.
+    * **Technical Debt Analysis**: Identify and categorize debt across architecture, code, testing, and documentation
+    * **Standards Compliance**: Enforce coding standards, SOLID principles, and project-specific conventions
+    * **Test Quality Assessment**: Analyze test coverage, patterns, and quality impact
+    * **Security Analysis**: Assess vulnerabilities, threats, and deployment security decisions
+    * **AI Coder Education**: Reinforce sustainable development patterns for AI-assisted codebases
+* **Why it exists:** To provide contextual, comprehensive code review that goes beyond traditional linting by understanding project intent, architectural patterns, and long-term maintainability. This AI-first approach eliminates crude programmatic checks in favor of intelligent, educational analysis.
 
 ## 2. Architecture & Key Concepts
 
-* **High-Level Design:** Template-based system with placeholder substitution pattern:
-    * **Markdown Templates** contain static analysis instructions with `{{PLACEHOLDER}}` markers
-    * **Workflow Steps** load templates and perform string replacement with actual values
-    * **Consistent Interface** ensures all Claude AI jobs follow the same loading pattern
-* **Template Structure:** Each prompt follows a consistent format:
-    * Header with dynamic PR information
-    * Mission statement and analysis focus
-    * Specific analysis criteria and data sources
-    * Standardized output format requirements
-* **Placeholder System:** Standardized placeholders for dynamic context:
-    * `{{PR_NUMBER}}` - Pull request number
-    * `{{PR_AUTHOR}}` - Pull request author login
-    * `{{ISSUE_REF}}` - Associated issue reference
-    * `{{SOURCE_BRANCH}}` - Source branch name
-    * `{{TARGET_BRANCH}}` - Target branch name
-* **Integration Pattern:** Workflows load and process templates using bash string replacement:
-    ```bash
-    PROMPT_TEMPLATE=$(cat .github/prompts/template-name.md)
-    PROMPT="${PROMPT_TEMPLATE//\{\{PLACEHOLDER\}\}/actual_value}"
-    ```
+### **The Four AI Sentinels**
+* **🔍 DebtSentinel** (`tech-debt-analysis.md`, 247 lines): Technical debt analysis with 5-step chain-of-thought reasoning
+* **🛡️ StandardsGuardian** (`standards-compliance.md`, 323 lines): Standards compliance with 6-step analysis framework
+* **🧪 TestMaster** (`testing-analysis.md`, 338 lines): Test quality assessment with coverage impact analysis
+* **🔒 SecuritySentinel** (`security-analysis.md`, 348 lines): Security vulnerability assessment with deployment decisions
+
+### **Advanced Prompt Engineering Features**
+Based on academic research in AI-driven technical debt analysis:
+* **Expert Personas**: Principal-level expertise (15-20+ years) with AI coder mentorship specialization
+* **Context Ingestion**: Comprehensive project documentation analysis before evaluation
+* **Chain-of-Thought Analysis**: 5-6 step structured reasoning processes with evidence-based conclusions
+* **Project-Specific Taxonomies**: Tailored to .NET 8/Angular 19 tech stack and monorepo architecture
+* **Decision Matrices**: Objective prioritization frameworks (Critical/High/Medium/Low/Celebrate)
+* **Educational Focus**: AI coder learning reinforcement and sustainable development patterns
+
+### **Technical Implementation**
+* **Template System**: Markdown prompts with `{{PLACEHOLDER}}` dynamic context injection
+* **Workflow Integration**: GitHub Actions jobs load templates and perform string replacement
+* **Branch-Aware Activation**: 
+  - Feature branches: Build + Test only
+  - Develop PRs: Testing + Standards + Tech Debt analysis
+  - Main PRs: Full analysis including Security assessment
+* **Quality Gates**: Critical findings can block deployment with specific remediation guidance
 
 ```mermaid
 graph TD
-    A[Workflow Trigger] --> B[Load Template]
-    B --> C[Replace Placeholders]
-    C --> D[Pass to Claude AI]
+    A[PR Created] --> B{Target Branch?}
+    B -->|Feature| C[Build + Test Only]
+    B -->|Develop| D[Build + Test + Quality Analysis]
+    B -->|Main| E[Build + Test + Quality + Security]
     
-    E[testing-analysis.md] --> B
-    F[standards-compliance.md] --> B
-    G[tech-debt-analysis.md] --> B
-    H[security-analysis.md] --> B
+    D --> F[🧪 TestMaster]
+    D --> G[🛡️ StandardsGuardian] 
+    D --> H[🔍 DebtSentinel]
     
-    D --> I[AI Analysis]
-    I --> J[PR Comment]
+    E --> F
+    E --> G
+    E --> H
+    E --> I[🔒 SecuritySentinel]
     
-    style E fill:#90EE90
-    style F fill:#87CEEB
-    style G fill:#DDA0DD
-    style H fill:#FFB6C1
+    F --> J[Context Ingestion]
+    G --> J
+    H --> J
+    I --> J
+    
+    J --> K[Chain-of-Thought Analysis]
+    K --> L[Decision Matrix]
+    L --> M[GitHub PR Comments]
+    L --> N[Quality Gates]
+    
+    N -->|Critical Issues| O[Block Merge]
+    N -->|Clean| P[Allow Merge]
+    
+    style F fill:#90EE90
+    style G fill:#87CEEB
+    style H fill:#DDA0DD
+    style I fill:#FFB6C1
+    style O fill:#FF6B6B
+    style P fill:#51CF66
 ```
 
 ## 3. Interface Contract & Assumptions
 
-* **Key Public Interfaces:**
-    * **Template Files**:
-        * **Purpose:** Provide reusable, version-controlled prompt templates with placeholder injection
-        * **Critical Preconditions:** Valid markdown format, consistent placeholder syntax `{{NAME}}`
-        * **Critical Postconditions:** Templates load successfully, placeholders replaceable via string substitution
-        * **Non-Obvious Error Handling:** Missing placeholders result in literal `{{PLACEHOLDER}}` in final prompt
-    * **Placeholder System**:
-        * **Purpose:** Enable dynamic context injection while maintaining static template content
-        * **Critical Preconditions:** Placeholders must use double brace format: `{{PLACEHOLDER_NAME}}`
-        * **Critical Postconditions:** All placeholders replaced with actual values before passing to Claude AI
-        * **Non-Obvious Error Handling:** Unreplaced placeholders appear literally in AI prompts
-* **Critical Assumptions:**
-    * **Template Availability:** All referenced template files exist and are readable
-    * **Placeholder Consistency:** Workflows provide values for all placeholders used in templates
-    * **String Replacement:** Bash string replacement handles all placeholder patterns correctly
-    * **Template Stability:** Template structure remains consistent for workflow compatibility
+### **AI Analysis Input Requirements**
+* **Git Context**: PR number, author, source/target branches, linked issues, git diff with file changes
+* **Project Documentation**: Access to `CLAUDE.md`, `/Docs/Standards/`, module `README.md` files
+* **Build Artifacts**: Test results, coverage reports, security scan results (when available)
+* **Branch Context**: Target branch determines analysis depth and security requirements
 
-## 4. Local Conventions & Constraints (Beyond Global Standards)
+### **AI Analysis Output Guarantees**
+* **Standardized Format**: GitHub markdown comments with consistent structure and emoji indicators
+* **Specific References**: File:line locations with actionable remediation steps
+* **Objective Prioritization**: Critical/High/Medium/Low categorization with clear justification
+* **Educational Value**: AI coder learning insights and pattern reinforcement
+* **Deployment Decisions**: Clear recommendations for merge/block with security assessment
 
-* **File Naming:**
-    * Templates use kebab-case naming: `analysis-type.md`
-    * Names match the corresponding workflow job function
-    * Extensions always `.md` for markdown formatting and readability
-* **Placeholder Format:**
-    * Always use double braces: `{{PLACEHOLDER_NAME}}`
-    * Placeholder names use UPPER_SNAKE_CASE convention
-    * Standard placeholders documented and reused across templates
-* **Template Structure:**
-    * All templates follow consistent section structure
-    * Header with PR context using standard placeholders
-    * Mission statement explaining analysis purpose
-    * Analysis focus with specific criteria
-    * Output format requirements with emoji sections
-* **Integration Requirements:**
-    * Templates must be loadable via `cat` command
-    * Placeholders must be replaceable via bash string substitution
-    * Final processed prompts must be valid for Claude AI action input
+### **Quality Gate Contracts**
+* **Critical Issues**: Automatically block merge until resolved (security vulnerabilities, breaking standards violations)
+* **High Priority**: Must be addressed in current PR or immediate follow-up with tracking
+* **Medium/Low Priority**: Tracked for future improvement with backlog integration
+* **Celebration**: Positive reinforcement for excellent patterns and debt reduction wins
+
+### **Context Ingestion Requirements**
+Each AI agent MUST perform comprehensive context analysis before evaluation:
+1. Read project documentation (`CLAUDE.md`, standards documents, module READMEs)
+2. Understand established patterns and architectural decisions
+3. Synthesize project-specific rules and quality gates
+4. Apply evidence-based analysis using established frameworks
+5. Generate educational feedback aligned with project standards
+
+## 4. Advanced Prompt Engineering Standards
+
+### **Research Foundation**
+Based on `/Docs/Research/Tech_Debt_Analysis_Prompt_Research.md` - academic research in AI-driven technical debt analysis:
+* **Persona Principle**: Expert role assignment frames AI's analytical perspective and priorities
+* **Context Ingestion**: Project-specific knowledge transforms generic analysis into relevant, actionable feedback
+* **Chain-of-Thought Reasoning**: Multi-step analytical process ensures evidence-based conclusions
+* **Structured Output**: Consistent markdown formatting enables downstream automation and human consumption
+
+### **Prompt Architecture Standards**
+Each AI agent follows consistent structural patterns:
+* **`<persona>`**: Expert identity (Principal + AI Coder Mentor) with specific domain expertise and educational tone
+* **`<context_ingestion>`**: Critical first step requiring comprehensive project documentation analysis
+* **`<analysis_instructions>`**: 5-6 step chain-of-thought reasoning with specific taxonomies and decision matrices
+* **`<output_format>`**: Standardized GitHub comment format with categorized findings and actionable recommendations
+
+### **Quality Standards**
+* **Prompt Length**: 240-350 lines for comprehensive coverage without context window strain
+* **Educational Focus**: Every analysis must include AI coder learning insights and pattern reinforcement
+* **Objectivity**: Evidence-based conclusions using established decision matrices and priority frameworks
+* **Actionability**: Specific file:line references with clear remediation steps and reasoning
+* **Project Alignment**: Deep integration with established standards, patterns, and architectural decisions
 
 ## 5. How to Work With This Code
 
-* **Setup:**
-    * No special setup required - templates are static markdown files
-    * Templates automatically loaded by workflow steps during execution
-    * Version control handles template management and change tracking
-* **Testing:**
-    * **Location:** Templates tested through actual workflow execution
-    * **How to Test:** Create PR to trigger workflows that use the templates
-    * **Validation:** Verify AI analysis produces expected output format and quality
-    * **Local Testing:** Use bash string replacement to test placeholder substitution:
-        ```bash
-        # Test template loading and placeholder replacement
-        TEMPLATE=$(cat .github/prompts/testing-analysis.md)
-        TEST_PROMPT="${TEMPLATE//\{\{PR_NUMBER\}\}/123}"
-        echo "$TEST_PROMPT" | head -10
-        ```
-* **Common Usage Patterns:**
-    ```bash
-    # Load template in workflow
-    PROMPT_TEMPLATE=$(cat .github/prompts/template-name.md)
-    
-    # Replace all standard placeholders
-    PROMPT="${PROMPT_TEMPLATE//\{\{PR_NUMBER\}\}/${{ github.event.number }}}"
-    PROMPT="${PROMPT//\{\{PR_AUTHOR\}\}/${{ github.event.pull_request.user.login }}}"
-    # ... etc for all placeholders
-    
-    # Output for Claude AI action
-    echo "prompt<<EOF" >> $GITHUB_OUTPUT
-    echo "$PROMPT" >> $GITHUB_OUTPUT
-    echo "EOF" >> $GITHUB_OUTPUT
-    ```
-* **Prompt Template Files:**
-    * `testing-analysis.md` - Testing coverage and quality analysis
-    * `standards-compliance.md` - Code standards and formatting compliance
-    * `tech-debt-analysis.md` - Technical debt assessment and recommendations
-    * `security-analysis.md` - Security vulnerability analysis and deployment decisions
-* **Common Pitfalls / Gotchas:**
-    * Placeholder syntax must exactly match `{{NAME}}` - extra spaces break replacement
-    * Missing placeholders result in literal text in final prompts
-    * Template changes affect all workflows that use them
-    * Bash string replacement is case-sensitive for placeholder names
+### **Automatic Operation**
+* **No Manual Setup**: AI analysis triggers automatically on PR creation targeting `develop` or `main` branches
+* **Branch-Aware Logic**: System intelligently selects appropriate analysis depth based on PR target
+* **Parallel Execution**: All applicable AI agents run simultaneously for optimal performance
+* **GitHub Integration**: Results appear as comprehensive comments on PR conversations
 
-## 6. Dependencies
+### **Understanding AI Analysis Output**
+Each AI agent provides structured analysis with consistent formatting:
+* **Executive Summary**: Overall assessment with clear metrics and quality indicators
+* **Categorized Findings**: Critical/High/Medium/Low priority issues with specific file:line references
+* **Educational Insights**: AI coder learning patterns and reinforcement guidance
+* **Actionable Recommendations**: Specific steps for remediation with reasoning and examples
 
-* **Internal Code Dependencies:**
-    * [`.github/workflows/`](../workflows/README.md) - Workflows that load and use these templates
-    * No dependencies on other internal modules - templates are standalone
-* **External Service Dependencies:**
-    * No external dependencies - templates are static files
-    * Templates designed for consumption by `grll/claude-code-action@beta`
-* **Consumers (Impact of Changes):**
-    * [`.github/workflows/build.yml`](../workflows/build.yml) - Consolidated workflow using all 4 templates
-    * Any future workflows requiring Claude AI analysis with consistent prompting
-    * Template changes immediately affect all consuming workflows
+### **Working with AI Feedback**
+* **Critical Issues**: Must be resolved before merge - these block deployment
+* **High Priority**: Address in current PR or create immediate follow-up issues
+* **Medium/Low Priority**: Add to backlog for future improvement sprints
+* **Celebration Sections**: Positive reinforcement for excellent patterns to replicate
+
+### **Prompt Evolution and Customization**
+When modifying AI analysis capabilities:
+```bash
+# Test prompt structure locally
+TEMPLATE=$(cat .github/prompts/tech-debt-analysis.md)
+echo "Prompt length: $(echo "$TEMPLATE" | wc -l) lines"
+echo "Has persona section: $(echo "$TEMPLATE" | grep -c '<persona>')"
+echo "Has context ingestion: $(echo "$TEMPLATE" | grep -c '<context_ingestion>')"
+
+# Validate placeholder usage
+echo "Standard placeholders used:"
+grep -o '{{[^}]*}}' .github/prompts/*.md | sort -u
+```
+
+### **Integration Testing**
+* **End-to-End Validation**: Create test PRs targeting different branches to verify analysis depth
+* **Quality Assessment**: Review AI output for accuracy, actionability, and educational value
+* **Performance Monitoring**: Ensure analysis completes within timeout constraints (30 minutes per agent)
+
+## 6. Dependencies & Integration
+
+### **Core Dependencies**
+* **Project Documentation**: `/Docs/Standards/` - Standards that inform AI analysis criteria
+* **Research Foundation**: `/Docs/Research/Tech_Debt_Analysis_Prompt_Research.md` - Academic foundation for prompt engineering
+* **Workflow Integration**: `.github/workflows/build.yml` - CI/CD pipeline that executes AI analysis
+* **Claude AI Service**: `grll/claude-code-action@beta` - AI analysis execution engine
+
+### **Consumer Impact**
+* **Immediate Impact**: All PR analysis for `develop` and `main` branches
+* **Quality Gates**: Changes affect deployment blocking logic and merge requirements
+* **Development Workflow**: Updates influence AI coder learning and pattern reinforcement
+* **Standards Evolution**: Prompt changes immediately reflect in project-wide analysis
 
 ## 7. Rationale & Key Historical Context
 
-* **Refactoring Decision:** Extracted inline prompts from `build.yml` to separate files for maintainability and version control visibility
-* **Template System:** Chose placeholder-based approach over complex parameter passing for simplicity and bash compatibility
-* **Centralized Location:** Placed in `.github/prompts/` to keep infrastructure-related files organized within GitHub directory
-* **Markdown Format:** Selected markdown for readability, version control diffs, and AI prompt formatting compatibility
-* **Standard Placeholders:** Established consistent placeholder naming to enable reuse and reduce workflow complexity
+### **Evolution from Script-Based to AI-First Analysis**
+* **Original Problem**: Crude programmatic quality checks (`run-quality-checks.sh`) provided limited value
+* **Research Integration**: Applied academic findings on AI-driven technical debt analysis
+* **Architectural Decision**: Eliminated script-based checks in favor of contextual AI understanding
+* **Educational Focus**: Designed system to teach sustainable patterns for AI-assisted development
 
-## 8. Known Issues & TODOs
+### **Prompt Engineering Approach**
+* **Research-Based**: Grounded in academic research rather than ad-hoc approaches
+* **Context-Aware**: Deep integration with project documentation and established patterns
+* **Evidence-Based**: Chain-of-thought reasoning ensures objective, defensible conclusions
+* **Educational Value**: Each analysis reinforces learning for sustainable AI-assisted development
 
-* **Template Validation:** No automated validation of placeholder syntax or template structure
-* **Placeholder Documentation:** Could benefit from centralized placeholder registry or validation
-* **Template Testing:** Limited ability to test templates in isolation from full workflow execution
-* **Cross-Template Consistency:** No enforcement of consistent section structure across templates
-* **Version Management:** Template versioning strategy could be enhanced for compatibility management
+### **System Architecture Benefits**
+* **Maintainability**: Version-controlled prompts separate from workflow logic
+* **Scalability**: Branch-aware activation prevents performance degradation
+* **Consistency**: Standardized output format enables automation and human consumption
+* **Evolution**: Context ingestion ensures analysis stays current with project changes
+
+## 8. Future Enhancements & Research
+
+### **Continuous Improvement Areas**
+* **Prompt Validation**: Automated structure and quality validation for prompt consistency
+* **Performance Metrics**: Analysis effectiveness measurement and optimization
+* **Pattern Learning**: Integration with project pattern evolution and documentation updates
+* **Cross-Project Applicability**: Framework generalization for other AI-assisted codebases
+
+### **Research Integration Opportunities**
+* **Advanced Taxonomies**: Deeper integration of domain-specific debt categorization
+* **Predictive Analysis**: Trend analysis for proactive technical debt management
+* **Learning Feedback Loops**: AI coder pattern effectiveness measurement and reinforcement
+* **Quality Correlation**: Relationship analysis between AI feedback and actual code quality outcomes
 
 ---

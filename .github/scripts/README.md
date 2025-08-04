@@ -21,7 +21,7 @@
 * **High-Level Design:** The scripts are organized into functional categories with shared utilities:
     * **Build Scripts:** `build-backend.sh`, `build-frontend.sh` - Handle compilation, testing, and artifact creation
     * **Deployment Scripts:** `deploy-backend.sh`, `deploy-frontend.sh` - Manage EC2 deployments with health checks
-    * **Analysis Scripts:** `run-security-scans.sh`, `run-quality-checks.sh` - Coordinate security and quality analysis
+    * **Analysis Scripts:** `run-security-scans.sh` - Coordinate security analysis
     * **Shared Utilities:** `common-functions.sh` - Logging, error handling, Docker access, artifact management
 * **Core Workflow Integration:** Scripts integrate with GitHub Actions through:
     1. Environment variable consumption for configuration
@@ -42,7 +42,7 @@
         * **Critical Preconditions:** `AWS credentials configured`, `deployment artifacts available`, `target EC2 instances accessible`
         * **Critical Postconditions:** `Application deployed and healthy`, `health checks passed`, `rollback artifacts created`
         * **Non-Obvious Error Handling:** Automatic rollback on deployment failure; health check validation with retries
-    * **Analysis Scripts** (`run-security-scans.sh`, `run-quality-checks.sh`):
+    * **Analysis Scripts** (`run-security-scans.sh`):
         * **Critical Preconditions:** `Source code available`, `previous build artifacts for context`, `API tokens for AI analysis`
         * **Critical Postconditions:** `Analysis reports generated`, `quality gates evaluated`, `auto-issues created for findings`
         * **Non-Obvious Error Handling:** Graceful degradation when AI services unavailable; consolidates multiple scan results
@@ -96,9 +96,6 @@
     
     # Security analysis (requires tokens)
     CLAUDE_CODE_OAUTH_TOKEN=xxx ./Scripts/Pipeline/run-security-scans.sh
-    
-    # Quality checks
-    ./Scripts/Pipeline/run-quality-checks.sh
     
     # Deployment (requires AWS credentials)
     ./Scripts/Pipeline/deploy-backend.sh production
