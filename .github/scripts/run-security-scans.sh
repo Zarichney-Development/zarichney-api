@@ -139,11 +139,10 @@ main() {
         run_policy_compliance
     fi
     
-    # Prepare comprehensive security data
-    prepare_security_data
-    
     # Run AI analysis unless skipped
     if [[ "$SKIP_ANALYSIS" != "true" ]]; then
+        # Prepare comprehensive security data
+        prepare_security_data
         run_ai_security_analysis
         # Generate security report only if analysis was performed
         generate_security_report
