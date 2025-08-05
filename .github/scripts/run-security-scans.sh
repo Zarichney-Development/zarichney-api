@@ -338,6 +338,7 @@ EOF
     fi
     
     log_success "Dependency scanning completed"
+    return 0
 }
 
 run_secrets_detection() {
@@ -390,6 +391,7 @@ EOF
     fi
     
     log_success "Secrets detection completed"
+    return 0
 }
 
 run_policy_compliance() {
@@ -432,6 +434,7 @@ EOF
     
     log_info "Policy violations found: $violations"
     log_success "Policy compliance check completed"
+    return 0
 }
 
 prepare_security_data() {

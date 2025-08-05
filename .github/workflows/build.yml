@@ -858,6 +858,7 @@ jobs:
               echo "🔍 Running dependency security scanning..."
               if ./.github/scripts/run-security-scans.sh --deps-only --skip-analysis; then
                 echo "✅ Dependency scanning completed successfully"
+                exit 0
               else
                 echo "❌ Dependency scanning failed"
                 exit 1
@@ -867,6 +868,7 @@ jobs:
               echo "🔐 Running secrets detection scanning..."
               if ./.github/scripts/run-security-scans.sh --secrets-only --skip-analysis; then
                 echo "✅ Secrets scanning completed successfully"
+                exit 0
               else
                 echo "❌ Secrets scanning failed"
                 exit 1
@@ -876,6 +878,7 @@ jobs:
               echo "📋 Running policy compliance checks..."
               if ./.github/scripts/run-security-scans.sh --policy-only --skip-analysis; then
                 echo "✅ Policy compliance checks completed successfully"
+                exit 0
               else
                 echo "❌ Policy compliance checks failed"
                 exit 1
