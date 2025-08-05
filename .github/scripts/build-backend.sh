@@ -350,14 +350,23 @@ create_build_artifacts() {
     # Copy important build outputs
     local artifact_dir="artifacts/backend"
     
+    # Ensure artifact directory exists
+    mkdir -p "$artifact_dir"
+    
     # Copy test results if they exist
     if [[ -d "TestResults" ]]; then
         cp -r TestResults "$artifact_dir/" 2>/dev/null || true
+        log_info "Test results copied to artifacts"
+    else
+        log_warning "No test results found to copy"
+        # Create a placeholder to indicate tests were not run
+        echo "Tests were not executed or completed" > "$artifact_dir/test-status.txt"
     fi
     
     # Copy coverage reports if they exist
     if [[ -d "CoverageReport" ]]; then
         cp -r CoverageReport "$artifact_dir/" 2>/dev/null || true
+        log_info "Coverage reports copied to artifacts"
     fi
     
     # Copy build outputs for deployment
@@ -365,9 +374,20 @@ create_build_artifacts() {
     if [[ -d "$server_project/bin/$BUILD_CONFIG" ]]; then
         mkdir -p "$artifact_dir/publish"
         cp -r "$server_project/bin/$BUILD_CONFIG"/* "$artifact_dir/publish/" 2>/dev/null || true
+        log_info "Build outputs copied to artifacts"
+    else
+        log_warning "No build outputs found in $server_project/bin/$BUILD_CONFIG"
+        # Create a placeholder
+        mkdir -p "$artifact_dir/publish"
+        echo "Build outputs not available" > "$artifact_dir/publish/build-status.txt"
     fi
     
-    # Generate build info
+    # Copy build logs if they exist (for debugging)
+    if [[ -f "build.log" ]]; then
+        cp "build.log" "$artifact_dir/" 2>/dev/null || true
+    fi
+    
+    # Generate comprehensive build info
     cat > "$artifact_dir/build-info.json" << EOF
 {
     "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%S.%3NZ")",
@@ -375,11 +395,34 @@ create_build_artifacts() {
     "branch": "$(git branch --show-current 2>/dev/null || echo 'unknown')",
     "build_config": "$BUILD_CONFIG",
     "dotnet_version": "${DOTNET_VERSION}",
-    "coverage_threshold": $COVERAGE_THRESHOLD
+    "coverage_threshold": $COVERAGE_THRESHOLD,
+    "skip_tests": "$SKIP_TESTS",
+    "parallel_mode": "$PARALLEL_MODE",
+    "allow_low_coverage": "$ALLOW_LOW_COVERAGE"
 }
 EOF
     
+    # Create a summary file
+    {
+        echo "Build Summary"
+        echo "============="
+        echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+        echo "Commit: $(git rev-parse HEAD 2>/dev/null || echo 'unknown')"
+        echo "Branch: $(git branch --show-current 2>/dev/null || echo 'unknown')"
+        echo "Configuration: $BUILD_CONFIG"
+        echo ""
+        echo "Artifact Contents:"
+        find "$artifact_dir" -type f | sort
+    } > "$artifact_dir/build-summary.txt"
+    
     log_info "Build artifacts created in $artifact_dir"
+    
+    # List what was actually created for debugging
+    if [[ -d "$artifact_dir" ]]; then
+        log_info "Artifact directory contents:"
+        ls -la "$artifact_dir" || true
+    fi
+    
     upload_artifact "backend-build" "$artifact_dir"
 }
 

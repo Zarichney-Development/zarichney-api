@@ -43,9 +43,28 @@ fi
 # Step 3: Run the API server with Swagger enabled and get the swagger.json directly
 echo -e "\e[32mGenerating swagger.json by running the API server temporarily...\e[0m"
 
+# Ensure port 5000 is available
+if lsof -Pi :5000 -sTCP:LISTEN -t >/dev/null ; then
+    echo -e "\e[33mPort 5000 is already in use. Attempting to find and stop the process...\e[0m"
+    PID_ON_PORT=$(lsof -Pi :5000 -sTCP:LISTEN -t)
+    if [ ! -z "$PID_ON_PORT" ]; then
+        echo -e "\e[33mKilling process $PID_ON_PORT on port 5000...\e[0m"
+        kill -9 $PID_ON_PORT 2>/dev/null || true
+        sleep 2
+    fi
+fi
+
 # Start the API server in the background to generate swagger.json
 echo -e "\e[32mStarting API server temporarily...\e[0m"
-dotnet run --project "$API_SERVER_DIR/Zarichney.Server.csproj" --urls "http://localhost:5000" > /dev/null 2>&1 &
+# Create a temporary log file for debugging startup issues
+TEMP_LOG=$(mktemp)
+echo -e "\e[33mAPI server logs will be captured in: $TEMP_LOG\e[0m"
+
+# Set environment variables for more permissive startup
+export ASPNETCORE_ENVIRONMENT=Development
+export ASPNETCORE_URLS=http://localhost:5000
+
+dotnet run --project "$API_SERVER_DIR/Zarichney.Server.csproj" > "$TEMP_LOG" 2>&1 &
 API_PID=$!
 
 # Function to safely stop the API server
@@ -63,6 +82,15 @@ cleanup_api_server() {
     else
         echo -e "\e[33mAPI server process not found (may have already stopped)\e[0m"
     fi
+    
+    # Clean up temporary log file and show recent logs if startup failed
+    if [ -f "$TEMP_LOG" ]; then
+        if [ -s "$TEMP_LOG" ]; then
+            echo -e "\e[33mAPI server startup logs:\e[0m"
+            tail -20 "$TEMP_LOG"
+        fi
+        rm -f "$TEMP_LOG"
+    fi
 }
 
 # Set up trap for cleanup on script exit
@@ -70,16 +98,37 @@ trap cleanup_api_server EXIT
 
 # Wait for the API to start up with health checking
 echo -e "\e[32mWaiting for API to start...\e[0m"
-for i in {1..30}; do
-    if curl -s -f "http://localhost:5000/api/swagger/swagger.json" > /dev/null 2>&1; then
+for i in {1..45}; do
+    # Check if process is still running
+    if ! ps -p $API_PID > /dev/null 2>&1; then
+        echo -e "\e[31mAPI server process has stopped unexpectedly.\e[0m"
+        echo -e "\e[33mLast few lines from server logs:\e[0m"
+        if [ -f "$TEMP_LOG" ]; then
+            tail -20 "$TEMP_LOG"
+        fi
+        exit 1
+    fi
+    
+    # Try to reach the swagger endpoint
+    if curl -s -f --connect-timeout 5 --max-time 10 "http://localhost:5000/api/swagger/swagger.json" > /dev/null 2>&1; then
         echo -e "\e[32mAPI is ready!\e[0m"
         break
     fi
-    if [ $i -eq 30 ]; then
-        echo -e "\e[31mTimeout waiting for API to start. Exiting.\e[0m"
+    
+    # Also try health check endpoint if available
+    if curl -s -f --connect-timeout 5 --max-time 10 "http://localhost:5000/health" > /dev/null 2>&1; then
+        echo -e "\e[32mAPI health check passed, waiting for swagger...\e[0m"
+    fi
+    
+    if [ $i -eq 45 ]; then
+        echo -e "\e[31mTimeout waiting for API to start (90 seconds).\e[0m"
+        echo -e "\e[33mServer logs:\e[0m"
+        if [ -f "$TEMP_LOG" ]; then
+            cat "$TEMP_LOG"
+        fi
         exit 1
     fi
-    echo -e "\e[33mWaiting... (attempt $i/30)\e[0m"
+    echo -e "\e[33mWaiting... (attempt $i/45)\e[0m"
     sleep 2
 done
 
