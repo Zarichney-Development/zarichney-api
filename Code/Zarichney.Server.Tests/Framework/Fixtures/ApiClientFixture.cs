@@ -24,68 +24,68 @@ public class ApiClientFixture : IAsyncLifetime
   /// <summary>
   /// Gets the unauthenticated Auth API client.
   /// </summary>
-  public IAuthApi? UnauthenticatedAuthApi { get; private set; } = null!;
+  public IAuthApi UnauthenticatedAuthApi { get; private set; } = null!;
 
   /// <summary>
   /// Gets the authenticated Auth API client.
   /// </summary>
-  public IAuthApi? AuthenticatedAuthApi { get; private set; } = null!;
+  public IAuthApi AuthenticatedAuthApi { get; private set; } = null!;
 
   /// <summary>
   /// Gets the unauthenticated AI API client.
   /// </summary>
-  public IAiApi? UnauthenticatedAiApi { get; private set; } = null!;
+  public IAiApi UnauthenticatedAiApi { get; private set; } = null!;
 
   /// <summary>
   /// Gets the authenticated AI API client.
   /// </summary>
-  public IAiApi? AuthenticatedAiApi { get; private set; } = null!;
+  public IAiApi AuthenticatedAiApi { get; private set; } = null!;
 
   /// <summary>
   /// Gets the unauthenticated Cookbook API client.
   /// </summary>
-  public ICookbookApi? UnauthenticatedCookbookApi { get; private set; } = null!;
+  public ICookbookApi UnauthenticatedCookbookApi { get; private set; } = null!;
 
   /// <summary>
   /// Gets the authenticated Cookbook API client.
   /// </summary>
-  public ICookbookApi? AuthenticatedCookbookApi { get; private set; } = null!;
+  public ICookbookApi AuthenticatedCookbookApi { get; private set; } = null!;
 
   /// <summary>
   /// Gets the unauthenticated Payment API client.
   /// </summary>
-  public IPaymentApi? UnauthenticatedPaymentApi { get; private set; } = null!;
+  public IPaymentApi UnauthenticatedPaymentApi { get; private set; } = null!;
 
   /// <summary>
   /// Gets the authenticated Payment API client.
   /// </summary>
-  public IPaymentApi? AuthenticatedPaymentApi { get; private set; } = null!;
+  public IPaymentApi AuthenticatedPaymentApi { get; private set; } = null!;
 
   /// <summary>
   /// Gets the unauthenticated Public API client.
   /// </summary>
-  public IPublicApi? UnauthenticatedPublicApi { get; private set; } = null!;
+  public IPublicApi UnauthenticatedPublicApi { get; private set; } = null!;
 
   /// <summary>
   /// Gets the authenticated Public API client.
   /// </summary>
-  public IPublicApi? AuthenticatedPublicApi { get; private set; } = null!;
+  public IPublicApi AuthenticatedPublicApi { get; private set; } = null!;
 
   /// <summary>
   /// Gets the unauthenticated API client.
   /// </summary>
-  public IApiApi? UnauthenticatedApiApi { get; private set; } = null!;
+  public IApiApi UnauthenticatedApiApi { get; private set; } = null!;
 
   /// <summary>
   /// Gets the authenticated API client.
   /// </summary>
-  public IApiApi? AuthenticatedApiApi { get; private set; } = null!;
+  public IApiApi AuthenticatedApiApi { get; private set; } = null!;
 
 
   /// <summary>
   /// Gets the database fixture.
   /// </summary>
-  public DatabaseFixture? DatabaseFixture => _databaseFixture;
+  public DatabaseFixture DatabaseFixture => _databaseFixture;
 
   /// <summary>
   /// Gets the web application factory.
