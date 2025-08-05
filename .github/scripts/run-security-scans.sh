@@ -148,6 +148,9 @@ main() {
         generate_security_report
         # Create security artifacts only if analysis was performed
         create_security_artifacts
+    else
+        # When skipping analysis, create minimal scan summary for artifact upload
+        create_minimal_scan_summary
     fi
     
     end_timer "$start_time" "security-scanning"
@@ -738,6 +741,27 @@ EOF
     
     log_info "Security artifacts created in $artifact_dir"
     upload_artifact "security-analysis" "$artifact_dir"
+}
+
+create_minimal_scan_summary() {
+    log_section "Creating Minimal Scan Summary"
+    
+    # Create basic scan summary for artifact upload when skipping analysis
+    cat > "$SECURITY_DIR/scan-summary.json" << EOF
+{
+    "timestamp": "$(date -Iseconds)",
+    "scan_mode": "individual-scan-only",
+    "ai_analysis_skipped": true,
+    "commit_sha": "$HEAD_SHA",
+    "base_branch": "$BASE_BRANCH",
+    "scan_completed": true
+}
+EOF
+    
+    # Create a simple status file
+    echo "Security scan completed without AI analysis" > "$SECURITY_DIR/scan-status.txt"
+    
+    log_info "Minimal scan summary created for artifact upload"
 }
 
 # Error handling
