@@ -796,6 +796,12 @@ jobs:
         with:
           category: "/language:${{ matrix.language }}"
 
+      - name: Install required tools
+        run: |
+          echo "📦 Installing required tools for security scanning..."
+          sudo apt-get update -qq
+          sudo apt-get install -y jq
+
       - name: Run security scans
         run: |
           echo "🔒 Running security scanning pipeline..."
