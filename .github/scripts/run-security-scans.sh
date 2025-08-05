@@ -11,7 +11,7 @@ source "$SCRIPT_DIR/common-functions.sh"
 
 # Script configuration
 readonly SECURITY_DIR="security-analysis"
-readonly PROMPT_FILE="$SCRIPT_DIR/../Prompts/security-analysis.md"
+readonly PROMPT_FILE="$SCRIPT_DIR/../prompts/security-analysis.md"
 
 # Help function
 show_help() {

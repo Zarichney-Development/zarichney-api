@@ -183,7 +183,60 @@ jobs:
           name: test-results-${{ github.run_number }}
           path: ./
 
+      - name: Check for existing TestMaster analysis comment
+        id: check-existing-comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Get all comments on this PR
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            // Check for existing unresolved TestMaster analysis comments
+            const hasExistingAnalysis = comments.data.some(comment => {
+              const body = comment.body || '';
+              return (
+                // Contains the TestMaster analysis header
+                body.includes('## 🧪 TestMaster Analysis Report') &&
+                // Is not an error message
+                !body.includes('Claude encountered an error') &&
+                !body.includes('TestMaster Analysis Failed') &&
+                // Contains substantial analysis content (not just a placeholder)
+                (body.includes('### 📊 Testing Impact Assessment') || 
+                 body.includes('Testing Metrics:') ||
+                 body.includes('Coverage Impact:'))
+              );
+            });
+            
+            console.log(`Found existing TestMaster analysis: ${hasExistingAnalysis}`);
+            core.setOutput('skip_analysis', hasExistingAnalysis.toString());
+            
+            if (hasExistingAnalysis) {
+              console.log('Skipping TestMaster analysis - existing unresolved analysis comment found');
+            }
+
+      - name: Create skip status check
+        if: steps.check-existing-comment.outputs.skip_analysis == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: '${{ github.event.pull_request.head.sha }}',
+              state: 'success',
+              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+              description: 'Skipped - existing analysis found',
+              context: 'TestMaster Analysis (AI)'
+            });
+
       - name: Load testing analysis prompt
+        if: steps.check-existing-comment.outputs.skip_analysis != 'true'
         id: load-testing-prompt
         run: |
           # Read the markdown template
@@ -202,6 +255,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Testing Analysis with Claude AI
+        if: steps.check-existing-comment.outputs.skip_analysis != 'true'
         id: claude-testing
         uses: grll/claude-code-action@beta
         with:
@@ -240,6 +294,17 @@ jobs:
             } catch (error) {
               console.log('Could not read Claude output files:', error.message);
             }
+            
+            // Create failure status check
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: '${{ github.event.pull_request.head.sha }}',
+              state: 'failure',
+              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+              description: isUsageLimitFailure ? 'Failed - Claude usage limit reached' : 'Failed - technical error',
+              context: 'TestMaster Analysis (AI)'
+            });
             
             // Find existing Claude comment to update
             const comments = await github.rest.issues.listComments({
@@ -439,7 +504,60 @@ jobs:
           echo "source_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
           echo "target_branch=${{ github.event.pull_request.base.ref }}" >> $GITHUB_OUTPUT
 
+      - name: Check for existing StandardsGuardian analysis comment
+        id: check-existing-comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Get all comments on this PR
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            // Check for existing unresolved StandardsGuardian analysis comments
+            const hasExistingAnalysis = comments.data.some(comment => {
+              const body = comment.body || '';
+              return (
+                // Contains the StandardsGuardian analysis header
+                body.includes('## 🛡️ StandardsGuardian Analysis Report') &&
+                // Is not an error message
+                !body.includes('Claude encountered an error') &&
+                !body.includes('StandardsGuardian Analysis Failed') &&
+                // Contains substantial analysis content (not just a placeholder)
+                (body.includes('### 📊 Standards Compliance Overview') || 
+                 body.includes('Overall Compliance Score:') ||
+                 body.includes('Standards Compliance Status:'))
+              );
+            });
+            
+            console.log(`Found existing StandardsGuardian analysis: ${hasExistingAnalysis}`);
+            core.setOutput('skip_analysis', hasExistingAnalysis.toString());
+            
+            if (hasExistingAnalysis) {
+              console.log('Skipping StandardsGuardian analysis - existing unresolved analysis comment found');
+            }
+
+      - name: Create skip status check
+        if: steps.check-existing-comment.outputs.skip_analysis == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: '${{ github.event.pull_request.head.sha }}',
+              state: 'success',
+              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+              description: 'Skipped - existing analysis found',
+              context: 'StandardsGuardian Analysis (AI)'
+            });
+
       - name: Load standards compliance prompt
+        if: steps.check-existing-comment.outputs.skip_analysis != 'true'
         id: load-standards-prompt
         run: |
           # Read the markdown template
@@ -458,6 +576,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Standards Compliance AI Analysis
+        if: steps.check-existing-comment.outputs.skip_analysis != 'true'
         id: claude-standards
         uses: grll/claude-code-action@beta
         with:
@@ -496,6 +615,17 @@ jobs:
             } catch (error) {
               console.log('Could not read Claude output files:', error.message);
             }
+            
+            // Create failure status check
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: '${{ github.event.pull_request.head.sha }}',
+              state: 'failure',
+              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+              description: isUsageLimitFailure ? 'Failed - Claude usage limit reached' : 'Failed - technical error',
+              context: 'StandardsGuardian Analysis (AI)'
+            });
             
             // Find existing Claude comment to update
             const comments = await github.rest.issues.listComments({
@@ -622,7 +752,60 @@ jobs:
           echo "source_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
           echo "target_branch=${{ github.event.pull_request.base.ref }}" >> $GITHUB_OUTPUT
 
+      - name: Check for existing DebtSentinel analysis comment
+        id: check-existing-comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Get all comments on this PR
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            // Check for existing unresolved DebtSentinel analysis comments
+            const hasExistingAnalysis = comments.data.some(comment => {
+              const body = comment.body || '';
+              return (
+                // Contains the DebtSentinel analysis header
+                body.includes('## 🔍 DebtSentinel Analysis Report') &&
+                // Is not an error message
+                !body.includes('Claude encountered an error') &&
+                !body.includes('DebtSentinel Analysis Failed') &&
+                // Contains substantial analysis content (not just a placeholder)
+                (body.includes('### 📊 Technical Debt Assessment') || 
+                 body.includes('Debt Score:') ||
+                 body.includes('Technical Debt Impact:'))
+              );
+            });
+            
+            console.log(`Found existing DebtSentinel analysis: ${hasExistingAnalysis}`);
+            core.setOutput('skip_analysis', hasExistingAnalysis.toString());
+            
+            if (hasExistingAnalysis) {
+              console.log('Skipping DebtSentinel analysis - existing unresolved analysis comment found');
+            }
+
+      - name: Create skip status check
+        if: steps.check-existing-comment.outputs.skip_analysis == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: '${{ github.event.pull_request.head.sha }}',
+              state: 'success',
+              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+              description: 'Skipped - existing analysis found',
+              context: 'DebtSentinel Analysis (AI)'
+            });
+
       - name: Load tech debt analysis prompt
+        if: steps.check-existing-comment.outputs.skip_analysis != 'true'
         id: load-techdebt-prompt
         run: |
           # Read the markdown template
@@ -641,6 +824,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Tech Debt AI Analysis
+        if: steps.check-existing-comment.outputs.skip_analysis != 'true'
         id: claude-techdebt
         uses: grll/claude-code-action@beta
         with:
@@ -679,6 +863,17 @@ jobs:
             } catch (error) {
               console.log('Could not read Claude output files:', error.message);
             }
+            
+            // Create failure status check
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: '${{ github.event.pull_request.head.sha }}',
+              state: 'failure',
+              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+              description: isUsageLimitFailure ? 'Failed - Claude usage limit reached' : 'Failed - technical error',
+              context: 'DebtSentinel Analysis (AI)'
+            });
             
             // Find existing Claude comment to update
             const comments = await github.rest.issues.listComments({
@@ -805,7 +1000,7 @@ jobs:
 
       - name: Initialize CodeQL
         if: matrix.scan-type == 'codeql'
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
           languages: 'csharp,javascript'
           config-file: ./.github/codeql/codeql-config.yml
@@ -825,7 +1020,7 @@ jobs:
 
       - name: Perform CodeQL Analysis
         if: matrix.scan-type == 'codeql'
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
 
       - name: Install required tools
         run: |
@@ -952,7 +1147,60 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check for existing SecuritySentinel analysis comment
+        id: check-existing-comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Get all comments on this PR
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            // Check for existing unresolved SecuritySentinel analysis comments
+            const hasExistingAnalysis = comments.data.some(comment => {
+              const body = comment.body || '';
+              return (
+                // Contains the SecuritySentinel analysis header
+                body.includes('## 🔒 SecuritySentinel Analysis Report') &&
+                // Is not an error message
+                !body.includes('Claude encountered an error') &&
+                !body.includes('SecuritySentinel Analysis Failed') &&
+                // Contains substantial analysis content (not just a placeholder)
+                (body.includes('### 🛡️ Security Assessment Overview') || 
+                 body.includes('Security Posture:') ||
+                 body.includes('Vulnerability Impact:'))
+              );
+            });
+            
+            console.log(`Found existing SecuritySentinel analysis: ${hasExistingAnalysis}`);
+            core.setOutput('skip_analysis', hasExistingAnalysis.toString());
+            
+            if (hasExistingAnalysis) {
+              console.log('Skipping SecuritySentinel analysis - existing unresolved analysis comment found');
+            }
+
+      - name: Create skip status check
+        if: steps.check-existing-comment.outputs.skip_analysis == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: '${{ github.event.pull_request.head.sha }}',
+              state: 'success',
+              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+              description: 'Skipped - existing analysis found',
+              context: 'SecuritySentinel Analysis (AI)'
+            });
+
       - name: Load security analysis prompt
+        if: steps.check-existing-comment.outputs.skip_analysis != 'true'
         id: load-security-prompt
         run: |
           # Read the markdown template
@@ -971,6 +1219,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Security Analysis with Claude AI
+        if: steps.check-existing-comment.outputs.skip_analysis != 'true'
         id: claude-security
         uses: grll/claude-code-action@beta
         with:
@@ -1009,6 +1258,17 @@ jobs:
             } catch (error) {
               console.log('Could not read Claude output files:', error.message);
             }
+            
+            // Create failure status check
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: '${{ github.event.pull_request.head.sha }}',
+              state: 'failure',
+              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+              description: isUsageLimitFailure ? 'Failed - Claude usage limit reached' : 'Failed - technical error',
+              context: 'SecuritySentinel Analysis (AI)'
+            });
             
             // Find existing Claude comment to update
             const comments = await github.rest.issues.listComments({
@@ -1109,11 +1369,19 @@ jobs:
       - name: Complete PR check run
         if: always() && steps.create-check.outputs.check_run_id != ''
         run: |
-          # Determine security status based on scan results
-          if [ "${{ job.status }}" = "success" ]; then
+          # Determine security status based on scan results and skip conditions
+          if [ "${{ steps.check-existing-comment.outputs.skip_analysis }}" = "true" ]; then
             CONCLUSION="success"
-            TITLE="✅ Security Analysis: No Critical Issues"
+            TITLE="⏭️ Security Analysis: Skipped"
+            SUMMARY="Security analysis skipped - existing unresolved analysis comment found in PR."
+          elif [ "${{ steps.claude-security.outcome }}" = "success" ]; then
+            CONCLUSION="success"
+            TITLE="✅ Security Analysis: Completed Successfully"
             SUMMARY="Security analysis completed successfully. Check PR comments for detailed findings."
+          elif [ "${{ steps.claude-security.outcome }}" = "failure" ]; then
+            CONCLUSION="failure"
+            TITLE="❌ Security Analysis: Failed"
+            SUMMARY="Security analysis failed - check workflow logs and PR comments for details."
           elif [ "${{ job.status }}" = "failure" ]; then
             CONCLUSION="failure"
             TITLE="❌ Security Analysis: Critical Issues Found"
@@ -1171,7 +1439,60 @@ jobs:
           echo "source_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
           echo "target_branch=${{ github.event.pull_request.base.ref }}" >> $GITHUB_OUTPUT
 
+      - name: Check for existing MergeOrchestrator analysis comment
+        id: check-existing-comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Get all comments on this PR
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            // Check for existing unresolved MergeOrchestrator analysis comments
+            const hasExistingAnalysis = comments.data.some(comment => {
+              const body = comment.body || '';
+              return (
+                // Contains the MergeOrchestrator analysis header
+                body.includes('## 🎯 MergeOrchestrator Analysis Report') &&
+                // Is not an error message
+                !body.includes('Claude encountered an error') &&
+                !body.includes('MergeOrchestrator Analysis Failed') &&
+                // Contains substantial analysis content (not just a placeholder)
+                (body.includes('### 🎯 Final Deployment Decision') || 
+                 body.includes('Deployment Decision:') ||
+                 body.includes('Overall Analysis Summary:'))
+              );
+            });
+            
+            console.log(`Found existing MergeOrchestrator analysis: ${hasExistingAnalysis}`);
+            core.setOutput('skip_analysis', hasExistingAnalysis.toString());
+            
+            if (hasExistingAnalysis) {
+              console.log('Skipping MergeOrchestrator analysis - existing unresolved analysis comment found');
+            }
+
+      - name: Create skip status check
+        if: steps.check-existing-comment.outputs.skip_analysis == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: '${{ github.event.pull_request.head.sha }}',
+              state: 'success',
+              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+              description: 'Skipped - existing analysis found',
+              context: 'MergeOrchestrator Analysis (AI)'
+            });
+
       - name: Load merge orchestrator prompt
+        if: steps.check-existing-comment.outputs.skip_analysis != 'true'
         id: load-orchestrator-prompt
         run: |
           # Read the markdown template
@@ -1190,6 +1511,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Merge Orchestrator AI Analysis
+        if: steps.check-existing-comment.outputs.skip_analysis != 'true'
         id: claude-orchestrator
         uses: grll/claude-code-action@beta
         with:
@@ -1228,6 +1550,17 @@ jobs:
             } catch (error) {
               console.log('Could not read Claude output files:', error.message);
             }
+            
+            // Create failure status check
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: '${{ github.event.pull_request.head.sha }}',
+              state: 'failure',
+              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+              description: isUsageLimitFailure ? 'Failed - Claude usage limit reached' : 'Failed - technical error',
+              context: 'MergeOrchestrator Analysis (AI)'
+            });
             
             // Find existing Claude comment to update
             const comments = await github.rest.issues.listComments({
