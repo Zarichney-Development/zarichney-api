@@ -408,17 +408,23 @@ run_policy_compliance() {
         log_warning "Security policy file not found"
     fi
     
-    # Check workflow permissions
-    local dangerous_perms
-    dangerous_perms=$(find .github/workflows -name "*.yml" -o -name "*.yaml" | \
-        xargs grep -l "write-all\|contents:.*write.*actions:.*write" | wc -l)
+    # Check workflow permissions (handle case where no matches found)
+    local dangerous_perms=0
+    if find .github/workflows -name "*.yml" -o -name "*.yaml" 2>/dev/null | xargs grep -l "write-all\|contents:.*write.*actions:.*write" 2>/dev/null >/dev/null; then
+        dangerous_perms=$(find .github/workflows -name "*.yml" -o -name "*.yaml" 2>/dev/null | \
+            xargs grep -l "write-all\|contents:.*write.*actions:.*write" 2>/dev/null | wc -l)
+    fi
     violations=$((violations + dangerous_perms))
     
-    # Check for HTTP URLs that should be HTTPS
-    local http_urls
-    http_urls=$(grep -r -i --include="*.cs" --include="*.js" --include="*.ts" --include="*.json" --include="*.yml" \
+    # Check for HTTP URLs that should be HTTPS (handle case where no matches found)
+    local http_urls=0
+    if grep -r -i --include="*.cs" --include="*.js" --include="*.ts" --include="*.json" --include="*.yml" \
         "http://.*\\.com\\|http://.*\\.org\\|http://.*\\.net" . \
-        --exclude-dir=node_modules --exclude-dir=bin --exclude-dir=obj | wc -l)
+        --exclude-dir=node_modules --exclude-dir=bin --exclude-dir=obj 2>/dev/null >/dev/null; then
+        http_urls=$(grep -r -i --include="*.cs" --include="*.js" --include="*.ts" --include="*.json" --include="*.yml" \
+            "http://.*\\.com\\|http://.*\\.org\\|http://.*\\.net" . \
+            --exclude-dir=node_modules --exclude-dir=bin --exclude-dir=obj 2>/dev/null | wc -l)
+    fi
     violations=$((violations + http_urls))
     
     cat > "$SECURITY_DIR/policy-compliance-summary.json" << EOF
