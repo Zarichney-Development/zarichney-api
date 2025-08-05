@@ -1,6 +1,6 @@
 # Module/Directory: .github/actions
 
-**Last Updated:** 2025-07-28
+**Last Updated:** 2025-08-05
 
 **Parent:** [`.github`](../README.md)
 
@@ -14,15 +14,18 @@
 * **Why it exists:** To encapsulate common automation logic into reusable, testable components that can be shared across all workflows while maintaining clean separation of concerns.
 * **Submodules:**
     * **Shared Utilities:** [`shared/`](./shared/README.md) - Common actions used across all workflows
+    * **Error Handling:** [`handle-ai-analysis-failure/`](./handle-ai-analysis-failure/README.md) - Centralized error handling for AI analysis jobs
 
 ## 2. Architecture & Key Concepts
 
 * **High-Level Design:** Actions are organized as utility components:
     * **Infrastructure Actions** - Shared utilities for setup and path detection (`shared/*`)
+    * **Error Handling Actions** - Centralized error handling for AI analysis failures (`handle-ai-analysis-failure`)
     * **Composite Actions** - Multi-step actions combining shell commands and GitHub Actions
 * **Core Action Types:**
     * **Environment Setup** - Consistent development environment configuration
     * **Path Analysis** - Intelligent change detection for workflow optimization
+    * **Error Management** - Standardized error handling for AI analysis job failures
 * **Integration Pattern:**
     * Workflows reference actions using relative paths
     * Consistent input/output interfaces across actions
@@ -40,8 +43,15 @@ graph TD
     D --> G[Backend Build]
     E --> H[Frontend Build]
     
-    D --> I[Test Execution]
-    E --> J[Test Execution]
+    D --> I[AI Analysis Jobs]
+    E --> I
+    
+    I --> J{Analysis Success?}
+    J -->|Success| K[Continue Pipeline]
+    J -->|Failure| L[handle-ai-analysis-failure]
+    
+    L --> M[PR Error Comment]
+    L --> N[Block Quality Gate]
 ```
 
 ## 3. Interface Contract & Assumptions
@@ -57,6 +67,11 @@ graph TD
         * **Critical Preconditions:** GitHub Actions runner environment
         * **Critical Postconditions:** .NET SDK and/or Node.js configured as requested
         * **Inputs:** `setup-dotnet`, `setup-node`, `dotnet-version`, `node-version`
+    * **`handle-ai-analysis-failure`**:
+        * **Purpose:** Centralized error handling for AI analysis job failures with PR comment management
+        * **Critical Preconditions:** AI analysis job has failed, valid GitHub token with comment permissions
+        * **Critical Postconditions:** Error comment posted/updated on PR, workflow failed with descriptive message
+        * **Inputs:** `github-token`, `analysis-type`, `analysis-emoji`, `analysis-name`, `standards-link`, `run-number`, `run-id`
 * **Critical Assumptions:**
     * GitHub Actions runtime environment available
     * Repository structure follows expected conventions
@@ -123,7 +138,7 @@ graph TD
     * `actions/setup-dotnet@v4` - .NET SDK installation
     * `actions/setup-node@v4` - Node.js installation
 * **Dependents (Impact of Changes):**
-    * [`build.yml`](../workflows/build.yml) - Uses both shared actions
+    * [`build.yml`](../workflows/build.yml) - Uses shared actions and error handling for all 5 AI analysis jobs
     * [`deploy.yml`](../workflows/deploy.yml) - Uses shared actions
     * [`maintenance.yml`](../workflows/maintenance.yml) - Uses setup-environment
 
@@ -133,6 +148,7 @@ graph TD
 * **Composite Action Design:** Simple, maintainable approach without Docker overhead
 * **Path Detection:** Enables intelligent workflow execution based on actual changes
 * **Environment Consistency:** Shared setup ensures all workflows use same tool versions
+* **Error Handling Consolidation:** Centralized AI analysis error handling reduced build.yml from ~1420 to 1092 lines (~328 line reduction)
 
 ## 8. Known Issues & TODOs
 

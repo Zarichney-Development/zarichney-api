@@ -1,0 +1,164 @@
+name: 'Handle AI Analysis Failure'
+description: 'Common error handling for AI analysis job failures with PR comment updates'
+inputs:
+  github-token:
+    description: 'GitHub token for API operations'
+    required: true
+  analysis-type:
+    description: 'Type of AI analysis (TestMaster, StandardsGuardian, DebtSentinel, SecuritySentinel, MergeOrchestrator)'
+    required: true
+  analysis-emoji:
+    description: 'Emoji for the analysis type'
+    required: true
+  analysis-name:
+    description: 'Human-readable name of the analysis'
+    required: true
+  standards-link:
+    description: 'Link to relevant standards documentation'
+    required: false
+    default: ''
+  run-number:
+    description: 'GitHub workflow run number'
+    required: true
+  run-id:
+    description: 'GitHub workflow run ID'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Handle Analysis Failure
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const fs = require('fs');
+          
+          // Check if this was a Claude usage limit failure
+          let isUsageLimitFailure = false;
+          try {
+            const logFiles = [
+              '/home/runner/work/_temp/claude-execution-output.json',
+              '/tmp/claude-error.log'
+            ];
+            
+            for (const logFile of logFiles) {
+              if (fs.existsSync(logFile)) {
+                const content = fs.readFileSync(logFile, 'utf8');
+                if (content.includes('Claude AI usage limit reached') || content.includes('usage limit')) {
+                  isUsageLimitFailure = true;
+                  break;
+                }
+              }
+            }
+          } catch (error) {
+            console.log('Could not read Claude output files:', error.message);
+          }
+          
+          // Find existing Claude comment to update
+          const comments = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+          
+          // Build search patterns for this specific analysis type
+          const analysisType = '${{ inputs.analysis-type }}';
+          const analysisName = '${{ inputs.analysis-name }}';
+          const analysisEmoji = '${{ inputs.analysis-emoji }}';
+          
+          // Look for Claude error comment that needs updating
+          const claudeComments = comments.data.filter(comment => {
+            const body = comment.body || '';
+            return body.includes('Claude encountered an error') && (
+              // Either already has this analysis type's content
+              body.includes(analysisType) ||
+              body.includes(analysisName) ||
+              body.includes(`${analysisEmoji} ${analysisType}`) ||
+              // Or is a generic error comment that hasn't been updated yet
+              (
+                body.includes("I'll analyze this and get back to you") &&
+                !body.includes('TestMaster') &&
+                !body.includes('StandardsGuardian') &&
+                !body.includes('DebtSentinel') &&
+                !body.includes('SecuritySentinel') &&
+                !body.includes('MergeOrchestrator')
+              )
+            );
+          });
+          
+          // Get the most recent Claude error comment for this analysis type
+          const claudeComment = claudeComments.length > 0 ? claudeComments[claudeComments.length - 1] : null;
+          
+          // Build standards link section if provided
+          const standardsLink = '${{ inputs.standards-link }}';
+          const standardsSection = standardsLink ? 
+            `- Consider manual review against [${analysisName.replace(' Analysis', '')} Standards](${standardsLink})` :
+            `- Consider manual ${analysisName.toLowerCase()} review`;
+          
+          const failureCommentBody = isUsageLimitFailure ? 
+            `## 🚫 ${analysisType} Analysis Failed - Usage Limit Reached
+            
+            **Analysis Status:** ❌ **FAILED**
+            
+            The ${analysisName} could not be completed due to Claude AI usage limit being reached. This is a temporary issue that will resolve when the usage limit resets.
+            
+            **Impact:**
+            - This PR cannot receive automated ${analysisName.toLowerCase()} at this time
+            ${standardsSection}
+            - All other pipeline checks (build, tests, security) continue normally
+            
+            **Next Steps:**
+            - Wait for Claude usage limit to reset (typically resets daily)
+            - Re-run the workflow or push a new commit to retry analysis
+            - Consider manual review in the meantime
+            
+            **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.
+            
+            ---
+            *Workflow Run: [#${{ inputs.run-number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ inputs.run-id }})*` :
+            `## 🚫 ${analysisType} Analysis Failed - Technical Error
+            
+            **Analysis Status:** ❌ **FAILED**
+            
+            The ${analysisName} encountered a technical error and could not be completed.
+            
+            **Impact:**
+            - This PR cannot receive automated ${analysisName.toLowerCase()} at this time
+            ${standardsSection}
+            - All other pipeline checks (build, tests, security) continue normally
+            
+            **Next Steps:**
+            - Check workflow logs for specific error details
+            - Re-run the workflow to retry analysis
+            - Consider manual review in the meantime
+            
+            **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.
+            
+            ---
+            *Workflow Run: [#${{ inputs.run-number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ inputs.run-id }})*`;
+          
+          if (claudeComment) {
+            // Update existing Claude comment
+            console.log(`Updating existing Claude comment ID: ${claudeComment.id}`);
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: claudeComment.id,
+              body: failureCommentBody
+            });
+          } else {
+            // Fallback: create new comment if Claude comment not found
+            console.log('Claude comment not found, creating new comment');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: failureCommentBody
+            });
+          }
+          
+          // Fail the workflow step to make the failure visible
+          core.setFailed(isUsageLimitFailure ? 
+            `${analysisType} analysis failed due to Claude AI usage limit` : 
+            `${analysisType} analysis failed due to technical error`);
