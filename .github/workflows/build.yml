@@ -253,9 +253,20 @@ jobs:
               comment.body && 
               comment.body.includes('Claude encountered an error') &&
               (
-                comment.body.includes('TestMaster') ||
-                comment.body.includes('Testing Analysis') ||
-                comment.body.includes('🧪 TestMaster')
+                // Either already has TestMaster-specific content
+                (
+                  comment.body.includes('TestMaster') ||
+                  comment.body.includes('Testing Analysis') ||
+                  comment.body.includes('🧪 TestMaster')
+                ) ||
+                // Or is a generic error comment that hasn't been updated yet
+                (
+                  comment.body.includes('I\'ll analyze this and get back to you') &&
+                  !comment.body.includes('StandardsGuardian') &&
+                  !comment.body.includes('DebtSentinel') &&
+                  !comment.body.includes('SecuritySentinel') &&
+                  !comment.body.includes('MergeOrchestrator')
+                )
               )
             );
             // Get the most recent Claude error comment for TestMaster
@@ -498,9 +509,20 @@ jobs:
               comment.body && 
               comment.body.includes('Claude encountered an error') &&
               (
-                comment.body.includes('StandardsGuardian') ||
-                comment.body.includes('Standards Compliance') ||
-                comment.body.includes('🛡️ StandardsGuardian')
+                // Either already has StandardsGuardian-specific content
+                (
+                  comment.body.includes('StandardsGuardian') ||
+                  comment.body.includes('Standards Compliance') ||
+                  comment.body.includes('🛡️ StandardsGuardian')
+                ) ||
+                // Or is a generic error comment that hasn't been updated yet
+                (
+                  comment.body.includes('I\'ll analyze this and get back to you') &&
+                  !comment.body.includes('TestMaster') &&
+                  !comment.body.includes('DebtSentinel') &&
+                  !comment.body.includes('SecuritySentinel') &&
+                  !comment.body.includes('MergeOrchestrator')
+                )
               )
             );
             // Get the most recent Claude error comment for StandardsGuardian
@@ -670,10 +692,21 @@ jobs:
               comment.body && 
               comment.body.includes('Claude encountered an error') &&
               (
-                comment.body.includes('DebtSentinel') ||
-                comment.body.includes('Technical Debt Analysis') ||
-                comment.body.includes('Tech Debt') ||
-                comment.body.includes('🔍 DebtSentinel')
+                // Either already has DebtSentinel-specific content
+                (
+                  comment.body.includes('DebtSentinel') ||
+                  comment.body.includes('Technical Debt Analysis') ||
+                  comment.body.includes('Tech Debt') ||
+                  comment.body.includes('🔍 DebtSentinel')
+                ) ||
+                // Or is a generic error comment that hasn't been updated yet
+                (
+                  comment.body.includes('I\'ll analyze this and get back to you') &&
+                  !comment.body.includes('TestMaster') &&
+                  !comment.body.includes('StandardsGuardian') &&
+                  !comment.body.includes('SecuritySentinel') &&
+                  !comment.body.includes('MergeOrchestrator')
+                )
               )
             );
             // Get the most recent Claude error comment for DebtSentinel
@@ -963,9 +996,20 @@ jobs:
               comment.body && 
               comment.body.includes('Claude encountered an error') &&
               (
-                comment.body.includes('SecuritySentinel') ||
-                comment.body.includes('Security Analysis') ||
-                comment.body.includes('🔍 SecuritySentinel')
+                // Either already has SecuritySentinel-specific content
+                (
+                  comment.body.includes('SecuritySentinel') ||
+                  comment.body.includes('Security Analysis') ||
+                  comment.body.includes('🔍 SecuritySentinel')
+                ) ||
+                // Or is a generic error comment that hasn't been updated yet
+                (
+                  comment.body.includes('I\'ll analyze this and get back to you') &&
+                  !comment.body.includes('TestMaster') &&
+                  !comment.body.includes('StandardsGuardian') &&
+                  !comment.body.includes('DebtSentinel') &&
+                  !comment.body.includes('MergeOrchestrator')
+                )
               )
             );
             // Get the most recent Claude error comment for SecuritySentinel
@@ -1171,11 +1215,22 @@ jobs:
               comment.body && 
               comment.body.includes('Claude encountered an error') &&
               (
-                comment.body.includes('MergeOrchestrator') ||
-                comment.body.includes('Merge Orchestrator') ||
-                comment.body.includes('Final Analysis') ||
-                comment.body.includes('Deployment Decision') ||
-                comment.body.includes('🔍 MergeOrchestrator')
+                // Either already has MergeOrchestrator-specific content
+                (
+                  comment.body.includes('MergeOrchestrator') ||
+                  comment.body.includes('Merge Orchestrator') ||
+                  comment.body.includes('Final Analysis') ||
+                  comment.body.includes('Deployment Decision') ||
+                  comment.body.includes('🔍 MergeOrchestrator')
+                ) ||
+                // Or is a generic error comment that hasn't been updated yet
+                (
+                  comment.body.includes('I\'ll analyze this and get back to you') &&
+                  !comment.body.includes('TestMaster') &&
+                  !comment.body.includes('StandardsGuardian') &&
+                  !comment.body.includes('DebtSentinel') &&
+                  !comment.body.includes('SecuritySentinel')
+                )
               )
             );
             // Get the most recent Claude error comment for MergeOrchestrator
