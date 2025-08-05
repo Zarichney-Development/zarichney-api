@@ -433,8 +433,14 @@ run_policy_compliance() {
 EOF
     
     log_info "Policy violations found: $violations"
-    log_success "Policy compliance check completed"
-    return 0
+    
+    if [[ $violations -gt 0 ]]; then
+        log_error "Policy compliance check failed with $violations violations"
+        return 1
+    else
+        log_success "Policy compliance check completed successfully"
+        return 0
+    fi
 }
 
 prepare_security_data() {
