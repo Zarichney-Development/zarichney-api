@@ -1,0 +1,355 @@
+name: "Deployment"
+
+on:
+  workflow_run:
+    workflows: ["Build & Test"]
+    types:
+      - completed
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: false
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+      force-deploy:
+        description: 'Force deployment (skip security checks)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  AWS_REGION: us-east-2
+
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+
+jobs:
+  deployment-decision:
+    name: "Deployment Decision"
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.event == 'push'
+    outputs:
+      deploy-backend: ${{ steps.decision.outputs.deploy-backend }}
+      deploy-frontend: ${{ steps.decision.outputs.deploy-frontend }}
+      environment: ${{ steps.decision.outputs.environment }}
+      security-passed: ${{ steps.decision.outputs.security-passed }}
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check changed paths
+        id: check-paths
+        uses: ./.github/actions/shared/check-paths
+        with:
+          base-ref: origin/main~1
+
+      - name: Check security status
+        id: security-check
+        run: |
+          SECURITY_PASSED=true
+          
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            # Check if this is triggered by build workflow from main branch
+            if [ "${{ github.event.workflow_run.head_branch }}" = "main" ] && [ "${{ github.event.workflow_run.event }}" = "push" ]; then
+              echo "🏷️ Main branch push detected - security validation completed during PR phase"
+              echo "Build workflow conclusion: ${{ github.event.workflow_run.conclusion }}"
+              
+              # For main branch pushes, we trust that security was validated during PR
+              # Only check that the triggering build workflow succeeded
+              if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+                SECURITY_PASSED=false
+                echo "❌ Build workflow failed for main branch - blocking deployment"
+              else
+                echo "✅ Build succeeded on main branch - proceeding with deployment"
+              fi
+            else
+              echo "🔍 Non-main branch deployment - checking for security workflow results"
+              # For non-main deployments, check if we can find security workflow results
+              # This would be the case for feature branch deployments with security scanning
+              if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+                SECURITY_PASSED=false
+                echo "❌ Workflow failed - blocking deployment"
+              fi
+            fi
+          fi
+          
+          # Check for force deploy override
+          if [ "${{ github.event.inputs.force-deploy }}" = "true" ]; then
+            SECURITY_PASSED=true
+            echo "⚠️ Force deploy enabled - bypassing security checks"
+          fi
+          
+          echo "security_passed=$SECURITY_PASSED" >> $GITHUB_OUTPUT
+
+      - name: Make deployment decision
+        id: decision
+        run: |
+          echo "🚀 Making deployment decisions..."
+          
+          # Determine environment
+          ENVIRONMENT="${{ github.event.inputs.environment || 'production' }}"
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+          
+          # Security gate check
+          SECURITY_PASSED="${{ steps.security-check.outputs.security_passed }}"
+          echo "security_passed=$SECURITY_PASSED" >> $GITHUB_OUTPUT
+          
+          if [ "$SECURITY_PASSED" != "true" ]; then
+            echo "❌ Security checks failed - blocking all deployments"
+            echo "deploy-backend=false" >> $GITHUB_OUTPUT
+            echo "deploy-frontend=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Path-based deployment decisions
+          DEPLOY_BACKEND=false
+          DEPLOY_FRONTEND=false
+          
+          if [ "${{ steps.check-paths.outputs.backend-changed }}" = "true" ]; then
+            DEPLOY_BACKEND=true
+            echo "📦 Backend changes detected - deployment required"
+          fi
+          
+          if [ "${{ steps.check-paths.outputs.frontend-changed }}" = "true" ]; then
+            DEPLOY_FRONTEND=true
+            echo "🌐 Frontend changes detected - deployment required"
+          fi
+          
+          # Check for skip deployment commit messages
+          if git log --format=%B -n 1 | grep -q "skip-.*-deploy"; then
+            if git log --format=%B -n 1 | grep -q "skip-backend-deploy"; then
+              DEPLOY_BACKEND=false
+              echo "⏭️ Backend deployment skipped per commit message"
+            fi
+            if git log --format=%B -n 1 | grep -q "skip-frontend-deploy"; then
+              DEPLOY_FRONTEND=false
+              echo "⏭️ Frontend deployment skipped per commit message"
+            fi
+          fi
+          
+          echo "deploy-backend=$DEPLOY_BACKEND" >> $GITHUB_OUTPUT
+          echo "deploy-frontend=$DEPLOY_FRONTEND" >> $GITHUB_OUTPUT
+          
+          echo ""
+          echo "📋 Deployment Decision Summary:"
+          echo "  - Environment: $ENVIRONMENT"
+          echo "  - Security Passed: $SECURITY_PASSED"
+          echo "  - Deploy Backend: $DEPLOY_BACKEND"
+          echo "  - Deploy Frontend: $DEPLOY_FRONTEND"
+
+  backend-deploy:
+    name: "Backend Deployment"
+    runs-on: ubuntu-latest
+    needs: deployment-decision
+    if: needs.deployment-decision.outputs.deploy-backend == 'true'
+    timeout-minutes: 30
+    environment: ${{ needs.deployment-decision.outputs.environment }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup development environment
+        uses: ./.github/actions/shared/setup-environment
+        with:
+          setup-dotnet: 'true'
+          setup-node: 'false'
+          dotnet-version: '8.0.x'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-Backend-${{ github.run_id }}
+
+      - name: Deploy backend application
+        id: deploy
+        run: |
+          echo "🚀 Deploying backend to ${{ needs.deployment-decision.outputs.environment }}..."
+          
+          # Set deployment environment variables
+          export AWS_REGION="${{ env.AWS_REGION }}"
+          export EC2_HOST_BACKEND="${{ secrets.EC2_HOST_BACKEND }}"
+          export EC2_SSH_KEY="${{ secrets.EC2_SSH_KEY }}"
+          export SECRET_ID="${{ secrets.SECRET_ID }}"
+          export SECRET_DB_PASSWORD_KEY="${{ secrets.SECRET_DB_PASSWORD_KEY }}"
+          
+          # Execute deployment
+          .github/scripts/deploy-backend.sh "${{ needs.deployment-decision.outputs.environment }}"
+
+      - name: Run health checks
+        run: |
+          echo "🏥 Running post-deployment health checks..."
+          
+          # Health check URL based on environment
+          case "${{ needs.deployment-decision.outputs.environment }}" in
+            "production")
+              HEALTH_URL="https://zarichney.com/api/health"
+              ;;
+            "staging")
+              HEALTH_URL="https://staging-zarichney.com/api/health"
+              ;;
+            *)
+              HEALTH_URL="http://${{ secrets.EC2_HOST_BACKEND }}:5000/health"
+              ;;
+          esac
+          
+          echo "Health check URL: $HEALTH_URL"
+          
+          # Wait for application to be ready
+          sleep 15
+          
+          # Health check with retry
+          for attempt in {1..5}; do
+            echo "Health check attempt $attempt/5..."
+            if curl -f -s --max-time 30 "$HEALTH_URL"; then
+              echo "✅ Backend health check passed"
+              exit 0
+            else
+              echo "❌ Health check failed, retrying in 20 seconds..."
+              sleep 20
+            fi
+          done
+          
+          echo "💥 Backend health checks failed after 5 attempts"
+          exit 1
+
+  frontend-deploy:
+    name: "Frontend Deployment"
+    runs-on: ubuntu-latest
+    needs: deployment-decision
+    if: needs.deployment-decision.outputs.deploy-frontend == 'true'
+    timeout-minutes: 25
+    environment: ${{ needs.deployment-decision.outputs.environment }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download frontend build artifacts
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: frontend-build-${{ github.run_number }}
+          path: artifacts/frontend/
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-Frontend-${{ github.run_id }}
+
+      - name: Deploy frontend application
+        id: deploy
+        run: |
+          echo "🌐 Deploying frontend to ${{ needs.deployment-decision.outputs.environment }}..."
+          
+          # Set deployment environment variables
+          export AWS_REGION="${{ env.AWS_REGION }}"
+          export EC2_HOST_FRONTEND="${{ secrets.EC2_HOST_FRONTEND }}"
+          export EC2_SSH_KEY="${{ secrets.EC2_SSH_KEY }}"
+          export S3_BUCKET="${{ secrets.S3_BUCKET }}"
+          
+          # Execute deployment
+          ./.github/scripts/deploy-frontend.sh "${{ needs.deployment-decision.outputs.environment }}"
+
+      - name: Run health checks
+        run: |
+          echo "🏥 Running post-deployment health checks..."
+          
+          # Health check URL based on environment
+          case "${{ needs.deployment-decision.outputs.environment }}" in
+            "production")
+              HEALTH_URL="https://zarichney.com/health"
+              ;;
+            "staging")
+              HEALTH_URL="https://staging.zarichney.com/health"
+              ;;
+            *)
+              HEALTH_URL="http://${{ secrets.EC2_HOST_FRONTEND }}:3000/health"
+              ;;
+          esac
+          
+          echo "Health check URL: $HEALTH_URL"
+          
+          # Wait for application to be ready
+          sleep 10
+          
+          # Health check with retry
+          for attempt in {1..5}; do
+            echo "Health check attempt $attempt/5..."
+            if curl -f -s --max-time 30 "$HEALTH_URL"; then
+              echo "✅ Frontend health check passed"
+              exit 0
+            else
+              echo "❌ Health check failed, retrying in 15 seconds..."
+              sleep 15
+            fi
+          done
+          
+          echo "💥 Frontend health checks failed after 5 attempts"
+          exit 1
+
+  deployment-summary:
+    name: "Deployment Summary"
+    runs-on: ubuntu-latest
+    needs: [deployment-decision, backend-deploy, frontend-deploy]
+    if: always() && !cancelled()
+    
+    steps:
+      - name: Generate deployment summary
+        run: |
+          echo "🚀 Deployment Summary"
+          echo "===================="
+          echo ""
+          echo "**Environment:** ${{ needs.deployment-decision.outputs.environment }}"
+          echo "**Security Status:** ${{ needs.deployment-decision.outputs.security-passed }}"
+          echo ""
+          echo "**Deployment Results:**"
+          echo "  - Backend: ${{ needs.backend-deploy.result || 'skipped' }}"
+          echo "  - Frontend: ${{ needs.frontend-deploy.result || 'skipped' }}"
+          echo ""
+          
+          # Check for failures
+          FAILED=false
+          if [ "${{ needs.backend-deploy.result }}" = "failure" ]; then
+            echo "❌ Backend deployment failed"
+            FAILED=true
+          elif [ "${{ needs.deployment-decision.outputs.deploy-backend }}" = "true" ]; then
+            echo "✅ Backend deployed successfully"
+          fi
+          
+          if [ "${{ needs.frontend-deploy.result }}" = "failure" ]; then
+            echo "❌ Frontend deployment failed"
+            FAILED=true
+          elif [ "${{ needs.deployment-decision.outputs.deploy-frontend }}" = "true" ]; then
+            echo "✅ Frontend deployed successfully"
+          fi
+          
+          if [ "${{ needs.deployment-decision.outputs.security-passed }}" != "true" ]; then
+            echo "🚨 Deployments blocked due to security issues"
+            FAILED=true
+          fi
+          
+          if [ "$FAILED" = "true" ]; then
+            echo ""
+            echo "💥 One or more deployments failed"
+            exit 1
+          elif [ "${{ needs.deployment-decision.outputs.deploy-backend }}" = "false" ] && [ "${{ needs.deployment-decision.outputs.deploy-frontend }}" = "false" ]; then
+            echo "⏭️ No deployments required (no relevant changes detected)"
+          else
+            echo ""
+            echo "🎉 All deployments completed successfully"
+          fi

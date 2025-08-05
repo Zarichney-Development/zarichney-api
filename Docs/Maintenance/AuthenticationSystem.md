@@ -251,8 +251,9 @@ Authentication settings are defined in `appsettings.json` and rely on secure con
 
 ## 13. Testing
 
-* Test scripts are available in the `Scripts` directory (`test-auth-endpoints.ps1`, `test-auth-endpoints.sh`) to verify auth endpoints [cite: Docs/AuthSystemMaintenance.md].
+* Authentication endpoints are comprehensively tested through the unified test suite (`./Scripts/run-test-suite.sh`) using professional integration tests with type-safe API clients.
 * Use the `/api/test-auth` endpoint with `Authorization: Bearer <token>` or `X-Api-Key: <key>` to check current authentication status [cite: Docs/ApiKeyAuthentication.md].
+* For focused authentication testing, run: `dotnet test --filter "Category=Integration&Feature=Auth"`
 
 ## 14. Deployment Considerations
 

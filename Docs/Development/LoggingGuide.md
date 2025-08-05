@@ -122,7 +122,7 @@ The application automatically adds a correlation ID to every HTTP request for en
 **Client sending correlation ID:**
 ```http
 GET /api/recipes HTTP/1.1
-Host: api.zarichney.com
+Host: zarichney.com/api
 X-Correlation-ID: user-generated-12345
 ```
 

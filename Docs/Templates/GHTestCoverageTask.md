@@ -30,7 +30,6 @@ Improve the robustness and maintainability of the codebase by increasing automat
 - [ ] All new tests pass consistently (`dotnet test`).
 - [ ] All existing tests continue to pass (`dotnet test`).
 - [ ] New tests adhere strictly to `/Docs/Standards/TestingStandards.md`.
-- [ ] Code formatting adheres to `.editorconfig` (`dotnet format --verify-no-changes` passes).
 - [ ] *(Optional)* Code coverage metrics (if measured) show an increase for the target area(s).
 - [ ] Production code (`/Zarichney.Server/`) remains logically unchanged (unless essential refactoring for testability was explicitly approved).
 - [ ] A Pull Request containing only test code additions/updates (and approved testability refactors, if any) is created, following `/Docs/Standards/

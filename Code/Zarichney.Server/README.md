@@ -123,7 +123,7 @@ graph TD
 ## 4. Local Conventions & Constraints
 
 * **Primary Language:** C\# 12 with .NET 8.
-* **Coding Standards:** Strictly adhere to [`/Docs/Standards/CodingStandards.md`](https://www.google.com/search?q=../Docs/Standards/CodingStandards.md) and rules enforced by `.editorconfig`.
+* **Coding Standards:** Strictly adhere to [`/Docs/Standards/CodingStandards.md`](https://www.google.com/search?q=../Docs/Standards/CodingStandards.md).
 * **Documentation Standards:** All subdirectories with significant logic **MUST** have a `README.md` following [`/Docs/Standards/DocumentationStandards.md`](https://www.google.com/search?q=../Docs/Standards/DocumentationStandards.md) and the template in [`/Docs/Templates/ReadmeTemplate.md`](https://www.google.com/search?q=../Docs/Templates/ReadmeTemplate.md).
 * **Testing Standards:** All new features/fixes **MUST** include corresponding tests adhering to [`/Docs/Standards/TestingStandards.md`](https://www.google.com/search?q=../Docs/Standards/TestingStandards.md).
 

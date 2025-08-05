@@ -5,6 +5,7 @@ using Moq;
 using Xunit;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Helpers;
+using Zarichney.Controllers.Responses;
 
 namespace Zarichney.Tests.Unit.Controllers.PublicController;
 
@@ -43,24 +44,16 @@ public class PublicControllerUnitTests
     var okResult = result as OkObjectResult;
     okResult.Should().NotBeNull();
 
-    // Use reflection or dynamic to check anonymous type properties
-    var value = okResult.Value;
-    value.Should().NotBeNull();
+    // Now using strongly typed DTO instead of reflection
+    var healthCheckResponse = okResult.Value as HealthCheckResponse;
+    healthCheckResponse.Should().NotBeNull(because: "the response should be a HealthCheckResponse");
     
-    // Verify the response includes version and environment (added in end-to-end test)
-    var properties = value.GetType().GetProperties();
-    properties.Should().Contain(p => p.Name == "Version", "health check should include version information");
-    properties.Should().Contain(p => p.Name == "Environment", "health check should include environment information");
-
-    // Check for Success property
-    var successProperty = value.GetType().GetProperty("Success");
-    successProperty.Should().NotBeNull(because: "the response should have a 'Success' property");
-    successProperty.GetValue(value).Should().Be(true, because: "the 'Success' property should be true");
-
-    // Check for Time property
-    var timeProperty = value.GetType().GetProperty("Time");
-    timeProperty.Should().NotBeNull(because: "the response should have a 'Time' property");
-    timeProperty.PropertyType.Should().Be(typeof(DateTime), because: "the 'Time' property should be a DateTime");
+    // Verify all properties
+    healthCheckResponse.Success.Should().BeTrue(because: "the health check should indicate success");
+    healthCheckResponse.Time.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5), 
+      because: "the time should be approximately the current time");
+    healthCheckResponse.Environment.Should().NotBeNullOrWhiteSpace(
+      because: "the environment should be specified");
   }
 
   /// <summary>
@@ -125,21 +118,59 @@ public class PublicControllerUnitTests
   }
 
   /// <summary>
-  /// Test for the validation endpoint - intentionally simple to test AI workflow analysis
+  /// Verifies that Config returns an OK result with the configuration status list
+  /// when the IStatusService succeeds.
   /// </summary>
   [Fact]
-  public async Task TestValidation_WithValidInput_ReturnsOkWithResults()
+  public async Task Config_WhenServiceSucceeds_ReturnsOkWithConfigurationStatus()
   {
     // Arrange
-    const string testInput = "test";
-
+    var expectedStatus = new List<ConfigurationItemStatus>
+    {
+      new ConfigurationItemStatus("Setting1", "Configured", "Value1"),
+      new ConfigurationItemStatus("Setting2", "Missing", null)
+    };
+    
+    _mockStatusService
+      .Setup(s => s.GetConfigurationStatusAsync())
+      .ReturnsAsync(expectedStatus)
+      .Verifiable();
+    
     // Act
-    var result = await _controller.TestValidation(testInput);
-
+    var result = await _controller.Config();
+    
     // Assert
-    result.Should().BeOfType<OkObjectResult>(because: "valid input should return OK result");
+    result.Should()
+      .BeOfType<OkObjectResult>(because: "a successful service call should return an OK status with content");
     var okResult = result as OkObjectResult;
     okResult.Should().NotBeNull();
-    okResult.Value.Should().NotBeNull();
+    okResult.Value.Should().BeEquivalentTo(expectedStatus,
+      because: "the returned value should match the configuration status list from the service");
+    
+    _mockStatusService.Verify();
+  }
+
+  /// <summary>
+  /// Verifies that Config propagates exceptions thrown by the IStatusService.
+  /// </summary>
+  [Fact]
+  public async Task Config_WhenServiceThrows_ThrowsException()
+  {
+    // Arrange
+    var expectedException = new InvalidOperationException("Configuration service failure");
+    _mockStatusService
+      .Setup(s => s.GetConfigurationStatusAsync())
+      .ThrowsAsync(expectedException)
+      .Verifiable();
+    
+    // Act
+    Func<Task> act = async () => await _controller.Config();
+    
+    // Assert
+    await act.Should().ThrowAsync<InvalidOperationException>(
+      because: "exceptions from the service should propagate")
+      .WithMessage(expectedException.Message);
+    
+    _mockStatusService.Verify();
   }
 }

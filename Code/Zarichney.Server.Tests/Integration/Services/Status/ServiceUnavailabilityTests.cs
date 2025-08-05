@@ -175,7 +175,7 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
     foreach (var service in serviceStatuses)
     {
       _outputHelper.WriteLine(
-        $"Service: {service.ServiceName}, Available: {service.IsAvailable}, MissingConfigs: {string.Join(", ", service.MissingConfigurations)}");
+        $"Service: {service.ServiceName}, Available: {service.IsAvailable}, MissingConfigs: {string.Join(", ", service.MissingConfigurations ?? [])}");
     }
 
     // Verify the test ran correctly by checking that we have a sensible response

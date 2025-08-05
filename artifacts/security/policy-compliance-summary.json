@@ -1,0 +1,11 @@
+{
+    "timestamp": "2025-08-05T07:34:00-04:00",
+    "violations_count": 7,
+    "areas_checked": ["security_policies", "workflow_permissions", "https_enforcement"],
+    "scan_completed": true,
+    "details": {
+        "security_md_missing": false,
+        "dangerous_workflow_permissions": 0,
+        "http_urls_found": 7
+    }
+}

@@ -46,14 +46,6 @@ This document outlines the configuration and setup requirements for local develo
   sg docker -c "dotnet test --filter 'Category=Integration&Dependency=Database'"
   ```
 
-* **Format Code:**
-  ```bash
-  # Check formatting
-  dotnet format --verify-no-changes --verbosity diagnostic
-  
-  # Apply formatting
-  dotnet format
-  ```
 
 ## 3. Configuration & Environment Variables
 
@@ -77,7 +69,7 @@ The application is configured using the following sources (in order of precedenc
   ```json
   "JwtSettings": {
     "SecretKey": "your-secure-key-at-least-32-characters-long",
-    "Issuer": "https://api.zarichney.com",
+    "Issuer": "https://zarichney.com/api",
     "Audience": "https://zarichney.com",
     "AccessTokenExpiryMinutes": 15,
     "RefreshTokenExpiryDays": 7

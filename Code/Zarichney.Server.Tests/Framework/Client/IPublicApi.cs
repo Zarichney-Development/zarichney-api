@@ -31,8 +31,9 @@ namespace Zarichney.Client
         /// </item>
         /// </list>
         /// </returns>
+        [Headers("Accept: text/plain, application/json, text/json")]
         [Get("/api/health")]
-        Task<IApiResponse> Health(CancellationToken cancellationToken = default);
+        Task<IApiResponse<HealthCheckResponse>> Health(CancellationToken cancellationToken = default);
 
         /// <summary>Returns the status of services based on their configuration availability.</summary>
         /// <returns>

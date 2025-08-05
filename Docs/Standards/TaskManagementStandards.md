@@ -92,9 +92,5 @@ These standards **MUST** be consulted and followed by AI Coders during task exec
     ```
 * **Output:** The URL of the created Pull Request is required as part of the task output specified in the AI Coder Prompt.
 
-## 7. Formatting Verification (Mandatory Pre-Commit)
-
-* **Requirement:** Before committing changes, AI Coders **MUST** verify code formatting against the project's `.editorconfig` file using `dotnet format`.
-* **Implementation:** This check is included as a mandatory step within all defined AI Coder Workflow files (`StandardWorkflow.md`, `ComplexTaskWorkflow.md`, `TestCoverageWorkflow.md`) immediately before the "Commit Changes" step. Violations must be fixed using `dotnet format`.
 
 ---

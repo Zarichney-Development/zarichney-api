@@ -22,7 +22,7 @@ This document details the mandatory step-by-step workflow for an AI Coder agent 
 3.  **Review Standards & Context:**
     * Carefully read all documentation listed in Section 3 of the prompt, paying close attention to the specified Key Sections.
     * Internalize the rules from:
-        * `/Docs/Standards/CodingStandards.md` (references `.editorconfig`)
+        * `/Docs/Standards/CodingStandards.md`
         * `/Docs/Standards/TaskManagementStandards.md`
         * `/Docs/Standards/DocumentationStandards.md`
         * `/Docs/Standards/DiagrammingStandards.md`
@@ -79,27 +79,15 @@ This document details the mandatory step-by-step workflow for an AI Coder agent 
     * Review the `README.md` file(s) listed in Section 3 of the prompt and the rules in `/Docs/Standards/DocumentationStandards.md` and `/Docs/Standards/DiagrammingStandards.md`.
     * If your code or test changes impact the module's purpose, architecture, interface, assumptions, dependencies, testing strategy, or visualized structures: Update the `README.md` and relevant Mermaid diagram(s) accordingly. Be precise, prune obsolete info, ensure correct relative paths, and adhere to diagramming standards. Update `Last Updated:` date.
 
-10. **Verify Formatting:**
-    * Run the .NET formatting tool to ensure code style compliance with `.editorconfig`.
-    * Check for violations:
-      ```bash
-      dotnet format --verify-no-changes --verbosity diagnostic
-      ```
-    * If violations are reported, fix them automatically:
-      ```bash
-      dotnet format
-      ```
-    * Stage the formatting changes if any were made (`git add .`). Ensure the formatter runs successfully without reporting further violations before proceeding.
-
-11. **Commit Changes:**
-    * Stage all relevant changes (code, tests, documentation, diagrams, formatting fixes).
+10. **Commit Changes:**
+    * Stage all relevant changes (code, tests, documentation, diagrams).
     * Commit the changes to your feature branch using a Conventional Commit message referencing the Associated Task ID. Adhere to `/Docs/Standards/TaskManagementStandards.md` Section 5.
       ```bash
-      git add . # Ensure formatting fixes are staged
+      git add .
       git commit -m "feat: Implement recipe search endpoint (#123)" # Example commit
       ```
 
-12. **Create Pull Request:**
+11. **Create Pull Request:**
     * Push your feature branch to the origin repository.
       ```bash
       git push origin feature/issue-{ISSUE_ID}-{brief-description}
@@ -110,7 +98,7 @@ This document details the mandatory step-by-step workflow for an AI Coder agent 
       gh pr create --base [TARGET_BRANCH_FROM_PROMPT] --title "<type>: <Brief description> (#ISSUE_ID)" --body "Closes #{ISSUE_ID}. [Summary of changes]"
       ```
 
-13. **Provide Output:**
+12. **Provide Output:
     * Report the final commit hash on your feature branch and the URL of the created Pull Request as specified in Section 6 of the prompt.
 
 ---
