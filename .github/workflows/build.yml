@@ -37,7 +37,6 @@ permissions:
   issues: write
   checks: write
   security-events: write
-  statuses: write
 
 jobs:
   path-analysis:
@@ -226,15 +225,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: '${{ github.event.pull_request.head.sha }}',
-              state: 'success',
-              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
-              description: 'Skipped - existing analysis found',
-              context: 'TestMaster Analysis (AI)'
-            });
+            console.log('TestMaster analysis skipped - existing unresolved analysis comment found');
 
       - name: Load testing analysis prompt
         if: steps.check-existing-comment.outputs.skip_analysis != 'true'
@@ -295,17 +286,6 @@ jobs:
             } catch (error) {
               console.log('Could not read Claude output files:', error.message);
             }
-            
-            // Create failure status check
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: '${{ github.event.pull_request.head.sha }}',
-              state: 'failure',
-              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
-              description: isUsageLimitFailure ? 'Failed - Claude usage limit reached' : 'Failed - technical error',
-              context: 'TestMaster Analysis (AI)'
-            });
             
             // Find existing Claude comment to update
             const comments = await github.rest.issues.listComments({
@@ -547,15 +527,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: '${{ github.event.pull_request.head.sha }}',
-              state: 'success',
-              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
-              description: 'Skipped - existing analysis found',
-              context: 'StandardsGuardian Analysis (AI)'
-            });
+            console.log('StandardsGuardian analysis skipped - existing unresolved analysis comment found');
 
       - name: Load standards compliance prompt
         if: steps.check-existing-comment.outputs.skip_analysis != 'true'
@@ -616,17 +588,6 @@ jobs:
             } catch (error) {
               console.log('Could not read Claude output files:', error.message);
             }
-            
-            // Create failure status check
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: '${{ github.event.pull_request.head.sha }}',
-              state: 'failure',
-              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
-              description: isUsageLimitFailure ? 'Failed - Claude usage limit reached' : 'Failed - technical error',
-              context: 'StandardsGuardian Analysis (AI)'
-            });
             
             // Find existing Claude comment to update
             const comments = await github.rest.issues.listComments({
@@ -795,15 +756,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: '${{ github.event.pull_request.head.sha }}',
-              state: 'success',
-              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
-              description: 'Skipped - existing analysis found',
-              context: 'DebtSentinel Analysis (AI)'
-            });
+            console.log('DebtSentinel analysis skipped - existing unresolved analysis comment found');
 
       - name: Load tech debt analysis prompt
         if: steps.check-existing-comment.outputs.skip_analysis != 'true'
@@ -864,17 +817,6 @@ jobs:
             } catch (error) {
               console.log('Could not read Claude output files:', error.message);
             }
-            
-            // Create failure status check
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: '${{ github.event.pull_request.head.sha }}',
-              state: 'failure',
-              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
-              description: isUsageLimitFailure ? 'Failed - Claude usage limit reached' : 'Failed - technical error',
-              context: 'DebtSentinel Analysis (AI)'
-            });
             
             // Find existing Claude comment to update
             const comments = await github.rest.issues.listComments({
@@ -1190,15 +1132,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: '${{ github.event.pull_request.head.sha }}',
-              state: 'success',
-              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
-              description: 'Skipped - existing analysis found',
-              context: 'SecuritySentinel Analysis (AI)'
-            });
+            console.log('SecuritySentinel analysis skipped - existing unresolved analysis comment found');
 
       - name: Load security analysis prompt
         if: steps.check-existing-comment.outputs.skip_analysis != 'true'
@@ -1259,17 +1193,6 @@ jobs:
             } catch (error) {
               console.log('Could not read Claude output files:', error.message);
             }
-            
-            // Create failure status check
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: '${{ github.event.pull_request.head.sha }}',
-              state: 'failure',
-              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
-              description: isUsageLimitFailure ? 'Failed - Claude usage limit reached' : 'Failed - technical error',
-              context: 'SecuritySentinel Analysis (AI)'
-            });
             
             // Find existing Claude comment to update
             const comments = await github.rest.issues.listComments({
@@ -1482,15 +1405,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: '${{ github.event.pull_request.head.sha }}',
-              state: 'success',
-              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
-              description: 'Skipped - existing analysis found',
-              context: 'MergeOrchestrator Analysis (AI)'
-            });
+            console.log('MergeOrchestrator analysis skipped - existing unresolved analysis comment found');
 
       - name: Load merge orchestrator prompt
         if: steps.check-existing-comment.outputs.skip_analysis != 'true'
@@ -1551,17 +1466,6 @@ jobs:
             } catch (error) {
               console.log('Could not read Claude output files:', error.message);
             }
-            
-            // Create failure status check
-            await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: '${{ github.event.pull_request.head.sha }}',
-              state: 'failure',
-              target_url: '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}',
-              description: isUsageLimitFailure ? 'Failed - Claude usage limit reached' : 'Failed - technical error',
-              context: 'MergeOrchestrator Analysis (AI)'
-            });
             
             // Find existing Claude comment to update
             const comments = await github.rest.issues.listComments({
