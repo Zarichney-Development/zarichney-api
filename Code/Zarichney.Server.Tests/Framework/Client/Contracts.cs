@@ -1330,6 +1330,47 @@ namespace Zarichney.Client.Contracts
 
     }
 
+    /// <summary>
+    /// Response model for the health check endpoint.
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial record HealthCheckResponse
+    {
+        [System.Text.Json.Serialization.JsonConstructor]
+
+        public HealthCheckResponse(string? @environment, bool? @success, System.DateTimeOffset? @time)
+
+        {
+
+            this.Success = @success;
+
+            this.Time = @time;
+
+            this.Environment = @environment;
+
+        }    /// <summary>
+        /// Indicates whether the health check was successful.
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("success")]
+        public bool? Success { get; init; }
+
+        /// <summary>
+        /// The current time when the health check was performed.
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("time")]
+        public System.DateTimeOffset? Time { get; init; }
+
+        /// <summary>
+        /// The current application environment (e.g., Development, Production).
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("environment")]
+        public string? Environment { get; init; }
+
+    }
+
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial record ICustomAttributeProvider
     {

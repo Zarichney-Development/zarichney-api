@@ -16,8 +16,6 @@
     * Development environment setup and maintenance
     * Recipe scraping functionality testing
     * Playwright browser automation setup
-    * **CI/CD Pipeline Logic:** Scripts moved to `.github/scripts/`
-    * **AI Analysis Prompts:** Prompts relocated to `.github/prompts/`
 * **Why it exists:** To provide standardized, automated workflows that ensure consistency across development, testing, deployment, and CI/CD phases while reducing manual effort and potential human error. The modular structure separates workflow orchestration from business logic for better maintainability.
 
 ## 2. Architecture & Key Concepts
