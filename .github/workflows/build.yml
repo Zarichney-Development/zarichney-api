@@ -826,8 +826,6 @@ jobs:
       - name: Perform CodeQL Analysis
         if: matrix.scan-type == 'codeql'
         uses: github/codeql-action/analyze@v2
-        with:
-          category: "/language:${{ matrix.language }}"
 
       - name: Install required tools
         run: |
@@ -838,6 +836,7 @@ jobs:
       - name: Run security scans
         run: |
           echo "🔒 Running security scanning pipeline..."
+          echo "📊 Scan Type: ${{ matrix.scan-type }}"
           
           # Set environment variables
           export GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}"
@@ -852,15 +851,39 @@ jobs:
           case "${{ matrix.scan-type }}" in
             "codeql")
               echo "CodeQL analysis handled by GitHub Actions"
+              echo "✅ CodeQL analysis completed successfully"
+              exit 0
               ;;
             "dependencies")
-              ./.github/scripts/run-security-scans.sh --deps-only --skip-analysis
+              echo "🔍 Running dependency security scanning..."
+              if ./.github/scripts/run-security-scans.sh --deps-only --skip-analysis; then
+                echo "✅ Dependency scanning completed successfully"
+              else
+                echo "❌ Dependency scanning failed"
+                exit 1
+              fi
               ;;
             "secrets")
-              ./.github/scripts/run-security-scans.sh --secrets-only --skip-analysis
+              echo "🔐 Running secrets detection scanning..."
+              if ./.github/scripts/run-security-scans.sh --secrets-only --skip-analysis; then
+                echo "✅ Secrets scanning completed successfully"
+              else
+                echo "❌ Secrets scanning failed"
+                exit 1
+              fi
               ;;
             "policy")
-              ./.github/scripts/run-security-scans.sh --policy-only --skip-analysis
+              echo "📋 Running policy compliance checks..."
+              if ./.github/scripts/run-security-scans.sh --policy-only --skip-analysis; then
+                echo "✅ Policy compliance checks completed successfully"
+              else
+                echo "❌ Policy compliance checks failed"
+                exit 1
+              fi
+              ;;
+            *)
+              echo "❌ Unknown scan type: ${{ matrix.scan-type }}"
+              exit 1
               ;;
           esac
 
