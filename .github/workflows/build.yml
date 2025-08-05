@@ -502,13 +502,15 @@ jobs:
             const hasExistingAnalysis = comments.data.some(comment => {
               const body = comment.body || '';
               return (
-                // Contains the StandardsGuardian analysis header
-                body.includes('## 🛡️ StandardsGuardian Analysis Report') &&
+                // Contains the StandardsGuardian analysis header (check both possible formats)
+                (body.includes('## 🛡️ StandardsGuardian Analysis Report') || 
+                 body.includes('## 🛡️ StandardsGuardian Compliance Report')) &&
                 // Is not an error message
                 !body.includes('Claude encountered an error') &&
                 !body.includes('StandardsGuardian Analysis Failed') &&
                 // Contains substantial analysis content (not just a placeholder)
                 (body.includes('### 📊 Standards Compliance Overview') || 
+                 body.includes('### 📊 Compliance Assessment') ||
                  body.includes('Overall Compliance Score:') ||
                  body.includes('Standards Compliance Status:'))
               );
@@ -737,8 +739,9 @@ jobs:
                 !body.includes('Claude encountered an error') &&
                 !body.includes('DebtSentinel Analysis Failed') &&
                 // Contains substantial analysis content (not just a placeholder)
-                (body.includes('### 📊 Technical Debt Assessment') || 
-                 body.includes('Debt Score:') ||
+                (body.includes('### 📊 Technical Debt Impact Assessment') || 
+                 body.includes('### 📊 Technical Debt Assessment') ||
+                 body.includes('Overall Debt Impact:') ||
                  body.includes('Technical Debt Impact:'))
               );
             });
@@ -1108,12 +1111,13 @@ jobs:
               const body = comment.body || '';
               return (
                 // Contains the SecuritySentinel analysis header
-                body.includes('## 🔒 SecuritySentinel Analysis Report') &&
+                body.includes('## 🛡️ SecuritySentinel Analysis Report') &&
                 // Is not an error message
                 !body.includes('Claude encountered an error') &&
                 !body.includes('SecuritySentinel Analysis Failed') &&
                 // Contains substantial analysis content (not just a placeholder)
                 (body.includes('### 🛡️ Security Assessment Overview') || 
+                 body.includes('### 📊 Security Impact Assessment') ||
                  body.includes('Security Posture:') ||
                  body.includes('Vulnerability Impact:'))
               );
@@ -1381,14 +1385,17 @@ jobs:
               const body = comment.body || '';
               return (
                 // Contains the MergeOrchestrator analysis header
-                body.includes('## 🎯 MergeOrchestrator Analysis Report') &&
+                (body.includes('## 🎯 MergeOrchestrator Analysis Report') ||
+                 body.includes('## 🎯 MergeOrchestrator Executive Summary')) &&
                 // Is not an error message
                 !body.includes('Claude encountered an error') &&
                 !body.includes('MergeOrchestrator Analysis Failed') &&
                 // Contains substantial analysis content (not just a placeholder)
                 (body.includes('### 🎯 Final Deployment Decision') || 
+                 body.includes('### 📊 Consolidated Analysis Overview') ||
                  body.includes('Deployment Decision:') ||
-                 body.includes('Overall Analysis Summary:'))
+                 body.includes('Overall Analysis Summary:') ||
+                 body.includes('Overall Assessment:'))
               );
             });
             
