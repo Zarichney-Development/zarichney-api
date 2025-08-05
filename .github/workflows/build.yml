@@ -37,6 +37,7 @@ permissions:
   issues: write
   checks: write
   security-events: write
+  statuses: write
 
 jobs:
   path-analysis:
