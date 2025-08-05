@@ -11,7 +11,6 @@
 * **Key Responsibilities:** 
     * API client generation and synchronization between server and test projects
     * Comprehensive test automation with coverage reporting
-    * Authentication endpoint testing and validation
     * Application deployment and service management
     * Development environment setup and maintenance
     * Recipe scraping functionality testing
@@ -20,8 +19,8 @@
 
 ## 2. Architecture & Key Concepts
 
-* **High-Level Design:** The scripts are organized into six main categories:
-    * **Development & Testing Scripts:** `generate-api-client.*`, `run-test-suite.sh` (unified testing), `test-auth-endpoints.*`
+* **High-Level Design:** The scripts are organized into five main categories:
+    * **Development & Testing Scripts:** `generate-api-client.*`, `run-test-suite.sh` (unified testing)
     * **Deployment & Service Management:** `start-server.sh`, `cookbook-api.service`, `cleanup-playwright.sh`
     * **Domain-Specific Testing:** `test_sites.sh` (recipe scraping validation)
     * **Configuration Files:** `.refitter` (API client generation settings)
@@ -30,8 +29,7 @@
 * **Core Workflow Integration:** Scripts integrate with the CI/CD pipeline and support local development workflows by:
     1. Generating strongly-typed API clients from OpenAPI specifications
     2. Running comprehensive test suites with coverage reporting
-    3. Validating authentication flows end-to-end
-    4. Managing production deployment and service lifecycle
+    3. Managing production deployment and service lifecycle
 * **Cross-Platform Support:** Most scripts provide both PowerShell (`.ps1`) and Bash (`.sh`) implementations for Windows and Unix-like systems
 * **Docker Integration:** Scripts handle Docker access requirements for Testcontainers-based integration tests
 
@@ -51,11 +49,6 @@
             - **Report Mode:** JSON/Markdown results in `TestResults/`, quality gate enforcement for CI/CD
             - **Both Mode:** All outputs from both modes
         * **Non-Obvious Error Handling:** Unified Docker group membership detection; supports `sg docker` fallback; mode-specific error handling and logging
-    * `test-auth-endpoints.*`:
-        * **Purpose:** Comprehensive end-to-end testing of authentication API endpoints
-        * **Critical Preconditions:** `API server running on localhost:5173`, valid test credentials configured
-        * **Critical Postconditions:** All authentication flows validated including registration, email confirmation, login, token refresh, password reset
-        * **Non-Obvious Error Handling:** Maintains token state across test scenarios; gracefully handles missing tokens
 * **Critical Assumptions:**
     * **Environment Dependencies:** Docker Desktop available for integration tests, Chrome/Chromium for Playwright
     * **Network Access:** API endpoints accessible on configured ports, external recipe sites reachable for scraping tests
@@ -66,7 +59,6 @@
 
 * **Configuration:**
     * `.refitter` file defines API client generation settings (namespace: `Zarichney.Client`, output: `api-server.Tests/Framework/Client/`)
-    * Test placeholders in auth scripts require replacement with actual test credentials
     * Service configuration in `cookbook-api.service` targets production environment paths
 * **Directory Structure:**
     * Generated files appear in `api-server.Tests/Framework/Client/` (not within Scripts directory)
@@ -82,7 +74,6 @@
     * Recipe scraping tests support configurable parallel execution (`max_parallel=5`)
     * Service configuration includes resource limits for t3.small EC2 instances
 * **Security Notes:**
-    * Auth test scripts contain placeholder credentials that must be configured
     * Production scripts handle sensitive environment variables and secrets
     * Cleanup scripts require root privileges for system resource management
 
@@ -91,7 +82,6 @@
 * **Setup:**
     * Ensure .NET 8 SDK installed with required global tools (`dotnet tool list -g`)
     * For integration tests: Install and start Docker Desktop
-    * For auth testing: Configure test credentials in `test-auth-endpoints.*` files
     * For recipe scraping: Ensure `Config/site_selectors.json` is properly configured
 * **Testing:**
     * **Location:** Scripts are primarily utilities; tested through their execution and output validation
@@ -109,7 +99,6 @@
     ./Scripts/run-test-suite.sh report json            # CI/CD integration
     
     # Testing specific components
-    ./Scripts/test-auth-endpoints.sh
     ./Scripts/test_sites.sh
     
     # Production deployment
@@ -118,7 +107,6 @@
 * **Common Pitfalls / Gotchas:**
     * Docker group membership issues on Linux/WSL2 - scripts provide `sg docker` fallback
     * API server must be stopped before running generation scripts to avoid port conflicts
-    * Auth test scripts require manual credential configuration before first use
     * Recipe scraping tests depend on external site availability and selector accuracy
 
 ## 6. Dependencies
@@ -150,7 +138,6 @@
 
 ## 8. Known Issues & TODOs
 
-* **Test Credential Management:** Auth testing scripts require manual credential configuration; could benefit from automated test data setup
 * **Recipe Scraping Brittleness:** Site selector configurations in `test_sites.sh` require ongoing maintenance as target websites change their DOM structure
 * **Windows PowerShell Compatibility:** Scripts target PowerShell Core; some compatibility issues may exist with Windows PowerShell 5.1
 * **Error Recovery:** Some scripts could benefit from more sophisticated error recovery and retry mechanisms
