@@ -248,17 +248,17 @@ jobs:
               issue_number: context.issue.number,
             });
             
-            // Look for Claude TestMaster comment (find the most recent one)
+            // Look for Claude TestMaster error comment that needs updating (contains "Claude encountered an error")
             const claudeComments = comments.data.filter(comment => 
-              comment.body && (
-                comment.body.includes('TestMaster Analysis In Progress') ||
-                comment.body.includes('🧪 TestMaster') ||
+              comment.body && 
+              comment.body.includes('Claude encountered an error') &&
+              (
+                comment.body.includes('TestMaster') ||
                 comment.body.includes('Testing Analysis') ||
-                (comment.user.login.includes('github-actions') && comment.body.includes('TestMaster')) ||
-                comment.user.type === 'Bot'
+                comment.body.includes('🧪 TestMaster')
               )
             );
-            // Get the most recent Claude comment for TestMaster
+            // Get the most recent Claude error comment for TestMaster
             const claudeComment = claudeComments.length > 0 ? claudeComments[claudeComments.length - 1] : null;
             
             const failureCommentBody = isUsageLimitFailure ? 
@@ -493,17 +493,17 @@ jobs:
               issue_number: context.issue.number,
             });
             
-            // Look for Claude StandardsGuardian comment (find the most recent one)
+            // Look for Claude StandardsGuardian error comment that needs updating (contains "Claude encountered an error")
             const claudeComments = comments.data.filter(comment => 
-              comment.body && (
-                comment.body.includes('StandardsGuardian Analysis In Progress') ||
-                comment.body.includes('🛡️ StandardsGuardian') ||
+              comment.body && 
+              comment.body.includes('Claude encountered an error') &&
+              (
+                comment.body.includes('StandardsGuardian') ||
                 comment.body.includes('Standards Compliance') ||
-                (comment.user.login.includes('github-actions') && comment.body.includes('Standards')) ||
-                comment.user.type === 'Bot'
+                comment.body.includes('🛡️ StandardsGuardian')
               )
             );
-            // Get the most recent Claude comment for StandardsGuardian
+            // Get the most recent Claude error comment for StandardsGuardian
             const claudeComment = claudeComments.length > 0 ? claudeComments[claudeComments.length - 1] : null;
             
             const failureCommentBody = isUsageLimitFailure ? 
@@ -665,18 +665,18 @@ jobs:
               issue_number: context.issue.number,
             });
             
-            // Look for Claude DebtSentinel comment (find the most recent one)
+            // Look for Claude DebtSentinel error comment that needs updating (contains "Claude encountered an error")
             const claudeComments = comments.data.filter(comment => 
-              comment.body && (
-                comment.body.includes('DebtSentinel Analysis In Progress') ||
-                comment.body.includes('🔍 DebtSentinel') ||
+              comment.body && 
+              comment.body.includes('Claude encountered an error') &&
+              (
+                comment.body.includes('DebtSentinel') ||
                 comment.body.includes('Technical Debt Analysis') ||
                 comment.body.includes('Tech Debt') ||
-                (comment.user.login.includes('github-actions') && comment.body.includes('Debt')) ||
-                comment.user.type === 'Bot'
+                comment.body.includes('🔍 DebtSentinel')
               )
             );
-            // Get the most recent Claude comment for DebtSentinel
+            // Get the most recent Claude error comment for DebtSentinel
             const claudeComment = claudeComments.length > 0 ? claudeComments[claudeComments.length - 1] : null;
             
             const failureCommentBody = isUsageLimitFailure ? 
@@ -958,18 +958,17 @@ jobs:
               issue_number: context.issue.number,
             });
             
-            // Look for Claude SecuritySentinel comment (find the most recent one)
+            // Look for Claude SecuritySentinel error comment that needs updating (contains "Claude encountered an error")
             const claudeComments = comments.data.filter(comment => 
-              comment.body && (
-                comment.body.includes('SecuritySentinel Analysis In Progress') ||
-                comment.body.includes('🔍 SecuritySentinel') ||
+              comment.body && 
+              comment.body.includes('Claude encountered an error') &&
+              (
+                comment.body.includes('SecuritySentinel') ||
                 comment.body.includes('Security Analysis') ||
-                comment.body.includes('Security') ||
-                (comment.user.login.includes('github-actions') && comment.body.includes('Security')) ||
-                comment.user.type === 'Bot'
+                comment.body.includes('🔍 SecuritySentinel')
               )
             );
-            // Get the most recent Claude comment for SecuritySentinel
+            // Get the most recent Claude error comment for SecuritySentinel
             const claudeComment = claudeComments.length > 0 ? claudeComments[claudeComments.length - 1] : null;
             
             const failureCommentBody = isUsageLimitFailure ? 
@@ -1167,19 +1166,19 @@ jobs:
               issue_number: context.issue.number,
             });
             
-            // Look for Claude MergeOrchestrator comment (find the most recent one)
+            // Look for Claude MergeOrchestrator error comment that needs updating (contains "Claude encountered an error")
             const claudeComments = comments.data.filter(comment => 
-              comment.body && (
-                comment.body.includes('MergeOrchestrator Analysis In Progress') ||
-                comment.body.includes('🔍 MergeOrchestrator') ||
+              comment.body && 
+              comment.body.includes('Claude encountered an error') &&
+              (
+                comment.body.includes('MergeOrchestrator') ||
                 comment.body.includes('Merge Orchestrator') ||
                 comment.body.includes('Final Analysis') ||
                 comment.body.includes('Deployment Decision') ||
-                (comment.user.login.includes('github-actions') && comment.body.includes('Orchestrator')) ||
-                comment.user.type === 'Bot'
+                comment.body.includes('🔍 MergeOrchestrator')
               )
             );
-            // Get the most recent Claude comment for MergeOrchestrator
+            // Get the most recent Claude error comment for MergeOrchestrator
             const claudeComment = claudeComments.length > 0 ? claudeComments[claudeComments.length - 1] : null;
             
             const failureCommentBody = isUsageLimitFailure ? 
