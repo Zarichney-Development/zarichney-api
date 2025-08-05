@@ -733,7 +733,7 @@ EOF
 
 # Error handling
 set -euo pipefail
-trap cleanup EXIT
+# Note: cleanup trap is already set in common-functions.sh
 
 # Check if script is being sourced or executed
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
