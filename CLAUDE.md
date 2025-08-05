@@ -476,8 +476,8 @@ gh issue list --label="tech-debt,auto-generated" --state=open
 The project includes a comprehensive security analysis system that follows the established workflow pattern used by standards compliance and tech debt analysis. Security scanning is integrated into the main CI/CD pipeline, with AI-powered analysis performed by a separate workflow that posts consolidated security insights to PR comments.
 
 ### Architecture Pattern (Consistent with Project Standards)
-1. **Security Scans in Build Workflow**: Security scanning jobs run alongside build/test in `01-build.yml`
-2. **Security Analysis Workflow**: `03-security.yml` triggers on workflow completion
+1. **Security Scans in Build Workflow**: Security scanning jobs run alongside build/test in `build.yml`
+2. **Security Analysis Workflow**: Security analysis integrated within unified build workflow
 3. **AI-Powered Analysis**: Custom GitHub Action analyzes all security data with Claude
 4. **Single PR Comment**: Consolidated security analysis posted to PR (like standards compliance)
 

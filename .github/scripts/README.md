@@ -1,8 +1,8 @@
-# Module/Directory: Scripts/Pipeline
+# Module/Directory: .github/scripts
 
 **Last Updated:** 2025-07-27
 
-**Parent:** [`Scripts`](../README.md)
+**Parent:** [`.github`](../README.md)
 
 ## 1. Purpose & Responsibility
 

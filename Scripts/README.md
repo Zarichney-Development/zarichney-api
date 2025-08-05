@@ -16,8 +16,8 @@
     * Development environment setup and maintenance
     * Recipe scraping functionality testing
     * Playwright browser automation setup
-    * **CI/CD Pipeline Logic:** [`Pipeline/`](./Pipeline/README.md) - Core automation scripts for GitHub Actions workflows
-    * **AI Analysis Prompts:** [`Prompts/`](./Prompts/README.md) - Claude AI prompts for security, quality, and standards analysis
+    * **CI/CD Pipeline Logic:** Scripts moved to `.github/scripts/`
+    * **AI Analysis Prompts:** Prompts relocated to `.github/prompts/`
 * **Why it exists:** To provide standardized, automated workflows that ensure consistency across development, testing, deployment, and CI/CD phases while reducing manual effort and potential human error. The modular structure separates workflow orchestration from business logic for better maintainability.
 
 ## 2. Architecture & Key Concepts
@@ -27,8 +27,8 @@
     * **Deployment & Service Management:** `start-server.sh`, `cookbook-api.service`, `cleanup-playwright.sh`
     * **Domain-Specific Testing:** `test_sites.sh` (recipe scraping validation)
     * **Configuration Files:** `.refitter` (API client generation settings)
-    * **CI/CD Pipeline Logic:** [`Pipeline/`](./Pipeline/README.md) - Extracted GitHub Actions workflow logic for maintainable automation
-    * **AI Analysis Prompts:** [`Prompts/`](./Prompts/README.md) - Version-controlled Claude AI prompts for consistent analysis
+    * **CI/CD Pipeline Logic:** Scripts moved to `.github/scripts/`
+    * **AI Analysis Prompts:** Prompts relocated to `.github/prompts/`
 * **Core Workflow Integration:** Scripts integrate with the CI/CD pipeline and support local development workflows by:
     1. Generating strongly-typed API clients from OpenAPI specifications
     2. Running comprehensive test suites with coverage reporting

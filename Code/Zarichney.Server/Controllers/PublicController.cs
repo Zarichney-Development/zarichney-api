@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Zarichney.Services.Status;
 using Microsoft.AspNetCore.Authorization;
+using Zarichney.Controllers.Responses;
 
 namespace Zarichney.Controllers;
 
@@ -12,14 +13,14 @@ public class PublicController(
   : ControllerBase
 {
   [HttpGet("health")]
+  [ProducesResponseType(typeof(HealthCheckResponse), 200)]
   public IActionResult HealthCheck()
   {
-    return Ok(new
-    {
-      Success = true,
-      Time = DateTime.Now.ToLocalTime(),
-      Environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"
-    });
+    return Ok(new HealthCheckResponse(
+      Success: true,
+      Time: DateTime.Now.ToLocalTime(),
+      Environment: Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"
+    ));
   }
 
   /// <summary>
