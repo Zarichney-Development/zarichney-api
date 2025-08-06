@@ -53,7 +53,7 @@ These attributes often work in conjunction with custom xUnit test case discovere
     * **External Services**: Tests marked with `[DependencyFact(ExternalServices.OpenAiApi)]`, `[DependencyFact(ExternalServices.Stripe)]`, or `[DependencyFact(ExternalServices.MsGraph)]` require proper environment variable configuration (see `../../README.md` Section 5).
     * **Infrastructure**: Tests marked with `[DependencyFact(InfrastructureDependency.Database)]` require SQL Server and proper connection string configuration.
     * **Environment Variables**: Required variables include `OPENAI_API_KEY`, `STRIPE_SECRET_KEY`, `MSGRAPH_TENANT_ID`, and `CONNECTION_STRING_USER_DB`.
-    * **Test Environment**: Configuration is managed through `../../../Zarichney.Server/appsettings.Test.json` with environment variable substitution.
+    * **Test Environment**: Configuration is managed through `../../../Zarichney.Server/appsettings.Testing.json` with environment variable substitution.
 * **Assumptions Made by Attributes:**
     * `DependencyFactAttribute` assumes:
         * The `IStatusService` (when checking `ExternalServices`) is correctly implemented in the `Zarichney.Server` and reflects the true availability of features based on configuration.

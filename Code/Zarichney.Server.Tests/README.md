@@ -98,8 +98,7 @@ export CONNECTION_STRING_USER_DB="Data Source=localhost;Initial Catalog=Zarichne
 
 #### Test Configuration Files
 
-- **`../Zarichney.Server/appsettings.Test.json`**: Comprehensive test environment configuration with environment variable substitution
-- **`../Zarichney.Server/appsettings.Testing.json`**: Existing test configuration for basic setup
+- **`../Zarichney.Server/appsettings.Testing.json`**: Comprehensive test environment configuration with environment variable substitution and full external service integration
 
 #### Dependency-Based Test Execution
 

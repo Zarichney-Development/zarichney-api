@@ -145,13 +145,14 @@ Features:
 - Comprehensive external service configurations
 - Appropriate test timeouts and retry limits
 
-### Legacy Test Configuration  
+### Consolidated Test Configuration  
 **File**: `Code/Zarichney.Server/appsettings.Testing.json`
 
 Features:
-- Basic test environment settings
-- Minimal external service configuration
-- Testcontainer database connection placeholders
+- Comprehensive external service configurations
+- Environment variable substitution (`${VARIABLE_NAME:-default}`)
+- Full integration with OpenAI, Stripe, MS Graph, and database services
+- Test-safe defaults and appropriate timeouts
 
 ## Validation and Troubleshooting
 
