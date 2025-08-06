@@ -178,6 +178,9 @@ public class LoggingService : ILoggingService
     if (string.IsNullOrEmpty(url) || !Uri.IsWellFormedUriString(url, UriKind.Absolute))
       return false;
 
+    // Check for cancellation before attempting HTTP call
+    cancellationToken.ThrowIfCancellationRequested();
+
     try
     {
       using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
