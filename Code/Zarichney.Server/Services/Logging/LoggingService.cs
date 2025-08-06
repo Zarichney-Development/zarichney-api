@@ -205,6 +205,12 @@ public class LoggingService : ILoggingService
   /// <inheritdoc />
   public async Task<bool> TryStartDockerSeqAsync(CancellationToken cancellationToken = default)
   {
+    if (!_config.EnableDockerFallback)
+    {
+      _logger.LogInformation("Docker fallback is disabled");
+      return false;
+    }
+
     try
     {
       // First check if a Seq container already exists

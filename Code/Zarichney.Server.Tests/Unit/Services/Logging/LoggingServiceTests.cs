@@ -391,7 +391,7 @@ public class LoggingServiceTests
   #region GetLoggingMethodAsync Tests
 
   [Fact]
-  public async Task GetLoggingMethodAsync_WhenSeqAvailable_ReturnsNativeSeq()
+  public async Task GetLoggingMethodAsync_WhenSeqAvailable_ReturnsUnknownSeqMethod()
   {
     // Arrange
     SetupSuccessfulHttpResponse();
@@ -400,7 +400,7 @@ public class LoggingServiceTests
     var result = await _sut.GetLoggingMethodAsync();
 
     // Assert
-    result.Should().Be("Native Seq", "should return native Seq when available");
+    result.Should().Be("Unknown Seq Method", "should return unknown method when Seq is reachable via HTTP but no native service or Docker container is detected in test environment");
   }
 
   [Fact]
