@@ -63,15 +63,15 @@ public class LoggingServiceTests
     var result = await _sut.GetLoggingStatusAsync();
 
     // Assert
-    result.Should().NotBeNull().Because("the service should return a status result");
-    result.SeqAvailable.Should().BeTrue().Because("Seq is configured and responding");
-    result.SeqUrl.Should().Be(_config.SeqUrl).Because("the configured URL should be used");
-    result.Method.Should().NotBeEmpty().Because("a logging method should be determined");
-    result.FallbackActive.Should().BeFalse().Because("Seq is available");
-    result.ConfiguredSeqUrl.Should().Be(_config.SeqUrl).Because("the configured URL should be reported");
-    result.LogLevel.Should().Be("Information").Because("the configured log level should be returned");
-    result.FileLoggingPath.Should().NotBeEmpty().Because("file logging path should always be available");
-    result.Timestamp.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5)).Because("timestamp should be recent");
+    result.Should().NotBeNull("the service should return a status result");
+    result.SeqAvailable.Should().BeTrue("Seq is configured and responding");
+    result.SeqUrl.Should().Be(_config.SeqUrl, "the configured URL should be used");
+    result.Method.Should().NotBeEmpty("a logging method should be determined");
+    result.FallbackActive.Should().BeFalse("Seq is available");
+    result.ConfiguredSeqUrl.Should().Be(_config.SeqUrl, "the configured URL should be reported");
+    result.LogLevel.Should().Be("Information", "the configured log level should be returned");
+    result.FileLoggingPath.Should().NotBeEmpty("file logging path should always be available");
+    result.Timestamp.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5), "timestamp should be recent");
   }
 
   [Fact]
@@ -85,11 +85,11 @@ public class LoggingServiceTests
     var result = await _sut.GetLoggingStatusAsync();
 
     // Assert
-    result.Should().NotBeNull().Because("the service should return a status result");
-    result.SeqAvailable.Should().BeFalse().Because("Seq is not responding");
-    result.FallbackActive.Should().BeTrue().Because("Seq is not available");
-    result.Method.Should().Contain("Fallback").Because("fallback logging should be used");
-    result.LogLevel.Should().Be("Warning").Because("the configured log level should be returned");
+    result.Should().NotBeNull("the service should return a status result");
+    result.SeqAvailable.Should().BeFalse("Seq is not responding");
+    result.FallbackActive.Should().BeTrue("Seq is not available");
+    result.Method.Should().Contain("Fallback", "fallback logging should be used");
+    result.LogLevel.Should().Be("Warning", "the configured log level should be returned");
   }
 
   [Fact]
@@ -103,7 +103,7 @@ public class LoggingServiceTests
     var result = await _sut.GetLoggingStatusAsync();
 
     // Assert
-    result.LogLevel.Should().Be("Warning").Because("Warning should be the default log level");
+    result.LogLevel.Should().Be("Warning", "Warning should be the default log level");
   }
 
   [Fact]
@@ -117,8 +117,7 @@ public class LoggingServiceTests
     // Act & Assert
     var act = async () => await _sut.GetLoggingStatusAsync();
     await act.Should().ThrowAsync<InvalidOperationException>()
-      .WithMessage("Test exception")
-      .Because("exceptions should be propagated to the caller");
+      .WithMessage("Test exception", "exceptions should be propagated to the caller");
 
     VerifyLoggerWasCalled(LogLevel.Error, "Error retrieving logging status");
   }
@@ -138,12 +137,12 @@ public class LoggingServiceTests
     var result = await _sut.TestSeqConnectivityAsync(testUrl);
 
     // Assert
-    result.Should().NotBeNull().Because("the service should return a connectivity result");
-    result.Url.Should().Be(testUrl).Because("the tested URL should be returned");
-    result.IsConnected.Should().BeTrue().Because("the HTTP request was successful");
-    result.ResponseTime.Should().BeGreaterThan(0).Because("response time should be measured");
-    result.TestedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5)).Because("timestamp should be recent");
-    result.Error.Should().BeNull().Because("no error occurred");
+    result.Should().NotBeNull("the service should return a connectivity result");
+    result.Url.Should().Be(testUrl, "the tested URL should be returned");
+    result.IsConnected.Should().BeTrue("the HTTP request was successful");
+    result.ResponseTime.Should().BeGreaterThan(0, "response time should be measured");
+    result.TestedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5), "timestamp should be recent");
+    result.Error.Should().BeNull("no error occurred");
   }
 
   [Fact]
@@ -157,10 +156,10 @@ public class LoggingServiceTests
     var result = await _sut.TestSeqConnectivityAsync(testUrl);
 
     // Assert
-    result.Should().NotBeNull().Because("the service should return a connectivity result");
-    result.Url.Should().Be(testUrl).Because("the tested URL should be returned");
-    result.IsConnected.Should().BeFalse().Because("the HTTP request failed");
-    result.ResponseTime.Should().Be(-1).Because("response time should be -1 for failed connections");
+    result.Should().NotBeNull("the service should return a connectivity result");
+    result.Url.Should().Be(testUrl, "the tested URL should be returned");
+    result.IsConnected.Should().BeFalse("the HTTP request failed");
+    result.ResponseTime.Should().Be(-1, "response time should be -1 for failed connections");
   }
 
   [Fact]
@@ -173,8 +172,8 @@ public class LoggingServiceTests
     var result = await _sut.TestSeqConnectivityAsync();
 
     // Assert
-    result.Url.Should().Be(_config.SeqUrl).Because("the configured URL should be used when no URL is provided");
-    result.IsConnected.Should().BeTrue().Because("the connection should succeed");
+    result.Url.Should().Be(_config.SeqUrl, "the configured URL should be used when no URL is provided");
+    result.IsConnected.Should().BeTrue("the connection should succeed");
   }
 
   [Fact]
@@ -192,10 +191,10 @@ public class LoggingServiceTests
     var result = await _sut.TestSeqConnectivityAsync(testUrl);
 
     // Assert
-    result.Should().NotBeNull().Because("the service should return a result even on exception");
-    result.IsConnected.Should().BeFalse().Because("the connection failed due to exception");
-    result.Error.Should().Be(exceptionMessage).Because("the exception message should be captured");
-    result.ResponseTime.Should().Be(-1).Because("response time should be -1 for failed connections");
+    result.Should().NotBeNull("the service should return a result even on exception");
+    result.IsConnected.Should().BeFalse("the connection failed due to exception");
+    result.Error.Should().Be(exceptionMessage, "the exception message should be captured");
+    result.ResponseTime.Should().Be(-1, "response time should be -1 for failed connections");
   }
 
   #endregion
@@ -212,13 +211,13 @@ public class LoggingServiceTests
     var result = await _sut.GetAvailableLoggingMethodsAsync();
 
     // Assert
-    result.Should().NotBeNull().Because("the service should return logging methods information");
-    result.NativeSeq.Should().NotBeNull().Because("native Seq information should be included");
-    result.DockerSeq.Should().NotBeNull().Because("Docker Seq information should be included");
-    result.FileLogging.Should().NotBeNull().Because("file logging information should be included");
-    result.FileLogging.Available.Should().BeTrue().Because("file logging is always available");
-    result.FileLogging.Method.Should().Contain("File-based").Because("file logging method should be described");
-    result.CurrentMethod.Should().NotBeEmpty().Because("current method should be determined");
+    result.Should().NotBeNull("the service should return logging methods information");
+    result.NativeSeq.Should().NotBeNull("native Seq information should be included");
+    result.DockerSeq.Should().NotBeNull("Docker Seq information should be included");
+    result.FileLogging.Should().NotBeNull("file logging information should be included");
+    result.FileLogging.Available.Should().BeTrue("file logging is always available");
+    result.FileLogging.Method.Should().Contain("File-based", "file logging method should be described");
+    result.CurrentMethod.Should().NotBeEmpty("current method should be determined");
   }
 
   #endregion
@@ -236,7 +235,7 @@ public class LoggingServiceTests
     var result = await _sut.TryConnectToSeqAsync(url);
 
     // Assert
-    result.Should().BeTrue().Because("the HTTP request should succeed");
+    result.Should().BeTrue("the HTTP request should succeed");
     
     _mockHttpHandler.Protected().Verify(
       "SendAsync",
@@ -257,7 +256,7 @@ public class LoggingServiceTests
       var result = await _sut.TryConnectToSeqAsync(url);
 
       // Assert
-      result.Should().BeFalse().Because($"invalid URL '{url}' should return false");
+      result.Should().BeFalse($"invalid URL '{url}' should return false");
     }
   }
 
@@ -280,7 +279,7 @@ public class LoggingServiceTests
     var result = await _sut.TryConnectToSeqAsync(url);
 
     // Assert
-    result.Should().BeFalse().Because("the request should timeout");
+    result.Should().BeFalse("the request should timeout");
   }
 
   [Fact]
@@ -293,8 +292,7 @@ public class LoggingServiceTests
 
     // Act & Assert
     var act = async () => await _sut.TryConnectToSeqAsync(url, cts.Token);
-    await act.Should().ThrowAsync<OperationCanceledException>()
-      .Because("cancellation should be respected");
+    await act.Should().ThrowAsync<OperationCanceledException>("cancellation should be respected");
   }
 
   #endregion
@@ -311,7 +309,7 @@ public class LoggingServiceTests
     var result = await _sut.GetBestAvailableSeqUrlAsync();
 
     // Assert
-    result.Should().Be(_config.SeqUrl).Because("configured URL should be preferred when available");
+    result.Should().Be(_config.SeqUrl, "configured URL should be preferred when available");
     VerifyLoggerWasCalled(LogLevel.Information, $"Using configured Seq at: {_config.SeqUrl}");
   }
 
@@ -331,7 +329,7 @@ public class LoggingServiceTests
     var result = await _sut.GetBestAvailableSeqUrlAsync();
 
     // Assert
-    result.Should().Be(workingUrl).Because("the first working common URL should be returned");
+    result.Should().Be(workingUrl, "the first working common URL should be returned");
     VerifyLoggerWasCalled(LogLevel.Information, $"Found native Seq at: {workingUrl}");
   }
 
@@ -346,7 +344,7 @@ public class LoggingServiceTests
     var result = await _sut.GetBestAvailableSeqUrlAsync();
 
     // Assert
-    result.Should().BeNull().Because("no Seq instances are available");
+    result.Should().BeNull("no Seq instances are available");
     VerifyLoggerWasCalled(LogLevel.Warning, "No Seq instance found - will use file logging");
   }
 
