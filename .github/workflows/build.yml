@@ -160,8 +160,8 @@ jobs:
       - name: Extract PR Context
         id: pr-context
         run: |
-          # Extract issue numbers from PR body
-          PR_BODY="${{ github.event.pull_request.body }}"
+          # Extract issue numbers from PR body (use single quotes to prevent command substitution)
+          PR_BODY='${{ github.event.pull_request.body }}'
           ISSUE_NUMBERS=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo "")
           
           if [ -n "$ISSUE_NUMBERS" ]; then
@@ -354,8 +354,8 @@ jobs:
       - name: Extract PR Context
         id: pr-context
         run: |
-          # Extract issue numbers from PR body
-          PR_BODY="${{ github.event.pull_request.body }}"
+          # Extract issue numbers from PR body (use single quotes to prevent command substitution)
+          PR_BODY='${{ github.event.pull_request.body }}'
           ISSUE_NUMBERS=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo "")
           
           if [ -n "$ISSUE_NUMBERS" ]; then
@@ -473,8 +473,8 @@ jobs:
       - name: Extract PR Context
         id: pr-context
         run: |
-          # Extract issue numbers from PR body
-          PR_BODY="${{ github.event.pull_request.body }}"
+          # Extract issue numbers from PR body (use single quotes to prevent command substitution)
+          PR_BODY='${{ github.event.pull_request.body }}'
           ISSUE_NUMBERS=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo "")
           
           if [ -n "$ISSUE_NUMBERS" ]; then
@@ -714,8 +714,8 @@ jobs:
       - name: Extract PR Context
         id: pr-context
         run: |
-          # Extract issue numbers from PR body
-          PR_BODY="${{ github.event.pull_request.body }}"
+          # Extract issue numbers from PR body (use single quotes to prevent command substitution)
+          PR_BODY='${{ github.event.pull_request.body }}'
           ISSUE_NUMBERS=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo "")
           
           if [ -n "$ISSUE_NUMBERS" ]; then
@@ -896,8 +896,8 @@ jobs:
       - name: Extract PR Context
         id: pr-context
         run: |
-          # Extract issue numbers from PR body
-          PR_BODY="${{ github.event.pull_request.body }}"
+          # Extract issue numbers from PR body (use single quotes to prevent command substitution)
+          PR_BODY='${{ github.event.pull_request.body }}'
           ISSUE_NUMBERS=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo "")
           
           if [ -n "$ISSUE_NUMBERS" ]; then
