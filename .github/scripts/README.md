@@ -1,6 +1,6 @@
 # Module/Directory: .github/scripts
 
-**Last Updated:** 2025-07-27
+**Last Updated:** 2025-08-05
 
 **Parent:** [`.github`](../README.md)
 
@@ -37,7 +37,11 @@
     * **Build Scripts** (`build-backend.sh`, `build-frontend.sh`):
         * **Critical Preconditions:** `.NET 8 SDK installed (backend)`, `Node.js 18.x (frontend)`, `clean working directory`, `Docker running for integration tests`
         * **Critical Postconditions:** `Artifacts created in specified directories`, `test results available for analysis`, `exit code 0 on success`
-        * **Non-Obvious Error Handling:** Automatically handles Docker group membership issues; creates detailed test reports even on failure
+        * **Non-Obvious Error Handling:** 
+            - Automatically handles Docker group membership issues
+            - Creates detailed test reports and artifacts even on failure
+            - Ensures artifact directories always contain meaningful content for debugging
+            - Enhanced build artifact creation with comprehensive metadata
     * **Deployment Scripts** (`deploy-backend.sh`, `deploy-frontend.sh`):
         * **Critical Preconditions:** `AWS credentials configured`, `deployment artifacts available`, `target EC2 instances accessible`
         * **Critical Postconditions:** `Application deployed and healthy`, `health checks passed`, `rollback artifacts created`
