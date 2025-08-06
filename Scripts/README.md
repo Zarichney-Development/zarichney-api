@@ -1,6 +1,6 @@
 # Module/Directory: Scripts
 
-**Last Updated:** 2025-08-05
+**Last Updated:** 2025-08-06
 
 **(Optional: Link to Parent Directory's README)**
 > **Parent:** [`zarichney-api`](../README.md)
@@ -23,7 +23,7 @@
     * **Development & Testing Scripts:** `generate-api-client.*`, `run-test-suite.sh` (unified testing)
     * **Deployment & Service Management:** `start-server.sh`, `cookbook-api.service`, `cleanup-playwright.sh`
     * **Domain-Specific Testing:** `test_sites.sh` (recipe scraping validation)
-    * **Configuration Files:** `.refitter` (API client generation settings)
+    * **Configuration Files:** `.refitter` (API client generation settings), `docker-compose.integration.yml` (integration test environment)
     * **CI/CD Pipeline Logic:** Scripts moved to `.github/scripts/`
     * **AI Analysis Prompts:** Prompts relocated to `.github/prompts/`
 * **Core Workflow Integration:** Scripts integrate with the CI/CD pipeline and support local development workflows by:
@@ -64,6 +64,7 @@
 
 * **Configuration:**
     * `.refitter` file defines API client generation settings (namespace: `Zarichney.Client`, output: `api-server.Tests/Framework/Client/`)
+    * `docker-compose.integration.yml` defines Seq logging infrastructure for LoggingService integration tests (ports 5342, 8080)
     * Service configuration in `cookbook-api.service` targets production environment paths
 * **Directory Structure:**
     * Generated files appear in `api-server.Tests/Framework/Client/` (not within Scripts directory)
@@ -105,6 +106,9 @@
     
     # Testing specific components
     ./Scripts/test_sites.sh
+    
+    # Manual integration test environment setup
+    docker-compose -f ./Scripts/docker-compose.integration.yml up -d
     
     # Production deployment
     ./Scripts/start-server.sh

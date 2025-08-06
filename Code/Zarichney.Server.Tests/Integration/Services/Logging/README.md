@@ -77,7 +77,7 @@ These are integration tests that require real Docker infrastructure. They skip a
    docker pull datalust/seq:latest
    
    # Optional: Start development Seq instance
-   docker-compose -f docker-compose.integration.yml up -d
+   docker-compose -f ../../../../../Scripts/docker-compose.integration.yml up -d
    ```
 
 ### Running Tests
