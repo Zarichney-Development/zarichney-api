@@ -18,6 +18,16 @@ This document outlines the configuration and setup requirements for local develo
 * **Git**: For source control management.
 * **IDE**: Visual Studio 2025, VS Code with C# extension, or JetBrains Rider.
 
+### Default Admin User
+
+In non-Production environments with a configured database, the system automatically creates a default administrator account on first startup:
+
+- **Email**: `admin@localhost.dev`
+- **Username**: `admin`
+- **Password**: `DevAdmin123!`
+
+⚠️ **Security Notice**: These are development credentials only. You MUST change them immediately after initial setup. See the [Authentication System Maintenance Guide](../Maintenance/AuthenticationSystem.md#7-default-admin-user-management) for detailed instructions.
+
 ### Basic Commands
 
 * **Build Application:**
