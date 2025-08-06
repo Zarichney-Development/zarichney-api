@@ -1,8 +1,0 @@
-{
-    "timestamp": "2025-08-05T07:34:00-04:00",
-    "scan_mode": "individual-scan-only",
-    "ai_analysis_skipped": true,
-    "commit_sha": "1dd89b5374f3a9ae8aa6322210af8993a6658784",
-    "base_branch": "develop",
-    "scan_completed": true
-}

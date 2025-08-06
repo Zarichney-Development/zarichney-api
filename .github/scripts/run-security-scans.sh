@@ -148,9 +148,6 @@ main() {
         generate_security_report
         # Create security artifacts only if analysis was performed
         create_security_artifacts
-    else
-        # When skipping analysis, create minimal scan summary for artifact upload
-        create_minimal_scan_summary
     fi
     
     end_timer "$start_time" "security-scanning"
@@ -442,18 +439,8 @@ run_policy_compliance() {
 EOF
     
     log_info "Policy violations found: $violations"
-    
-    # Copy the policy compliance results to artifacts
-    mkdir -p "artifacts/security"
-    cp "$SECURITY_DIR/policy-compliance-summary.json" "artifacts/security/"
-    
-    if [[ $violations -gt 0 ]]; then
-        log_warning "Policy compliance check found $violations violations (non-blocking)"
-        return 0  # Changed to 0 to not fail the pipeline, just log warnings
-    else
-        log_success "Policy compliance check completed successfully"
-        return 0
-    fi
+    log_success "Policy compliance check completed"
+    return 0
 }
 
 prepare_security_data() {
@@ -751,27 +738,6 @@ EOF
     
     log_info "Security artifacts created in $artifact_dir"
     upload_artifact "security-analysis" "$artifact_dir"
-}
-
-create_minimal_scan_summary() {
-    log_section "Creating Minimal Scan Summary"
-    
-    # Create basic scan summary for artifact upload when skipping analysis
-    cat > "$SECURITY_DIR/scan-summary.json" << EOF
-{
-    "timestamp": "$(date -Iseconds)",
-    "scan_mode": "individual-scan-only",
-    "ai_analysis_skipped": true,
-    "commit_sha": "$HEAD_SHA",
-    "base_branch": "$BASE_BRANCH",
-    "scan_completed": true
-}
-EOF
-    
-    # Create a simple status file
-    echo "Security scan completed without AI analysis" > "$SECURITY_DIR/scan-status.txt"
-    
-    log_info "Minimal scan summary created for artifact upload"
 }
 
 # Error handling
