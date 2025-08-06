@@ -1,229 +1,148 @@
-# LoggingService Integration Tests
+# Module/Directory: /Integration/Services/Logging
 
-This directory contains integration tests for the LoggingService that validate real-world connectivity to external logging infrastructure (Seq).
+**Last Updated:** 2025-01-10
 
-## Overview
+> **Parent:** [`Services Integration Tests`](../README.md)
 
-The LoggingService integration tests verify:
-- Real connectivity to Seq instances (native and Docker-based)
-- Docker container lifecycle management
-- Intelligent fallback logic between different logging methods
-- Comprehensive logging status reporting with actual infrastructure
+## 1. Purpose & Responsibility
 
-## Test Categories
+* **What it is:** Integration test module that validates the LoggingService's real-world connectivity to external logging infrastructure (Seq) and Docker container management capabilities.
+* **Key Responsibilities:**
+  - Testing actual HTTP connectivity to Seq instances (native and Docker-based)
+  - Validating Docker container lifecycle management (start/stop/cleanup)
+  - Verifying intelligent fallback logic between different logging methods
+  - Testing comprehensive logging status reporting with real infrastructure dependencies
+  - Ensuring graceful degradation when external dependencies are unavailable
+* **Why it exists:** To validate the LoggingService behavior with actual external dependencies (Seq, Docker) rather than mocked implementations, ensuring real-world reliability and proper failover mechanisms.
 
-### 1. Seq Connectivity Tests
-- `TestSeqConnectivityAsync_WithRealSeqInstance_ReturnsSuccessResult`
-  - Validates HTTP connectivity to real Seq instances
-  - Tests connection timeout and retry logic
-  - Verifies response time measurement
+## 2. Architecture & Key Concepts
 
-### 2. Docker Container Management Tests
-- `TryStartDockerSeqAsync_WithDockerAvailable_AttemptsContainerStartup`
-  - Tests automatic Seq container startup
-  - Validates port mapping and configuration
-  - Ensures proper container cleanup
+* **High-Level Design:** These tests use the `IntegrationTestBase` framework with `DependencyFact` attributes to conditionally execute tests based on Docker availability. Tests directly interact with real Seq instances and manage Docker containers for isolated test execution.
+* **Key Test Categories:**
+  - **Seq Connectivity Tests:** Validate HTTP connectivity, response time measurement, and error handling
+  - **Docker Container Management:** Test container lifecycle, detection logic, and name resolution
+  - **Fallback Logic Tests:** Verify intelligent URL selection and priority ordering
+  - **End-to-End Integration:** Comprehensive status reporting with actual infrastructure
+* **Test Infrastructure Components:**
+  - `CustomWebApplicationFactory` for hosting the application under test
+  - Real Docker containers (datalust/seq:latest) for Seq testing
+  - Container lifecycle management with proper cleanup and isolation
+  - Reflection-based testing of private methods for comprehensive coverage
 
-- `IsDockerSeqContainerRunningAsync_ChecksContainerStatus`
-  - Verifies container detection logic
-  - Tests Docker CLI integration
+## 3. Interface Contract & Assumptions
 
-- `GetDockerSeqContainerNameAsync_ReturnsContainerInfo`
-  - Tests container name resolution
-  - Validates container metadata retrieval
+* **Preconditions:**
+  - Docker must be installed and running for container-based tests
+  - Seq container image (datalust/seq:latest) must be available
+  - Tests assume port 5341 is available for Seq connectivity testing
+  - Network connectivity to localhost required for HTTP testing
+* **Postconditions:**
+  - All test containers are cleaned up after execution (no resource leaks)
+  - Tests skip gracefully when Docker dependencies are unavailable
+  - No persistent state changes to the host system
+* **Critical Assumptions:**
+  - Docker daemon is properly configured and accessible
+  - Seq container starts within 3 seconds (test timeout)
+  - HTTP connectivity tests complete within 10 seconds
+  - Container names are unique to avoid conflicts between parallel test runs
+* **Error Handling:** Tests use `DependencyFact` attributes to skip gracefully when infrastructure is unavailable, preventing CI/CD failures due to missing dependencies.
 
-### 3. Fallback Logic Tests
-- `GetBestAvailableSeqUrlAsync_WithMultipleUrls_FindsBestOption`
-  - Tests intelligent URL selection
-  - Verifies priority ordering (Native > Docker > Configured URLs)
-  - Validates real-world failover scenarios
+## 4. Local Conventions & Constraints
 
-- `GetActiveSeqUrlAsync_WithRealSeq_ReturnsActiveUrl`
-  - Tests active URL detection
-  - Validates connectivity status
+* **Test Container Naming:** Uses unique container names (`seq-integration-test`) to avoid conflicts
+* **Port Configuration:** 
+  - Test containers use port 5342 to avoid conflicts with development Seq instances on 5341
+  - Alternative test URLs include localhost:5341, 127.0.0.1:5341, and localhost:8080
+* **Timeout Values:** 10-second timeout for all container operations and HTTP connectivity tests
+* **Collection Assignment:** Uses `IntegrationInfra` collection for lightweight infrastructure tests without database dependencies
+* **Cleanup Strategy:** All containers started during tests are automatically cleaned up in finally blocks and use `--rm` flag
 
-### 4. Comprehensive Status Tests
-- `GetAvailableLoggingMethodsAsync_WithRealEnvironment_ShowsActualAvailability`
-  - Tests complete method discovery
-  - Validates all logging method availability
-  - Verifies Docker and native Seq detection
+## 5. How to Work With This Code
 
-- `GetLoggingStatusAsync_WithRealEnvironment_ReturnsComprehensiveStatus`
-  - Tests full status reporting pipeline
-  - Validates field consistency
-  - Ensures accurate real-time status
+### Module-Specific Testing Strategy
+These are integration tests that require real Docker infrastructure. They skip automatically in environments without Docker, making them CI/CD safe while providing comprehensive validation in development environments.
 
-## Prerequisites
-
-### Required Software
-- Docker Desktop or Docker Engine
-- .NET 8 SDK
-- (Optional) Native Seq service via systemd
-
-### Docker Setup
-```bash
-# Install Docker (Ubuntu/Debian)
-sudo apt install docker.io
-sudo usermod -aG docker $USER
-# Log out and back in for group changes to take effect
-
-# Verify Docker installation
-docker --version
-docker ps
-```
-
-### Seq Container Setup
-The tests can use an existing Seq container or start their own:
-
-```bash
-# Manual Seq container for development (optional)
-docker run --name seq -d \
-  -e ACCEPT_EULA=Y \
-  -p 5341:80 \
-  datalust/seq:latest
-
-# Or use the provided docker-compose file
-docker-compose -f docker-compose.integration.yml up -d
-```
-
-## Running the Tests
-
-### Run All Integration Tests
-```bash
-# With Docker group membership active
-dotnet test --filter "Category=Integration&Feature=Logging"
-
-# If Docker group membership isn't active in current shell
-sg docker -c "dotnet test --filter 'Category=Integration&Feature=Logging'"
-```
-
-### Run Specific Test
-```bash
-dotnet test --filter "FullyQualifiedName~LoggingServiceIntegrationTests.TestSeqConnectivityAsync"
-```
-
-### Using the Test Suite Script
-```bash
-# Run integration tests only with detailed report
-./Scripts/run-test-suite.sh report --integration-only
-
-# Run with performance analysis
-./Scripts/run-test-suite.sh report --integration-only --performance
-```
-
-## Test Environment Configuration
-
-### Docker Compose Configuration
-The `docker-compose.integration.yml` file provides:
-- Primary Seq instance on port 5342
-- Alternative Seq instance on port 8080
-- Health checks for container readiness
-- Isolated test network
-
-### Environment Variables
-```bash
-# Enable/disable Docker fallback
-export LOGGING__ENABLEDOCKERFALLBACK=true
-
-# Configure Seq URL
-export LOGGING__SEQURL=http://localhost:5341
-
-# Set process timeout
-export LOGGING__PROCESSTIMEOUTMS=10000
-```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Tests Skip with "Docker is not available"**
-   - Ensure Docker is installed and running
-   - Check Docker permissions: `docker ps`
-   - Add user to docker group: `sudo usermod -aG docker $USER`
-
-2. **Container Port Conflicts**
-   - Check for existing containers: `docker ps`
-   - Stop conflicting containers: `docker stop <container-name>`
-   - Use alternative ports in configuration
-
-3. **Seq Connection Timeouts**
-   - Verify Seq container is healthy: `docker logs seq`
-   - Check firewall rules for port 5341
-   - Increase timeout in configuration
-
-4. **Permission Denied Errors**
+### Setup Steps
+1. **Install Docker:**
    ```bash
-   # Fix Docker socket permissions
-   sudo chmod 666 /var/run/docker.sock
-   
-   # Or use Docker group (recommended)
+   # Ubuntu/Debian
+   sudo apt install docker.io
    sudo usermod -aG docker $USER
-   newgrp docker
+   # Log out and back in for group changes
    ```
 
-### Debugging Tests
+2. **Configure Test Environment:**
+   ```bash
+   # Optional: Pre-pull Seq image
+   docker pull datalust/seq:latest
+   
+   # Optional: Start development Seq instance
+   docker-compose -f docker-compose.integration.yml up -d
+   ```
 
-Enable detailed logging:
+### Running Tests
 ```bash
-# Set logging level
-export Serilog__MinimumLevel__Default=Debug
+# Run all logging integration tests
+dotnet test --filter "Category=Integration&Feature=Logging"
 
-# Run tests with verbose output
-dotnet test --logger "console;verbosity=detailed"
+# Run with Docker group (if needed)
+sg docker -c "dotnet test --filter 'Category=Integration&Feature=Logging'"
+
+# Using unified test suite
+./Scripts/run-test-suite.sh report --integration-only
 ```
 
-Check container status:
-```bash
-# List all Seq containers
-docker ps --filter name=seq
+### Key Test Scenarios
+- **Seq Connectivity Validation:** Tests actual HTTP connectivity with real response time measurement
+- **Container Lifecycle Management:** Validates proper startup, detection, and cleanup of Docker containers  
+- **Fallback Logic Testing:** Verifies intelligent URL selection with multiple Seq instances
+- **Graceful Degradation:** Ensures tests skip appropriately when Docker is unavailable
 
-# View container logs
-docker logs seq-integration-test
+### Test Data Considerations
+- Tests use real Seq containers rather than mocked responses
+- Container port allocation managed dynamically to avoid conflicts
+- HTTP connectivity tested against actual Seq API endpoints
+- No persistent test data - all validation uses runtime container state
 
-# Inspect container health
-docker inspect seq-integration-test --format='{{.State.Health.Status}}'
-```
+### Known Pitfalls
+- Tests may fail if Docker daemon is not running or misconfigured
+- Container startup race conditions possible if system is under heavy load
+- Port conflicts can occur if multiple test runs execute simultaneously
+- Testcontainers library may require specific Docker socket configuration
 
-## CI/CD Considerations
+## 6. Dependencies
 
-### GitHub Actions
-Tests automatically skip when Docker isn't available in CI:
-- Uses `DependencyFact` attribute for conditional execution
-- No build failures due to missing dependencies
-- Clear skip reasons in test output
+### Key Internal Dependencies
+* **Services Being Tested:**
+  - [`LoggingService`](../../../../Zarichney.Server/Services/Logging/README.md) - Primary system under test
+  - [`SeqConnectivity`](../../../../Zarichney.Server/Services/Logging/README.md) - Seq connectivity logic
+  - [`LoggingStatus`](../../../../Zarichney.Server/Services/Logging/README.md) - Status reporting functionality
+* **Test Framework Components:**
+  - [`IntegrationTestBase`](../../README.md) - Base class providing DI and dependency checking
+  - [`ApiClientFixture`](../../../Framework/Fixtures/README.md) - Test application hosting
+  - [`DependencyFact`](../../../Framework/Attributes/README.md) - Conditional test execution
 
-### Local Development
-For full test coverage locally:
-1. Ensure Docker is running
-2. Run `docker-compose -f docker-compose.integration.yml up -d`
-3. Execute tests with `./Scripts/run-test-suite.sh`
-4. Clean up with `docker-compose -f docker-compose.integration.yml down`
+### Key External Dependencies
+* **Docker Infrastructure:**
+  - Docker Engine/Desktop for container management
+  - `datalust/seq:latest` container image for real Seq instances
+* **Testing Libraries:**
+  - xUnit for test framework
+  - FluentAssertions for test assertions
+  - Testcontainers.NET for Docker integration (via framework)
 
-## Best Practices
+### Key Dependents
+* **CI/CD Pipeline:** Tests provide validation for logging infrastructure reliability
+* **Development Workflow:** Ensures logging fallback mechanisms work correctly in real environments
 
-1. **Container Cleanup**
-   - Tests clean up containers after execution
-   - Use unique container names to avoid conflicts
-   - Implement proper disposal in test fixtures
+## 7. Rationale & Key Historical Context
 
-2. **Network Isolation**
-   - Use dedicated Docker networks for tests
-   - Avoid port conflicts with development services
-   - Clean up networks after test runs
+* **Real Infrastructure Testing:** These tests complement unit tests by validating actual external dependencies, ensuring the LoggingService works reliably with real Seq instances and Docker containers.
+* **Graceful Degradation Design:** The `DependencyFact` approach ensures tests provide value in development environments with Docker while maintaining CI/CD compatibility in containerized build environments.
+* **Container Isolation Strategy:** Uses unique container names and ports to enable parallel test execution without resource conflicts.
 
-3. **Timeout Configuration**
-   - Set appropriate timeouts for container startup
-   - Use health checks for readiness detection
-   - Handle timeout scenarios gracefully
+## 8. Known Issues & TODOs
 
-4. **Error Handling**
-   - Tests should handle container startup failures
-   - Provide clear error messages for debugging
-   - Skip tests gracefully when dependencies are missing
-
-## Related Documentation
-
-- [Testing Standards](../../../../Docs/Standards/TestingStandards.md)
-- [LoggingService Documentation](../../../../../Zarichney.Server/Services/Logging/README.md)
-- [Integration Test Framework](../../../Framework/README.md)
-- [Docker Setup Guide](../../../../Docs/Development/DockerSetup.md)
+* **Docker Configuration Complexity:** Testcontainers may require additional configuration in some development environments
+* **Container Startup Timing:** Fixed 3-second wait for container readiness could be optimized with health check polling
+* **Reflection-Based Private Method Testing:** Current approach for testing private container detection methods could be improved with internal visibility or public wrapper methods

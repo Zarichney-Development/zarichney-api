@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Zarichney.Services.Logging;
@@ -47,20 +48,20 @@ public class LoggingServiceIntegrationTests : IntegrationTestBase
     var result = await loggingService.TestSeqConnectivityAsync("http://localhost:5341");
     
     // Assert
-    Assert.NotNull(result);
-    Assert.Equal("http://localhost:5341", result.Url);
+    result.Should().NotBeNull();
+    result.Url.Should().Be("http://localhost:5341");
     
     // If Seq is running, we expect a successful connection
     if (await IsSeqAvailable())
     {
-      Assert.True(result.IsConnected, "Expected successful connection to running Seq instance");
-      Assert.True(result.ResponseTime >= 0, "Response time should be non-negative for successful connection");
-      Assert.Null(result.Error);
+      result.IsConnected.Should().BeTrue("Expected successful connection to running Seq instance");
+      result.ResponseTime.Should().BeGreaterThanOrEqualTo(0, "Response time should be non-negative for successful connection");
+      result.Error.Should().BeNull();
     }
     else
     {
-      Assert.False(result.IsConnected, "Expected failed connection when Seq is not available");
-      Assert.Equal(-1, result.ResponseTime);
+      result.IsConnected.Should().BeFalse("Expected failed connection when Seq is not available");
+      result.ResponseTime.Should().Be(-1);
     }
   }
 
@@ -92,7 +93,7 @@ public class LoggingServiceIntegrationTests : IntegrationTestBase
       {
         // Verify container is running
         var containerRunning = await IsContainerRunning(processExecutor, "seq-fallback");
-        Assert.True(containerRunning, "Container should be running after successful start");
+        containerRunning.Should().BeTrue("Container should be running after successful start");
       }
     }
     finally
@@ -120,18 +121,18 @@ public class LoggingServiceIntegrationTests : IntegrationTestBase
     // Assert
     if (await IsSeqAvailable())
     {
-      Assert.NotNull(bestUrl);
-      Assert.Contains(bestUrl, new[] { "http://localhost:5341", "http://127.0.0.1:5341", "http://localhost:8080" });
+      bestUrl.Should().NotBeNull();
+      bestUrl.Should().BeOneOf("http://localhost:5341", "http://127.0.0.1:5341", "http://localhost:8080");
       
       // Verify the returned URL is actually accessible
       var connectivityResult = await loggingService.TestSeqConnectivityAsync(bestUrl);
-      Assert.True(connectivityResult.IsConnected, $"Best URL {bestUrl} should be accessible");
+      connectivityResult.IsConnected.Should().BeTrue($"Best URL {bestUrl} should be accessible");
     }
     else
     {
       // If no Seq is available and Docker fallback fails, we expect null
-      Assert.True(bestUrl == null || await IsUrlAccessible(loggingService, bestUrl), 
-        "Returned URL should be accessible or null");
+      (bestUrl == null || await IsUrlAccessible(loggingService, bestUrl))
+        .Should().BeTrue("Returned URL should be accessible or null");
     }
   }
 
@@ -162,15 +163,15 @@ public class LoggingServiceIntegrationTests : IntegrationTestBase
         .GetMethod("IsDockerSeqContainerRunningAsync", 
           System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
       
-      Assert.NotNull(method);
+      method.Should().NotBeNull();
       
       var task = method.Invoke(seqConnectivity, new object[] { CancellationToken.None }) as Task<bool>;
-      Assert.NotNull(task);
+      task.Should().NotBeNull();
       
       var isRunning = await task;
       
       // Assert
-      Assert.True(isRunning, "Should detect running Seq container");
+      isRunning.Should().BeTrue("Should detect running Seq container");
     }
     finally
     {
@@ -202,16 +203,16 @@ public class LoggingServiceIntegrationTests : IntegrationTestBase
         .GetMethod("GetDockerSeqContainerNameAsync", 
           System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
       
-      Assert.NotNull(method);
+      method.Should().NotBeNull();
       
       var task = method.Invoke(loggingStatus, new object[] { CancellationToken.None }) as Task<string?>;
-      Assert.NotNull(task);
+      task.Should().NotBeNull();
       
       var containerName = await task;
       
       // Assert
-      Assert.NotNull(containerName);
-      Assert.Contains("seq", containerName.ToLower());
+      containerName.Should().NotBeNull();
+      containerName!.ToLower().Should().Contain("seq");
     }
     finally
     {
@@ -240,44 +241,43 @@ public class LoggingServiceIntegrationTests : IntegrationTestBase
     var methods = await loggingService.GetAvailableLoggingMethodsAsync();
     
     // Assert
-    Assert.NotNull(methods);
+    methods.Should().NotBeNull();
     
     // File logging should always be available
-    Assert.NotNull(methods.FileLogging);
-    Assert.True(methods.FileLogging.Available, "File logging should always be available");
-    Assert.Equal("File-based logging (always available)", methods.FileLogging.Method);
-    Assert.NotNull(methods.FileLogging.Path);
+    methods.FileLogging.Should().NotBeNull();
+    methods.FileLogging.Available.Should().BeTrue("File logging should always be available");
+    methods.FileLogging.Method.Should().Be("File-based logging (always available)");
+    methods.FileLogging.Path.Should().NotBeNull();
     
     // Docker Seq availability depends on Docker being available
-    Assert.NotNull(methods.DockerSeq);
+    methods.DockerSeq.Should().NotBeNull();
     if (await IsDockerAvailable())
     {
       // Docker is available, so we can check container status
       var containerRunning = await IsAnySeqContainerRunning();
-      Assert.Equal(containerRunning, methods.DockerSeq.Available);
+      methods.DockerSeq.Available.Should().Be(containerRunning);
       
       if (containerRunning)
       {
-        Assert.NotNull(methods.DockerSeq.ServiceName);
-        Assert.Equal(5341, methods.DockerSeq.Port);
+        methods.DockerSeq.ServiceName.Should().NotBeNull();
+        methods.DockerSeq.Port.Should().Be(5341);
       }
     }
     
     // Native Seq check (may or may not be running)
-    Assert.NotNull(methods.NativeSeq);
-    Assert.Equal("seq", methods.NativeSeq.ServiceName);
-    Assert.Equal(5341, methods.NativeSeq.Port);
-    Assert.Equal("Native systemd service", methods.NativeSeq.Method);
+    methods.NativeSeq.Should().NotBeNull();
+    methods.NativeSeq.ServiceName.Should().Be("seq");
+    methods.NativeSeq.Port.Should().Be(5341);
+    methods.NativeSeq.Method.Should().Be("Native systemd service");
     
     // Current method should be set
-    Assert.NotNull(methods.CurrentMethod);
-    Assert.Contains(methods.CurrentMethod, new[] 
-    { 
+    methods.CurrentMethod.Should().NotBeNull();
+    methods.CurrentMethod.Should().BeOneOf(
       "File Logging (Fallback)", 
       "Native Seq Service", 
       "Docker Container", 
-      "Unknown Seq Method" 
-    });
+      "Unknown Seq Method"
+    );
   }
 
   /// <summary>
@@ -296,40 +296,39 @@ public class LoggingServiceIntegrationTests : IntegrationTestBase
     var status = await loggingService.GetLoggingStatusAsync();
     
     // Assert
-    Assert.NotNull(status);
+    status.Should().NotBeNull();
     
     // Basic fields should always be populated
-    Assert.NotNull(status.Method);
-    Assert.NotNull(status.LogLevel);
-    Assert.NotNull(status.FileLoggingPath);
-    Assert.True(status.Timestamp <= DateTime.UtcNow, "Timestamp should not be in the future");
-    Assert.True(status.Timestamp > DateTime.UtcNow.AddMinutes(-1), "Timestamp should be recent");
+    status.Method.Should().NotBeNull();
+    status.LogLevel.Should().NotBeNull();
+    status.FileLoggingPath.Should().NotBeNull();
+    status.Timestamp.Should().BeOnOrBefore(DateTime.UtcNow, "Timestamp should not be in the future");
+    status.Timestamp.Should().BeAfter(DateTime.UtcNow.AddMinutes(-1), "Timestamp should be recent");
     
     // Seq availability and URL consistency
     if (status.SeqAvailable)
     {
-      Assert.NotNull(status.SeqUrl);
-      Assert.False(status.FallbackActive, "Fallback should not be active when Seq is available");
+      status.SeqUrl.Should().NotBeNull();
+      status.FallbackActive.Should().BeFalse("Fallback should not be active when Seq is available");
       
       // Verify the reported URL is actually accessible
-      var connectivityResult = await loggingService.TestSeqConnectivityAsync(status.SeqUrl);
-      Assert.True(connectivityResult.IsConnected, 
+      var connectivityResult = await loggingService.TestSeqConnectivityAsync(status.SeqUrl!);
+      connectivityResult.IsConnected.Should().BeTrue(
         $"Reported Seq URL {status.SeqUrl} should be accessible");
     }
     else
     {
-      Assert.True(status.FallbackActive, "Fallback should be active when Seq is not available");
-      Assert.Equal("File Logging (Fallback)", status.Method);
+      status.FallbackActive.Should().BeTrue("Fallback should be active when Seq is not available");
+      status.Method.Should().Be("File Logging (Fallback)");
     }
     
     // Method consistency
-    Assert.Contains(status.Method, new[] 
-    { 
+    status.Method.Should().BeOneOf(
       "File Logging (Fallback)", 
       "Native Seq Service", 
       "Docker Container", 
-      "Unknown Seq Method" 
-    });
+      "Unknown Seq Method"
+    );
   }
 
   #endregion
