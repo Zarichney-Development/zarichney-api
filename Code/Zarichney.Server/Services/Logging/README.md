@@ -1,35 +1,39 @@
 # Module/Directory: Services/Logging
 
-**Last Updated:** 2025-01-26
+**Last Updated:** 2025-08-06
 
 **Parent:** [`Services`](../README.md)
 
 ## 1. Purpose & Responsibility
 
-* **What it is:** Centralized logging system management service that consolidates logging functionality previously scattered across `LoggingController`, `LoggingMiddleware`, and `ConfigurationStartup` into a cohesive, testable service architecture.
+* **What it is:** Modular logging system management architecture that follows Single Responsibility Principle, separating concerns into focused, testable services with clean dependency injection patterns.
 * **Key Responsibilities:** 
-  - Intelligent Seq detection and fallback management
-  - Logging system status monitoring and reporting  
-  - Connectivity testing for Seq instances
-  - Request/response logging middleware with correlation tracking
-  - Docker Seq container management as fallback option
-  - Public API endpoints for logging system operations
-* **Why it exists:** To provide a single, testable service for all logging system operations while maintaining intelligent fallback capabilities and supporting both development and production logging scenarios.
+  - **Orchestration**: `LoggingService` delegates to focused services following modern C# patterns  
+  - **Status Management**: `ILoggingStatus` handles system status monitoring and configuration reporting
+  - **Connectivity**: `ISeqConnectivity` manages Seq detection, testing, and Docker fallback operations
+  - **Process Execution**: `IProcessExecutor` handles system command execution for Docker and systemd operations
+  - **Request/Response Logging**: Enhanced middleware with proper dependency injection patterns
+  - **Public API**: Monitoring endpoints accessible without authentication
+* **Why it exists:** To provide a maintainable, testable logging architecture that follows SOLID principles, eliminates anti-patterns, and supports modern C# development practices while maintaining intelligent fallback capabilities.
 
 ## 2. Architecture & Key Concepts
 
-* **High-Level Design:** 
-  - `ILoggingService` / `LoggingService`: Core service implementing intelligent Seq detection with native → Docker → file fallback
-  - `LoggingConfig`: Configuration model with sensible defaults for all logging operations
-  - `RequestResponseLoggerMiddleware`: Enhanced HTTP request/response logging with session correlation
-  - `Models/`: Complete set of DTOs for API responses (`LoggingStatusResult`, `SeqConnectivityResult`, etc.)
-  - Integration with `PublicController` for monitoring endpoints accessible without authentication
+* **High-Level Design (Refactored Architecture):** 
+  - **`ILoggingService` / `LoggingService`**: Orchestrator service using primary constructor pattern that delegates to focused services
+  - **`ILoggingStatus` / `LoggingStatus`**: Handles status reporting, method detection, and configuration queries
+  - **`ISeqConnectivity` / `SeqConnectivity`**: Manages Seq connection testing, URL discovery, and Docker fallback with proper cancellation token propagation
+  - **`IProcessExecutor` / `ProcessExecutor`**: Abstracted process execution for Docker/systemd commands with timeout handling
+  - **`LoggingConfig`**: Configuration model with modern collection expressions and sensible defaults
+  - **`RequestResponseLoggerMiddleware`**: Refactored to eliminate service locator anti-pattern
+  - **`Models/`**: Complete set of DTOs for API responses (`LoggingStatusResult`, `SeqConnectivityResult`, etc.)
 
-* **Key Interaction Pattern:**
+* **Key Interaction Pattern (After Refactoring):**
   ```
-  PublicController → ILoggingService → [Native Seq | Docker Seq | File Logging]
-                                   ↓
-                              LoggingConfig (fallback URLs, timeouts)
+  PublicController → ILoggingService → ILoggingStatus → [Status Operations]
+                                    ↓
+                                   ISeqConnectivity → IProcessExecutor → [System Commands]
+                                    ↓                      ↓
+                                   HttpClient           LoggingConfig
   ```
 
 * **Intelligent Fallback Logic:**
@@ -40,16 +44,16 @@
 
 ## 3. Interface Contract & Assumptions
 
-* **Core Service Contract (`ILoggingService`):**
-  - All async methods accept `CancellationToken` with sensible defaults
-  - Methods never throw exceptions during fallback scenarios - graceful degradation to file logging
-  - Connectivity tests respect configured timeouts (default 3 seconds)
-  - Status methods return real-time information, not cached data
+* **Service Contract Overview:**
+  - **`ILoggingService`**: Orchestration layer that delegates to focused services, all methods properly async with cancellation support
+  - **`ILoggingStatus`**: Status and configuration reporting with real-time system information
+  - **`ISeqConnectivity`**: Connection testing, URL discovery, and Docker management with proper timeout handling
+  - **`IProcessExecutor`**: Abstracted system command execution with configurable timeouts and cancellation token propagation
   
 * **Key Assumptions:**
-  - HTTP connectivity available for Seq URL testing via injected `HttpClient`
-  - Docker available if `EnableDockerFallback` is true
-  - File system write permissions available for fallback logging
+  - HttpClient properly injected via IHttpClientFactory pattern for connection testing
+  - Docker available if `EnableDockerFallback` is true, with proper permissions for container operations
+  - File system write permissions available for fallback logging scenarios
   - Seq instances respond to `/api/events/raw` endpoint for connectivity validation
   
 * **Error Handling:**
@@ -74,22 +78,25 @@
   - Container naming follows pattern: `{DockerContainerName}` (configurable, default: "seq-fallback")
   - Respects Docker availability and fails gracefully if Docker not accessible
   
-* **HTTP Client Usage:**
-  - Depends on injected `HttpClient` with default configuration
-  - Implements proper timeout handling using `CancellationTokenSource.CreateLinkedTokenSource`
-  - Tests Seq-specific endpoint `/api/events/raw` for validation
+* **Modern C# Patterns:**
+  - **Primary Constructors**: All new services use C# 12 primary constructor syntax for cleaner code
+  - **HttpClient Factory**: Proper IHttpClientFactory pattern eliminates socket exhaustion risks
+  - **Dependency Injection**: Eliminates service locator anti-patterns in middleware
+  - **Process Execution**: Abstracted into dedicated service for better testability and separation of concerns
 
 ## 5. How to Work With This Code
 
 * **Setup Steps:**
-  1. Ensure `LoggingConfig` is registered in DI container via `ServiceStartup.cs`
-  2. Register `ILoggingService` as scoped service with `HttpClient` dependency
-  3. Optional: Configure Seq URL in app settings or leave null for auto-discovery
+  1. All services are properly registered in DI container via `ServiceStartup.cs` with correct lifetime scopes
+  2. Services follow dependency hierarchy: `LoggingService` → `ILoggingStatus` + `ISeqConnectivity` → `IProcessExecutor`
+  3. HttpClient factory pattern ensures proper resource management
+  4. Optional: Configure Seq URL in app settings or leave null for auto-discovery
 
 * **Module-Specific Testing Strategy:**
-  - **Unit Tests**: Mock all dependencies (`ILogger`, `IConfiguration`, `HttpClient`, `IOptions<LoggingConfig>`)
+  - **Unit Tests**: Focus on testing service delegation and orchestration behavior rather than implementation details
+  - **Focused Service Tests**: Each service interface can be tested independently with appropriate mocks
   - **Integration Tests**: Test actual API endpoints via `PublicController` integration tests
-  - Focus on fallback logic testing with different connectivity scenarios
+  - **Process Execution Tests**: Mock `IProcessExecutor` for Docker/systemd command testing
 
 * **Key Test Scenarios:**
   - Seq connectivity success/failure with various URLs
@@ -114,32 +121,45 @@
 
 * **Internal Dependencies:**
   - [`Services/Sessions`](../Sessions/README.md) - For session correlation in request logging middleware
+  - [`Services/ProcessExecution`](../ProcessExecution/README.md) - For abstracted system command execution
   - [`Config`](../../Config/README.md) - For `IConfig` interface implementation
   - [`Controllers/PublicController`](../../Controllers/README.md) - For API endpoint hosting
 
 * **Internal Dependents:**
-  - [`Startup/ServiceStartup`](../../Startup/README.md) - Registers services in DI container
-  - [`Startup/ApplicationStartup`](../../Startup/README.md) - Configures middleware pipeline
+  - [`Startup/ServiceStartup`](../../Startup/README.md) - Registers all focused services with proper DI lifetime management
+  - [`Startup/ApplicationStartup`](../../Startup/README.md) - Configures middleware pipeline with corrected DI patterns
   - [`Startup/MiddlewareStartup`](../../Startup/README.md) - Provides extension methods for middleware registration
 
 * **External Libraries:**
   - `Microsoft.Extensions.Options` - Configuration binding and validation
-  - `System.Diagnostics` - Process management for Docker operations
-  - `System.Net.Http` - Seq connectivity testing
+  - `Microsoft.Extensions.Http` - IHttpClientFactory for proper HttpClient lifecycle management
+  - `System.Diagnostics` - Process management abstracted through IProcessExecutor
+  - `System.Net.Http` - Seq connectivity testing via HttpClient factory pattern
 
 ## 7. Rationale & Key Historical Context
 
-* **Centralization Decision:** Previously, logging functionality was scattered across multiple files (`LoggingController.cs`, middleware in `Config/`, startup configuration). Centralizing into a service provides better testability, maintainability, and separation of concerns.
+* **Architectural Refactoring (Issue #83):** Major refactoring based on AI analysis identified multiple architectural improvements needed:
+  - **Single Responsibility Violation**: Original `LoggingService` handled logging, process execution, Docker management, and Seq detection
+  - **Service Locator Anti-Pattern**: Middleware was using `IServiceProvider.CreateScope()` instead of proper constructor injection
+  - **HttpClient Lifecycle Issues**: Direct HttpClient injection without IHttpClientFactory pattern risked socket exhaustion
+  - **Modern C# Patterns**: Needed primary constructor adoption and collection expression updates
 
-* **Intelligent Fallback Design:** Based on need to support both development (native Seq) and containerized environments (Docker Seq) while ensuring the application never fails due to logging configuration issues.
+* **Focused Service Design:** Split monolithic service into focused interfaces following SOLID principles:
+  - `ILoggingStatus`: Status reporting and configuration queries
+  - `ISeqConnectivity`: Connection testing and Docker management
+  - `IProcessExecutor`: Abstracted system command execution
+  - `LoggingService`: Orchestration layer that delegates to focused services
 
-* **Public API Integration:** Logging status endpoints placed in `PublicController` rather than dedicated controller to reduce surface area and ensure monitoring capabilities are always available without authentication.
+* **Dependency Injection Modernization:** Eliminated anti-patterns and implemented proper DI patterns:
+  - HttpClient factory pattern for resource management
+  - Constructor injection instead of service locator pattern
+  - Primary constructor syntax for cleaner code
 
-* **Middleware Integration:** Request/response logging moved from `Config/` namespace to align with service-based architecture while maintaining existing functionality.
+* **Public API Integration:** Maintained logging status endpoints in `PublicController` while improving underlying architecture.
 
 ## 8. Known Issues & TODOs
 
-* **Test Framework Issues:** Unit and integration tests currently disabled due to FluentAssertions syntax compatibility issues - needs resolution for full test coverage
-* **API Client Generation:** Integration tests require API client regeneration to include new logging endpoints
+* **Test Coverage Expansion:** Consider adding focused unit tests for new service interfaces (`ILoggingStatus`, `ISeqConnectivity`, `IProcessExecutor`) to complement orchestration tests
 * **Performance Optimization:** Consider caching Seq connectivity status to reduce repeated network calls during high-traffic periods
 * **Health Check Integration:** Future enhancement to integrate with ASP.NET Core health checks for monitoring dashboard integration
+* **Compiler Warning:** Remove unused `serviceProvider` parameter warning in middleware by implementing proper DI pattern validation

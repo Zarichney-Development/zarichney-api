@@ -18,30 +18,19 @@ public class RequestResponseLoggerOptions
 /// <summary>
 /// Enhanced middleware for logging HTTP requests and responses with correlation tracking
 /// </summary>
-public class RequestResponseLoggerMiddleware
+public class RequestResponseLoggerMiddleware(
+  RequestDelegate next,
+  IOptions<RequestResponseLoggerOptions> options,
+  ILogger<RequestResponseLoggerMiddleware> logger,
+  IServiceProvider serviceProvider)
 {
-  private readonly RequestDelegate _next;
-  private readonly ILogger<RequestResponseLoggerMiddleware> _logger;
-  private readonly RequestResponseLoggerOptions _options;
-  private readonly IServiceProvider _serviceProvider;
-
-  public RequestResponseLoggerMiddleware(
-    RequestDelegate next,
-    IOptions<RequestResponseLoggerOptions> options,
-    ILogger<RequestResponseLoggerMiddleware> logger,
-    IServiceProvider serviceProvider)
-  {
-    _next = next;
-    _logger = logger;
-    _options = options.Value;
-    _serviceProvider = serviceProvider;
-  }
+  private readonly RequestResponseLoggerOptions _options = options.Value;
 
   public async Task InvokeAsync(HttpContext context)
   {
     if (!_options.RequestFilter(context))
     {
-      await _next(context);
+      await next(context);
       return;
     }
 
@@ -49,12 +38,9 @@ public class RequestResponseLoggerMiddleware
     var scopeId = scopeContainer?.Id;
     var sessionId = scopeContainer?.SessionId;
 
-    // Resolve ILoggingService from request scope
-    using var scope = _serviceProvider.CreateScope();
-    var loggingService = scope.ServiceProvider.GetRequiredService<ILoggingService>();
-    
-    // Add logging method to context for enhanced diagnostics
-    var loggingMethod = await loggingService.GetLoggingMethodAsync(context.RequestAborted);
+    // Get logging method for enhanced diagnostics from request scope
+    var loggingStatus = context.RequestServices.GetRequiredService<ILoggingStatus>();
+    var loggingMethod = await loggingStatus.GetLoggingMethodAsync(context.RequestAborted);
 
     // Replace the current logger in the logging context
     using (Serilog.Context.LogContext.PushProperty("ScopeId", scopeId))
@@ -72,7 +58,7 @@ public class RequestResponseLoggerMiddleware
 
       try
       {
-        await _next(context);
+        await next(context);
       }
       finally
       {
@@ -107,7 +93,7 @@ public class RequestResponseLoggerMiddleware
       RequestBody = requestBody
     };
 
-    _logger.LogInformation("HTTP Request: {@RequestDetails}", logContext);
+    logger.LogInformation("HTTP Request: {@RequestDetails}", logContext);
   }
 
   private async Task LogResponseAsync(HttpContext context, MemoryStream responseBody)
@@ -126,7 +112,7 @@ public class RequestResponseLoggerMiddleware
       ResponseBody = responseContent
     };
 
-    _logger.LogInformation("HTTP Response: {@ResponseDetails}", logContext);
+    logger.LogInformation("HTTP Response: {@ResponseDetails}", logContext);
   }
 
   private object MaskSensitiveHeaders(IHeaderDictionary headers)

@@ -19,6 +19,7 @@ using Zarichney.Services.Payment;
 using Zarichney.Services.PdfGeneration;
 using Zarichney.Services.Status;
 using Zarichney.Services.Status.Proxies;
+using Zarichney.Services.ProcessExecution;
 using Zarichney.Services.Web;
 using Zarichney.Services.Logging;
 
@@ -226,9 +227,13 @@ public class ServiceStartup
     // Status Service - provides configuration and feature availability status
     services.AddSingleton<IStatusService, StatusService>();
 
-    // Logging Service - provides centralized logging system management
+    // System Services
+    services.AddScoped<IProcessExecutor, ProcessExecutor>();
+    
+    // Logging Services - provides centralized logging system management
+    services.AddHttpClient<ISeqConnectivity, SeqConnectivity>();
+    services.AddScoped<ILoggingStatus, LoggingStatus>();
     services.AddScoped<ILoggingService, LoggingService>();
-    services.AddHttpClient<LoggingService>();
 
     // Repositories
     services.AddSingleton<ILlmRepository, LlmRepository>();
