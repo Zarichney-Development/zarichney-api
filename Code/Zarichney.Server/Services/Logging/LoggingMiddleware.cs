@@ -23,18 +23,18 @@ public class RequestResponseLoggerMiddleware
   private readonly RequestDelegate _next;
   private readonly ILogger<RequestResponseLoggerMiddleware> _logger;
   private readonly RequestResponseLoggerOptions _options;
-  private readonly ILoggingService _loggingService;
+  private readonly IServiceProvider _serviceProvider;
 
   public RequestResponseLoggerMiddleware(
     RequestDelegate next,
     IOptions<RequestResponseLoggerOptions> options,
     ILogger<RequestResponseLoggerMiddleware> logger,
-    ILoggingService loggingService)
+    IServiceProvider serviceProvider)
   {
     _next = next;
     _logger = logger;
     _options = options.Value;
-    _loggingService = loggingService;
+    _serviceProvider = serviceProvider;
   }
 
   public async Task InvokeAsync(HttpContext context)
@@ -49,8 +49,12 @@ public class RequestResponseLoggerMiddleware
     var scopeId = scopeContainer?.Id;
     var sessionId = scopeContainer?.SessionId;
 
+    // Resolve ILoggingService from request scope
+    using var scope = _serviceProvider.CreateScope();
+    var loggingService = scope.ServiceProvider.GetRequiredService<ILoggingService>();
+    
     // Add logging method to context for enhanced diagnostics
-    var loggingMethod = await _loggingService.GetLoggingMethodAsync(context.RequestAborted);
+    var loggingMethod = await loggingService.GetLoggingMethodAsync(context.RequestAborted);
 
     // Replace the current logger in the logging context
     using (Serilog.Context.LogContext.PushProperty("ScopeId", scopeId))

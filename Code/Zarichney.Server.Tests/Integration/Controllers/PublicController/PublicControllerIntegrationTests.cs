@@ -2,9 +2,10 @@ using FluentAssertions;
 using Refit;
 using Xunit;
 using Xunit.Abstractions;
-using Zarichney.Services.Status;
+using Zarichney.Client.Contracts;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
+using ExternalServices = Zarichney.Services.Status.ExternalServices;
 
 namespace Zarichney.Tests.Integration.Controllers.PublicController;
 
@@ -121,6 +122,118 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture,
     {
       item.Should().NotBeNull(because: "each configuration item should not be null");
       item.Name.Should().NotBeNullOrWhiteSpace(because: "each item should have a name");
+    }
+  }
+
+  /// <summary>
+  /// Tests that the logging status endpoint returns an OK result with logging system status information.
+  /// This corresponds to the GetLoggingStatus method in PublicController, mapped to /api/logging/status.
+  /// </summary>
+  [Fact]
+  [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
+  [LogTestStartEnd]
+  public async Task GetLoggingStatus_WhenCalled_ReturnsLoggingStatusInfo()
+  {
+    using (CreateTestMethodContext(nameof(GetLoggingStatus_WhenCalled_ReturnsLoggingStatusInfo)))
+    {
+      // Act
+      var statusResponse = await _apiClientFixture.UnauthenticatedPublicApi.Status2();
+      var loggingStatus = statusResponse.Content;
+
+      // Assert
+      statusResponse.Should().NotBeNull(
+        because: "response should contain logging status information");
+
+      loggingStatus.Should().NotBeNull(
+        because: "logging status should not be null");
+
+      loggingStatus.SeqAvailable.Should().NotBeNull(
+        "Seq availability status should be provided");
+
+      loggingStatus.Method.Should().NotBeNull(
+        because: "active logging method should be specified");
+
+      // SeqUrl can be null if no Seq is configured, which is acceptable
+    }
+  }
+
+  /// <summary>
+  /// Tests that the logging test Seq connectivity endpoint handles requests properly.
+  /// This corresponds to the TestSeqConnectivity method in PublicController, mapped to /api/logging/test-seq.
+  /// </summary>
+  [Fact]
+  [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
+  [LogTestStartEnd]
+  public async Task TestSeqConnectivity_WhenCalledWithValidRequest_ReturnsResult()
+  {
+    using (CreateTestMethodContext(nameof(TestSeqConnectivity_WhenCalledWithValidRequest_ReturnsResult)))
+    {
+      // Arrange
+      var testRequest = new TestSeqRequest("http://localhost:5341");
+
+      // Act
+      var connectivityResponse = await _apiClientFixture.UnauthenticatedPublicApi.TestSeq(testRequest);
+      var connectivityResult = connectivityResponse.Content;
+
+      // Assert
+      connectivityResponse.Should().NotBeNull(
+        because: "response should contain connectivity test results");
+
+      connectivityResult.Should().NotBeNull(
+        because: "connectivity test result should not be null");
+
+      connectivityResult.IsConnected.Should().NotBeNull(
+        "connectivity test should indicate success or failure");
+
+      connectivityResult.Url.Should().NotBeNullOrWhiteSpace(
+        because: "tested URL should be provided");
+
+      // Response time can be -1 for failed connections, which is acceptable
+      connectivityResult.ResponseTime.Should().NotBeNull(
+        because: "response time should be provided");
+
+      // Error message is provided if connection fails, but we won't enforce it
+      // since the exact behavior may vary based on network conditions
+    }
+  }
+
+  /// <summary>
+  /// Tests that the logging methods endpoint returns available logging methods.
+  /// This corresponds to the GetAvailableLoggingMethods method in PublicController, mapped to /api/logging/methods.
+  /// </summary>
+  [Fact]
+  [Trait(TestCategories.Category, TestCategories.MinimalFunctionality)]
+  [LogTestStartEnd]
+  public async Task GetLoggingMethods_WhenCalled_ReturnsAvailableLogingMethods()
+  {
+    using (CreateTestMethodContext(nameof(GetLoggingMethods_WhenCalled_ReturnsAvailableLogingMethods)))
+    {
+      // Act
+      var methodsResponse = await _apiClientFixture.UnauthenticatedPublicApi.Methods();
+      var loggingMethods = methodsResponse.Content;
+
+      // Assert
+      methodsResponse.Should().NotBeNull(
+        because: "response should contain logging methods information");
+
+      loggingMethods.Should().NotBeNull(
+        because: "logging methods result should not be null");
+
+      // Check that at least one logging method is available
+      var hasAnyMethod = loggingMethods.NativeSeq != null || 
+                        loggingMethods.DockerSeq != null || 
+                        loggingMethods.FileLogging != null;
+      hasAnyMethod.Should().BeTrue(
+        because: "at least one logging method should be available");
+
+      loggingMethods.CurrentMethod.Should().NotBeNullOrWhiteSpace(
+        because: "current logging method should be specified");
+
+      // Verify current method is one of the expected method names
+      // The actual method names are more descriptive than the property names
+      var validMethods = new[] { "Native Seq", "Docker Seq", "File Logging (Fallback)" };
+      validMethods.Should().Contain(loggingMethods.CurrentMethod,
+        because: "current method should be one of the valid logging methods");
     }
   }
 }
