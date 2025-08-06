@@ -20,6 +20,7 @@ using Zarichney.Services.PdfGeneration;
 using Zarichney.Services.Status;
 using Zarichney.Services.Status.Proxies;
 using Zarichney.Services.Web;
+using Zarichney.Services.Logging;
 
 namespace Zarichney.Startup;
 
@@ -57,6 +58,7 @@ public class ServiceStartup
     services.AddAutoMapper(typeof(Program));
     services.AddMemoryCache();
     services.AddSessionManagement();
+    services.AddRequestResponseLogger();
 
     ConfigureEmailServices(services);
     ConfigureOpenAiServices(services);
@@ -223,6 +225,10 @@ public class ServiceStartup
 
     // Status Service - provides configuration and feature availability status
     services.AddSingleton<IStatusService, StatusService>();
+
+    // Logging Service - provides centralized logging system management
+    services.AddScoped<ILoggingService, LoggingService>();
+    services.AddHttpClient<LoggingService>();
 
     // Repositories
     services.AddSingleton<ILlmRepository, LlmRepository>();
