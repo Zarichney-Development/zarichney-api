@@ -403,6 +403,50 @@ validate_test_baselines() {
             fi
         fi
         
+        # Phase 3: Progressive coverage analysis and dynamic quality gates
+        local progressive_coverage_exists
+        progressive_coverage_exists=$(jq -e '.progressiveCoverage' "$baseline_file" >/dev/null 2>&1 && echo "true" || echo "false")
+        
+        if [[ "$progressive_coverage_exists" == "true" ]]; then
+            log_info "📈 Progressive Coverage Analysis:"
+            
+            # Extract progressive coverage data
+            local current_phase next_target coverage_gap is_on_track required_velocity
+            current_phase=$(jq -r '.progressiveCoverage.currentPhase // "Unknown"' "$baseline_file")
+            next_target=$(jq -r '.progressiveCoverage.nextTarget // 0' "$baseline_file")
+            coverage_gap=$(jq -r '.progressiveCoverage.coverageGap // 0' "$baseline_file")
+            is_on_track=$(jq -r '.progressiveCoverage.isOnTrack // false' "$baseline_file")
+            required_velocity=$(jq -r '.progressiveCoverage.requiredVelocity // 0' "$baseline_file")
+            
+            # Log progressive coverage status
+            log_info "  Current Phase: $current_phase"
+            log_info "  Next Target: ${next_target}% (Gap: ${coverage_gap}%)"
+            log_info "  Required Velocity: ${required_velocity}%/month for 90% by Jan 2026"
+            
+            if [[ "$is_on_track" == "true" ]]; then
+                log_success "  ✅ Coverage progression on track"
+            else
+                log_warning "  ⚠️ Coverage progression behind schedule - acceleration needed"
+            fi
+            
+            # Dynamic quality gate adjustment based on progressive phase
+            local current_coverage
+            current_coverage=$(jq -r '.metrics.lineCoverage // 0' "$baseline_file")
+            
+            # Set progressive coverage outputs
+            if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+                {
+                    echo "current_coverage_phase=$current_phase"
+                    echo "next_coverage_target=$next_target"
+                    echo "coverage_gap=$coverage_gap"
+                    echo "progression_on_track=$is_on_track"
+                    echo "required_velocity=$required_velocity"
+                } >> "$GITHUB_OUTPUT"
+            fi
+        else
+            log_info "No progressive coverage analysis data available"
+        fi
+        
         # Set GitHub Actions outputs for baseline validation
         if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
             {
