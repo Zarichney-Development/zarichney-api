@@ -206,61 +206,78 @@ runs:
           INFRASTRUCTURE_COUNT=$(( SKIPPED_TESTS * 25 / 100 ))
           HARDCODED_COUNT=$(( SKIPPED_TESTS * 5 / 100 ))
           
-          SKIP_ANALYSIS_JSON=$(cat << EOF
-{
-  "externalServices": {
-    "categoryType": "expected",
-    "skippedCount": $EXTERNAL_SERVICES_COUNT,
-    "isExpected": true,
-    "reason": "External service dependencies not configured"
-  },
-  "infrastructure": {
-    "categoryType": "expected",
-    "skippedCount": $INFRASTRUCTURE_COUNT,
-    "isExpected": true,
-    "reason": "Infrastructure dependencies unavailable"
-  },
-  "hardcodedSkips": {
-    "categoryType": "problematic",
-    "skippedCount": $HARDCODED_COUNT,
-    "isExpected": false,
-    "reason": "Hardcoded Skip attributes requiring review"
-  }
-}
-EOF
-          )
+          # Generate JSON using jq to avoid YAML parsing issues with HEREDOC
+          SKIP_ANALYSIS_JSON=$(jq -n \
+            --argjson ext_count "$EXTERNAL_SERVICES_COUNT" \
+            --argjson infra_count "$INFRASTRUCTURE_COUNT" \
+            --argjson hardcoded_count "$HARDCODED_COUNT" \
+            '{
+              "externalServices": {
+                "categoryType": "expected",
+                "skippedCount": $ext_count,
+                "isExpected": true,
+                "reason": "External service dependencies not configured"
+              },
+              "infrastructure": {
+                "categoryType": "expected", 
+                "skippedCount": $infra_count,
+                "isExpected": true,
+                "reason": "Infrastructure dependencies unavailable"
+              },
+              "hardcodedSkips": {
+                "categoryType": "problematic",
+                "skippedCount": $hardcoded_count,
+                "isExpected": false,
+                "reason": "Hardcoded Skip attributes requiring review"
+              }
+            }')
         fi
         
-        # Create baseline validation JSON file
-        cat > "$BASELINE_VALIDATION_FILE" << EOF
-{
-  "timestamp": "$(date -Iseconds)",
-  "environment": {
-    "classification": "$ENVIRONMENT_CLASSIFICATION",
-    "description": "$ENVIRONMENT_DESCRIPTION",
-    "expectedSkipPercentage": $EXPECTED_SKIP_PERCENTAGE
-  },
-  "metrics": {
-    "totalTests": $TOTAL_TESTS,
-    "skippedTests": $SKIPPED_TESTS,
-    "failedTests": $FAILED_TESTS,
-    "skipPercentage": $SKIP_PERCENTAGE,
-    "lineCoverage": $LINE_COVERAGE
-  },
-  "baselines": {
-    "skipThreshold": $EXPECTED_SKIP_PERCENTAGE,
-    "coverageBaseline": $COVERAGE_BASELINE,
-    "coverageRegressionTolerance": $COVERAGE_TOLERANCE
-  },
-  "validation": {
-    "passesThresholds": $VALIDATION_PASSED,
-    "violationsCount": $VIOLATIONS_COUNT,
-    "violations": $VIOLATIONS_JSON,
-    "recommendations": $RECOMMENDATIONS_JSON
-  },
-  "skipAnalysis": $SKIP_ANALYSIS_JSON
-}
-EOF
+        # Create baseline validation JSON file using jq to avoid YAML parsing issues
+        jq -n \
+          --arg timestamp "$(date -Iseconds)" \
+          --arg classification "$ENVIRONMENT_CLASSIFICATION" \
+          --arg description "$ENVIRONMENT_DESCRIPTION" \
+          --argjson expected_skip "$EXPECTED_SKIP_PERCENTAGE" \
+          --argjson total_tests "$TOTAL_TESTS" \
+          --argjson skipped_tests "$SKIPPED_TESTS" \
+          --argjson failed_tests "$FAILED_TESTS" \
+          --argjson skip_percentage "$SKIP_PERCENTAGE" \
+          --argjson line_coverage "$LINE_COVERAGE" \
+          --argjson coverage_baseline "$COVERAGE_BASELINE" \
+          --argjson coverage_tolerance "$COVERAGE_TOLERANCE" \
+          --argjson validation_passed "$VALIDATION_PASSED" \
+          --argjson violations_count "$VIOLATIONS_COUNT" \
+          --argjson violations "$VIOLATIONS_JSON" \
+          --argjson recommendations "$RECOMMENDATIONS_JSON" \
+          --argjson skip_analysis "$SKIP_ANALYSIS_JSON" \
+          '{
+            "timestamp": $timestamp,
+            "environment": {
+              "classification": $classification,
+              "description": $description,
+              "expectedSkipPercentage": $expected_skip
+            },
+            "metrics": {
+              "totalTests": $total_tests,
+              "skippedTests": $skipped_tests,
+              "failedTests": $failed_tests,
+              "skipPercentage": $skip_percentage,
+              "lineCoverage": $line_coverage
+            },
+            "baselines": {
+              "skipThreshold": $expected_skip,
+              "coverageBaseline": $coverage_baseline,
+              "coverageRegressionTolerance": $coverage_tolerance
+            },
+            "validation": {
+              "passesThresholds": ($validation_passed == "true"),
+              "violationsCount": $violations_count,
+              "violations": $violations,
+              "recommendations": $recommendations
+            },
+            "skipAnalysis": $skip_analysis
+          }' > "$BASELINE_VALIDATION_FILE"
         
         # Set outputs
         echo "validation-passed=$VALIDATION_PASSED" >> $GITHUB_OUTPUT
