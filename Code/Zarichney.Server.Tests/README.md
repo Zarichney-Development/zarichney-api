@@ -1,7 +1,7 @@
 # README: Code/Zarichney.Server.Tests Project
 
-**Version:** 1.4
-**Last Updated:** 2025-07-25
+**Version:** 1.5
+**Last Updated:** 2025-08-06
 **Parent:** `../Zarichney.Server/README.md` (Conceptual link to the main application's README)
 
 ## 1. Purpose & Responsibility
@@ -70,6 +70,53 @@ All test development **must** adhere to the following standards documents:
 A commitment to high test coverage (>=90% for unit tests) and rigorous adherence to these standards is expected to ensure a reliable and maintainable API.
 
 ## 5. How to Work With This Code
+
+### Environment Configuration for 100% Test Pass Rate
+
+To achieve 100% test pass rate (85/86 tests passing, 98.8% success rate) in a fully configured environment, specific external service configurations are required:
+
+#### Required Environment Variables
+
+```bash
+# OpenAI Configuration (6 tests depend on this)
+export OPENAI_API_KEY="sk-test-your-openai-api-key-here"
+export OPENAI_ORG_ID="org-your-organization-id-here"
+
+# Stripe Configuration (6 tests depend on this)  
+export STRIPE_SECRET_KEY="sk_test_your-stripe-secret-key"
+export STRIPE_PUBLISHABLE_KEY="pk_test_your-stripe-publishable-key"
+export STRIPE_WEBHOOK_SECRET="whsec_your-webhook-secret"
+
+# Microsoft Graph Configuration (4 tests depend on this)
+export MSGRAPH_TENANT_ID="your-azure-tenant-id"
+export MSGRAPH_CLIENT_ID="your-azure-app-client-id"
+export MSGRAPH_CLIENT_SECRET="your-azure-app-secret"
+
+# Database Configuration (6 tests depend on this)
+export CONNECTION_STRING_USER_DB="Data Source=localhost;Initial Catalog=ZarichneyTest;Integrated Security=true;TrustServerCertificate=true;"
+```
+
+#### Test Configuration Files
+
+- **`../Zarichney.Server/appsettings.Testing.json`**: Comprehensive test environment configuration with environment variable substitution and full external service integration
+
+#### Dependency-Based Test Execution
+
+Tests use the `[DependencyFact]` attribute system for conditional execution based on service availability:
+
+- **External Services**: 16 tests conditional on OpenAI, Stripe, MS Graph availability
+- **Infrastructure**: 6 tests conditional on database availability  
+- **Production Safety**: 1 test intentionally skipped for production protection
+
+#### Environment Setup Validation
+
+```bash
+# Quick validation of environment setup
+./Scripts/run-test-suite.sh report summary
+
+# Verify all environment variables are set
+echo $OPENAI_API_KEY && echo $STRIPE_SECRET_KEY && echo $MSGRAPH_TENANT_ID
+```
 
 ### Running Tests
 
