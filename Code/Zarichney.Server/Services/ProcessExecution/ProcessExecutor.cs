@@ -29,12 +29,24 @@ public class ProcessExecutor(ILogger<ProcessExecutor> logger) : IProcessExecutor
       using var process = Process.Start(processInfo);
       if (process != null)
       {
-        var output = await process.StandardOutput.ReadToEndAsync();
-        
+        // Start reading stdout and stderr asynchronously and in parallel
+        var outputTask = process.StandardOutput.ReadToEndAsync();
+        var errorTask = process.StandardError.ReadToEndAsync();
+
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutCts.CancelAfter(timeoutMs);
-        
+
+        // Wait for process exit and both output tasks
         await process.WaitForExitAsync(timeoutCts.Token);
+        var output = await outputTask;
+        var error = await errorTask;
+
+        // Log error output if present (for debugging)
+        if (!string.IsNullOrWhiteSpace(error))
+        {
+          logger.LogDebug("Command stderr output: {Error}", error);
+        }
+
         return (process.ExitCode, output);
       }
 
