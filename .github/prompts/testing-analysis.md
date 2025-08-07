@@ -54,6 +54,13 @@ Before analyzing any test changes, you MUST perform comprehensive testing contex
    - Understand current coverage metrics and trends
    - Note any quality gate flexibility (--allow-low-coverage scenarios)
    - Identify critical vs non-critical testing areas
+
+6. **Review Test Suite Baseline Standards (Phase 2 Enhancement):**
+   - Examine `baseline_validation.json` if present in TestResults/
+   - Understand environment-specific skip thresholds (26.7% unconfigured, 1.2% configured, 0% production)
+   - Review current 14.22% coverage baseline with progressive targets (20% → 35% → 50% → 90%)
+   - Analyze skip categorization: expected (external services, infrastructure) vs problematic (hardcoded skips)
+   - Note baseline validation results and any threshold violations or recommendations
 </context_ingestion>
 
 <analysis_instructions>
@@ -154,6 +161,42 @@ Review available test execution artifacts:
 
 Label findings as `[EXECUTION_SUCCESS]`, `[EXECUTION_ISSUES]`, or `[EXECUTION_FAILURES]`.
 </step_4_execution_results_analysis>
+
+<step_4a_baseline_validation_analysis>
+**Step 4a: Test Suite Baseline Analysis (Phase 2 Enhancement)**
+Review baseline validation results if available:
+
+**Environment Classification Analysis:**
+- Identify detected test environment (unconfigured/configured/production)
+- Validate environment classification matches expected CI/CD context
+- Check if environment-specific thresholds are appropriate for current deployment scenario
+
+**Skip Rate Analysis:**
+- Review actual skip percentage vs environment-specific thresholds
+- Analyze skip categorization breakdown (external services, infrastructure, hardcoded)
+- Identify expected vs problematic skips requiring attention
+- Assess impact of external service availability on test completeness
+
+**Coverage Baseline Validation:**
+- Compare current coverage vs 14.22% baseline with 1% regression tolerance
+- Evaluate progress toward progressive targets (20% → 35% → 50% → 90%)
+- Assess coverage trend and recommend incremental improvement strategies
+- Flag any coverage degradation requiring immediate attention
+
+**Baseline Violation Assessment:**
+- Review any baseline violations and their severity
+- Evaluate recommended actions from baseline validation
+- Prioritize baseline-related improvements within overall test strategy
+- Identify opportunities to improve environment configuration for better test coverage
+
+**Progressive Improvement Alignment:**
+- Check if PR changes align with progressive coverage improvement goals
+- Suggest specific improvements to move toward next coverage target
+- Recommend strategies to reduce skip rates through better service configuration
+- Identify infrastructure improvements that could enhance test reliability
+
+Label findings as `[BASELINE_COMPLIANT]`, `[BASELINE_ACCEPTABLE]`, or `[BASELINE_VIOLATIONS]`.
+</step_4a_baseline_validation_analysis>
 
 <step_5_ai_coder_education_assessment>
 **Step 5: AI Coder Learning Pattern Analysis**

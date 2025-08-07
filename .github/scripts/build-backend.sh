@@ -119,6 +119,7 @@ main() {
     if [[ "$SKIP_TESTS" != "true" ]]; then
         run_comprehensive_tests
         parse_test_results
+        validate_test_baselines
         # Quality gates are validated within the test suite
     fi
     
@@ -340,6 +341,83 @@ validate_quality_gates() {
         return 1
     else
         log_success "All quality gates passed"
+        return 0
+    fi
+}
+
+validate_test_baselines() {
+    log_section "Validating Test Suite Baselines"
+    
+    local results_file="./TestResults/parsed_results.json"
+    local coverage_file="./TestResults/coverage_results.json"
+    local baseline_file="./TestResults/baseline_validation.json"
+    
+    if [[ ! -f "$results_file" ]]; then
+        log_warning "Cannot validate test baselines - results file missing"
+        return 0
+    fi
+    
+    # Check if baseline validation was already performed by the test suite script
+    if [[ -f "$baseline_file" ]]; then
+        log_info "Using existing baseline validation results from test suite script"
+        
+        # Extract validation results
+        local validation_passed environment_classification skip_percentage violations_count
+        validation_passed=$(jq -r '.validation.passesThresholds // false' "$baseline_file")
+        environment_classification=$(jq -r '.environment.classification // "unknown"' "$baseline_file")
+        skip_percentage=$(jq -r '.metrics.skipPercentage // 0' "$baseline_file")
+        violations_count=$(jq -r '.validation.violationsCount // 0' "$baseline_file")
+        
+        # Log baseline validation summary
+        log_info "Baseline Validation Results:"
+        log_info "  Environment: $environment_classification"
+        log_info "  Skip Percentage: ${skip_percentage}%"
+        log_info "  Violations: $violations_count"
+        
+        if [[ "$validation_passed" == "true" ]]; then
+            log_success "Test suite baselines validation passed"
+        else
+            log_warning "Test suite baselines validation detected issues:"
+            
+            # Extract and display violations
+            local violations
+            violations=$(jq -r '.validation.violations[]?' "$baseline_file" 2>/dev/null || echo "")
+            if [[ -n "$violations" ]]; then
+                while IFS= read -r violation; do
+                    if [[ -n "$violation" ]]; then
+                        log_warning "  ❌ $violation"
+                    fi
+                done <<< "$violations"
+            fi
+            
+            # Extract and display recommendations  
+            local recommendations
+            recommendations=$(jq -r '.validation.recommendations[]?' "$baseline_file" 2>/dev/null || echo "")
+            if [[ -n "$recommendations" ]]; then
+                log_info "Recommendations:"
+                while IFS= read -r recommendation; do
+                    if [[ -n "$recommendation" ]]; then
+                        log_info "  💡 $recommendation"
+                    fi
+                done <<< "$recommendations"
+            fi
+        fi
+        
+        # Set GitHub Actions outputs for baseline validation
+        if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+            {
+                echo "baseline_validation_passed=$validation_passed"
+                echo "environment_classification=$environment_classification"
+                echo "skip_percentage=$skip_percentage"
+                echo "violations_count=$violations_count"
+            } >> "$GITHUB_OUTPUT"
+        fi
+        
+        # In CI/CD, baseline validation issues are warnings, not failures
+        # The test suite script handles the actual quality gate logic
+        return 0
+    else
+        log_warning "No baseline validation results found - test suite may not have run baseline validation"
         return 0
     fi
 }

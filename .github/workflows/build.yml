@@ -136,6 +136,15 @@ jobs:
           path: artifacts/backend/
           retention-days: 7
 
+      - name: Validate test suite baselines
+        if: always()
+        id: validate-baselines
+        uses: ./.github/actions/shared/validate-test-suite
+        with:
+          test-results-path: './TestResults'
+          fail-on-violations: 'false'  # Warning mode - don't fail build on baseline issues
+          upload-artifacts: 'false'     # We'll handle artifacts separately
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
