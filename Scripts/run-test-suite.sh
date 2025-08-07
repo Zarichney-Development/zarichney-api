@@ -1818,7 +1818,7 @@ generate_json_report() {
             fi
         else
             # Fallback if jq not available
-            echo '{"error": "JSON processing not available", "results_file": "'$results_file'", "coverage_file": "'$coverage_file'", "baseline_file": "'$baseline_file'"}'
+            echo '{"error": "JSON processing not available", "results_file": "'"$(json_escape "$results_file")"'", "coverage_file": "'"$(json_escape "$coverage_file")"'", "baseline_file": "'"$(json_escape "$baseline_file")"'"}'
         fi
     else
         echo '{"error": "Results files not found"}'
