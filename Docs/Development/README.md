@@ -1,6 +1,6 @@
 # Module/Directory: Docs/Development
 
-**Last Updated:** 2025-05-25
+**Last Updated:** 2025-08-07
 
 > **Parent:** [`Docs`](../README.md)
 
@@ -19,6 +19,8 @@
     * [`TestCoverageWorkflow.md`](./TestCoverageWorkflow.md): Details the step-by-step workflow for the AI Coder performing test coverage enhancement tasks.
     * [`LoggingGuide.md`](./LoggingGuide.md): Comprehensive guide for the enhanced logging system, including configuration and best practices.
     * [`TestArtifactsGuide.md`](./TestArtifactsGuide.md): Guide for understanding and using CI/CD test artifacts including coverage reports and test results.
+    * [`TestSuiteBaselineGuide.md`](./TestSuiteBaselineGuide.md): Practical interpretation guide for test suite baseline validation results, troubleshooting workflows, and actionable guidance for achieving progressive coverage targets.
+    * [`TestSuiteEnvironmentSetup.md`](./TestSuiteEnvironmentSetup.md): Comprehensive environment setup requirements for all test classifications, external service configuration, and optimization strategies to minimize skip rates.
     * [`ShortTermRoadmap.md`](./ShortTermRoadmap.md): Captures planned enhancements and deferred items for the codebase and development workflow.
 * **Related Templates (Located in /Docs/Templates/):**
     * [`../Templates/AICoderPromptTemplate.md`](../Templates/AICoderPromptTemplate.md): The mandatory template structure used by the Planning Assistant to generate prompts for AI Coders performing coding tasks.

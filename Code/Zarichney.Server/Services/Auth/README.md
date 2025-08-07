@@ -1,6 +1,6 @@
 # Module/Directory: /Auth
 
-**Last Updated:** 2025-05-22
+**Last Updated:** 2025-08-05
 
 > **Parent:** [`Server`](../README.md)
 
@@ -43,7 +43,7 @@
     * `AuthenticationMiddleware`: Middleware to handle authentication via `X-Api-Key` header or JWT. Respects endpoints marked with the `[AllowAnonymous]` attribute and skips authentication for them. [cite: Zarichney.Server/Services/Auth/AuthenticationMiddleware.cs]
     * `RefreshTokenCleanupService`: Background service to remove expired/used tokens. [cite: Zarichney.Server/Auth/RefreshTokenCleanupService.cs]
     * `MockAuthHandler`: Authentication handler for non-Production environments when Identity DB is unavailable. Creates mock authenticated users with configurable roles. [cite: Zarichney.Server/Services/Auth/MockAuthHandler.cs]
-    * `RoleInitializer`: Hosted service that initializes application roles and seeds a default administrator user in non-Production environments when a real database is available. [cite: Zarichney.Server/Auth/RoleInitializer.cs]
+    * `RoleInitializer`: Hosted service that initializes application roles and seeds a default administrator user in non-Production environments when a real database is available. Supports intelligent fallback logic: uses `EmailConfig.FromEmail` as admin username if `DefaultAdminUserConfig` is incomplete, falling back to `test@gmail.com` if both are missing. Uses `"nimda"` as default password for fallback scenarios. [cite: Zarichney.Server/Auth/RoleInitializer.cs]
 * **Core Logic Flow (Login):**
     1.  `AuthController.Login` receives email/password. [cite: Zarichney.Server/Controllers/AuthController.cs]
     2.  Delegates to `LoginCommandHandler` (MediatR). [cite: Zarichney.Server/Auth/Commands/LoginCommand.cs]
@@ -195,13 +195,13 @@ graph TD
         * **Postconditions:** No user identity is required. The authentication middleware will skip validation for these endpoints.
         * **Error Handling:** Standard response based on the controller/action logic, not related to authentication.
 * **Critical Assumptions:**
-    * **External Systems/Config:** Assumes PostgreSQL database is available and connection string (`IdentityConnection`) is correct. Assumes `JwtSettings` (SecretKey, Issuer, Audience, Expiry) are configured securely for production environments. For development/testing, the system will generate a temporary JWT signing key if `JwtSettings:SecretKey` is missing or invalid, but this is not suitable for production use. Assumes `IEmailService` is configured and functional for registration/password reset flows.
+    * **External Systems/Config:** Assumes PostgreSQL database is available and connection string (`IdentityConnection`) is correct. Assumes `JwtSettings` (SecretKey, Issuer, Audience, Expiry) are configured securely for production environments. For development/testing, the system will generate a temporary JWT signing key if `JwtSettings:SecretKey` is missing or invalid, but this is not suitable for production use. Assumes `IEmailService` is configured and functional for registration/password reset flows. For `RoleInitializer` admin user seeding: if `DefaultAdminUserConfig` is incomplete, assumes `EmailConfig.FromEmail` is available as fallback; otherwise uses `test@gmail.com` with `"nimda"` password.
     * **Data Integrity:** Assumes `UserDbContext` schema matches the entities defined in `Models/`. Relies on EF Core Identity for password hashing and token generation integrity. Assumes uniqueness constraints (Email, API Key value) are enforced by the database.
     * **Implicit Constraints:** Assumes client browsers correctly handle HttpOnly, Secure, SameSite=Lax cookies. Assumes clock synchronization between server instances for JWT validation (minimal skew allowed by default). `RefreshTokenCleanupService` relies on `BackgroundService` infrastructure.
 
 ## 4. Local Conventions & Constraints (Beyond Global Standards)
 
-* **Configuration:** Requires `ConnectionStrings:UserDatabase` and `JwtSettings` section in configuration (`appsettings.json`, user secrets, environment variables, AWS SSM/Secrets Manager). Optional `MockAuth` section for configuring mock authentication when Identity Database is unavailable in non-Production environments. [cite: Zarichney.Server/Startup/AuthenticationStartup.cs, Zarichney.Server/Config/ConfigModels.cs]
+* **Configuration:** Requires `ConnectionStrings:UserDatabase` and `JwtSettings` section in configuration (`appsettings.json`, user secrets, environment variables, AWS SSM/Secrets Manager). Optional `MockAuth` section for configuring mock authentication when Identity Database is unavailable in non-Production environments. Optional `DefaultAdminUser` section for explicit admin user configuration; if incomplete, `RoleInitializer` will use `EmailConfig.FromEmail` as fallback, or `test@gmail.com` with password `"nimda"` as ultimate fallback. See [Authentication System Maintenance Guide](../../../../Docs/Maintenance/AuthenticationSystem.md#7-default-admin-user-management) for operational details. [cite: Zarichney.Server/Startup/AuthenticationStartup.cs, Zarichney.Server/Config/ConfigModels.cs, Zarichney.Server/Auth/RoleInitializer.cs]
 * **Directory Structure:** Commands in `Commands/`, DB context/entities/DTOs in `Models/`, Migrations in `Migrations/`.
 * **Technology Choices:** ASP.NET Core Identity, EF Core with PostgreSQL (`Npgsql.EntityFrameworkCore.PostgreSQL`), MediatR for CQRS, JWT for access tokens.
 * **Security Notes:** 
@@ -225,7 +225,7 @@ graph TD
 
 * **Internal Code Dependencies:**
     * [`/Config`](../../Config/README.md) - Consumes `JwtSettings`, `ClientConfig`, `ServerConfig`.
-    * [`/Services/Email`](../Email/README.md) - Used by commands for sending confirmation/password reset emails.
+    * [`/Services/Email`](../Email/README.md) - Used by commands for sending confirmation/password reset emails. `EmailConfig.FromEmail` used by `RoleInitializer` as fallback for admin user seeding.
 * **External Library Dependencies:**
     * `Microsoft.AspNetCore.Identity.EntityFrameworkCore`: Core Identity framework.
     * `Microsoft.AspNetCore.Authentication.JwtBearer`: JWT validation middleware.

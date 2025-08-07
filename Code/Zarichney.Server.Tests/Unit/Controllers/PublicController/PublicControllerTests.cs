@@ -1,4 +1,5 @@
 using Zarichney.Services.Status;
+using Zarichney.Services.Logging;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -15,12 +16,14 @@ namespace Zarichney.Tests.Unit.Controllers.PublicController;
 public class PublicControllerTests
 {
   private readonly Mock<IStatusService> _mockStatusService;
+  private readonly Mock<ILoggingService> _mockLoggingService;
   private readonly Zarichney.Controllers.PublicController _controller;
 
   public PublicControllerTests()
   {
     _mockStatusService = new Mock<IStatusService>();
-    _controller = new Zarichney.Controllers.PublicController(_mockStatusService.Object);
+    _mockLoggingService = new Mock<ILoggingService>();
+    _controller = new Zarichney.Controllers.PublicController(_mockStatusService.Object, _mockLoggingService.Object);
   }
 
   /// <summary>

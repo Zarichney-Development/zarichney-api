@@ -34,7 +34,7 @@ jobs:
   deployment-decision:
     name: "Deployment Decision"
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.event == 'push'
+    if: github.event.workflow_run.event == 'push' || github.event_name == 'workflow_dispatch'
     outputs:
       deploy-backend: ${{ steps.decision.outputs.deploy-backend }}
       deploy-frontend: ${{ steps.decision.outputs.deploy-frontend }}
@@ -115,14 +115,22 @@ jobs:
           DEPLOY_BACKEND=false
           DEPLOY_FRONTEND=false
           
-          if [ "${{ steps.check-paths.outputs.backend-changed }}" = "true" ]; then
+          # For manual workflow_dispatch, deploy both by default for testing
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             DEPLOY_BACKEND=true
-            echo "📦 Backend changes detected - deployment required"
-          fi
-          
-          if [ "${{ steps.check-paths.outputs.frontend-changed }}" = "true" ]; then
             DEPLOY_FRONTEND=true
-            echo "🌐 Frontend changes detected - deployment required"
+            echo "🔧 Manual deployment triggered - deploying both backend and frontend for testing"
+          else
+            # Normal path-based decisions for workflow_run events
+            if [ "${{ steps.check-paths.outputs.backend-changed }}" = "true" ]; then
+              DEPLOY_BACKEND=true
+              echo "📦 Backend changes detected - deployment required"
+            fi
+            
+            if [ "${{ steps.check-paths.outputs.frontend-changed }}" = "true" ]; then
+              DEPLOY_FRONTEND=true
+              echo "🌐 Frontend changes detected - deployment required"
+            fi
           fi
           
           # Check for skip deployment commit messages

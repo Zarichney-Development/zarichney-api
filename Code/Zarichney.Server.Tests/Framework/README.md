@@ -1,7 +1,7 @@
 # README: /Framework Directory
 
-**Version:** 1.2
-**Last Updated:** 2025-07-25
+**Version:** 1.3
+**Last Updated:** 2025-08-07
 **Parent:** `../README.md`
 
 ## 1. Purpose & Responsibility
@@ -21,7 +21,7 @@ The components within this directory are designed to be leveraged by test cases 
 * **`./Attributes/README.md`**: Custom xUnit attributes for specialized test execution control (e.g., `[DependencyFact]`, `[DockerAvailableFact]`).
 * **`./Client/README.md`**: Contains the auto-generated Refit clients (multiple granular interfaces) for type-safe API interactions during integration tests.
 * **`./Fixtures/README.md`**: Core xUnit fixtures managing the lifecycle of expensive resources like the test server (`CustomWebApplicationFactory.cs`) and database (`DatabaseFixture.cs`).
-* **`./Helpers/README.md`**: Utility classes and extension methods that provide common helper functions for tests (e.g., `AuthTestHelper.cs`, `TestConfigurationHelper.cs`).
+* **`./Helpers/README.md`**: Utility classes and extension methods that provide common helper functions for tests (e.g., `AuthTestHelper.cs`, `TestConfigurationHelper.cs`). **Enhanced in v1.3** with test suite standards support (`TestSuiteStandardsHelper.cs`) and advanced environment detection (`TestEnvironmentHelper.cs`).
 * **`./Mocks/README.md`**: Infrastructure for mocking external dependencies, including mock factories (e.g., `MockStripeServiceFactory.cs`) and configurations for service virtualization tools like WireMock.Net (planned).
 * **`./TestData/AutoFixtureCustomizations/`** (Planned as per TDD FRMK-002): Will house advanced, reusable AutoFixture customizations (e.g., `ISpecimenBuilder`, `ICustomization`) for complex domain models.
 * **`./TestControllers/`**: Contains minimal ASP.NET Core controllers used specifically by the testing framework, for example, to test feature availability middleware or other pipeline components in isolation. (e.g., `FeatureTestController.cs`).
@@ -33,6 +33,7 @@ The framework components are designed to be composable and to integrate seamless
 * **Base Test Classes:** `IntegrationTestBase` and `DatabaseIntegrationTestBase` provide convenient access to these shared fixtures and common setup logic for integration tests.
 * **Dependency Abstraction:** External service interactions are abstracted via interfaces in the main `Zarichney.Server` project, allowing the `CustomWebApplicationFactory` to inject mock implementations (often from `./Mocks/Factories/`) or configure clients to point to virtualized services (WireMock.Net).
 * **Configuration Management:** Test configuration is handled centrally by `CustomWebApplicationFactory`, mimicking production loading patterns while allowing test-specific overrides (see `../TechnicalDesignDocument.md` Section 9). Helpers like `TestConfigurationHelper` can assist if isolated configuration instances are needed.
+* **Test Suite Standards (v1.3 Enhancement):** The framework now includes comprehensive baseline management via `TestSuiteStandardsHelper`, which loads standards from `appsettings.Testing.json` and provides environment-aware validation of test skip rates and coverage metrics. This supports AI-powered analysis by categorizing skips as expected (external services, infrastructure), acceptable (production safety), or problematic (hardcoded skips).
 
 ## 3. Interface Contract & Assumptions
 

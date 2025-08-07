@@ -1,6 +1,7 @@
 
 using Microsoft.AspNetCore.Identity;
 using Zarichney.Config;
+using Zarichney.Services.Email;
 
 namespace Zarichney.Services.Auth;
 
@@ -52,6 +53,7 @@ public class RoleInitializer(
   /// <summary>
   /// Seeds a default administrator user in non-Production environments if configured and the user doesn't already exist.
   /// This operation is idempotent and will not create duplicate users.
+  /// Uses EmailConfig.FromEmail as fallback for admin username if DefaultAdminUserConfig is incomplete.
   /// </summary>
   /// <param name="scope">The dependency injection scope.</param>
   private async Task SeedDefaultAdminUserAsync(IServiceScope scope)
@@ -65,28 +67,47 @@ public class RoleInitializer(
 
     // Get the default admin user configuration
     var adminConfig = configuration.GetSection("DefaultAdminUser").Get<DefaultAdminUserConfig>();
+    var emailConfig = configuration.GetSection("EmailConfig").Get<EmailConfig>();
 
-    // Skip if configuration is missing or incomplete
-    if (adminConfig == null ||
-        string.IsNullOrWhiteSpace(adminConfig.Email) ||
-        string.IsNullOrWhiteSpace(adminConfig.UserName) ||
-        string.IsNullOrWhiteSpace(adminConfig.Password))
+    // Determine admin user details with fallback logic
+    string adminEmail;
+    string adminUserName;
+    string adminPassword;
+
+    if (adminConfig != null && 
+        !string.IsNullOrWhiteSpace(adminConfig.Email) &&
+        !string.IsNullOrWhiteSpace(adminConfig.UserName) &&
+        !string.IsNullOrWhiteSpace(adminConfig.Password))
     {
-      logger.LogWarning("DefaultAdminUser configuration is missing or incomplete. Skipping admin user seeding.");
-      return;
+      // Use complete configuration
+      adminEmail = adminConfig.Email;
+      adminUserName = adminConfig.UserName;
+      adminPassword = adminConfig.Password;
+      logger.LogInformation("Using DefaultAdminUser configuration for admin user seeding.");
+    }
+    else
+    {
+      // Use fallback logic
+      adminEmail = !string.IsNullOrWhiteSpace(emailConfig?.FromEmail) 
+        ? emailConfig.FromEmail 
+        : "test@gmail.com";
+      adminUserName = adminEmail; // Use email as username for fallback
+      adminPassword = "nimda";
+      
+      logger.LogInformation("DefaultAdminUser configuration incomplete. Using fallback: email='{Email}', password='nimda'", adminEmail);
     }
 
     // Validate email format
-    if (!adminConfig.Email.Contains('@') || adminConfig.Email.Length > 254)
+    if (!adminEmail.Contains('@') || adminEmail.Length > 254)
     {
-      logger.LogError("DefaultAdminUser email '{Email}' is invalid. Skipping admin user seeding.", adminConfig.Email);
+      logger.LogError("Admin email '{Email}' is invalid. Skipping admin user seeding.", adminEmail);
       return;
     }
 
     // Validate username
-    if (adminConfig.UserName.Length > 256)
+    if (adminUserName.Length > 256)
     {
-      logger.LogError("DefaultAdminUser username is too long. Skipping admin user seeding.");
+      logger.LogError("Admin username is too long. Skipping admin user seeding.");
       return;
     }
 
@@ -97,8 +118,8 @@ public class RoleInitializer(
       var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
       // Check if user already exists by email or username
-      var existingUserByEmail = await userManager.FindByEmailAsync(adminConfig.Email);
-      var existingUserByUserName = await userManager.FindByNameAsync(adminConfig.UserName);
+      var existingUserByEmail = await userManager.FindByEmailAsync(adminEmail);
+      var existingUserByUserName = await userManager.FindByNameAsync(adminUserName);
 
       if (existingUserByEmail != null || existingUserByUserName != null)
       {
@@ -116,16 +137,16 @@ public class RoleInitializer(
       // Create new admin user
       var adminUser = new ApplicationUser
       {
-        UserName = adminConfig.UserName,
-        Email = adminConfig.Email,
+        UserName = adminUserName,
+        Email = adminEmail,
         EmailConfirmed = true // Auto-confirm email for dev environment
       };
 
-      var createResult = await userManager.CreateAsync(adminUser, adminConfig.Password);
+      var createResult = await userManager.CreateAsync(adminUser, adminPassword);
 
       if (createResult.Succeeded)
       {
-        logger.LogInformation("Default admin user created successfully: {Email}", adminConfig.Email);
+        logger.LogInformation("Default admin user created successfully: {Email}", adminEmail);
 
         // Assign admin role to the new user
         await EnsureUserInAdminRoleAsync(userManager, adminUser);

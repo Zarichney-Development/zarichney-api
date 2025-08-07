@@ -1,5 +1,6 @@
 using Zarichney.Config;
 using Zarichney.Services.Sessions;
+using Zarichney.Services.Logging;
 
 namespace Zarichney.Startup;
 

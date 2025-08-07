@@ -54,6 +54,22 @@ Before analyzing any test changes, you MUST perform comprehensive testing contex
    - Understand current coverage metrics and trends
    - Note any quality gate flexibility (--allow-low-coverage scenarios)
    - Identify critical vs non-critical testing areas
+
+6. **Review Test Suite Baseline Standards (Phase 2 Enhancement):**
+   - Examine `baseline_validation.json` if present in TestResults/
+   - Understand environment-specific skip thresholds (26.7% unconfigured, 1.2% configured, 0% production)
+   - Review current 14.22% coverage baseline with progressive targets (20% → 35% → 50% → 90%)
+   - Analyze skip categorization: expected (external services, infrastructure) vs problematic (hardcoded skips)
+   - Note baseline validation results and any threshold violations or recommendations
+
+7. **Progressive Coverage Framework Analysis (Phase 3 Enhancement):**
+   - Review `progressiveCoverage` section in baseline validation JSON
+   - Understand current phase classification and next target requirements
+   - Analyze coverage gap, velocity requirements, and timeline to 90% target (Jan 2026)
+   - Review phase-specific focus areas and strategic priorities
+   - Assess monthly velocity target (2.8%/month) vs actual progression rate
+   - Understand AI-driven recommendations for efficient coverage growth
+   - Note timeline-aware progression status (on-track, behind schedule, critical)
 </context_ingestion>
 
 <analysis_instructions>
@@ -154,6 +170,86 @@ Review available test execution artifacts:
 
 Label findings as `[EXECUTION_SUCCESS]`, `[EXECUTION_ISSUES]`, or `[EXECUTION_FAILURES]`.
 </step_4_execution_results_analysis>
+
+<step_4a_baseline_validation_analysis>
+**Step 4a: Test Suite Baseline Analysis (Phase 2 Enhancement)**
+Review baseline validation results if available:
+
+**Environment Classification Analysis:**
+- Identify detected test environment (unconfigured/configured/production)
+- Validate environment classification matches expected CI/CD context
+- Check if environment-specific thresholds are appropriate for current deployment scenario
+
+**Skip Rate Analysis:**
+- Review actual skip percentage vs environment-specific thresholds
+- Analyze skip categorization breakdown (external services, infrastructure, hardcoded)
+- Identify expected vs problematic skips requiring attention
+- Assess impact of external service availability on test completeness
+
+**Coverage Baseline Validation:**
+- Compare current coverage vs 14.22% baseline with 1% regression tolerance
+- Evaluate progress toward progressive targets (20% → 35% → 50% → 90%)
+- Assess coverage trend and recommend incremental improvement strategies
+- Flag any coverage degradation requiring immediate attention
+
+**Baseline Violation Assessment:**
+- Review any baseline violations and their severity
+- Evaluate recommended actions from baseline validation
+- Prioritize baseline-related improvements within overall test strategy
+- Identify opportunities to improve environment configuration for better test coverage
+
+**Progressive Improvement Alignment:**
+- Check if PR changes align with progressive coverage improvement goals
+- Suggest specific improvements to move toward next coverage target
+- Recommend strategies to reduce skip rates through better service configuration
+- Identify infrastructure improvements that could enhance test reliability
+
+Label findings as `[BASELINE_COMPLIANT]`, `[BASELINE_ACCEPTABLE]`, or `[BASELINE_VIOLATIONS]`.
+</step_4a_baseline_validation_analysis>
+
+<step_4b_progressive_coverage_analysis>
+**Step 4b: Progressive Coverage Growth Analysis (Phase 3 Enhancement)**
+Analyze progressive coverage status and provide strategic guidance:
+
+**Current Phase Assessment:**
+- Identify current coverage phase (Foundation/Growth/Maturity/Excellence/Mastery/Optimization)
+- Evaluate if current coverage aligns with expected phase characteristics
+- Assess phase-appropriate test development strategies being employed
+- Determine if test additions align with current phase focus areas
+
+**Next Target Analysis:**
+- Calculate coverage gap to next progressive target (20% → 35% → 50% → 75% → 90%)
+- Evaluate timeline feasibility for reaching next target by January 2026
+- Assess coverage velocity requirements and current progression rate
+- Identify high-impact areas for coverage improvement
+
+**Strategic Progression Guidance:**
+- Recommend phase-appropriate test scenarios and coverage priorities
+- Suggest specific focus areas based on current phase (service layers, edge cases, complex scenarios)
+- Provide timeline-aware recommendations for sustainable coverage growth
+- Identify opportunities for efficient coverage gains
+
+**Velocity and Timeline Assessment:**
+- Calculate required monthly coverage velocity (target: 2.8%/month for 90% by Jan 2026)
+- Evaluate if current testing approach supports required velocity
+- Assess sustainability of current progression rate
+- Recommend acceleration strategies if behind schedule
+
+**AI-Driven Coverage Intelligence:**
+- Analyze test gap opportunities based on untested code paths
+- Suggest coverage optimization strategies (high-impact vs low-effort tests)
+- Recommend automation opportunities to accelerate coverage growth
+- Identify systematic approaches to reduce testing effort while maximizing coverage
+
+**Phase-Specific Recommendations:**
+- **Phase 1 (14.22% → 20%)**: Focus on service layer basics, API contracts, core business logic
+- **Phase 2 (20% → 35%)**: Deepen service method coverage, integration scenarios, data validation
+- **Phase 3 (35% → 50%)**: Edge cases, error handling, input validation, boundary conditions
+- **Phase 4 (50% → 75%)**: Complex business scenarios, integration depth, cross-cutting concerns
+- **Phase 5 (75% → 90%)**: Comprehensive edge cases, performance scenarios, system integration
+
+Label findings as `[PROGRESSION_EXCELLENT]`, `[PROGRESSION_ON_TRACK]`, `[PROGRESSION_BEHIND]`, or `[PROGRESSION_CRITICAL]`.
+</step_4b_progressive_coverage_analysis>
 
 <step_5_ai_coder_education_assessment>
 **Step 5: AI Coder Learning Pattern Analysis**
@@ -287,6 +383,24 @@ Provide specific file:line references and actionable testing recommendations.
 - Always include edge case testing for new business logic
 - Use descriptive test names that explain the scenario being tested
 - Remember to test error conditions, not just happy path scenarios
+
+### 🎯 Progressive Coverage Analysis
+
+**Current Phase:** [Phase X - Description]  
+**Next Target:** [X.X%] (Gap: [X.X%])  
+**Timeline Status:** [On Track/Behind Schedule/Critical/Ahead]  
+**Required Velocity:** [X.X%/month] for 90% by Jan 2026
+
+**Strategic Recommendations:**
+- **Phase Focus Areas**: [List current phase priorities]
+- **High-Impact Opportunities**: [Specific areas for maximum coverage gain]
+- **Velocity Assessment**: [Analysis of current progression rate]
+- **Timeline Adjustments**: [Recommendations for meeting 90% target]
+
+**Coverage Progression Insights:**
+- **Efficient Coverage Gains**: [Low-effort, high-impact test scenarios]
+- **Strategic Test Development**: [Phase-appropriate testing priorities]
+- **AI-Driven Opportunities**: [Automated coverage improvement suggestions]
 
 ### 📈 Testing Health Metrics
 

@@ -1,6 +1,6 @@
 # Module/Directory: Docs
 
-**Last Updated:** 2025-05-04
+**Last Updated:** 2025-08-07
 
 > **Parent:** [`/`](../README.md)
 
@@ -22,7 +22,7 @@ The `/Docs` directory is organized into the following key areas:
 
 * **[`/Docs/Standards/`](./Standards/README.md): Mandatory Rules & Conventions**
     * Contains the official standards that **MUST** be followed for all development work.
-    * Includes rules for C# Coding (`CodingStandards.md`), Automated Testing (`TestingStandards.md`), Per-Directory Documentation (`DocumentationStandards.md`), Mermaid Diagramming (`DiagrammingStandards.md`), and Git/Task Management (`TaskManagementStandards.md`).
+    * Includes rules for C# Coding (`CodingStandards.md`), Automated Testing (`TestingStandards.md`), Test Suite Baselines & Progressive Coverage (`TestSuiteStandards.md`), Per-Directory Documentation (`DocumentationStandards.md`), Mermaid Diagramming (`DiagrammingStandards.md`), and Git/Task Management (`TaskManagementStandards.md`).
     * **Entry Point:** Consult these standards to understand the expected quality and conventions for code, tests, and documentation.
 
 * **[`/Docs/Templates/`](./Templates/README.md): Reusable Templates**

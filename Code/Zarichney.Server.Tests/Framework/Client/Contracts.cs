@@ -1423,6 +1423,190 @@ namespace Zarichney.Client.Contracts
     }
 
     /// <summary>
+    /// Information about a specific logging method
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial record LoggingMethodInfo
+    {
+        [System.Text.Json.Serialization.JsonConstructor]
+
+        public LoggingMethodInfo(bool? @available, string? @method, string? @path, int? @port, string? @serviceName)
+
+        {
+
+            this.Available = @available;
+
+            this.ServiceName = @serviceName;
+
+            this.Port = @port;
+
+            this.Method = @method;
+
+            this.Path = @path;
+
+        }    /// <summary>
+        /// Whether this logging method is available
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("available")]
+        public bool? Available { get; init; }
+
+        /// <summary>
+        /// Service name or container name (if applicable)
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("serviceName")]
+        public string? ServiceName { get; init; }
+
+        /// <summary>
+        /// Port number (if applicable)
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("port")]
+        public int? Port { get; init; }
+
+        /// <summary>
+        /// Description of the method
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("method")]
+        public string? Method { get; init; }
+
+        /// <summary>
+        /// File path (for file logging)
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("path")]
+        public string? Path { get; init; }
+
+    }
+
+    /// <summary>
+    /// Result model for available logging methods
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial record LoggingMethodsResult
+    {
+        [System.Text.Json.Serialization.JsonConstructor]
+
+        public LoggingMethodsResult(string? @currentMethod, LoggingMethodInfo? @dockerSeq, LoggingMethodInfo? @fileLogging, LoggingMethodInfo? @nativeSeq)
+
+        {
+
+            this.NativeSeq = @nativeSeq;
+
+            this.DockerSeq = @dockerSeq;
+
+            this.FileLogging = @fileLogging;
+
+            this.CurrentMethod = @currentMethod;
+
+        }
+        [System.Text.Json.Serialization.JsonPropertyName("nativeSeq")]
+        public LoggingMethodInfo? NativeSeq { get; init; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("dockerSeq")]
+        public LoggingMethodInfo? DockerSeq { get; init; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("fileLogging")]
+        public LoggingMethodInfo? FileLogging { get; init; }
+
+        /// <summary>
+        /// Description of the currently active method
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("currentMethod")]
+        public string? CurrentMethod { get; init; }
+
+    }
+
+    /// <summary>
+    /// Result model for logging system status
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial record LoggingStatusResult
+    {
+        [System.Text.Json.Serialization.JsonConstructor]
+
+        public LoggingStatusResult(string? @configuredSeqUrl, bool? @fallbackActive, string? @fileLoggingPath, string? @logLevel, string? @method, bool? @seqAvailable, string? @seqUrl, System.DateTimeOffset? @timestamp)
+
+        {
+
+            this.SeqAvailable = @seqAvailable;
+
+            this.SeqUrl = @seqUrl;
+
+            this.Method = @method;
+
+            this.FallbackActive = @fallbackActive;
+
+            this.ConfiguredSeqUrl = @configuredSeqUrl;
+
+            this.LogLevel = @logLevel;
+
+            this.FileLoggingPath = @fileLoggingPath;
+
+            this.Timestamp = @timestamp;
+
+        }    /// <summary>
+        /// Whether Seq is available and accessible
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("seqAvailable")]
+        public bool? SeqAvailable { get; init; }
+
+        /// <summary>
+        /// The active Seq URL if available
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("seqUrl")]
+        public string? SeqUrl { get; init; }
+
+        /// <summary>
+        /// Description of the current logging method
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("method")]
+        public string? Method { get; init; }
+
+        /// <summary>
+        /// Whether fallback logging is currently active
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("fallbackActive")]
+        public bool? FallbackActive { get; init; }
+
+        /// <summary>
+        /// The configured Seq URL from configuration
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("configuredSeqUrl")]
+        public string? ConfiguredSeqUrl { get; init; }
+
+        /// <summary>
+        /// The current log level setting
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("logLevel")]
+        public string? LogLevel { get; init; }
+
+        /// <summary>
+        /// The file logging path when using file fallback
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("fileLoggingPath")]
+        public string? FileLoggingPath { get; init; }
+
+        /// <summary>
+        /// Timestamp when the status was generated
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("timestamp")]
+        public System.DateTimeOffset? Timestamp { get; init; }
+
+    }
+
+    /// <summary>
     /// Request model for user login.
     /// </summary>
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -2824,6 +3008,65 @@ namespace Zarichney.Client.Contracts
     }
 
     /// <summary>
+    /// Result model for Seq connectivity testing
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial record SeqConnectivityResult
+    {
+        [System.Text.Json.Serialization.JsonConstructor]
+
+        public SeqConnectivityResult(string? @error, bool? @isConnected, long? @responseTime, System.DateTimeOffset? @testedAt, string? @url)
+
+        {
+
+            this.Url = @url;
+
+            this.IsConnected = @isConnected;
+
+            this.TestedAt = @testedAt;
+
+            this.ResponseTime = @responseTime;
+
+            this.Error = @error;
+
+        }    /// <summary>
+        /// The URL that was tested
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("url")]
+        public string? Url { get; init; }
+
+        /// <summary>
+        /// Whether the connection was successful
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("isConnected")]
+        public bool? IsConnected { get; init; }
+
+        /// <summary>
+        /// Timestamp when the test was performed
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("testedAt")]
+        public System.DateTimeOffset? TestedAt { get; init; }
+
+        /// <summary>
+        /// Response time in milliseconds (-1 if failed)
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("responseTime")]
+        public long? ResponseTime { get; init; }
+
+        /// <summary>
+        /// Error message if connection failed
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("error")]
+        public string? Error { get; init; }
+
+    }
+
+    /// <summary>
     /// Represents the status of a service based on its configuration availability.
     /// </summary>
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -2984,6 +3227,29 @@ namespace Zarichney.Client.Contracts
 
         [System.Text.Json.Serialization.JsonPropertyName("isAnalyzed")]
         public bool? IsAnalyzed { get; init; }
+
+    }
+
+    /// <summary>
+    /// Request model for testing Seq connectivity
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial record TestSeqRequest
+    {
+        [System.Text.Json.Serialization.JsonConstructor]
+
+        public TestSeqRequest(string? @url)
+
+        {
+
+            this.Url = @url;
+
+        }    /// <summary>
+        /// The Seq URL to test
+        /// </summary>
+
+        [System.Text.Json.Serialization.JsonPropertyName("url")]
+        public string? Url { get; init; }
 
     }
 

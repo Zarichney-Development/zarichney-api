@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  seq-integration:
+    image: datalust/seq:latest
+    container_name: seq-integration-test
+    environment:
+      - ACCEPT_EULA=Y
+    ports:
+      - "5342:80"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - integration-test
+
+  # Alternative Seq instance for testing multiple URL scenarios
+  seq-alternative:
+    image: datalust/seq:latest
+    container_name: seq-alternative-test
+    environment:
+      - ACCEPT_EULA=Y
+    ports:
+      - "8080:80"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - integration-test
+
+networks:
+  integration-test:
+    driver: bridge

@@ -202,14 +202,15 @@ public class RoleInitializerTests(ApiClientFixture apiClientFixture, ITestOutput
   }
 
   [DependencyFact(InfrastructureDependency.Database)]
-  public async Task SeedAdminUser_SkipsSeeding_IfConfigMissing()
+  public async Task SeedAdminUser_UsesFallback_WhenEmailConfigFromEmailProvided()
   {
     // Arrange
     await ResetDatabaseAsync();
 
     var testConfig = new Dictionary<string, string?>
     {
-      // Missing DefaultAdminUser configuration
+      // Missing DefaultAdminUser configuration but EmailConfig.FromEmail provided
+      { "EmailConfig:FromEmail", "fallback@example.com" },
       { $"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}", "Server=localhost;Database=test;User Id=test;Password=test;" }
     };
 
@@ -243,9 +244,142 @@ public class RoleInitializerTests(ApiClientFixture apiClientFixture, ITestOutput
     await roleInitializer.StartAsync(CancellationToken.None);
 
     // Assert
-    // Verify no users were created (since we didn't specify any admin user config)
-    var userCount = userManager.Users.Count();
-    userCount.Should().Be(0, "no admin user should be created when configuration is missing");
+    var createdUser = await userManager.FindByEmailAsync("fallback@example.com");
+    createdUser.Should().NotBeNull("admin user should be created using EmailConfig.FromEmail fallback");
+    createdUser.UserName.Should().Be("fallback@example.com", "username should use email as fallback");
+    createdUser.Email.Should().Be("fallback@example.com");
+    createdUser.EmailConfirmed.Should().BeTrue("email should be auto-confirmed in dev environment");
+
+    // Verify user is in admin role
+    var isInAdminRole = await userManager.IsInRoleAsync(createdUser, "admin");
+    isInAdminRole.Should().BeTrue("the fallback admin user should be assigned to the admin role");
+
+    // Verify user can authenticate with fallback password
+    var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<ApplicationUser>>();
+    var signInResult = await signInManager.CheckPasswordSignInAsync(createdUser, "nimda", false);
+    signInResult.Succeeded.Should().BeTrue("the fallback admin user should authenticate with 'nimda' password");
+  }
+
+  [DependencyFact(InfrastructureDependency.Database)]
+  public async Task SeedAdminUser_UsesDefaultFallback_WhenAllConfigMissing()
+  {
+    // Arrange
+    await ResetDatabaseAsync();
+
+    var testConfig = new Dictionary<string, string?>
+    {
+      // Missing both DefaultAdminUser and EmailConfig configuration
+      { $"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}", "Server=localhost;Database=test;User Id=test;Password=test;" }
+    };
+
+    await using var factory = Factory.ReplaceService(services =>
+    {
+      services.AddSingleton<IConfiguration>(_ => new ConfigurationBuilder()
+        .AddInMemoryCollection(testConfig)
+        .Build());
+
+      services.AddSingleton<IWebHostEnvironment>(_ =>
+        new TestWebHostEnvironment { EnvironmentName = "Development" });
+    });
+
+    using var scope = factory.Services.CreateScope();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<IRoleManager>();
+    var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    var environment = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<RoleInitializer>>();
+
+    // Ensure roles exist first
+    await roleManager.EnsureRolesCreatedAsync();
+
+    var roleInitializer = new RoleInitializer(
+      scope.ServiceProvider,
+      configuration,
+      environment,
+      logger);
+
+    // Act
+    await roleInitializer.StartAsync(CancellationToken.None);
+
+    // Assert
+    var createdUser = await userManager.FindByEmailAsync("test@gmail.com");
+    createdUser.Should().NotBeNull("admin user should be created using default fallback email");
+    createdUser.UserName.Should().Be("test@gmail.com", "username should use default fallback email");
+    createdUser.Email.Should().Be("test@gmail.com");
+    createdUser.EmailConfirmed.Should().BeTrue("email should be auto-confirmed in dev environment");
+
+    // Verify user is in admin role
+    var isInAdminRole = await userManager.IsInRoleAsync(createdUser, "admin");
+    isInAdminRole.Should().BeTrue("the default fallback admin user should be assigned to the admin role");
+
+    // Verify user can authenticate with fallback password
+    var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<ApplicationUser>>();
+    var signInResult = await signInManager.CheckPasswordSignInAsync(createdUser, "nimda", false);
+    signInResult.Succeeded.Should().BeTrue("the default fallback admin user should authenticate with 'nimda' password");
+  }
+
+  [DependencyFact(InfrastructureDependency.Database)]
+  public async Task SeedAdminUser_PrefersDefaultAdminUserConfig_OverFallback()
+  {
+    // Arrange
+    await ResetDatabaseAsync();
+
+    var testConfig = new Dictionary<string, string?>
+    {
+      // Both DefaultAdminUser and EmailConfig provided - should prefer DefaultAdminUser
+      { "DefaultAdminUser:Email", "primary@example.com" },
+      { "DefaultAdminUser:UserName", "primaryadmin" },
+      { "DefaultAdminUser:Password", "PrimaryPassword123!" },
+      { "EmailConfig:FromEmail", "fallback@example.com" },
+      { $"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}", "Server=localhost;Database=test;User Id=test;Password=test;" }
+    };
+
+    await using var factory = Factory.ReplaceService(services =>
+    {
+      services.AddSingleton<IConfiguration>(_ => new ConfigurationBuilder()
+        .AddInMemoryCollection(testConfig)
+        .Build());
+
+      services.AddSingleton<IWebHostEnvironment>(_ =>
+        new TestWebHostEnvironment { EnvironmentName = "Development" });
+    });
+
+    using var scope = factory.Services.CreateScope();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<IRoleManager>();
+    var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    var environment = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<RoleInitializer>>();
+
+    // Ensure roles exist first
+    await roleManager.EnsureRolesCreatedAsync();
+
+    var roleInitializer = new RoleInitializer(
+      scope.ServiceProvider,
+      configuration,
+      environment,
+      logger);
+
+    // Act
+    await roleInitializer.StartAsync(CancellationToken.None);
+
+    // Assert
+    var createdUser = await userManager.FindByEmailAsync("primary@example.com");
+    createdUser.Should().NotBeNull("admin user should be created using DefaultAdminUser config");
+    createdUser.UserName.Should().Be("primaryadmin", "username should use DefaultAdminUser config");
+    createdUser.Email.Should().Be("primary@example.com");
+
+    // Verify fallback user was NOT created
+    var fallbackUser = await userManager.FindByEmailAsync("fallback@example.com");
+    fallbackUser.Should().BeNull("fallback user should not be created when DefaultAdminUser config is complete");
+
+    // Verify user can authenticate with primary password (not fallback)
+    var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<ApplicationUser>>();
+    var signInResult = await signInManager.CheckPasswordSignInAsync(createdUser, "PrimaryPassword123!", false);
+    signInResult.Succeeded.Should().BeTrue("should authenticate with DefaultAdminUser password");
+
+    var fallbackSignInResult = await signInManager.CheckPasswordSignInAsync(createdUser, "nimda", false);
+    fallbackSignInResult.Succeeded.Should().BeFalse("should not authenticate with fallback password");
   }
 
   /// <summary>

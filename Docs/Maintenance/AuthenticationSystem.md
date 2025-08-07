@@ -168,7 +168,146 @@ Authentication settings are defined in `appsettings.json` and rely on secure con
 * Users cannot log in until their email is confirmed (`EmailConfirmed = true` in `AspNetUsers` table) [cite: Zarichney.Server/Services/Auth/Commands/LoginCommand.cs].
 * Email templates are stored in the `EmailTemplates` directory (`email-verification.html`, `base.html`) [cite: Docs/AuthSystemMaintenance.md].
 
-## 7. Password Reset
+## 7. Default Admin User Management
+
+### 7.1. Overview
+
+In non-Production environments, the system automatically creates a default administrator account on first startup when a database connection is available. This feature ensures developers have immediate admin access for initial setup and testing.
+
+### 7.2. Default Credentials
+
+The system uses the following configuration from `appsettings.json`:
+
+```json
+"DefaultAdminUser": {
+  "Email": "admin@localhost.dev",
+  "UserName": "admin",
+  "Password": "DevAdmin123!"
+}
+```
+
+### 7.3. Fallback Logic
+
+If the `DefaultAdminUser` configuration is incomplete or missing, the system uses intelligent fallback:
+
+1. **Primary**: Complete `DefaultAdminUser` configuration (all three fields)
+2. **Secondary**: `EmailConfig.FromEmail` as both email and username, password: `"nimda"`
+3. **Tertiary**: `"test@gmail.com"` as both email and username, password: `"nimda"`
+
+### 7.4. Security Requirements
+
+⚠️ **CRITICAL SECURITY NOTICE**:
+- These are development-only credentials
+- **NEVER** deploy to production with default credentials
+- Change credentials **immediately** after initial database setup
+- The feature is automatically disabled in Production environments
+
+### 7.5. Changing Admin Credentials
+
+#### Method 1: Via API (Recommended)
+
+1. Login with default credentials:
+   ```bash
+   POST /api/auth/login
+   {
+     "email": "admin@localhost.dev",
+     "password": "DevAdmin123!"
+   }
+   ```
+
+2. Change password:
+   ```bash
+   POST /api/auth/change-password
+   Authorization: Bearer [token]
+   {
+     "currentPassword": "DevAdmin123!",
+     "newPassword": "YourSecurePassword123!"
+   }
+   ```
+
+3. Update email if needed:
+   ```bash
+   POST /api/auth/update-email
+   Authorization: Bearer [token]
+   {
+     "newEmail": "your-email@domain.com"
+   }
+   ```
+
+#### Method 2: Via Database
+
+For direct database updates (password change still requires API):
+
+```sql
+-- Find the admin user
+SELECT "Id", "Email", "UserName" 
+FROM "AspNetUsers" 
+WHERE "Email" = 'admin@localhost.dev';
+
+-- Update email/username
+UPDATE "AspNetUsers" 
+SET "Email" = 'your-email@domain.com', 
+    "UserName" = 'your-username',
+    "NormalizedEmail" = 'YOUR-EMAIL@DOMAIN.COM',
+    "NormalizedUserName" = 'YOUR-USERNAME'
+WHERE "Email" = 'admin@localhost.dev';
+```
+
+**Note**: Password must be changed via API due to hashing requirements.
+
+#### Method 3: Via Configuration (Fresh Deployments Only)
+
+Before first deployment, update configuration:
+
+1. **appsettings.json**:
+   ```json
+   "DefaultAdminUser": {
+     "Email": "your-admin@domain.com",
+     "UserName": "youradmin",
+     "Password": "YourSecurePassword123!"
+   }
+   ```
+
+2. **Environment Variables**:
+   ```bash
+   export DefaultAdminUser__Email="your-admin@domain.com"
+   export DefaultAdminUser__UserName="youradmin"
+   export DefaultAdminUser__Password="YourSecurePassword123!"
+   ```
+
+3. **User Secrets** (Development):
+   ```bash
+   dotnet user-secrets set "DefaultAdminUser:Email" "your-admin@domain.com"
+   dotnet user-secrets set "DefaultAdminUser:UserName" "youradmin"
+   dotnet user-secrets set "DefaultAdminUser:Password" "YourSecurePassword123!"
+   ```
+
+### 7.6. Disabling Default Admin Creation
+
+The feature is automatically disabled when:
+- Environment is set to "Production"
+- No database connection string is configured
+- The admin user already exists
+
+To manually disable in non-Production:
+1. Remove the database connection string, OR
+2. Clear all `DefaultAdminUser` configuration values
+
+### 7.7. Troubleshooting
+
+**Admin not created:**
+- Check logs for `RoleInitializer` entries
+- Verify database connection string is configured
+- Ensure environment is not "Production"
+- Check if user already exists with the configured email
+
+**Cannot login with default credentials:**
+- Verify exact credentials from configuration/fallback
+- Check if password was already changed
+- Ensure email is confirmed (auto-confirmed by default)
+- Review logs for authentication errors
+
+## 8. Password Reset
 
 * User initiates via `/api/auth/forgot-password` with their email [cite: Zarichney.Server/Controllers/AuthController.cs].
 * System sends an email with a reset link containing a token (template: `password-reset.html`) [cite: Zarichney.Server/Services/Auth/Commands/ForgotPasswordCommand.cs].
@@ -176,14 +315,14 @@ Authentication settings are defined in `appsettings.json` and rely on secure con
 * Frontend submits email, token, and new password to `/api/auth/reset-password` [cite: Zarichney.Server/Controllers/AuthController.cs].
 * If successful, password is reset, and a confirmation email is sent (`password-reset-confirmation.html`) [cite: Zarichney.Server/Services/Auth/Commands/ResetPasswordCommand.cs].
 
-## 8. Role-Based Authorization
+## 9. Role-Based Authorization
 
 * Uses ASP.NET Identity roles [cite: Docs/ApiKeyAuthentication.md].
 * Currently defined role: `admin` [cite: Docs/ApiKeyAuthentication.md].
 * Admin users can manage API keys for all users and manage roles via specific endpoints (`/api/auth/roles/*`) [cite: Docs/ApiKeyAuthentication.md].
 * Role management endpoints require JWT authentication with the 'admin' role [cite: Zarichney.Server/Controllers/AuthController.cs].
 
-## 9. Database Maintenance
+## 10. Database Maintenance
 
 * The auth system uses the `UserDbContext` with key tables [cite: Docs/AuthSystemMaintenance.md]:
     * `AspNetUsers`: User accounts.
@@ -193,14 +332,14 @@ Authentication settings are defined in `appsettings.json` and rely on secure con
     * `ApiKeys`: Stores API key metadata [cite: Zarichney.Server/Services/Auth/Models/ApiKey.cs].
 * Refer to `Docs/PostgreSqlMaintenance.md` for details on migrations, backups, and direct SQL management [cite: Docs/PostgreSqlMaintenance.md].
 
-## 10. Regular Maintenance Tasks
+## 11. Regular Maintenance Tasks
 
 * **Token Cleanup**: Verify the `RefreshTokenCleanupService` background task runs correctly (check logs). Manually clean up expired/used/revoked tokens via SQL if needed [cite: Docs/AuthSystemMaintenance.md, Zarichney.Server/Services/Auth/RefreshTokenCleanupService.cs].
 * **User Account Auditing**: Periodically review inactive accounts, unverified accounts, and failed login attempts [cite: Docs/AuthSystemMaintenance.md].
 * **Email Deliverability**: Monitor email delivery rates; verify DNS records (SPF, DKIM, DMARC) [cite: Docs/AuthSystemMaintenance.md].
 * **Configuration Review**: Periodically review and rotate sensitive keys (`JwtSettings:SecretKey`, API keys, `EmailConfig` secrets) [cite: Docs/AuthSystemMaintenance.md].
 
-## 11. Troubleshooting
+## 12. Troubleshooting
 
 ### User Cannot Log In
 
@@ -233,7 +372,7 @@ Authentication settings are defined in `appsettings.json` and rely on secure con
 3.  Check email service logs (e.g., Microsoft Graph activity) for delivery errors.
 4.  Ensure confirmation tokens haven't expired (default lifespan set by ASP.NET Core Identity).
 
-## 12. Security Best Practices
+## 13. Security Best Practices
 
 1.  **Rotate JWT Secret Keys**: Change `JwtSettings:SecretKey` periodically [cite: Docs/AuthSystemMaintenance.md].
 2.  **Secure Secret Storage**: Use AWS Secrets Manager/SSM, environment variables, or .NET User Secrets for `JwtSettings:SecretKey`, `EmailConfig` credentials, `ConnectionStrings` password, and API keys [cite: Docs/PostgreSqlMaintenance.md].
@@ -249,20 +388,20 @@ Authentication settings are defined in `appsettings.json` and rely on secure con
 6.  **Use HttpOnly Cookies**: The system uses HttpOnly cookies for JWT and refresh tokens, mitigating XSS risks [cite: Zarichney.Server/Services/Auth/CookieAuthManager.cs, Docs/AuthRefactoring.md].
 7.  **Token Lifetimes**: Keep access tokens short-lived (e.g., 15-60 min). Balance refresh token lifetime based on security vs. user convenience [cite: Docs/AuthSystemMaintenance.md].
 
-## 13. Testing
+## 14. Testing
 
 * Authentication endpoints are comprehensively tested through the unified test suite (`./Scripts/run-test-suite.sh`) using professional integration tests with type-safe API clients.
 * Use the `/api/test-auth` endpoint with `Authorization: Bearer <token>` or `X-Api-Key: <key>` to check current authentication status [cite: Docs/ApiKeyAuthentication.md].
 * For focused authentication testing, run: `dotnet test --filter "Category=Integration&Feature=Auth"`
 
-## 14. Deployment Considerations
+## 15. Deployment Considerations
 
 * Ensure all secrets (`JwtSettings:SecretKey`, connection string password, email credentials, API Key service config if any) are configured securely in the production environment (e.g., via environment variables injected from AWS Secrets Manager/SSM) [cite: Docs/AuthSystemMaintenance.md].
 * Verify database migrations are applied correctly during deployment [cite: Docs/PostgreSqlMaintenance.md].
 * Ensure the `RefreshTokenCleanupService` background task is running in production.
 * Test all auth flows thoroughly in a staging environment before deploying to production [cite: Docs/AuthSystemMaintenance.md].
 
-## 15. Future Enhancements
+## 16. Future Enhancements
 
 * Multi-factor Authentication (MFA) [cite: Docs/AuthSystemMaintenance.md].
 * Social Login integration (Google, etc.) [cite: Docs/AuthSystemMaintenance.md].
@@ -270,7 +409,7 @@ Authentication settings are defined in `appsettings.json` and rely on secure con
 * Enhanced Session Management (e.g., "logout everywhere") [cite: Docs/AuthSystemMaintenance.md].
 * More robust Account Lockout policies [cite: Docs/AuthSystemMaintenance.md].
 
-## 16. Related Documentation
+## 17. Related Documentation
 
 * [/Services/Auth/README.md](../..//Services/Auth/README.md) (Detailed Module Architecture)
 * [Docs/PostgreSqlDatabase.md](./PostgreSqlDatabase.md) (Database Specifics)

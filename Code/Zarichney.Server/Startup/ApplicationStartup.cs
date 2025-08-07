@@ -4,6 +4,7 @@ using Zarichney.Config;
 using Zarichney.Cookbook.Recipes;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Status;
+using Zarichney.Services.Logging;
 
 namespace Zarichney.Startup;
 

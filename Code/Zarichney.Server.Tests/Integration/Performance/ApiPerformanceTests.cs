@@ -16,11 +16,9 @@ namespace Zarichney.Tests.Integration.Performance;
 [Trait(TestCategories.Dependency, TestCategories.Docker)]
 public class ApiPerformanceTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper) : IntegrationTestBase(apiClientFixture, testOutputHelper)
 {
-  [Fact(Skip = "Performance test depends on external services - run with proper configuration")]
+  [DependencyFact(InfrastructureDependency.Database)]
   public async Task GetRecipes_Performance_CompletesWithinTimeLimit()
   {
-    // Set a skip reason for the test to be properly handled
-    SetSkipReason("Test requires database and cookbook services which are missing configuration");
 
     // Arrange
     var client = _apiClientFixture.AuthenticatedCookbookApi;
@@ -40,11 +38,9 @@ public class ApiPerformanceTests(ApiClientFixture apiClientFixture, ITestOutputH
       $"API call took {stopwatch.ElapsedMilliseconds}ms, which exceeds the acceptable threshold of {maxAcceptableMilliseconds}ms");
   }
 
-  [Fact(Skip = "Performance test depends on external services - run with proper configuration")]
+  [DependencyFact(InfrastructureDependency.Database)]
   public async Task MultipleRequests_Performance_MaintainsConsistentResponseTime()
   {
-    // Set a skip reason for the test to be properly handled
-    SetSkipReason("Test requires database and cookbook services which are missing configuration");
 
     // Arrange
     var client = _apiClientFixture.AuthenticatedCookbookApi;

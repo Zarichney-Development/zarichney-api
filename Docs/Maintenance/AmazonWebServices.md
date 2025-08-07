@@ -352,6 +352,160 @@ $distributionConfig.DistributionConfig |
 aws cloudfront update-distribution --id $cfDistId --distribution-config file://cloudfront-config.json --if-match $etag
 ```
 
+## GitHub Actions OIDC Authentication
+
+### Overview
+The deployment pipeline uses AWS OIDC (OpenID Connect) authentication for secure, short-lived credential access without storing long-term AWS access keys. This provides enhanced security and eliminates the need to rotate static credentials.
+
+### AWS Infrastructure Components
+
+#### 1. OIDC Identity Provider
+- **Provider URL**: `https://token.actions.githubusercontent.com`
+- **Audience**: `sts.amazonaws.com`
+- **Thumbprints**: GitHub's OIDC certificate thumbprints
+- **ARN**: `arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/token.actions.githubusercontent.com`
+
+#### 2. IAM Role Configuration
+- **Role Name**: `GitHubActionsDeploymentRole`
+- **ARN**: `arn:aws:iam::${AWS_ACCOUNT_ID}:role/GitHubActionsDeploymentRole`
+- **Trust Policy**: Allows GitHub Actions from `Zarichney-Development/zarichney-api` repository
+- **Branch Restrictions**: Limited to `main` and `develop` branches only
+
+#### 3. Permission Policies
+The role includes permissions for:
+- **EC2**: Instance management and status checks
+- **S3**: Static asset deployment to frontend bucket
+- **CloudFront**: Cache invalidation for deployments
+- **Secrets Manager**: Database password retrieval
+- **SSM Parameter Store**: Application configuration access
+
+### Repository Secrets Configuration
+Required GitHub repository secrets for OIDC authentication:
+
+```bash
+# Core OIDC Configuration
+AWS_OIDC_ROLE_ARN=arn:aws:iam::${AWS_ACCOUNT_ID}:role/GitHubActionsDeploymentRole
+
+# Infrastructure Endpoints
+EC2_HOST_BACKEND=${BACKEND_EC2_DNS}
+EC2_HOST_FRONTEND=${FRONTEND_EC2_DNS}
+CLOUDFRONT_DISTRIBUTION_ID=${CLOUDFRONT_DIST_ID}
+S3_BUCKET=${S3_BUCKET}
+
+# Application Configuration
+SECRET_ID=cookbook-factory-secrets
+SECRET_DB_PASSWORD_KEY=DatabasePassword
+
+# SSH Access
+EC2_SSH_KEY=${EC2_SSH_PRIVATE_KEY_CONTENT}
+```
+
+### Deployment Workflow Integration
+The GitHub Actions workflow (`.github/workflows/deploy.yml`) uses OIDC authentication:
+
+```yaml
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+
+steps:
+  - name: Configure AWS credentials
+    uses: aws-actions/configure-aws-credentials@v2
+    with:
+      role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+      aws-region: us-east-2
+      role-session-name: GitHubActions-Backend-${{ github.run_id }}
+```
+
+### Security Features
+- **Short-lived tokens**: Credentials are valid only for the duration of the GitHub Actions run
+- **Repository scoping**: Access restricted to specific repository and branches
+- **Branch-based conditions**: Only `main` and `develop` branches can assume the role
+- **Least privilege**: Role has minimal required permissions for deployment tasks
+- **No static credentials**: Eliminates need for long-term AWS access keys
+
+### Troubleshooting OIDC Authentication
+
+#### Common Issues
+
+1. **"Not authorized to perform sts:AssumeRoleWithWebIdentity"**
+   - Verify OIDC provider exists in AWS IAM
+   - Check role trust policy includes correct repository path
+   - Ensure branch name matches trust policy conditions
+
+2. **"No OpenIDConnect provider found"**
+   - Verify OIDC provider was created with correct URL and audience
+   - Check provider thumbprints are current
+
+3. **Role assumption succeeds but permissions denied**
+   - Verify attached policies have required permissions
+   - Check resource ARNs in policies match actual infrastructure
+   - Ensure policy conditions don't block the action
+
+#### Validation Commands
+
+```bash
+# Verify OIDC provider exists
+aws iam list-open-id-connect-providers --query 'OpenIDConnectProviderList[?contains(Arn, `token.actions.githubusercontent.com`)]'
+
+# Check role trust policy
+aws iam get-role --role-name GitHubActionsDeploymentRole --query 'Role.AssumeRolePolicyDocument'
+
+# List attached policies
+aws iam list-attached-role-policies --role-name GitHubActionsDeploymentRole
+
+# Test policy permissions (replace with actual policy ARN)
+aws iam simulate-principal-policy \
+  --policy-source-arn arn:aws:iam::${AWS_ACCOUNT_ID}:role/GitHubActionsDeploymentRole \
+  --action-names s3:PutObject \
+  --resource-arns arn:aws:s3:::${S3_BUCKET}/*
+```
+
+#### Recovery Procedures
+
+If OIDC authentication fails:
+
+1. **Verify Infrastructure**:
+   ```bash
+   # Check if OIDC provider exists
+   aws iam get-open-id-connect-provider --open-id-connect-provider-arn arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/token.actions.githubusercontent.com
+   
+   # Check if role exists
+   aws iam get-role --role-name GitHubActionsDeploymentRole
+   ```
+
+2. **Update Trust Policy** (if needed):
+   ```bash
+   aws iam update-assume-role-policy --role-name GitHubActionsDeploymentRole --policy-document file://trust-policy.json
+   ```
+
+3. **Regenerate OIDC Provider** (if corrupted):
+   ```bash
+   # Delete existing provider
+   aws iam delete-open-id-connect-provider --open-id-connect-provider-arn arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/token.actions.githubusercontent.com
+   
+   # Recreate provider
+   aws iam create-open-id-connect-provider \
+     --url https://token.actions.githubusercontent.com \
+     --client-id-list sts.amazonaws.com \
+     --thumbprint-list 6938fd4d98bab03faadb97b34396831e3780aea1 1c58a3a8518e8759bf075b76b750d4f2df264fcd
+   ```
+
+### Monitoring and Maintenance
+
+#### CloudTrail Events
+Monitor OIDC authentication events:
+- `AssumeRoleWithWebIdentity` - Role assumption attempts
+- `GetOpenIDConnectProvider` - Provider access attempts
+- `GetRole` - Role configuration access
+
+#### Regular Maintenance
+- **Thumbprint Updates**: GitHub may update OIDC certificate thumbprints
+- **Permission Reviews**: Regularly audit role permissions for least privilege
+- **Branch Updates**: Update trust policy when branch strategy changes
+- **Security Scanning**: Monitor for unauthorized role assumptions
+
 ## Application Management
 
 ### Backend Deployment Process (via GitHub Actions)

@@ -1,7 +1,7 @@
 # README: /Standards Directory
 
-**Version:** 1.2
-**Last Updated:** 2025-05-23
+**Version:** 1.3
+**Last Updated:** 2025-08-07
 **Parent:** `../README.md`
 
 ## 1. Purpose & Importance
@@ -35,6 +35,8 @@ Below is a list of the key standards documents within this directory. Each docum
     * **Description:** Provides guidelines for creating, maintaining, and embedding Mermaid diagrams used for visualizing architecture, workflows, and component relationships.
 * **`./TaskManagementStandards.md`**
     * **Description:** Defines the process for managing development tasks, including issue tracking conventions (e.g., GitHub Issues), pull request procedures, branching strategies, and commit message formatting.
+* **`./TestSuiteStandards.md`**
+    * **Description:** Comprehensive standards for test suite baseline management, progressive coverage framework (14.22% → 90% by Jan 2026), environment-specific quality gates, skip categorization taxonomy, and AI-powered analysis integration. Establishes the foundation for systematic test suite health monitoring and improvement.
 
 ## 3. Target Audience & Application
 

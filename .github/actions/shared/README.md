@@ -1,6 +1,6 @@
 # Module/Directory: .github/actions/shared
 
-**Last Updated:** 2025-07-27
+**Last Updated:** 2025-08-07
 
 **Parent:** [`.github/actions`](../README.md)
 
@@ -10,6 +10,7 @@
 * **Key Responsibilities:** 
     * Unified development environment setup for .NET and Node.js
     * Intelligent path-based change detection for workflow optimization
+    * Test suite baseline validation with environment-aware thresholds
     * Standardized result posting to pull requests with consistent formatting
     * Common error handling and logging patterns
     * Artifact management and workflow communication
@@ -17,13 +18,15 @@
 
 ## 2. Architecture & Key Concepts
 
-* **High-Level Design:** Three core shared actions that form the foundation of workflow automation:
+* **High-Level Design:** Four core shared actions that form the foundation of workflow automation:
     * **`setup-environment`** - Configures development environment with required tools
     * **`check-paths`** - Analyzes changed files to determine required workflow execution
+    * **`validate-test-suite`** - Validates test results against baseline standards (Phase 2)
     * **`post-results`** - Standardizes communication of analysis results to pull requests
 * **Core Action Types:**
     * **Composite Actions** - Multi-step actions combining GitHub Actions and shell commands
     * **Environment Actions** - Setup and configuration utilities
+    * **Validation Actions** - Test suite and quality gate validation utilities (Phase 2)
     * **Communication Actions** - Result formatting and posting utilities
 * **Integration Patterns:**
     * **Input Validation** - Comprehensive input parameter validation with clear error messages
@@ -64,6 +67,11 @@ graph TD
         * **Critical Preconditions:** Git repository with valid history, changed files detectable
         * **Critical Postconditions:** Boolean outputs for backend/frontend/docs changes, changed file list available
         * **Non-Obvious Error Handling:** Handles edge cases like new repositories, merge conflicts, large change sets
+    * **`validate-test-suite`** *(Phase 2)*:
+        * **Purpose:** Validate test results against baseline standards with environment-aware thresholds
+        * **Critical Preconditions:** Test results files available, jq and bc tools installed, configuration standards defined
+        * **Critical Postconditions:** Baseline validation results generated, violations and recommendations identified
+        * **Non-Obvious Error Handling:** Graceful degradation when baseline files missing; environment auto-detection with fallbacks
     * **`post-results`**:
         * **Purpose:** Post analysis results to pull requests with consistent formatting
         * **Critical Preconditions:** Valid analysis data, PR context available, GitHub token with comment permissions
@@ -124,6 +132,15 @@ graph TD
     - name: Analyze changed paths
       id: paths
       uses: ./.github/actions/shared/check-paths
+    
+    # Test suite baseline validation (Phase 2)
+    - name: Validate test suite baselines
+      id: baseline-validation
+      uses: ./.github/actions/shared/validate-test-suite
+      with:
+        test-results-path: './TestResults'
+        fail-on-violations: 'false'  # Warning mode
+        environment-override: 'unconfigured'
     
     # Result posting
     - name: Post analysis results
