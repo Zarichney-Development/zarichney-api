@@ -72,6 +72,15 @@ generate_dashboard() {
     # Generate historical trend data
     local historical_data=$(generate_historical_trends)
     
+    # Determine status values for cleaner HTML generation
+    if [ "$passes_thresholds" = "true" ]; then
+        status_class="pass"
+        status_text="BASELINE PASSED"
+    else
+        status_class="fail"
+        status_text="BASELINE FAILED"
+    fi
+    
     # Create HTML dashboard
     cat > "$DASHBOARD_FILE" << EOF
 <!DOCTYPE html>
@@ -301,8 +310,8 @@ generate_dashboard() {
             <div class="subtitle">
                 Generated: $timestamp
                 <span class="environment-badge env-$environment">$environment Environment</span>
-                <span class="status-indicator status-$([ "$passes_thresholds" = "true" ] && echo "pass" || echo "fail")">
-                    $([ "$passes_thresholds" = "true" ] && echo "BASELINE PASSED" || echo "BASELINE FAILED")
+                <span class="status-indicator status-$status_class">
+                    $status_text
                 </span>
             </div>
         </div>

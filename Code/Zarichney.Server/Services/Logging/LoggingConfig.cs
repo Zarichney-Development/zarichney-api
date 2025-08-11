@@ -52,4 +52,9 @@ public class LoggingConfig : IConfig
   /// Process execution timeout in milliseconds
   /// </summary>
   public int ProcessTimeoutMs { get; set; } = 5000;
+
+  /// <summary>
+  /// Docker container startup delay in milliseconds
+  /// </summary>
+  public int DockerStartupDelayMs { get; set; } = 3000;
 }

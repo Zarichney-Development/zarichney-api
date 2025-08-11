@@ -112,7 +112,7 @@ public class SeqConnectivity(
       logger.LogInformation("Attempting to start Docker Seq container...");
       
       // Wait for container startup with proper cancellation token propagation
-      await Task.Delay(3000, cancellationToken);
+      await Task.Delay(_config.DockerStartupDelayMs, cancellationToken);
       
       if (await TryConnectToSeqAsync("http://localhost:5341", cancellationToken))
       {

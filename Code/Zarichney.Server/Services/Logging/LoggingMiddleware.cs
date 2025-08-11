@@ -21,10 +21,12 @@ public class RequestResponseLoggerOptions
 public class RequestResponseLoggerMiddleware(
   RequestDelegate next,
   IOptions<RequestResponseLoggerOptions> options,
-  ILogger<RequestResponseLoggerMiddleware> logger,
-  IServiceProvider serviceProvider)
+  ILogger<RequestResponseLoggerMiddleware> logger)
 {
   private readonly RequestResponseLoggerOptions _options = options.Value;
+  private string? _cachedLoggingMethod;
+  private DateTime _cacheExpiry = DateTime.MinValue;
+  private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(5);
 
   public async Task InvokeAsync(HttpContext context)
   {
@@ -38,9 +40,15 @@ public class RequestResponseLoggerMiddleware(
     var scopeId = scopeContainer?.Id;
     var sessionId = scopeContainer?.SessionId;
 
-    // Get logging method for enhanced diagnostics from request scope
-    var loggingStatus = context.RequestServices.GetRequiredService<ILoggingStatus>();
-    var loggingMethod = await loggingStatus.GetLoggingMethodAsync(context.RequestAborted);
+    // Get logging method for enhanced diagnostics (cached for performance)
+    var loggingMethod = _cachedLoggingMethod;
+    if (string.IsNullOrEmpty(loggingMethod) || DateTime.UtcNow > _cacheExpiry)
+    {
+      var loggingStatus = context.RequestServices.GetRequiredService<ILoggingStatus>();
+      loggingMethod = await loggingStatus.GetLoggingMethodAsync(context.RequestAborted);
+      _cachedLoggingMethod = loggingMethod;
+      _cacheExpiry = DateTime.UtcNow.Add(_cacheDuration);
+    }
 
     // Replace the current logger in the logging context
     using (Serilog.Context.LogContext.PushProperty("ScopeId", scopeId))

@@ -52,6 +52,11 @@ INTEGRATION_ONLY=false
 PARALLEL_EXECUTION=false
 MAX_PARALLEL_COLLECTIONS=$MAX_PARALLEL_DEFAULT
 
+# JSON escape function for safe string encoding
+json_escape() {
+    printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\n/\\n/g; s/\r/\\r/g'
+}
+
 # Colors for output
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
