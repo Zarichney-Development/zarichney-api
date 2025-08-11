@@ -31,9 +31,10 @@ Before beginning any coverage work, validate the CI environment:
 ```
 
 ### 2.2 Success Criteria Validation
+
 The following conditions **MUST** be met before proceeding:
 - ✅ All executable tests pass (100% pass rate)
-- ✅ Skip count is exactly 23 tests
+- ✅ Skip count matches EXPECTED_SKIP_COUNT (default: 23; see Docs/Standards/TestingStandards.md section 12.7 for rationale)
 - ✅ No unexpected test failures or errors
 - ✅ Coverage baseline can be established
 

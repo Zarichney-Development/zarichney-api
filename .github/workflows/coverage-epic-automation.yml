@@ -427,7 +427,7 @@ jobs:
             - Current Coverage: ${{ steps.coverage-analysis.outputs.current_coverage }}
             - Task ID: ${{ steps.coverage-analysis.outputs.task_identifier }}
             - AI Improvements: ${{ steps.ai-execution.outputs.coverage_improvements }}
-            - Environment: CI (23 tests skipped, 100% pass rate maintained)
+            - Environment: CI (${EXPECTED_SKIP_COUNT:-23} tests skipped, 100% pass rate maintained; see Docs/Standards/TestingStandards.md section 12.7)
             
             🤖 Generated with Coverage Epic Automation
             Co-Authored-By: Coverage Epic Bot <noreply@zarichney.dev>"
@@ -522,7 +522,7 @@ jobs:
           
           ### Test Environment Validation
           - ✅ **Executable Tests:** 100% pass rate maintained
-          - ✅ **Expected Skips:** 23 tests skipped (external dependencies unavailable)
+          - ✅ **Expected Skips:** ${EXPECTED_SKIP_COUNT:-23} tests skipped (external dependencies unavailable; see Docs/Standards/TestingStandards.md section 12.7)
           - ✅ **Build Status:** Clean build with no regressions
           - ✅ **Standards Compliance:** All testing standards followed
           

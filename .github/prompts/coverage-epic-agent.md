@@ -30,7 +30,7 @@ You are an autonomous AI agent executing as part of the **Backend Testing Covera
 ### **CI Environment Characteristics**
 - **Execution Platform:** GitHub Actions CI (unconfigured)
 - **External Dependencies:** Unavailable (properly mocked/skipped)
-- **Expected Test State:** 23 tests skipped, ~65 executable tests with 100% pass rate
+- **Expected Test State:** EXPECTED_SKIP_COUNT tests skipped (default: 23; see Docs/Standards/TestingStandards.md section 12.7), ~65 executable tests with 100% pass rate
 - **Resource Constraints:** Optimized for CI execution time and memory limits
 - **Coordination Model:** Multiple agents working simultaneously with conflict prevention
 

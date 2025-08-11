@@ -126,10 +126,10 @@ validate_core_files() {
             print_error "Epic #94 reference missing in prompt file"
         fi
         
-        if grep -q "23 tests skipped" "$PROMPT_FILE"; then
-            print_success "CI environment expectations documented"
+        if grep -q "${EXPECTED_SKIP_COUNT:-23} tests skipped" "$PROMPT_FILE"; then
+            print_success "CI environment expectations documented (skip count configurable via EXPECTED_SKIP_COUNT, see Docs/Standards/TestingStandards.md section 12.7)"
         else
-            print_error "CI environment test expectations missing"
+            print_error "CI environment test expectations missing (EXPECTED_SKIP_COUNT, see Docs/Standards/TestingStandards.md section 12.7)"
         fi
         
         if grep -q "Standards.*TestingStandards.md" "$PROMPT_FILE"; then
@@ -247,10 +247,10 @@ validate_ci_environment() {
             
             if grep -q "skipped" /tmp/test_validation.log; then
                 SKIP_COUNT=$(grep -o "[0-9]* skipped" /tmp/test_validation.log | head -1 | cut -d' ' -f1)
-                if [ "$SKIP_COUNT" -eq 23 ] 2>/dev/null; then
-                    print_success "Expected skip count (23) detected in test results"
+                if [ "$SKIP_COUNT" -eq "${EXPECTED_SKIP_COUNT:-23}" ] 2>/dev/null; then
+                    print_success "Expected skip count (${EXPECTED_SKIP_COUNT:-23}) detected in test results (see Docs/Standards/TestingStandards.md section 12.7 for rationale)"
                 else
-                    print_warning "Skip count ($SKIP_COUNT) differs from expected (23)"
+                    print_warning "Skip count ($SKIP_COUNT) differs from expected (${EXPECTED_SKIP_COUNT:-23}) (see Docs/Standards/TestingStandards.md section 12.7)"
                 fi
             else
                 print_warning "Skip count information not found in test results"
