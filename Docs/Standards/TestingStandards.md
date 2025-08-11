@@ -364,6 +364,49 @@ When adding tests, consider current coverage phase:
 * Dynamic quality gate adjustments based on current phase
 * Velocity tracking and timeline alerts
 
+### 12.7 Automated Epic Execution Environment
+
+#### **Epic Context & Automation**
+The Backend Coverage Epic (Issue #94) operates through automated AI agents in GitHub Actions CI environment:
+
+* **Execution Environment:** GitHub Actions CI (unconfigured - external services unavailable)
+* **Automation Frequency:** 4 AI agent instances per day (6-hour cron intervals)
+* **Epic Branch Strategy:** All work performed on `epic/testing-coverage-to-90` branch off `develop`
+* **Task Branches:** Individual tasks use `tests/issue-94-description-timestamp` pattern
+
+#### **CI Environment Test Execution**
+In the automated CI environment, the test suite operates with specific constraints:
+
+* **Expected Skip Rate:** 23 tests skipped due to unavailable external dependencies:
+  * OpenAI API tests: 6 tests skipped
+  * Stripe payment tests: 6 tests skipped  
+  * Microsoft Graph tests: 4 tests skipped
+  * Database integration tests: 6 tests skipped
+  * Production safety tests: 1 test skipped
+* **Success Criteria:** 100% pass rate on ~65 executable tests
+* **Quality Gate:** All executable tests must pass; skipped tests are acceptable and expected
+
+#### **Automated Coverage Workflow Integration**
+AI agents follow the detailed workflow defined in:
+* **Primary Workflow:** `Docs/Development/AutomatedCoverageEpicWorkflow.md`
+* **Scope Selection:** Self-directed based on coverage phase and impact analysis
+* **Conflict Prevention:** File-level focus areas to avoid agent overlap
+* **Framework Enhancement:** Include testing infrastructure improvements when beneficial
+
+#### **Success Metrics for Automated Execution**
+* **Daily Output:** 4 pull requests per day against epic branch (target)
+* **Coverage Velocity:** ~2.8% coverage increase per month toward 90% target
+* **Quality Maintenance:** ≥99% test pass rate throughout progression
+* **Timeline:** January 2026 target for 90% backend coverage
+
+#### **Production Code Assumptions**
+* **Default Assumption:** Production code is bug-free; all new tests should pass
+* **Exception Handling:** If new tests reveal production issues:
+  * Document findings in PR description
+  * Create separate GitHub issue for production bug fix
+  * Advise on separating bug fix from coverage improvement work
+  * Continue with coverage improvements after production fixes
+
 ## 13. Document References
 
 * **Detailed Unit Testing Guide:** `Docs/Standards/UnitTestCaseDevelopment.md` (To be created)

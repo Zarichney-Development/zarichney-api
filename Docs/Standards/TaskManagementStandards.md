@@ -92,5 +92,120 @@ These standards **MUST** be consulted and followed by AI Coders during task exec
     ```
 * **Output:** The URL of the created Pull Request is required as part of the task output specified in the AI Coder Prompt.
 
+## 7. Epic Branch Strategy (For Long-Term Initiatives)
+
+### 7.1 Epic Branch Purpose
+For long-term initiatives spanning multiple tasks and extending over months, an **epic branch strategy** provides coordination and isolation:
+
+* **Epic Branches:** Long-running branches for major initiatives (e.g., `epic/testing-coverage-to-90`)
+* **Base Branch:** Epic branches are created from and periodically updated with `develop`
+* **Task Branches:** Individual tasks create branches off the epic branch, not `develop`
+* **Integration:** Epic branches are merged to `develop` in chunks by the product owner
+
+### 7.2 Epic Branch Naming Convention
+* **Format:** `epic/[initiative-name]`
+* **Examples:**
+  * `epic/testing-coverage-to-90` - Backend coverage improvement initiative
+  * `epic/api-v2-migration` - Major API version migration
+  * `epic/performance-optimization` - System-wide performance improvements
+
+### 7.3 Epic Branch Workflow
+
+#### **Epic Branch Creation (Product Owner)**
+```bash
+# Create epic branch from develop
+git checkout develop
+git pull origin develop
+git checkout -b epic/[initiative-name]
+git push origin epic/[initiative-name]
+```
+
+#### **Epic Branch Maintenance (AI Agents)**
+Before creating task branches, ensure epic branch is current:
+
+```bash
+# Update epic branch with latest develop changes
+git checkout epic/[initiative-name]
+git fetch origin
+git merge origin/develop --no-edit
+git push origin epic/[initiative-name]
+```
+
+#### **Task Branch Creation (AI Agents)**
+Task branches are created **off the epic branch**, not develop:
+
+```bash
+# Create task branch from epic branch
+git checkout epic/[initiative-name]
+git pull origin epic/[initiative-name]
+git checkout -b tests/issue-[ISSUE_ID]-[description]-[timestamp]
+```
+
+### 7.4 Epic Task Branch Naming
+For tasks within an epic, use modified naming conventions:
+
+* **Testing Tasks:** `tests/issue-[EPIC_ISSUE_ID]-[description]-[timestamp]`
+* **Feature Tasks:** `feature/issue-[EPIC_ISSUE_ID]-[description]-[timestamp]`
+* **Examples:**
+  * `tests/issue-94-cookbook-service-1628712345`
+  * `feature/issue-95-api-versioning-1628712400`
+
+### 7.5 Epic Pull Request Management
+
+#### **Task Pull Requests**
+Task PRs target the **epic branch**, not develop:
+
+```bash
+# Create PR against epic branch
+gh pr create --base epic/[initiative-name] \
+  --title "[type]: [Description] (#EPIC_ISSUE_ID)" \
+  --body "Epic contribution: [Description]. Refs #[EPIC_ISSUE_ID]."
+```
+
+#### **Epic Integration Pull Requests (Product Owner)**
+Periodically, the product owner creates integration PRs from epic branch to develop:
+
+```bash
+# Create epic integration PR
+gh pr create --base develop \
+  --title "epic: [Initiative name] - Integration batch [N]" \
+  --body "Integrates completed work from epic/[initiative-name]. Includes: [summary of completed tasks]"
+```
+
+### 7.6 Automated Epic Execution (CI Environment)
+
+#### **Multi-Agent Coordination**
+For automated epic execution (e.g., 4 agents per day):
+
+* **Epic Branch Updates:** Each agent must update epic branch from develop before starting
+* **Conflict Prevention:** Agents select different modules/files to minimize conflicts
+* **Timestamp Naming:** Include timestamp in task branch names for uniqueness
+* **Parallel Execution:** Multiple agents can work simultaneously on different areas
+
+#### **CI Environment Epic Workflow**
+```bash
+# Step 1: Prepare epic branch
+git checkout develop && git pull origin develop
+git checkout epic/[initiative-name] || git checkout -b epic/[initiative-name]
+git merge develop --no-edit
+git push origin epic/[initiative-name]
+
+# Step 2: Create unique task branch
+TIMESTAMP=$(date +%s)
+TASK_BRANCH="tests/issue-[EPIC_ID]-[area]-${TIMESTAMP}"
+git checkout -b $TASK_BRANCH
+
+# Step 3: Implement and create PR against epic branch
+# [Implementation work]
+gh pr create --base epic/[initiative-name] --title "[type]: [Description] (#EPIC_ID)"
+```
+
+### 7.7 Epic Branch Benefits
+
+* **Coordination:** Multiple developers/agents can work on related tasks without conflicts
+* **Integration Control:** Product owner controls when epic work integrates to develop
+* **Progress Tracking:** Epic branch shows cumulative progress toward initiative goals
+* **Risk Management:** Epic work is isolated from develop until ready for integration
+* **Batch Processing:** Product owner can review and merge multiple related PRs efficiently
 
 ---
