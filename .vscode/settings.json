@@ -1,0 +1,17 @@
+{
+  // MCP client settings for VS Code (Copilot/Tools). We reference env vars only; no secrets in repo.
+  "mcp.servers": {
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/cli",
+        "connect",
+        "github"
+      ],
+      "env": {
+        "GITHUB_TOKEN": "${env:GITHUB_TOKEN}"
+      }
+    }
+  }
+}
