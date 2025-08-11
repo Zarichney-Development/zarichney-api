@@ -1,8 +1,12 @@
 # Testing Environment Setup Guide
 
-**Version:** 1.0
-**Last Updated:** 2025-08-06
-**Parent:** `../README.md`
+**Version:** 1.1
+**Last Updated:** 2025-08-11
+
+> **Parent:** [`README.md`](./README.md)
+
+**Scope**: Local testing environment configuration and external service setup  
+**Related**: [`../Maintenance/TestingSetup.md`](../Maintenance/TestingSetup.md) for CI/CD integration and maintenance procedures
 
 ## Purpose
 

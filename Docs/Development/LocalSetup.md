@@ -1,12 +1,27 @@
 # Local Development Setup & Configuration
 
-**Last Updated:** 2025-05-25
+**Last Updated:** 2025-08-11
 
 > **Parent:** [`README.md`](./README.md)
 
 ## 1. Introduction
 
-This document outlines the configuration and setup requirements for local development of the Zarichney API application. It covers environment setup, database configuration, required services, and graceful degradation patterns that enable development without all external dependencies.
+This document provides comprehensive setup instructions for local development of the complete Zarichney platform, including both backend (.NET 8 API) and frontend (Angular 19) applications. It covers environment setup, database configuration, external service integration, and graceful degradation patterns that enable development with varying levels of functionality.
+
+### Setup Approaches
+
+**Quick Start (Minimal Setup)**:
+* Basic functionality without external services
+* Suitable for core development and testing
+* ~15 minutes setup time
+* See sections 2-6 for minimal requirements
+
+**Full Setup (Production-Like)**:
+* All external services configured
+* Complete feature availability
+* Suitable for comprehensive testing and production preparation  
+* ~45-60 minutes setup time
+* Includes sections 2-10 for complete configuration
 
 ## 2. Core Environment Setup
 
@@ -237,10 +252,382 @@ For full functionality, we recommend setting up a local PostgreSQL database:
    
    **Important**: Ensure the password meets ASP.NET Core Identity requirements (uppercase, lowercase, digit, special character, minimum 6 characters).
 
-## 7. Next Steps
+## 7. Frontend Application Setup (Angular)
 
-* Review [`/Zarichney.Server/Services/Status/README.md`](../../Zarichney.Server/Services/Status/README.md) for details on the Status Service implementation.
-* See [`/Zarichney.Server/Controllers/AuthController.cs`](../../Zarichney.Server/Controllers/AuthController.cs) for authentication endpoints.
-* Explore [`/Docs/Maintenance/PostgreSqlDatabase.md`](../Maintenance/PostgreSqlDatabase.md) for database maintenance guidance.
+The Zarichney platform includes a modern Angular 19 frontend application with Server-Side Rendering (SSR) capabilities. This section covers setup requirements for the complete full-stack development experience.
+
+### Frontend Prerequisites
+
+* **Node.js 18+**: Required for Angular development and build processes
+* **npm**: Comes with Node.js, used for package management
+* **Angular CLI** (Optional): Global installation recommended for development convenience
+
+### Frontend Setup Steps
+
+1. **Install Node.js**:
+   * Download from [nodejs.org](https://nodejs.org/) (LTS version recommended)
+   * Verify installation: `node --version` and `npm --version`
+
+2. **Navigate to Frontend Directory**:
+   ```bash
+   cd Code/Zarichney.Website
+   ```
+
+3. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+
+4. **Configure Environment Settings**:
+   * Review `src/startup/environments.dev.ts` for development configuration
+   * Key settings include API base URL and Stripe publishable key
+   * Example development configuration:
+   ```typescript
+   export const environment = {
+     production: false,
+     apiUrl: 'https://localhost:7061/api',
+     stripePublishableKey: 'pk_test_your_stripe_key_here',
+     appName: 'Zarichney Platform',
+     version: '1.0.0'
+   };
+   ```
+
+5. **Start Development Server**:
+   ```bash
+   # Standard development server with hot reload
+   npm start
+   
+   # Or with Angular CLI (if installed globally)
+   ng serve
+   ```
+
+6. **Verify Frontend Setup**:
+   * Navigate to `http://localhost:4200`
+   * Application should load with basic navigation
+   * Check browser console for any configuration errors
+
+### Frontend Build Options
+
+* **Development Build**: `npm run build-dev`
+* **Production Build**: `npm run build-prod` 
+* **SSR Development**: `npm run serve:ssr` (requires build first)
+* **Clean Build**: `npm run clean-dist` (removes previous build artifacts)
+
+### Frontend Configuration Dependencies
+
+The frontend application integrates with several services that require configuration:
+
+* **Backend API**: Assumes `Code/Zarichney.Server` is running on configured port
+* **Stripe Payments**: Requires valid Stripe publishable key for payment processing
+* **Authentication**: Relies on JWT tokens from backend authentication system
+
+### Common Frontend Issues
+
+* **CORS Errors**: Ensure backend CORS is configured for development port 4200
+* **API Connection**: Verify backend is running and accessible at configured API URL
+* **Build Failures**: Clear `node_modules` and reinstall if experiencing dependency issues
+* **SSR Issues**: Ensure code is browser/server compatible when using SSR features
+
+## 8. External Services Configuration
+
+This section provides comprehensive setup instructions for all external services that enhance the platform's capabilities. Each service can be configured independently, and the application gracefully degrades when services are unavailable.
+
+### OpenAI API (AI Services)
+
+**Purpose**: Powers AI-driven recipe analysis, cleaning, ranking, and synthesis features.
+
+**Setup Steps**:
+1. Create account at [OpenAI Platform](https://platform.openai.com/)
+2. Generate API key from API Keys section
+3. Configure via User Secrets or environment variables:
+   ```bash
+   # User Secrets (recommended for development)
+   dotnet user-secrets set "LlmConfig:ApiKey" "your-openai-api-key" --project Code/Zarichney.Server
+   dotnet user-secrets set "LlmConfig:OrganizationId" "your-org-id" --project Code/Zarichney.Server
+   
+   # Environment Variables
+   export LlmConfig__ApiKey="your-openai-api-key"
+   export LlmConfig__OrganizationId="your-org-id"
+   ```
+
+**Configuration Reference**:
+```json
+{
+  "LlmConfig": {
+    "ApiKey": "sk-your-openai-api-key",
+    "OrganizationId": "org-your-organization-id",
+    "CompletionModel": "gpt-4o-mini",
+    "TranscriptionModel": "whisper-1",
+    "MaxTokens": 4000,
+    "Temperature": 0.7
+  }
+}
+```
+
+### Stripe Payment Processing
+
+**Purpose**: Handles payment processing for cookbook orders and premium features.
+
+**Setup Steps**:
+1. Create account at [Stripe Dashboard](https://dashboard.stripe.com/)
+2. Enable test mode for development
+3. Obtain test API keys from Developers > API Keys
+4. Configure backend and frontend:
+   ```bash
+   # Backend configuration (User Secrets)
+   dotnet user-secrets set "StripeConfig:SecretKey" "sk_test_your_stripe_secret_key" --project Code/Zarichney.Server
+   dotnet user-secrets set "StripeConfig:PublishableKey" "pk_test_your_stripe_publishable_key" --project Code/Zarichney.Server
+   dotnet user-secrets set "StripeConfig:WebhookSecret" "whsec_your_webhook_secret" --project Code/Zarichney.Server
+   
+   # Frontend configuration (environments.dev.ts)
+   stripePublishableKey: 'pk_test_your_stripe_publishable_key'
+   ```
+
+**Configuration Reference**:
+```json
+{
+  "StripeConfig": {
+    "SecretKey": "sk_test_your_stripe_secret_key",
+    "PublishableKey": "pk_test_your_stripe_publishable_key", 
+    "WebhookSecret": "whsec_your_webhook_secret",
+    "Currency": "usd",
+    "PaymentIntentConfirmationMethod": "automatic"
+  }
+}
+```
+
+### Microsoft Graph API (Email Services)
+
+**Purpose**: Provides email functionality including verification emails, notifications, and admin communications.
+
+**Setup Steps**:
+1. Register application in [Azure Portal](https://portal.azure.com/)
+2. Configure required Graph API permissions (Mail.Send, User.Read)
+3. Generate client secret for authentication
+4. Configure email settings:
+   ```bash
+   dotnet user-secrets set "EmailConfig:AzureTenantId" "your-tenant-id" --project Code/Zarichney.Server
+   dotnet user-secrets set "EmailConfig:AzureClientId" "your-client-id" --project Code/Zarichney.Server
+   dotnet user-secrets set "EmailConfig:AzureClientSecret" "your-client-secret" --project Code/Zarichney.Server
+   dotnet user-secrets set "EmailConfig:FromAddress" "your-email@domain.com" --project Code/Zarichney.Server
+   ```
+
+**Configuration Reference**:
+```json
+{
+  "EmailConfig": {
+    "AzureTenantId": "your-azure-tenant-id",
+    "AzureClientId": "your-azure-app-client-id", 
+    "AzureClientSecret": "your-azure-app-secret",
+    "FromAddress": "noreply@yourdomain.com",
+    "FromName": "Zarichney Platform"
+  }
+}
+```
+
+### GitHub API (Development Integration)
+
+**Purpose**: Enables GitHub integration features for repository management and issue tracking.
+
+**Setup Steps**:
+1. Generate Personal Access Token at [GitHub Settings](https://github.com/settings/tokens)
+2. Configure required scopes (repo, read:org, admin:public_key)
+3. Configure GitHub settings:
+   ```bash
+   dotnet user-secrets set "GitHubConfig:AccessToken" "your-github-token" --project Code/Zarichney.Server
+   dotnet user-secrets set "GitHubConfig:Organization" "your-organization" --project Code/Zarichney.Server
+   ```
+
+### MailCheck Service (Email Validation)
+
+**Purpose**: Provides email address validation and verification for user registration.
+
+**Setup Steps**:
+1. Register at [MailCheck.co](https://www.mailcheck.co/)
+2. Obtain API key from dashboard
+3. Configure validation settings:
+   ```bash
+   dotnet user-secrets set "MailCheckConfig:ApiKey" "your-mailcheck-api-key" --project Code/Zarichney.Server
+   ```
+
+## 9. Production Deployment Considerations
+
+This section outlines key considerations for production deployment, including security, performance, and monitoring requirements.
+
+### Security Configuration
+
+**JWT Secret Key**:
+* Generate cryptographically secure key (minimum 256 bits)
+* Use different keys for each environment
+* Store securely using cloud key management services
+
+**HTTPS Configuration**:
+* Obtain SSL/TLS certificates (Let's Encrypt recommended)
+* Configure HTTPS redirection in production
+* Update CORS settings for production domains
+
+**Environment Variables**:
+* Never commit secrets to source control
+* Use secure environment variable management
+* Rotate API keys and secrets regularly
+
+### Performance Optimization
+
+**Frontend Build**:
+* Use production build with optimization: `npm run build-prod`
+* Enable compression and caching at reverse proxy level
+* Configure CDN for static assets
+
+**Backend Configuration**:
+* Enable output caching for appropriate endpoints
+* Configure connection pooling for database connections
+* Implement rate limiting for API endpoints
+
+**Database Optimization**:
+* Configure connection pooling appropriately
+* Implement database monitoring and alerting
+* Plan for database backup and recovery
+
+### Monitoring and Logging
+
+**Structured Logging**:
+* Configure Serilog with appropriate log levels
+* Use structured logging for better searchability
+* Implement log aggregation (ELK stack, Seq, etc.)
+
+**Health Checks**:
+* Monitor `/api/status` endpoint for service health
+* Configure alerts for service unavailability
+* Implement uptime monitoring for critical services
+
+**Performance Monitoring**:
+* Monitor API response times and throughput
+* Track database query performance
+* Monitor external service dependency health
+
+### Deployment Automation
+
+**CI/CD Pipeline**:
+* Implement automated testing before deployment
+* Use feature flags for gradual rollouts
+* Configure automatic rollback on deployment failures
+
+**Infrastructure as Code**:
+* Define infrastructure using Terraform, ARM templates, or CloudFormation
+* Version control infrastructure configurations
+* Implement infrastructure monitoring and alerting
+
+## 10. Troubleshooting Guide
+
+This section provides solutions to common setup and configuration issues encountered during development.
+
+### Backend API Issues
+
+**Build Failures**:
+* Verify .NET 8 SDK is installed: `dotnet --version`
+* Clear build artifacts: `dotnet clean` then `dotnet restore`
+* Check for missing NuGet packages: `dotnet restore`
+
+**Database Connection Issues**:
+* Verify PostgreSQL is running and accessible
+* Check connection string format and credentials
+* Test connection using database client tools
+* Ensure database exists and migrations are applied
+
+**External Service Connectivity**:
+* Verify API keys are correctly configured
+* Check network connectivity to external services
+* Review service status pages for outages
+* Test with minimal configuration first
+
+**Configuration Loading Issues**:
+* Verify User Secrets are properly configured: `dotnet user-secrets list`
+* Check environment variable names match configuration structure
+* Ensure configuration precedence order is understood
+* Use `/api/status/config` endpoint to verify loaded configuration
+
+### Frontend Application Issues
+
+**Dependencies and Build Issues**:
+* Clear Node.js cache: `npm cache clean --force`
+* Delete `node_modules` and reinstall: `rm -rf node_modules && npm install`
+* Verify Node.js version compatibility (18+ required)
+* Check for global vs local Angular CLI version conflicts
+
+**Development Server Issues**:
+* Verify port 4200 is available
+* Check for CORS configuration in backend
+* Ensure backend API is running and accessible
+* Review browser console for specific errors
+
+**API Communication Issues**:
+* Verify API base URL in environment configuration
+* Check network tab in browser developer tools
+* Ensure authentication tokens are being sent correctly
+* Verify backend CORS settings include frontend origin
+
+### Integration Testing Issues
+
+**Docker and Testcontainers**:
+* Ensure Docker Desktop is running: `docker info`
+* Verify Docker group membership on Linux: `groups $USER`
+* Use `sg docker -c "command"` if group membership isn't active
+* Check Docker resource limits for container startup
+
+**Test Database Issues**:
+* Verify PostgreSQL image can be pulled: `docker pull postgres:15`
+* Check for port conflicts with existing PostgreSQL instances
+* Ensure sufficient disk space for test containers
+* Review Testcontainers logs for specific errors
+
+**External Service Mocking**:
+* Verify mock configurations are loaded correctly
+* Check test environment configuration files
+* Ensure external service dependencies are properly isolated
+* Review test logs for service availability issues
+
+### Common Configuration Mistakes
+
+**Case Sensitivity**:
+* JSON configuration keys are case-sensitive
+* Environment variable names must match exactly
+* Verify nested configuration structure matches expected format
+
+**Secret Management**:
+* User Secrets only work in Development environment
+* Environment variables override other configuration sources
+* Verify secrets are not accidentally committed to source control
+
+**Service Dependencies**:
+* Check service startup order for dependent services
+* Verify health check endpoints for service availability
+* Review service logs for initialization errors
+* Ensure all required configuration is present before service startup
+
+### Getting Additional Help
+
+**Diagnostic Endpoints**:
+* `/api/status` - Overall service health
+* `/api/status/config` - Configuration validation
+* `/swagger` - API documentation and testing
+
+**Log Analysis**:
+* Review application logs for specific error messages
+* Check structured logging output for correlation IDs
+* Use log aggregation tools for pattern analysis
+* Enable debug logging for detailed troubleshooting
+
+**Community Resources**:
+* Check project documentation for updated troubleshooting guides
+* Review GitHub issues for similar problems
+* Consult framework-specific documentation and communities
+
+## 11. Next Steps
+
+* Review [`../../Code/Zarichney.Server/Services/Status/README.md`](../../Code/Zarichney.Server/Services/Status/README.md) for details on the Status Service implementation.
+* See [`../../Code/Zarichney.Server/Controllers/AuthController.cs`](../../Code/Zarichney.Server/Controllers/AuthController.cs) for authentication endpoints.
+* Explore [`../Maintenance/PostgreSqlDatabase.md`](../Maintenance/PostgreSqlDatabase.md) for database maintenance guidance.
+* Review [`../Standards/TestingStandards.md`](../Standards/TestingStandards.md) for comprehensive testing approach.
+* Consult [`../../Scripts/README.md`](../../Scripts/README.md) for development automation scripts.
 
 ---
