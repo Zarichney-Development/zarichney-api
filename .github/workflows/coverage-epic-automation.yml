@@ -212,83 +212,115 @@ jobs:
           
           echo "task_branch_created=true" >> $GITHUB_OUTPUT
       
-      - name: "Execute Coverage Epic AI Agent"
-        id: ai-execution
+      - name: "Extract Coverage Task Context"
+        id: task-context
         if: steps.task-branch.outputs.task_branch_created == 'true'
         run: |
-          echo "🤖 Executing AI agent for coverage improvement"
-          
-          # Load the AI agent prompt and execute via Claude CLI
-          PROMPT_FILE=".github/prompts/coverage-epic-agent.md"
-          
-          if [ ! -f "$PROMPT_FILE" ]; then
-            echo "❌ AI agent prompt file not found: $PROMPT_FILE"
-            exit 1
-          fi
-          
-          # Prepare execution context
-          export COVERAGE_TARGET_AREA="${{ steps.coverage-analysis.outputs.selected_target_area }}"
-          export CURRENT_COVERAGE="${{ steps.coverage-analysis.outputs.current_coverage }}"
-          export TASK_IDENTIFIER="${{ steps.coverage-analysis.outputs.task_identifier }}"
-          export CI_EXECUTION="true"
-          
-          echo "🎯 Target Area: $COVERAGE_TARGET_AREA"
-          echo "📊 Current Coverage: $CURRENT_COVERAGE"
-          echo "🔢 Task ID: $TASK_IDENTIFIER"
-          
-          # Enhanced structured approach for coverage improvement
-          # Note: Full Claude CLI integration requires additional configuration
-          echo "🔄 Executing structured coverage improvement analysis"
-          
-          # Analyze target area for coverage opportunities  
-          echo "📊 Analyzing $COVERAGE_TARGET_AREA for coverage gaps"
-          
-          # Find uncovered files in target area
-          TARGET_FILES=$(find Code/Zarichney.Server -name "*.cs" -path "*/$COVERAGE_TARGET_AREA/*" ! -path "*/bin/*" ! -path "*/obj/*" | head -5)
-          
-          if [ -n "$TARGET_FILES" ]; then
-            echo "🎯 Identified files for coverage improvement:"
-            echo "$TARGET_FILES" | sed 's/^/  - /'
+          # Extract context for Claude Code action (using proper escaping)
+          echo "task_branch=${{ steps.task-branch.outputs.task_branch_name }}" >> $GITHUB_OUTPUT
+          echo "target_area=${{ steps.coverage-analysis.outputs.selected_target_area }}" >> $GITHUB_OUTPUT
+          echo "current_coverage=${{ steps.coverage-analysis.outputs.current_coverage }}" >> $GITHUB_OUTPUT
+          echo "task_identifier=${{ steps.coverage-analysis.outputs.task_identifier }}" >> $GITHUB_OUTPUT
+          echo "epic_issue_id=$EPIC_ISSUE_ID" >> $GITHUB_OUTPUT
+
+      - name: "Check for existing Coverage Epic analysis comment"
+        id: check-existing-comment
+        if: steps.task-branch.outputs.task_branch_created == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Check for existing unresolved Coverage Epic analysis comments in linked issue
+            const issueNumber = ${{ env.EPIC_ISSUE_ID }};
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+            });
             
-            FILE_COUNT=$(echo "$TARGET_FILES" | wc -l)
-            ESTIMATED_TESTS=$((FILE_COUNT * 5))  # Estimate 5 tests per file
+            // Check for existing active coverage analysis comments
+            const hasActiveAnalysis = comments.data.some(comment => {
+              const body = comment.body || '';
+              return (
+                // Contains the Coverage Epic analysis header
+                body.includes('## 🤖 Coverage Epic AI Agent Report') &&
+                // Is not an error message
+                !body.includes('Claude encountered an error') &&
+                !body.includes('Coverage Epic Analysis Failed') &&
+                // Contains substantial analysis content
+                (body.includes('### 📊 Coverage Improvement Analysis') || 
+                 body.includes('Coverage Impact:') ||
+                 body.includes('Test Methods Added:'))
+              );
+            });
             
-            echo "📈 Coverage improvement plan:"
-            echo "  - Files to enhance: $FILE_COUNT"
-            echo "  - Estimated new tests: $ESTIMATED_TESTS"
-            echo "  - Focus area: $COVERAGE_TARGET_AREA"
-            echo "  - Standards compliance: All testing standards will be followed"
-            echo "  - Quality gates: 100% pass rate maintained"
+            console.log(`Found existing Coverage Epic analysis: ${hasActiveAnalysis}`);
+            core.setOutput('skip_analysis', hasActiveAnalysis.toString());
             
-            # Simulate successful structured analysis
-            echo "ai_execution_status=structured_analysis_complete" >> $GITHUB_OUTPUT
-            echo "coverage_improvements=Analyzed $FILE_COUNT files in $COVERAGE_TARGET_AREA, planned $ESTIMATED_TESTS test methods" >> $GITHUB_OUTPUT
-            
-            # Note about next steps
-            echo ""
-            echo "📝 Next implementation phase (requires Claude CLI integration):"
-            echo "  - Load AI agent prompt: $PROMPT_FILE"
-            echo "  - Generate comprehensive tests following established patterns"
-            echo "  - Implement tests with proper AAA structure and FluentAssertions"
-            echo "  - Validate all tests pass with expected skip count (23)"
-            echo "  - Measure coverage improvement in target area"
-            
+            if (hasActiveAnalysis) {
+              console.log('Skipping Coverage Epic analysis - existing active analysis comment found');
+            }
+
+      - name: "Load coverage epic prompt"
+        if: steps.check-existing-comment.outputs.skip_analysis != 'true'
+        id: load-coverage-prompt
+        run: |
+          # Read the markdown template
+          PROMPT_TEMPLATE=$(cat .github/prompts/coverage-epic-agent.md)
+          
+          # Replace placeholders with actual values
+          PROMPT="${PROMPT_TEMPLATE//\{\{COVERAGE_TARGET_AREA\}\}/${{ steps.task-context.outputs.target_area }}}"
+          PROMPT="${PROMPT//\{\{CURRENT_COVERAGE\}\}/${{ steps.task-context.outputs.current_coverage }}}"
+          PROMPT="${PROMPT//\{\{TASK_IDENTIFIER\}\}/${{ steps.task-context.outputs.task_identifier }}}"
+          PROMPT="${PROMPT//\{\{EPIC_ISSUE_ID\}\}/${{ steps.task-context.outputs.epic_issue_id }}}"
+          PROMPT="${PROMPT//\{\{TASK_BRANCH\}\}/${{ steps.task-context.outputs.task_branch }}}"
+          
+          # Output for use in Claude action
+          echo "prompt<<EOF" >> $GITHUB_OUTPUT
+          echo "$PROMPT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: "Execute Coverage Epic AI Agent"
+        if: steps.check-existing-comment.outputs.skip_analysis != 'true'
+        id: claude-coverage
+        uses: grll/claude-code-action@beta
+        with:
+          use_oauth: true
+          claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
+          claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          direct_prompt: ${{ steps.load-coverage-prompt.outputs.prompt }}
+
+      - name: "Handle Coverage Epic AI Failure"
+        if: failure() && steps.claude-coverage.outcome == 'failure'
+        uses: ./.github/actions/handle-ai-analysis-failure
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          analysis-type: 'Coverage Epic Agent'
+          analysis-emoji: '🤖'
+          analysis-name: 'Coverage Epic Analysis'
+          standards-link: 'https://github.com/Zarichney-Development/zarichney-api/blob/main/Docs/Standards/TestingStandards.md'
+          run-number: ${{ github.run_number }}
+          run-id: ${{ github.run_id }}
+
+      - name: "Set AI Execution Status"
+        id: ai-execution
+        if: always() && steps.task-branch.outputs.task_branch_created == 'true'
+        run: |
+          if [ "${{ steps.check-existing-comment.outputs.skip_analysis }}" = "true" ]; then
+            echo "ai_execution_status=skipped_existing_analysis" >> $GITHUB_OUTPUT
+            echo "coverage_improvements=Skipped - existing analysis found in Epic Issue #$EPIC_ISSUE_ID" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.claude-coverage.outcome }}" = "success" ]; then
+            echo "ai_execution_status=claude_success" >> $GITHUB_OUTPUT
+            echo "coverage_improvements=Claude AI agent completed coverage improvements successfully" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.claude-coverage.outcome }}" = "failure" ]; then
+            echo "ai_execution_status=claude_failure" >> $GITHUB_OUTPUT
+            echo "coverage_improvements=Claude AI agent encountered an error during execution" >> $GITHUB_OUTPUT
           else
-            echo "⚠️ No suitable files found for coverage improvement in $COVERAGE_TARGET_AREA"
-            echo "🔍 This may indicate the area is already well-covered or path needs adjustment"
-            
-            echo "ai_execution_status=no_targets_found" >> $GITHUB_OUTPUT  
-            echo "coverage_improvements=No uncovered files identified in $COVERAGE_TARGET_AREA area" >> $GITHUB_OUTPUT
+            echo "ai_execution_status=not_executed" >> $GITHUB_OUTPUT
+            echo "coverage_improvements=AI agent was not executed" >> $GITHUB_OUTPUT
           fi
-          
-          # Infrastructure validation
-          echo ""
-          echo "✅ Infrastructure status:"
-          echo "  - Epic branch: Ready for task integration"
-          echo "  - Coverage analysis: Functional"
-          echo "  - Agent coordination: Timestamp-based conflict prevention active"
-          echo "  - Quality gates: Ready for test validation"
-          echo "  - PR automation: Ready for coverage improvement PRs"
       
       # ========================================
       # Quality Gates & Validation
@@ -296,7 +328,7 @@ jobs:
       
       - name: "Validate Infrastructure & Test Suite"
         id: post-validation
-        if: steps.ai-execution.outputs.ai_execution_status != ''
+        if: always() && steps.ai-execution.outputs.ai_execution_status != ''
         run: |
           echo "🔍 Validating infrastructure and test suite status"
           
@@ -340,14 +372,18 @@ jobs:
           
           # Determine overall validation status
           if [ "$BUILD_STATUS" = "passed" ] && [ "$TEST_STATUS" != "failed" ]; then
-            if [ "$AI_STATUS" = "structured_analysis_complete" ]; then
-              echo "✅ Infrastructure validation passed - ready for AI integration"
-              echo "📈 Coverage analysis completed successfully"
-              echo "🚀 Next step: Implement Claude CLI integration for actual test generation"
+            if [ "$AI_STATUS" = "claude_success" ]; then
+              echo "✅ Infrastructure validation passed - Claude AI agent executed successfully"
+              echo "📈 Coverage improvements implemented by autonomous AI agent"
+              echo "🚀 Epic #$EPIC_ISSUE_ID progression: Real AI-powered test generation completed"
               
-            elif [ "$AI_STATUS" = "no_targets_found" ]; then
-              echo "⚠️ Infrastructure healthy but no coverage targets identified"
-              echo "💡 Consider adjusting target area selection or coverage analysis"
+            elif [ "$AI_STATUS" = "skipped_existing_analysis" ]; then
+              echo "⏭️ Infrastructure healthy - AI analysis skipped (existing analysis found)"
+              echo "💡 Review existing analysis in Epic Issue #$EPIC_ISSUE_ID"
+              
+            elif [ "$AI_STATUS" = "claude_failure" ]; then
+              echo "⚠️ Infrastructure healthy but Claude AI agent encountered issues"
+              echo "📋 Check workflow logs and error handling for details"
               
             else
               echo "⚠️ Infrastructure validation completed with status: $AI_STATUS"

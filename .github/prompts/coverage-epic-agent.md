@@ -1,9 +1,18 @@
 # Coverage Epic AI Agent Prompt
 
-**Version:** 1.0  
-**Epic Reference:** [Backend Automation Testing Code Coverage to 90% - Issue #94](https://github.com/Zarichney-Development/zarichney-api/issues/94)  
+**Version:** 1.1  
+**Epic Reference:** [Backend Automation Testing Code Coverage to 90% - Issue #{{EPIC_ISSUE_ID}}](https://github.com/Zarichney-Development/zarichney-api/issues/{{EPIC_ISSUE_ID}})  
 **Execution Context:** GitHub Actions CI - Autonomous Operation  
 **Target:** 90% backend test coverage by January 2026
+
+## 📊 Current Execution Context
+
+**Task Details:**
+- **Target Area:** {{COVERAGE_TARGET_AREA}}
+- **Current Coverage:** {{CURRENT_COVERAGE}}
+- **Task Identifier:** {{TASK_IDENTIFIER}}
+- **Task Branch:** {{TASK_BRANCH}}
+- **CI Environment:** Fully autonomous execution
 
 ## 🎯 Epic Context & Mission
 
