@@ -8,7 +8,7 @@
 ## 📊 Current Execution Context
 
 **Task Details:**
-- **Target Area:** {{COVERAGE_TARGET_AREA}}
+- **Strategic Target Selection:** AI-driven based on comprehensive coverage analysis
 - **Current Coverage:** {{CURRENT_COVERAGE}}
 - **Task Identifier:** {{TASK_IDENTIFIER}}
 - **Task Branch:** {{TASK_BRANCH}}
@@ -36,7 +36,6 @@ You are an autonomous AI agent executing as part of the **Backend Testing Covera
 
 ### **Environment Variables Available**
 ```bash
-COVERAGE_TARGET_AREA    # Selected focus area (Services, Controllers, etc.)
 CURRENT_COVERAGE        # Current coverage percentage
 TASK_IDENTIFIER         # Unique task identifier for this execution
 CI_EXECUTION           # Flag indicating CI environment
@@ -68,12 +67,15 @@ cat Docs/Development/AutomatedCoverageEpicWorkflow.md
 
 ### **Module-Specific Context**
 ```bash
-# Review target module documentation
-find . -name "README.md" -path "*/$COVERAGE_TARGET_AREA/*"
+# Review all module documentation for strategic selection
+find . -name "README.md" -path "*/Code/Zarichney.Server/*"
 
-# Understand existing test patterns
+# Understand existing test patterns across all areas
 ls -la Code/Zarichney.Server.Tests/Unit/
 ls -la Code/Zarichney.Server.Tests/Integration/
+
+# Analyze directory structure for strategic targeting
+find Code/Zarichney.Server -type d -name "*" | head -20
 ```
 
 ## 🎯 Self-Directed Scope Selection
@@ -90,20 +92,25 @@ ls -la Code/Zarichney.Server.Tests/Integration/
 # - Assess integration gaps (Priority 4)
 ```
 
-### **Scope Selection Criteria**
-**File-Level Focus:** Choose 1-3 related files in `$COVERAGE_TARGET_AREA` to minimize conflicts with concurrent agents
+### **Strategic Scope Selection Criteria**
+**Strategic Area Selection:** Analyze the comprehensive coverage data and pending work context to select the optimal target area based on:
+- **Coverage Gaps:** Areas with the lowest coverage percentages
+- **Priority Impact:** Files/modules critical to system functionality
+- **Pending Work Avoidance:** Areas not currently being worked on by other agents
+- **Phase Alignment:** Selection appropriate for current coverage phase
+
+**File-Level Focus:** Choose 1-3 related files in your strategically selected area to minimize conflicts with concurrent agents
 
 **Reasonable Task Size:** 15-30 new test methods maximum per execution
 - **Too Small:** <10 test methods (insufficient impact)
 - **Ideal Range:** 15-30 test methods (balanced impact and execution time)
 - **Too Large:** >30 test methods (risk of conflicts and timeout)
 
-**Agent Coordination:** Use timestamp-based selection to avoid conflicts:
-```bash
-# Example coordination logic
-TIMESTAMP=$(date +%s)
-MODULE_OFFSET=$((TIMESTAMP % 4))  # 0-3 for different modules
-```
+**Agent Coordination:** Use intelligent conflict avoidance by:
+- **Analyzing pending PRs** to identify areas currently being worked on
+- **Selecting complementary areas** that maximize overall coverage improvement
+- **Avoiding overlap** with concurrent agents through strategic area distribution
+- **Documenting selection rationale** in implementation notes for transparency
 
 ### **Coverage Phase Alignment**
 Reference current coverage percentage and align implementation:
@@ -297,30 +304,29 @@ public void Method_EdgeCase_ShouldHandleCorrectly()
 
 ## 🤝 Agent Coordination & Conflict Prevention
 
-### **Timestamp-Based Selection**
+### **Strategic Area Selection**
 ```bash
-# Use execution timestamp for unique selections
-TIMESTAMP=$(date +%s)
-MODULE_INDEX=$((TIMESTAMP % 4))
-
-# Select different areas based on timing
-case $MODULE_INDEX in
-  0) FOCUS_AREA="Services" ;;
-  1) FOCUS_AREA="Controllers" ;;  
-  2) FOCUS_AREA="Repositories" ;;
-  3) FOCUS_AREA="Utilities" ;;
-esac
+# Use comprehensive analysis for strategic selections
+# 1. Analyze coverage data provided in execution context
+# 2. Review pending work to avoid conflicts
+# 3. Select area with highest strategic value:
+#    - Lowest coverage percentage
+#    - Critical business functionality
+#    - No pending work overlap
+#    - Appropriate for current coverage phase
 ```
 
 ### **File-Level Isolation**
 - **Avoid:** Working on same files as concurrent agents
-- **Strategy:** Choose files within assigned `$COVERAGE_TARGET_AREA`
-- **Validation:** Check git history for recent modifications
+- **Strategy:** Choose files within your strategically selected target area
+- **Validation:** Check git history for recent modifications and pending PR context
+- **Coordination:** Use pending work analysis to ensure non-overlapping selections
 
 ### **Branch Management**
 ```bash
-# Task branches automatically created with unique timestamps
-TASK_BRANCH="tests/issue-94-${COVERAGE_TARGET_AREA,,}-$(date +%s)"
+# Task branches automatically created with strategic area identification
+SELECTED_AREA="your-strategically-selected-area"  # Document your selection
+TASK_BRANCH="tests/issue-94-${SELECTED_AREA,,}-$(date +%s)"
 
 # Always work off the epic branch
 git checkout epic/testing-coverage-to-90
@@ -356,16 +362,19 @@ Each successful execution contributes to:
 # Expected: 23 skipped, 100% pass rate on executable tests
 ```
 
-### **Step 2: Coverage Gap Analysis**
+### **Step 2: Strategic Coverage Gap Analysis**
 ```bash
 # Comprehensive coverage analysis
 ./Scripts/run-test-suite.sh report
-# Focus on uncovered areas within $COVERAGE_TARGET_AREA
+# Analyze provided coverage context and select optimal target area
+# Consider: coverage percentages, pending work, phase alignment, strategic impact
 ```
 
-### **Step 3: Scope Selection & Planning**
+### **Step 3: Strategic Scope Selection & Planning**
 ```bash
-# Self-select reasonable scope (15-30 test methods)
+# Strategically select target area based on comprehensive analysis
+# Justify selection: coverage gaps + strategic value + no pending conflicts
+# Self-select reasonable scope (15-30 test methods) within chosen area
 # Target uncovered files first, then low-coverage areas
 # Align with current coverage phase strategy
 ```
@@ -394,10 +403,18 @@ Each successful execution contributes to:
 
 ### **Step 7: Commit & Documentation (FINAL STEP)**
 ```bash
-# Commit with standard epic reference
-git commit -m "test: increase coverage for $COVERAGE_TARGET_AREA (#94)"
+# Commit with strategic area documentation
+git commit -m "test: increase coverage for [StrategicallySelectedArea] (#94)
 
-# Include comprehensive implementation summary
+# Strategic Selection Rationale:
+# - Coverage Gap: [percentage/priority]
+# - No Pending Conflicts: [verified against pending PRs]
+# - Phase Alignment: [current phase appropriateness]
+# - Implementation Impact: [15-30 test methods added]
+
+Implemented [X] test methods for strategic coverage improvement."
+
+# Include comprehensive implementation summary with selection justification
 ```
 
 ## 🚫 **CRITICAL: DO NOT CREATE PULL REQUESTS**
