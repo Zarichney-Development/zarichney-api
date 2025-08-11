@@ -1,6 +1,6 @@
 # Module/Directory: Scripts
 
-**Last Updated:** 2025-07-27
+**Last Updated:** 2025-08-06
 
 **(Optional: Link to Parent Directory's README)**
 > **Parent:** [`zarichney-api`](../README.md)
@@ -23,7 +23,7 @@
     * **Development & Testing Scripts:** `generate-api-client.*`, `run-test-suite.sh` (unified testing)
     * **Deployment & Service Management:** `start-server.sh`, `cookbook-api.service`, `cleanup-playwright.sh`
     * **Domain-Specific Testing:** `test_sites.sh` (recipe scraping validation)
-    * **Configuration Files:** `.refitter` (API client generation settings)
+    * **Configuration Files:** `.refitter` (API client generation settings), `docker-compose.integration.yml` (integration test environment)
     * **CI/CD Pipeline Logic:** Scripts moved to `.github/scripts/`
     * **AI Analysis Prompts:** Prompts relocated to `.github/prompts/`
 * **Core Workflow Integration:** Scripts integrate with the CI/CD pipeline and support local development workflows by:
@@ -38,9 +38,14 @@
 * **Key Public Interfaces (for external callers):**
     * `generate-api-client.*`:
         * **Purpose:** Generate strongly-typed Refit client interfaces for integration testing
-        * **Critical Preconditions:** `.NET 8 SDK installed`, `api-server project buildable`, `refitter tool available`
+        * **Critical Preconditions:** `.NET 8 SDK installed`, `api-server project buildable`, `refitter tool available`, `port 5000 available`
         * **Critical Postconditions:** `api-server.Tests/Framework/Client/` populated with generated client interfaces grouped by OpenAPI tags
-        * **Non-Obvious Error Handling:** Temporarily starts API server to generate swagger.json; cleans up process on failure
+        * **Non-Obvious Error Handling:** 
+            - Automatically detects and kills processes on port 5000 to prevent conflicts
+            - Extended 90-second timeout with health checks (45 attempts × 2 seconds)
+            - Captures startup logs for debugging API server issues  
+            - Validates process health before attempting API calls
+            - Enhanced error reporting with detailed diagnostics
     * `run-test-suite.sh` (Unified Testing):
         * **Purpose:** Consolidated test execution with multiple modes - automation (HTML reports), report (AI analysis), or both
         * **Critical Preconditions:** `Docker running for integration tests`, `.NET 8 SDK`, `ReportGenerator tool (automation mode)`, `jq for JSON processing (report mode)`
@@ -59,6 +64,7 @@
 
 * **Configuration:**
     * `.refitter` file defines API client generation settings (namespace: `Zarichney.Client`, output: `api-server.Tests/Framework/Client/`)
+    * `docker-compose.integration.yml` defines Seq logging infrastructure for LoggingService integration tests (ports 5342, 8080)
     * Service configuration in `cookbook-api.service` targets production environment paths
 * **Directory Structure:**
     * Generated files appear in `api-server.Tests/Framework/Client/` (not within Scripts directory)
@@ -101,13 +107,17 @@
     # Testing specific components
     ./Scripts/test_sites.sh
     
+    # Manual integration test environment setup
+    docker-compose -f ./Scripts/docker-compose.integration.yml up -d
+    
     # Production deployment
     ./Scripts/start-server.sh
     ```
 * **Common Pitfalls / Gotchas:**
     * Docker group membership issues on Linux/WSL2 - scripts provide `sg docker` fallback
-    * API server must be stopped before running generation scripts to avoid port conflicts
+    * API server port conflicts are now automatically resolved by the generation script
     * Recipe scraping tests depend on external site availability and selector accuracy
+    * API startup issues will be captured in temporary log files for debugging
 
 ## 6. Dependencies
 

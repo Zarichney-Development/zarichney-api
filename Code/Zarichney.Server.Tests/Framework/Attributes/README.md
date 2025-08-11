@@ -1,7 +1,7 @@
 # README: /Framework/Attributes Directory
 
-**Version:** 1.2
-**Last Updated:** 2025-05-25
+**Version:** 1.3
+**Last Updated:** 2025-08-06
 **Parent:** `../README.md`
 
 ## 1. Purpose & Responsibility
@@ -48,6 +48,12 @@ These attributes often work in conjunction with custom xUnit test case discovere
     * When using `DependencyFactAttribute` with `ExternalServices` or `InfrastructureDependency` enums, the attribute handles checking the status via the application's `IStatusService` or framework-level checks.
     * When using `ServiceUnavailableFactAttribute` with an `ExternalServices` enum, the attribute checks service availability via `IStatusService` and skips if the service is available (opposite behavior from `DependencyFactAttribute`).
     * Tests using these attributes should clearly indicate their dependencies also via appropriate `[Trait("Category", ...)]` attributes (though `DependencyFactAttribute` handles some implicit trait mapping).
+
+* **For 100% Test Pass Rate Configuration:**
+    * **External Services**: Tests marked with `[DependencyFact(ExternalServices.OpenAiApi)]`, `[DependencyFact(ExternalServices.Stripe)]`, or `[DependencyFact(ExternalServices.MsGraph)]` require proper environment variable configuration (see `../../README.md` Section 5).
+    * **Infrastructure**: Tests marked with `[DependencyFact(InfrastructureDependency.Database)]` require SQL Server and proper connection string configuration.
+    * **Environment Variables**: Required variables include `OPENAI_API_KEY`, `STRIPE_SECRET_KEY`, `MSGRAPH_TENANT_ID`, and `CONNECTION_STRING_USER_DB`.
+    * **Test Environment**: Configuration is managed through `../../../Zarichney.Server/appsettings.Testing.json` with environment variable substitution.
 * **Assumptions Made by Attributes:**
     * `DependencyFactAttribute` assumes:
         * The `IStatusService` (when checking `ExternalServices`) is correctly implemented in the `Zarichney.Server` and reflects the true availability of features based on configuration.

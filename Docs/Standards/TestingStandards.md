@@ -221,7 +221,193 @@
     * **Changelog (Future):** A machine-readable `CHANGELOG.md` may be introduced to detail changes between versions, facilitating differential ingestion by AI agents.
     * **Feedback Loop:** AI-generated tests flagged during code review for non-adherence will serve as feedback to refine prompts or identify ambiguities in these standards.
 
-## 12. Document References
+## 12. Progressive Coverage Strategy & Test Addition Guidelines
+
+### 12.1 Coverage Progression Framework
+* **Objective:** Systematic progression from 14.22% baseline to 90% coverage by January 2026 through phase-based strategic test development.
+* **Timeline:** 27 months with target monthly velocity of 2.8% coverage increase.
+* **Approach:** Phase-appropriate testing priorities ensure efficient resource utilization and sustainable coverage growth.
+
+### 12.2 Coverage Phases & Strategic Focus
+
+#### Phase 1: Foundation (14.22% → 20%)
+* **Duration:** ~2 months
+* **Primary Focus:** Service layer basics, API contracts, core business logic
+* **Strategy:** Target low-hanging fruit and establish broad coverage foundation
+* **Key Areas:**
+  * Public service methods (happy path scenarios)
+  * Controller action coverage (major API endpoints)
+  * Core business entity validation
+  * Basic integration test coverage
+* **AI Coder Guidance:** Focus on straightforward unit tests with clear arrange-act-assert patterns
+
+#### Phase 2: Growth (20% → 35%) 
+* **Duration:** ~5 months
+* **Primary Focus:** Service layer depth, integration scenarios, data validation
+* **Strategy:** Deepen existing coverage and expand integration testing
+* **Key Areas:**
+  * Complex service method scenarios
+  * Repository integration patterns
+  * Authentication and authorization flows
+  * Data transformation and validation logic
+* **AI Coder Guidance:** Emphasis on integration testing and complex test data scenarios
+
+#### Phase 3: Maturity (35% → 50%)
+* **Duration:** ~5 months  
+* **Primary Focus:** Edge cases, error handling, input validation, boundary conditions
+* **Strategy:** Comprehensive error scenario coverage and edge case testing
+* **Key Areas:**
+  * Exception handling paths
+  * Input validation boundary testing
+  * External service error scenarios
+  * Concurrent operation testing
+* **AI Coder Guidance:** Focus on negative test cases and error condition coverage
+
+#### Phase 4: Excellence (50% → 75%)
+* **Duration:** ~9 months
+* **Primary Focus:** Complex business scenarios, integration depth, cross-cutting concerns
+* **Strategy:** Advanced integration testing and comprehensive business logic coverage
+* **Key Areas:**
+  * End-to-end business process validation
+  * Complex integration scenarios
+  * Performance-sensitive code paths
+  * Security and authorization edge cases
+* **AI Coder Guidance:** Advanced testing patterns and comprehensive scenario coverage
+
+#### Phase 5: Mastery (75% → 90%)
+* **Duration:** ~6 months
+* **Primary Focus:** Comprehensive edge cases, performance scenarios, system integration
+* **Strategy:** Complete coverage of critical paths and system-wide validation
+* **Key Areas:**
+  * Comprehensive performance testing
+  * System integration validation
+  * Advanced security scenarios
+  * Complete edge case coverage
+* **AI Coder Guidance:** Focus on system-wide testing and advanced scenarios
+
+### 12.3 Test Addition Guidelines
+
+#### Coverage-Driven Test Prioritization
+Use the **Coverage Impact Matrix** to prioritize test development:
+
+1. **High Impact, Low Effort** (Priority 1):
+   * Public API methods with minimal dependencies
+   * Service layer methods with clear input/output contracts
+   * Validation logic with well-defined rules
+
+2. **High Impact, High Effort** (Priority 2):
+   * Complex integration scenarios
+   * End-to-end business processes
+   * Multi-service coordination testing
+
+3. **Low Impact, Low Effort** (Priority 3):
+   * Utility method testing
+   * Simple getter/setter validation
+   * Basic configuration testing
+
+4. **Low Impact, High Effort** (Priority 4):
+   * Legacy code with complex dependencies
+   * Performance testing for non-critical paths
+   * Comprehensive UI testing
+
+#### Phase-Specific Test Development
+When adding tests, consider current coverage phase:
+
+* **Early Phases (1-2):** Focus on breadth and basic functionality
+* **Middle Phases (3-4):** Emphasize depth and edge case coverage
+* **Late Phases (5):** Complete comprehensive coverage and optimization
+
+### 12.4 AI Coder Test Development Guidelines
+
+#### Progressive Test Patterns
+* **Phase 1-2:** Standard AAA patterns, basic mocking, simple integration tests
+* **Phase 3-4:** Advanced mocking strategies, complex test data builders, negative testing
+* **Phase 5:** Performance testing, comprehensive integration, advanced scenarios
+
+#### Coverage-Aware Development
+* Always check current phase before test development
+* Align test complexity with phase-appropriate strategies
+* Use progressive coverage analysis to identify high-impact opportunities
+* Balance test coverage with maintainability and execution performance
+
+### 12.5 Quality Gates & Velocity Tracking
+
+#### Dynamic Thresholds
+* **Regression Tolerance:** 1% coverage decrease allowed for refactoring
+* **Phase Progression:** Must reach phase targets before advancing focus areas
+* **Velocity Requirements:** Maintain 2.8%/month average for 90% by Jan 2026
+* **Quality Maintenance:** Test pass rate must remain ≥99% throughout progression
+
+#### Velocity Monitoring
+* **Monthly Reviews:** Track coverage progression against velocity targets
+* **Trend Analysis:** Identify acceleration or deceleration patterns
+* **Intervention Triggers:** Act when velocity drops below 80% of required rate
+* **Success Metrics:** On-track progression toward 90% coverage epic
+
+### 12.6 Integration with Existing Workflows
+
+#### Test Suite Commands
+```bash
+# Get current phase and recommendations
+./Scripts/run-test-suite.sh report
+
+# Phase-appropriate test guidance
+./Scripts/run-test-suite.sh report --coverage-detail
+
+# Progress tracking with AI insights
+/test-report summary
+```
+
+#### CI/CD Integration
+* Progressive coverage analysis in all PR workflows
+* Phase-aware AI analysis and recommendations
+* Dynamic quality gate adjustments based on current phase
+* Velocity tracking and timeline alerts
+
+### 12.7 Automated Epic Execution Environment
+
+#### **Epic Context & Automation**
+The Backend Coverage Epic (Issue #94) operates through automated AI agents in GitHub Actions CI environment:
+
+* **Execution Environment:** GitHub Actions CI (unconfigured - external services unavailable)
+* **Automation Frequency:** 4 AI agent instances per day (6-hour cron intervals)
+* **Epic Branch Strategy:** All work performed on `epic/testing-coverage-to-90` branch off `develop`
+* **Task Branches:** Individual tasks use `tests/issue-94-description-timestamp` pattern
+
+#### **CI Environment Test Execution**
+In the automated CI environment, the test suite operates with specific constraints:
+
+* **Expected Skip Rate:** 23 tests skipped due to unavailable external dependencies:
+  * OpenAI API tests: 6 tests skipped
+  * Stripe payment tests: 6 tests skipped  
+  * Microsoft Graph tests: 4 tests skipped
+  * Database integration tests: 6 tests skipped
+  * Production safety tests: 1 test skipped
+* **Success Criteria:** 100% pass rate on ~65 executable tests
+* **Quality Gate:** All executable tests must pass; skipped tests are acceptable and expected
+
+#### **Automated Coverage Workflow Integration**
+AI agents follow the detailed workflow defined in:
+* **Primary Workflow:** `Docs/Development/AutomatedCoverageEpicWorkflow.md`
+* **Scope Selection:** Self-directed based on coverage phase and impact analysis
+* **Conflict Prevention:** File-level focus areas to avoid agent overlap
+* **Framework Enhancement:** Include testing infrastructure improvements when beneficial
+
+#### **Success Metrics for Automated Execution**
+* **Daily Output:** 4 pull requests per day against epic branch (target)
+* **Coverage Velocity:** ~2.8% coverage increase per month toward 90% target
+* **Quality Maintenance:** ≥99% test pass rate throughout progression
+* **Timeline:** January 2026 target for 90% backend coverage
+
+#### **Production Code Assumptions**
+* **Default Assumption:** Production code is bug-free; all new tests should pass
+* **Exception Handling:** If new tests reveal production issues:
+  * Document findings in PR description
+  * Create separate GitHub issue for production bug fix
+  * Advise on separating bug fix from coverage improvement work
+  * Continue with coverage improvements after production fixes
+
+## 13. Document References
 
 * **Detailed Unit Testing Guide:** `Docs/Standards/UnitTestCaseDevelopment.md` (To be created)
 * **Detailed Integration Testing Guide:** `Docs/Standards/IntegrationTestCaseDevelopment.md` (To be created)

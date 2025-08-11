@@ -5,6 +5,7 @@ using Xunit.Abstractions;
 using Zarichney.Client.Contracts;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.Services.Status;
 
 namespace Zarichney.Tests.Integration.Smoke;
 
@@ -19,12 +20,10 @@ namespace Zarichney.Tests.Integration.Smoke;
 [Collection("IntegrationQA")]
 public class ApiSmokeTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper) : IntegrationTestBase(apiClientFixture, testOutputHelper)
 {
-  [DependencyFact]
+  [DependencyFact(InfrastructureDependency.Database)]
   [Trait(TestCategories.Feature, TestCategories.Auth)]
   public async Task AuthFlow_Smoke_LoginAndLogout()
   {
-    // Set a skip reason for the test to be properly handled
-    SetSkipReason("Test requires authentication service which is missing configuration");
 
     // Arrange
     var apiClient = _apiClientFixture.UnauthenticatedAuthApi;
@@ -45,12 +44,10 @@ public class ApiSmokeTests(ApiClientFixture apiClientFixture, ITestOutputHelper 
     Assert.True(logoutResult.Success);
   }
 
-  [Fact(Skip = "Skipping to keep runtime time low. TODO: remove after support test specific data")]
+  [DependencyFact(InfrastructureDependency.Database)]
   [Trait(TestCategories.Feature, TestCategories.Cookbook)]
   public async Task Cookbook_Smoke_GetRecipes()
   {
-    // Set a skip reason for the test to be properly handled
-    SetSkipReason("Test requires cookbook service which is missing configuration");
 
     // Arrange
     var client = _apiClientFixture.AuthenticatedCookbookApi;
@@ -62,12 +59,10 @@ public class ApiSmokeTests(ApiClientFixture apiClientFixture, ITestOutputHelper 
     Assert.NotNull(recipes);
   }
 
-  [DependencyFact]
+  [DependencyFact(Zarichney.Services.Status.ExternalServices.Stripe)]
   [Trait(TestCategories.Feature, TestCategories.Payment)]
   public async Task Payment_Smoke_ApiEndpointsAvailable()
   {
-    // Set a skip reason for the test to be properly handled
-    SetSkipReason("Test requires payment service which is missing configuration");
 
     // This test just verifies that the payment endpoints are accessible
     // It doesn't test actual payment processing

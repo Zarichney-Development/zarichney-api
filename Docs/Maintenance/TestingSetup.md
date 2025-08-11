@@ -1,11 +1,16 @@
-# Testing Setup and Maintenance
+# Testing CI/CD and Maintenance
 
-**Version:** 1.1
-**Last Updated:** 2025-05-25
+**Version:** 1.2
+**Last Updated:** 2025-08-11
+
+> **Parent:** [`README.md`](./README.md)
 
 ## Overview
 
-This document describes the setup, configuration, and maintenance procedures for the automated testing infrastructure of the Zarichney API.
+This document focuses on CI/CD integration and maintenance procedures for the automated testing infrastructure. For comprehensive local testing environment setup including external service configuration, see [`../Development/TestingSetup.md`](../Development/TestingSetup.md).
+
+**Scope**: CI/CD pipeline integration, maintenance tasks, and operational procedures  
+**Related**: [`../Development/TestingSetup.md`](../Development/TestingSetup.md) for local environment setup
 
 ## CI/CD Integration
 

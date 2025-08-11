@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Zarichney.Services.Status;
+using Zarichney.Services.Logging;
+using Zarichney.Services.Logging.Models;
 using Microsoft.AspNetCore.Authorization;
 using Zarichney.Controllers.Responses;
 
@@ -9,7 +11,8 @@ namespace Zarichney.Controllers;
 [AllowAnonymous]
 [Route("api")]
 public class PublicController(
-  IStatusService statusService)
+  IStatusService statusService,
+  ILoggingService loggingService)
   : ControllerBase
 {
   [HttpGet("health")]
@@ -46,6 +49,51 @@ public class PublicController(
   public async Task<IActionResult> Config()
   {
     var result = await statusService.GetConfigurationStatusAsync();
+    return Ok(result);
+  }
+
+  /// <summary>
+  /// Gets the current logging system status and configuration
+  /// </summary>
+  /// <returns>Detailed logging status information</returns>
+  [HttpGet("logging/status")]
+  [ProducesResponseType(typeof(LoggingStatusResult), 200)]
+  [ProducesResponseType(500)]
+  public async Task<IActionResult> GetLoggingStatus()
+  {
+    try
+    {
+      var result = await loggingService.GetLoggingStatusAsync(HttpContext.RequestAborted);
+      return Ok(result);
+    }
+    catch (Exception ex)
+    {
+      return StatusCode(500, new { error = "Failed to retrieve logging status", details = ex.Message });
+    }
+  }
+
+  /// <summary>
+  /// Tests connectivity to the specified Seq URL
+  /// </summary>
+  /// <param name="request">The Seq URL test request (optional, uses configured URL if not provided)</param>
+  /// <returns>Connectivity test results</returns>
+  [HttpPost("logging/test-seq")]
+  [ProducesResponseType(typeof(SeqConnectivityResult), 200)]
+  public async Task<IActionResult> TestSeqConnectivity([FromBody] TestSeqRequest? request = null)
+  {
+    var result = await loggingService.TestSeqConnectivityAsync(request?.Url, HttpContext.RequestAborted);
+    return Ok(result);
+  }
+
+  /// <summary>
+  /// Gets information about available logging methods
+  /// </summary>
+  /// <returns>Information about all available logging options</returns>
+  [HttpGet("logging/methods")]
+  [ProducesResponseType(typeof(LoggingMethodsResult), 200)]
+  public async Task<IActionResult> GetAvailableLoggingMethods()
+  {
+    var result = await loggingService.GetAvailableLoggingMethodsAsync(HttpContext.RequestAborted);
     return Ok(result);
   }
 }
