@@ -52,7 +52,7 @@ In non-Production environments with a configured database, the system automatica
 
 * **Run Application:**
   ```bash
-  dotnet run --project Zarichney.Server
+  dotnet run --project Code/Zarichney.Server
   ```
 
 * **Run Tests:**
@@ -186,12 +186,12 @@ To run the application without setting up a PostgreSQL Identity Database:
    export ASPNETCORE_ENVIRONMENT="Development" # Linux/macOS
    
    # Run without configuring UserDatabase connection string
-   dotnet run --project Zarichney.Server
+   dotnet run --project Code/Zarichney.Server
    ```
 
 2. Verify the application starts successfully and check the status:
    ```bash
-   curl http://localhost:5000/status
+   curl http://localhost:5000/api/status
    ```
 
 3. Note that authentication endpoints will return 503 Service Unavailable:
@@ -215,13 +215,23 @@ For full functionality, we recommend setting up a local PostgreSQL database:
 3. **Configure Connection String**:
    ```bash
    # Using .NET User Secrets
-   dotnet user-secrets set "ConnectionStrings:UserDatabase" "Host=localhost;Database=zarichney_identity;Username=postgres;Password=yourpassword" --project Zarichney.Server
+   dotnet user-secrets set "ConnectionStrings:UserDatabase" "Host=localhost;Database=zarichney_identity;Username=postgres;Password=yourpassword" --project Code/Zarichney.Server
    ```
 
 4. **Apply Migrations**:
+   
+   ```bash
+   # Navigate to server project directory
+   cd Code/Zarichney.Server
+   
+   # Apply migrations manually using EF CLI
+   dotnet ef database update --context UserDbContext
+   ```
+   
+   **Option B - Production Script (Alternative for advanced users)**:
    ```bash
    # Navigate to Migrations directory
-   cd Zarichney.Server/Services/Auth/Migrations
+   cd Code/Zarichney.Server/Services/Auth/Migrations
    
    # Run migration script
    ./ApplyMigrations.sh  # Linux/macOS
@@ -355,11 +365,12 @@ This section provides comprehensive setup instructions for all external services
 {
   "LlmConfig": {
     "ApiKey": "sk-your-openai-api-key",
-    "OrganizationId": "org-your-organization-id",
-    "CompletionModel": "gpt-4o-mini",
-    "TranscriptionModel": "whisper-1",
-    "MaxTokens": 4000,
-    "Temperature": 0.7
+    "ModelName": "gpt-4o-mini",
+    "RetryAttempts": 5
+  },
+  "TranscribeConfig": {
+    "ModelName": "whisper-1", 
+    "RetryAttempts": 5
   }
 }
 ```
@@ -375,9 +386,9 @@ This section provides comprehensive setup instructions for all external services
 4. Configure backend and frontend:
    ```bash
    # Backend configuration (User Secrets)
-   dotnet user-secrets set "StripeConfig:SecretKey" "sk_test_your_stripe_secret_key" --project Code/Zarichney.Server
-   dotnet user-secrets set "StripeConfig:PublishableKey" "pk_test_your_stripe_publishable_key" --project Code/Zarichney.Server
-   dotnet user-secrets set "StripeConfig:WebhookSecret" "whsec_your_webhook_secret" --project Code/Zarichney.Server
+   dotnet user-secrets set "PaymentConfig:StripeSecretKey" "sk_test_your_stripe_secret_key" --project Code/Zarichney.Server
+   dotnet user-secrets set "PaymentConfig:StripePublishableKey" "pk_test_your_stripe_publishable_key" --project Code/Zarichney.Server
+   dotnet user-secrets set "PaymentConfig:StripeWebhookSecret" "whsec_your_webhook_secret" --project Code/Zarichney.Server
    
    # Frontend configuration (environments.dev.ts)
    stripePublishableKey: 'pk_test_your_stripe_publishable_key'
@@ -386,12 +397,14 @@ This section provides comprehensive setup instructions for all external services
 **Configuration Reference**:
 ```json
 {
-  "StripeConfig": {
-    "SecretKey": "sk_test_your_stripe_secret_key",
-    "PublishableKey": "pk_test_your_stripe_publishable_key", 
-    "WebhookSecret": "whsec_your_webhook_secret",
+  "PaymentConfig": {
+    "StripeSecretKey": "sk_test_your_stripe_secret_key",
+    "StripePublishableKey": "pk_test_your_stripe_publishable_key", 
+    "StripeWebhookSecret": "whsec_your_webhook_secret",
     "Currency": "usd",
-    "PaymentIntentConfirmationMethod": "automatic"
+    "RecipePrice": 0.20,
+    "SuccessUrl": "/cookbook/order/{0}",
+    "CancelUrl": "/cookbook/order/{0}?cancelled=true"
   }
 }
 ```
@@ -407,9 +420,9 @@ This section provides comprehensive setup instructions for all external services
 4. Configure email settings:
    ```bash
    dotnet user-secrets set "EmailConfig:AzureTenantId" "your-tenant-id" --project Code/Zarichney.Server
-   dotnet user-secrets set "EmailConfig:AzureClientId" "your-client-id" --project Code/Zarichney.Server
-   dotnet user-secrets set "EmailConfig:AzureClientSecret" "your-client-secret" --project Code/Zarichney.Server
-   dotnet user-secrets set "EmailConfig:FromAddress" "your-email@domain.com" --project Code/Zarichney.Server
+   dotnet user-secrets set "EmailConfig:AzureAppId" "your-client-id" --project Code/Zarichney.Server
+   dotnet user-secrets set "EmailConfig:AzureAppSecret" "your-client-secret" --project Code/Zarichney.Server
+   dotnet user-secrets set "EmailConfig:FromEmail" "your-email@domain.com" --project Code/Zarichney.Server
    ```
 
 **Configuration Reference**:
@@ -417,10 +430,11 @@ This section provides comprehensive setup instructions for all external services
 {
   "EmailConfig": {
     "AzureTenantId": "your-azure-tenant-id",
-    "AzureClientId": "your-azure-app-client-id", 
-    "AzureClientSecret": "your-azure-app-secret",
-    "FromAddress": "noreply@yourdomain.com",
-    "FromName": "Zarichney Platform"
+    "AzureAppId": "your-azure-app-client-id", 
+    "AzureAppSecret": "your-azure-app-secret",
+    "FromEmail": "noreply@yourdomain.com",
+    "MailCheckApiKey": "your-mailcheck-api-key",
+    "TemplateDirectory": "Services/Email/Templates"
   }
 }
 ```
@@ -434,9 +448,23 @@ This section provides comprehensive setup instructions for all external services
 2. Configure required scopes (repo, read:org, admin:public_key)
 3. Configure GitHub settings:
    ```bash
-   dotnet user-secrets set "GitHubConfig:AccessToken" "your-github-token" --project Code/Zarichney.Server
-   dotnet user-secrets set "GitHubConfig:Organization" "your-organization" --project Code/Zarichney.Server
+   dotnet user-secrets set "GithubConfig:AccessToken" "your-github-token" --project Code/Zarichney.Server
+   dotnet user-secrets set "GithubConfig:RepositoryOwner" "your-organization" --project Code/Zarichney.Server
+   dotnet user-secrets set "GithubConfig:RepositoryName" "your-repository" --project Code/Zarichney.Server
    ```
+
+**Configuration Reference**:
+```json
+{
+  "GithubConfig": {
+    "RepositoryOwner": "your-organization-name",
+    "RepositoryName": "cloud-storage",
+    "BranchName": "main",
+    "AccessToken": "your-github-personal-access-token",
+    "RetryAttempts": 5
+  }
+}
+```
 
 ### MailCheck Service (Email Validation)
 
@@ -449,6 +477,36 @@ This section provides comprehensive setup instructions for all external services
    ```bash
    dotnet user-secrets set "MailCheckConfig:ApiKey" "your-mailcheck-api-key" --project Code/Zarichney.Server
    ```
+
+### 🔄 Automatic Runtime Behaviors
+
+The Zarichney platform includes several automatic features that enhance the developer experience by handling common setup tasks at runtime:
+
+#### Data Directory Creation
+The FileService automatically creates data directories when they don't exist during runtime. This eliminates the need for manual directory setup and ensures the application can store files for:
+
+* **Recipe Data**: `/app/Data/Recipes` (configurable via `RecipeConfig:OutputDirectory`)
+* **Order Data**: `/app/Data/Orders` (configurable via `OrderConfig:OutputDirectory`) 
+* **PDF Generation**: `/app/temp` (configurable via `PdfCompilerConfig:ImageDirectory`)
+* **Email Templates**: Template directory paths specified in `EmailConfig:TemplateDirectory`
+
+**Implementation**: The `GetFiles()` method in `FileService.cs` line 66-68 automatically calls `Directory.CreateDirectory(directoryPath)` if the directory doesn't exist.
+
+#### Database Schema Management
+Entity Framework migrations must be applied manually to ensure proper database schema setup. The application does not automatically apply migrations on startup. See section 6 (Setting Up Local PostgreSQL Identity Database) for detailed migration instructions using the EF CLI tools.
+
+#### Genesis Admin User Creation
+In Development and Testing environments, the `RoleInitializer` service automatically:
+
+* Creates the default administrator role if it doesn't exist
+* Seeds a genesis admin user using configured credentials
+* Assigns the admin role to the genesis user
+* Uses the default credentials: `admin@localhost.dev` / `DevAdmin123!`
+* Falls back to `EmailConfig:FromEmail` if `DefaultAdminUser` is not configured
+
+**Security Note**: This feature is disabled in Production environments and should only be used for initial local development setup.
+
+**Why These Features Matter**: These automatic behaviors reduce friction in local development setup, eliminate common "it works on my machine" issues, and ensure consistent development environments across team members.
 
 ## 9. Production Deployment Considerations
 
