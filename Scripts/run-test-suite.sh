@@ -35,7 +35,7 @@ readonly LOG_FILE="$TEST_RESULTS_DIR/test-suite-$TIMESTAMP.log"
 
 # Test configuration
 readonly BUILD_CONFIG="Release"
-readonly COVERAGE_FORMATS="HtmlInline_AzurePipelines;Cobertura;Badges;SummaryGithub"
+readonly COVERAGE_FORMATS="Html;Cobertura;Badges;SummaryGithub"
 
 # Default settings
 MODE="report"  # Default to report mode for backward compatibility
@@ -200,7 +200,7 @@ check_prerequisites() {
     
     # Check if ReportGenerator tool is installed (for automation mode)
     if [[ "$MODE" == "automation" || "$MODE" == "both" ]]; then
-        if ! dotnet reportgenerator --help &> /dev/null; then
+        if ! reportgenerator --help &> /dev/null; then
             print_status "Installing ReportGenerator global tool..."
             dotnet tool install -g dotnet-reportgenerator-globaltool || {
                 error_exit "Failed to install ReportGenerator tool"
@@ -537,7 +537,7 @@ generate_coverage_report() {
     local coverage_files_param
     coverage_files_param=$(echo "$coverage_files" | tr '\n' ';' | sed 's/;$//')
     
-    dotnet reportgenerator \
+    reportgenerator \
         -reports:"$coverage_files_param" \
         -targetdir:"$COVERAGE_REPORT_DIR" \
         -reporttypes:"$COVERAGE_FORMATS" \

@@ -320,7 +320,7 @@ dotnet test --filter "Category=Security"
 git secrets --scan
 
 # Validate security headers
-curl -I https://api.zarichney.com/health | grep -E "(Strict-Transport-Security|Content-Security-Policy)"
+curl -I https://zarichney.com/api/health | grep -E "(Strict-Transport-Security|Content-Security-Policy)"
 ```
 
 ### 📚 Security Resources & Standards
