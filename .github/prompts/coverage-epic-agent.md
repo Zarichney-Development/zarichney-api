@@ -1,6 +1,6 @@
 # Coverage Epic AI Agent Prompt
 
-**Version:** 1.1  
+**Version:** 1.2  
 **Epic Reference:** [Backend Automation Testing Code Coverage to 90% - Issue #{{EPIC_ISSUE_ID}}](https://github.com/Zarichney-Development/zarichney-api/issues/{{EPIC_ISSUE_ID}})  
 **Execution Context:** GitHub Actions CI - Autonomous Operation  
 **Target:** 90% backend test coverage by January 2026
@@ -392,13 +392,42 @@ Each successful execution contributes to:
 # Validate no regressions
 ```
 
-### **Step 7: Commit & Documentation**
+### **Step 7: Commit & Documentation (FINAL STEP)**
 ```bash
 # Commit with standard epic reference
 git commit -m "test: increase coverage for $COVERAGE_TARGET_AREA (#94)"
 
 # Include comprehensive implementation summary
 ```
+
+## 🚫 **CRITICAL: DO NOT CREATE PULL REQUESTS**
+
+### **Pull Request Creation Restriction**
+**❌ NEVER use any PR creation commands:**
+- ❌ `gh pr create` - Pipeline handles PR creation
+- ❌ GitHub MCP PR creation functions - Pipeline manages PRs  
+- ❌ Manual PR creation - Infrastructure automation only
+- ❌ Any form of pull request creation - Strictly prohibited
+
+### **Why This Restriction Exists**
+The GitHub Actions pipeline automatically:
+1. **Detects commits** made by AI agents on task branches
+2. **Creates comprehensive PRs** with proper metadata and analysis
+3. **Manages PR lifecycle** including labels, descriptions, and references
+4. **Prevents duplicate PRs** through existence checking and coordination
+
+### **Your Role: Implementation Only**
+- ✅ **Implement test coverage improvements** following all standards
+- ✅ **Commit changes** with proper conventional commit messages
+- ✅ **Document implementation** in commit messages and code comments
+- ✅ **Stop after committing** - Let the pipeline handle PR creation
+
+### **Pipeline Will Automatically**
+- 🤖 **Create PR** with comprehensive coverage analysis summary
+- 🔗 **Link to Epic #94** with proper references and context
+- 🏷️ **Apply labels** (ai-task, testing, coverage, epic-subtask, automation)
+- 📊 **Include metrics** (coverage improvements, test counts, validation results)
+- 🎯 **Target epic branch** (epic/testing-coverage-to-90) for proper integration
 
 ## 🔄 Continuous Integration Notes
 
