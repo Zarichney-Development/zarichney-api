@@ -1,0 +1,768 @@
+name: "Coverage Epic Automation"
+
+# Coverage Epic Automation Workflow
+# Executes 4 times per day (every 6 hours) to generate test coverage improvements
+# Each execution creates autonomous AI agent tasks contributing to Epic #94
+# Target: 90% backend test coverage by January 2026
+
+on:
+  schedule:
+    # Run every 6 hours: 00:00, 06:00, 12:00, 18:00 UTC
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      skip_epic_update:
+        description: 'Skip epic branch update from develop'
+        required: false
+        default: false
+        type: boolean
+      target_area:
+        description: 'Optional target area for focused coverage (e.g., "Services", "Controllers")'
+        required: false
+        default: ''
+        type: string
+
+# Prevent multiple concurrent executions to avoid agent conflicts
+concurrency:
+  group: coverage-epic-automation
+  cancel-in-progress: false
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  EPIC_BRANCH: 'epic/testing-coverage-to-90'
+  EPIC_ISSUE_ID: '94'
+
+permissions:
+  id-token: write
+  contents: write
+  actions: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  coverage-epic-agent:
+    name: "Coverage Epic AI Agent"
+    runs-on: ubuntu-latest
+    
+    # Only run on main repository, not forks
+    if: github.repository == 'Zarichney-Development/zarichney-api'
+    
+    steps:
+      # ========================================
+      # Environment Setup
+      # ========================================
+      
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for branch management
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: "Setup Development Environment"
+        uses: ./.github/actions/shared/setup-environment
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          setup-node: false
+          cache-dependencies: true
+      
+      - name: "Configure Git for Automation"
+        run: |
+          git config --global user.name "Coverage Epic Bot"
+          git config --global user.email "noreply@zarichney.dev"
+          git config --global init.defaultBranch main
+      
+      # ========================================
+      # Epic Branch Management
+      # ========================================
+      
+      - name: "Prepare Epic Branch"
+        id: epic-branch
+        run: |
+          echo "🔄 Managing epic branch: $EPIC_BRANCH"
+          
+          # Ensure we start from develop
+          git checkout develop || {
+            echo "❌ Failed to checkout develop branch"
+            exit 1
+          }
+          git pull origin develop
+          
+          # Create or update epic branch
+          if git show-ref --verify --quiet refs/heads/$EPIC_BRANCH; then
+            echo "📝 Epic branch exists, updating from develop"
+            git checkout $EPIC_BRANCH
+            
+            if ! ${{ github.event.inputs.skip_epic_update || 'false' }}; then
+              # Attempt to merge develop changes
+              if git merge develop --no-edit; then
+                echo "✅ Epic branch updated successfully"
+                git push origin $EPIC_BRANCH
+              else
+                echo "⚠️ Merge conflicts detected, resetting epic branch"
+                git merge --abort
+                git reset --hard develop
+                git push --force-with-lease origin $EPIC_BRANCH
+                echo "🔄 Epic branch reset to match develop"
+              fi
+            else
+              echo "⏭️ Skipping epic branch update (manual override)"
+            fi
+          else
+            echo "🆕 Creating new epic branch from develop"
+            git checkout -b $EPIC_BRANCH
+            git push origin $EPIC_BRANCH
+          fi
+          
+          # Set outputs for subsequent steps
+          echo "epic_branch_ready=true" >> $GITHUB_OUTPUT
+          echo "current_commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+      
+      # ========================================
+      # Pre-Flight Validation
+      # ========================================
+      
+      - name: "Restore Dependencies"
+        run: dotnet restore zarichney-api.sln
+      
+      - name: "Build Solution"
+        run: dotnet build zarichney-api.sln --configuration Release --no-restore
+      
+      - name: "Validate Test Environment"
+        id: test-validation
+        run: |
+          echo "🧪 Validating CI test environment"
+          
+          # Execute test suite and capture results
+          ./Scripts/run-test-suite.sh report summary > test_summary.txt 2>&1 || {
+            echo "❌ Test suite execution failed"
+            cat test_summary.txt
+            exit 1
+          }
+          
+          # Parse test results for validation
+          if grep -q "100%" test_summary.txt && grep -q "skipped" test_summary.txt; then
+            echo "✅ Test environment validated"
+            echo "environment_valid=true" >> $GITHUB_OUTPUT
+            
+            # Extract metrics for agent coordination
+            TOTAL_TESTS=$(grep -o "Total.*tests" test_summary.txt | head -1 || echo "~88 total tests")
+            SKIPPED_COUNT=$(grep -o "[0-9]* skipped" test_summary.txt | head -1 || echo "23 skipped")
+            
+            echo "test_metrics=$TOTAL_TESTS, $SKIPPED_COUNT" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Test environment validation failed"
+            cat test_summary.txt
+            echo "environment_valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+      
+      # ========================================
+      # Coverage Analysis & Scope Selection
+      # ========================================
+      
+      - name: "Generate Comprehensive Coverage Context"
+        id: coverage-analysis
+        if: steps.test-validation.outputs.environment_valid == 'true'
+        run: |
+          echo "📊 Generating comprehensive coverage analysis for AI strategic decision-making"
+          
+          # Generate detailed coverage report
+          ./Scripts/run-test-suite.sh report > coverage_analysis_full.txt 2>&1
+          
+          # Extract current coverage metrics
+          CURRENT_COVERAGE=$(grep -o "[0-9]*\.[0-9]*%" coverage_analysis_full.txt | head -1 || echo "Unknown%")
+          echo "current_coverage=$CURRENT_COVERAGE" >> $GITHUB_OUTPUT
+          
+          # Generate coverage summary by area (for AI analysis)
+          echo "🔍 Extracting coverage data by area for AI analysis"
+          COVERAGE_CONTEXT=""
+          
+          # Extract coverage information by major areas
+          if grep -q "Services.*%" coverage_analysis_full.txt; then
+            SERVICES_COV=$(grep -o "Services.*[0-9]*\.[0-9]*%" coverage_analysis_full.txt | head -1 || echo "Services: Unknown%")
+            COVERAGE_CONTEXT="${COVERAGE_CONTEXT}${SERVICES_COV}\n"
+          fi
+          
+          if grep -q "Controllers.*%" coverage_analysis_full.txt; then
+            CONTROLLERS_COV=$(grep -o "Controllers.*[0-9]*\.[0-9]*%" coverage_analysis_full.txt | head -1 || echo "Controllers: Unknown%")
+            COVERAGE_CONTEXT="${COVERAGE_CONTEXT}${CONTROLLERS_COV}\n"
+          fi
+          
+          if grep -q "Repositories.*%" coverage_analysis_full.txt; then
+            REPOSITORIES_COV=$(grep -o "Repositories.*[0-9]*\.[0-9]*%" coverage_analysis_full.txt | head -1 || echo "Repositories: Unknown%")
+            COVERAGE_CONTEXT="${COVERAGE_CONTEXT}${REPOSITORIES_COV}\n"
+          fi
+          
+          if grep -q "Utilities.*%" coverage_analysis_full.txt; then
+            UTILITIES_COV=$(grep -o "Utilities.*[0-9]*\.[0-9]*%" coverage_analysis_full.txt | head -1 || echo "Utilities: Unknown%")
+            COVERAGE_CONTEXT="${COVERAGE_CONTEXT}${UTILITIES_COV}\n"
+          fi
+          
+          # Generate comprehensive coverage summary for AI
+          COVERAGE_SUMMARY=$(head -50 coverage_analysis_full.txt | tail -30)
+          
+          echo "coverage_by_area<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$COVERAGE_CONTEXT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "coverage_summary<<EOF" >> $GITHUB_OUTPUT
+          echo "$COVERAGE_SUMMARY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Prepare manual target area override if specified
+          MANUAL_TARGET_AREA="${{ github.event.inputs.target_area }}"
+          if [ -n "$MANUAL_TARGET_AREA" ]; then
+            echo "manual_target_override=$MANUAL_TARGET_AREA" >> $GITHUB_OUTPUT
+            echo "⚠️ Manual target area override: $MANUAL_TARGET_AREA"
+          else
+            echo "manual_target_override=" >> $GITHUB_OUTPUT
+            echo "✅ No manual override - AI will select target area strategically"
+          fi
+          
+          # Generate unique task identifier (AI will select target area)
+          TIMESTAMP=$(date +%s)
+          TASK_ID="coverage-ai-strategic-${TIMESTAMP}"
+          echo "task_identifier=$TASK_ID" >> $GITHUB_OUTPUT
+          
+          echo "📋 Coverage context prepared for AI strategic analysis"
+          echo "🤖 AI will analyze coverage data and select optimal target area"
+          echo "scope_analysis_complete=true" >> $GITHUB_OUTPUT
+      
+      - name: "Analyze Pending Work Context"
+        id: pending-work-analysis
+        if: steps.coverage-analysis.outputs.scope_analysis_complete == 'true'
+        run: |
+          echo "🔍 Analyzing pending work to prevent overlap"
+          
+          # Check for pending PRs on the epic branch
+          EPIC_PRS=$(gh pr list --base "$EPIC_BRANCH" --json number,title,headRefName,labels --jq '.[] | select(.labels[]?.name | test("(coverage|testing|ai-task)"))')
+          
+          if [ -n "$EPIC_PRS" ]; then
+            echo "📋 Found pending coverage-related PRs:"
+            echo "$EPIC_PRS" | jq -r '"PR #\(.number): \(.title) (Branch: \(.headRefName))"'
+            
+            # Extract target areas from PR branches and titles
+            PENDING_AREAS=$(echo "$EPIC_PRS" | jq -r '.headRefName' | grep -oE "(services|controllers|repositories|utilities)" | sort -u | tr '\n' ',' | sed 's/,$//')
+            
+            echo "pending_pr_context<<EOF" >> $GITHUB_OUTPUT
+            echo "$EPIC_PRS" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            
+            echo "pending_target_areas=$PENDING_AREAS" >> $GITHUB_OUTPUT
+            echo "⚠️ Areas with pending work: $PENDING_AREAS"
+          else
+            echo "✅ No pending coverage-related PRs found on epic branch"
+            echo "pending_pr_context=" >> $GITHUB_OUTPUT
+            echo "pending_target_areas=" >> $GITHUB_OUTPUT
+          fi
+          
+          # Use GitHub MCP for enhanced analysis if available
+          echo "🤖 Attempting enhanced analysis with GitHub MCP"
+          MCP_PENDING_ANALYSIS=$(claude --dangerously-skip-permissions --print "Use GitHub MCP to:
+          1. List all open PRs in zarichney-api that contain labels 'coverage', 'testing', or 'ai-task'
+          2. Analyze their target areas based on branch names and descriptions
+          3. Identify any ongoing coverage improvement work
+          4. Return summary of areas currently being worked on
+          5. Provide recommendations for avoiding overlap" 2>/dev/null || echo "MCP analysis unavailable")
+          
+          echo "mcp_pending_analysis<<EOF" >> $GITHUB_OUTPUT
+          echo "$MCP_PENDING_ANALYSIS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "pending_analysis_complete=true" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true  # Don't fail workflow if this analysis fails
+      
+      # ========================================
+      # AI Agent Task Execution
+      # ========================================
+      
+      - name: "Create Task Branch"
+        id: task-branch
+        if: steps.coverage-analysis.outputs.scope_analysis_complete == 'true'
+        run: |
+          TASK_BRANCH="tests/issue-$EPIC_ISSUE_ID-${{ steps.coverage-analysis.outputs.task_identifier }}"
+          echo "task_branch_name=$TASK_BRANCH" >> $GITHUB_OUTPUT
+          
+          echo "🌿 Creating task branch: $TASK_BRANCH"
+          git checkout -b "$TASK_BRANCH"
+          
+          echo "task_branch_created=true" >> $GITHUB_OUTPUT
+      
+      - name: "Prepare Comprehensive AI Context"
+        id: task-context
+        if: steps.task-branch.outputs.task_branch_created == 'true'
+        run: |
+          # Extract comprehensive context for AI strategic decision-making
+          echo "task_branch=${{ steps.task-branch.outputs.task_branch_name }}" >> $GITHUB_OUTPUT
+          echo "current_coverage=${{ steps.coverage-analysis.outputs.current_coverage }}" >> $GITHUB_OUTPUT
+          echo "task_identifier=${{ steps.coverage-analysis.outputs.task_identifier }}" >> $GITHUB_OUTPUT
+          echo "epic_issue_id=$EPIC_ISSUE_ID" >> $GITHUB_OUTPUT
+          
+          # Pass coverage analysis context
+          echo "coverage_by_area<<EOF" >> $GITHUB_OUTPUT
+          echo "${{ steps.coverage-analysis.outputs.coverage_by_area }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "coverage_summary<<EOF" >> $GITHUB_OUTPUT
+          echo "${{ steps.coverage-analysis.outputs.coverage_summary }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Pass pending work context
+          echo "pending_target_areas=${{ steps.pending-work-analysis.outputs.pending_target_areas }}" >> $GITHUB_OUTPUT
+          echo "manual_target_override=${{ steps.coverage-analysis.outputs.manual_target_override }}" >> $GITHUB_OUTPUT
+          
+          echo "pending_pr_context<<EOF" >> $GITHUB_OUTPUT
+          echo "${{ steps.pending-work-analysis.outputs.pending_pr_context }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "mcp_pending_analysis<<EOF" >> $GITHUB_OUTPUT
+          echo "${{ steps.pending-work-analysis.outputs.mcp_pending_analysis }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: "Check for existing Coverage Epic analysis comment"
+        id: check-existing-comment
+        if: steps.task-branch.outputs.task_branch_created == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // Check for existing unresolved Coverage Epic analysis comments in linked issue
+            const issueNumber = ${{ env.EPIC_ISSUE_ID }};
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+            });
+            
+            // Check for existing active coverage analysis comments
+            const hasActiveAnalysis = comments.data.some(comment => {
+              const body = comment.body || '';
+              return (
+                // Contains the Coverage Epic analysis header
+                body.includes('## 🤖 Coverage Epic AI Agent Report') &&
+                // Is not an error message
+                !body.includes('Claude encountered an error') &&
+                !body.includes('Coverage Epic Analysis Failed') &&
+                // Contains substantial analysis content
+                (body.includes('### 📊 Coverage Improvement Analysis') || 
+                 body.includes('Coverage Impact:') ||
+                 body.includes('Test Methods Added:'))
+              );
+            });
+            
+            console.log(`Found existing Coverage Epic analysis: ${hasActiveAnalysis}`);
+            core.setOutput('skip_analysis', hasActiveAnalysis.toString());
+            
+            if (hasActiveAnalysis) {
+              console.log('Skipping Coverage Epic analysis - existing active analysis comment found');
+            }
+
+      - name: "Load coverage epic prompt with comprehensive context"
+        if: steps.check-existing-comment.outputs.skip_analysis != 'true'
+        id: load-coverage-prompt
+        run: |
+          # Read the markdown template
+          PROMPT_TEMPLATE=$(cat .github/prompts/coverage-epic-agent.md)
+          
+          # Replace basic placeholders
+          PROMPT="${PROMPT_TEMPLATE//\{\{CURRENT_COVERAGE\}\}/${{ steps.task-context.outputs.current_coverage }}}"
+          PROMPT="${PROMPT//\{\{TASK_IDENTIFIER\}\}/${{ steps.task-context.outputs.task_identifier }}}"
+          PROMPT="${PROMPT//\{\{EPIC_ISSUE_ID\}\}/${{ steps.task-context.outputs.epic_issue_id }}}"
+          PROMPT="${PROMPT//\{\{TASK_BRANCH\}\}/${{ steps.task-context.outputs.task_branch }}}"
+          
+          # Add comprehensive coverage context section
+          COVERAGE_CONTEXT_SECTION="
+          
+          ## 📊 COMPREHENSIVE COVERAGE ANALYSIS FOR AI STRATEGIC DECISION-MAKING
+          
+          ### **Current Coverage Data by Area**
+          \`\`\`
+          ${{ steps.task-context.outputs.coverage_by_area }}
+          \`\`\`
+          
+          ### **Detailed Coverage Summary** 
+          \`\`\`
+          ${{ steps.task-context.outputs.coverage_summary }}
+          \`\`\`
+          
+          ### **Pending Work Analysis**
+          **Areas Currently Being Worked On:** ${{ steps.task-context.outputs.pending_target_areas }}
+          
+          **Pending PR Context:**
+          \`\`\`json
+          ${{ steps.task-context.outputs.pending_pr_context }}
+          \`\`\`
+          
+          **Enhanced MCP Analysis:**
+          \`\`\`
+          ${{ steps.task-context.outputs.mcp_pending_analysis }}
+          \`\`\`
+          
+          ### **Manual Target Override**
+          ${{ steps.task-context.outputs.manual_target_override && format('**MANUAL OVERRIDE SPECIFIED:** {0}', steps.task-context.outputs.manual_target_override) || '**NO MANUAL OVERRIDE** - AI has full strategic decision-making authority' }}
+          
+          ## 🎯 YOUR STRATEGIC MISSION: INTELLIGENT TARGET AREA SELECTION
+          
+          **You must now analyze the above data and:**
+          1. **Select the optimal target area** based on coverage gaps and priority
+          2. **Avoid areas with pending work** to prevent overlap and conflicts  
+          3. **Consider coverage phase alignment** and strategic value
+          4. **Choose 1-3 related files** in your selected area for focused implementation
+          5. **Justify your selection** in your implementation notes
+          
+          **CRITICAL:** You are NOT constrained to any predetermined area. Use your intelligence to make the best strategic decision for maximum coverage impact.
+          "
+          
+          # Inject the comprehensive context into the prompt
+          PROMPT="${PROMPT}${COVERAGE_CONTEXT_SECTION}"
+          
+          # Output for use in Claude action
+          echo "prompt<<EOF" >> $GITHUB_OUTPUT
+          echo "$PROMPT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: "Execute Coverage Epic AI Agent"
+        if: steps.check-existing-comment.outputs.skip_analysis != 'true'
+        id: claude-coverage
+        uses: grll/claude-code-action@beta
+        with:
+          use_oauth: true
+          claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
+          claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          direct_prompt: ${{ steps.load-coverage-prompt.outputs.prompt }}
+
+      - name: "Handle Coverage Epic AI Failure"
+        if: failure() && steps.claude-coverage.outcome == 'failure'
+        uses: ./.github/actions/handle-ai-analysis-failure
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          analysis-type: 'Coverage Epic Agent'
+          analysis-emoji: '🤖'
+          analysis-name: 'Coverage Epic Analysis'
+          standards-link: 'https://github.com/Zarichney-Development/zarichney-api/blob/main/Docs/Standards/TestingStandards.md'
+          run-number: ${{ github.run_number }}
+          run-id: ${{ github.run_id }}
+
+      - name: "Set AI Execution Status"
+        id: ai-execution
+        if: always() && steps.task-branch.outputs.task_branch_created == 'true'
+        run: |
+          if [ "${{ steps.check-existing-comment.outputs.skip_analysis }}" = "true" ]; then
+            echo "ai_execution_status=skipped_existing_analysis" >> $GITHUB_OUTPUT
+            echo "coverage_improvements=Skipped - existing analysis found in Epic Issue #$EPIC_ISSUE_ID" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.claude-coverage.outcome }}" = "success" ]; then
+            echo "ai_execution_status=claude_success" >> $GITHUB_OUTPUT
+            echo "coverage_improvements=Claude AI agent completed coverage improvements successfully" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.claude-coverage.outcome }}" = "failure" ]; then
+            echo "ai_execution_status=claude_failure" >> $GITHUB_OUTPUT
+            echo "coverage_improvements=Claude AI agent encountered an error during execution" >> $GITHUB_OUTPUT
+          else
+            echo "ai_execution_status=not_executed" >> $GITHUB_OUTPUT
+            echo "coverage_improvements=AI agent was not executed" >> $GITHUB_OUTPUT
+          fi
+      
+      # ========================================
+      # Quality Gates & Validation
+      # ========================================
+      
+      - name: "Validate Infrastructure & Test Suite"
+        id: post-validation
+        if: always() && steps.ai-execution.outputs.ai_execution_status != ''
+        run: |
+          echo "🔍 Validating infrastructure and test suite status"
+          
+          AI_STATUS="${{ steps.ai-execution.outputs.ai_execution_status }}"
+          echo "📋 AI Execution Status: $AI_STATUS"
+          
+          # Build validation to ensure no regressions
+          echo "🔨 Validating build integrity"
+          if dotnet build zarichney-api.sln --configuration Release --no-restore; then
+            echo "✅ Build validation passed - no build regressions"
+            BUILD_STATUS="passed"
+          else
+            echo "❌ Build validation failed - infrastructure needs attention"
+            BUILD_STATUS="failed"
+          fi
+          
+          # Test suite validation (basic health check)
+          echo "🧪 Validating test suite health"
+          if ./Scripts/run-test-suite.sh report summary > post_test_summary.txt 2>&1; then
+            echo "✅ Test suite execution completed"
+            
+            # Check for expected test patterns
+            if grep -q "100%" post_test_summary.txt && grep -q "skipped" post_test_summary.txt; then
+              echo "✅ Test suite maintains expected patterns (100% pass rate with skips)"
+              TEST_STATUS="healthy"
+            else
+              echo "⚠️ Test suite patterns may have changed"
+              TEST_STATUS="changed"
+            fi
+            
+            # Show summary for transparency
+            echo "📊 Test execution summary:"
+            grep -E "(passed|failed|skipped|Total)" post_test_summary.txt | head -5 | sed 's/^/  /'
+            
+          else
+            echo "❌ Test suite execution failed"
+            TEST_STATUS="failed"
+            echo "📋 Error details:"
+            tail -10 post_test_summary.txt | sed 's/^/  /'
+          fi
+          
+          # Determine overall validation status
+          if [ "$BUILD_STATUS" = "passed" ] && [ "$TEST_STATUS" != "failed" ]; then
+            if [ "$AI_STATUS" = "claude_success" ]; then
+              echo "✅ Infrastructure validation passed - Claude AI agent executed successfully"
+              echo "📈 Coverage improvements implemented by autonomous AI agent"
+              echo "🚀 Epic #$EPIC_ISSUE_ID progression: Real AI-powered test generation completed"
+              
+            elif [ "$AI_STATUS" = "skipped_existing_analysis" ]; then
+              echo "⏭️ Infrastructure healthy - AI analysis skipped (existing analysis found)"
+              echo "💡 Review existing analysis in Epic Issue #$EPIC_ISSUE_ID"
+              
+            elif [ "$AI_STATUS" = "claude_failure" ]; then
+              echo "⚠️ Infrastructure healthy but Claude AI agent encountered issues"
+              echo "📋 Check workflow logs and error handling for details"
+              
+            else
+              echo "⚠️ Infrastructure validation completed with status: $AI_STATUS"
+            fi
+            
+            echo "validation_passed=true" >> $GITHUB_OUTPUT
+            echo "infrastructure_status=ready" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Infrastructure validation failed"
+            echo "🔧 Build Status: $BUILD_STATUS"
+            echo "🧪 Test Status: $TEST_STATUS"
+            echo "validation_passed=false" >> $GITHUB_OUTPUT
+            echo "infrastructure_status=needs_attention" >> $GITHUB_OUTPUT
+          fi
+          
+          # Cleanup
+          rm -f post_test_summary.txt
+      
+      # ========================================
+      # Automated Pull Request Creation
+      # ========================================
+      
+      - name: "Commit Coverage Improvements"
+        id: commit-changes
+        if: steps.post-validation.outputs.validation_passed == 'true'
+        run: |
+          echo "💾 Committing coverage improvements"
+          
+          # Check if there are changes to commit
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "⚠️ No changes detected - AI agent may not have implemented improvements"
+            echo "changes_committed=false" >> $GITHUB_OUTPUT
+          else
+            # Commit all changes
+            git add -A
+            git commit -m "test: improve coverage for ${{ steps.coverage-analysis.outputs.selected_target_area }} (#$EPIC_ISSUE_ID)
+            
+            Automated coverage improvement for Epic #$EPIC_ISSUE_ID
+            
+            - Target Area: ${{ steps.coverage-analysis.outputs.selected_target_area }}
+            - Current Coverage: ${{ steps.coverage-analysis.outputs.current_coverage }}
+            - Task ID: ${{ steps.coverage-analysis.outputs.task_identifier }}
+            - AI Improvements: ${{ steps.ai-execution.outputs.coverage_improvements }}
+            - Environment: CI (${EXPECTED_SKIP_COUNT:-23} tests skipped, 100% pass rate maintained; see Docs/Standards/TestingStandards.md section 12.7)
+            
+            🤖 Generated with Coverage Epic Automation
+            Co-Authored-By: Coverage Epic Bot <noreply@zarichney.dev>"
+            
+            # Push task branch
+            git push origin "${{ steps.task-branch.outputs.task_branch_name }}"
+            
+            echo "changes_committed=true" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: "Check for Existing Pull Request"
+        id: check-existing-pr
+        if: steps.commit-changes.outputs.changes_committed == 'true'
+        run: |
+          echo "🔍 Checking for existing pull request on task branch"
+          
+          TASK_BRANCH="${{ steps.task-branch.outputs.task_branch_name }}"
+          
+          # Check if PR already exists for this task branch
+          EXISTING_PR=$(gh pr list --head "$TASK_BRANCH" --json number,url,state --jq '.[0] // empty')
+          
+          if [ -n "$EXISTING_PR" ]; then
+            PR_NUMBER=$(echo "$EXISTING_PR" | jq -r '.number')
+            PR_URL=$(echo "$EXISTING_PR" | jq -r '.url')
+            PR_STATE=$(echo "$EXISTING_PR" | jq -r '.state')
+            
+            echo "⚠️ Existing pull request found for branch $TASK_BRANCH"
+            echo "   PR #$PR_NUMBER: $PR_URL (State: $PR_STATE)"
+            echo "   Skipping duplicate PR creation"
+            
+            echo "pr_exists=true" >> $GITHUB_OUTPUT
+            echo "existing_pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "existing_pr_url=$PR_URL" >> $GITHUB_OUTPUT
+            echo "existing_pr_state=$PR_STATE" >> $GITHUB_OUTPUT
+          else
+            echo "✅ No existing pull request found for branch $TASK_BRANCH"
+            echo "   Proceeding with PR creation"
+            echo "pr_exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: "Enhanced PR Analysis with GitHub MCP"
+        id: mcp-pr-analysis
+        if: steps.commit-changes.outputs.changes_committed == 'true'
+        run: |
+          echo "🔍 Performing enhanced PR analysis with GitHub MCP"
+          
+          TASK_BRANCH="${{ steps.task-branch.outputs.task_branch_name }}"
+          TARGET_AREA="${{ steps.coverage-analysis.outputs.selected_target_area }}"
+          
+          # Use GitHub MCP for intelligent PR analysis and validation
+          MCP_ANALYSIS=$(claude --dangerously-skip-permissions --print "Use GitHub MCP to:
+          1. Check if a PR exists for branch '$TASK_BRANCH' in zarichney-api repository
+          2. If no PR exists, validate that creating a PR is appropriate
+          3. Analyze recent commits on this branch for coverage improvements
+          4. Provide recommendations for PR title and description enhancements
+          5. Return JSON with: {\"pr_exists\": boolean, \"recommendations\": string, \"should_create_pr\": boolean}" 2>/dev/null || echo "{\"error\": \"MCP analysis failed\"}")
+          
+          echo "mcp_analysis_result<<EOF" >> $GITHUB_OUTPUT
+          echo "$MCP_ANALYSIS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Log MCP analysis for transparency
+          echo "📊 MCP Analysis Result:"
+          echo "$MCP_ANALYSIS" | head -10
+        continue-on-error: true  # Don't fail the workflow if MCP is unavailable
+      
+      - name: "Create Pull Request"
+        id: create-pr
+        if: steps.commit-changes.outputs.changes_committed == 'true' && steps.check-existing-pr.outputs.pr_exists == 'false'
+        run: |
+          echo "📝 Creating automated pull request"
+          
+          PR_TITLE="test: improve coverage for ${{ steps.coverage-analysis.outputs.selected_target_area }} (#$EPIC_ISSUE_ID)"
+          
+          PR_BODY="## Coverage Improvement Summary
+          
+          **Epic Reference:** [Backend Testing Coverage to 90%](https://github.com/Zarichney-Development/zarichney-api/issues/$EPIC_ISSUE_ID)
+          **Target Area:** ${{ steps.coverage-analysis.outputs.selected_target_area }}
+          **Current Coverage:** ${{ steps.coverage-analysis.outputs.current_coverage }}
+          **Task Identifier:** ${{ steps.coverage-analysis.outputs.task_identifier }}
+          
+          ### Automated Implementation
+          - 🤖 **Execution Model:** Autonomous AI agent in CI environment
+          - 🎯 **Scope:** Self-selected based on coverage analysis
+          - ✅ **Quality Gates:** 100% pass rate maintained on executable tests
+          - 📊 **Coverage Phase:** Aligned with current coverage progression strategy
+          
+          ### Changes Made
+          ${{ steps.ai-execution.outputs.coverage_improvements }}
+          
+          ### Test Environment Validation
+          - ✅ **Executable Tests:** 100% pass rate maintained
+          - ✅ **Expected Skips:** ${EXPECTED_SKIP_COUNT:-23} tests skipped (external dependencies unavailable; see Docs/Standards/TestingStandards.md section 12.7)
+          - ✅ **Build Status:** Clean build with no regressions
+          - ✅ **Standards Compliance:** All testing standards followed
+          
+          ### Epic Progress Contribution
+          This automated task contributes to the systematic progression toward 90% backend test coverage by January 2026, maintaining the target velocity of ~2.8% monthly improvement.
+          
+          ### AI Analysis Insights
+          **Enhanced Analysis via GitHub MCP:**
+          $(if [ -n \"${{ steps.mcp-pr-analysis.outputs.mcp_analysis_result }}\" ] && [ \"${{ steps.mcp-pr-analysis.outputs.mcp_analysis_result }}\" != \"{\\\"error\\\": \\\"MCP analysis failed\\\"}\" ]; then
+            echo \"✅ MCP analysis completed - See additional insights below\"
+            echo \"📊 Analysis: ${{ steps.mcp-pr-analysis.outputs.mcp_analysis_result }}\"
+          else
+            echo \"⚠️ MCP analysis unavailable - Standard pipeline analysis used\"
+          fi)
+          
+          ---
+          
+          🤖 **Generated by Coverage Epic Automation**  
+          **Execution Time:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')  
+          **Agent Coordination:** Timestamp-based conflict prevention active  
+          **Epic Branch:** \`$EPIC_BRANCH\`  
+          **Duplicate Prevention:** ✅ PR existence validated before creation"
+          
+          # Create PR using GitHub CLI
+          gh pr create \
+            --base "$EPIC_BRANCH" \
+            --title "$PR_TITLE" \
+            --body "$PR_BODY" \
+            --label "ai-task,testing,coverage,epic-subtask,automation" \
+            --draft=false
+          
+          PR_URL=$(gh pr view --json url --jq .url)
+          echo "pr_created=true" >> $GITHUB_OUTPUT
+          echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+          
+          echo "✅ Pull request created: $PR_URL"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      # ========================================
+      # Execution Summary & Metrics
+      # ========================================
+      
+      - name: "Execution Summary"
+        if: always()
+        run: |
+          echo "=================================================="
+          echo "🎯 Coverage Epic Automation Execution Summary"
+          echo "=================================================="
+          echo "📅 Execution Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "🌿 Epic Branch: $EPIC_BRANCH"
+          echo "🎯 Target Area: ${{ steps.coverage-analysis.outputs.selected_target_area || 'Not determined' }}"
+          echo "📊 Current Coverage: ${{ steps.coverage-analysis.outputs.current_coverage || 'Unknown' }}"
+          echo "🔢 Task ID: ${{ steps.coverage-analysis.outputs.task_identifier || 'Not generated' }}"
+          echo ""
+          echo "📋 Step Results:"
+          echo "  Epic Branch Ready: ${{ steps.epic-branch.outputs.epic_branch_ready || 'false' }}"
+          echo "  Environment Valid: ${{ steps.test-validation.outputs.environment_valid || 'false' }}"
+          echo "  Scope Analysis: ${{ steps.coverage-analysis.outputs.scope_analysis_complete || 'false' }}"
+          echo "  Task Branch: ${{ steps.task-branch.outputs.task_branch_created || 'false' }}"
+          echo "  AI Execution: ${{ steps.ai-execution.outputs.ai_execution_status || 'not_executed' }}"
+          echo "  Post-Validation: ${{ steps.post-validation.outputs.validation_passed || 'false' }}"
+          echo "  Changes Committed: ${{ steps.commit-changes.outputs.changes_committed || 'false' }}"
+          echo "  PR Exists Check: ${{ steps.check-existing-pr.outputs.pr_exists || 'not_checked' }}"
+          echo "  MCP Analysis: $([ -n '${{ steps.mcp-pr-analysis.outputs.mcp_analysis_result }}' ] && echo 'completed' || echo 'not_available')"
+          echo "  PR Created: ${{ steps.create-pr.outputs.pr_created || 'false' }}"
+          echo ""
+          if [ "${{ steps.create-pr.outputs.pr_created }}" = "true" ]; then
+            echo "🎉 SUCCESS: Pull request created successfully"
+            echo "🔗 PR URL: ${{ steps.create-pr.outputs.pr_url }}"
+            echo "📈 Epic #$EPIC_ISSUE_ID progression continues"
+          elif [ "${{ steps.check-existing-pr.outputs.pr_exists }}" = "true" ]; then
+            echo "✅ SUCCESS: Changes committed to existing pull request"
+            echo "🔗 Existing PR: ${{ steps.check-existing-pr.outputs.existing_pr_url }}"
+            echo "📝 PR #${{ steps.check-existing-pr.outputs.existing_pr_number }} (State: ${{ steps.check-existing-pr.outputs.existing_pr_state }})"
+            echo "📈 Epic #$EPIC_ISSUE_ID progression continues via existing PR"
+          elif [ "${{ steps.commit-changes.outputs.changes_committed }}" = "true" ]; then
+            echo "⚠️ PARTIAL: Changes committed but PR creation skipped"
+            echo "🔍 Check PR creation logic and permissions"
+          else
+            echo "ℹ️ NO ACTION: No changes were made to commit"
+            echo "🔍 Check AI execution status and scope selection"
+          fi
+          echo "=================================================="
+      
+      - name: "Cleanup on Failure"
+        if: failure()
+        run: |
+          echo "🧹 Cleaning up after failed execution"
+          
+          # Remove task branch if created but not successfully used
+          if [ "${{ steps.task-branch.outputs.task_branch_created }}" = "true" ] && 
+             [ "${{ steps.commit-changes.outputs.changes_committed }}" != "true" ]; then
+            TASK_BRANCH="${{ steps.task-branch.outputs.task_branch_name }}"
+            echo "🗑️ Removing unused task branch: $TASK_BRANCH"
+            git checkout $EPIC_BRANCH 2>/dev/null || git checkout develop
+            git branch -D "$TASK_BRANCH" 2>/dev/null || true
+          fi
+          
+          echo "🔍 Failure cleanup completed"

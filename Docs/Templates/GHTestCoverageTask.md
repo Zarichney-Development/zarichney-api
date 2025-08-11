@@ -51,13 +51,13 @@ AI agent identifies specific production code files based on coverage analysis:
 
 ### Expected Test Environment
 - **Execution Environment:** GitHub Actions CI (unconfigured)
-- **Expected Skip Count:** 23 tests (OpenAI: 6, Stripe: 6, MS Graph: 4, Database: 6, Production: 1)
+**Expected Skip Count:** EXPECTED_SKIP_COUNT tests (fallback: 23 if unset; OpenAI: 6, Stripe: 6, MS Graph: 4, Database: 6, Production: 1; see Docs/Standards/TestingStandards.md section 12.7 for rationale)
 - **Success Criteria:** 100% pass rate on ~65 executable tests
 - **Framework:** All external dependencies properly mocked/virtualized
 
 ### Quality Gates (Non-Negotiable)
 - [ ] All executable tests pass (100% pass rate maintained)
-- [ ] Exactly 23 tests skipped (expected for unconfigured environment)  
+- [ ] Exactly EXPECTED_SKIP_COUNT tests skipped (fallback: 23 if unset; expected for unconfigured environment; see Docs/Standards/TestingStandards.md section 12.7 for rationale)
 - [ ] No existing tests broken by new implementations
 - [ ] All new tests deterministic and repeatable in CI
 - [ ] Coverage improvement measurable and documented

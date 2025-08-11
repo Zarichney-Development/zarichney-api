@@ -377,14 +377,16 @@ The Backend Coverage Epic (Issue #94) operates through automated AI agents in Gi
 #### **CI Environment Test Execution**
 In the automated CI environment, the test suite operates with specific constraints:
 
-* **Expected Skip Rate:** 23 tests skipped due to unavailable external dependencies:
+* **Expected Skip Rate:** The number of skipped tests is controlled by the EXPECTED_SKIP_COUNT environment variable (default: 23). This reflects tests that require unavailable external dependencies in CI:
   * OpenAI API tests: 6 tests skipped
-  * Stripe payment tests: 6 tests skipped  
+  * Stripe payment tests: 6 tests skipped
   * Microsoft Graph tests: 4 tests skipped
   * Database integration tests: 6 tests skipped
   * Production safety tests: 1 test skipped
 * **Success Criteria:** 100% pass rate on ~65 executable tests
-* **Quality Gate:** All executable tests must pass; skipped tests are acceptable and expected
+* **Quality Gate:** All executable tests must pass; skipped tests (EXPECTED_SKIP_COUNT) are acceptable and expected in unconfigured environments.
+
+**Rationale:** In CI environments where external dependencies are not configured, tests requiring those services are intentionally skipped to prevent false negatives. The skip count is set via EXPECTED_SKIP_COUNT (default: 23) and should be referenced in all validation scripts and documentation. See also Docs/Development/AutomatedCoverageEpicWorkflow.md for workflow details.
 
 #### **Automated Coverage Workflow Integration**
 AI agents follow the detailed workflow defined in:
