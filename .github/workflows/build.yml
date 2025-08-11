@@ -169,11 +169,9 @@ jobs:
       - name: Extract PR Context
         id: pr-context
         run: |
-          # Extract issue numbers from PR body (using heredoc to prevent command substitution)
-          ISSUE_NUMBERS=$(cat <<'EOF' | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo ""
-${{ github.event.pull_request.body }}
-EOF
-)
+          # Extract issue numbers from PR body (using environment variable to prevent command substitution)
+          export PR_BODY="${{ github.event.pull_request.body }}"
+          ISSUE_NUMBERS=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo "")
           
           if [ -n "$ISSUE_NUMBERS" ]; then
             echo "issue_ref=#$ISSUE_NUMBERS" >> $GITHUB_OUTPUT
@@ -365,11 +363,9 @@ EOF
       - name: Extract PR Context
         id: pr-context
         run: |
-          # Extract issue numbers from PR body (using heredoc to prevent command substitution)
-          ISSUE_NUMBERS=$(cat <<'EOF' | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo ""
-${{ github.event.pull_request.body }}
-EOF
-)
+          # Extract issue numbers from PR body (using environment variable to prevent command substitution)
+          export PR_BODY="${{ github.event.pull_request.body }}"
+          ISSUE_NUMBERS=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo "")
           
           if [ -n "$ISSUE_NUMBERS" ]; then
             echo "issue_ref=#$ISSUE_NUMBERS" >> $GITHUB_OUTPUT
@@ -486,11 +482,9 @@ EOF
       - name: Extract PR Context
         id: pr-context
         run: |
-          # Extract issue numbers from PR body (using heredoc to prevent command substitution)
-          ISSUE_NUMBERS=$(cat <<'EOF' | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo ""
-${{ github.event.pull_request.body }}
-EOF
-)
+          # Extract issue numbers from PR body (using environment variable to prevent command substitution)
+          export PR_BODY="${{ github.event.pull_request.body }}"
+          ISSUE_NUMBERS=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo "")
           
           if [ -n "$ISSUE_NUMBERS" ]; then
             echo "issue_ref=#$ISSUE_NUMBERS" >> $GITHUB_OUTPUT
@@ -729,11 +723,9 @@ EOF
       - name: Extract PR Context
         id: pr-context
         run: |
-          # Extract issue numbers from PR body (using heredoc to prevent command substitution)
-          ISSUE_NUMBERS=$(cat <<'EOF' | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo ""
-${{ github.event.pull_request.body }}
-EOF
-)
+          # Extract issue numbers from PR body (using environment variable to prevent command substitution)
+          export PR_BODY="${{ github.event.pull_request.body }}"
+          ISSUE_NUMBERS=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo "")
           
           if [ -n "$ISSUE_NUMBERS" ]; then
             echo "issue_ref=#$ISSUE_NUMBERS" >> $GITHUB_OUTPUT
@@ -913,11 +905,9 @@ EOF
       - name: Extract PR Context
         id: pr-context
         run: |
-          # Extract issue numbers from PR body (using heredoc to prevent command substitution)
-          ISSUE_NUMBERS=$(cat <<'EOF' | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo ""
-${{ github.event.pull_request.body }}
-EOF
-)
+          # Extract issue numbers from PR body (using environment variable to prevent command substitution)
+          export PR_BODY="${{ github.event.pull_request.body }}"
+          ISSUE_NUMBERS=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo "")
           
           if [ -n "$ISSUE_NUMBERS" ]; then
             echo "issue_ref=#$ISSUE_NUMBERS" >> $GITHUB_OUTPUT
