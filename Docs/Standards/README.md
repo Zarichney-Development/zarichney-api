@@ -35,6 +35,8 @@ Below is a list of the key standards documents within this directory. Each docum
     * **Description:** Provides guidelines for creating, maintaining, and embedding Mermaid diagrams used for visualizing architecture, workflows, and component relationships.
 * **`./TaskManagementStandards.md`**
     * **Description:** Defines the process for managing development tasks, including issue tracking conventions (e.g., GitHub Issues), pull request procedures, branching strategies, and commit message formatting.
+* **`./GitHubLabelStandards.md`**
+    * **Description:** Comprehensive GitHub label management standards providing a 52-label taxonomic system for issue categorization, epic coordination, progressive test coverage tracking, and AI agent workflow automation. Integrates with task management workflows and supports epic branch strategy execution.
 * **`./TestSuiteStandards.md`**
     * **Description:** Comprehensive standards for test suite baseline management, progressive coverage framework (14.22% → 90% by Jan 2026), environment-specific quality gates, skip categorization taxonomy, and AI-powered analysis integration. Establishes the foundation for systematic test suite health monitoring and improvement.
 
@@ -66,7 +68,16 @@ It's important to recognize that these standards are interconnected and often re
 * Adherence to **`./CodingStandards.md`** (e.g., DI, SOLID, Humble Object pattern) is fundamental for creating code that can be effectively tested according to **`./TestingStandards.md`** and its detailed guides.
 * **`./DocumentationStandards.md`** ensures that modules are well-explained, which aids in understanding how to test them and how to apply coding standards consistently.
 * **`./TaskManagementStandards.md`** ensures that the process of developing code, tests, and documentation according to these standards is orderly and traceable.
+* **`./GitHubLabelStandards.md`** provides the categorization framework that enables efficient project management while supporting the epic branch strategy defined in **`./TaskManagementStandards.md`** and the progressive coverage phases outlined in **`./TestSuiteStandards.md`**.
+* **`./TestSuiteStandards.md`** progressive coverage framework (phases 1-5) directly aligns with the `coverage: phase-X` labels defined in **`./GitHubLabelStandards.md`**, enabling systematic tracking of the journey from 14.22% to 90% coverage.
 
-By understanding and applying these standards comprehensively, all contributors can help build a high-quality, maintainable, and robust `zarichney-api` application.
+### **Epic Workflow Integration**
+The standards form a cohesive ecosystem for long-term initiative management:
+* **Epic Definition:** Issues created using templates from `./TaskManagementStandards.md` with labels per `./GitHubLabelStandards.md`
+* **Epic Execution:** Development work follows `./CodingStandards.md` and `./TestingStandards.md` with progress tracked via labels
+* **Epic Documentation:** Changes documented per `./DocumentationStandards.md` and diagrams per `./DiagrammingStandards.md`
+* **Epic Coordination:** Multi-agent collaboration enabled through automation and epic labels from `./GitHubLabelStandards.md`
+
+By understanding and applying these standards comprehensively, all contributors can help build a high-quality, maintainable, and robust `zarichney-api` application while supporting systematic technical debt management and epic initiative coordination.
 
 ---
