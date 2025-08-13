@@ -70,6 +70,14 @@ Before analyzing any test changes, you MUST perform comprehensive testing contex
    - Assess monthly velocity target (2.8%/month) vs actual progression rate
    - Understand AI-driven recommendations for efficient coverage growth
    - Note timeline-aware progression status (on-track, behind schedule, critical)
+
+8. **GitHub Label Context Integration:**
+   - Read GitHub issue labels associated with {{ISSUE_REF}} to understand testing strategic context:
+     - **Coverage Phase Labels** (`coverage:phase-1` through `coverage:phase-6`): Determine current progressive testing focus and phase-appropriate analysis depth
+     - **Epic Labels** (`epic:testing-coverage-to-90`): Align test analysis with long-term coverage objectives and timeline requirements  
+     - **Component Labels** (`component:backend-api`, `component:frontend-ui`, `component:database`): Target test analysis to specific architectural areas with component-specific patterns
+     - **Quality Labels** (`quality:test-coverage`, `quality:test-quality`): Focus testing analysis on established quality improvement objectives
+     - **Priority Labels** (`priority:critical`, `priority:high`): Adjust testing rigor and coverage requirements based on strategic importance
 </context_ingestion>
 
 <analysis_instructions>
@@ -91,8 +99,8 @@ Categorize each change by component type:
 </step_1_test_change_identification>
 
 <step_2_coverage_impact_analysis>
-**Step 2: Test Coverage Impact Assessment**
-Apply TestingStandards.md coverage requirements:
+**Step 2: Phase-Aware Test Coverage Impact Assessment**
+Apply TestingStandards.md coverage requirements with GitHub label coverage phase intelligence:
 
 **New Code Coverage Analysis:**
 - Identify all new production code (methods, classes, components, services)
@@ -112,7 +120,19 @@ Apply TestingStandards.md coverage requirements:
 - Flag coverage degradation and provide remediation steps
 - Note coverage flexibility scenarios (test branches, approved exemptions)
 
-Label findings as `[COVERAGE_IMPROVED]`, `[COVERAGE_MAINTAINED]`, or `[COVERAGE_DEGRADED]`.
+**Coverage Phase Intelligence:**
+- **Phase 1 (14.22% → 20%)**: Focus on service layer basics, API contracts, core business logic coverage
+- **Phase 2 (20% → 35%)**: Deepen service method coverage, integration scenarios, data validation testing
+- **Phase 3 (35% → 50%)**: Edge cases, error handling, input validation, boundary conditions
+- **Phase 4 (50% → 75%)**: Complex business scenarios, integration depth, cross-cutting concerns
+- **Phase 5 (75% → 90%)**: Comprehensive edge cases, performance scenarios, system integration
+- **Phase 6 (90%+)**: Optimization phase with maintenance and advanced testing patterns
+
+**Epic-Aligned Coverage Assessment:**
+- **Testing Coverage Epic** (`epic:testing-coverage-to-90`): Evaluate test additions against progressive coverage targets and timeline requirements
+- **Component-Specific Coverage**: Apply phase-appropriate testing expectations to specific architectural components
+
+Label findings as `[COVERAGE_IMPROVED]`, `[COVERAGE_MAINTAINED]`, or `[COVERAGE_DEGRADED]` with phase context: `[PHASE:X]` and component context: `[COMPONENT:label-name]`.
 </step_2_coverage_impact_analysis>
 
 <step_3_test_quality_assessment>
@@ -208,8 +228,8 @@ Label findings as `[BASELINE_COMPLIANT]`, `[BASELINE_ACCEPTABLE]`, or `[BASELINE
 </step_4a_baseline_validation_analysis>
 
 <step_4b_progressive_coverage_analysis>
-**Step 4b: Progressive Coverage Growth Analysis (Phase 3 Enhancement)**
-Analyze progressive coverage status and provide strategic guidance:
+**Step 4b: Label-Driven Progressive Coverage Growth Analysis (Phase 3 Enhancement)**
+Analyze progressive coverage status with GitHub label strategic context and provide phase-appropriate guidance:
 
 **Current Phase Assessment:**
 - Identify current coverage phase (Foundation/Growth/Maturity/Excellence/Mastery/Optimization)
@@ -324,12 +344,19 @@ Provide specific file:line references and actionable testing recommendations.
 
 **PR Summary:** {{PR_NUMBER}} by @{{PR_AUTHOR}} ({{SOURCE_BRANCH}} → {{TARGET_BRANCH}})  
 **Issue Context:** {{ISSUE_REF}}  
+**Strategic Testing Context:** Coverage phase alignment and epic-driven testing priorities  
 **Analysis Scope:** Comprehensive testing impact assessment
 
 ### 📊 Testing Impact Assessment
 
 **Coverage Impact:** [Improved/Maintained/Degraded/Mixed]  
 **Test Execution Status:** [✅ All Passed/⚠️ Some Issues/🚨 Failures]
+
+**Strategic Testing Analysis:**
+- **Coverage Phase Context:** [Current phase and phase-appropriate testing expectations]
+- **Epic Alignment:** [How test changes support testing coverage epic objectives]  
+- **Component Testing Focus:** [Component-specific testing patterns and priorities]
+- **Progressive Coverage Status:** [Assessment against coverage velocity targets and timeline]
 
 **Testing Metrics:**
 - New Tests Added: [X unit, Y integration]

@@ -56,14 +56,22 @@ Before analyzing any security implications, you MUST perform comprehensive secur
    - Note security quality gates and compliance requirements
    - Identify critical vs non-critical security areas based on data sensitivity
    - Review established incident response and security update procedures
+
+6. **GitHub Label Context Integration:**
+   - Read GitHub issue labels associated with {{ISSUE_REF}} to understand security and automation context:
+     - **Automation Labels** (`automation:ci-environment`, `automation:github-actions`): Understand CI/CD execution context and apply appropriate security analysis for automated environments
+     - **Component Labels** (`component:security`, `component:backend-api`, `component:database`): Target security analysis to specific architectural areas with component-specific threat models
+     - **Epic Labels** (`epic:security-hardening`, `epic:performance-optimization`): Align security assessment with long-term strategic objectives and security initiatives
+     - **Priority Labels** (`priority:critical`, `priority:high`): Adjust security analysis rigor and deployment decision thresholds based on strategic importance
+     - **Quality Labels** (`quality:security`, `quality:vulnerability-management`): Focus security analysis on established security improvement objectives
 </context_ingestion>
 
 <analysis_instructions>
 **STRUCTURED CHAIN-OF-THOUGHT SECURITY ANALYSIS:**
 
 <step_1_security_context_analysis>
-**Step 1: Security Context and Threat Landscape Analysis**
-- Analyze the git diff to identify all security-relevant changes:
+**Step 1: Automation-Aware Security Context and Threat Landscape Analysis**
+- Analyze the git diff to identify all security-relevant changes with GitHub label automation context:
   - **Authentication/Authorization Changes**: New endpoints, role requirements, JWT handling
   - **Data Handling Changes**: Input processing, data validation, output encoding
   - **Infrastructure Changes**: Configuration updates, dependency additions, CI/CD modifications
@@ -73,6 +81,12 @@ Categorize each change by security impact:
 - **High Impact**: Authentication systems, data access, external integrations
 - **Medium Impact**: Business logic, data processing, client-side functionality
 - **Low Impact**: Logging, configuration, documentation, minor refactoring
+
+**Automation Context Security Assessment:**
+- **CI/CD Environment** (`automation:ci-environment`): Assess security implications for automated testing and deployment environments
+- **GitHub Actions** (`automation:github-actions`): Evaluate security of workflow automation, secrets handling in CI/CD pipelines
+- **Component-Specific Threat Modeling**: Apply targeted security analysis based on architectural component labels
+- **Epic Security Alignment**: Ensure security analysis supports strategic security initiatives from epic labels
 </step_1_security_context_analysis>
 
 <step_2_vulnerability_assessment>
@@ -227,12 +241,19 @@ Provide specific file:line references and actionable security remediation steps.
 
 **PR Summary:** {{PR_NUMBER}} by @{{PR_AUTHOR}} ({{SOURCE_BRANCH}} → {{TARGET_BRANCH}})  
 **Issue Context:** {{ISSUE_REF}}  
+**Security Context:** Automation-aware security analysis with component-specific threat assessment  
 **Analysis Scope:** Comprehensive security impact assessment
 
 ### 🔒 Security Posture Assessment
 
 **Overall Security Impact:** [Security Enhanced/Neutral/Degraded/Critical Risk]  
 **Threat Level:** [None/Low/Medium/High/Critical]
+
+**Strategic Security Analysis:**
+- **Automation Context:** [How security assessment considers CI/CD and automated deployment context]
+- **Component Threat Focus:** [Component-specific security analysis based on architectural areas]  
+- **Epic Security Alignment:** [How security changes support strategic security initiatives]
+- **Priority-Based Assessment:** [Security analysis rigor adjusted for strategic importance]
 
 **Security Metrics:**
 - Vulnerabilities Introduced: [X critical, Y high, Z medium]

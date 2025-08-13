@@ -18,10 +18,10 @@
 ## 2. Architecture & Key Concepts
 
 ### **The Four AI Sentinels**
-* **🔍 DebtSentinel** (`tech-debt-analysis.md`, 247 lines): Technical debt analysis with 5-step chain-of-thought reasoning
-* **🛡️ StandardsGuardian** (`standards-compliance.md`, 323 lines): Standards compliance with 6-step analysis framework
-* **🧪 TestMaster** (`testing-analysis.md`, 338 lines): Test quality assessment with coverage impact analysis
-* **🔒 SecuritySentinel** (`security-analysis.md`, 348 lines): Security vulnerability assessment with deployment decisions
+* **🔍 DebtSentinel** (`tech-debt-analysis.md`, ~270 lines): Technical debt analysis with GitHub label strategic context and epic-aware prioritization
+* **🛡️ StandardsGuardian** (`standards-compliance.md`, ~350 lines): Standards compliance with component-specific analysis and epic alignment
+* **🧪 TestMaster** (`testing-analysis.md`, ~370 lines): Test quality assessment with coverage phase intelligence and progressive testing strategy
+* **🔒 SecuritySentinel** (`security-analysis.md`, ~370 lines): Security vulnerability assessment with automation context awareness and component-specific threat modeling
 
 ### **Advanced Prompt Engineering Features**
 Based on academic research in AI-driven technical debt analysis:
@@ -31,6 +31,14 @@ Based on academic research in AI-driven technical debt analysis:
 * **Project-Specific Taxonomies**: Tailored to .NET 8/Angular 19 tech stack and monorepo architecture
 * **Decision Matrices**: Objective prioritization frameworks (Critical/High/Medium/Low/Celebrate)
 * **Educational Focus**: AI coder learning reinforcement and sustainable development patterns
+
+### **GitHub Label Integration**
+All four AI agents now leverage GitHub issue labels for enhanced contextual analysis:
+* **Epic-Aware Analysis**: `epic:testing-coverage-to-90`, `epic:performance-optimization` labels provide long-term strategic context for prioritization and alignment
+* **Component-Specific Intelligence**: `component:backend-api`, `component:frontend-ui`, `component:database`, `component:security` labels enable targeted analysis with component-specific standards and threat models
+* **Coverage Phase Intelligence**: `coverage:phase-1` through `coverage:phase-6` labels inform progressive testing strategy and phase-appropriate expectations  
+* **Automation Context Awareness**: `automation:ci-environment`, `automation:github-actions` labels help security analysis understand execution context
+* **Strategic Prioritization**: `priority:critical`, `priority:high`, `quality:performance`, `quality:maintainability` labels adjust analysis rigor and deployment decision thresholds
 
 ### **Technical Implementation**
 * **Template System**: Markdown prompts with `{{PLACEHOLDER}}` dynamic context injection
@@ -62,7 +70,17 @@ graph TD
     H --> J
     I --> J
     
-    J --> K[Chain-of-Thought Analysis]
+    J --> J1[GitHub Label Context]
+    J1 --> J2[Epic Labels: strategic context]
+    J1 --> J3[Component Labels: targeted analysis]
+    J1 --> J4[Coverage Phase Labels: progressive strategy]
+    J1 --> J5[Priority Labels: analysis rigor]
+    
+    J2 --> K[Chain-of-Thought Analysis]
+    J3 --> K
+    J4 --> K
+    J5 --> K
+    
     K --> L[Decision Matrix]
     L --> M[GitHub PR Comments]
     L --> N[Quality Gates]
@@ -74,6 +92,7 @@ graph TD
     style G fill:#87CEEB
     style H fill:#DDA0DD
     style I fill:#FFB6C1
+    style J1 fill:#FFD700
     style O fill:#FF6B6B
     style P fill:#51CF66
 ```
@@ -82,6 +101,7 @@ graph TD
 
 ### **AI Analysis Input Requirements**
 * **Git Context**: PR number, author, source/target branches, linked issues, git diff with file changes
+* **GitHub Label Context**: Issue labels providing strategic, component, and priority context for targeted analysis
 * **Project Documentation**: Access to `CLAUDE.md`, `/Docs/Standards/`, module `README.md` files
 * **Build Artifacts**: Test results, coverage reports, security scan results (when available)
 * **Branch Context**: Target branch determines analysis depth and security requirements

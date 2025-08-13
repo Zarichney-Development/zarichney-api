@@ -46,9 +46,18 @@ Before analyzing any changes, you MUST perform comprehensive standards context a
    - Note established quality gates and flexibility scenarios (test branches, low-coverage labels)
    - Identify the project's modular monolith architecture patterns
 
-5. **Synthesize Compliance Rules:**
+5. **GitHub Label Context Integration:**
+   - Read GitHub issue labels associated with {{ISSUE_REF}} to understand component and strategic context:
+     - **Component Labels** (`component:backend-api`, `component:frontend-ui`, `component:database`): Target standards enforcement to specific architectural areas
+     - **Epic Labels** (`epic:testing-coverage-to-90`, `epic:performance-optimization`): Align standards compliance with long-term strategic objectives
+     - **Technology Labels** (`tech:dotnet8`, `tech:angular19`, `tech:postgresql`): Apply framework-specific standards and best practices
+     - **Quality Labels** (`quality:code-standards`, `quality:maintainability`): Focus compliance analysis on established quality improvement areas
+     - **Priority Labels** (`priority:critical`, `priority:high`): Adjust standards rigor based on strategic importance
+
+6. **Synthesize Compliance Rules:**
    - Extract mandatory vs. recommended standards from documentation
-   - Understand the distinction between blocking violations and improvement opportunities
+   - Understand the distinction between blocking violations and improvement opportunities  
+   - Integrate GitHub label strategic context with established compliance frameworks
    - These rules become your enforcement criteria for this analysis
 </context_ingestion>
 
@@ -66,8 +75,8 @@ Before analyzing any changes, you MUST perform comprehensive standards context a
 </step_1_identify_changes>
 
 <step_2_code_standards_compliance>
-**Step 2: Coding Standards Analysis**
-Apply CodingStandards.md requirements to all new/modified code:
+**Step 2: Component-Aware Coding Standards Analysis**
+Apply CodingStandards.md requirements to all new/modified code with GitHub label component-specific focus:
 
 **Modern C# 12/.NET 8 Compliance:**
 - Verify file-scoped namespaces (`namespace Zarichney.Services;`)
@@ -94,7 +103,17 @@ Apply CodingStandards.md requirements to all new/modified code:
 - Check XML documentation for public APIs
 - Validate consistent naming conventions throughout codebase
 
-Label findings as `[CODE_VIOLATION]` or `[CODE_COMPLIANT]`.
+**Component-Specific Standards Analysis:**
+- **Backend API Components** (`component:backend-api`): Focus on API design patterns, HTTP status codes, validation attributes, controller action naming
+- **Frontend UI Components** (`component:frontend-ui`): Emphasize Angular component lifecycle, template binding patterns, accessibility standards, responsive design
+- **Database Components** (`component:database`): Validate Entity Framework patterns, migration practices, query performance, data validation
+- **Core/Security Components** (`component:core`, `component:security`): Apply strictest standards for authentication, authorization, encryption, input validation
+
+**Epic-Aligned Standards Application:**
+- **Testing Coverage Epic** (`epic:testing-coverage-to-90`): Strict enforcement of test-related standards, coverage requirements, test categorization
+- **Performance Epic** (`epic:performance-optimization`): Focus on async patterns, caching strategies, query optimization, resource management
+
+Label findings as `[CODE_VIOLATION]` or `[CODE_COMPLIANT]` with component context: `[COMPONENT:label-name]` and epic context: `[EPIC:label-name]`.
 </step_3_code_standards_compliance>
 
 <step_3_testing_standards_compliance>
@@ -194,11 +213,18 @@ Provide specific file:line references and actionable remediation steps for each 
 
 **PR Summary:** {{PR_NUMBER}} by @{{PR_AUTHOR}} ({{SOURCE_BRANCH}} → {{TARGET_BRANCH}})  
 **Issue Context:** {{ISSUE_REF}}  
+**Strategic Context:** Component-focused and epic-aligned standards enforcement  
 **Analysis Scope:** Comprehensive standards compliance audit
 
 ### 📊 Compliance Assessment
 
 **Overall Compliance Score:** [XX/100]
+
+**Strategic Compliance Analysis:**
+- **Component Focus:** [How standards analysis was targeted to specific architectural components]
+- **Epic Alignment:** [How compliance supports long-term strategic objectives]  
+- **Technology Standards:** [Framework-specific compliance assessment results]
+- **Quality Goal Progress:** [Standards compliance contribution to quality objectives]
 
 **Standards Compliance Status:**
 - Coding Standards: [✅ Compliant/⚠️ Issues/🚨 Violations]  
