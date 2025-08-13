@@ -199,8 +199,9 @@ check_prerequisites() {
     fi
     
     # Check if ReportGenerator tool is installed (for automation mode)
+    # Use 'dotnet tool run' approach for better path isolation and consistency
     if [[ "$MODE" == "automation" || "$MODE" == "both" ]]; then
-        if ! reportgenerator --help &> /dev/null; then
+        if ! dotnet tool list -g | grep -q "dotnet-reportgenerator-globaltool"; then
             print_status "Installing ReportGenerator global tool..."
             dotnet tool install -g dotnet-reportgenerator-globaltool || {
                 error_exit "Failed to install ReportGenerator tool"
@@ -537,7 +538,8 @@ generate_coverage_report() {
     local coverage_files_param
     coverage_files_param=$(echo "$coverage_files" | tr '\n' ';' | sed 's/;$//')
     
-    reportgenerator \
+    # Use 'dotnet tool run' for consistent tool invocation and path isolation
+    dotnet tool run reportgenerator \
         -reports:"$coverage_files_param" \
         -targetdir:"$COVERAGE_REPORT_DIR" \
         -reporttypes:"$COVERAGE_FORMATS" \

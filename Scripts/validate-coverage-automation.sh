@@ -31,6 +31,9 @@ readonly TEST_SUITE_SCRIPT="$ROOT_DIR/Scripts/run-test-suite.sh"
 readonly EPIC_BRANCH="epic/testing-coverage-to-90"
 readonly EPIC_ISSUE_ID="94"
 
+# Expected skip count configuration (see Docs/Standards/TestingStandards.md section 12.7)
+readonly DEFAULT_EXPECTED_SKIP_COUNT=23
+
 # Validation settings
 VERBOSE=false
 FIX_ISSUES=false
@@ -81,6 +84,11 @@ print_info() {
     fi
 }
 
+# Helper function to resolve effective expected skip count
+get_expected_skip_count() {
+    echo "${EXPECTED_SKIP_COUNT:-$DEFAULT_EXPECTED_SKIP_COUNT}"
+}
+
 # ==============================================================================
 # Infrastructure File Validation
 # ==============================================================================
@@ -126,7 +134,8 @@ validate_core_files() {
             print_error "Epic #94 reference missing in prompt file"
         fi
         
-        if grep -q "${EXPECTED_SKIP_COUNT:-23} tests skipped" "$PROMPT_FILE"; then
+        local expected_skip_count=$(get_expected_skip_count)
+        if grep -q "$expected_skip_count tests skipped" "$PROMPT_FILE"; then
             print_success "CI environment expectations documented (skip count configurable via EXPECTED_SKIP_COUNT, see Docs/Standards/TestingStandards.md section 12.7)"
         else
             print_error "CI environment test expectations missing (EXPECTED_SKIP_COUNT, see Docs/Standards/TestingStandards.md section 12.7)"
@@ -247,10 +256,11 @@ validate_ci_environment() {
             
             if grep -q "skipped" /tmp/test_validation.log; then
                 SKIP_COUNT=$(grep -o "[0-9]* skipped" /tmp/test_validation.log | head -1 | cut -d' ' -f1)
-                if [ "$SKIP_COUNT" -eq "${EXPECTED_SKIP_COUNT:-23}" ] 2>/dev/null; then
-                    print_success "Expected skip count (${EXPECTED_SKIP_COUNT:-23}) detected in test results (see Docs/Standards/TestingStandards.md section 12.7 for rationale)"
+                local expected_skip_count=$(get_expected_skip_count)
+                if [ "$SKIP_COUNT" -eq "$expected_skip_count" ] 2>/dev/null; then
+                    print_success "Expected skip count ($expected_skip_count) detected in test results (see Docs/Standards/TestingStandards.md section 12.7 for rationale)"
                 else
-                    print_warning "Skip count ($SKIP_COUNT) differs from expected (${EXPECTED_SKIP_COUNT:-23}) (see Docs/Standards/TestingStandards.md section 12.7)"
+                    print_warning "Skip count ($SKIP_COUNT) differs from expected ($expected_skip_count) (see Docs/Standards/TestingStandards.md section 12.7)"
                 fi
             else
                 print_warning "Skip count information not found in test results"

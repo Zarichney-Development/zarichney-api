@@ -23,6 +23,10 @@ readonly NC='\033[0m' # No Color
 
 VERBOSE=false
 
+# Cache MCP list result to avoid duplicate external calls
+MCP_LIST_OUTPUT=""
+MCP_AVAILABLE=false
+
 print_header() {
     echo -e "${BLUE}===============================================${NC}"
     echo -e "${BLUE}🔍 Duplicate PR Prevention Testing${NC}"
@@ -46,6 +50,16 @@ print_error() {
 print_info() {
     if [ "$VERBOSE" = true ]; then
         echo -e "  ${BLUE}ℹ️  $1${NC}"
+    fi
+}
+
+# Initialize MCP cache to avoid duplicate external calls
+initialize_mcp_cache() {
+    MCP_LIST_OUTPUT=$(claude mcp list 2>/dev/null || echo "")
+    if echo "$MCP_LIST_OUTPUT" | grep -q "github.*Connected" || echo "$MCP_LIST_OUTPUT" | grep -q "github"; then
+        MCP_AVAILABLE=true
+    else
+        MCP_AVAILABLE=false
     fi
 }
 
@@ -170,8 +184,8 @@ test_github_cli_availability() {
 test_mcp_integration() {
     echo -e "${BLUE}📋 Testing GitHub MCP Integration${NC}"
     
-    # Check if MCP configuration exists
-    if claude mcp list 2>/dev/null | grep -q "github.*Connected" || claude mcp list 2>/dev/null | grep -q "github"; then
+    # Use cached MCP list result to avoid duplicate external calls
+    if [ "$MCP_AVAILABLE" = true ]; then
         print_success "GitHub MCP server configured"
         
         # Test MCP connectivity
@@ -230,6 +244,7 @@ done
 
 # Main execution
 print_header
+initialize_mcp_cache
 test_ai_agent_restrictions
 test_pipeline_pr_checking
 test_github_cli_availability

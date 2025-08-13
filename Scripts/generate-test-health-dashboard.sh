@@ -514,8 +514,14 @@ generate_historical_trends() {
         local targets=()
         local skip_rates=()
         
-        # Process historical files (last 30 entries)
-        for file in $(ls -t "$HISTORICAL_DIR"/baseline_validation_*.json 2>/dev/null | head -30 | sort); do
+        # Process historical files (last 30 entries) - using safe file iteration
+        local historical_files=()
+        if [[ -d "$HISTORICAL_DIR" ]]; then
+            # Use mapfile with null-delimited find output for safe iteration
+            mapfile -t historical_files < <(find "$HISTORICAL_DIR" -name "baseline_validation_*.json" -type f -print0 2>/dev/null | xargs -0 ls -t 2>/dev/null | head -30 | sort)
+        fi
+        
+        for file in "${historical_files[@]}"; do
             if [[ -f "$file" ]]; then
                 local date=$(jq -r '.timestamp // empty' "$file" 2>/dev/null)
                 local cov=$(jq -r '.metrics.lineCoverage // 0' "$file" 2>/dev/null)
