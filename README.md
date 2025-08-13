@@ -66,22 +66,26 @@ Whether you're interested in the platform's features or the cutting-edge develop
     * Each module within `Code/` also has its own detailed `README.md`.
 * **`Scripts/`:** Utility scripts including the unified test suite, API client generation, and various development tools. See [`Scripts/README.md`](./Scripts/README.md).
 
-## Getting Started (High Level)
+## Getting Started
 
-1.  Clone the repository.
-2.  **Backend Setup:**
-    * Ensure [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) and [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for integration tests) are installed.
-    * Review `Code/Zarichney.Server/README.md` for configuration prerequisites (secrets, API keys).
-    * Build the solution (`dotnet build`).
-    * Run the tests with AI-powered analysis (`/test-report` or `Scripts/run-test-suite.sh`).
-    * Run the API (`dotnet run --project Code/Zarichney.Server`).
-3.  **Frontend Setup:**
-    * Ensure [Node.js 18+](https://nodejs.org/) is installed.
-    * Navigate to `Code/Zarichney.Website/` and run `npm install`.
-    * Review `Code/Zarichney.Website/README.md` for configuration details.
-    * Start development server (`npm start`) or build for production (`npm run build-prod`).
+**Quick Setup**: For immediate development without external services (~15 minutes)  
+**Complete Setup**: For full platform features including payments, AI, and email (~60 minutes)
 
-*(Detailed setup and contribution guidelines are part of the internal documentation standards.)*
+📋 **Comprehensive Setup Guide**: [`Docs/Development/LocalSetup.md`](./Docs/Development/LocalSetup.md)
+
+**Essential Commands**:
+```bash
+# Clone and build
+git clone [repository-url]
+dotnet build Zarichney.sln
+
+# Quick validation
+./Scripts/run-test-suite.sh report summary
+
+# Start development
+dotnet run --project Code/Zarichney.Server  # Backend API
+cd Code/Zarichney.Website && npm start      # Frontend (separate terminal)
+```
 
 ---
 

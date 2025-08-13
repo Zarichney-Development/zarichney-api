@@ -111,27 +111,35 @@
 
 ## 5. How to Work With This Code
 
-* **Setup:**
-    1. Install Node.js (v18+ recommended)
-    2. Install dependencies: `npm install`
-    3. Configure environment variables in `src/startup/environments.dev.ts`
-    4. Ensure backend API is running for full functionality
-* **Development Commands:**
-    * **Development Server:** `npm start` (with HMR enabled)
-    * **Production Build:** `npm run build-prod`
-    * **Development Build:** `npm run build-dev`
-    * **Serve SSR:** `npm run serve:ssr` (requires build first)
-    * **Clean Build:** `npm run clean-dist`
-* **Testing:**
-    * **Location:** Tests should be co-located with components (`.spec.ts` files)
-    * **How to Run:** Use Angular CLI testing commands (Jasmine/Karma framework)
-    * **Testing Strategy:** Focus on component interaction, service integration, and state management testing
-* **Common Pitfalls / Gotchas:**
-    * **SSR Compatibility:** Ensure code works in both browser and Node.js environments
-    * **State Management:** Be cautious with NgRx store mutations and side effects
-    * **Authentication:** Handle token expiration and refresh scenarios properly
-    * **Payment Processing:** Test Stripe integration thoroughly in sandbox mode
-    * **Build Process:** Clean dist directory when switching between development and production builds
+* **Setup**: See [`../../Docs/Development/LocalSetup.md`](../../Docs/Development/LocalSetup.md) for comprehensive frontend setup including Node.js installation, environment configuration, and integration with backend services.
+
+* **Quick Commands**:
+  ```bash
+  # Setup and run (from Code/Zarichney.Website/)
+  npm install
+  npm start  # Development server with HMR
+  
+  # Available at: http://localhost:4200
+  ```
+
+* **Build Commands**:
+  ```bash
+  npm run build-dev     # Development build
+  npm run build-prod    # Production build with optimization
+  npm run serve:ssr     # SSR development (requires build first)
+  npm run clean-dist    # Clean previous builds
+  ```
+
+* **Testing Strategy:**
+  * **Unit Tests**: Component and service testing with Jasmine/Karma
+  * **Integration**: E2E testing with backend API integration
+  * **Testing Files**: Co-located `.spec.ts` files with components
+
+* **Key Development Notes:**
+  * **SSR Compatibility**: Ensure code works in both browser and Node.js environments
+  * **State Management**: Use NgRx for complex state, be cautious with mutations
+  * **Authentication**: JWT token handling with automatic refresh
+  * **Payment Integration**: Stripe.js integration for secure payment processing
 
 ## 6. Dependencies
 

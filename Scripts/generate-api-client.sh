@@ -56,15 +56,17 @@ fi
 
 # Start the API server in the background to generate swagger.json
 echo -e "\e[32mStarting API server temporarily...\e[0m"
-# Create a temporary log file for debugging startup issues
-TEMP_LOG=$(mktemp)
-echo -e "\e[33mAPI server logs will be captured in: $TEMP_LOG\e[0m"
+# Create temporary log files for debugging startup issues
+TEMP_LOG_OUT=$(mktemp)
+TEMP_LOG_ERR=$(mktemp)
+echo -e "\e[33mAPI server stdout will be captured in: $TEMP_LOG_OUT\e[0m"
+echo -e "\e[33mAPI server stderr will be captured in: $TEMP_LOG_ERR\e[0m"
 
 # Set environment variables for more permissive startup
 export ASPNETCORE_ENVIRONMENT=Development
 export ASPNETCORE_URLS=http://localhost:5000
 
-dotnet run --project "$API_SERVER_DIR/Zarichney.Server.csproj" > "$TEMP_LOG" 2>&1 &
+dotnet run --project "$API_SERVER_DIR/Zarichney.Server.csproj" > "$TEMP_LOG_OUT" 2> "$TEMP_LOG_ERR" &
 API_PID=$!
 
 # Function to safely stop the API server
@@ -83,13 +85,20 @@ cleanup_api_server() {
         echo -e "\e[33mAPI server process not found (may have already stopped)\e[0m"
     fi
     
-    # Clean up temporary log file and show recent logs if startup failed
-    if [ -f "$TEMP_LOG" ]; then
-        if [ -s "$TEMP_LOG" ]; then
-            echo -e "\e[33mAPI server startup logs:\e[0m"
-            tail -20 "$TEMP_LOG"
+    # Clean up temporary log files and show recent logs if startup failed
+    if [ -f "$TEMP_LOG_OUT" ]; then
+        if [ -s "$TEMP_LOG_OUT" ]; then
+            echo -e "\e[33mAPI server stdout logs:\e[0m"
+            tail -20 "$TEMP_LOG_OUT"
         fi
-        rm -f "$TEMP_LOG"
+        rm -f "$TEMP_LOG_OUT"
+    fi
+    if [ -f "$TEMP_LOG_ERR" ]; then
+        if [ -s "$TEMP_LOG_ERR" ]; then
+            echo -e "\e[33mAPI server stderr logs:\e[0m"
+            tail -20 "$TEMP_LOG_ERR"
+        fi
+        rm -f "$TEMP_LOG_ERR"
     fi
 }
 
@@ -103,8 +112,8 @@ for i in {1..45}; do
     if ! ps -p $API_PID > /dev/null 2>&1; then
         echo -e "\e[31mAPI server process has stopped unexpectedly.\e[0m"
         echo -e "\e[33mLast few lines from server logs:\e[0m"
-        if [ -f "$TEMP_LOG" ]; then
-            tail -20 "$TEMP_LOG"
+        if [ -f "$TEMP_LOG_ERR" ]; then
+            tail -20 "$TEMP_LOG_ERR"
         fi
         exit 1
     fi
@@ -123,8 +132,13 @@ for i in {1..45}; do
     if [ $i -eq 45 ]; then
         echo -e "\e[31mTimeout waiting for API to start (90 seconds).\e[0m"
         echo -e "\e[33mServer logs:\e[0m"
-        if [ -f "$TEMP_LOG" ]; then
-            cat "$TEMP_LOG"
+        if [ -f "$TEMP_LOG_OUT" ]; then
+            echo -e "\e[33mStdout:\e[0m"
+            cat "$TEMP_LOG_OUT"
+        fi
+        if [ -f "$TEMP_LOG_ERR" ]; then
+            echo -e "\e[33mStderr:\e[0m"
+            cat "$TEMP_LOG_ERR"
         fi
         exit 1
     fi

@@ -119,6 +119,7 @@ main() {
     if [[ "$SKIP_TESTS" != "true" ]]; then
         run_comprehensive_tests
         parse_test_results
+        validate_test_baselines
         # Quality gates are validated within the test suite
     fi
     
@@ -340,6 +341,127 @@ validate_quality_gates() {
         return 1
     else
         log_success "All quality gates passed"
+        return 0
+    fi
+}
+
+validate_test_baselines() {
+    log_section "Validating Test Suite Baselines"
+    
+    local results_file="./TestResults/parsed_results.json"
+    local coverage_file="./TestResults/coverage_results.json"
+    local baseline_file="./TestResults/baseline_validation.json"
+    
+    if [[ ! -f "$results_file" ]]; then
+        log_warning "Cannot validate test baselines - results file missing"
+        return 0
+    fi
+    
+    # Check if baseline validation was already performed by the test suite script
+    if [[ -f "$baseline_file" ]]; then
+        log_info "Using existing baseline validation results from test suite script"
+        
+        # Extract validation results
+        local validation_passed environment_classification skip_percentage violations_count
+        validation_passed=$(jq -r '.validation.passesThresholds // false' "$baseline_file")
+        environment_classification=$(jq -r '.environment.classification // "unknown"' "$baseline_file")
+        skip_percentage=$(jq -r '.metrics.skipPercentage // 0' "$baseline_file")
+        violations_count=$(jq -r '.validation.violationsCount // 0' "$baseline_file")
+        
+        # Log baseline validation summary
+        log_info "Baseline Validation Results:"
+        log_info "  Environment: $environment_classification"
+        log_info "  Skip Percentage: ${skip_percentage}%"
+        log_info "  Violations: $violations_count"
+        
+        if [[ "$validation_passed" == "true" ]]; then
+            log_success "Test suite baselines validation passed"
+        else
+            log_warning "Test suite baselines validation detected issues:"
+            
+            # Extract and display violations
+            local violations
+            violations=$(jq -r '.validation.violations[]?' "$baseline_file" 2>/dev/null || echo "")
+            if [[ -n "$violations" ]]; then
+                while IFS= read -r violation; do
+                    if [[ -n "$violation" ]]; then
+                        log_warning "  ❌ $violation"
+                    fi
+                done <<< "$violations"
+            fi
+            
+            # Extract and display recommendations  
+            local recommendations
+            recommendations=$(jq -r '.validation.recommendations[]?' "$baseline_file" 2>/dev/null || echo "")
+            if [[ -n "$recommendations" ]]; then
+                log_info "Recommendations:"
+                while IFS= read -r recommendation; do
+                    if [[ -n "$recommendation" ]]; then
+                        log_info "  💡 $recommendation"
+                    fi
+                done <<< "$recommendations"
+            fi
+        fi
+        
+        # Phase 3: Progressive coverage analysis and dynamic quality gates
+        local progressive_coverage_exists
+        progressive_coverage_exists=$(jq -e '.progressiveCoverage' "$baseline_file" >/dev/null 2>&1 && echo "true" || echo "false")
+        
+        if [[ "$progressive_coverage_exists" == "true" ]]; then
+            log_info "📈 Progressive Coverage Analysis:"
+            
+            # Extract progressive coverage data
+            local current_phase next_target coverage_gap is_on_track required_velocity
+            current_phase=$(jq -r '.progressiveCoverage.currentPhase // "Unknown"' "$baseline_file")
+            next_target=$(jq -r '.progressiveCoverage.nextTarget // 0' "$baseline_file")
+            coverage_gap=$(jq -r '.progressiveCoverage.coverageGap // 0' "$baseline_file")
+            is_on_track=$(jq -r '.progressiveCoverage.isOnTrack // false' "$baseline_file")
+            required_velocity=$(jq -r '.progressiveCoverage.requiredVelocity // 0' "$baseline_file")
+            
+            # Log progressive coverage status
+            log_info "  Current Phase: $current_phase"
+            log_info "  Next Target: ${next_target}% (Gap: ${coverage_gap}%)"
+            log_info "  Required Velocity: ${required_velocity}%/month for 90% by Jan 2026"
+            
+            if [[ "$is_on_track" == "true" ]]; then
+                log_success "  ✅ Coverage progression on track"
+            else
+                log_warning "  ⚠️ Coverage progression behind schedule - acceleration needed"
+            fi
+            
+            # Dynamic quality gate adjustment based on progressive phase
+            local current_coverage
+            current_coverage=$(jq -r '.metrics.lineCoverage // 0' "$baseline_file")
+            
+            # Set progressive coverage outputs
+            if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+                {
+                    echo "current_coverage_phase=$current_phase"
+                    echo "next_coverage_target=$next_target"
+                    echo "coverage_gap=$coverage_gap"
+                    echo "progression_on_track=$is_on_track"
+                    echo "required_velocity=$required_velocity"
+                } >> "$GITHUB_OUTPUT"
+            fi
+        else
+            log_info "No progressive coverage analysis data available"
+        fi
+        
+        # Set GitHub Actions outputs for baseline validation
+        if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+            {
+                echo "baseline_validation_passed=$validation_passed"
+                echo "environment_classification=$environment_classification"
+                echo "skip_percentage=$skip_percentage"
+                echo "violations_count=$violations_count"
+            } >> "$GITHUB_OUTPUT"
+        fi
+        
+        # In CI/CD, baseline validation issues are warnings, not failures
+        # The test suite script handles the actual quality gate logic
+        return 0
+    else
+        log_warning "No baseline validation results found - test suite may not have run baseline validation"
         return 0
     fi
 }

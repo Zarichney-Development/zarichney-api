@@ -80,6 +80,12 @@
     * All scripts handle secrets through environment variables only
     * No secrets are logged or written to files
     * Temporary files are cleaned up automatically
+    * **AWS OIDC Authentication:** Deployment scripts use short-lived OIDC tokens instead of static AWS credentials
+* **AWS OIDC Integration:**
+    * Scripts support both traditional AWS credentials and OIDC token authentication
+    * OIDC authentication provides enhanced security with repository-scoped, time-limited access
+    * AWS credentials are automatically configured by GitHub Actions before script execution
+    * No manual AWS credential management required in deployment scripts
 
 ## 5. How to Work With This Code
 
@@ -87,7 +93,8 @@
     * Ensure script execute permissions: `chmod +x Scripts/Pipeline/*.sh`
     * Install required tools: `.NET 8 SDK`, `Node.js 18.x`, `Docker Desktop`
     * For AI analysis: Configure `CLAUDE_CODE_OAUTH_TOKEN` environment variable
-    * For deployments: Configure AWS credentials with appropriate permissions
+    * For deployments: AWS credentials are automatically configured via OIDC in GitHub Actions
+    * For local testing: Configure AWS credentials manually or use `aws configure`
 * **Testing:**
     * **Location:** Scripts are tested through local execution and integration tests in CI/CD
     * **How to Run:** Each script includes `--help` option and can be executed locally

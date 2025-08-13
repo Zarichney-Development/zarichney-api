@@ -129,28 +129,28 @@ graph TD
 
 ## 5. How to Work With This Code
 
-* **Setup:**
-1.  Ensure .NET 8 SDK is installed.
-2.  Configure necessary secrets (API Keys, DB connection string) using User Secrets (`dotnet user-secrets set ...`) or environment variables, referencing `appsettings.json` and module READMEs for required keys.
-3.  Ensure Docker Desktop is running (for integration tests using Testcontainers).
-4.  Build the solution: `dotnet build Zarichney.sln` (from root directory).
-5.  Apply database migrations (if using UserDbContext): Navigate to `/Zarichney.Server/` and run `dotnet ef database update --context UserDbContext`.
-* **Running Locally:**
-* From the `/Zarichney.Server/` directory, run `dotnet run`.
-* Access the API via `https://localhost:7061` (or configured port).
-* Swagger UI is available at `https://localhost:7061/swagger`.
-* **Running Tests:** **(New)**
-* Navigate to the repository root directory (`zarichney-api/`).
-* Run all tests: `dotnet test Zarichney.sln`
-* Run only Unit tests: `dotnet test --filter "Category=Unit"`
-* Run only Integration tests: `dotnet test --filter "Category=Integration"` (Requires Docker)
-* Run tests for a specific feature (using Traits): `dotnet test --filter "Category=Integration&Feature=Auth"`
-* **Regenerating API Client for Tests:** **(New)**
-* If API contracts in `/Zarichney.Server/Controllers/` change, the Refit clients used by integration tests (multiple interfaces in `/Zarichney.Server.Tests/Framework/Client/`) need regeneration.
-* From the repository root directory (`zarichney-api/`), run the script:
-```powershell
-./Scripts/generate-api-client.ps1
-```
+* **Setup**: See [`../../Docs/Development/LocalSetup.md`](../../Docs/Development/LocalSetup.md) for comprehensive setup instructions including external service configuration and troubleshooting.
+
+* **Quick Commands**:
+  ```bash
+  # Build and run (from repository root)
+  dotnet build Zarichney.sln
+  dotnet run --project Code/Zarichney.Server
+  
+  # API available at: https://localhost:7061
+  # Swagger UI: https://localhost:7061/swagger
+  ```
+
+* **Testing**: Use unified test suite from repository root:
+  ```bash
+  ./Scripts/run-test-suite.sh report summary  # Quick validation
+  ./Scripts/run-test-suite.sh                 # Full analysis
+  ```
+
+* **API Client Regeneration**: If controller contracts change:
+  ```bash
+  ./Scripts/generate-api-client.sh  # From repository root
+  ```
 * **Key Tooling:**
 * `.NET CLI`
 * `Entity Framework Core Tools` (`dotnet ef`)

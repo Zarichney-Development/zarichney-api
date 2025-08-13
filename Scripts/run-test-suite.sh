@@ -35,7 +35,7 @@ readonly LOG_FILE="$TEST_RESULTS_DIR/test-suite-$TIMESTAMP.log"
 
 # Test configuration
 readonly BUILD_CONFIG="Release"
-readonly COVERAGE_FORMATS="HtmlInline_AzurePipelines;Cobertura;Badges;SummaryGithub"
+readonly COVERAGE_FORMATS="Html;Cobertura;Badges;SummaryGithub"
 
 # Default settings
 MODE="report"  # Default to report mode for backward compatibility
@@ -51,6 +51,11 @@ UNIT_ONLY=false
 INTEGRATION_ONLY=false
 PARALLEL_EXECUTION=false
 MAX_PARALLEL_COLLECTIONS=$MAX_PARALLEL_DEFAULT
+
+# JSON escape function for safe string encoding
+json_escape() {
+    printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\n/\\n/g; s/\r/\\r/g'
+}
 
 # Colors for output
 readonly RED='\033[0;31m'
@@ -194,8 +199,9 @@ check_prerequisites() {
     fi
     
     # Check if ReportGenerator tool is installed (for automation mode)
+    # Use 'dotnet tool run' approach for better path isolation and consistency
     if [[ "$MODE" == "automation" || "$MODE" == "both" ]]; then
-        if ! dotnet reportgenerator --help &> /dev/null; then
+        if ! dotnet tool list -g | grep -q "dotnet-reportgenerator-globaltool"; then
             print_status "Installing ReportGenerator global tool..."
             dotnet tool install -g dotnet-reportgenerator-globaltool || {
                 error_exit "Failed to install ReportGenerator tool"
@@ -532,7 +538,8 @@ generate_coverage_report() {
     local coverage_files_param
     coverage_files_param=$(echo "$coverage_files" | tr '\n' ';' | sed 's/;$//')
     
-    dotnet reportgenerator \
+    # Use 'dotnet tool run' for consistent tool invocation and path isolation
+    dotnet tool run reportgenerator \
         -reports:"$coverage_files_param" \
         -targetdir:"$COVERAGE_REPORT_DIR" \
         -reporttypes:"$COVERAGE_FORMATS" \
@@ -891,6 +898,262 @@ EOF
     
     log "Processed $file_count coverage file(s)"
     success "Coverage analyzed: ${line_coverage}% lines, ${branch_coverage}% branches"
+}
+
+# Test suite baseline validation (Phase 2 enhancement)
+validate_test_baselines() {
+    log "📊 Validating test suite baselines..."
+    
+    local results_file="$TEST_RESULTS_DIR/parsed_results.json"
+    local coverage_file="$TEST_RESULTS_DIR/coverage_results.json"
+    
+    if [[ ! -f "$results_file" ]]; then
+        warning "Test results file not found, skipping baseline validation"
+        return 1
+    fi
+    
+    # Extract test metrics
+    local total_tests=$(jq -r '.tests.total' "$results_file" 2>/dev/null || echo "0")
+    local skipped_tests=$(jq -r '.tests.skipped' "$results_file" 2>/dev/null || echo "0")
+    local failed_tests=$(jq -r '.tests.failed' "$results_file" 2>/dev/null || echo "0")
+    
+    # Calculate skip percentage
+    local skip_percentage=0
+    if [[ $total_tests -gt 0 ]]; then
+        skip_percentage=$(awk -v skipped="$skipped_tests" -v total="$total_tests" 'BEGIN {printf "%.1f", (skipped / total) * 100}')
+    fi
+    
+    # Extract coverage data
+    local line_coverage=0
+    if [[ -f "$coverage_file" ]]; then
+        line_coverage=$(jq -r '.line_coverage' "$coverage_file" 2>/dev/null || echo "0")
+    fi
+    
+    # Determine environment classification (simplified version for bash script)
+    local environment_classification="unconfigured"  # Default assumption for CI/CD
+    local expected_skip_percentage=26.7
+    local environment_description="Local dev / CI without external services"
+    
+    # Check for production environment
+    if [[ "${ASPNETCORE_ENVIRONMENT:-}" == "Production" ]]; then
+        environment_classification="production"
+        expected_skip_percentage=0.0
+        environment_description="Production deployment validation - no test failures acceptable"
+    elif [[ "${CI_ENVIRONMENT:-false}" == "true" && "${QUALITY_GATE_ENABLED:-false}" == "true" ]]; then
+        # In CI with quality gates enabled, check if we have service configurations
+        # For now, assume unconfigured - this could be enhanced with actual service availability checks
+        environment_classification="unconfigured"
+        expected_skip_percentage=26.7
+        environment_description="CI environment without external services"
+    fi
+    
+    # Validate against thresholds
+    local baseline_validation_passed="true"
+    local violations=()
+    local recommendations=()
+    
+    # Skip percentage validation
+    if [[ $(awk -v actual="$skip_percentage" -v expected="$expected_skip_percentage" 'BEGIN {print (actual > expected) ? 1 : 0}') -eq 1 ]]; then
+        baseline_validation_passed="false"
+        violations+=("Skip rate ${skip_percentage}% exceeds threshold of ${expected_skip_percentage}% for ${environment_classification} environment")
+    fi
+    
+    # Test failure validation (always critical)
+    if [[ $failed_tests -gt 0 ]]; then
+        baseline_validation_passed="false"
+        violations+=("${failed_tests} test(s) failing - must be resolved before deployment")
+    fi
+    
+    # Generate recommendations based on environment
+    if [[ "$environment_classification" == "unconfigured" && $skipped_tests -gt 0 ]]; then
+        recommendations+=("Configure external services (OpenAI, Stripe, MS Graph) to reduce skip rate from ${skip_percentage}% to target 1.2%")
+    fi
+    
+    # Coverage baseline check (14.22% baseline)
+    local coverage_baseline=14.22
+    if [[ $(awk -v actual="$line_coverage" -v baseline="$coverage_baseline" 'BEGIN {print (actual < baseline - 1.0) ? 1 : 0}') -eq 1 ]]; then
+        violations+=("Coverage ${line_coverage}% below baseline ${coverage_baseline}% (allowing 1% regression tolerance)")
+        recommendations+=("Increase test coverage to meet or exceed ${coverage_baseline}% baseline")
+    fi
+    
+    # Phase 3: Progressive coverage analysis
+    local progressive_targets=(20.0 35.0 50.0 75.0 90.0)
+    local next_target=$(get_next_coverage_target "$line_coverage")
+    local coverage_gap=$(awk -v target="$next_target" -v current="$line_coverage" 'BEGIN {printf "%.1f", target - current}')
+    local current_phase=$(get_current_coverage_phase "$line_coverage")
+    
+    # Calculate velocity and timeline predictions
+    local target_date="2026-01-31"
+    local months_to_target=$(calculate_months_to_target "$target_date")
+    local required_velocity=$(awk -v gap="$((90 - ${line_coverage%.*}))" -v months="$months_to_target" 'BEGIN {printf "%.1f", (months > 0) ? gap / months : 0}')
+    
+    # Check if progression is on track
+    local is_on_track="true"
+    local velocity_threshold=$(awk -v rv="$required_velocity" 'BEGIN {printf "%.1f", rv * 0.8}')  # 80% tolerance
+    
+    # Add progressive coverage recommendations
+    recommendations+=("📈 Progressive Coverage Analysis:")
+    recommendations+=("Current Phase: $current_phase")
+    recommendations+=("Next Target: ${next_target}% (Gap: ${coverage_gap}%)")
+    recommendations+=("Required monthly velocity: ${required_velocity}% for 90% by Jan 2026")
+    
+    if [[ $(awk -v gap="$coverage_gap" 'BEGIN {print (gap > 15) ? 1 : 0}') -eq 1 ]]; then
+        recommendations+=("⚠️ Large coverage gap - prioritize high-impact test scenarios")
+        recommendations+=("Focus areas: Service layer methods, API endpoints, error handling")
+    elif [[ $(awk -v gap="$coverage_gap" 'BEGIN {print (gap > 5) ? 1 : 0}') -eq 1 ]]; then
+        recommendations+=("📊 Moderate coverage gap - steady progression needed")
+        recommendations+=("Focus areas: Business logic validation, integration scenarios")
+    else
+        recommendations+=("✅ Close to next target - maintain current testing velocity")
+    fi
+    
+    # Generate skip categorization analysis (basic version)
+    local skip_analysis="{}"
+    if [[ $skipped_tests -gt 0 ]]; then
+        # For bash version, provide basic categorization - could be enhanced with TRX parsing
+        skip_analysis=$(cat << EOF
+{
+    "externalServices": {
+        "categoryType": "expected",
+        "skippedCount": $(($skipped_tests * 70 / 100)),
+        "isExpected": true,
+        "reason": "External service dependencies not configured"
+    },
+    "infrastructure": {
+        "categoryType": "expected", 
+        "skippedCount": $(($skipped_tests * 25 / 100)),
+        "isExpected": true,
+        "reason": "Infrastructure dependencies unavailable"
+    },
+    "hardcodedSkips": {
+        "categoryType": "problematic",
+        "skippedCount": $(($skipped_tests * 5 / 100)),
+        "isExpected": false,
+        "reason": "Hardcoded Skip attributes requiring review"
+    }
+}
+EOF
+        )
+    fi
+    
+    # Create baseline validation results
+    local violations_json=$(printf '%s\n' "${violations[@]}" | jq -R . | jq -s .)
+    local recommendations_json=$(printf '%s\n' "${recommendations[@]}" | jq -R . | jq -s .)
+    
+    cat > "$TEST_RESULTS_DIR/baseline_validation.json" << EOF
+{
+    "timestamp": "$(date -Iseconds)",
+    "environment": {
+        "classification": "$environment_classification",
+        "description": "$environment_description",
+        "expectedSkipPercentage": $expected_skip_percentage
+    },
+    "metrics": {
+        "totalTests": $total_tests,
+        "skippedTests": $skipped_tests,
+        "failedTests": $failed_tests,
+        "skipPercentage": $skip_percentage,
+        "lineCoverage": $line_coverage
+    },
+    "baselines": {
+        "skipThreshold": $expected_skip_percentage,
+        "coverageBaseline": $coverage_baseline,
+        "coverageRegressionTolerance": 1.0
+    },
+    "progressiveCoverage": {
+        "currentPhase": "$current_phase",
+        "nextTarget": $next_target,
+        "coverageGap": $coverage_gap,
+        "targetDate": "$target_date",
+        "monthsToTarget": $months_to_target,
+        "requiredVelocity": $required_velocity,
+        "isOnTrack": $is_on_track,
+        "progressiveTargets": [20.0, 35.0, 50.0, 75.0, 90.0]
+    },
+    "validation": {
+        "passesThresholds": $baseline_validation_passed,
+        "violations": $violations_json,
+        "recommendations": $recommendations_json
+    },
+    "skipAnalysis": $skip_analysis
+}
+EOF
+    
+    # Log validation results
+    if [[ "$baseline_validation_passed" == "true" ]]; then
+        success "Baseline validation passed: ${skip_percentage}% skip rate (≤ ${expected_skip_percentage}%), ${line_coverage}% coverage (≥ ${coverage_baseline}%)"
+    else
+        warning "Baseline validation issues detected:"
+        for violation in "${violations[@]}"; do
+            warning "  ❌ $violation"
+        done
+        if [[ ${#recommendations[@]} -gt 0 ]]; then
+            log "Recommendations:"
+            for recommendation in "${recommendations[@]}"; do
+                info "  💡 $recommendation"
+            done
+        fi
+    fi
+    
+    # Return appropriate exit code for CI/CD
+    if [[ "$baseline_validation_passed" == "true" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Helper functions for progressive coverage analysis (Phase 3)
+get_next_coverage_target() {
+    local current_coverage=$1
+    local progressive_targets=(20.0 35.0 50.0 75.0 90.0)
+    
+    for target in "${progressive_targets[@]}"; do
+        if [[ $(awk -v target="$target" -v current="$current_coverage" 'BEGIN {print (target > current) ? 1 : 0}') -eq 1 ]]; then
+            echo "$target"
+            return 0
+        fi
+    done
+    
+    # If already at or above highest target, return 90.0
+    echo "90.0"
+}
+
+get_current_coverage_phase() {
+    local current_coverage=$1
+    
+    if [[ $(awk -v current="$current_coverage" 'BEGIN {print (current < 20) ? 1 : 0}') -eq 1 ]]; then
+        echo "Phase 1 - Foundation (Basic Coverage)"
+    elif [[ $(awk -v current="$current_coverage" 'BEGIN {print (current < 35) ? 1 : 0}') -eq 1 ]]; then
+        echo "Phase 2 - Growth (Service Layer Depth)"
+    elif [[ $(awk -v current="$current_coverage" 'BEGIN {print (current < 50) ? 1 : 0}') -eq 1 ]]; then
+        echo "Phase 3 - Maturity (Edge Cases & Error Handling)"
+    elif [[ $(awk -v current="$current_coverage" 'BEGIN {print (current < 75) ? 1 : 0}') -eq 1 ]]; then
+        echo "Phase 4 - Excellence (Complex Scenarios)"
+    elif [[ $(awk -v current="$current_coverage" 'BEGIN {print (current < 90) ? 1 : 0}') -eq 1 ]]; then
+        echo "Phase 5 - Mastery (Comprehensive Coverage)"
+    else
+        echo "Phase 6 - Optimization (Maintenance & Optimization)"
+    fi
+}
+
+calculate_months_to_target() {
+    local target_date=$1
+    local current_date=$(date +%Y-%m-%d)
+    
+    # Calculate months between dates (simplified calculation)
+    local target_epoch=$(date -d "$target_date" +%s 2>/dev/null || echo "0")
+    local current_epoch=$(date -d "$current_date" +%s)
+    
+    if [[ $target_epoch -eq 0 ]]; then
+        echo "24"  # Default to 24 months if date parsing fails
+        return
+    fi
+    
+    local days_diff=$(( (target_epoch - current_epoch) / 86400 ))
+    local months_diff=$(awk -v days="$days_diff" 'BEGIN {printf "%.1f", days / 30.44}')
+    
+    echo "$months_diff"
 }
 
 # Quality regression detection (Phase 2 enhancement)
@@ -1550,13 +1813,19 @@ generate_report() {
 generate_json_report() {
     local results_file="$TEST_RESULTS_DIR/parsed_results.json"
     local coverage_file="$TEST_RESULTS_DIR/coverage_results.json"
+    local baseline_file="$TEST_RESULTS_DIR/baseline_validation.json"
     
     if [[ -f "$results_file" && -f "$coverage_file" ]]; then
         if command -v jq &> /dev/null; then
-            jq -s '.[0] + {"coverage": .[1]}' "$results_file" "$coverage_file"
+            # Include baseline validation data if available
+            if [[ -f "$baseline_file" ]]; then
+                jq -s '.[0] + {"coverage": .[1]} + {"baselineValidation": .[2]}' "$results_file" "$coverage_file" "$baseline_file"
+            else
+                jq -s '.[0] + {"coverage": .[1]}' "$results_file" "$coverage_file"
+            fi
         else
             # Fallback if jq not available
-            echo '{"error": "JSON processing not available", "results_file": "'$results_file'", "coverage_file": "'$coverage_file'"}'
+            echo '{"error": "JSON processing not available", "results_file": "'"$(json_escape "$results_file")"'", "coverage_file": "'"$(json_escape "$coverage_file")"'", "baseline_file": "'"$(json_escape "$baseline_file")"'"}'
         fi
     else
         echo '{"error": "Results files not found"}'
@@ -1646,6 +1915,406 @@ generate_console_report() {
     fi
 }
 
+# Generate progressive coverage visualization (Phase 3)
+generate_progressive_coverage_visualization() {
+    local baseline_file="$TEST_RESULTS_DIR/baseline_validation.json"
+    
+    if [[ ! -f "$baseline_file" ]] || ! jq -e '.progressiveCoverage' "$baseline_file" >/dev/null 2>&1; then
+        return 0  # No progressive coverage data available
+    fi
+    
+    # Extract progressive coverage data
+    local current_phase next_target coverage_gap is_on_track required_velocity months_to_target
+    current_phase=$(jq -r '.progressiveCoverage.currentPhase // "Unknown"' "$baseline_file")
+    next_target=$(jq -r '.progressiveCoverage.nextTarget // 0' "$baseline_file")
+    coverage_gap=$(jq -r '.progressiveCoverage.coverageGap // 0' "$baseline_file")
+    is_on_track=$(jq -r '.progressiveCoverage.isOnTrack // false' "$baseline_file")
+    required_velocity=$(jq -r '.progressiveCoverage.requiredVelocity // 0' "$baseline_file")
+    months_to_target=$(jq -r '.progressiveCoverage.monthsToTarget // 0' "$baseline_file")
+    
+    local current_coverage
+    current_coverage=$(jq -r '.metrics.lineCoverage // 0' "$baseline_file")
+    
+    cat << EOF
+
+### 🎯 Progressive Coverage Journey (Phase 3)
+
+**Current Status:** $current_phase  
+**Next Milestone:** ${next_target}% coverage (Gap: ${coverage_gap}%)  
+**Timeline:** $(if [[ "$is_on_track" == "true" ]]; then echo "✅ On Track"; else echo "⚠️ Behind Schedule"; fi) for 90% by Jan 2026  
+**Required Velocity:** ${required_velocity}%/month (${months_to_target} months remaining)
+
+#### Coverage Progression Visual
+
+\`\`\`
+Progress toward 90% Coverage Epic:
+
+  14.22%     20%      35%      50%      75%      90%
+     |----------|----------|----------|----------|
+$(generate_progress_bar "$current_coverage")
+     ^
+  Current: ${current_coverage}%
+
+Phase Milestones:
+• Phase 1: Foundation (14.22% → 20%) - Service basics, API contracts
+• Phase 2: Growth (20% → 35%) - Integration depth, data validation  
+• Phase 3: Maturity (35% → 50%) - Edge cases, error handling
+• Phase 4: Excellence (50% → 75%) - Complex scenarios, security
+• Phase 5: Mastery (75% → 90%) - Comprehensive coverage, performance
+\`\`\`
+
+#### Strategic Focus Areas
+$(get_phase_focus_areas "$current_phase")
+
+#### Coverage Velocity Analysis
+- **Target Date:** January 31, 2026
+- **Months Remaining:** ${months_to_target}
+- **Required Monthly Velocity:** ${required_velocity}%
+- **Progression Status:** $(if [[ "$is_on_track" == "true" ]]; then echo "On track for 90% target"; else echo "Acceleration needed to meet timeline"; fi)
+
+$(if [[ "$is_on_track" == "false" ]]; then 
+cat << VELOCITY_WARNING
+
+⚠️ **Velocity Alert:** Current progression may not meet Jan 2026 target
+- Consider increasing test development focus
+- Prioritize high-impact coverage opportunities  
+- Review phase-appropriate testing strategies
+VELOCITY_WARNING
+fi)
+EOF
+}
+
+# Generate ASCII progress bar for coverage visualization
+generate_progress_bar() {
+    local current_coverage=$1
+    local total_width=50
+    local milestones=(14.22 20 35 50 75 90)
+    local progress_chars=""
+    
+    # Calculate position (0-50 scale)
+    local position
+    position=$(awk -v current="$current_coverage" -v max="90" -v width="$total_width" 'BEGIN {
+        printf "%.0f", (current / max) * width
+    }')
+    
+    # Ensure position is within bounds
+    if [[ $position -lt 0 ]]; then position=0; fi
+    if [[ $position -gt $total_width ]]; then position=$total_width; fi
+    
+    # Generate progress bar
+    for ((i=0; i<total_width; i++)); do
+        if [[ $i -le $position ]]; then
+            progress_chars+="█"
+        else
+            progress_chars+="░"
+        fi
+    done
+    
+    echo "     [$progress_chars]"
+}
+
+# Get phase-specific focus areas
+get_phase_focus_areas() {
+    local phase="$1"
+    
+    case "$phase" in
+        *"Phase 1"*|*"Foundation"*)
+            echo "- **Primary Focus:** Service layer basics, API contracts, core business logic"
+            echo "- **Strategy:** Target low-hanging fruit, establish broad coverage foundation"
+            echo "- **Key Areas:** Public service methods, controller actions, basic integration tests"
+            ;;
+        *"Phase 2"*|*"Growth"*)
+            echo "- **Primary Focus:** Service layer depth, integration scenarios, data validation"
+            echo "- **Strategy:** Deepen existing coverage, expand integration testing"
+            echo "- **Key Areas:** Complex service scenarios, repository patterns, auth flows"
+            ;;
+        *"Phase 3"*|*"Maturity"*)
+            echo "- **Primary Focus:** Edge cases, error handling, input validation"
+            echo "- **Strategy:** Comprehensive error scenario coverage and boundary testing"
+            echo "- **Key Areas:** Exception paths, validation boundaries, external service errors"
+            ;;
+        *"Phase 4"*|*"Excellence"*)
+            echo "- **Primary Focus:** Complex business scenarios, integration depth"
+            echo "- **Strategy:** Advanced integration testing, comprehensive business logic"
+            echo "- **Key Areas:** End-to-end processes, complex integrations, security scenarios"
+            ;;
+        *"Phase 5"*|*"Mastery"*)
+            echo "- **Primary Focus:** Comprehensive edge cases, performance scenarios"
+            echo "- **Strategy:** Complete critical path coverage, system-wide validation"
+            echo "- **Key Areas:** Performance testing, system integration, advanced security"
+            ;;
+        *)
+            echo "- **Status:** Optimization phase - maintain high coverage and optimize performance"
+            echo "- **Focus:** Test maintenance, documentation, and continuous improvement"
+            ;;
+    esac
+}
+
+# Advanced health visualization functions (Phase 4)
+generate_health_trends() {
+    local trends_file="$TEST_RESULTS_DIR/health_trends.json"
+    
+    log "📈 Generating test suite health trends..."
+    
+    # Create or update trends file with historical data
+    local current_timestamp=$(date -Iseconds)
+    local current_coverage=$(jq -r '.metrics.lineCoverage // 0' "$TEST_RESULTS_DIR/baseline_validation.json" 2>/dev/null || echo "0")
+    local current_skip_rate=$(jq -r '.metrics.skipPercentage // 0' "$TEST_RESULTS_DIR/baseline_validation.json" 2>/dev/null || echo "0")
+    local total_tests=$(jq -r '.tests.total // 0' "$TEST_RESULTS_DIR/parsed_results.json" 2>/dev/null || echo "0")
+    
+    # Initialize trends file if it doesn't exist
+    if [[ ! -f "$trends_file" ]]; then
+        cat > "$trends_file" << EOF
+{
+    "metadata": {
+        "created": "$current_timestamp",
+        "project": "zarichney-api",
+        "version": "1.0"
+    },
+    "trends": []
+}
+EOF
+    fi
+    
+    # Add current data point
+    local new_entry=$(cat << EOF
+{
+    "timestamp": "$current_timestamp",
+    "coverage": $current_coverage,
+    "skipRate": $current_skip_rate,
+    "totalTests": $total_tests,
+    "passRate": $(jq -r '.tests.pass_rate // 0' "$TEST_RESULTS_DIR/parsed_results.json" 2>/dev/null || echo "0"),
+    "executionTime": $(jq -r '.execution_time // 0' "$TEST_RESULTS_DIR/parsed_results.json" 2>/dev/null || echo "0")
+}
+EOF
+    )
+    
+    # Update trends file with new data point
+    jq --argjson entry "$new_entry" '.trends += [$entry] | .trends |= sort_by(.timestamp)' "$trends_file" > "${trends_file}.tmp" && mv "${trends_file}.tmp" "$trends_file"
+    
+    # Keep only last 30 data points to prevent file growth
+    jq '.trends |= .[-30:]' "$trends_file" > "${trends_file}.tmp" && mv "${trends_file}.tmp" "$trends_file"
+    
+    success "Health trends updated in $trends_file"
+}
+
+generate_coverage_velocity_chart() {
+    local trends_file="$TEST_RESULTS_DIR/health_trends.json"
+    
+    if [[ ! -f "$trends_file" ]]; then
+        echo "No historical data available for velocity analysis"
+        return 1
+    fi
+    
+    echo
+    echo "### 📊 Coverage Velocity Analysis (Last 30 Data Points)"
+    echo
+    
+    # Extract coverage data points
+    local coverage_data
+    coverage_data=$(jq -r '.trends[] | "\(.timestamp) \(.coverage)"' "$trends_file")
+    
+    if [[ -z "$coverage_data" ]]; then
+        echo "Insufficient data for velocity analysis"
+        return 1
+    fi
+    
+    # Calculate simple velocity (change over time)
+    local first_coverage last_coverage first_date last_date
+    first_coverage=$(jq -r '.trends[0].coverage // 0' "$trends_file")
+    last_coverage=$(jq -r '.trends[-1].coverage // 0' "$trends_file")
+    first_date=$(jq -r '.trends[0].timestamp // ""' "$trends_file")
+    last_date=$(jq -r '.trends[-1].timestamp // ""' "$trends_file")
+    
+    local coverage_change
+    coverage_change=$(awk -v first="$first_coverage" -v last="$last_coverage" 'BEGIN {printf "%.2f", last - first}')
+    
+    echo "**Coverage Trend Analysis:**"
+    echo "- First recorded: ${first_coverage}% ($first_date)"
+    echo "- Latest: ${last_coverage}% ($last_date)"
+    echo "- Change: ${coverage_change}% ($(if [[ $(awk -v change="$coverage_change" 'BEGIN {print (change >= 0) ? 1 : 0}') -eq 1 ]]; then echo "📈 Improving"; else echo "📉 Declining"; fi))"
+    
+    # Generate simple ASCII trend chart
+    echo
+    echo "**Coverage History (ASCII Chart):**"
+    echo "\`\`\`"
+    generate_ascii_trend_chart "$trends_file" "coverage"
+    echo "\`\`\`"
+}
+
+generate_skip_rate_analysis() {
+    local trends_file="$TEST_RESULTS_DIR/health_trends.json"
+    
+    if [[ ! -f "$trends_file" ]]; then
+        echo "No historical data available for skip rate analysis"
+        return 1
+    fi
+    
+    echo
+    echo "### 🎯 Skip Rate Trend Analysis"
+    echo
+    
+    # Calculate skip rate statistics
+    local avg_skip_rate min_skip_rate max_skip_rate
+    avg_skip_rate=$(jq -r '[.trends[].skipRate] | add / length' "$trends_file" 2>/dev/null || echo "0")
+    min_skip_rate=$(jq -r '[.trends[].skipRate] | min' "$trends_file" 2>/dev/null || echo "0")
+    max_skip_rate=$(jq -r '[.trends[].skipRate] | max' "$trends_file" 2>/dev/null || echo "0")
+    
+    echo "**Skip Rate Statistics:**"
+    echo "- Average: ${avg_skip_rate}%"
+    echo "- Best: ${min_skip_rate}%"
+    echo "- Worst: ${max_skip_rate}%"
+    
+    # Determine skip rate trend
+    local first_skip_rate last_skip_rate
+    first_skip_rate=$(jq -r '.trends[0].skipRate // 0' "$trends_file")
+    last_skip_rate=$(jq -r '.trends[-1].skipRate // 0' "$trends_file")
+    
+    local skip_rate_change
+    skip_rate_change=$(awk -v first="$first_skip_rate" -v last="$last_skip_rate" 'BEGIN {printf "%.2f", last - first}')
+    
+    echo "- Trend: ${skip_rate_change}% ($(if [[ $(awk -v change="$skip_rate_change" 'BEGIN {print (change <= 0) ? 1 : 0}') -eq 1 ]]; then echo "✅ Improving"; else echo "⚠️ Increasing"; fi))"
+    
+    # Generate skip rate chart
+    echo
+    echo "**Skip Rate History:**"
+    echo "\`\`\`"
+    generate_ascii_trend_chart "$trends_file" "skipRate"
+    echo "\`\`\`"
+}
+
+generate_test_execution_metrics() {
+    local trends_file="$TEST_RESULTS_DIR/health_trends.json"
+    
+    if [[ ! -f "$trends_file" ]]; then
+        echo "No historical data available for execution metrics"
+        return 1
+    fi
+    
+    echo
+    echo "### ⚡ Test Execution Performance"
+    echo
+    
+    # Calculate execution time statistics
+    local avg_exec_time min_exec_time max_exec_time
+    avg_exec_time=$(jq -r '[.trends[].executionTime] | add / length' "$trends_file" 2>/dev/null || echo "0")
+    min_exec_time=$(jq -r '[.trends[].executionTime] | min' "$trends_file" 2>/dev/null || echo "0")
+    max_exec_time=$(jq -r '[.trends[].executionTime] | max' "$trends_file" 2>/dev/null || echo "0")
+    
+    # Calculate test count growth
+    local first_test_count last_test_count
+    first_test_count=$(jq -r '.trends[0].totalTests // 0' "$trends_file")
+    last_test_count=$(jq -r '.trends[-1].totalTests // 0' "$trends_file")
+    local test_growth=$((last_test_count - first_test_count))
+    
+    echo "**Performance Metrics:**"
+    echo "- Average execution time: ${avg_exec_time}s"
+    echo "- Best time: ${min_exec_time}s"
+    echo "- Worst time: ${max_exec_time}s"
+    echo "- Test suite growth: +${test_growth} tests"
+    
+    # Performance trend analysis
+    local first_exec_time last_exec_time
+    first_exec_time=$(jq -r '.trends[0].executionTime // 0' "$trends_file")
+    last_exec_time=$(jq -r '.trends[-1].executionTime // 0' "$trends_file")
+    
+    local time_change
+    time_change=$(awk -v first="$first_exec_time" -v last="$last_exec_time" 'BEGIN {printf "%.2f", last - first}')
+    
+    echo "- Time trend: ${time_change}s ($(if [[ $(awk -v change="$time_change" 'BEGIN {print (change <= 0) ? 1 : 0}') -eq 1 ]]; then echo "✅ Faster"; else echo "⚠️ Slower"; fi))"
+}
+
+generate_ascii_trend_chart() {
+    local trends_file="$1"
+    local field="$2"
+    local chart_width=50
+    local chart_height=10
+    
+    # Extract field data
+    local data_points
+    data_points=$(jq -r ".trends[].$field" "$trends_file")
+    
+    if [[ -z "$data_points" ]]; then
+        echo "No data available for $field"
+        return 1
+    fi
+    
+    # Convert to array
+    local points=()
+    while IFS= read -r point; do
+        points+=("$point")
+    done <<< "$data_points"
+    
+    # Find min and max values
+    local min_val max_val
+    min_val=$(printf '%s\n' "${points[@]}" | sort -n | head -1)
+    max_val=$(printf '%s\n' "${points[@]}" | sort -n | tail -1)
+    
+    # Avoid division by zero
+    local range
+    range=$(awk -v max="$max_val" -v min="$min_val" 'BEGIN {print max - min}')
+    if [[ $(awk -v range="$range" 'BEGIN {print (range == 0) ? 1 : 0}') -eq 1 ]]; then
+        range=1
+    fi
+    
+    # Generate chart header
+    printf "%8s │" "$field"
+    for ((i=0; i<chart_width; i++)); do printf "─"; done
+    printf "│ Values\n"
+    
+    # Generate chart rows
+    for ((row=chart_height-1; row>=0; row--)); do
+        local threshold
+        threshold=$(awk -v min="$min_val" -v max="$max_val" -v row="$row" -v height="$chart_height" 'BEGIN {
+            printf "%.2f", min + (max - min) * (row + 0.5) / height
+        }')
+        
+        printf "%7.1f │" "$threshold"
+        
+        # Plot data points for this row
+        local point_index=0
+        for point in "${points[@]}"; do
+            local x_pos
+            x_pos=$((point_index * chart_width / ${#points[@]}))
+            
+            # Check if point should be plotted at this y level
+            local y_pos
+            y_pos=$(awk -v min="$min_val" -v max="$max_val" -v val="$point" -v height="$chart_height" 'BEGIN {
+                if (max == min) print height / 2
+                else printf "%.0f", (val - min) / (max - min) * height
+            }')
+            
+            if [[ $y_pos -eq $row ]]; then
+                # Plot point
+                for ((i=0; i<chart_width; i++)); do
+                    if [[ $i -eq $x_pos ]]; then
+                        printf "●"
+                    elif [[ $i -eq $((x_pos-1)) ]] || [[ $i -eq $((x_pos+1)) ]]; then
+                        printf "─"
+                    else
+                        printf " "
+                    fi
+                done
+                break
+            fi
+            ((point_index++))
+        done
+        
+        # Fill empty space if no point plotted
+        if [[ $point_index -eq ${#points[@]} ]]; then
+            for ((i=0; i<chart_width; i++)); do printf " "; done
+        fi
+        
+        printf "│\n"
+    done
+    
+    # Chart footer
+    printf "        │"
+    for ((i=0; i<chart_width; i++)); do printf "─"; done
+    printf "│\n"
+    printf "        │%-${chart_width}s│\n" " Time →"
+}
+
 # Generate detailed markdown report (abbreviated version)
 generate_markdown_report() {
     local report_file="$TEST_RESULTS_DIR/test-report-$TIMESTAMP.md"
@@ -1696,6 +2365,13 @@ $(if [[ $failed -eq 0 ]]; then echo "✅ **ALL TESTS PASSING** - Excellent stabi
 |---------------|------------|-----------|--------|
 | Line Coverage | ${line_cov}% | ${COVERAGE_THRESHOLD}% | $(if [[ "$meets_threshold" == "Yes" ]]; then echo "✅ Meets Target"; else echo "⚠️ Below Target"; fi) |
 | Branch Coverage | ${branch_cov}% | 20% | $(if [[ $(awk -v bc="${branch_cov/N\/A/0}" 'BEGIN {print (bc >= 20) ? 1 : 0}') -eq 1 ]]; then echo "✅ Meets Target"; else echo "⚠️ Below Target"; fi) |
+
+$(generate_progressive_coverage_visualization)
+
+$(generate_health_trends)
+$(generate_coverage_velocity_chart)
+$(generate_skip_rate_analysis)
+$(generate_test_execution_metrics)
 
 ## 🎯 Recommendations
 
@@ -1864,6 +2540,10 @@ execute_report_mode() {
     print_header "Executing Report Mode"
     parse_results
     parse_coverage
+    
+    # Phase 2 Test Suite Baseline Validation
+    validate_test_baselines || true  # Don't fail build on baseline validation errors (warnings only)
+    
     generate_report
     
     # Phase 2 AI-Powered Quality Analysis

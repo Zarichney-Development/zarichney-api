@@ -1,7 +1,7 @@
 # README: /Framework/Helpers Directory
 
-**Version:** 1.1
-**Last Updated:** 2025-05-22
+**Version:** 1.2
+**Last Updated:** 2025-08-07
 **Parent:** `../README.md`
 
 ## 1. Purpose & Responsibility
@@ -14,6 +14,7 @@ The primary responsibilities of the helpers in this directory include:
 * **Test Data Generation:** Offering convenient access to random data generation capabilities, primarily using AutoFixture (e.g., `GetRandom.cs`).
 * **Configuration Management:** Aiding in the creation or manipulation of `IConfiguration` instances for specific test scenarios (e.g., `TestConfigurationHelper.cs`).
 * **Environment Information:** Providing utilities for querying or influencing the test environment (e.g., `TestEnvironmentHelper.cs`).
+* **Test Suite Standards:** Supporting test baseline management, skip categorization, and quality gate validation (e.g., `TestSuiteStandardsHelper.cs`).
 * **Common Test Operations:** Providing reusable extension methods or factory methods for frequent testing operations (e.g., `TestExtensions.cs`, `TestFactories.cs`).
 
 These helpers are intended to make tests cleaner, more readable, and easier to write and maintain, adhering to the DRY (Don't Repeat Yourself) principle.
@@ -40,6 +41,12 @@ The helpers in this directory serve various functions:
     * Provides utility methods to construct `IConfiguration` instances from various sources like in-memory dictionaries or JSON strings/files. Useful for unit tests that need to test components with `IConfiguration` dependencies in a controlled manner.
 * **`TestEnvironmentHelper.cs`:**
     * Contains utilities for determining aspects of the test execution environment, such as detecting if tests are running within a CI pipeline (`IsContinuousIntegration()`). This can be used to alter test behavior or logging if needed.
+    * **Enhanced Capabilities (v1.2):** Now includes environment classification for test suite baseline validation (`DetectCurrentTestEnvironmentAsync`, `GetCurrentTestEnvironmentClassification`), distinguishing between Unconfigured (26.7% skip rate expected), Configured (1.2% skip rate), and Production (0% skip rate) environments.
+* **`TestSuiteStandardsHelper.cs`:** *(New in v1.2)*
+    * Provides comprehensive support for test suite baseline management and quality gate validation.
+    * Loads configured standards from `appsettings.Testing.json` including skip thresholds, coverage baselines, and skip categorization rules.
+    * Validates test results against environment-specific thresholds and provides detailed analysis of skip reasons by category.
+    * Supports the AI-powered test analysis infrastructure by categorizing skips as expected, acceptable, or problematic.
 * **`TestExtensions.cs`:**
     * A collection of C# extension methods that add convenient testing-related functionalities to existing types. For example, `HttpClient.WithTestUser(...)` allows easy modification of an `HttpClient` to include test authentication headers.
 * **`TestFactories.cs`:**
@@ -99,6 +106,32 @@ The helpers in this directory serve various functions:
         ["ConnectionStrings:DefaultConnection"] = "TestConnection"
     });
     var myService = new MyService(config); // Assuming MyService takes IConfiguration
+    ```
+* **`TestSuiteStandardsHelper.cs`:** *(New in v1.2)*
+    ```csharp
+    // Load test suite standards from configuration
+    var standards = TestSuiteStandardsHelper.LoadStandards(configuration);
+    if (standards != null)
+    {
+        // Get expected skip percentage for current environment
+        var envInfo = await TestEnvironmentHelper.DetectCurrentTestEnvironmentAsync(factory);
+        var expectedSkipRate = TestSuiteStandardsHelper.GetExpectedSkipPercentage(standards, envInfo.Classification);
+        
+        // Validate test results against standards
+        var validationResult = TestSuiteStandardsHelper.ValidateTestResults(
+            standards, envInfo, totalTests: 86, skippedTests: 23, 
+            skippedTestsByCategory: new Dictionary<string, int> { ["ExternalOpenAI"] = 16 });
+        
+        if (!validationResult.PassesThresholds)
+        {
+            // Handle threshold violations - violations list contains details
+            Console.WriteLine($"Skip rate {validationResult.ActualSkipPercentage:F1}% exceeds threshold");
+        }
+        
+        // Categorize individual skips for analysis
+        var (categoryType, isExpected) = TestSuiteStandardsHelper.CategorizeSkip(standards, "ExternalOpenAI");
+        // categoryType = "expected", isExpected = true
+    }
     ```
 
 ### Adding New Helpers

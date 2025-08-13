@@ -16,7 +16,6 @@ env
 
 # IDEs
 .idea
-.vscode
 *.DotSettings.user
 
 # .NET

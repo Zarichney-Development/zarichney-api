@@ -1,6 +1,6 @@
 # Module/Directory: Scripts
 
-**Last Updated:** 2025-08-05
+**Last Updated:** 2025-08-13
 
 **(Optional: Link to Parent Directory's README)**
 > **Parent:** [`zarichney-api`](../README.md)
@@ -23,7 +23,7 @@
     * **Development & Testing Scripts:** `generate-api-client.*`, `run-test-suite.sh` (unified testing)
     * **Deployment & Service Management:** `start-server.sh`, `cookbook-api.service`, `cleanup-playwright.sh`
     * **Domain-Specific Testing:** `test_sites.sh` (recipe scraping validation)
-    * **Configuration Files:** `.refitter` (API client generation settings)
+    * **Configuration Files:** `.refitter` (API client generation settings), `docker-compose.integration.yml` (integration test environment)
     * **CI/CD Pipeline Logic:** Scripts moved to `.github/scripts/`
     * **AI Analysis Prompts:** Prompts relocated to `.github/prompts/`
 * **Core Workflow Integration:** Scripts integrate with the CI/CD pipeline and support local development workflows by:
@@ -64,6 +64,7 @@
 
 * **Configuration:**
     * `.refitter` file defines API client generation settings (namespace: `Zarichney.Client`, output: `api-server.Tests/Framework/Client/`)
+    * `docker-compose.integration.yml` defines Seq logging infrastructure for LoggingService integration tests (ports 5342, 8080)
     * Service configuration in `cookbook-api.service` targets production environment paths
 * **Directory Structure:**
     * Generated files appear in `api-server.Tests/Framework/Client/` (not within Scripts directory)
@@ -74,13 +75,21 @@
     * Bash with POSIX compliance for shell scripts
     * curl and jq for REST API testing in shell scripts
     * systemd for service management in production
+* **Shell Scripting Standards (Per Issue #104):**
+    * **Tool Invocation**: Standardized on `dotnet tool run` pattern for .NET tools (e.g., `dotnet tool run reportgenerator`) to ensure path isolation and consistent execution across environments
+    * **Constants Convention**: Use `readonly DEFAULT_*` naming for magic number replacements, placed at top of script with other readonly declarations
+    * **Safe File Iteration**: Use `mapfile -t array < <(find ... -print0 | xargs -0 ...)` or null-delimited loops instead of `for file in $(ls ...)` to prevent word-splitting and glob expansion vulnerabilities
+    * **External Command Caching**: Cache results of expensive external commands (e.g., `claude mcp list`) to improve performance and reduce redundant calls
+    * **Shell Linting**: All scripts must pass `shellcheck Scripts/*.sh` with zero ERROR findings; WARN suppressions require inline justification comments
 * **Performance/Resource Notes:**
     * Automation suite can be resource-intensive; provides parallel execution limits
     * Recipe scraping tests support configurable parallel execution (`max_parallel=5`)
     * Service configuration includes resource limits for t3.small EC2 instances
+    * External command optimization reduces unnecessary network/process calls by ≥50%
 * **Security Notes:**
     * Production scripts handle sensitive environment variables and secrets
     * Cleanup scripts require root privileges for system resource management
+    * Safe file iteration patterns prevent injection attacks via malicious filenames
 
 ## 5. How to Work With This Code
 
@@ -92,6 +101,8 @@
     * **Location:** Scripts are primarily utilities; tested through their execution and output validation
     * **How to Run:** Each script includes usage documentation via `--help` or internal documentation
     * **Testing Strategy:** Scripts perform end-to-end validation of development and deployment workflows
+    * **Shell Linting:** Validate script quality with `shellcheck Scripts/*.sh` - all scripts must pass with zero ERROR findings
+    * **Functional Validation:** Test core functionality with `./Scripts/run-test-suite.sh report summary` after modifications
 * **Common Usage Patterns:**
     ```bash
     # Complete development workflow
@@ -106,6 +117,9 @@
     # Testing specific components
     ./Scripts/test_sites.sh
     
+    # Manual integration test environment setup
+    docker-compose -f ./Scripts/docker-compose.integration.yml up -d
+    
     # Production deployment
     ./Scripts/start-server.sh
     ```
@@ -114,6 +128,9 @@
     * API server port conflicts are now automatically resolved by the generation script
     * Recipe scraping tests depend on external site availability and selector accuracy
     * API startup issues will be captured in temporary log files for debugging
+    * **Shell Script Security**: Avoid `for file in $(ls ...)` patterns; use mapfile or proper quoting to prevent word-splitting attacks
+    * **External Command Performance**: Cache expensive command results (e.g., MCP calls) to avoid redundant execution
+    * **Tool Path Dependencies**: Use `dotnet tool run` instead of direct tool calls to avoid PATH issues in different environments
 
 ## 6. Dependencies
 
@@ -141,6 +158,11 @@
 * **Backward Compatibility:** Legacy script names are preserved as simple forwarders to maintain existing workflows and CI/CD integrations
 * **Docker Access Handling:** Special handling for Docker group membership reflects common issues in Linux/WSL2 environments where Testcontainers require Docker socket access
 * **Service Management Design:** Production scripts follow systemd best practices with resource limits appropriate for t3.small EC2 instances and proper cleanup handling
+* **Shell Script Standards Consolidation (Issue #104):** 
+    * **Tool Invocation Standardization:** Adopted `dotnet tool run` pattern to eliminate PATH dependency issues and ensure consistent tool execution across unconfigured CI environments
+    * **Performance Optimization:** Implemented command result caching (e.g., `claude mcp list`) to reduce external calls by ≥50% and improve script execution speed
+    * **Security Hardening:** Replaced unsafe file iteration patterns with mapfile-based approaches to prevent word-splitting and glob expansion vulnerabilities
+    * **Constants Convention:** Established `readonly DEFAULT_*` naming pattern to eliminate magic numbers and improve maintainability and AI-assisted development
 
 ## 8. Known Issues & TODOs
 

@@ -41,9 +41,18 @@ Before analyzing any code changes, you MUST perform comprehensive context ingest
    - Understand the project's quality gates (16% coverage threshold, complexity limits)
    - Note any CI/CD flexibility flags (`--allow-low-coverage` scenarios)
 
-4. **Synthesize Guiding Principles:**
+4. **GitHub Label Context Integration:**
+   - Read GitHub issue labels associated with {{ISSUE_REF}} to understand strategic context:
+     - **Epic Labels** (`epic:testing-coverage-to-90`, `epic:performance-optimization`): Long-term strategic initiatives that provide context for debt prioritization
+     - **Component Labels** (`component:backend-api`, `component:frontend-ui`, `component:database`): Specific architectural areas requiring targeted debt analysis
+     - **Coverage Phase Labels** (`coverage:phase-1` through `coverage:phase-6`): Progressive testing maturity context for test-related debt assessment
+     - **Quality Labels** (`quality:tech-debt`, `quality:performance`, `quality:maintainability`): Existing quality concerns that inform debt interaction analysis
+     - **Priority Labels** (`priority:critical`, `priority:high`, `priority:medium`): Strategic importance context for debt remediation prioritization
+
+5. **Synthesize Guiding Principles:**
    - Extract the project-specific architectural rules, dependency constraints, and design patterns
    - Identify the established conventions for this monorepo's .NET backend and Angular frontend
+   - Integrate GitHub label strategic context with established project patterns
    - These principles become your primary source of truth for debt analysis
 </context_ingestion>
 
@@ -61,8 +70,8 @@ Before analyzing any code changes, you MUST perform comprehensive context ingest
 </step_1_identify_changes>
 
 <step_2_analyze_new_debt>
-**Step 2: New Debt Introduction Analysis**
-Focus ONLY on code that was ADDED or MODIFIED in this PR. Apply the Zarichney API Technical Debt Taxonomy:
+**Step 2: Label-Aware New Debt Introduction Analysis**
+Focus ONLY on code that was ADDED or MODIFIED in this PR. Apply the Zarichney API Technical Debt Taxonomy with GitHub label strategic context:
 
 **Architecture & Design Debt:**
 - **Dependency Injection Violations:** New services not following established DI patterns from `/Startup/`
@@ -97,7 +106,13 @@ Focus ONLY on code that was ADDED or MODIFIED in this PR. Apply the Zarichney AP
 - **Code Comment Gaps:** Public APIs without XML documentation
 - **Architecture Documentation:** Changes affecting documented patterns without updates
 
-Label each finding as `[NEW_DEBT]`.
+**Epic-Aligned Debt Analysis:**
+- **Epic Context Assessment:** Evaluate how new debt impacts long-term strategic objectives from epic labels
+- **Component-Specific Debt Impact:** Analyze debt within the context of specific architectural components from component labels
+- **Coverage Phase Debt:** Assess test-related debt in context of progressive coverage goals from coverage phase labels
+- **Quality Goal Alignment:** Evaluate debt against established quality improvement objectives from quality labels
+
+Label each finding as `[NEW_DEBT]` with epic context: `[EPIC:label-name]` and component context: `[COMPONENT:label-name]`.
 </step_2_analyze_new_debt>
 
 <step_3_analyze_debt_interactions>
@@ -126,9 +141,9 @@ Label each finding as `[DEBT_REDUCED]`.
 </step_4_analyze_debt_reduction>
 
 <step_5_prioritize_and_recommend>
-**Step 5: Prioritization Using Zarichney API Decision Matrix**
+**Step 5: Strategic Prioritization Using GitHub Label Context**
 
-For each debt item identified, assign priority and recommendation using these rules:
+For each debt item identified, assign priority and recommendation using Zarichney API Decision Matrix enhanced with GitHub label strategic context:
 
 **CRITICAL (🚨 BLOCK_MERGE):**
 - Breaking architectural violations in core components (SOLID principles, separation of concerns)
@@ -154,11 +169,17 @@ For each debt item identified, assign priority and recommendation using these ru
 
 **CELEBRATE (🎉 IMPROVEMENT):**
 - Debt reduction achievements
-- Clean workarounds for existing issues
+- Clean workarounds for existing issues  
 - Test coverage improvements
 - Documentation enhancements
 
-Provide a one-sentence justification for each recommendation.
+**Label-Driven Strategic Prioritization:**
+- **Epic Priority Boost:** Issues affecting epic objectives (`epic:testing-coverage-to-90`, `epic:performance-optimization`) receive higher priority
+- **Component Critical Path:** Debt in components marked with `component:core` or `component:security` requires immediate attention
+- **Coverage Phase Alignment:** Test debt prioritization considers current coverage phase (`coverage:phase-1` = focus on service layers, `coverage:phase-6` = comprehensive edge cases)
+- **Quality Goal Context:** Debt remediation aligns with established quality objectives from quality labels
+
+Provide a one-sentence justification for each recommendation, including relevant epic and component label context.
 
 **IMPORTANT:** Do not provide time estimates for any recommendations. AI coder execution timelines differ significantly from human developer estimates - focus on priority and complexity instead.
 </step_5_prioritize_and_recommend>
@@ -171,11 +192,18 @@ Provide a one-sentence justification for each recommendation.
 
 **PR Summary:** {{PR_NUMBER}} by @{{PR_AUTHOR}} ({{SOURCE_BRANCH}} → {{TARGET_BRANCH}})  
 **Issue Context:** {{ISSUE_REF}}  
+**Strategic Context:** Epic alignment and component focus based on GitHub issue labels  
 **Analysis Scope:** {{CHANGED_FILES_COUNT}} files modified, {{LINES_CHANGED}} lines of code
 
 ### 📊 Technical Debt Impact Assessment
 
 **Overall Debt Impact:** [Net Increase/Net Decrease/Neutral/Mixed]
+
+**Strategic Alignment Analysis:**
+- **Epic Context:** [How changes align with or impact long-term strategic objectives from epic labels]
+- **Component Focus:** [Specific architectural areas affected based on component labels]  
+- **Coverage Phase Impact:** [How debt affects progressive testing strategy from coverage phase labels]
+- **Quality Goal Alignment:** [Assessment against established quality objectives from quality labels]
 
 **Quality Gate Status:**
 - Coverage Threshold: [✅ Met/⚠️ Below/🚨 Critical] 

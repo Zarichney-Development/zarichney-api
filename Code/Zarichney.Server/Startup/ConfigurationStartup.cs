@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
+using Microsoft.Extensions.Options;
 using Serilog;
 using Zarichney.Config;
 using Zarichney.Services.AI;
@@ -190,6 +191,15 @@ public static class ConfigurationStartup
 
       // Register the configuration as a singleton service
       services.AddSingleton(configType, config);
+      
+      // Also register as IOptions<T> for services that expect the Options pattern
+      var optionsType = typeof(IOptions<>).MakeGenericType(configType);
+      services.AddSingleton(optionsType, sp => 
+      {
+        var configInstance = sp.GetRequiredService(configType);
+        var optionsWrapper = typeof(OptionsWrapper<>).MakeGenericType(configType);
+        return Activator.CreateInstance(optionsWrapper, configInstance)!;
+      });
     }
   }
 

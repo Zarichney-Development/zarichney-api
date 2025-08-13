@@ -78,6 +78,65 @@ namespace Zarichney.Client
         [Headers("Accept: text/plain, application/json, text/json")]
         [Get("/api/config")]
         Task<IApiResponse<ICollection<ConfigurationItemStatus>>> Config(CancellationToken cancellationToken = default);
+
+        /// <summary>Gets the current logging system status and configuration</summary>
+        /// <returns>
+        /// A <see cref="Task"/> representing the <see cref="IApiResponse"/> instance containing the result:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>200</term>
+        /// <description>OK</description>
+        /// </item>
+        /// <item>
+        /// <term>500</term>
+        /// <description>Internal Server Error</description>
+        /// </item>
+        /// </list>
+        /// </returns>
+        [Headers("Accept: text/plain, application/json, text/json")]
+        [Get("/api/logging/status")]
+        Task<IApiResponse<LoggingStatusResult>> Status2(CancellationToken cancellationToken = default);
+
+        /// <summary>Tests connectivity to the specified Seq URL</summary>
+        /// <param name="body">The Seq URL test request (optional, uses configured URL if not provided)</param>
+        /// <returns>
+        /// A <see cref="Task"/> representing the <see cref="IApiResponse"/> instance containing the result:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>200</term>
+        /// <description>OK</description>
+        /// </item>
+        /// </list>
+        /// </returns>
+        [Headers("Accept: text/plain, application/json, text/json")]
+        [Post("/api/logging/test-seq")]
+        Task<IApiResponse<SeqConnectivityResult>> TestSeq([Body] TestSeqRequest? body = default, CancellationToken cancellationToken = default);
+
+        /// <summary>Gets information about available logging methods</summary>
+        /// <returns>
+        /// A <see cref="Task"/> representing the <see cref="IApiResponse"/> instance containing the result:
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Status</term>
+        /// <description>Description</description>
+        /// </listheader>
+        /// <item>
+        /// <term>200</term>
+        /// <description>OK</description>
+        /// </item>
+        /// </list>
+        /// </returns>
+        [Headers("Accept: text/plain, application/json, text/json")]
+        [Get("/api/logging/methods")]
+        Task<IApiResponse<LoggingMethodsResult>> Methods(CancellationToken cancellationToken = default);
     }
 
 }
