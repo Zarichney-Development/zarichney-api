@@ -50,6 +50,18 @@ runs:
         key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
         restore-keys: |
           ${{ runner.os }}-nuget-
+    
+    - name: Restore .NET tools
+      if: inputs.setup-dotnet == 'true'
+      shell: bash
+      run: |
+        echo "🔧 Restoring .NET tools..."
+        if [ -f ".config/dotnet-tools.json" ]; then
+          dotnet tool restore
+          echo "✅ .NET tools restored successfully"
+        else
+          echo "ℹ️ No .config/dotnet-tools.json found - skipping tool restore"
+        fi
 
     - name: Setup Node.js
       if: inputs.setup-node == 'true'

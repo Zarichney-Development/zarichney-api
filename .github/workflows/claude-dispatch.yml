@@ -20,11 +20,55 @@ jobs:
         with:
           fetch-depth: 1
 
-      # - name: Preliminary Setup
-        # run: |
-          # echo "Setting up environment..."
-          # Add any preliminary setup commands here to setup Claude's dev environment
-          # e.g., npm install, etc.
+      - name: Setup Development Environment
+        uses: ./.github/actions/shared/setup-environment
+        with:
+          dotnet-version: '8.0.x'
+          node-version: '18.x'
+          setup-dotnet: 'true'
+          setup-node: 'true'
+          cache-dependencies: 'true'
+
+      - name: Restore Dependencies
+        run: |
+          echo "📦 Restoring project dependencies..."
+          dotnet restore zarichney-api.sln
+          echo "✅ .NET dependencies restored"
+          
+          # Also restore frontend dependencies if needed
+          if [ -d "Code/Zarichney.Website" ]; then
+            cd Code/Zarichney.Website
+            npm ci --legacy-peer-deps
+            cd ../..
+            echo "✅ Node.js dependencies restored"
+          fi
+
+      - name: Generate Initial Test Results
+        id: test-baseline
+        run: |
+          echo "🧪 Generating test baseline for Claude..."
+          
+          # Run test suite in summary mode to provide context
+          if [ -f "./Scripts/run-test-suite.sh" ]; then
+            chmod +x ./Scripts/run-test-suite.sh
+            ./Scripts/run-test-suite.sh report summary > test_baseline.txt 2>&1 || true
+            
+            # Save test baseline for Claude's reference
+            if [ -f "test_baseline.txt" ]; then
+              echo "test_baseline<<EOF" >> $GITHUB_OUTPUT
+              cat test_baseline.txt >> $GITHUB_OUTPUT
+              echo "EOF" >> $GITHUB_OUTPUT
+              echo "✅ Test baseline generated"
+            fi
+          fi
+          
+          # Save coverage report path if it exists
+          if [ -d "TestResults" ]; then
+            echo "test_results_available=true" >> $GITHUB_OUTPUT
+          else
+            echo "test_results_available=false" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
 
       - name: Run Claude Code
         id: claude
@@ -60,6 +104,55 @@ jobs:
             Bash(rm:*)
             Bash(./Scripts/*)
 
-          # Optional: Custom environment variables for Claude
-          # claude_env: |
-          #   NODE_ENV: test
+          # Custom environment variables for Claude
+          claude_env: |
+            NODE_ENV: development
+            DOTNET_VERSION: 8.0.x
+            NODE_VERSION: 18.x
+            TEST_RESULTS_AVAILABLE: ${{ steps.test-baseline.outputs.test_results_available }}
+            PROJECT_ROOT: /home/runner/work/zarichney-api/zarichney-api
+            COVERAGE_THRESHOLD: 16
+
+      - name: Capture Test Results & Coverage
+        if: always()
+        run: |
+          echo "📊 Capturing test results and coverage reports..."
+          
+          # Check if Claude ran tests and generated new results
+          if [ -d "TestResults" ]; then
+            echo "✅ Test results found"
+            
+            # Generate summary if available
+            if [ -f "TestResults/parsed_results.json" ]; then
+              echo "📋 Test Summary:"
+              jq -r '.tests | "Total: \(.total), Passed: \(.passed), Failed: \(.failed), Skipped: \(.skipped)"' TestResults/parsed_results.json 2>/dev/null || echo "Unable to parse test results"
+            fi
+            
+            # Check coverage
+            if [ -f "TestResults/coverage_results.json" ]; then
+              echo "📈 Coverage Summary:"
+              jq -r '"Line Coverage: \(.line_coverage)%, Branch Coverage: \(.branch_coverage)%"' TestResults/coverage_results.json 2>/dev/null || echo "Unable to parse coverage results"
+            fi
+          else
+            echo "ℹ️ No test results generated during this session"
+          fi
+          
+          # Check for coverage reports
+          if [ -d "CoverageReport" ]; then
+            echo "✅ Coverage reports found"
+            if [ -f "CoverageReport/index.html" ]; then
+              echo "📄 HTML coverage report available"
+            fi
+          fi
+
+      - name: Upload Test Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-dispatch-results-${{ github.run_number }}
+          path: |
+            TestResults/
+            CoverageReport/
+            test_baseline.txt
+          retention-days: 7
+        continue-on-error: true
