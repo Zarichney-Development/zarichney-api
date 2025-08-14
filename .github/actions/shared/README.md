@@ -1,6 +1,6 @@
 # Module/Directory: .github/actions/shared
 
-**Last Updated:** 2025-08-07
+**Last Updated:** 2025-08-14
 
 **Parent:** [`.github/actions`](../README.md)
 
@@ -25,7 +25,7 @@
     * **`post-results`** - Standardizes communication of analysis results to pull requests
 * **Core Action Types:**
     * **Composite Actions** - Multi-step actions combining GitHub Actions and shell commands
-    * **Environment Actions** - Setup and configuration utilities
+    * **Environment Actions** - Setup and configuration utilities with automatic tool restoration
     * **Validation Actions** - Test suite and quality gate validation utilities (Phase 2)
     * **Communication Actions** - Result formatting and posting utilities
 * **Integration Patterns:**
@@ -58,10 +58,10 @@ graph TD
 
 * **Key Public Interfaces (for workflow consumption):**
     * **`setup-environment`**:
-        * **Purpose:** Configure development environment with .NET, Node.js, and common tools
-        * **Critical Preconditions:** GitHub Actions runner with sudo access, internet connectivity
-        * **Critical Postconditions:** Specified tools installed and configured, environment variables set
-        * **Non-Obvious Error Handling:** Retry logic for package installation failures; version verification after setup
+        * **Purpose:** Configure development environment with .NET, Node.js, common tools, and restore .NET local tools
+        * **Critical Preconditions:** GitHub Actions runner with sudo access, internet connectivity, optional .config/dotnet-tools.json
+        * **Critical Postconditions:** Specified tools installed and configured, .NET local tools restored (if defined), environment variables set
+        * **Non-Obvious Error Handling:** Retry logic for package installation failures; version verification after setup; graceful handling when no local tools defined
     * **`check-paths`**:
         * **Purpose:** Analyze file changes to determine which workflows and jobs should execute
         * **Critical Preconditions:** Git repository with valid history, changed files detectable
@@ -119,7 +119,7 @@ graph TD
     * **Testing Strategy:** Each action includes validation steps and error case handling
 * **Common Usage Patterns:**
     ```yaml
-    # Environment setup
+    # Environment setup with automatic .NET tool restoration
     - name: Setup development environment
       uses: ./.github/actions/shared/setup-environment
       with:
@@ -127,6 +127,7 @@ graph TD
         dotnet-version: '8.0.x'
         setup-node: 'true'
         node-version: '18.x'
+    # Note: Automatically restores tools from .config/dotnet-tools.json if present
     
     # Path analysis
     - name: Analyze changed paths
@@ -155,6 +156,7 @@ graph TD
     * Path analysis accuracy depends on git history and proper fetch depth
     * PR commenting requires appropriate GitHub token permissions
     * Large comments may be truncated due to GitHub API limitations
+    * .NET tools (like refitter) require `dotnet tool restore` which is now automatic in setup-environment
 
 ## 6. Dependencies
 
@@ -183,6 +185,7 @@ graph TD
 * **Path Intelligence:** Smart path detection enables significant performance optimization by skipping unnecessary work
 * **Standardized Communication:** Consistent result posting ensures uniform PR feedback experience across all analysis types
 * **Error Resilience:** Comprehensive error handling ensures workflows continue gracefully even when optional features fail
+* **Tool Restoration:** Added automatic `dotnet tool restore` to prevent failures from missing local tools (e.g., refitter) across all workflows
 
 ## 8. Known Issues & TODOs
 

@@ -1,6 +1,6 @@
 # Module/Directory: .github/workflows
 
-**Last Updated:** 2025-08-04
+**Last Updated:** 2025-08-14
 
 **Parent:** [`.github`](../README.md)
 
@@ -16,10 +16,12 @@
 
 ## 2. Architecture & Key Concepts
 
-* **High-Level Design:** Three core workflows with clear responsibilities:
+* **High-Level Design:** Five core workflows with clear responsibilities:
     * **build.yml** - Consolidated mega build pipeline with all AI analysis using template-based prompts
     * **deploy.yml** - Conditional deployment based on build results
     * **maintenance.yml** - Scheduled system maintenance and monitoring
+    * **claude-dispatch.yml** - Remote agent execution with enhanced environment preparation
+    * **coverage-epic-automation.yml** - Automated test coverage improvement via AI agents
 * **Branch-Aware Execution Logic:**
     * **Feature → Epic PRs**: Build + Test only (no AI analysis)
     * **Epic → Develop PRs**: Build + Test + Quality Analysis (Testing, Standards, Tech Debt)
@@ -31,6 +33,10 @@
     deploy.yml (Main branch only, after successful build)
     
     maintenance.yml (Scheduled, independent)
+    
+    claude-dispatch.yml (Repository dispatch, independent)
+    
+    coverage-epic-automation.yml (Scheduled, 4x daily)
     ```
 * **Concurrency Control:**
     * Automatic cancellation of previous runs when new commits are pushed
@@ -87,6 +93,16 @@ graph TD
         * **Triggers:** Cron schedule (weekly/monthly) or manual dispatch
         * **Critical Preconditions:** Repository access, issue creation permissions
         * **Critical Postconditions:** Cleanup completed, health issues reported
+    * **claude-dispatch.yml**:
+        * **Purpose:** Remote Claude AI agent execution with full environment preparation
+        * **Triggers:** Repository dispatch event (claude-dispatch)
+        * **Critical Preconditions:** Valid dispatch event, GitHub token permissions
+        * **Critical Postconditions:** Environment prepared with dependencies and tools, test baseline generated, results captured
+    * **coverage-epic-automation.yml**:
+        * **Purpose:** Automated test coverage improvement through AI-driven test generation
+        * **Triggers:** Scheduled 4x daily (every 6 hours) or manual dispatch
+        * **Critical Preconditions:** Epic branch exists, test environment valid, Claude OAuth tokens configured
+        * **Critical Postconditions:** Coverage improvements implemented, PR created for review
 * **Critical Assumptions:**
     * GitHub Actions runners provide consistent environment
     * Claude AI OAuth token remains valid for analysis
@@ -148,6 +164,8 @@ graph TD
     * Security analysis only runs on PRs to main branch
     * Deployment requires successful security gates
     * Concurrency control may cancel runs during rapid commits
+    * Claude-dispatch requires full environment setup including .NET tool restoration
+    * Coverage automation depends on refitter tool being available (handled by setup-environment)
 
 ## 6. Dependencies
 
@@ -180,6 +198,8 @@ graph TD
 * **Concurrency Control:** Added to prevent duplicate runs and optimize resource usage
 * **Simplified Naming:** Removed workflow numbering for cleaner, more intuitive interface
 * **Logic Extraction:** Moving complex logic to `.github/scripts/` enables local testing and easier debugging
+* **Environment Preparation:** Enhanced claude-dispatch with full dependency restoration and test baseline generation for better AI context
+* **Tool Management:** Centralized .NET tool restoration in setup-environment action to prevent tool-related failures across all workflows
 
 ## 8. Known Issues & TODOs
 
