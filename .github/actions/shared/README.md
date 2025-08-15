@@ -185,7 +185,7 @@ graph TD
     * `actions/checkout@v4` - Repository checkout functionality
     * `actions/setup-dotnet@v4` - .NET SDK installation
     * `actions/setup-node@v4` - Node.js installation
-    * `actions/cache@v3` - Caching functionality for performance
+    * `actions/cache@v4` - Caching functionality for performance
 * **External Tool Dependencies:**
     * `git` - Version control operations for path analysis
     * `jq` - JSON processing for structured data handling

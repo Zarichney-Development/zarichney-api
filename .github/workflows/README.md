@@ -1,6 +1,6 @@
 # Module/Directory: .github/workflows
 
-**Last Updated:** 2025-08-14
+**Last Updated:** 2025-08-15
 
 **Parent:** [`.github`](../README.md)
 
@@ -16,12 +16,13 @@
 
 ## 2. Architecture & Key Concepts
 
-* **High-Level Design:** Five core workflows with clear responsibilities:
+* **High-Level Design:** Six core workflows with clear responsibilities:
     * **build.yml** - Consolidated mega build pipeline with all AI analysis using template-based prompts
     * **deploy.yml** - Conditional deployment based on build results
     * **maintenance.yml** - Scheduled system maintenance and monitoring
     * **claude-dispatch.yml** - Remote agent execution with enhanced environment preparation
-    * **coverage-epic-automation.yml** - Automated test coverage improvement via AI agents
+    * **coverage-epic-automation.yml** - Automated test coverage improvement via AI agents (workflow_dispatch only)
+    * **coverage-epic-scheduler.yml** - Intelligent scheduler that triggers coverage automation every 6 hours
 * **Branch-Aware Execution Logic:**
     * **Feature → Epic PRs**: Build + Test only (no AI analysis)
     * **Epic → Develop PRs**: Build + Test + Quality Analysis (Testing, Standards, Tech Debt)
@@ -36,7 +37,9 @@
     
     claude-dispatch.yml (Repository dispatch, independent)
     
-    coverage-epic-automation.yml (Scheduled, 4x daily)
+    coverage-epic-scheduler.yml (Scheduled, 4x daily)
+        ↓
+    coverage-epic-automation.yml (Workflow dispatch only)
     ```
 * **Concurrency Control:**
     * Automatic cancellation of previous runs when new commits are pushed
@@ -100,9 +103,16 @@ graph TD
         * **Critical Postconditions:** Environment prepared with dependencies and tools, test baseline generated, results captured
     * **coverage-epic-automation.yml**:
         * **Purpose:** Automated test coverage improvement through AI-driven test generation
-        * **Triggers:** Scheduled 4x daily (every 6 hours) or manual dispatch
+        * **Triggers:** Workflow dispatch only (triggered by scheduler or manually)
         * **Critical Preconditions:** Epic branch exists, test environment valid, Claude OAuth tokens configured
         * **Critical Postconditions:** Coverage improvements implemented, PR created for review
+        * **Input Parameters:** scheduled_trigger, trigger_source, trigger_reason for tracking automation source
+    * **coverage-epic-scheduler.yml**:
+        * **Purpose:** Intelligent scheduler that checks repository activity and triggers coverage automation
+        * **Triggers:** Scheduled 4x daily (every 6 hours) or manual dispatch with force option
+        * **Critical Preconditions:** Repository access, workflow dispatch permissions
+        * **Critical Postconditions:** Coverage automation triggered if activity detected (or forced)
+        * **Intelligence:** Only triggers if commits within 72 hours, reducing unnecessary runs
 * **Critical Assumptions:**
     * GitHub Actions runners provide consistent environment
     * Claude AI OAuth token remains valid for analysis
@@ -204,6 +214,7 @@ graph TD
 * **Logic Extraction:** Moving complex logic to `.github/scripts/` enables local testing and easier debugging
 * **Environment Preparation:** Enhanced claude-dispatch with full dependency restoration and test baseline generation for better AI context
 * **Tool Management:** Centralized .NET tool restoration in setup-environment action to prevent tool-related failures across all workflows
+* **Coverage Epic Architecture:** Split scheduled coverage automation into two workflows to resolve Claude Code action incompatibility with schedule events
 
 ## 8. Known Issues & TODOs
 
@@ -212,5 +223,6 @@ graph TD
 * **Analysis Consolidation:** Consider combining multiple Claude AI calls into single analysis
 * **Deployment Rollback:** Automated rollback mechanism could enhance reliability
 * **Metrics Collection:** Workflow performance metrics would aid optimization
+* **Coverage Scheduler Enhancement:** Could add more sophisticated activity detection and PR conflict avoidance
 
 ---

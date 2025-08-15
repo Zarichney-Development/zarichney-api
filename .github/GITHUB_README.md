@@ -1,6 +1,6 @@
 # Module/Directory: .github
 
-**Last Updated:** 2025-08-04
+**Last Updated:** 2025-08-15
 
 **Parent:** [`zarichney-api`](../README.md)
 
@@ -36,6 +36,9 @@
     4. **Security Analysis** → Comprehensive security scanning (main branch)
     5. **Deployment** → Conditional deployment with health checks (main branch)
     6. **Maintenance** → Scheduled cleanup and monitoring tasks
+    7. **Coverage Automation** → Two-workflow architecture for scheduled test generation:
+        * **Scheduler** → Checks activity every 6 hours, triggers if recent commits
+        * **Automation** → Executes AI agent via workflow_dispatch (Claude Code compatible)
 * **Key Integration Points:**
     * **AI Services:** Claude AI integration for security/quality analysis
     * **AWS Infrastructure:** EC2 deployment with health validation
@@ -66,6 +69,17 @@ graph TD
     
     M[Scheduled] --> N[Maintenance Tasks]
     N --> O[Auto Issue Creation]
+    
+    P[Schedule: 6hr] --> Q[Coverage Scheduler]
+    Q --> R{Activity Check}
+    R -->|Recent Commits| S[Trigger Coverage]
+    R -->|No Activity| T[Skip]
+    S --> U[Coverage Automation]
+    U --> V[AI Test Generation]
+    V --> W[Create PR]
+    
+    style Q fill:#FFD700
+    style U fill:#87CEEB
 ```
 
 ## 3. Interface Contract & Assumptions
@@ -167,8 +181,9 @@ graph TD
 * **AI Integration Strategy:** Template-based prompts in `.github/prompts/` provide consistent, version-controlled AI analysis with dynamic context injection
 * **Prompt Refactoring:** Extracted inline Claude AI prompts to separate template files for improved maintainability and workflow clarity
 * **Path-Based Optimization:** Intelligent filtering reduces unnecessary workflow runs by 30%+ while maintaining comprehensive coverage
-* **Workflow Separation:** Five focused workflows replace eight overlapping ones, each with single responsibility and clear dependencies
+* **Workflow Separation:** Six focused workflows replace eight overlapping ones, each with single responsibility and clear dependencies
 * **Script Delegation:** Moving complex logic to `Scripts/Pipeline/` enables local development and testing of CI/CD components
+* **Coverage Epic Split:** Two-workflow architecture (scheduler + automation) resolves Claude Code action's incompatibility with schedule events while preserving automated execution
 
 ## 8. Known Issues & TODOs
 
@@ -177,5 +192,6 @@ graph TD
 * **Workflow Performance:** Some parallel execution opportunities not yet implemented
 * **Configuration Management:** Could benefit from more sophisticated configuration validation
 * **Monitoring Integration:** Enhanced observability and alerting could be added for production workflows
+* **Coverage Scheduler Intelligence:** Could add more sophisticated PR conflict detection and workload balancing
 
 ---

@@ -37,7 +37,7 @@ runs:
   steps:
     - name: Setup .NET SDK
       if: inputs.setup-dotnet == 'true'
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ inputs.dotnet-version }}
 
@@ -65,7 +65,7 @@ runs:
 
     - name: Setup Node.js
       if: inputs.setup-node == 'true'
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
         cache: 'npm'
