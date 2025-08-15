@@ -16,6 +16,8 @@ public class ProcessExecutor(ILogger<ProcessExecutor> logger) : IProcessExecutor
   {
     try
     {
+      // Check for cancellation upfront
+      cancellationToken.ThrowIfCancellationRequested();
       var processInfo = new ProcessStartInfo
       {
         FileName = command,
