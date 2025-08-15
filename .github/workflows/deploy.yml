@@ -89,7 +89,7 @@ jobs:
             echo "⚠️ Force deploy enabled - bypassing security checks"
           fi
           
-          echo "security_passed=$SECURITY_PASSED" >> $GITHUB_OUTPUT
+          echo "security-passed=$SECURITY_PASSED" >> $GITHUB_OUTPUT
 
       - name: Make deployment decision
         id: decision
@@ -101,8 +101,8 @@ jobs:
           echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
           
           # Security gate check
-          SECURITY_PASSED="${{ steps.security-check.outputs.security_passed }}"
-          echo "security_passed=$SECURITY_PASSED" >> $GITHUB_OUTPUT
+          SECURITY_PASSED="${{ steps.security-check.outputs.security-passed }}"
+          echo "security-passed=$SECURITY_PASSED" >> $GITHUB_OUTPUT
           
           if [ "$SECURITY_PASSED" != "true" ]; then
             echo "❌ Security checks failed - blocking all deployments"
@@ -280,13 +280,13 @@ jobs:
           # Health check URL based on environment
           case "${{ needs.deployment-decision.outputs.environment }}" in
             "production")
-              HEALTH_URL="https://zarichney.com/health"
+              HEALTH_URL="https://zarichney.com"
               ;;
             "staging")
-              HEALTH_URL="https://staging.zarichney.com/health"
+              HEALTH_URL="https://staging.zarichney.com"
               ;;
             *)
-              HEALTH_URL="http://${{ secrets.EC2_HOST_FRONTEND }}:3000/health"
+              HEALTH_URL="http://${{ secrets.EC2_HOST_FRONTEND }}:3000"
               ;;
           esac
           
