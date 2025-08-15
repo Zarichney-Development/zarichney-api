@@ -1,6 +1,7 @@
 name: 'Run Test Suite'
 description: 'Execute test suite with consistent error handling and structured outputs'
 author: 'Zarichney Development'
+# Version: 1.0 - Initial release with standardized test execution
 
 inputs:
   mode:
@@ -90,6 +91,8 @@ outputs:
 
 runs:
   using: 'composite'
+  # Note: Composite actions don't support versioning yet, but when GitHub adds support,
+  # consider adding: version: '1.0' for better compatibility and change tracking
   steps:
     - name: Execute test suite
       id: execute
@@ -100,13 +103,15 @@ runs:
         # Record start time
         START_TIME=$(date +%s)
         
-        # Set up environment variables based on inputs
+        # Set up environment variables based on inputs with proper boolean handling
         if [[ "${{ inputs.environment-type }}" == "ci" ]]; then
-          export CI_ENVIRONMENT=true
-          export QUALITY_GATE_ENABLED=true
+          export CI_ENVIRONMENT="true"
+          export QUALITY_GATE_ENABLED="true"
+          IS_CI_ENVIRONMENT=true
         else
-          export CI_ENVIRONMENT=false
-          export QUALITY_GATE_ENABLED=false
+          export CI_ENVIRONMENT="false"
+          export QUALITY_GATE_ENABLED="false"
+          IS_CI_ENVIRONMENT=false
         fi
         
         export COVERAGE_THRESHOLD="${{ inputs.coverage-threshold }}"
@@ -145,11 +150,13 @@ runs:
           exit 1
         fi
         
-        # Run the test suite script and capture exit code
-        set +e  # Don't exit immediately on error
-        ./Scripts/run-test-suite.sh $COMMAND_ARGS
-        TEST_EXIT_CODE=$?
-        set -e
+        # Run the test suite script and capture exit code with proper error handling
+        # Use explicit error capture instead of set +e to avoid masking unexpected failures
+        TEST_EXIT_CODE=0
+        if ! ./Scripts/run-test-suite.sh $COMMAND_ARGS; then
+          TEST_EXIT_CODE=$?
+          echo "⚠️ Test suite script returned exit code: $TEST_EXIT_CODE"
+        fi
         
         # Calculate execution time
         END_TIME=$(date +%s)
@@ -157,6 +164,13 @@ runs:
         
         echo "📊 Test execution completed with exit code: $TEST_EXIT_CODE"
         echo "⏱️ Execution time: ${EXECUTION_TIME}s"
+        
+        # Verify jq is available for JSON parsing (required for structured outputs)
+        if ! command -v jq &> /dev/null; then
+          echo "❌ Error: jq is required for parsing test results but not found"
+          echo "ℹ️ GitHub Actions runners include jq by default. If running locally, install with: apt-get install jq"
+          exit 1
+        fi
         
         # Parse results from generated JSON files
         TEST_RESULTS_DIR="./TestResults"
@@ -180,30 +194,24 @@ runs:
         if [[ -f "$PARSED_RESULTS" ]]; then
           echo "📊 Parsing test results..."
           
-          # Extract test metrics using jq
-          if command -v jq &> /dev/null; then
-            TOTAL_TESTS=$(jq -r '.tests.total // 0' "$PARSED_RESULTS" 2>/dev/null || echo "0")
-            PASSED_TESTS=$(jq -r '.tests.passed // 0' "$PARSED_RESULTS" 2>/dev/null || echo "0")
-            FAILED_TESTS=$(jq -r '.tests.failed // 0' "$PARSED_RESULTS" 2>/dev/null || echo "0")
-            SKIPPED_TESTS=$(jq -r '.tests.skipped // 0' "$PARSED_RESULTS" 2>/dev/null || echo "0")
-            
-            # Determine if tests passed
-            if [[ $FAILED_TESTS -eq 0 ]]; then
-              TESTS_PASSED="true"
-            fi
-            
-            # Calculate skip percentage
-            if [[ $TOTAL_TESTS -gt 0 ]]; then
-              SKIP_PERCENTAGE=$(awk -v skipped="$SKIPPED_TESTS" -v total="$TOTAL_TESTS" 'BEGIN {printf "%.1f", (skipped / total) * 100}')
-            fi
-            
-            # Create summary
-            TEST_SUMMARY="Total: $TOTAL_TESTS, Passed: $PASSED_TESTS, Failed: $FAILED_TESTS, Skipped: $SKIPPED_TESTS"
-          else
-            echo "⚠️ jq not available, using basic parsing"
-            # Fallback to grep-based parsing if jq is not available
-            TEST_SUMMARY="Test results available but jq not installed for parsing"
+          # Extract test metrics using jq (guaranteed available from check above)
+          TOTAL_TESTS=$(jq -r '.tests.total // 0' "$PARSED_RESULTS" 2>/dev/null || echo "0")
+          PASSED_TESTS=$(jq -r '.tests.passed // 0' "$PARSED_RESULTS" 2>/dev/null || echo "0")
+          FAILED_TESTS=$(jq -r '.tests.failed // 0' "$PARSED_RESULTS" 2>/dev/null || echo "0")
+          SKIPPED_TESTS=$(jq -r '.tests.skipped // 0' "$PARSED_RESULTS" 2>/dev/null || echo "0")
+          
+          # Determine if tests passed
+          if [[ $FAILED_TESTS -eq 0 ]]; then
+            TESTS_PASSED="true"
           fi
+          
+          # Calculate skip percentage
+          if [[ $TOTAL_TESTS -gt 0 ]]; then
+            SKIP_PERCENTAGE=$(awk -v skipped="$SKIPPED_TESTS" -v total="$TOTAL_TESTS" 'BEGIN {printf "%.1f", (skipped / total) * 100}')
+          fi
+          
+          # Create summary
+          TEST_SUMMARY="Total: $TOTAL_TESTS, Passed: $PASSED_TESTS, Failed: $FAILED_TESTS, Skipped: $SKIPPED_TESTS"
         else
           echo "⚠️ Test results file not found: $PARSED_RESULTS"
         fi
@@ -212,10 +220,9 @@ runs:
         if [[ -f "$COVERAGE_RESULTS" ]]; then
           echo "📊 Parsing coverage results..."
           
-          if command -v jq &> /dev/null; then
-            COVERAGE_PERCENTAGE=$(jq -r '.line_coverage // 0' "$COVERAGE_RESULTS" 2>/dev/null || echo "0")
-            BRANCH_COVERAGE=$(jq -r '.branch_coverage // 0' "$COVERAGE_RESULTS" 2>/dev/null || echo "0")
-          fi
+          # Extract coverage metrics using jq (guaranteed available from check above)
+          COVERAGE_PERCENTAGE=$(jq -r '.line_coverage // 0' "$COVERAGE_RESULTS" 2>/dev/null || echo "0")
+          BRANCH_COVERAGE=$(jq -r '.branch_coverage // 0' "$COVERAGE_RESULTS" 2>/dev/null || echo "0")
         else
           echo "⚠️ Coverage results file not found: $COVERAGE_RESULTS"
         fi
@@ -264,7 +271,7 @@ runs:
           elif [[ "$TESTS_PASSED" == "false" ]]; then
             echo "❌ Tests failed: $FAILED_TESTS test(s) failing"
             exit 1
-          elif [[ "$QUALITY_GATES_PASSED" == "false" && "${{ inputs.environment-type }}" == "ci" ]]; then
+          elif [[ "$QUALITY_GATES_PASSED" == "false" && "$IS_CI_ENVIRONMENT" == true ]]; then
             echo "❌ Quality gates failed in CI environment"
             exit 1
           fi
