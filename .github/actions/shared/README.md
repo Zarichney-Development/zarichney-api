@@ -18,14 +18,16 @@
 
 ## 2. Architecture & Key Concepts
 
-* **High-Level Design:** Four core shared actions that form the foundation of workflow automation:
+* **High-Level Design:** Five core shared actions that form the foundation of workflow automation:
     * **`setup-environment`** - Configures development environment with required tools
     * **`check-paths`** - Analyzes changed files to determine required workflow execution
+    * **`run-tests`** - Standardized test execution with consistent error handling and structured outputs
     * **`validate-test-suite`** - Validates test results against baseline standards (Phase 2)
     * **`post-results`** - Standardizes communication of analysis results to pull requests
 * **Core Action Types:**
     * **Composite Actions** - Multi-step actions combining GitHub Actions and shell commands
     * **Environment Actions** - Setup and configuration utilities with automatic tool restoration
+    * **Execution Actions** - Test and build execution with intelligent error handling and environment awareness
     * **Validation Actions** - Test suite and quality gate validation utilities (Phase 2)
     * **Communication Actions** - Result formatting and posting utilities
 * **Integration Patterns:**
@@ -67,6 +69,11 @@ graph TD
         * **Critical Preconditions:** Git repository with valid history, changed files detectable
         * **Critical Postconditions:** Boolean outputs for backend/frontend/docs changes, changed file list available
         * **Non-Obvious Error Handling:** Handles edge cases like new repositories, merge conflicts, large change sets
+    * **`run-tests`**:
+        * **Purpose:** Execute test suite with standardized error handling, environment awareness, and structured outputs
+        * **Critical Preconditions:** Test script available at ./Scripts/run-test-suite.sh, appropriate environment configured
+        * **Critical Postconditions:** Test metrics captured (passed/failed/skipped counts, coverage percentages), structured outputs available
+        * **Non-Obvious Error Handling:** Environment-aware quality gate enforcement; CI vs local behavior differences; graceful failure handling
     * **`validate-test-suite`** *(Phase 2)*:
         * **Purpose:** Validate test results against baseline standards with environment-aware thresholds
         * **Critical Preconditions:** Test results files available, jq and bc tools installed, configuration standards defined
@@ -134,6 +141,17 @@ graph TD
       id: paths
       uses: ./.github/actions/shared/check-paths
     
+    # Test execution with structured outputs
+    - name: Run test suite
+      id: test-execution
+      uses: ./.github/actions/shared/run-tests
+      with:
+        mode: 'report'
+        output-format: 'summary'
+        environment-type: 'ci'
+        fail-on-error: 'true'
+        coverage-threshold: '16'
+    
     # Test suite baseline validation (Phase 2)
     - name: Validate test suite baselines
       id: baseline-validation
@@ -174,9 +192,9 @@ graph TD
     * `curl` - HTTP requests for API interactions
     * `gh` CLI - GitHub API operations for advanced functionality
 * **Dependents (Impact of Changes):**
-    * [`.github/workflows/01-build.yml`](../../workflows/README.md) - Uses setup-environment and check-paths
-    * [`.github/workflows/02-quality.yml`](../../workflows/README.md) - Uses post-results for PR comments
-    * [`.github/workflows/03-security.yml`](../../workflows/README.md) - Uses setup-environment for security tools
+    * [`.github/workflows/build.yml`](../../workflows/README.md) - Uses setup-environment and check-paths
+    * [`.github/workflows/claude-dispatch.yml`](../../workflows/README.md) - Uses setup-environment and run-tests for environment preparation
+    * [`.github/workflows/coverage-epic-automation.yml`](../../workflows/README.md) - Uses setup-environment and run-tests for test validation
 
 ## 7. Rationale & Key Historical Context
 
@@ -186,6 +204,7 @@ graph TD
 * **Standardized Communication:** Consistent result posting ensures uniform PR feedback experience across all analysis types
 * **Error Resilience:** Comprehensive error handling ensures workflows continue gracefully even when optional features fail
 * **Tool Restoration:** Added automatic `dotnet tool restore` to prevent failures from missing local tools (e.g., refitter) across all workflows
+* **Test Execution Standardization:** Created unified run-tests action to eliminate inconsistent test execution patterns and provide reliable structured outputs across all workflows
 
 ## 8. Known Issues & TODOs
 

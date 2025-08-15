@@ -1,0 +1,279 @@
+name: 'Run Test Suite'
+description: 'Execute test suite with consistent error handling and structured outputs'
+author: 'Zarichney Development'
+
+inputs:
+  mode:
+    description: 'Test execution mode (automation|report|both)'
+    required: false
+    default: 'report'
+  
+  output-format:
+    description: 'Output format for report mode (markdown|json|summary|console)'
+    required: false
+    default: 'summary'
+  
+  fail-on-error:
+    description: 'Whether to fail the step on test failures'
+    required: false
+    default: 'true'
+  
+  environment-type:
+    description: 'Environment type for test execution (ci|local)'
+    required: false
+    default: 'ci'
+  
+  coverage-threshold:
+    description: 'Minimum coverage threshold percentage'
+    required: false
+    default: '16'
+  
+  skip-build:
+    description: 'Skip the build step'
+    required: false
+    default: 'false'
+  
+  skip-client-gen:
+    description: 'Skip API client generation'
+    required: false
+    default: 'false'
+  
+  performance-analysis:
+    description: 'Enable performance analysis'
+    required: false
+    default: 'false'
+
+outputs:
+  tests-passed:
+    description: 'Whether all tests passed'
+    value: ${{ steps.execute.outputs.tests-passed }}
+  
+  total-tests:
+    description: 'Total number of tests'
+    value: ${{ steps.execute.outputs.total-tests }}
+  
+  passed-tests:
+    description: 'Number of passed tests'
+    value: ${{ steps.execute.outputs.passed-tests }}
+  
+  failed-tests:
+    description: 'Number of failed tests'
+    value: ${{ steps.execute.outputs.failed-tests }}
+  
+  skipped-tests:
+    description: 'Number of skipped tests'
+    value: ${{ steps.execute.outputs.skipped-tests }}
+  
+  coverage-percentage:
+    description: 'Line coverage percentage'
+    value: ${{ steps.execute.outputs.coverage-percentage }}
+  
+  branch-coverage:
+    description: 'Branch coverage percentage'
+    value: ${{ steps.execute.outputs.branch-coverage }}
+  
+  skip-percentage:
+    description: 'Percentage of skipped tests'
+    value: ${{ steps.execute.outputs.skip-percentage }}
+  
+  test-summary:
+    description: 'Test execution summary text'
+    value: ${{ steps.execute.outputs.test-summary }}
+  
+  execution-time:
+    description: 'Test execution time in seconds'
+    value: ${{ steps.execute.outputs.execution-time }}
+  
+  quality-gates-passed:
+    description: 'Whether quality gates passed'
+    value: ${{ steps.execute.outputs.quality-gates-passed }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Execute test suite
+      id: execute
+      shell: bash
+      run: |
+        set -euo pipefail
+        
+        # Record start time
+        START_TIME=$(date +%s)
+        
+        # Set up environment variables based on inputs
+        if [[ "${{ inputs.environment-type }}" == "ci" ]]; then
+          export CI_ENVIRONMENT=true
+          export QUALITY_GATE_ENABLED=true
+        else
+          export CI_ENVIRONMENT=false
+          export QUALITY_GATE_ENABLED=false
+        fi
+        
+        export COVERAGE_THRESHOLD="${{ inputs.coverage-threshold }}"
+        
+        # Build command arguments
+        COMMAND_ARGS="${{ inputs.mode }}"
+        
+        if [[ "${{ inputs.mode }}" == "report" ]]; then
+          COMMAND_ARGS="$COMMAND_ARGS ${{ inputs.output-format }}"
+        fi
+        
+        if [[ "${{ inputs.skip-build }}" == "true" ]]; then
+          COMMAND_ARGS="$COMMAND_ARGS --skip-build"
+        fi
+        
+        if [[ "${{ inputs.skip-client-gen }}" == "true" ]]; then
+          COMMAND_ARGS="$COMMAND_ARGS --skip-client-gen"
+        fi
+        
+        if [[ "${{ inputs.performance-analysis }}" == "true" ]]; then
+          COMMAND_ARGS="$COMMAND_ARGS --performance"
+        fi
+        
+        echo "🧪 Executing test suite..."
+        echo "Mode: ${{ inputs.mode }}"
+        echo "Output format: ${{ inputs.output-format }}"
+        echo "Environment: ${{ inputs.environment-type }}"
+        echo "Coverage threshold: ${{ inputs.coverage-threshold }}%"
+        echo "Command: ./Scripts/run-test-suite.sh $COMMAND_ARGS"
+        
+        # Make script executable if needed
+        if [[ -f "./Scripts/run-test-suite.sh" ]]; then
+          chmod +x ./Scripts/run-test-suite.sh
+        else
+          echo "❌ Test suite script not found: ./Scripts/run-test-suite.sh"
+          exit 1
+        fi
+        
+        # Run the test suite script and capture exit code
+        set +e  # Don't exit immediately on error
+        ./Scripts/run-test-suite.sh $COMMAND_ARGS
+        TEST_EXIT_CODE=$?
+        set -e
+        
+        # Calculate execution time
+        END_TIME=$(date +%s)
+        EXECUTION_TIME=$((END_TIME - START_TIME))
+        
+        echo "📊 Test execution completed with exit code: $TEST_EXIT_CODE"
+        echo "⏱️ Execution time: ${EXECUTION_TIME}s"
+        
+        # Parse results from generated JSON files
+        TEST_RESULTS_DIR="./TestResults"
+        PARSED_RESULTS="$TEST_RESULTS_DIR/parsed_results.json"
+        COVERAGE_RESULTS="$TEST_RESULTS_DIR/coverage_results.json"
+        QUALITY_STATUS="$TEST_RESULTS_DIR/quality_status.env"
+        
+        # Default values
+        TESTS_PASSED="false"
+        TOTAL_TESTS=0
+        PASSED_TESTS=0
+        FAILED_TESTS=0
+        SKIPPED_TESTS=0
+        COVERAGE_PERCENTAGE=0
+        BRANCH_COVERAGE=0
+        SKIP_PERCENTAGE=0
+        QUALITY_GATES_PASSED="true"
+        TEST_SUMMARY="No test results available"
+        
+        # Parse test results if available
+        if [[ -f "$PARSED_RESULTS" ]]; then
+          echo "📊 Parsing test results..."
+          
+          # Extract test metrics using jq
+          if command -v jq &> /dev/null; then
+            TOTAL_TESTS=$(jq -r '.tests.total // 0' "$PARSED_RESULTS" 2>/dev/null || echo "0")
+            PASSED_TESTS=$(jq -r '.tests.passed // 0' "$PARSED_RESULTS" 2>/dev/null || echo "0")
+            FAILED_TESTS=$(jq -r '.tests.failed // 0' "$PARSED_RESULTS" 2>/dev/null || echo "0")
+            SKIPPED_TESTS=$(jq -r '.tests.skipped // 0' "$PARSED_RESULTS" 2>/dev/null || echo "0")
+            
+            # Determine if tests passed
+            if [[ $FAILED_TESTS -eq 0 ]]; then
+              TESTS_PASSED="true"
+            fi
+            
+            # Calculate skip percentage
+            if [[ $TOTAL_TESTS -gt 0 ]]; then
+              SKIP_PERCENTAGE=$(awk -v skipped="$SKIPPED_TESTS" -v total="$TOTAL_TESTS" 'BEGIN {printf "%.1f", (skipped / total) * 100}')
+            fi
+            
+            # Create summary
+            TEST_SUMMARY="Total: $TOTAL_TESTS, Passed: $PASSED_TESTS, Failed: $FAILED_TESTS, Skipped: $SKIPPED_TESTS"
+          else
+            echo "⚠️ jq not available, using basic parsing"
+            # Fallback to grep-based parsing if jq is not available
+            TEST_SUMMARY="Test results available but jq not installed for parsing"
+          fi
+        else
+          echo "⚠️ Test results file not found: $PARSED_RESULTS"
+        fi
+        
+        # Parse coverage results if available
+        if [[ -f "$COVERAGE_RESULTS" ]]; then
+          echo "📊 Parsing coverage results..."
+          
+          if command -v jq &> /dev/null; then
+            COVERAGE_PERCENTAGE=$(jq -r '.line_coverage // 0' "$COVERAGE_RESULTS" 2>/dev/null || echo "0")
+            BRANCH_COVERAGE=$(jq -r '.branch_coverage // 0' "$COVERAGE_RESULTS" 2>/dev/null || echo "0")
+          fi
+        else
+          echo "⚠️ Coverage results file not found: $COVERAGE_RESULTS"
+        fi
+        
+        # Check quality gates status
+        if [[ -f "$QUALITY_STATUS" ]]; then
+          source "$QUALITY_STATUS"
+          if [[ "${QUALITY_GATES_FAILED:-false}" == "true" ]]; then
+            QUALITY_GATES_PASSED="false"
+            echo "⚠️ Quality gates failed"
+          fi
+        fi
+        
+        # Set GitHub outputs
+        echo "tests-passed=$TESTS_PASSED" >> $GITHUB_OUTPUT
+        echo "total-tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+        echo "passed-tests=$PASSED_TESTS" >> $GITHUB_OUTPUT
+        echo "failed-tests=$FAILED_TESTS" >> $GITHUB_OUTPUT
+        echo "skipped-tests=$SKIPPED_TESTS" >> $GITHUB_OUTPUT
+        echo "coverage-percentage=$COVERAGE_PERCENTAGE" >> $GITHUB_OUTPUT
+        echo "branch-coverage=$BRANCH_COVERAGE" >> $GITHUB_OUTPUT
+        echo "skip-percentage=$SKIP_PERCENTAGE" >> $GITHUB_OUTPUT
+        echo "test-summary=$TEST_SUMMARY" >> $GITHUB_OUTPUT
+        echo "execution-time=$EXECUTION_TIME" >> $GITHUB_OUTPUT
+        echo "quality-gates-passed=$QUALITY_GATES_PASSED" >> $GITHUB_OUTPUT
+        
+        # Log summary
+        echo ""
+        echo "📋 Test Execution Summary:"
+        echo "  Tests Passed: $TESTS_PASSED"
+        echo "  Total Tests: $TOTAL_TESTS"
+        echo "  Passed: $PASSED_TESTS"
+        echo "  Failed: $FAILED_TESTS"
+        echo "  Skipped: $SKIPPED_TESTS ($SKIP_PERCENTAGE%)"
+        echo "  Line Coverage: $COVERAGE_PERCENTAGE%"
+        echo "  Branch Coverage: $BRANCH_COVERAGE%"
+        echo "  Quality Gates: $QUALITY_GATES_PASSED"
+        echo "  Execution Time: ${EXECUTION_TIME}s"
+        echo ""
+        
+        # Handle failure based on input and environment
+        if [[ "${{ inputs.fail-on-error }}" == "true" ]]; then
+          if [[ $TEST_EXIT_CODE -ne 0 ]]; then
+            echo "❌ Test suite failed with exit code $TEST_EXIT_CODE"
+            exit $TEST_EXIT_CODE
+          elif [[ "$TESTS_PASSED" == "false" ]]; then
+            echo "❌ Tests failed: $FAILED_TESTS test(s) failing"
+            exit 1
+          elif [[ "$QUALITY_GATES_PASSED" == "false" && "${{ inputs.environment-type }}" == "ci" ]]; then
+            echo "❌ Quality gates failed in CI environment"
+            exit 1
+          fi
+        else
+          echo "ℹ️ Test failures detected but not failing action (fail-on-error=false)"
+        fi
+        
+        echo "✅ Test suite action completed successfully"
+
+branding:
+  icon: 'check-square'
+  color: 'green'

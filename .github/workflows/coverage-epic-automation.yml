@@ -129,29 +129,36 @@ jobs:
       
       - name: "Validate Test Environment"
         id: test-validation
+        uses: ./.github/actions/shared/run-tests
+        with:
+          mode: 'report'
+          output-format: 'summary'
+          environment-type: 'ci'
+          fail-on-error: 'true'
+          coverage-threshold: '16'
+      
+      - name: "Process Test Validation Results"
+        id: process-validation
+        if: always()
         run: |
-          echo "🧪 Validating CI test environment"
+          echo "🧪 Processing test validation results"
           
-          # Execute test suite and capture results
-          ./Scripts/run-test-suite.sh report summary > test_summary.txt 2>&1 || {
-            echo "❌ Test suite execution failed"
-            cat test_summary.txt
-            exit 1
-          }
-          
-          # Parse test results for validation
-          if grep -q "100%" test_summary.txt && grep -q "skipped" test_summary.txt; then
+          # Check test execution status
+          if [[ "${{ steps.test-validation.outputs.tests-passed }}" == "true" ]]; then
             echo "✅ Test environment validated"
             echo "environment_valid=true" >> $GITHUB_OUTPUT
             
             # Extract metrics for agent coordination
-            TOTAL_TESTS=$(grep -o "Total.*tests" test_summary.txt | head -1 || echo "~88 total tests")
-            SKIPPED_COUNT=$(grep -o "[0-9]* skipped" test_summary.txt | head -1 || echo "23 skipped")
+            TOTAL_TESTS="${{ steps.test-validation.outputs.total-tests }}"
+            SKIPPED_TESTS="${{ steps.test-validation.outputs.skipped-tests }}"
+            COVERAGE="${{ steps.test-validation.outputs.coverage-percentage }}"
             
-            echo "test_metrics=$TOTAL_TESTS, $SKIPPED_COUNT" >> $GITHUB_OUTPUT
+            echo "test_metrics=$TOTAL_TESTS total tests, $SKIPPED_TESTS skipped" >> $GITHUB_OUTPUT
+            echo "current_coverage=$COVERAGE" >> $GITHUB_OUTPUT
           else
             echo "❌ Test environment validation failed"
-            cat test_summary.txt
+            echo "Failed tests: ${{ steps.test-validation.outputs.failed-tests }}"
+            echo "Test summary: ${{ steps.test-validation.outputs.test-summary }}"
             echo "environment_valid=false" >> $GITHUB_OUTPUT
             exit 1
           fi
@@ -162,15 +169,12 @@ jobs:
       
       - name: "Generate Comprehensive Coverage Context"
         id: coverage-analysis
-        if: steps.test-validation.outputs.environment_valid == 'true'
+        if: steps.process-validation.outputs.environment_valid == 'true'
         run: |
           echo "📊 Generating comprehensive coverage analysis for AI strategic decision-making"
           
-          # Generate detailed coverage report
-          ./Scripts/run-test-suite.sh report > coverage_analysis_full.txt 2>&1
-          
-          # Extract current coverage metrics
-          CURRENT_COVERAGE=$(grep -o "[0-9]*\.[0-9]*%" coverage_analysis_full.txt | head -1 || echo "Unknown%")
+          # Use coverage from test validation
+          CURRENT_COVERAGE="${{ steps.test-validation.outputs.coverage-percentage }}%"
           echo "current_coverage=$CURRENT_COVERAGE" >> $GITHUB_OUTPUT
           
           # Generate coverage summary by area (for AI analysis)
@@ -723,7 +727,7 @@ jobs:
           echo ""
           echo "📋 Step Results:"
           echo "  Epic Branch Ready: ${{ steps.epic-branch.outputs.epic_branch_ready || 'false' }}"
-          echo "  Environment Valid: ${{ steps.test-validation.outputs.environment_valid || 'false' }}"
+          echo "  Environment Valid: ${{ steps.process-validation.outputs.environment_valid || 'false' }}"
           echo "  Scope Analysis: ${{ steps.coverage-analysis.outputs.scope_analysis_complete || 'false' }}"
           echo "  Task Branch: ${{ steps.task-branch.outputs.task_branch_created || 'false' }}"
           echo "  AI Execution: ${{ steps.ai-execution.outputs.ai_execution_status || 'not_executed' }}"

@@ -171,7 +171,11 @@ graph TD
 
 * **Internal Code Dependencies:**
     * [`.github/scripts/`](../scripts/README.md) - Core automation logic executed by workflows
-    * [`.github/actions/shared/`](../actions/shared/README.md) - Shared utility actions
+    * [`.github/actions/shared/`](../actions/shared/README.md) - Shared utility actions including:
+        * `run-tests` - Standardized test execution with structured outputs
+        * `setup-environment` - Environment preparation with tool restoration
+        * `validate-test-suite` - Test baseline validation
+        * `check-paths` - Intelligent path filtering
     * [`.github/prompts/`](../prompts/README.md) - AI analysis prompt templates with placeholder system
     * [`Code/Zarichney.Server/`](../../Code/Zarichney.Server/README.md) - Backend application
     * [`Code/Zarichney.Website/`](../../Code/Zarichney.Website/README.md) - Frontend application

@@ -56,30 +56,45 @@ jobs:
 
       - name: Generate Initial Test Results
         id: test-baseline
+        uses: ./.github/actions/shared/run-tests
+        with:
+          mode: 'report'
+          output-format: 'summary'
+          environment-type: 'local'
+          fail-on-error: 'false'
+          coverage-threshold: '16'
+        continue-on-error: true
+      
+      - name: Process Test Baseline
+        id: process-baseline
+        if: always()
         run: |
-          echo "🧪 Generating test baseline for Claude..."
+          echo "🧪 Processing test baseline for Claude..."
           
-          # Run test suite in summary mode to provide context
-          if [ -f "./Scripts/run-test-suite.sh" ]; then
-            chmod +x ./Scripts/run-test-suite.sh
-            ./Scripts/run-test-suite.sh report summary > test_baseline.txt 2>&1 || true
-            
-            # Save test baseline for Claude's reference
-            if [ -f "test_baseline.txt" ]; then
-              echo "test_baseline<<EOF" >> $GITHUB_OUTPUT
-              cat test_baseline.txt >> $GITHUB_OUTPUT
-              echo "EOF" >> $GITHUB_OUTPUT
-              echo "✅ Test baseline generated"
-            fi
-          fi
+          # Create test baseline summary for Claude's reference
+          TEST_SUMMARY="${{ steps.test-baseline.outputs.test-summary }}"
+          COVERAGE="${{ steps.test-baseline.outputs.coverage-percentage }}"
+          SKIP_PCT="${{ steps.test-baseline.outputs.skip-percentage }}"
+          
+          # Build baseline text
+          BASELINE_TEXT="Test Baseline Summary:
+          - $TEST_SUMMARY
+          - Line Coverage: ${COVERAGE}%
+          - Skip Rate: ${SKIP_PCT}%
+          - Execution Time: ${{ steps.test-baseline.outputs.execution-time }}s"
+          
+          echo "test_baseline<<EOF" >> $GITHUB_OUTPUT
+          echo "$BASELINE_TEXT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
           
           # Save coverage report path if it exists
           if [ -d "TestResults" ]; then
             echo "test_results_available=true" >> $GITHUB_OUTPUT
+            echo "✅ Test baseline generated with results available"
           else
             echo "test_results_available=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Test baseline generated but no results directory found"
           fi
-        continue-on-error: true
 
       - name: Run Claude Code
         id: claude
@@ -120,9 +135,10 @@ jobs:
             NODE_ENV: development
             DOTNET_VERSION: 8.0.x
             NODE_VERSION: 18.x
-            TEST_RESULTS_AVAILABLE: ${{ steps.test-baseline.outputs.test_results_available }}
+            TEST_RESULTS_AVAILABLE: ${{ steps.process-baseline.outputs.test_results_available }}
             PROJECT_ROOT: /home/runner/work/zarichney-api/zarichney-api
             COVERAGE_THRESHOLD: 16
+            TEST_BASELINE: ${{ steps.process-baseline.outputs.test_baseline }}
 
       - name: Capture Test Results & Coverage
         if: always()
