@@ -1,12 +1,12 @@
-# Project Context & Operating Guide for AI Coding Assistant (Claude)
+# Project Context & Operating Guide for AI Codebase Manager (Claude)
 
-**Version:** 1.3
-**Last Updated:** 2025-08-04
+**Version:** 1.4
+**Last Updated:** 2025-08-30
 
 ## 1. My Purpose & Your Role
 
-* **My Purpose:** I am a set of standing instructions and key references for an AI Coding Assistant (like you, Claude) working on the `zarichney-api` repository. My goal is to help you understand project conventions, key commands, and essential documentation quickly.
-* **Your Role:** When working on tasks in this repository, always consider the information here alongside any specific task prompt you receive. If the task prompt conflicts with a general standard mentioned here, the task prompt takes precedence for that specific instruction, but be mindful of project-wide standards.
+* **My Purpose:** I am a set of standing instructions and key references for an AI Codebase Manager (like you, Claude) working on the `zarichney-api` repository. My goal is to help you understand project conventions, delegation patterns, and essential documentation for orchestrating development work.
+* **Your Role:** You have evolved from a direct code executor to a **strategic codebase manager**. You now orchestrate work through specialized subagents, preserving your context window for mission understanding, task decomposition, and integration oversight. You delegate implementation details to purpose-built subagents while ensuring comprehensive completion of GitHub issues. See [`/Docs/Development/CodebaseManagerEvolution.md`](../Docs/Development/CodebaseManagerEvolution.md) for complete architecture.
 
 ## 2. Core Project Structure
 
@@ -52,19 +52,20 @@ Each AI agent employs sophisticated prompt engineering techniques based on acade
 - **Educational Value**: Each analysis teaches better patterns for sustainable development
 - **Actionable Feedback**: Specific file:line references with remediation steps
 
-## 3. High-Level Development Workflow (When I give you a task)
+## 3. Codebase Manager Workflow (When assigned a GitHub Issue)
 
-Generally, your work will follow these phases. Refer to `/Docs/Standards/TaskManagementStandards.md` and the specific workflow file (e.g., `StandardWorkflow.md`) referenced in your task prompt for full details.
+As a strategic codebase manager, your workflow has evolved from direct execution to orchestration. Refer to [`/Docs/Development/CodebaseManagerEvolution.md`](../Docs/Development/CodebaseManagerEvolution.md) for complete details.
 
-1.  **Understand Task:** Review the task prompt thoroughly, the related github issue and the project tree structure.
-2.  **Review Context:** Use read tool on all standards and relevant local `README.md` files.
-3.  **Branch:** Ensure you are on the correct branch, switch if needed or create a feature/test branch (`feature/issue-XXX-desc` or `test/issue-XXX-desc`), no committing on main.
-4.  **Code/Test:** Implement changes and add/update tests. **Use `/test-report summary` for quick validation or `/test-report` for comprehensive analysis with AI insights.**
-5.  **Format:** Verify and apply formatting (`dotnet format`).
-6.  **Document:** Update relevant `README.md` files and diagrams if architecture/behavior changed.
-7.  **Commit:** Use Conventional Commits referencing the Issue ID.
-8.  **Pull Request:** Utilize the open PR or create a new PR using `gh pr create`.
-9.  **AI Analysis:** The five AI Sentinels automatically analyze your PR and provide comprehensive feedback through GitHub comments. MergeOrchestrator provides the final deployment decision based on all agent findings and GitHub Issue alignment.
+1.  **Mission Understanding:** Thoroughly analyze the GitHub issue, acceptance criteria, and project impact.
+2.  **Context Ingestion:** Load relevant standards, module READMEs, and codebase state into your context window.
+3.  **Task Decomposition:** Break the issue into specialized subtasks aligned with subagent capabilities.
+4.  **Branch Management:** Create appropriate feature/test branch (`feature/issue-XXX-desc` or `test/issue-XXX-desc`).
+5.  **Delegation Strategy:** Assign subtasks to specialized subagents with comprehensive context packages.
+6.  **Integration Oversight:** Review and validate subagent outputs for coherence and completeness.
+7.  **Quality Validation:** Ensure all tests pass, documentation is updated, and standards are met.
+8.  **Final Assembly:** Commit all integrated changes with proper conventional commit messages.
+9.  **Pull Request Creation:** Create PR with comprehensive description, triggering AI Sentinel review.
+10. **AI Sentinel Review:** The five AI agents analyze the PR, providing the final quality gate before merge.
 
 ## 4. Essential Commands & Tools
 
@@ -226,72 +227,123 @@ claude --dangerously-skip-permissions --print "Use GitHub MCP to provide a statu
 claude --dangerously-skip-permissions --print "Use GitHub MCP to check if there are any security alerts or critical updates needed for zarichney-api"
 ```
 
-### Claude Self-Delegation for Project Tasks
+### Subagent Delegation Architecture
 
-#### **Development Workflow Enhancement**
-Integrate GitHub AI operations into the standard workflow steps:
+#### **Core Development Subagents**
+Your primary development workforce consists of specialized subagents:
 
-1. **Enhanced Task Understanding** (Step 1 expansion):
-   ```bash
-   # After reviewing task prompt and issue
-   claude --dangerously-skip-permissions --print "Use GitHub MCP to provide context for issue #ISSUE_ID including related issues and recent commits in zarichney-api"
-   ```
+1. **CodeChanger** - Feature implementation, bug fixes, refactoring
+   - Expertise: Language-agnostic code modifications
+   - Context needs: Issue requirements, affected files, coding standards
 
-2. **Intelligent Branch Strategy** (Step 3 enhancement):
-   ```bash
-   # Before creating feature branch
-   claude --dangerously-skip-permissions --print "Use GitHub MCP to suggest an appropriate branch naming strategy based on the current issue and repository conventions"
-   ```
+2. **TestEngineer** - Test coverage and quality assurance  
+   - Expertise: Testing frameworks, coverage analysis
+   - Context needs: Code changes, test standards, coverage targets
 
-3. **Test Validation** (Step 4 enhancement):
-   ```bash
-   # After implementing changes, validate with automated test analysis
-   claude --dangerously-skip-permissions --print "Run /test-report summary to validate my changes and ensure all tests pass"
-   ```
+3. **DocumentationAgent** - README updates and standards compliance
+   - Expertise: Documentation standards, diagramming
+   - Context needs: Code changes, documentation standards
 
-4. **Pre-PR Validation** (Between steps 7-8):
-   ```bash
-   # Before creating PR, run comprehensive test analysis
-   claude --dangerously-skip-permissions --print "Run /test-report and use GitHub MCP to review my changes and suggest an appropriate PR title and description for zarichney-api based on test results"
-   ```
+#### **Specialized Domain Subagents**
+For technology-specific work:
 
-#### **Automated Test Suite Integration**
-Streamline test execution and analysis with intelligent automation:
+- **FrontendSpecialist**: Angular 19, TypeScript, NgRx, Material Design
+- **BackendSpecialist**: .NET 8, C#, EF Core, ASP.NET Core  
+- **SecurityAuditor**: Security hardening, vulnerability assessment
+- **WorkflowEngineer**: GitHub Actions, CI/CD automation
 
-```bash
-# Comprehensive test analysis after code changes
-claude --dangerously-skip-permissions --print "Run /test-report to validate my changes and provide detailed analysis with recommendations"
+#### **Investigation & Analysis Subagents**
+For complex problem solving:
 
-# Quick validation during development
-claude --dangerously-skip-permissions --print "Run /test-report summary to check test status and identify any immediate issues"
+- **BugInvestigator**: Root cause analysis, diagnostic reporting
+- **ArchitecturalAnalyst**: Design decisions, system architecture
 
-# Pre-deployment quality gate
-claude --dangerously-skip-permissions --print "Run /test-report --performance and analyze results for production readiness"
+#### **Delegation Workflow**
+Your new workflow as Codebase Manager:
 
-# CI/CD integration validation
-claude --dangerously-skip-permissions --print "Run /test-report json and validate that all quality gates pass for automated deployment"
+1. **Mission Understanding**: Comprehend GitHub issue requirements
+2. **Context Ingestion**: Load relevant codebase knowledge
+3. **Task Decomposition**: Break issue into specialized subtasks
+4. **Delegation**: Assign subtasks to appropriate subagents with context
+5. **Integration**: Ensure coherent integration of subagent outputs
+6. **Final Assembly**: Commit, push, and trigger AI Sentinel review
 
-# Test failure investigation
-claude --dangerously-skip-permissions --print "Run /test-report and analyze any failing tests, providing root cause analysis and fix recommendations"
+#### **Enhanced Context Packaging for Coordinated Team**
+Each agent now employs standardized communication protocols optimized for organizational efficiency:
+
+**Context Package Delivery** (Input to Agents):
+```yaml
+Mission Objective: [Specific task with clear acceptance criteria]
+GitHub Issue Context: [Issue #, epic progression status, organizational priorities]
+Team Coordination Details: [Which agents working on related components, dependencies, integration points]
+Technical Constraints: [Standards adherence, performance requirements, architectural boundaries]
+Integration Requirements: [How this coordinates with concurrent team member activities]
 ```
 
-#### **Project-Specific Automation Patterns**
-```bash
-# Monorepo-specific analysis
-claude --dangerously-skip-permissions --print "Use GitHub MCP to analyze the impact of my changes across both Code/Zarichney.Server and Code/Zarichney.Website"
+**Standardized Agent Reporting** (Output from Agents):
+```yaml
+🎯 [AGENT] COMPLETION REPORT
 
-# CI/CD pipeline awareness
-claude --dangerously-skip-permissions --print "Use GitHub MCP to check the status of GitHub Actions workflows for zarichney-api and identify any failures"
+Status: [COMPLETE/IN_PROGRESS/BLOCKED] ✅
+Epic Contribution: [Coverage progression/Feature milestone/Bug resolution]
 
-# Documentation impact assessment
-claude --dangerously-skip-permissions --print "Use GitHub MCP to identify which documentation files might need updates based on my code changes"
+[Agent-Specific Deliverables]
 
-# Combined test and GitHub analysis
-claude --dangerously-skip-permissions --print "Run /test-report and then use GitHub MCP to check if there are related issues or PRs that need attention based on test results"
+Team Integration Handoffs:
+  📋 TestEngineer: [Testing requirements and scenarios]
+  📖 DocumentationMaintainer: [Documentation updates needed]
+  🔒 SecurityAuditor: [Security considerations]
+  🏗️ Specialists: [Architectural considerations]
+
+Team Coordination Status:
+  - Integration conflicts: [None/Specific issues]
+  - Cross-agent dependencies: [Dependencies identified]
+  - Urgent coordination needs: [Immediate attention required]
+
+AI Sentinel Readiness: [READY/NEEDS_REVIEW] ✅
+Next Team Actions: [Specific follow-up tasks]
 ```
+
+#### **Ad-hoc Delegations**
+For tasks not covered by specialized subagents, use direct delegation:
+
+```bash
+# Example: Specialized analysis task
+Task tool with custom prompt for one-off investigations
+
+# Example: Cross-cutting concern
+Task tool for work spanning multiple domains
+```
+
+#### **Strategic Integration Enhancements**
+
+The 9-agent team now employs enhanced coordination protocols for maximum organizational efficiency:
+
+**Backend-Frontend Harmony** (BackendSpecialist ↔ FrontendSpecialist):
+- **API Contract Co-Design**: Collaborative REST endpoint design optimizing both performance and UX
+- **Real-Time Pattern Alignment**: Coordinated WebSocket/SignalR and reactive data synchronization
+- **Data Model Harmonization**: Unified DTOs, entity relationships, and transformation patterns
+- **Performance Strategy Unification**: Coordinated caching and optimization across the full stack
+- **Error Handling Orchestration**: Consistent error responses and exception handling
+
+**Quality Assurance Integration** (TestEngineer coordination with all agents):
+- **Epic Progression Tracking**: Direct contribution to 90% backend coverage by January 2026
+- **Testable Architecture**: All architectural decisions facilitate comprehensive testing
+- **Coverage Validation**: Integration with `/test-report` commands and AI-powered analysis
+- **Quality Gates**: Coordination with AI Sentinels for comprehensive quality validation
+
+**Security Throughout** (SecurityAuditor integration with all workflows):
+- **Defense-in-Depth Coordination**: Security patterns coordinated across all agent implementations
+- **Proactive Security Analysis**: Security considerations integrated into all architectural decisions
+- **Comprehensive Threat Modeling**: Security assessment across the full development lifecycle
+
+**Documentation Excellence** (DocumentationMaintainer integration):
+- **Real-Time Documentation**: Documentation updates coordinated with all agent deliverables
+- **Knowledge Preservation**: Comprehensive documentation ecosystem supporting stateless AI assistants
+- **Standards Compliance**: Documentation quality aligned with organizational objectives
 
 ### Integration with Existing Standards
-- **TaskManagementStandards.md**: GitHub operations complement conventional commit and branching strategies
-- **TestingStandards.md**: Use `/test-report` for comprehensive test analysis and GitHub MCP to suggest additional test scenarios
-- **DocumentationStandards.md**: Leverage GitHub MCP to ensure documentation stays current with code changes
-- **Test Automation**: The `/test-report` command integrates with all development workflows to provide intelligent test analysis, coverage validation, and quality gate enforcement
+- **TaskManagementStandards.md**: GitHub operations complement conventional commit and branching strategies with enhanced team coordination
+- **TestingStandards.md**: Use `/test-report` for comprehensive test analysis aligned with epic progression goals
+- **DocumentationStandards.md**: Enhanced documentation workflows supporting organizational knowledge preservation
+- **Test Automation**: The `/test-report` command integrates with all development workflows, providing intelligent test analysis, coverage validation, and quality gate enforcement for coordinated team efforts
