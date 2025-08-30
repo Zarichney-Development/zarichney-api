@@ -18,6 +18,7 @@
     * **`/Docs/Development/`**: AI-assisted workflow definitions. ([View README](../Docs/Development/README.md))
     * **`/Docs/Templates/`**: Templates for prompts, issues, etc. ([View README](../Docs/Templates/README.md))
 * **Module-Specific `README.md` files:** Each significant directory within `/Code/Zarichney.Server/` and `/Code/Zarichney.Server.Tests/` has its own `README.md`. **Always review the local `README.md` for the specific module you are working on.**
+* **`/.claude/agents/`**: **9-AGENT DEVELOPMENT TEAM** - Specialized agent instruction files with comprehensive documentation grounding protocols. ([View Agent Directory](../.claude/agents/))
 * **`/.github/prompts/`**: **AI-POWERED CODE REVIEW SYSTEM** - Advanced AI analysis prompts. ([View README](../.github/prompts/README.md))
 
 ## 2.1. AI-Powered Code Review System
@@ -228,6 +229,16 @@ claude --dangerously-skip-permissions --print "Use GitHub MCP to check if there 
 ```
 
 ### Subagent Delegation Architecture
+
+#### **Documentation Grounding Protocols**
+All 9 specialized agents have been enhanced with mandatory documentation loading protocols that embody the self-contained knowledge philosophy of this codebase. Before performing any work, each agent systematically:
+
+1. **Loads Primary Standards** - Reviews relevant documentation from `/Docs/Standards/` for context
+2. **Ingests Module Context** - Reads local `README.md` files for specific area knowledge
+3. **Assesses Architectural Patterns** - Reviews production code documentation for established patterns
+4. **Validates Integration Points** - Understands how their work coordinates with other agents
+
+This ensures all agents operate with comprehensive project context and maintain consistency with established patterns, reducing the need for oversight while improving work quality.
 
 #### **Core Development Subagents**
 Your primary development workforce consists of specialized subagents:

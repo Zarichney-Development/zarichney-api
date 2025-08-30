@@ -1,6 +1,6 @@
 # Zarichney Platform & AI Workflow Testbed
 
-**Last Updated:** 2025-07-27  
+**Last Updated:** 2025-08-30  
 **DevOps Status:** ✅ Infrastructure deployment validated  
 **Test Status:** 🧪 AI Workflow validation - testing all 4 analysis pipelines  
 **Validation Mode:** Testing Quality, Security, Tech Debt, and Coverage Analysis workflows  
@@ -35,10 +35,11 @@ Whether you're interested in the platform's features or the cutting-edge develop
     * Customer and order management with administrative dashboards.
 * **Core Services:** Email (MS Graph), File Storage, Background Tasks, Secure Configuration, Session Management.
 * **AI-Assisted Development Workflow (Meta-Feature):**
-    * Leverages AI Planning Assistants and AI Coders for development tasks.
+    * **9-Agent Specialized Development Team:** Features a coordinated team of specialized AI agents (CodeChanger, TestEngineer, SecurityAuditor, etc.) working under strategic codebase manager supervision.
+    * **Documentation Grounding Architecture:** Self-contained knowledge system where agents systematically load project documentation to ensure contextual awareness and standards alignment.
     * Includes comprehensive standards documentation (`/Docs/Standards/`) governing coding, testing, documentation, diagramming, and task management.
-    * Features detailed workflow definitions (`/Docs/Development/`) and prompt templates (`/Docs/Templates/`) for guiding AI agents.
-    * Aims for high code quality, test coverage, and maintainability through this structured AI collaboration. ([Learn More](./Docs/Development/README.md))
+    * Features detailed agent instruction files (`/.claude/agents/`) defining specialized capabilities and coordination protocols.
+    * Aims for high code quality, test coverage, and maintainability through this structured team collaboration. ([Learn More](./Docs/Development/README.md))
 
 ## Technology Highlights
 
@@ -52,7 +53,7 @@ Whether you're interested in the platform's features or the cutting-edge develop
 * **Key Libraries:** 
     * **Backend:** Serilog, Polly, MediatR, AutoMapper, RestSharp, Stripe.net, Octokit, QuestPDF, PlaywrightSharp, AngleSharp
     * **Frontend:** RxJS, Angular CDK, Stripe.js, Express (for SSR), Axios
-* **Development Process:** Git, **GitHub Actions (Advanced CI/CD with AI-powered QA, Parallel Test Execution, Dynamic Quality Gates)**, AI Agent Assistance (via custom prompts/workflows).
+* **Development Process:** Git, **GitHub Actions (Advanced CI/CD with AI-powered QA, Parallel Test Execution, Dynamic Quality Gates)**, **9-Agent Specialized Development Team** (via coordinated subagent orchestration).
 
 ## Exploring the Repository
 
@@ -64,6 +65,7 @@ Whether you're interested in the platform's features or the cutting-edge develop
     * **`Docs/Development/`:** Defines the AI-assisted workflow processes and roadmap.
     * **`Docs/Templates/`:** Contains templates for AI prompts and GitHub Issues.
     * Each module within `Code/` also has its own detailed `README.md`.
+* **`.claude/agents/`:** **9-Agent Development Team Instructions** - Specialized agent configurations with documentation grounding protocols for coordinated development work.
 * **`Scripts/`:** Utility scripts including the unified test suite, API client generation, and various development tools. See [`Scripts/README.md`](./Scripts/README.md).
 
 ## Getting Started

@@ -1,18 +1,19 @@
 # Module/Directory: .github/workflows
 
-**Last Updated:** 2025-08-15
+**Last Updated:** 2025-08-30
 
 **Parent:** [`.github`](../README.md)
 
 ## 1. Purpose & Responsibility
 
-* **What it is:** Consolidated CI/CD pipeline architecture with intelligent branch-aware automation for build, test, analysis, deployment, and maintenance operations.
+* **What it is:** Consolidated CI/CD pipeline architecture with intelligent branch-aware automation for build, test, analysis, deployment, and maintenance operations, designed to support the **9-agent orchestrated development workflow**.
 * **Key Responsibilities:** 
     * Unified build and test execution with integrated AI-powered analysis
     * Branch-aware conditional logic for appropriate analysis depth
     * Automated deployment with security gates and health checks
     * Scheduled maintenance tasks including cleanup and dependency monitoring
-* **Why it exists:** To provide a streamlined, maintainable CI/CD pipeline that consolidates all analysis into a single workflow for optimal Claude AI integration, reduces complexity, and enables intelligent automation with clear separation of concerns.
+    * **Agent-triggered automation** supporting WorkflowEngineer agent and coverage epic automation
+* **Why it exists:** To provide a streamlined, maintainable CI/CD pipeline that consolidates all analysis into a single workflow for optimal Claude AI integration, **supports multi-agent coordination**, and enables intelligent automation with clear separation of concerns.
 
 ## 2. Architecture & Key Concepts
 
@@ -20,9 +21,9 @@
     * **build.yml** - Consolidated mega build pipeline with all AI analysis using template-based prompts
     * **deploy.yml** - Conditional deployment based on build results
     * **maintenance.yml** - Scheduled system maintenance and monitoring
-    * **claude-dispatch.yml** - Remote agent execution with enhanced environment preparation
-    * **coverage-epic-automation.yml** - Automated test coverage improvement via AI agents (workflow_dispatch only)
-    * **coverage-epic-scheduler.yml** - Intelligent scheduler that triggers coverage automation every 6 hours
+    * **claude-dispatch.yml** - Remote agent execution with enhanced environment preparation supporting **strategic codebase manager coordination**
+    * **coverage-epic-automation.yml** - Automated test coverage improvement via **TestEngineer agent** (workflow_dispatch only) 
+    * **coverage-epic-scheduler.yml** - Intelligent scheduler that triggers coverage automation every 6 hours with **agent activity detection**
 * **Branch-Aware Execution Logic:**
     * **Feature → Epic PRs**: Build + Test only (no AI analysis)
     * **Epic → Develop PRs**: Build + Test + Quality Analysis (Testing, Standards, Tech Debt)
@@ -215,6 +216,9 @@ graph TD
 * **Environment Preparation:** Enhanced claude-dispatch with full dependency restoration and test baseline generation for better AI context
 * **Tool Management:** Centralized .NET tool restoration in setup-environment action to prevent tool-related failures across all workflows
 * **Coverage Epic Architecture:** Split scheduled coverage automation into two workflows to resolve Claude Code action incompatibility with schedule events
+* **9-Agent Development Integration:** Workflows designed to support the strategic codebase manager orchestration model with specialized agent coordination
+* **Agent-Triggered Automation:** Coverage epic automation specifically designed for TestEngineer agent execution with comprehensive environment preparation
+* **WorkflowEngineer Integration:** CI/CD pipeline architecture that supports the WorkflowEngineer agent's automation and optimization responsibilities
 
 ## 8. Known Issues & TODOs
 
