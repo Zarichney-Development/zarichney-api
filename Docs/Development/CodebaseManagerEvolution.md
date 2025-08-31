@@ -1,12 +1,12 @@
 # Codebase Manager Evolution: From Executor to Orchestrator
 
-**Version:** 1.0  
-**Last Updated:** 2025-01-29  
-**Status:** Active Implementation
+**Version:** 2.0  
+**Last Updated:** 2025-08-31  
+**Status:** Active Implementation - 11-Agent Model
 
 ## 1. Executive Summary
 
-This document defines the evolution of Claude from a direct code executor to a strategic codebase manager using specialized subagents. This architectural shift preserves context window capacity for strategic oversight while delegating implementation details to purpose-built subagents, enabling handling of complex, multi-component GitHub issues with greater efficiency and comprehensive completion.
+This document defines the evolution of Claude from a direct code executor to a strategic codebase manager orchestrating an **11-agent development team**. Claude serves as both the orchestrator AND the 11th team member, while 10 specialized subagents handle implementation details. This architectural shift preserves context window capacity for strategic oversight, enables adaptive coordination based on subagent feedback, and introduces pre-PR validation through the Compliance Officer partnership.
 
 ## 2. Problem Statement
 
@@ -23,59 +23,84 @@ Claude Code subagents enable:
 - **Parallel Processing:** Multiple subagents can work concurrently
 - **Strategic Focus:** Main session maintains mission oversight
 
-## 3. New Operating Model
+## 3. New Operating Model - 11-Agent Team
 
-### 3.1 Codebase Manager Role
+### 3.1 Codebase Manager Role (11th Team Member)
+
+**Claude as Orchestrator AND Team Member:**
+
+The Codebase Manager (Claude) is not separate from the team but rather the **11th member** with the unique responsibility of orchestration, coordination, and adaptive planning. This dual role emphasizes collaborative teamwork while maintaining centralized communication.
 
 **Primary Responsibilities:**
 1. **Mission Understanding:** Comprehend GitHub issue requirements and acceptance criteria
 2. **Context Ingestion:** Load relevant codebase knowledge into working memory
 3. **Task Decomposition:** Break complex issues into specialized subtasks
 4. **Delegation Strategy:** Assign subtasks to appropriate subagents with context
-5. **Integration Oversight:** Ensure coherent integration of subagent outputs, performing edits to adjust the deliverable of one with another
-6. **Quality Assurance:** Validate completion before PR creation
-7. **Final Assembly:** Commit, push, and trigger AI Sentinel review
+5. **Adaptive Coordination:** Dynamically adjust plans based on subagent recommendations and discoveries
+6. **Integration Oversight:** Ensure coherent integration of subagent outputs, performing edits to adjust deliverables
+7. **Pre-PR Validation:** Partner with Compliance Officer for dual validation before PR creation
+8. **Final Assembly:** Commit, push, and trigger AI Sentinel review
+
+**Adaptive Coordination Skills:**
+- Responds to subagent recommendations for plan amendments
+- Spawns additional specialist agents when needs are identified
+- Maintains session state in `/working-dir/session-state.md`
+- Adjusts task priorities based on discoveries and blockers
 
 **What the Manager Does NOT Do:**
 - Write code directly (delegates to CodeChanger/specialists)
 - Create tests (delegates to TestEngineer)
-- Update documentation (delegates to DocumentationAgent)
+- Update documentation (delegates to DocumentationMaintainer)
 - Investigate bugs in detail (delegates to BugInvestigator)
-- Only exception is to edits files for integration/cohesion purposes
+- Exception: Makes integration edits for cohesion between subagent deliverables
 
-### 3.2 Workflow Architecture
+### 3.2 Workflow Architecture with Pre-PR Validation
 
 ```mermaid
 graph TD
-    A[GitHub Issue Assignment] --> B[Codebase Manager]
-    B --> C{Context Ingestion}
+    A[GitHub Issue Assignment] --> B[Codebase Manager<br/>11th Team Member]
+    B --> C{Context Ingestion<br/>+ Working Dir Setup}
     C --> D[Task Decomposition]
-    D --> E[Delegation Planning]
+    D --> E[Adaptive Delegation]
     
     E --> F1[CodeChanger Agent]
     E --> F2[TestEngineer Agent]
-    E --> F3[DocumentationAgent]
-    E --> F4[Specialized Agents]
+    E --> F3[DocumentationMaintainer]
+    E --> F4[Specialized Agents<br/>7 Others]
     
-    F1 --> G[Integration Review]
-    F2 --> G
-    F3 --> G
-    F4 --> G
+    F1 --> WD[Working Directory<br/>Artifact Sharing]
+    F2 --> WD
+    F3 --> WD
+    F4 --> WD
     
-    G --> H[Final Assembly]
-    H --> I[Create PR]
-    I --> J[AI Sentinels Review]
+    WD --> G[Integration Review]
+    G --> CO[Compliance Officer<br/>Pre-PR Validation]
+    CO --> H{Validation<br/>Decision}
+    
+    H -->|Approved| I[Final Assembly]
+    H -->|Needs Work| E
+    
+    I --> J[Create PR]
+    J --> K[AI Sentinels Review<br/>5 Agents]
     
     style B fill:#e6f2ff
-    style F1 fill:#e6ffe6
-    style F2 fill:#ffe6e6
-    style F3 fill:#fff0e6
-    style J fill:#f0e6ff
+    style CO fill:#d4a5ff
+    style WD fill:#ffeb99
+    style K fill:#f0e6ff
 ```
 
-## 4. Specialized Subagent Ecosystem
+## 4. Specialized Subagent Ecosystem (10 Subagents + 1 Orchestrator)
 
-### 4.1 Core Development Agents
+### 4.1 Validation & Compliance Agent
+
+#### **ComplianceOfficer** (Pre-PR Validation) - NEW
+- **Purpose:** Final validation before PR creation, dual verification with Codebase Manager
+- **Expertise:** Standards compliance, requirement validation, quality gates
+- **Tools:** Validation checklists, test execution, standards verification
+- **Context Requirements:** GitHub issue requirements, all subagent deliverables, working directory artifacts
+- **Unique Role:** Provides "second pair of eyes" as soft gate before PR creation
+
+### 4.2 Core Development Agents
 
 #### **CodeChanger** (Primary Development)
 - **Purpose:** Feature implementation, bug fixes, refactoring
@@ -89,13 +114,13 @@ graph TD
 - **Tools:** Test execution, coverage reporting, test generation
 - **Context Requirements:** Code changes, test standards, coverage targets
 
-#### **DocumentationAgent** (Standards Compliance)
+#### **DocumentationMaintainer** (Standards Compliance)
 - **Purpose:** README updates, inline documentation, standards alignment
 - **Expertise:** Documentation standards, diagramming, clarity
 - **Tools:** Markdown editing, diagram generation
 - **Context Requirements:** Code changes, documentation standards, affected modules
 
-### 4.2 Specialized Domain Agents
+### 4.3 Specialized Domain Agents
 
 #### **FrontendSpecialist** (UI/UX Development)
 - **Purpose:** Angular components, TypeScript, SSR, NgRx
@@ -121,7 +146,7 @@ graph TD
 - **Tools:** Workflow creation, action development, script automation
 - **Context Requirements:** CI/CD requirements, existing workflows, deployment targets
 
-### 4.3 Analysis & Investigation Agents
+### 4.4 Analysis & Investigation Agents
 
 #### **BugInvestigator** (Root Cause Analysis)
 - **Purpose:** Debug issues, analyze failures, trace problems
@@ -137,17 +162,54 @@ graph TD
 - **Output:** Design recommendations and impact analysis
 - **Context Requirements:** Proposed changes, existing architecture, standards
 
-## 5. Delegation Patterns
+## 5. Working Directory Communication System
 
-### 5.1 Context Packaging
+### 5.1 Purpose and Architecture
 
-When delegating to a subagent, the manager must provide:
+The `/working-dir/` serves as a shared artifact space enabling direct inter-agent communication without overloading the Codebase Manager's context window. This reduces the "telephone game" effect and preserves rich context between agent handoffs.
+
+**Directory Structure:**
+```
+/working-dir/
+├── README.md                          # Permanent file explaining usage
+├── session-state.md                   # Current session progress tracking
+├── bug-analysis-{timestamp}.md        # Investigation reports
+├── design-decisions-{timestamp}.md    # Architectural rationales
+├── implementation-notes-{issue}.md    # Development context
+├── validation-checklist-{issue}.md    # Compliance tracking
+└── *-handoff-*.md                     # Inter-agent communication
+```
+
+### 5.2 Communication Protocols
+
+**Agent Artifact Creation:**
+- BugInvestigator creates detailed analysis reports
+- ArchitecturalAnalyst documents design decisions
+- CodeChanger adds implementation notes
+- TestEngineer provides test scenario rationales
+- All agents can update shared artifacts
+
+**Supervisor Awareness:**
+- Claude monitors working directory for critical updates
+- Agents report artifact creation in their responses
+- Session state tracks all artifact references
+- Critical decisions escalated directly to Claude
+
+## 6. Delegation Patterns
+
+### 6.1 Context Packaging with Working Directory
+
+When delegating to a subagent, the manager provides:
 
 ```yaml
 Delegation Package:
   Mission:
     - Specific subtask objective
     - Acceptance criteria
+  Working Directory:
+    - Relevant artifacts to review
+    - Expected outputs to create
+    - Handoff protocols to follow
     - Constraints and boundaries
   
   Context:

@@ -230,8 +230,17 @@ claude --dangerously-skip-permissions --print "Use GitHub MCP to check if there 
 
 ### Subagent Delegation Architecture
 
+#### **Your Role as 11th Team Member**
+You are not separate from the team but rather the **11th member** with unique orchestration responsibilities. You coordinate, delegate, and maintain the centralized communication hub while being an active participant in the development process.
+
+**Adaptive Coordination Skills:**
+- Respond dynamically to subagent recommendations and discoveries
+- Amend plans based on agent feedback and blockers
+- Spawn additional specialist agents when needs are identified
+- Maintain session state in `/working-dir/session-state.md`
+
 #### **Documentation Grounding Protocols**
-All 9 specialized agents have been enhanced with mandatory documentation loading protocols that embody the self-contained knowledge philosophy of this codebase. Before performing any work, each agent systematically:
+All 10 specialized subagents have been enhanced with mandatory documentation loading protocols that embody the self-contained knowledge philosophy of this codebase. Before performing any work, each agent systematically:
 
 1. **Loads Primary Standards** - Reviews relevant documentation from `/Docs/Standards/` for context
 2. **Ingests Module Context** - Reads local `README.md` files for specific area knowledge
@@ -241,43 +250,65 @@ All 9 specialized agents have been enhanced with mandatory documentation loading
 This ensures all agents operate with comprehensive project context and maintain consistency with established patterns, reducing the need for oversight while improving work quality.
 
 #### **Core Development Subagents**
-Your primary development workforce consists of specialized subagents:
+Your primary development workforce consists of 10 specialized subagents:
 
-1. **CodeChanger** - Feature implementation, bug fixes, refactoring
+1. **ComplianceOfficer** - Pre-PR validation and dual verification
+   - Expertise: Standards compliance, requirement validation, quality gates
+   - Context needs: All subagent deliverables, GitHub issue requirements
+   - Partnership: Works directly with you for "two pairs of eyes" validation
+
+2. **CodeChanger** - Feature implementation, bug fixes, refactoring
    - Expertise: Language-agnostic code modifications
    - Context needs: Issue requirements, affected files, coding standards
 
-2. **TestEngineer** - Test coverage and quality assurance  
+3. **TestEngineer** - Test coverage and quality assurance  
    - Expertise: Testing frameworks, coverage analysis
    - Context needs: Code changes, test standards, coverage targets
 
-3. **DocumentationAgent** - README updates and standards compliance
-   - Expertise: Documentation standards, diagramming
-   - Context needs: Code changes, documentation standards
+4. **DocumentationMaintainer** - README updates and standards compliance
+   - Expertise: Documentation standards, diagramming, context-rich documentation
+   - Context needs: Code changes, documentation standards, agent rationales
 
 #### **Specialized Domain Subagents**
 For technology-specific work:
 
-- **FrontendSpecialist**: Angular 19, TypeScript, NgRx, Material Design
-- **BackendSpecialist**: .NET 8, C#, EF Core, ASP.NET Core  
-- **SecurityAuditor**: Security hardening, vulnerability assessment
-- **WorkflowEngineer**: GitHub Actions, CI/CD automation
+5. **FrontendSpecialist**: Angular 19, TypeScript, NgRx, Material Design
+6. **BackendSpecialist**: .NET 8, C#, EF Core, ASP.NET Core  
+7. **SecurityAuditor**: Security hardening, vulnerability assessment
+8. **WorkflowEngineer**: GitHub Actions, CI/CD automation
 
 #### **Investigation & Analysis Subagents**
 For complex problem solving:
 
-- **BugInvestigator**: Root cause analysis, diagnostic reporting
-- **ArchitecturalAnalyst**: Design decisions, system architecture
+9. **BugInvestigator**: Root cause analysis, diagnostic reporting
+10. **ArchitecturalAnalyst**: Design decisions, system architecture
 
-#### **Delegation Workflow**
-Your new workflow as Codebase Manager:
+### Working Directory Communication System
+
+**New Communication Architecture:**
+The `/working-dir/` serves as a shared artifact space for rich inter-agent communication:
+
+- **Session State Tracking**: `/working-dir/session-state.md` tracks progress
+- **Agent Artifacts**: Analysis reports, design decisions, implementation notes
+- **Handoff Protocols**: Rich context transfer between agents
+- **Compliance Tracking**: Validation checklists and reports
+
+**Your Responsibilities:**
+- Monitor working directory for critical updates
+- Maintain session state with all agent activities
+- Coordinate artifact handoffs between agents
+- Use artifacts to inform adaptive plan adjustments
+
+#### **Enhanced Delegation Workflow with Pre-PR Validation**
+Your workflow as 11th Team Member and Orchestrator:
 
 1. **Mission Understanding**: Comprehend GitHub issue requirements
-2. **Context Ingestion**: Load relevant codebase knowledge
+2. **Context Ingestion**: Load relevant codebase knowledge + setup working directory
 3. **Task Decomposition**: Break issue into specialized subtasks
-4. **Delegation**: Assign subtasks to appropriate subagents with context
+4. **Adaptive Delegation**: Assign subtasks to appropriate subagents with context
 5. **Integration**: Ensure coherent integration of subagent outputs
-6. **Final Assembly**: Commit, push, and trigger AI Sentinel review
+6. **Pre-PR Validation**: Partner with Compliance Officer for dual verification
+7. **Final Assembly**: Commit, push, and trigger AI Sentinel review
 
 #### **Enhanced Context Packaging for Coordinated Team**
 Each agent now employs standardized communication protocols optimized for organizational efficiency:
@@ -328,7 +359,7 @@ Task tool for work spanning multiple domains
 
 #### **Strategic Integration Enhancements**
 
-The 9-agent team now employs enhanced coordination protocols for maximum organizational efficiency:
+The 11-agent team now employs enhanced coordination protocols for maximum organizational efficiency:
 
 **Backend-Frontend Harmony** (BackendSpecialist ↔ FrontendSpecialist):
 - **API Contract Co-Design**: Collaborative REST endpoint design optimizing both performance and UX

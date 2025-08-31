@@ -1,7 +1,36 @@
+# ⚠️ DEPRECATED WORKFLOW
+
+**Status:** This workflow has been superseded by the **11-agent orchestration model**.  
+**Effective Date:** August 2025  
+**Migration Path:** See [CONTRIBUTING.md](../../CONTRIBUTING.md) for current development methods.
+
+---
+
+## Why This Workflow Was Deprecated
+
+This manual workflow has been consolidated into the comprehensive 11-agent orchestration model that provides:
+- **Automated Standards Compliance:** Documentation grounding protocols ensure all standards are systematically loaded
+- **Enhanced Quality Gates:** ComplianceOfficer partnership provides dual validation before PR creation  
+- **Reduced Overhead:** Working directory communication eliminates telephone-game coordination
+- **Context Preservation:** Rich artifact sharing enables better documentation and decision tracking
+
+**For Current Development:** Activate the orchestration model via [CLAUDE.md](../../CLAUDE.md) and leverage specialized subagents instead of following these manual steps.
+
+**Agent Mapping:** This coverage enhancement workflow is now handled by **TestEngineer** (systematic gap analysis and targeted test development) + **ComplianceOfficer** (validation and epic progression tracking) coordination, with integration to the [Automated Coverage Epic](AutomatedCoverageEpicWorkflow.md) for systematic improvement.
+
+**Reference:** The consolidated [Coverage Enhancement Process](../../CONTRIBUTING.md#coverage-enhancement-process) in CONTRIBUTING.md preserves the analytics-driven approach and coverage measurement tools while integrating them into the modern AI orchestration framework with epic progression toward 90% backend coverage by January 2026.
+
+---
+
+## Historical Documentation
+
+The content below is preserved for reference and understanding of workflow evolution:
+
 # Test Coverage Enhancement Workflow
 
-**Version:** 1.1
-**Last Updated:** 2025-05-23
+**Version:** 1.1 (DEPRECATED)  
+**Last Updated:** 2025-08-31  
+**Status:** DEPRECATED  
 **Parent:** `../README.md`
 
 ## 1. Purpose and Goal

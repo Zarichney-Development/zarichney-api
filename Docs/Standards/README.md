@@ -15,7 +15,7 @@ The primary importance of these standards is to ensure:
 * **Testability:** Ensuring that code is designed and written in a way that facilitates comprehensive automated testing.
 * **Effective Collaboration:** Providing a common understanding and set of expectations for all team members, including human developers and AI coding assistants.
 
-**Adherence to these standards is non-negotiable for all contributions to this project.** They are foundational to our development process and critical for achieving our quality goals, especially in the **9-agent orchestrated development workflow**. These standards are systematically loaded by specialized agents through **documentation grounding protocols**, ensuring consistent application without requiring manual oversight.
+**Adherence to these standards is non-negotiable for all contributions to this project.** They are foundational to our development process and critical for achieving our quality goals, especially in the **11-agent orchestrated development workflow**. These standards are systematically loaded by specialized agents through **documentation grounding protocols**, ensuring consistent application without requiring manual oversight.
 
 ## 2. Overview of Standards Documents
 

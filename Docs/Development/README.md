@@ -6,7 +6,7 @@
 
 ## 1. Purpose & Responsibility
 
-* **What it is:** This directory houses documentation defining the *workflows and processes* specifically governing the development of the Zarichney API application, with a focus on facilitating **9-agent orchestrated development**.
+* **What it is:** This directory houses documentation defining the *workflows and processes* specifically governing the development of the Zarichney API application, with a focus on facilitating **11-agent orchestrated development**.
 * **Key Responsibilities:**
     * Outlining the strategic codebase manager orchestration model with specialized agent coordination.
     * Documenting the architectural evolution from executor to orchestrator (`CodebaseManagerEvolution.md`).
@@ -14,7 +14,7 @@
     * Documenting the short-term technical roadmap and deferred items.
 * **Why it exists:** To establish a clear and effective **multi-agent development process**, ensuring tasks are well-defined, agents operate with comprehensive context, and standards are consistently applied across the development team.
 * **Core Documents within this Directory:**
-    * **[`CodebaseManagerEvolution.md`](./CodebaseManagerEvolution.md): ARCHITECTURAL FOUNDATION** - Documents the evolution from executor to orchestrator model with 9-agent specialization.
+    * **[`CodebaseManagerEvolution.md`](./CodebaseManagerEvolution.md): ARCHITECTURAL FOUNDATION** - Documents the evolution from executor to orchestrator model with 11-agent specialization.
     * [`CodingPlannerAssistant.md`](./CodingPlannerAssistant.md): Legacy workflow documentation (superseded by orchestration model).
     * [`StandardWorkflow.md`](./StandardWorkflow.md): Legacy workflow documentation (superseded by specialized agent protocols).
     * [`ComplexTaskWorkflow.md`](./ComplexTaskWorkflow.md): Legacy workflow documentation (superseded by specialized agent protocols).
@@ -33,9 +33,9 @@
 * **Core Standards (Located in /Docs/Standards/):**
     * (Links to CodingStandards.md, DocumentationStandards.md, DiagrammingStandards.md, TestingStandards.md, TaskManagementStandards.md)
 
-## 2. 9-Agent Orchestrated Development Workflow Overview
+## 2. 11-Agent Orchestrated Development Workflow Overview
 
-The core workflow leverages a **strategic codebase manager** orchestrating a team of 9 specialized AI agents in a structured, coordinated process. This evolution from direct execution to orchestration preserves context for strategic oversight while delegating implementation to purpose-built specialists. Each agent employs comprehensive **documentation grounding protocols** to ensure contextual awareness and standards alignment.
+The core workflow leverages a **strategic codebase manager** (Claude) as the 11th team member orchestrating 10 specialized AI agents in a structured, coordinated process. This evolution includes pre-PR validation through the Compliance Officer partnership and rich inter-agent communication via the `/working-dir/` system. Each agent employs comprehensive **documentation grounding protocols** to ensure contextual awareness and standards alignment.
 
 * **Orchestration Workflow Diagram:**
     *(Diagram follows conventions defined in [`../Standards/DiagrammingStandards.md`](../Standards/DiagrammingStandards.md))*
@@ -48,15 +48,15 @@ config:
 flowchart TD
     subgraph INPUT ["GitHub Issue Assignment"]
        direction LR
-       Issue["GitHub Issue\n(Requirements & Context)"] --> Claude["Claude\n(Strategic Codebase Manager)"]
+       Issue["GitHub Issue\n(Requirements & Context)"] --> Claude["Claude\n(11th Team Member & Orchestrator)"]
     end
 
-    subgraph CLAUDE_ORCHESTRATION ["Strategic Codebase Management"]
+    subgraph CLAUDE_ORCHESTRATION ["Strategic Codebase Management + Adaptive Coordination"]
        direction TB
        Step1["1. Mission Understanding\n(Analyze issue requirements)"]
-       Step2["2. Context Ingestion\n(Load documentation & codebase state)"] 
+       Step2["2. Context Ingestion + Working Dir Setup\n(Load documentation & initialize session)"] 
        Step3["3. Task Decomposition\n(Break into specialized subtasks)"]
-       Step4["4. Delegation Strategy\n(Assign to appropriate agents)"]
+       Step4["4. Adaptive Delegation\n(Assign to agents with context)"]
        Claude --> Step1 --> Step2 --> Step3 --> Step4
     end
 
@@ -70,6 +70,7 @@ flowchart TD
            STD_TM([TaskManagementStandards.md])
        end
        subgraph AgentInstructions ["/.claude/agents/"]
+           AGT_CO([compliance-officer.md])
            AGT_CC([code-changer.md])
            AGT_TE([test-engineer.md])
            AGT_SA([security-auditor.md])
@@ -83,8 +84,9 @@ flowchart TD
        LocalREADMEs["Module READMEs\n(Production Code Context)"]
     end
 
-    subgraph AGENT_TEAM ["9-Agent Specialized Team"]
+    subgraph AGENT_TEAM ["10-Agent Specialized Team"]
        direction TB
+       CO["ComplianceOfficer\n(Pre-PR Validation)"]
        CC["CodeChanger\n(Implementation)"]
        TE["TestEngineer\n(Quality Assurance)"]
        SA["SecurityAuditor\n(Security Review)"]
@@ -96,20 +98,34 @@ flowchart TD
        AA["ArchitecturalAnalyst\n(Design Decisions)"]
     end
 
-    subgraph INTEGRATION ["Integration & Final Assembly"]
+    subgraph WORKING_DIR ["/working-dir/ Communication Hub"]
+       direction TB
+       SessionState["session-state.md\n(Progress Tracking)"]
+       Artifacts["Agent Artifacts\n(Analysis, Decisions, Notes)"]
+       Handoffs["Inter-Agent Handoffs\n(Rich Context Transfer)"]
+    end
+
+    subgraph INTEGRATION ["Integration & Pre-PR Validation"]
        direction TB
        Step5["5. Integration Oversight\n(Validate agent outputs)"]
-       Step6["6. Quality Assurance\n(Ensure completeness)"]
-       Step7["7. Final Assembly\n(Commit, push, create PR)"]
-       Step8["8. AI Sentinel Review\n(5 AI reviewers analyze PR)"]
-       Step5 --> Step6 --> Step7 --> Step8
+       Step6["6. Compliance Partnership\n(Dual validation with ComplianceOfficer)"]
+       Step7A["7a. Pre-PR Gate\n(ComplianceOfficer assessment)"]
+       Step7B{"Validation Decision"}
+       Step8["8. Final Assembly\n(Commit, push, create PR)"]
+       Step9["9. AI Sentinel Review\n(5 AI reviewers analyze PR)"]
+       Step5 --> Step6 --> Step7A --> Step7B
+       Step7B -->|Approved| Step8
+       Step7B -->|Needs Work| Step4
+       Step8 --> Step9
     end
 
     %% Strategic Manager Workflow
-    Step2 -->|Loads| DOCUMENTATION
+    Step2 -->|Loads & Initializes| DOCUMENTATION
+    Step2 -->|Creates| WORKING_DIR
     Step4 -->|Delegates to| AGENT_TEAM
 
     %% Agent Documentation Grounding
+    CO -->|Grounds in| AGT_CO
     CC -->|Grounds in| AGT_CC
     TE -->|Grounds in| AGT_TE
     SA -->|Grounds in| AGT_SA
@@ -120,31 +136,44 @@ flowchart TD
     DM -->|Grounds in| AGT_DM
     AA -->|Grounds in| AGT_AA
 
-    %% Agent Context Loading
+    %% Agent Context Loading & Communication
     AGENT_TEAM -->|Systematically Loads| Standards
     AGENT_TEAM -->|Reviews| LocalREADMEs
+    AGENT_TEAM <==>|Creates & Consumes| WORKING_DIR
+
+    %% ComplianceOfficer Integration
+    Step6 -->|Partners with| CO
+    CO -->|Validates using| WORKING_DIR
 
     %% Integration Flow
     AGENT_TEAM --> Step5
-    Step8 --> FinalOutput["Pull Request\n(Ready for Merge)"]
+    Step9 --> FinalOutput["Pull Request\n(Ready for Merge)"]
+
+    %% Adaptive Feedback Loop
+    WORKING_DIR -.->|Critical Updates| Claude
+    Claude -.->|Plan Adjustments| Step4
 
     classDef manager fill:#e6f2ff,stroke:#004080,stroke-width:2px;
+    classDef compliance fill:#d4a5ff,stroke:#6b21a8,stroke-width:2px;
     classDef agent fill:#e6ffe6,stroke:#006400,stroke-width:1px;
     classDef document fill:#f5f5f5,stroke:#666,stroke-width:1px;
+    classDef working fill:#ffeb99,stroke:#d69e2e,stroke-width:1px;
     classDef process fill:#fff,stroke:#333,stroke-width:1px;
     classDef output fill:#fff0b3,stroke:#cca300,stroke-width:1px;
 
     class Claude,CLAUDE_ORCHESTRATION manager;
+    class CO,Step6,Step7A,Step7B compliance;
     class AGENT_TEAM,CC,TE,SA,FS,BS,WE,BI,DM,AA agent;
-    class DOCUMENTATION,Standards,AgentInstructions,LocalREADMEs,STD_CS,STD_TS,STD_DS,STD_DG,STD_TM,AGT_CC,AGT_TE,AGT_SA,AGT_FS,AGT_BS,AGT_WE,AGT_BI,AGT_DM,AGT_AA document;
-    class Step1,Step2,Step3,Step4,Step5,Step6,Step7,Step8 process;
+    class DOCUMENTATION,Standards,AgentInstructions,LocalREADMEs,STD_CS,STD_TS,STD_DS,STD_DG,STD_TM,AGT_CO,AGT_CC,AGT_TE,AGT_SA,AGT_FS,AGT_BS,AGT_WE,AGT_BI,AGT_DM,AGT_AA document;
+    class WORKING_DIR,SessionState,Artifacts,Handoffs working;
+    class Step1,Step2,Step3,Step4,Step5,Step8,Step9 process;
     class Issue,FinalOutput output;
 
 ```
 
 ## 3. How to Use This Directory
 
-* **Understanding the Architecture:** Start with [`CodebaseManagerEvolution.md`](./CodebaseManagerEvolution.md) to understand the strategic orchestration model and 9-agent specialization.
+* **Understanding the Architecture:** Start with [`CodebaseManagerEvolution.md`](./CodebaseManagerEvolution.md) to understand the strategic orchestration model and 11-agent specialization (10 subagents + codebase manager).
 * **Agent Coordination:** Review the specialized agent instruction files in [`/.claude/agents/`](../../.claude/agents/) to understand individual agent capabilities and documentation grounding protocols.
 * **Legacy Workflows:** Historical workflow files (`CodingPlannerAssistant.md`, `StandardWorkflow.md`, etc.) are maintained for reference but have been superseded by the agent orchestration model.
 * **Templates:** Refer to files in [`/Docs/Templates/`](../Templates/) for the structure of GitHub Issues and documentation templates.

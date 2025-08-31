@@ -1,7 +1,36 @@
+# ⚠️ DEPRECATED WORKFLOW
+
+**Status:** This workflow has been superseded by the **11-agent orchestration model**.  
+**Effective Date:** August 2025  
+**Migration Path:** See [CONTRIBUTING.md](../../CONTRIBUTING.md) for current development methods.
+
+---
+
+## Why This Workflow Was Deprecated
+
+This manual workflow has been consolidated into the comprehensive 11-agent orchestration model that provides:
+- **Automated Standards Compliance:** Documentation grounding protocols ensure all standards are systematically loaded
+- **Enhanced Quality Gates:** ComplianceOfficer partnership provides dual validation before PR creation  
+- **Reduced Overhead:** Working directory communication eliminates telephone-game coordination
+- **Context Preservation:** Rich artifact sharing enables better documentation and decision tracking
+
+**For Current Development:** Activate the orchestration model via [CLAUDE.md](../../CLAUDE.md) and leverage specialized subagents instead of following these manual steps.
+
+**Agent Mapping:** This TDD/Plan-First workflow is now handled by **ArchitecturalAnalyst** (upfront planning and design validation) + **CodeChanger** (red-green-refactor implementation) + **TestEngineer** (comprehensive test-driven development) coordination, with **ComplianceOfficer** providing enhanced validation.
+
+**Reference:** The consolidated [Test-Driven Development Process](../../CONTRIBUTING.md#test-driven-development-process) in CONTRIBUTING.md preserves the plan-first methodology and TDD approach while integrating them into the modern AI orchestration framework.
+
+---
+
+## Historical Documentation
+
+The content below is preserved for reference and understanding of workflow evolution:
+
 # AI Coder Workflow Steps: TDD / Plan-First
 
-**Version:** 1.2
-**Last Updated:** 2025-07-25
+**Version:** 1.2 (DEPRECATED)  
+**Last Updated:** 2025-08-31  
+**Status:** DEPRECATED
 
 ## Overview
 
