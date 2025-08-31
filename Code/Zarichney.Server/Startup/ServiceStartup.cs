@@ -22,6 +22,7 @@ using Zarichney.Services.Status.Proxies;
 using Zarichney.Services.ProcessExecution;
 using Zarichney.Services.Web;
 using Zarichney.Services.Logging;
+using Zarichney.Services.Security;
 
 namespace Zarichney.Startup;
 
@@ -229,6 +230,10 @@ public class ServiceStartup
 
     // System Services
     services.AddScoped<IProcessExecutor, ProcessExecutor>();
+    
+    // Security Services - provides SSRF protection and URL validation
+    services.AddHttpClient<IOutboundUrlSecurity, OutboundUrlSecurity>();
+    services.AddScoped<IOutboundUrlSecurity, OutboundUrlSecurity>();
     
     // Logging Services - provides centralized logging system management
     services.AddHttpClient<ISeqConnectivity, SeqConnectivity>();

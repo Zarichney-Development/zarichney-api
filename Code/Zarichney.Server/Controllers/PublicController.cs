@@ -79,9 +79,17 @@ public class PublicController(
   /// <returns>Connectivity test results</returns>
   [HttpPost("logging/test-seq")]
   [ProducesResponseType(typeof(SeqConnectivityResult), 200)]
+  [ProducesResponseType(400)]
   public async Task<IActionResult> TestSeqConnectivity([FromBody] TestSeqRequest? request = null)
   {
     var result = await loggingService.TestSeqConnectivityAsync(request?.Url, HttpContext.RequestAborted);
+    
+    // Return 400 Bad Request if URL validation failed for security reasons
+    if (!result.IsConnected && result.Error == "URL validation failed for security reasons")
+    {
+      return BadRequest(new { error = "Invalid URL provided" });
+    }
+    
     return Ok(result);
   }
 

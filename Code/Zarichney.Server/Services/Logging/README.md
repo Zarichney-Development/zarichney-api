@@ -60,11 +60,13 @@
   - Connectivity failures result in graceful fallback, not exceptions
   - Docker command failures are logged but don't prevent file logging fallback
   - Invalid URLs return `false` from connectivity tests rather than throwing
+  - **Security Integration:** URL validation now performed before any connectivity testing to prevent SSRF attacks
 
 * **Configuration Requirements:**
   - No required configuration - all properties have sensible defaults
   - `SeqUrl` can be null - triggers automatic discovery of common URLs
   - Process and network timeouts are configurable but have safe defaults
+  - **NetworkSecurity configuration** controls URL validation behavior (see Security section below)
 
 ## 4. Local Conventions & Constraints
 
@@ -122,6 +124,7 @@
 * **Internal Dependencies:**
   - [`Services/Sessions`](../Sessions/README.md) - For session correlation in request logging middleware
   - [`Services/ProcessExecution`](../ProcessExecution/README.md) - For abstracted system command execution
+  - [`Services/Security`](../Security/README.md) - For URL validation and SSRF prevention
   - [`Config`](../../Config/README.md) - For `IConfig` interface implementation
   - [`Controllers/PublicController`](../../Controllers/README.md) - For API endpoint hosting
 
@@ -157,7 +160,36 @@
 
 * **Public API Integration:** Maintained logging status endpoints in `PublicController` while improving underlying architecture.
 
-## 8. Known Issues & TODOs
+## 8. Security
+
+* **SSRF Prevention:** All URL connectivity testing now includes security validation through `IOutboundUrlSecurity` service to prevent Server-Side Request Forgery attacks
+* **URL Allowlisting:** Only explicitly approved hosts can be tested via the `/api/logging/test-seq` endpoint
+* **Default Security Configuration:**
+  ```json
+  {
+    "NetworkSecurity": {
+      "AllowedSeqHosts": [],
+      "EnableDefaultLocalhost": true,
+      "MaxRedirects": 3,
+      "EnableDnsResolutionValidation": true,
+      "DnsResolutionTimeoutSeconds": 2
+    }
+  }
+  ```
+
+* **Security Features:**
+  - **Host Allowlisting:** Only configured hosts plus localhost variants (when enabled) are permitted
+  - **Scheme Validation:** Only HTTP and HTTPS schemes are allowed
+  - **Credential Detection:** URLs containing credentials are rejected
+  - **Private IP Protection:** DNS resolution to private IP ranges is blocked
+  - **Structured Logging:** Security events logged with Event IDs 5700-5703 for monitoring
+
+* **Configuration Security:**
+  - **AllowedSeqHosts:** List of explicitly allowed hosts (exact match or subdomain with leading '.')
+  - **EnableDefaultLocalhost:** Controls whether localhost, 127.0.0.1, and ::1 are automatically allowed
+  - **DNS Resolution:** Validates that allowed external hosts don't resolve to private IP ranges
+
+## 9. Known Issues & TODOs
 
 * **Test Coverage Expansion:** Consider adding focused unit tests for new service interfaces (`ILoggingStatus`, `ISeqConnectivity`, `IProcessExecutor`) to complement orchestration tests
 * **Performance Optimization:** Consider caching Seq connectivity status to reduce repeated network calls during high-traffic periods

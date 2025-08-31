@@ -9,6 +9,7 @@ using Xunit;
 using Zarichney.Services.Logging;
 using Zarichney.Services.Logging.Models;
 using Zarichney.Services.ProcessExecution;
+using Zarichney.Services.Security;
 
 namespace Zarichney.Tests.Unit.Services.Logging;
 
@@ -26,6 +27,7 @@ public class SeqConnectivityTests
   private readonly Mock<HttpMessageHandler> _mockHttpMessageHandler;
   private readonly HttpClient _httpClient;
   private readonly Mock<IProcessExecutor> _mockProcessExecutor;
+  private readonly Mock<IOutboundUrlSecurity> _mockUrlSecurity;
   private readonly LoggingConfig _loggingConfig;
   private readonly SeqConnectivity _sut;
 
@@ -37,6 +39,7 @@ public class SeqConnectivityTests
     _mockHttpMessageHandler = new Mock<HttpMessageHandler>();
     _httpClient = new HttpClient(_mockHttpMessageHandler.Object);
     _mockProcessExecutor = new Mock<IProcessExecutor>();
+    _mockUrlSecurity = new Mock<IOutboundUrlSecurity>();
 
     _loggingConfig = new LoggingConfig
     {
@@ -51,14 +54,47 @@ public class SeqConnectivityTests
 
     _mockConfig.Setup(x => x.Value).Returns(_loggingConfig);
 
+    // Setup URL security to allow all URLs by default (existing tests should pass)
+    _mockUrlSecurity
+      .Setup(x => x.ValidateSeqUrlAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync((string? url, CancellationToken _) => 
+        UrlValidationResult.Success(new Uri(url ?? "http://localhost:5341").Host));
+
     _sut = new SeqConnectivity(
       _mockLogger.Object,
       _mockConfig.Object,
       _httpClient,
-      _mockProcessExecutor.Object);
+      _mockProcessExecutor.Object,
+      _mockUrlSecurity.Object);
   }
 
   #region TestSeqConnectivityAsync Tests
+
+  [Fact]
+  public async Task TestSeqConnectivityAsync_WithSecurityValidationFailure_ReturnsDisconnectedResult()
+  {
+    // Arrange
+    var testUrl = "http://malicious.internal:5341";
+    _mockUrlSecurity
+      .Setup(x => x.ValidateSeqUrlAsync(testUrl, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(UrlValidationResult.Failure(ValidationReasonCodes.HostNotAllowed, "malicious.internal"));
+
+    // Act
+    var result = await _sut.TestSeqConnectivityAsync(testUrl);
+
+    // Assert
+    result.Should().NotBeNull();
+    result.Url.Should().Be(testUrl);
+    result.IsConnected.Should().BeFalse("URL validation failed");
+    result.Error.Should().Be("URL validation failed for security reasons");
+    result.ResponseTime.Should().Be(-1);
+    
+    // Verify URL validation was called
+    _mockUrlSecurity.Verify(
+      x => x.ValidateSeqUrlAsync(testUrl, It.IsAny<CancellationToken>()),
+      Times.Once,
+      "should validate URL before testing connectivity");
+  }
 
   [Fact]
   public async Task TestSeqConnectivityAsync_WithSuccessfulConnection_ReturnsConnectedResult()

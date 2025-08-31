@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.Extensions.Options;
 using Zarichney.Services.Logging.Models;
 using Zarichney.Services.ProcessExecution;
+using Zarichney.Services.Security;
 
 namespace Zarichney.Services.Logging;
 
@@ -12,7 +13,8 @@ public class SeqConnectivity(
   ILogger<SeqConnectivity> logger,
   IOptions<LoggingConfig> config,
   HttpClient httpClient,
-  IProcessExecutor processExecutor) : ISeqConnectivity
+  IProcessExecutor processExecutor,
+  IOutboundUrlSecurity urlSecurity) : ISeqConnectivity
 {
   private readonly LoggingConfig _config = config.Value;
 
@@ -23,6 +25,24 @@ public class SeqConnectivity(
 
     try
     {
+      // Validate URL for security before testing
+      var validationResult = await urlSecurity.ValidateSeqUrlAsync(urlToTest, cancellationToken);
+      
+      if (!validationResult.IsValid)
+      {
+        logger.LogWarning("Seq connectivity test blocked: {ReasonCode} for host {Host}",
+          validationResult.ReasonCode, validationResult.SanitizedHost);
+          
+        return new SeqConnectivityResult
+        {
+          Url = urlToTest,
+          IsConnected = false,
+          Error = "URL validation failed for security reasons",
+          TestedAt = DateTime.UtcNow,
+          ResponseTime = -1
+        };
+      }
+
       var stopwatch = Stopwatch.StartNew();
       var isConnected = await TryConnectToSeqAsync(urlToTest, cancellationToken);
       stopwatch.Stop();

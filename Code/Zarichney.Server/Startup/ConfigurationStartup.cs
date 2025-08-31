@@ -5,6 +5,7 @@ using Serilog;
 using Zarichney.Config;
 using Zarichney.Services.AI;
 using Zarichney.Services.Status;
+using Zarichney.Services.Security;
 
 namespace Zarichney.Startup;
 
