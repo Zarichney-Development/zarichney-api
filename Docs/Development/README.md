@@ -1,12 +1,12 @@
 # Module/Directory: Docs/Development
 
-**Last Updated:** 2025-08-30
+**Last Updated:** 2025-09-01
 
 > **Parent:** [`Docs`](../README.md)
 
 ## 1. Purpose & Responsibility
 
-* **What it is:** This directory houses documentation defining the *workflows and processes* specifically governing the development of the Zarichney API application, with a focus on facilitating **11-agent orchestrated development**.
+* **What it is:** This directory houses documentation defining the *workflows and processes* specifically governing the development of the Zarichney API application, with a focus on facilitating **12-agent orchestrated development**.
 * **Key Responsibilities:**
     * Outlining the strategic codebase manager orchestration model with specialized agent coordination.
     * Documenting the architectural evolution from executor to orchestrator (`CodebaseManagerEvolution.md`).
@@ -14,7 +14,7 @@
     * Documenting the short-term technical roadmap and deferred items.
 * **Why it exists:** To establish a clear and effective **multi-agent development process**, ensuring tasks are well-defined, agents operate with comprehensive context, and standards are consistently applied across the development team.
 * **Core Documents within this Directory:**
-    * **[`CodebaseManagerEvolution.md`](./CodebaseManagerEvolution.md): ARCHITECTURAL FOUNDATION** - Documents the evolution from executor to orchestrator model with 11-agent specialization.
+    * **[`CodebaseManagerEvolution.md`](./CodebaseManagerEvolution.md): ARCHITECTURAL FOUNDATION** - Documents the evolution from executor to orchestrator model with 12-agent specialization.
     * [`CodingPlannerAssistant.md`](./CodingPlannerAssistant.md): Legacy workflow documentation (superseded by orchestration model).
     * [`StandardWorkflow.md`](./StandardWorkflow.md): Legacy workflow documentation (superseded by specialized agent protocols).
     * [`ComplexTaskWorkflow.md`](./ComplexTaskWorkflow.md): Legacy workflow documentation (superseded by specialized agent protocols).
@@ -33,9 +33,9 @@
 * **Core Standards (Located in /Docs/Standards/):**
     * (Links to CodingStandards.md, DocumentationStandards.md, DiagrammingStandards.md, TestingStandards.md, TaskManagementStandards.md)
 
-## 2. 11-Agent Orchestrated Development Workflow Overview
+## 2. 12-Agent Orchestrated Development Workflow Overview
 
-The core workflow leverages a **strategic codebase manager** (Claude) as the 11th team member orchestrating 10 specialized AI agents in a structured, coordinated process. This evolution includes pre-PR validation through the Compliance Officer partnership and rich inter-agent communication via the `/working-dir/` system. Each agent employs comprehensive **documentation grounding protocols** to ensure contextual awareness and standards alignment.
+The core workflow leverages a **strategic codebase manager** (Claude) as the team leader orchestrating 11 specialized AI agents in a structured, coordinated process. This evolution includes pre-PR validation through the Compliance Officer partnership and rich inter-agent communication via the `/working-dir/` system. Each agent employs comprehensive **documentation grounding protocols** to ensure contextual awareness and standards alignment.
 
 * **Orchestration Workflow Diagram:**
     *(Diagram follows conventions defined in [`../Standards/DiagrammingStandards.md`](../Standards/DiagrammingStandards.md))*
@@ -48,7 +48,7 @@ config:
 flowchart TD
     subgraph INPUT ["GitHub Issue Assignment"]
        direction LR
-       Issue["GitHub Issue\n(Requirements & Context)"] --> Claude["Claude\n(11th Team Member & Orchestrator)"]
+       Issue["GitHub Issue\n(Requirements & Context)"] --> Claude["Claude\n(team leader & Orchestrator)"]
     end
 
     subgraph CLAUDE_ORCHESTRATION ["Strategic Codebase Management + Adaptive Coordination"]
@@ -80,11 +80,12 @@ flowchart TD
            AGT_BI([bug-investigator.md])
            AGT_DM([documentation-maintainer.md])
            AGT_AA([architectural-analyst.md])
+           AGT_PE([prompt-engineer.md])
        end
        LocalREADMEs["Module READMEs\n(Production Code Context)"]
     end
 
-    subgraph AGENT_TEAM ["10-Agent Specialized Team"]
+    subgraph AGENT_TEAM ["12-Agent Specialized Team"]
        direction TB
        CO["ComplianceOfficer\n(Pre-PR Validation)"]
        CC["CodeChanger\n(Implementation)"]
@@ -96,6 +97,7 @@ flowchart TD
        BI["BugInvestigator\n(Root Cause Analysis)"]
        DM["DocumentationMaintainer\n(Standards Compliance)"]
        AA["ArchitecturalAnalyst\n(Design Decisions)"]
+       PE["PromptEngineer\n(AI Enhancement)"]
     end
 
     subgraph WORKING_DIR ["/working-dir/ Communication Hub"]
@@ -135,6 +137,7 @@ flowchart TD
     BI -->|Grounds in| AGT_BI
     DM -->|Grounds in| AGT_DM
     AA -->|Grounds in| AGT_AA
+    PE -->|Grounds in| AGT_PE
 
     %% Agent Context Loading & Communication
     AGENT_TEAM -->|Systematically Loads| Standards
@@ -163,8 +166,8 @@ flowchart TD
 
     class Claude,CLAUDE_ORCHESTRATION manager;
     class CO,Step6,Step7A,Step7B compliance;
-    class AGENT_TEAM,CC,TE,SA,FS,BS,WE,BI,DM,AA agent;
-    class DOCUMENTATION,Standards,AgentInstructions,LocalREADMEs,STD_CS,STD_TS,STD_DS,STD_DG,STD_TM,AGT_CO,AGT_CC,AGT_TE,AGT_SA,AGT_FS,AGT_BS,AGT_WE,AGT_BI,AGT_DM,AGT_AA document;
+    class AGENT_TEAM,CC,TE,SA,FS,BS,WE,BI,DM,AA,PE agent;
+    class DOCUMENTATION,Standards,AgentInstructions,LocalREADMEs,STD_CS,STD_TS,STD_DS,STD_DG,STD_TM,AGT_CO,AGT_CC,AGT_TE,AGT_SA,AGT_FS,AGT_BS,AGT_WE,AGT_BI,AGT_DM,AGT_AA,AGT_PE document;
     class WORKING_DIR,SessionState,Artifacts,Handoffs working;
     class Step1,Step2,Step3,Step4,Step5,Step8,Step9 process;
     class Issue,FinalOutput output;
@@ -173,7 +176,7 @@ flowchart TD
 
 ## 3. How to Use This Directory
 
-* **Understanding the Architecture:** Start with [`CodebaseManagerEvolution.md`](./CodebaseManagerEvolution.md) to understand the strategic orchestration model and 11-agent specialization (10 subagents + codebase manager).
+* **Understanding the Architecture:** Start with [`CodebaseManagerEvolution.md`](./CodebaseManagerEvolution.md) to understand the strategic orchestration model and 12-agent specialization (11 subagents + codebase manager).
 * **Agent Coordination:** Review the specialized agent instruction files in [`/.claude/agents/`](../../.claude/agents/) to understand individual agent capabilities and documentation grounding protocols.
 * **Legacy Workflows:** Historical workflow files (`CodingPlannerAssistant.md`, `StandardWorkflow.md`, etc.) are maintained for reference but have been superseded by the agent orchestration model.
 * **Templates:** Refer to files in [`/Docs/Templates/`](../Templates/) for the structure of GitHub Issues and documentation templates.

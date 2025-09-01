@@ -1,12 +1,12 @@
 # Module/Directory: .github/workflows
 
-**Last Updated:** 2025-08-30
+**Last Updated:** 2025-09-01
 
 **Parent:** [`.github`](../README.md)
 
 ## 1. Purpose & Responsibility
 
-* **What it is:** Consolidated CI/CD pipeline architecture with intelligent branch-aware automation for build, test, analysis, deployment, and maintenance operations, designed to support the **11-agent orchestrated development workflow**.
+* **What it is:** Consolidated CI/CD pipeline architecture with intelligent branch-aware automation for build, test, analysis, deployment, and maintenance operations, designed to support the **12-agent orchestrated development workflow**.
 * **Key Responsibilities:** 
     * Unified build and test execution with integrated AI-powered analysis
     * Branch-aware conditional logic for appropriate analysis depth
@@ -216,7 +216,7 @@ graph TD
 * **Environment Preparation:** Enhanced claude-dispatch with full dependency restoration and test baseline generation for better AI context
 * **Tool Management:** Centralized .NET tool restoration in setup-environment action to prevent tool-related failures across all workflows
 * **Coverage Epic Architecture:** Split scheduled coverage automation into two workflows to resolve Claude Code action incompatibility with schedule events
-* **11-Agent Development Integration:** Workflows designed to support the strategic codebase manager orchestration model with specialized agent coordination
+* **12-Agent Development Integration:** Workflows designed to support the strategic codebase manager orchestration model with specialized agent coordination
 * **Agent-Triggered Automation:** Coverage epic automation specifically designed for TestEngineer agent execution with comprehensive environment preparation
 * **WorkflowEngineer Integration:** CI/CD pipeline architecture that supports the WorkflowEngineer agent's automation and optimization responsibilities
 

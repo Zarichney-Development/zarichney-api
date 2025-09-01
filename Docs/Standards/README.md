@@ -1,7 +1,7 @@
 # README: /Standards Directory
 
 **Version:** 1.4
-**Last Updated:** 2025-08-30
+**Last Updated:** 2025-09-01
 **Parent:** `../README.md`
 
 ## 1. Purpose & Importance
@@ -15,7 +15,7 @@ The primary importance of these standards is to ensure:
 * **Testability:** Ensuring that code is designed and written in a way that facilitates comprehensive automated testing.
 * **Effective Collaboration:** Providing a common understanding and set of expectations for all team members, including human developers and AI coding assistants.
 
-**Adherence to these standards is non-negotiable for all contributions to this project.** They are foundational to our development process and critical for achieving our quality goals, especially in the **11-agent orchestrated development workflow**. These standards are systematically loaded by specialized agents through **documentation grounding protocols**, ensuring consistent application without requiring manual oversight.
+**Adherence to these standards is non-negotiable for all contributions to this project.** They are foundational to our development process and critical for achieving our quality goals, especially in the **12-agent orchestrated development workflow**. These standards are systematically loaded by specialized agents through **documentation grounding protocols**, ensuring consistent application without requiring manual oversight.
 
 ## 2. Overview of Standards Documents
 
@@ -44,14 +44,14 @@ Below is a list of the key standards documents within this directory. Each docum
 
 These standards are intended for:
 * **Software Developers:** All human engineers contributing to the project.
-* **9-Agent Development Team:** Specialized AI agents (CodeChanger, TestEngineer, SecurityAuditor, etc.) that systematically load these standards through documentation grounding protocols before performing any work.
+* **12-Agent Development Team:** Specialized AI agents (CodeChanger, TestEngineer, SecurityAuditor, etc.) that systematically load these standards through documentation grounding protocols before performing any work.
 * **Strategic Codebase Manager (Claude):** For orchestrating multi-agent coordination while ensuring standards compliance across all deliverables.
 * **Architects & Technical Leads:** For defining and upholding the technical vision and quality benchmarks.
 * **QA Engineers / Testers:** For understanding testing expectations and strategies.
 
 **How to Use:**
 * **Onboarding:** New contributors (human or AI configurations) must review relevant standards as part of their onboarding.
-* **Documentation Grounding (Agents):** Each of the 9 specialized agents automatically loads relevant standards documents before performing work, ensuring contextual awareness and compliance.
+* **Documentation Grounding (Agents):** Each of the 11 specialized agents automatically loads relevant standards documents before performing work, ensuring contextual awareness and compliance.
 * **Task Initiation:** Before starting any development task, review the applicable standards (e.g., `CodingStandards.md` and testing guides before coding and writing tests).
 * **During Development:** Continuously refer to these standards to ensure compliance.
 * **Code/Documentation Reviews:** Standards serve as the objective criteria for reviewing contributions.
@@ -88,7 +88,7 @@ By understanding and applying these standards comprehensively, all contributors 
 This standards directory embodies the **self-contained knowledge philosophy** that makes this codebase unique. All knowledge is self-contained within the documentation ecosystem, enabling stateless AI agents to operate effectively without external context.
 
 ### **Agent Integration Architecture**
-The 9 specialized agents in [`/.claude/agents/`](../../.claude/agents/) are configured with comprehensive **documentation grounding protocols** that:
+The 11 specialized agents in [`/.claude/agents/`](../../.claude/agents/) are configured with comprehensive **documentation grounding protocols** that:
 
 1. **Systematic Standards Loading:** Each agent automatically reviews relevant standards documents before performing any work
 2. **Contextual Awareness:** Agents understand their role within the broader development ecosystem through standards integration

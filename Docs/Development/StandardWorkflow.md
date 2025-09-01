@@ -1,6 +1,6 @@
 # ⚠️ DEPRECATED WORKFLOW
 
-**Status:** This workflow has been superseded by the **11-agent orchestration model**.  
+**Status:** This workflow has been superseded by the **12-agent orchestration model**.  
 **Effective Date:** August 2025  
 **Migration Path:** See [CONTRIBUTING.md](../../CONTRIBUTING.md) for current development methods.
 
@@ -8,7 +8,7 @@
 
 ## Why This Workflow Was Deprecated
 
-This manual workflow has been consolidated into the comprehensive 11-agent orchestration model that provides:
+This manual workflow has been consolidated into the comprehensive 12-agent orchestration model that provides:
 - **Automated Standards Compliance:** Documentation grounding protocols ensure all standards are systematically loaded
 - **Enhanced Quality Gates:** ComplianceOfficer partnership provides dual validation before PR creation  
 - **Reduced Overhead:** Working directory communication eliminates telephone-game coordination
@@ -29,7 +29,7 @@ The content below is preserved for reference and understanding of workflow evolu
 # AI Coder Workflow Steps: Standard
 
 **Version:** 1.2 (DEPRECATED)  
-**Last Updated:** 2025-08-31  
+**Last Updated:** 2025-09-01  
 **Status:** DEPRECATED
 
 ## Overview

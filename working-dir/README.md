@@ -1,9 +1,10 @@
 # Working Directory - Inter-Agent Communication Hub
 
-**Purpose**: Shared artifact space for rich communication between the 11-agent development team without overloading the Codebase Manager's context window.
+**Purpose**: Shared artifact space for rich communication between the 12-agent development team without overloading the Codebase Manager's context window.
 
-**Last Updated**: 2025-08-31  
-**Session Management**: All files except this README.md are session-scoped and gitignored
+**Last Updated**: 2025-09-01  
+**Session Management**: All files except this README.md are session-scoped and gitignored  
+**Communication Standards**: Mandatory protocols ensure consistent artifact reporting across all 12 agents
 
 ## Overview
 
@@ -53,19 +54,72 @@ The `/working-dir/` serves as a temporary communication hub where agents create,
 - `standards-review-{timestamp}.md` - Standards compliance analysis
 - `quality-checklist-{issue}.md` - Quality gate tracking
 
+## Mandatory Communication Standards
+
+**CRITICAL FOR ALL AGENTS**: These protocols are MANDATORY, not optional. Every agent must follow these exact standards to ensure effective team coordination and prevent communication gaps.
+
+### Universal Agent Requirements
+
+All agents (analysis, file-editing, and specialized) MUST follow these three mandatory protocols:
+
+#### 1. Pre-Work Artifact Discovery (MANDATORY)
+**BEFORE STARTING ANY TASK**:
+```
+🔍 WORKING DIRECTORY DISCOVERY:
+- Current artifacts reviewed: [list existing files checked]
+- Relevant context found: [artifacts that inform current work]
+- Integration opportunities: [how existing work will be built upon]
+- Potential conflicts: [any overlapping concerns identified]
+```
+
+#### 2. Immediate Artifact Reporting (MANDATORY)
+**WHEN CREATING/UPDATING ANY WORKING DIRECTORY FILE**:
+```
+🗂️ WORKING DIRECTORY ARTIFACT CREATED:
+- Filename: [exact-filename-with-extension]
+- Purpose: [brief description of content and intended consumers]
+- Context for Team: [what other agents need to know about this artifact]
+- Dependencies: [what other artifacts this builds upon or relates to]
+- Next Actions: [any follow-up coordination needed]
+```
+
+#### 3. Context Integration Reporting (REQUIRED)
+**WHEN BUILDING UPON OTHER AGENTS' WORK**:
+```
+🔗 ARTIFACT INTEGRATION:
+- Source artifacts used: [specific files that informed this work]
+- Integration approach: [how existing context was incorporated]
+- Value addition: [what new insights or progress this provides]
+- Handoff preparation: [context prepared for future agents]
+```
+
+### Communication Enforcement Standards
+
+- **No Delayed Reporting**: Agents must report artifacts IMMEDIATELY upon creation, not in batch or summary format
+- **Mandatory Discovery**: Every agent MUST check existing artifacts before starting work - no exceptions
+- **Standard Format Compliance**: All reporting must use exact formats above for consistency
+- **Team Awareness**: Every artifact must include context for other agents to understand relevance
+- **Integration Continuity**: Agents must explicitly report how they build upon existing team work
+
 ## Agent Responsibilities
 
 ### All Agents Must
-- **Report Artifacts**: Inform Codebase Manager when creating/updating working directory files
-- **Review Context**: Check relevant artifacts before starting work
-- **Preserve Context**: Document decisions, rationales, and important discoveries
+- **Execute Pre-Work Discovery**: Check existing artifacts using mandatory discovery format before starting ANY task
+- **Report Artifacts Immediately**: Use exact artifact reporting format when creating/updating working directory files
+- **Integrate Team Context**: Build upon existing artifacts and report integration using standard format
 - **Follow Naming**: Use standard naming conventions for artifact discoverability
+- **Preserve Context**: Document decisions, rationales, and important discoveries
+- **Enable Team Coordination**: Provide context that enables other agents to understand and build upon work
 
 ### Codebase Manager Must
 - **Monitor Directory**: Watch for critical updates that require plan adjustments
 - **Maintain State**: Keep `session-state.md` current with all agent activities
 - **Coordinate Handoffs**: Ensure agents consume relevant artifacts from other team members
 - **Session Cleanup**: Initialize clean working directory for new missions
+- **Verify Communication Compliance**: Confirm each agent reports artifacts using standardized formats
+- **Enforce Discovery**: Ensure agents check existing artifacts before starting work
+- **Track Continuity**: Monitor how artifacts build upon each other across agent engagements
+- **Prevent Communication Gaps**: Intervene when agents miss mandatory reporting requirements
 
 ### ComplianceOfficer Must
 - **Consume All Artifacts**: Review all agent outputs during pre-PR validation
@@ -74,39 +128,77 @@ The `/working-dir/` serves as a temporary communication hub where agents create,
 
 ## Communication Protocol
 
-### Creating Artifacts
+### Mandatory Communication Sequence
+
+**EVERY AGENT MUST FOLLOW THIS EXACT SEQUENCE**:
+
+1. **Pre-Work Discovery** (MANDATORY): Check existing artifacts using discovery format before starting
+2. **Work Execution**: Complete assigned task with full context awareness
+3. **Immediate Artifact Reporting** (MANDATORY): Report any files created using artifact reporting format
+4. **Context Integration Reporting** (REQUIRED): Report how existing work was incorporated
+
+### Standard Artifact Content Structure
 ```markdown
 **Agent**: [Agent Name]
 **Timestamp**: [ISO format]
 **Mission Context**: [Related GitHub issue and subtask]
 **Artifact Type**: [Analysis/Decision/Handoff/etc.]
+**Team Integration**: [Artifacts reviewed and how they informed this work]
 
 ## Summary
 [Brief overview of artifact contents]
 
 ## Context for Other Agents
-[What other agents need to know]
+[What other agents need to know - MANDATORY SECTION]
+
+## Dependencies and Integration
+[What other artifacts this builds upon or relates to]
 
 ## Recommendations
 [Any suggested actions or plan adjustments]
 
+## Next Agent Actions
+[Specific guidance for agents who will consume this artifact]
+
 ## Detailed Content
 [Full analysis, decisions, findings, etc.]
 ```
+
+### Communication Verification Checklist
+
+Before completing any task, agents must verify:
+- [ ] Pre-work discovery completed and reported
+- [ ] All artifacts created are immediately reported using standard format
+- [ ] Context integration documented when building upon existing work
+- [ ] Team awareness information provided for future agents
+- [ ] Next actions clearly identified for coordination
 
 ### Updating Artifacts
 - Always preserve original content
 - Add timestamps for updates
 - Clearly mark new sections
 - Maintain continuity for consuming agents
+- **Report Updates**: Use artifact reporting format when making updates
+- **Document Integration**: Explain how updates build upon or relate to other artifacts
+- **Preserve Team Context**: Ensure updates maintain visibility for other agents
 
 ## Integration with Standards
 
 This working directory system integrates with:
+- **CLAUDE.md Version 1.5**: Communication protocols align with multi-agent orchestration standards
 - **DocumentationStandards.md**: Artifacts follow documentation standards for clarity
 - **TaskManagementStandards.md**: Session tracking aligns with GitHub issue workflow
 - **TestingStandards.md**: Test artifacts support comprehensive coverage planning
 - **CodingStandards.md**: Implementation artifacts preserve architectural decisions
+
+### Multi-Agent Team Coordination Framework
+
+These communication standards enable:
+- **Context Preservation**: Rich context transfer between specialized agents
+- **Team Awareness**: Every agent understands what others have accomplished
+- **Integration Continuity**: Work builds systematically upon previous agent deliverables
+- **Communication Gaps Prevention**: Mandatory reporting ensures no work happens in isolation
+- **Coordination Efficiency**: Codebase Manager can effectively orchestrate with full visibility
 
 ## Privacy and Security
 
@@ -168,4 +260,20 @@ BackendSpecialist should implement the JWT service following these security requ
 
 ---
 
-**Remember**: This working directory enables the 11-agent team to work cohesively while maintaining the self-contained knowledge philosophy of the zarichney-api project. Use it effectively to preserve context and reduce coordination overhead.
+## Critical Success Factors
+
+### For Individual Agents
+- **Mandatory Compliance**: Follow all three communication protocols without exception
+- **Team Awareness**: Always consider how your work enables other agents
+- **Context Building**: Build systematically upon existing team artifacts
+- **Clear Communication**: Use exact standard formats for consistent team understanding
+
+### For Team Coordination
+- **No Communication Gaps**: Every artifact creation is immediately reported
+- **Context Continuity**: Rich context flows seamlessly between agent engagements
+- **Integration Awareness**: All agents understand interdependencies and build accordingly
+- **Efficient Orchestration**: Codebase Manager maintains full visibility for effective coordination
+
+---
+
+**Remember**: This working directory enables the 12-agent team to work cohesively while maintaining the self-contained knowledge philosophy of the zarichney-api project. The mandatory communication protocols ensure no agent works in isolation, enabling effective context preservation and reducing coordination overhead through systematic artifact reporting and discovery.
