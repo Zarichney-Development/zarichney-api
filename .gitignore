@@ -1,3 +1,8 @@
+# Working Directory - Inter-Agent Communication Hub
+# Only README.md is tracked, all other files are session-scoped
+/working-dir/*
+!/working-dir/README.md
+
 # Node.js
 node_modules
 npm-debug.log*

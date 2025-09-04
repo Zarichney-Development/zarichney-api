@@ -1,26 +1,45 @@
 # Zarichney API Documentation Index
 
 **Created:** 2025-07-30  
+**Last Updated:** 2025-09-01  
 **Purpose:** Comprehensive overview of all documentation files in the zarichney-api repository
 
 ## Executive Summary
 
-This index provides a holistic view of the documentation structure for the Zarichney API project. The documentation is organized into several key categories, with a strong focus on AI-assisted development workflows, comprehensive standards, and operational guides.
+This index provides a holistic view of the documentation structure for the Zarichney API project. The documentation is organized into several key categories, with a strong focus on **12-agent orchestrated development workflows**, comprehensive documentation grounding protocols, and operational guides.
 
 ## Documentation Structure Overview
 
 ### 📍 Root Level Documentation
 
-#### **CLAUDE.md** (v1.2)
-- **Purpose:** Operating guide for AI coding assistants (Claude)
-- **Value:** High - Essential context for AI-assisted development
-- **Contents:** Project structure, development workflow, essential commands, GitHub integration, CI/CD architecture
-- **Recent Updates:** Unified test suite, GitHub MCP integration, automated standards compliance, tech debt analysis, security analysis
+#### **CLAUDE.md** (v1.4)
+- **Purpose:** Operating guide for strategic codebase manager (Claude) with 12-agent orchestration
+- **Value:** High - Essential context for coordinated multi-agent development
+- **Contents:** Project structure, agent delegation patterns, essential commands, GitHub integration, CI/CD architecture
+- **Recent Updates:** Documentation grounding protocols, 12-agent specialization model, strategic orchestration architecture
 
 #### **README.md**
 - **Purpose:** Project overview and entry point
 - **Value:** High - First point of contact for all contributors
 - **Contents:** Platform overview, key features, technology stack, quick start guide
+
+### 🤖 /.claude/agents/ Directory - 12-Agent Development Team
+
+#### **Agent Instruction Files with Documentation Grounding Protocols**
+**Purpose:** Specialized agent configurations that embody the self-contained knowledge philosophy
+
+1. **code-changer.md** - Feature implementation, bug fixes, refactoring with comprehensive standards grounding
+2. **test-engineer.md** - Test coverage and quality assurance with epic progression tracking (90% goal by Jan 2026)
+3. **security-auditor.md** - Security analysis, vulnerability assessment, OWASP compliance with defensive focus
+4. **frontend-specialist.md** - Angular 19 development, TypeScript, NgRx with backend coordination protocols
+5. **backend-specialist.md** - .NET 8/C# architecture, ASP.NET Core patterns, Entity Framework expertise
+6. **workflow-engineer.md** - GitHub Actions, CI/CD automation, AI Sentinel integration protocols
+7. **bug-investigator.md** - Root cause analysis, diagnostic reporting, systematic debugging approaches
+8. **documentation-maintainer.md** - Standards compliance, README management, self-documentation philosophy
+9. **architectural-analyst.md** - Design decisions, system architecture, technical debt assessment
+10. **prompt-engineer.md** - AI prompt optimization, Chain-of-Thought enhancement, model coordination
+
+**Key Innovation:** Each agent systematically loads project documentation before working, ensuring contextual awareness and standards alignment without requiring oversight.
 
 ### 📂 /Docs Directory Structure
 
@@ -36,20 +55,21 @@ This index provides a holistic view of the documentation structure for the Zaric
 7. **DiagrammingStandards.md** - Mermaid diagram guidelines
 8. **TaskManagementStandards.md** - Git workflow, branching, commit standards
 
-#### 🔧 **/Docs/Development/** - AI-Assisted Development Workflows
-**Purpose:** Defines structured workflows for AI-assisted development
+#### 🔧 **/Docs/Development/** - 12-Agent Orchestrated Development Workflows
+**Purpose:** Defines strategic orchestration workflows for coordinated multi-agent development
 
-1. **README.md** - Development workflow overview with comprehensive Mermaid diagram
-2. **CodingPlannerAssistant.md** - AI planning assistant prompt and workflow
-3. **StandardWorkflow.md** - Step-by-step workflow for standard development tasks
-4. **ComplexTaskWorkflow.md** - TDD/Plan-first approach for complex tasks
-5. **TestCoverageWorkflow.md** - Workflow for test coverage enhancement
-6. **LocalSetup.md** - Local development environment setup
-7. **LoggingGuide.md** - Enhanced logging system configuration
-8. **TestArtifactsGuide.md** - CI/CD test artifacts and coverage reports
-9. **TestingCurrentState.md** - Current testing framework status
-10. **TestingFrameworkEnhancements.md** - Testing improvements roadmap
-11. **ShortTermRoadmap.md** - Planned enhancements and deferred items
+1. **README.md** - Development workflow overview with comprehensive orchestration diagram
+2. **CodebaseManagerEvolution.md** - **ARCHITECTURAL FOUNDATION** - Evolution from executor to orchestrator model
+3. **CodingPlannerAssistant.md** - Legacy workflow documentation (superseded by orchestration model)
+4. **StandardWorkflow.md** - Legacy workflow documentation (superseded by agent specialization)
+5. **ComplexTaskWorkflow.md** - Legacy workflow documentation (superseded by agent specialization)
+6. **TestCoverageWorkflow.md** - Legacy workflow documentation (superseded by TestEngineer agent)
+7. **LocalSetup.md** - Local development environment setup
+8. **LoggingGuide.md** - Enhanced logging system configuration
+9. **TestArtifactsGuide.md** - CI/CD test artifacts and coverage reports
+10. **TestingCurrentState.md** - Current testing framework status
+11. **TestingFrameworkEnhancements.md** - Testing improvements roadmap
+12. **ShortTermRoadmap.md** - Planned enhancements and deferred items
 
 #### 📝 **/Docs/Templates/** - Reusable Document Templates
 **Purpose:** Ensures uniformity in generated artifacts
