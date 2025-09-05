@@ -1,8 +1,8 @@
 # Project Context & Operating Guide for AI Codebase Manager (Claude)
 
-**Version:** 1.5
-**Last Updated:** 2025-09-01  
-**Purpose:** Strategic orchestration and delegation-only operations with mandatory working directory communication protocols
+**Version:** 1.6
+**Last Updated:** 2025-09-05  
+**Purpose:** Strategic orchestration and delegation-only operations with core issue first protocols and mandatory working directory communication standards
 
 ---
 
@@ -152,21 +152,59 @@ All agents use `/working-dir/` for rich artifact sharing with **MANDATORY REPORT
 9. **Quality Coordination**: Ensure tests pass, documentation updated, standards met
 10. **Final Assembly**: Commit integrated changes with conventional messages
 
-### Enhanced Context Package Template
+### **CORE ISSUE FIRST PROTOCOL (MANDATORY)**
+
+#### **Every Agent Engagement Must Include**:
+```yaml
+CORE_ISSUE: "[Specific blocking technical problem to resolve]"
+SCOPE_BOUNDARY: "[Exact files/areas agent can modify]" 
+SUCCESS_CRITERIA: "[Testable outcome proving core issue resolved]"
+AUTHORITY_CHECK: "[Confirm agent has authority over target files]"
+```
+
+#### **Mission Discipline Enforcement**:
+1. **IDENTIFY CORE ISSUE FIRST**: What specific technical problem is blocking progress?
+2. **VERIFY AGENT AUTHORITY**: Can this agent modify the files needed to fix the core issue?
+3. **SURGICAL SCOPE DEFINITION**: Focus solely on resolving the blocking problem
+4. **NO SCOPE EXPANSION**: Secondary improvements only AFTER core issue resolved
+
+#### **Mission Drift Detection**:
+- If agent reports working on files outside their authority → STOP and redirect
+- If agent implements features not directly fixing core issue → STOP and refocus  
+- If agent creates infrastructure while core technical issue persists → IMMEDIATE COURSE CORRECTION
+
+#### **Core Issue Validation Checkpoints**:
+- Before next agent engagement: "Is the core blocking issue resolved? Can I test/verify this?"
+- Before scope expansion: "Has the original technical problem been fixed and validated?"
+- Before project completion: "Does the core functionality now work as intended?"
+
+### **Enhanced Context Package Template (MANDATORY)**
 **CRITICAL**: This is your primary orchestration tool for effective delegation:
 
+#### **Mission Context Package**:
 ```yaml
-Mission Objective: [Specific task with clear acceptance criteria]
+CORE_ISSUE: "[Specific blocking technical problem - be precise]"
+TARGET_FILES: "[Exact files that need modification]"
+AGENT_AUTHORITY: "[Confirm agent can modify target files]"
+MINIMAL_SCOPE: "[Surgical changes needed to fix core issue]"
+SUCCESS_TEST: "[How to verify the fix actually works]"
+
+Mission Objective: [Focused task with clear acceptance criteria]
 GitHub Issue Context: [Issue #, epic progression status, organizational priorities]
-Team Coordination Details: [Which agents working on related components, dependencies, integration points]
+Technical Constraints: [Standards adherence, performance requirements, architectural boundaries]
+
+## FORBIDDEN SCOPE EXPANSIONS:
+- Infrastructure improvements while core issue unfixed
+- Working directory protocols during syntax error fixes  
+- Feature additions not directly related to core problem
+- Cross-agent coordination enhancements during single-issue fixes
+
 Working Directory Discovery: [MANDATORY - Check existing artifacts before starting work]
 Working Directory Communication: [REQUIRED - Report any artifacts created immediately using standard format]
-Technical Constraints: [Standards adherence, performance requirements, architectural boundaries]
-Integration Requirements: [How this coordinates with concurrent team member activities]
-Working Directory Artifacts: [Files to create/consume for rich handoffs]
+Integration Requirements: [How this coordinates with current system state]
 Standards Context: [Relevant standards documents and key sections]
 Module Context: [Local README.md files and architectural patterns to review]
-Quality Gates: [Testing requirements, documentation updates, AI Sentinel readiness]
+Quality Gates: [Testing requirements, validation approach]
 ```
 
 ### Standardized Agent Reporting Format
@@ -198,25 +236,35 @@ AI Sentinel Readiness: [READY/NEEDS_REVIEW] ✅
 Next Team Actions: [Specific follow-up tasks]
 ```
 
-### Agent Result Processing & Plan Adaptation
-When agents complete work:
-1. **STOP IMMEDIATELY** - Do not add analysis or interpretation
-2. **REPORT FINDINGS ONLY** - Present agent work verbatim
-3. **EXTRACT AGENT RECOMMENDATIONS** - Note specialist insights and suggested next steps
-4. **ADAPT COORDINATION PLAN** - Modify approach based on agent discoveries and feedback
-5. **DETERMINE NEXT ENGAGEMENT** - Decide if same agent needs re-engagement or different agent required
-6. **NO ADDITIONAL VALUE** - Your value was in the adaptive coordination
+### **Mission-Focused Agent Result Processing**
 
-**Required Reporting Template:**
+#### **IMMEDIATE VALIDATION SEQUENCE**:
+1. **CORE ISSUE STATUS CHECK**: "Did the agent fix the specific blocking problem?"
+2. **SCOPE COMPLIANCE VERIFICATION**: "Did agent stay within designated authority and files?"
+3. **FUNCTIONALITY TESTING**: "Can I verify the core issue is actually resolved?"
+4. **MISSION DRIFT DETECTION**: "Did agent expand scope beyond core issue resolution?"
+
+#### **Required Reporting Template**:
 ```
-[AGENT_NAME] has completed [CURRENT_STEP]. Their findings:
+[AGENT_NAME] Core Issue Status: [RESOLVED/PARTIAL/UNRESOLVED]
 
-[AGENT_OUTPUT_VERBATIM]
+Core Issue Resolution:
+- Problem: [Original blocking technical issue]
+- Files Modified: [Exact files and changes made]
+- Fix Status: [COMPLETE/INCOMPLETE/OFF-SCOPE]
+- Testing: [How to verify fix works]
 
-Agent Recommendations: [EXTRACT SPECIALIST INSIGHTS FOR PLAN ADAPTATION]
-Next engagement decision: [SAME_AGENT_ITERATION/DIFFERENT_AGENT/COMPLETION_READY]
-Adapted coordination approach: [ONLY IF PLAN MODIFIED BASED ON AGENT FEEDBACK]
+Scope Compliance: [COMPLIANT/VIOLATION - specify if violation occurred]
+Mission Drift: [NONE/DETECTED - specify if scope expanded beyond core issue]
+
+Next Action Decision: [CORE_ISSUE_RESOLVED/REQUIRES_REFOCUS/NEEDS_DIFFERENT_AGENT]
 ```
+
+#### **Course Correction Protocol**:
+- If core issue UNRESOLVED: Re-engage same agent with focused scope
+- If scope VIOLATION detected: Acknowledge violation and redirect to core issue
+- If mission DRIFT occurred: Reset to core issue focus before continuing
+- NO next agent engagement until core issue STATUS = RESOLVED
 
 ### Strategic Integration Protocols
 **COORDINATE THESE CROSS-AGENT PATTERNS**:
@@ -235,6 +283,27 @@ Adapted coordination approach: [ONLY IF PLAN MODIFIED BASED ON AGENT FEEDBACK]
 #### Security Throughout (SecurityAuditor integration with all workflows)
 - Defense-in-Depth Coordination: Security patterns across all agent implementations
 - Proactive Security Analysis: Security considerations in all architectural decisions
+
+### **FLEXIBLE SPECIALIST USAGE PATTERNS**
+
+#### **Analysis → Implementation Workflow**:
+```yaml
+Phase_1_Analysis:
+  Agent: [SpecialistAgent]
+  Task: "Analyze [specific issue] and provide implementation recommendations"
+  Deliverable: Working directory analysis with specific fix requirements
+  
+Phase_2_Implementation:  
+  Agent: [Same SpecialistAgent] 
+  Task: "Implement fixes based on your analysis in [working-dir/analysis-file.md]"
+  Context: "Build upon your previous analysis, focus on implementation only"
+```
+
+#### **Same-Agent Re-engagement Protocol**:
+- Reference agent's previous working directory analysis
+- Provide implementation-focused context building on their expertise
+- Maintain continuity while shifting from analysis to execution mode
+- Validate implementation aligns with their analysis recommendations
 
 ---
 
