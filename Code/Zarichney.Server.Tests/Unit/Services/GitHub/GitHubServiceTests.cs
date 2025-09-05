@@ -122,7 +122,7 @@ public class GitHubServiceTests : IDisposable
         operation.Directory.Should().BeEmpty("directory should be empty by default");
         operation.CommitMessage.Should().BeEmpty("commit message should be empty by default");
         operation.Content.Should().BeEmpty("content should be empty by default");
-        Assert.NotNull(operation.CompletionSource);
+        operation.CompletionSource.Should().NotBeNull();
     }
 
     [Fact]
