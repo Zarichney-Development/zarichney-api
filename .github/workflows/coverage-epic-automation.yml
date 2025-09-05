@@ -648,6 +648,9 @@ jobs:
           prompt: ${{ steps.load-coverage-prompt.outputs.prompt }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Enable non-interactive execution of required tools for CI
+          claude_args: |
+            --allowedTools "Edit,Read,Write,MultiEdit,Bash(./Scripts/*),Bash(dotnet build:*),Bash(dotnet test:*),Bash(dotnet restore:*),Bash(dotnet format:*),Bash(ls:*),Bash(pwd:*),Bash(find:*),Bash(grep:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(jq:*)"
 
       - name: "Handle Coverage Epic AI Failure"
         if: failure() && steps.claude-coverage.outcome == 'failure'
@@ -680,6 +683,15 @@ jobs:
           else
             echo "ai_execution_status=not_executed" >> $GITHUB_OUTPUT
             echo "coverage_improvements=AI agent was not executed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: "Clean AI Transcript Artifacts"
+        if: always()
+        run: |
+          # Remove any AI transcript files that should not be committed
+          if [ -f "output.txt" ]; then
+            echo "🧹 Removing AI transcript file: output.txt"
+            rm -f output.txt || true
           fi
       
       # ========================================
@@ -774,7 +786,8 @@ jobs:
       
       - name: "Commit Coverage Improvements"
         id: commit-changes
-        if: steps.post-validation.outputs.validation_passed == 'true'
+        # Only commit if validation passed AND AI execution completed successfully
+        if: steps.post-validation.outputs.validation_passed == 'true' && steps.ai-execution.outputs.ai_execution_status == 'claude_success'
         run: |
           echo "💾 Committing coverage improvements"
           
