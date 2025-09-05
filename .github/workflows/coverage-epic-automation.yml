@@ -472,9 +472,7 @@ jobs:
           if [ "$PR_CONTEXT_EXISTS" = "true" ]; then
             # Create a temporary file to safely handle complex JSON content
             TEMP_PR_FILE=$(mktemp)
-            cat > "$TEMP_PR_FILE" << 'JSON_CONTENT_EOF'
-            ${{ steps.pending-work-analysis.outputs.pending_pr_context }}
-            JSON_CONTENT_EOF
+            echo '${{ steps.pending-work-analysis.outputs.pending_pr_context }}' > "$TEMP_PR_FILE"
             
             echo "pending_pr_context<<EOF" >> $GITHUB_OUTPUT
             # Use cat to safely output the JSON content
