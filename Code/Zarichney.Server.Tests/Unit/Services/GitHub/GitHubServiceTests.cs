@@ -209,7 +209,7 @@ public class GitHubServiceTests : IDisposable
             var storeTask = _sut.StoreAudioAndTranscriptAsync(audioFileName, audioData, transcriptFileName, transcriptText);
             _cancellationTokenSource.CancelAfter(TimeSpan.FromMilliseconds(100));
             
-            await Assert.ThrowsAnyAsync<Exception>(() => storeTask);
+            await storeTask.Should().ThrowAsync<Exception>();
         }
         finally
         {
