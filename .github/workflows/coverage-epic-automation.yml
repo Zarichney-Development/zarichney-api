@@ -467,7 +467,9 @@ jobs:
           echo "✅ Pending work basic context passed"
           
           # Handle potentially problematic JSON content safely
-          if [ -n "${{ steps.pending-work-analysis.outputs.pending_pr_context }}" ]; then
+          # Use GitHub Actions conditional to avoid bash parsing issues
+          PR_CONTEXT_EXISTS="${{ steps.pending-work-analysis.outputs.pending_pr_context != '' && 'true' || 'false' }}"
+          if [ "$PR_CONTEXT_EXISTS" = "true" ]; then
             # Create a temporary file to safely handle complex JSON content
             TEMP_PR_FILE=$(mktemp)
             cat > "$TEMP_PR_FILE" << 'JSON_CONTENT_EOF'
@@ -871,12 +873,8 @@ jobs:
           
           ### AI Analysis Insights
           **Enhanced Analysis via GitHub MCP:**
-          $(if [ -n \"${{ steps.mcp-pr-analysis.outputs.mcp_analysis_result }}\" ] && [ \"${{ steps.mcp-pr-analysis.outputs.mcp_analysis_result }}\" != \"{\\\"error\\\": \\\"MCP analysis failed\\\"}\" ]; then
-            echo \"✅ MCP analysis completed - See additional insights below\"
-            echo \"📊 Analysis: ${{ steps.mcp-pr-analysis.outputs.mcp_analysis_result }}\"
-          else
-            echo \"⚠️ MCP analysis unavailable - Standard pipeline analysis used\"
-          fi)
+          ${{ steps.mcp-pr-analysis.outputs.mcp_analysis_result != '' && steps.mcp-pr-analysis.outputs.mcp_analysis_result != '{"error": "MCP analysis failed"}' && '✅ MCP analysis completed - See additional insights below' || '⚠️ MCP analysis unavailable - Standard pipeline analysis used' }}
+          ${{ steps.mcp-pr-analysis.outputs.mcp_analysis_result != '' && steps.mcp-pr-analysis.outputs.mcp_analysis_result != '{"error": "MCP analysis failed"}' && format('📊 Analysis: {0}', steps.mcp-pr-analysis.outputs.mcp_analysis_result) || '' }}
           
           ---
           
