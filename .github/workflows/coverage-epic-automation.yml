@@ -7,12 +7,6 @@ name: "Coverage Epic Automation"
 # Target: 90% backend test coverage by January 2026
 
 on:
-  push:
-    branches: [main]
-    paths:
-      # Only trigger on push if this workflow file itself is modified
-      # This prevents the workflow from running on every push
-      - '.github/workflows/coverage-epic-automation.yml'
   workflow_dispatch:
     inputs:
       skip_epic_update:
@@ -566,23 +560,18 @@ jobs:
         if: steps.check-existing-comment.outputs.skip_analysis != 'true' && github.event.inputs.skip_ai_execution != 'true'
         id: load-coverage-prompt
         run: |
-          # Read the markdown template
-          PROMPT_TEMPLATE=$(cat .github/prompts/coverage-epic-agent.md)
-          
-          # Replace basic placeholders
-          PROMPT="${PROMPT_TEMPLATE//\{\{CURRENT_COVERAGE\}\}/${{ steps.task-context.outputs.current_coverage }}%}"
-          PROMPT="${PROMPT//\{\{TASK_IDENTIFIER\}\}/${{ steps.task-context.outputs.task_identifier }}}"
-          PROMPT="${PROMPT//\{\{EPIC_ISSUE_ID\}\}/${{ steps.task-context.outputs.epic_issue_id }}}"
-          PROMPT="${PROMPT//\{\{TASK_BRANCH\}\}/${{ steps.task-context.outputs.task_branch }}}"
-          
-          # Add comprehensive coverage context section directly to GITHUB_OUTPUT using safe heredoc approach
-          # This avoids bash variable assignment with JSON content that contains parentheses
+          # Direct file-based approach - completely bypass bash variable processing
+          # This eliminates the bash syntax error caused by JSON content with parentheses
           echo "prompt<<PROMPT_EOF" >> $GITHUB_OUTPUT
+          
+          # Write prompt template with placeholder replacement directly to output
           cat .github/prompts/coverage-epic-agent.md | sed \
             -e "s/{{CURRENT_COVERAGE}}/${{ steps.task-context.outputs.current_coverage }}%/g" \
             -e "s/{{TASK_IDENTIFIER}}/${{ steps.task-context.outputs.task_identifier }}/g" \
             -e "s/{{EPIC_ISSUE_ID}}/${{ steps.task-context.outputs.epic_issue_id }}/g" \
             -e "s/{{TASK_BRANCH}}/${{ steps.task-context.outputs.task_branch }}/g" >> $GITHUB_OUTPUT
+          
+          # Add comprehensive coverage context section directly
           echo "" >> $GITHUB_OUTPUT
           echo "## 📊 COMPREHENSIVE COVERAGE ANALYSIS FOR AI STRATEGIC DECISION-MAKING" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
@@ -601,7 +590,13 @@ jobs:
           echo "" >> $GITHUB_OUTPUT
           echo "**Pending PR Context:**" >> $GITHUB_OUTPUT
           echo "\`\`\`json" >> $GITHUB_OUTPUT
-          echo '${{ steps.task-context.outputs.pending_pr_context }}' >> $GITHUB_OUTPUT
+          
+          # Use safe temporary file approach for problematic JSON content
+          TEMP_PR_FILE=$(mktemp)
+          echo '${{ steps.task-context.outputs.pending_pr_context }}' > "$TEMP_PR_FILE"
+          cat "$TEMP_PR_FILE" >> $GITHUB_OUTPUT
+          rm -f "$TEMP_PR_FILE"
+          
           echo "\`\`\`" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "**Enhanced MCP Analysis:**" >> $GITHUB_OUTPUT
