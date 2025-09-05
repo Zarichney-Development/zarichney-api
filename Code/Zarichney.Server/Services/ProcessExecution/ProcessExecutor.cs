@@ -14,6 +14,9 @@ public class ProcessExecutor(ILogger<ProcessExecutor> logger) : IProcessExecutor
     int timeoutMs = 5000,
     CancellationToken cancellationToken = default)
   {
+    // Check for pre-cancelled token to ensure immediate cancellation behavior
+    cancellationToken.ThrowIfCancellationRequested();
+
     try
     {
       var processInfo = new ProcessStartInfo
