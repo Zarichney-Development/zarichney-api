@@ -564,56 +564,54 @@ jobs:
           PROMPT="${PROMPT//\{\{EPIC_ISSUE_ID\}\}/${{ steps.task-context.outputs.epic_issue_id }}}"
           PROMPT="${PROMPT//\{\{TASK_BRANCH\}\}/${{ steps.task-context.outputs.task_branch }}}"
           
-          # Add comprehensive coverage context section
-          COVERAGE_CONTEXT_SECTION="
-          
-          ## 📊 COMPREHENSIVE COVERAGE ANALYSIS FOR AI STRATEGIC DECISION-MAKING
-          
-          ### **Current Coverage Data by Area**
-          \`\`\`
-          ${{ steps.task-context.outputs.coverage_by_area }}
-          \`\`\`
-          
-          ### **Detailed Coverage Summary** 
-          \`\`\`
-          ${{ steps.task-context.outputs.coverage_summary }}
-          \`\`\`
-          
-          ### **Pending Work Analysis**
-          **Areas Currently Being Worked On:** ${{ steps.task-context.outputs.pending_target_areas }}
-          
-          **Pending PR Context:**
-          \`\`\`json
-          ${{ steps.task-context.outputs.pending_pr_context }}
-          \`\`\`
-          
-          **Enhanced MCP Analysis:**
-          \`\`\`
-          ${{ steps.task-context.outputs.mcp_pending_analysis }}
-          \`\`\`
-          
-          ### **Manual Target Override**
-          ${{ steps.task-context.outputs.manual_target_override && format('**MANUAL OVERRIDE SPECIFIED:** {0}', steps.task-context.outputs.manual_target_override) || '**NO MANUAL OVERRIDE** - AI has full strategic decision-making authority' }}
-          
-          ## 🎯 YOUR STRATEGIC MISSION: INTELLIGENT TARGET AREA SELECTION
-          
-          **You must now analyze the above data and:**
-          1. **Select the optimal target area** based on coverage gaps and priority
-          2. **Avoid areas with pending work** to prevent overlap and conflicts  
-          3. **Consider coverage phase alignment** and strategic value
-          4. **Choose 1-3 related files** in your selected area for focused implementation
-          5. **Justify your selection** in your implementation notes
-          
-          **CRITICAL:** You are NOT constrained to any predetermined area. Use your intelligence to make the best strategic decision for maximum coverage impact.
-          "
-          
-          # Inject the comprehensive context into the prompt
-          PROMPT="${PROMPT}${COVERAGE_CONTEXT_SECTION}"
-          
-          # Output for use in Claude action
-          echo "prompt<<EOF" >> $GITHUB_OUTPUT
-          echo "$PROMPT" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          # Add comprehensive coverage context section directly to GITHUB_OUTPUT using safe heredoc approach
+          # This avoids bash variable assignment with JSON content that contains parentheses
+          echo "prompt<<PROMPT_EOF" >> $GITHUB_OUTPUT
+          cat .github/prompts/coverage-epic-agent.md | sed \
+            -e "s/{{CURRENT_COVERAGE}}/${{ steps.task-context.outputs.current_coverage }}%/g" \
+            -e "s/{{TASK_IDENTIFIER}}/${{ steps.task-context.outputs.task_identifier }}/g" \
+            -e "s/{{EPIC_ISSUE_ID}}/${{ steps.task-context.outputs.epic_issue_id }}/g" \
+            -e "s/{{TASK_BRANCH}}/${{ steps.task-context.outputs.task_branch }}/g" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "## 📊 COMPREHENSIVE COVERAGE ANALYSIS FOR AI STRATEGIC DECISION-MAKING" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "### **Current Coverage Data by Area**" >> $GITHUB_OUTPUT
+          echo "\`\`\`" >> $GITHUB_OUTPUT
+          echo "${{ steps.task-context.outputs.coverage_by_area }}" >> $GITHUB_OUTPUT
+          echo "\`\`\`" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "### **Detailed Coverage Summary**" >> $GITHUB_OUTPUT
+          echo "\`\`\`" >> $GITHUB_OUTPUT
+          echo "${{ steps.task-context.outputs.coverage_summary }}" >> $GITHUB_OUTPUT
+          echo "\`\`\`" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "### **Pending Work Analysis**" >> $GITHUB_OUTPUT
+          echo "**Areas Currently Being Worked On:** ${{ steps.task-context.outputs.pending_target_areas }}" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "**Pending PR Context:**" >> $GITHUB_OUTPUT
+          echo "\`\`\`json" >> $GITHUB_OUTPUT
+          echo '${{ steps.task-context.outputs.pending_pr_context }}' >> $GITHUB_OUTPUT
+          echo "\`\`\`" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "**Enhanced MCP Analysis:**" >> $GITHUB_OUTPUT
+          echo "\`\`\`" >> $GITHUB_OUTPUT
+          echo "${{ steps.task-context.outputs.mcp_pending_analysis }}" >> $GITHUB_OUTPUT
+          echo "\`\`\`" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "### **Manual Target Override**" >> $GITHUB_OUTPUT
+          echo '${{ steps.task-context.outputs.manual_target_override && format("**MANUAL OVERRIDE SPECIFIED:** {0}", steps.task-context.outputs.manual_target_override) || "**NO MANUAL OVERRIDE** - AI has full strategic decision-making authority" }}' >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "## 🎯 YOUR STRATEGIC MISSION: INTELLIGENT TARGET AREA SELECTION" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "**You must now analyze the above data and:**" >> $GITHUB_OUTPUT
+          echo "1. **Select the optimal target area** based on coverage gaps and priority" >> $GITHUB_OUTPUT
+          echo "2. **Avoid areas with pending work** to prevent overlap and conflicts" >> $GITHUB_OUTPUT
+          echo "3. **Consider coverage phase alignment** and strategic value" >> $GITHUB_OUTPUT
+          echo "4. **Choose 1-3 related files** in your selected area for focused implementation" >> $GITHUB_OUTPUT
+          echo "5. **Justify your selection** in your implementation notes" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "**CRITICAL:** You are NOT constrained to any predetermined area. Use your intelligence to make the best strategic decision for maximum coverage impact." >> $GITHUB_OUTPUT
+          echo "PROMPT_EOF" >> $GITHUB_OUTPUT
 
       - name: "Execute Coverage Epic AI Agent"
         if: steps.check-existing-comment.outputs.skip_analysis != 'true'
