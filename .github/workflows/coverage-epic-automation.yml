@@ -898,7 +898,8 @@ jobs:
           ### AI Analysis Insights
           **Enhanced Analysis via GitHub MCP:**
           ${{ steps.mcp-pr-analysis.outputs.mcp_analysis_result != '' && steps.mcp-pr-analysis.outputs.mcp_analysis_result != '{"error": "MCP analysis failed"}' && '✅ MCP analysis completed - See additional insights below' || '⚠️ MCP analysis unavailable - Standard pipeline analysis used' }}
-          ${{ steps.mcp-pr-analysis.outputs.mcp_analysis_result != '' && steps.mcp-pr-analysis.outputs.mcp_analysis_result != '{"error": "MCP analysis failed"}' && format('📊 Analysis: {0}', steps.mcp-pr-analysis.outputs.mcp_analysis_result) || '' }}
+          
+          ${{ steps.mcp-pr-analysis.outputs.mcp_analysis_result != '' && steps.mcp-pr-analysis.outputs.mcp_analysis_result != '{"error": "MCP analysis failed"}' && '📊 **Analysis Summary:** Enhanced PR validation completed with GitHub MCP integration' || '' }}
           
           ---
           
@@ -978,7 +979,7 @@ jobs:
           echo "  Post-Validation: ${{ steps.post-validation.outputs.validation_passed || 'false' }}"
           echo "  Changes Committed: ${{ steps.commit-changes.outputs.changes_committed || 'false' }}"
           echo "  PR Exists Check: ${{ steps.check-existing-pr.outputs.pr_exists || 'not_checked' }}"
-          echo "  MCP Analysis: $([ -n '${{ steps.mcp-pr-analysis.outputs.mcp_analysis_result }}' ] && echo 'completed' || echo 'not_available')"
+          echo "  MCP Analysis: ${{ steps.mcp-pr-analysis.outputs.mcp_analysis_result != '' && 'completed' || 'not_available' }}"
           echo "  PR Created: ${{ steps.create-pr.outputs.pr_created || 'false' }}"
           echo ""
           if [ "${{ steps.create-pr.outputs.pr_created }}" = "true" ]; then
