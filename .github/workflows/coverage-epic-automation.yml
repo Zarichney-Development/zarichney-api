@@ -330,7 +330,11 @@ jobs:
             PENDING_AREAS=$(echo "$EPIC_PRS" | jq -r '.headRefName' | grep -oE "(services|controllers|repositories|utilities)" | sort -u | tr '\n' ',' | sed 's/,$//')
             
             echo "pending_pr_context<<EOF" >> $GITHUB_OUTPUT
-            echo "$EPIC_PRS" >> $GITHUB_OUTPUT
+            if [ -n "$EPIC_PRS" ]; then
+              echo "$EPIC_PRS" | jq -c '.'
+            else
+              echo ""
+            fi >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
             
             echo "pending_target_areas=$PENDING_AREAS" >> $GITHUB_OUTPUT
@@ -438,8 +442,24 @@ jobs:
           fi
           
           # Pass pending work context with safe JSON handling
-          PENDING_TARGET_AREAS="${{ steps.pending-work-analysis.outputs.pending_target_areas }}"
-          MANUAL_TARGET_OVERRIDE="${{ steps.coverage-analysis.outputs.manual_target_override }}"
+          # Safe JSON variable assignment using temporary approach
+          TEMP_TARGET_FILE=$(mktemp)
+          echo '${{ steps.pending-work-analysis.outputs.pending_target_areas }}' > "$TEMP_TARGET_FILE"
+          if [ -s "$TEMP_TARGET_FILE" ]; then
+            PENDING_TARGET_AREAS=$(cat "$TEMP_TARGET_FILE" | jq -c '.' 2>/dev/null || echo "")
+          else
+            PENDING_TARGET_AREAS=""
+          fi
+          rm -f "$TEMP_TARGET_FILE"
+          
+          TEMP_OVERRIDE_FILE=$(mktemp)
+          echo '${{ steps.coverage-analysis.outputs.manual_target_override }}' > "$TEMP_OVERRIDE_FILE"
+          if [ -s "$TEMP_OVERRIDE_FILE" ]; then
+            MANUAL_TARGET_OVERRIDE=$(cat "$TEMP_OVERRIDE_FILE" | jq -c '.' 2>/dev/null || echo "")
+          else
+            MANUAL_TARGET_OVERRIDE=""
+          fi
+          rm -f "$TEMP_OVERRIDE_FILE"
           
           echo "pending_target_areas=${PENDING_TARGET_AREAS}" >> $GITHUB_OUTPUT
           echo "manual_target_override=${MANUAL_TARGET_OVERRIDE}" >> $GITHUB_OUTPUT
@@ -447,11 +467,10 @@ jobs:
           echo "✅ Pending work basic context passed"
           
           # Handle potentially problematic JSON content safely
-          PENDING_PR_CONTEXT="${{ steps.pending-work-analysis.outputs.pending_pr_context }}"
-          if [ -n "$PENDING_PR_CONTEXT" ]; then
+          if [ -n "${{ steps.pending-work-analysis.outputs.pending_pr_context }}" ]; then
             # Create a temporary file to safely handle complex JSON content
             TEMP_PR_FILE=$(mktemp)
-            echo "$PENDING_PR_CONTEXT" > "$TEMP_PR_FILE"
+            echo "${{ steps.pending-work-analysis.outputs.pending_pr_context }}" > "$TEMP_PR_FILE"
             
             echo "pending_pr_context<<EOF" >> $GITHUB_OUTPUT
             # Use cat to safely output the JSON content
@@ -468,7 +487,16 @@ jobs:
           fi
           
           # Handle MCP analysis context safely
-          MCP_PENDING_ANALYSIS="${{ steps.pending-work-analysis.outputs.mcp_pending_analysis }}"
+          # Safe JSON variable assignment using temporary approach
+          TEMP_MCP_FILE=$(mktemp)
+          echo '${{ steps.pending-work-analysis.outputs.mcp_pending_analysis }}' > "$TEMP_MCP_FILE"
+          if [ -s "$TEMP_MCP_FILE" ]; then
+            MCP_PENDING_ANALYSIS=$(cat "$TEMP_MCP_FILE" | jq -c '.' 2>/dev/null || echo "")
+          else
+            MCP_PENDING_ANALYSIS=""
+          fi
+          rm -f "$TEMP_MCP_FILE"
+          
           if [ -n "$MCP_PENDING_ANALYSIS" ] && [ "$MCP_PENDING_ANALYSIS" != "MCP analysis unavailable" ]; then
             echo "mcp_pending_analysis<<EOF" >> $GITHUB_OUTPUT
             echo "$MCP_PENDING_ANALYSIS" >> $GITHUB_OUTPUT
