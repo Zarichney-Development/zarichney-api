@@ -71,8 +71,8 @@ runs:
           } else {
             console.log('No target issue available for error reporting - skipping comment creation');
             core.setFailed(isUsageLimitFailure ? 
-              `${{ inputs.analysis-type }} analysis failed due to Claude AI usage limit` : 
-              `${{ inputs.analysis-type }} analysis failed due to technical error`);
+              `${analysisType} analysis failed due to Claude AI usage limit` : 
+              `${analysisType} analysis failed due to technical error`);
             return; // Exit early if no target available
           }
           

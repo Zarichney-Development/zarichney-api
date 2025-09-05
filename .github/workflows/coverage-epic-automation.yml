@@ -206,7 +206,7 @@ jobs:
           echo "📊 Generating comprehensive coverage analysis for AI strategic decision-making"
           
           # Use coverage from process validation
-          CURRENT_COVERAGE="${{ steps.process-validation.outputs.current_coverage }}"
+          CURRENT_COVERAGE="${{ steps.process-validation.outputs.current_coverage }}%"
           echo "current_coverage=$CURRENT_COVERAGE" >> $GITHUB_OUTPUT
           
           # Generate coverage summary by area (for AI analysis)
@@ -410,7 +410,7 @@ jobs:
           PROMPT_TEMPLATE=$(cat .github/prompts/coverage-epic-agent.md)
           
           # Replace basic placeholders
-          PROMPT="${PROMPT_TEMPLATE//\{\{CURRENT_COVERAGE\}\}/${{ steps.task-context.outputs.current_coverage }}}"
+          PROMPT="${PROMPT_TEMPLATE//\{\{CURRENT_COVERAGE\}\}/${{ steps.task-context.outputs.current_coverage }}%}"
           PROMPT="${PROMPT//\{\{TASK_IDENTIFIER\}\}/${{ steps.task-context.outputs.task_identifier }}}"
           PROMPT="${PROMPT//\{\{EPIC_ISSUE_ID\}\}/${{ steps.task-context.outputs.epic_issue_id }}}"
           PROMPT="${PROMPT//\{\{TASK_BRANCH\}\}/${{ steps.task-context.outputs.task_branch }}}"
