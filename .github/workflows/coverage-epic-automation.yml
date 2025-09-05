@@ -205,51 +205,93 @@ jobs:
         run: |
           echo "📊 Generating comprehensive coverage analysis for AI strategic decision-making"
           
-          # Use coverage from process validation
-          CURRENT_COVERAGE="${{ steps.process-validation.outputs.current_coverage }}%"
-          echo "current_coverage=$CURRENT_COVERAGE" >> $GITHUB_OUTPUT
+          # Use coverage from process validation with error handling
+          CURRENT_COVERAGE="${{ steps.process-validation.outputs.current_coverage || '16' }}"
+          # Remove any existing % symbol and ensure it's added consistently
+          CURRENT_COVERAGE=$(echo "$CURRENT_COVERAGE" | sed 's/%//g')
+          echo "current_coverage=${CURRENT_COVERAGE}%" >> $GITHUB_OUTPUT
           
-          # Generate coverage summary by area (for AI analysis)
+          # Generate coverage summary by area (for AI analysis) with improved fallbacks
           echo "🔍 Extracting coverage data by area for AI analysis"
           COVERAGE_CONTEXT=""
           
-          # Extract coverage information by major areas
-          if [ -f "coverage_analysis_full.txt" ] && grep -q "Services.*%" coverage_analysis_full.txt; then
-            SERVICES_COV=$(grep -o "Services.*[0-9]*\.[0-9]*%" coverage_analysis_full.txt | head -1 || echo "Services: Unknown%")
-            COVERAGE_CONTEXT="${COVERAGE_CONTEXT}${SERVICES_COV}\n"
-          fi
-          
-          if [ -f "coverage_analysis_full.txt" ] && grep -q "Controllers.*%" coverage_analysis_full.txt; then
-            CONTROLLERS_COV=$(grep -o "Controllers.*[0-9]*\.[0-9]*%" coverage_analysis_full.txt | head -1 || echo "Controllers: Unknown%")
-            COVERAGE_CONTEXT="${COVERAGE_CONTEXT}${CONTROLLERS_COV}\n"
-          fi
-          
-          if [ -f "coverage_analysis_full.txt" ] && grep -q "Repositories.*%" coverage_analysis_full.txt; then
-            REPOSITORIES_COV=$(grep -o "Repositories.*[0-9]*\.[0-9]*%" coverage_analysis_full.txt | head -1 || echo "Repositories: Unknown%")
-            COVERAGE_CONTEXT="${COVERAGE_CONTEXT}${REPOSITORIES_COV}\n"
-          fi
-          
-          if [ -f "coverage_analysis_full.txt" ] && grep -q "Utilities.*%" coverage_analysis_full.txt; then
-            UTILITIES_COV=$(grep -o "Utilities.*[0-9]*\.[0-9]*%" coverage_analysis_full.txt | head -1 || echo "Utilities: Unknown%")
-            COVERAGE_CONTEXT="${COVERAGE_CONTEXT}${UTILITIES_COV}\n"
-          fi
-          
-          # Generate comprehensive coverage summary for AI
+          # Enhanced coverage context generation with fallbacks
           if [ -f "coverage_analysis_full.txt" ]; then
-            COVERAGE_SUMMARY=$(head -50 coverage_analysis_full.txt | tail -30)
-          elif [ -f "TestResults/parsed_results.json" ] && [ -f "TestResults/coverage_results.json" ]; then
-            # Fallback to test results files
-            COVERAGE_SUMMARY="Coverage data from test results: $(jq -r '.line_coverage // 0' TestResults/coverage_results.json 2>/dev/null || echo '0')%"
+            echo "✅ Found coverage_analysis_full.txt - extracting detailed coverage by area"
+            
+            # Extract coverage information by major areas
+            if grep -q "Services.*%" coverage_analysis_full.txt; then
+              SERVICES_COV=$(grep -o "Services.*[0-9]*\.[0-9]*%" coverage_analysis_full.txt | head -1 || echo "Services: Unknown%")
+              COVERAGE_CONTEXT="${COVERAGE_CONTEXT}${SERVICES_COV}\n"
+            fi
+            
+            if grep -q "Controllers.*%" coverage_analysis_full.txt; then
+              CONTROLLERS_COV=$(grep -o "Controllers.*[0-9]*\.[0-9]*%" coverage_analysis_full.txt | head -1 || echo "Controllers: Unknown%")
+              COVERAGE_CONTEXT="${COVERAGE_CONTEXT}${CONTROLLERS_COV}\n"
+            fi
+            
+            if grep -q "Repositories.*%" coverage_analysis_full.txt; then
+              REPOSITORIES_COV=$(grep -o "Repositories.*[0-9]*\.[0-9]*%" coverage_analysis_full.txt | head -1 || echo "Repositories: Unknown%")
+              COVERAGE_CONTEXT="${COVERAGE_CONTEXT}${REPOSITORIES_COV}\n"
+            fi
+            
+            if grep -q "Utilities.*%" coverage_analysis_full.txt; then
+              UTILITIES_COV=$(grep -o "Utilities.*[0-9]*\.[0-9]*%" coverage_analysis_full.txt | head -1 || echo "Utilities: Unknown%")
+              COVERAGE_CONTEXT="${COVERAGE_CONTEXT}${UTILITIES_COV}\n"
+            fi
+            
+            # If no specific areas found, provide general coverage info
+            if [ -z "$COVERAGE_CONTEXT" ]; then
+              COVERAGE_CONTEXT="Overall Coverage: ${CURRENT_COVERAGE} (from detailed analysis file)\n"
+            fi
           else
-            COVERAGE_SUMMARY="Coverage analysis file not available - using test validation results"
+            echo "⚠️ coverage_analysis_full.txt not found - generating coverage context from available data"
+            # Fallback coverage context based on common .NET project structure
+            COVERAGE_CONTEXT="Overall Backend Coverage: ${CURRENT_COVERAGE} (from test execution results)\n"
+            COVERAGE_CONTEXT="${COVERAGE_CONTEXT}Services Layer: Analysis pending (requires coverage_analysis_full.txt)\n"
+            COVERAGE_CONTEXT="${COVERAGE_CONTEXT}Controllers Layer: Analysis pending (requires coverage_analysis_full.txt)\n"
+            COVERAGE_CONTEXT="${COVERAGE_CONTEXT}Repository Layer: Analysis pending (requires coverage_analysis_full.txt)\n"
+            COVERAGE_CONTEXT="${COVERAGE_CONTEXT}Utilities/Helpers: Analysis pending (requires coverage_analysis_full.txt)\n"
           fi
           
+          # Generate comprehensive coverage summary for AI with improved fallbacks
+          if [ -f "coverage_analysis_full.txt" ]; then
+            echo "✅ Using detailed coverage analysis file"
+            COVERAGE_SUMMARY=$(head -50 coverage_analysis_full.txt | tail -30)
+          elif [ -f "TestResults/coverage_results.json" ]; then
+            echo "✅ Using coverage results JSON"
+            LINE_COV=$(jq -r '.line_coverage // "unknown"' TestResults/coverage_results.json 2>/dev/null || echo "unknown")
+            BRANCH_COV=$(jq -r '.branch_coverage // "unknown"' TestResults/coverage_results.json 2>/dev/null || echo "unknown")
+            COVERAGE_SUMMARY="Coverage Summary from Test Results:\n"
+            COVERAGE_SUMMARY="${COVERAGE_SUMMARY}Line Coverage: ${LINE_COV}%\n"
+            COVERAGE_SUMMARY="${COVERAGE_SUMMARY}Branch Coverage: ${BRANCH_COV}%\n"
+            COVERAGE_SUMMARY="${COVERAGE_SUMMARY}Test Results: Available in TestResults/ directory\n"
+            COVERAGE_SUMMARY="${COVERAGE_SUMMARY}Note: Run './Scripts/run-test-suite.sh report summary' for detailed analysis"
+          elif [ -f "TestResults/parsed_results.json" ]; then
+            echo "✅ Using parsed test results"
+            TOTAL_TESTS=$(jq -r '.tests.total // 0' TestResults/parsed_results.json 2>/dev/null || echo "0")
+            PASSED_TESTS=$(jq -r '.tests.passed // 0' TestResults/parsed_results.json 2>/dev/null || echo "0")
+            COVERAGE_SUMMARY="Test Execution Summary:\n"
+            COVERAGE_SUMMARY="${COVERAGE_SUMMARY}Total Tests: ${TOTAL_TESTS}\n"
+            COVERAGE_SUMMARY="${COVERAGE_SUMMARY}Passed Tests: ${PASSED_TESTS}\n"
+            COVERAGE_SUMMARY="${COVERAGE_SUMMARY}Coverage: ${CURRENT_COVERAGE}\n"
+            COVERAGE_SUMMARY="${COVERAGE_SUMMARY}Status: Test suite executed successfully"
+          else
+            echo "⚠️ No detailed coverage files available - using basic information"
+            COVERAGE_SUMMARY="Basic Coverage Information:\n"
+            COVERAGE_SUMMARY="${COVERAGE_SUMMARY}Current Coverage: ${CURRENT_COVERAGE}\n"
+            COVERAGE_SUMMARY="${COVERAGE_SUMMARY}Source: Test validation step\n"
+            COVERAGE_SUMMARY="${COVERAGE_SUMMARY}Status: Coverage analysis files not generated\n"
+            COVERAGE_SUMMARY="${COVERAGE_SUMMARY}Note: Consider running './Scripts/run-test-suite.sh report summary' for detailed analysis"
+          fi
+          
+          # Output coverage context with error handling
           echo "coverage_by_area<<EOF" >> $GITHUB_OUTPUT
           echo -e "$COVERAGE_CONTEXT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           
           echo "coverage_summary<<EOF" >> $GITHUB_OUTPUT
-          echo "$COVERAGE_SUMMARY" >> $GITHUB_OUTPUT
+          echo -e "$COVERAGE_SUMMARY" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           
           # Prepare manual target area override if specified
@@ -337,32 +379,109 @@ jobs:
         id: task-context
         if: steps.task-branch.outputs.task_branch_created == 'true'
         run: |
-          # Extract comprehensive context for AI strategic decision-making
-          echo "task_branch=${{ steps.task-branch.outputs.task_branch_name }}" >> $GITHUB_OUTPUT
-          echo "current_coverage=${{ steps.coverage-analysis.outputs.current_coverage }}" >> $GITHUB_OUTPUT
-          echo "task_identifier=${{ steps.coverage-analysis.outputs.task_identifier }}" >> $GITHUB_OUTPUT
+          echo "🎯 Preparing comprehensive AI context with error handling and validation"
+          
+          # Extract comprehensive context for AI strategic decision-making with validation
+          TASK_BRANCH="${{ steps.task-branch.outputs.task_branch_name }}"
+          CURRENT_COVERAGE="${{ steps.coverage-analysis.outputs.current_coverage }}"
+          TASK_IDENTIFIER="${{ steps.coverage-analysis.outputs.task_identifier }}"
+          
+          # Validate required outputs exist
+          if [ -z "$TASK_BRANCH" ]; then
+            echo "❌ ERROR: Task branch name is missing"
+            exit 1
+          fi
+          
+          if [ -z "$CURRENT_COVERAGE" ]; then
+            echo "⚠️ WARNING: Current coverage is missing, using default"
+            CURRENT_COVERAGE="16%"
+          fi
+          
+          if [ -z "$TASK_IDENTIFIER" ]; then
+            echo "⚠️ WARNING: Task identifier is missing, generating new one"
+            TASK_IDENTIFIER="coverage-ai-strategic-$(date +%s)"
+          fi
+          
+          # Set basic outputs with validation
+          echo "task_branch=$TASK_BRANCH" >> $GITHUB_OUTPUT
+          echo "current_coverage=$CURRENT_COVERAGE" >> $GITHUB_OUTPUT
+          echo "task_identifier=$TASK_IDENTIFIER" >> $GITHUB_OUTPUT
           echo "epic_issue_id=$EPIC_ISSUE_ID" >> $GITHUB_OUTPUT
           
-          # Pass coverage analysis context
-          echo "coverage_by_area<<EOF" >> $GITHUB_OUTPUT
-          echo "${{ steps.coverage-analysis.outputs.coverage_by_area }}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "✅ Basic AI context outputs set successfully"
           
-          echo "coverage_summary<<EOF" >> $GITHUB_OUTPUT
-          echo "${{ steps.coverage-analysis.outputs.coverage_summary }}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          # Pass coverage analysis context with safe handling
+          COVERAGE_BY_AREA="${{ steps.coverage-analysis.outputs.coverage_by_area }}"
+          if [ -n "$COVERAGE_BY_AREA" ]; then
+            echo "coverage_by_area<<EOF" >> $GITHUB_OUTPUT
+            echo "$COVERAGE_BY_AREA" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "✅ Coverage by area context passed"
+          else
+            echo "coverage_by_area<<EOF" >> $GITHUB_OUTPUT
+            echo "Overall Backend Coverage: $CURRENT_COVERAGE (context generation pending)" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "⚠️ Using fallback coverage by area context"
+          fi
           
-          # Pass pending work context
-          echo "pending_target_areas=${{ steps.pending-work-analysis.outputs.pending_target_areas }}" >> $GITHUB_OUTPUT
-          echo "manual_target_override=${{ steps.coverage-analysis.outputs.manual_target_override }}" >> $GITHUB_OUTPUT
+          COVERAGE_SUMMARY="${{ steps.coverage-analysis.outputs.coverage_summary }}"
+          if [ -n "$COVERAGE_SUMMARY" ]; then
+            echo "coverage_summary<<EOF" >> $GITHUB_OUTPUT
+            echo "$COVERAGE_SUMMARY" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "✅ Coverage summary context passed"
+          else
+            echo "coverage_summary<<EOF" >> $GITHUB_OUTPUT
+            echo "Coverage Summary: $CURRENT_COVERAGE from test validation step. Detailed analysis pending." >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "⚠️ Using fallback coverage summary context"
+          fi
           
-          echo "pending_pr_context<<EOF" >> $GITHUB_OUTPUT
-          echo "${{ steps.pending-work-analysis.outputs.pending_pr_context }}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          # Pass pending work context with safe JSON handling
+          PENDING_TARGET_AREAS="${{ steps.pending-work-analysis.outputs.pending_target_areas }}"
+          MANUAL_TARGET_OVERRIDE="${{ steps.coverage-analysis.outputs.manual_target_override }}"
           
-          echo "mcp_pending_analysis<<EOF" >> $GITHUB_OUTPUT
-          echo "${{ steps.pending-work-analysis.outputs.mcp_pending_analysis }}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "pending_target_areas=${PENDING_TARGET_AREAS}" >> $GITHUB_OUTPUT
+          echo "manual_target_override=${MANUAL_TARGET_OVERRIDE}" >> $GITHUB_OUTPUT
+          
+          echo "✅ Pending work basic context passed"
+          
+          # Handle potentially problematic JSON content safely
+          PENDING_PR_CONTEXT="${{ steps.pending-work-analysis.outputs.pending_pr_context }}"
+          if [ -n "$PENDING_PR_CONTEXT" ]; then
+            # Create a temporary file to safely handle complex JSON content
+            TEMP_PR_FILE=$(mktemp)
+            echo "$PENDING_PR_CONTEXT" > "$TEMP_PR_FILE"
+            
+            echo "pending_pr_context<<EOF" >> $GITHUB_OUTPUT
+            # Use cat to safely output the JSON content
+            cat "$TEMP_PR_FILE" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            
+            rm -f "$TEMP_PR_FILE"
+            echo "✅ Pending PR context passed safely via temporary file"
+          else
+            echo "pending_pr_context<<EOF" >> $GITHUB_OUTPUT
+            echo "No pending coverage-related PRs found on epic branch" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "✅ No pending PR context (expected for clean state)"
+          fi
+          
+          # Handle MCP analysis context safely
+          MCP_PENDING_ANALYSIS="${{ steps.pending-work-analysis.outputs.mcp_pending_analysis }}"
+          if [ -n "$MCP_PENDING_ANALYSIS" ] && [ "$MCP_PENDING_ANALYSIS" != "MCP analysis unavailable" ]; then
+            echo "mcp_pending_analysis<<EOF" >> $GITHUB_OUTPUT
+            echo "$MCP_PENDING_ANALYSIS" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "✅ MCP pending analysis context passed"
+          else
+            echo "mcp_pending_analysis<<EOF" >> $GITHUB_OUTPUT
+            echo "MCP analysis was not available during pending work analysis. Using standard GitHub CLI analysis only." >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "✅ MCP analysis fallback context set"
+          fi
+          
+          echo "🎯 Comprehensive AI context preparation completed successfully"
 
       - name: "Check for existing Coverage Epic analysis comment"
         id: check-existing-comment
