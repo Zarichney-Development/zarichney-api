@@ -235,10 +235,10 @@ jobs:
           "
           
           gh issue create \
+            --repo "${{ github.repository }}" \
             --title "$ISSUE_TITLE" \
             --body "$ISSUE_BODY" \
-            --label "security,dependencies,maintenance" \
-            --assignee "${{ github.actor }}"
+            --label "security,dependencies,maintenance"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -265,7 +265,7 @@ jobs:
           
           # Frontend health check
           echo "Checking frontend health..."
-          if curl -f -s --max-time 30 "https://zarichney.com/health"; then
+          if curl -f -s --max-time 30 "https://zarichney.com/api/health"; then
             echo "✅ Frontend is healthy"
             FRONTEND_STATUS="healthy"
           else
@@ -307,10 +307,10 @@ jobs:
           "
           
           gh issue create \
+            --repo "${{ github.repository }}" \
             --title "$ISSUE_TITLE" \
             --body "$ISSUE_BODY" \
-            --label "alert,production,health-check,maintenance" \
-            --assignee "${{ github.actor }}"
+            --label "alert,production,health-check,maintenance"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
