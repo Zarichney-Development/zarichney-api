@@ -7,6 +7,8 @@ name: "Coverage Epic Automation"
 # Target: 90% backend test coverage by January 2026
 
 on:
+  # Explicitly prevent push events to avoid unintended executions
+  # This workflow should only run on manual dispatch or external scheduler triggers
   workflow_dispatch:
     inputs:
       skip_epic_update:
@@ -605,7 +607,11 @@ jobs:
           echo "\`\`\`" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "### **Manual Target Override**" >> $GITHUB_OUTPUT
-          echo '${{ steps.task-context.outputs.manual_target_override && format("**MANUAL OVERRIDE SPECIFIED:** {0}", steps.task-context.outputs.manual_target_override) || "**NO MANUAL OVERRIDE** - AI has full strategic decision-making authority" }}' >> $GITHUB_OUTPUT
+          if [ -n "${{ steps.task-context.outputs.manual_target_override }}" ]; then
+            echo "**MANUAL OVERRIDE SPECIFIED:** ${{ steps.task-context.outputs.manual_target_override }}" >> $GITHUB_OUTPUT
+          else
+            echo "**NO MANUAL OVERRIDE** - AI has full strategic decision-making authority" >> $GITHUB_OUTPUT
+          fi
           echo "" >> $GITHUB_OUTPUT
           echo "## 🎯 YOUR STRATEGIC MISSION: INTELLIGENT TARGET AREA SELECTION" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
