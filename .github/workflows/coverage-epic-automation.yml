@@ -62,8 +62,8 @@ jobs:
     name: "Coverage Epic AI Agent"
     runs-on: ubuntu-latest
     
-    # Only run on main repository, not forks
-    if: github.repository == 'Zarichney-Development/zarichney-api'
+    # Only run on main repository via workflow_dispatch, prevent push event interference
+    if: github.repository == 'Zarichney-Development/zarichney-api' && github.event_name == 'workflow_dispatch'
     
     steps:
       # ========================================
@@ -617,6 +617,21 @@ jobs:
           echo "" >> $GITHUB_OUTPUT
           echo "**CRITICAL:** You are NOT constrained to any predetermined area. Use your intelligence to make the best strategic decision for maximum coverage impact." >> $GITHUB_OUTPUT
           echo "PROMPT_EOF" >> $GITHUB_OUTPUT
+
+      - name: "Debug Manual Trigger Context"
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "🔍 Manual Trigger Debug Information"
+          echo "Event Name: ${{ github.event_name }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Skip AI Execution Input: ${{ github.event.inputs.skip_ai_execution }}"
+          echo "Skip Analysis Check: ${{ steps.check-existing-comment.outputs.skip_analysis }}"
+          echo "Claude OAuth Token Present: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}"
+          echo "Scheduled Trigger Input: ${{ github.event.inputs.scheduled_trigger }}"
+          echo "AI Execution Condition Evaluation:"
+          echo "  - skip_analysis != 'true': ${{ steps.check-existing-comment.outputs.skip_analysis != 'true' }}"
+          echo "  - skip_ai_execution != 'true': ${{ github.event.inputs.skip_ai_execution != 'true' }}"
+          echo "  - Combined Condition: ${{ steps.check-existing-comment.outputs.skip_analysis != 'true' && github.event.inputs.skip_ai_execution != 'true' }}"
 
       - name: "Execute Coverage Epic AI Agent"
         if: steps.check-existing-comment.outputs.skip_analysis != 'true' && github.event.inputs.skip_ai_execution != 'true'
