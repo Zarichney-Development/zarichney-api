@@ -14,6 +14,11 @@ on:
         required: false
         default: false
         type: boolean
+      skip_ai_execution:
+        description: 'Skip AI agent execution (for infrastructure testing only)'
+        required: false
+        default: false
+        type: boolean
       target_area:
         description: 'Optional target area for focused coverage (e.g., "Services", "Controllers")'
         required: false
@@ -515,7 +520,7 @@ jobs:
 
       - name: "Check for existing Coverage Epic analysis comment"
         id: check-existing-comment
-        if: steps.task-branch.outputs.task_branch_created == 'true'
+        if: steps.task-branch.outputs.task_branch_created == 'true' && github.event.inputs.skip_ai_execution != 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -552,7 +557,7 @@ jobs:
             }
 
       - name: "Load coverage epic prompt with comprehensive context"
-        if: steps.check-existing-comment.outputs.skip_analysis != 'true'
+        if: steps.check-existing-comment.outputs.skip_analysis != 'true' && github.event.inputs.skip_ai_execution != 'true'
         id: load-coverage-prompt
         run: |
           # Read the markdown template
@@ -614,7 +619,7 @@ jobs:
           echo "PROMPT_EOF" >> $GITHUB_OUTPUT
 
       - name: "Execute Coverage Epic AI Agent"
-        if: steps.check-existing-comment.outputs.skip_analysis != 'true'
+        if: steps.check-existing-comment.outputs.skip_analysis != 'true' && github.event.inputs.skip_ai_execution != 'true'
         id: claude-coverage
         uses: anthropics/claude-code-action@v1
         with:
@@ -638,12 +643,12 @@ jobs:
         id: ai-execution
         if: always() && steps.task-branch.outputs.task_branch_created == 'true'
         run: |
-          if [ "${{ steps.check-existing-comment.outputs.skip_analysis }}" = "true" ]; then
+          if [ "${{ github.event.inputs.skip_ai_execution }}" = "true" ]; then
+            echo "ai_execution_status=skipped_manual_override" >> $GITHUB_OUTPUT
+            echo "coverage_improvements=AI execution skipped - manual override (infrastructure testing mode)" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.check-existing-comment.outputs.skip_analysis }}" = "true" ]; then
             echo "ai_execution_status=skipped_existing_analysis" >> $GITHUB_OUTPUT
             echo "coverage_improvements=Skipped - existing analysis found in Epic Issue #$EPIC_ISSUE_ID" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event.inputs.scheduled_trigger }}" != "true" ] && [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "ai_execution_status=manual_execution" >> $GITHUB_OUTPUT
-            echo "coverage_improvements=Manual workflow dispatch execution" >> $GITHUB_OUTPUT
           elif [ "${{ steps.claude-coverage.outcome }}" = "success" ]; then
             echo "ai_execution_status=claude_success" >> $GITHUB_OUTPUT
             echo "coverage_improvements=Claude AI agent completed coverage improvements successfully" >> $GITHUB_OUTPUT
@@ -714,10 +719,11 @@ jobs:
               echo "⏭️ Infrastructure healthy - AI analysis skipped (existing analysis found)"
               echo "💡 Review existing analysis in Epic Issue #$EPIC_ISSUE_ID"
               
-            elif [ "$AI_STATUS" = "manual_execution" ]; then
-              echo "✅ Infrastructure validation passed - Manual execution mode"
+            elif [ "$AI_STATUS" = "skipped_manual_override" ]; then
+              echo "✅ Infrastructure validation passed - AI execution skipped (manual override)"
               echo "🤖 Triggered by: ${{ github.event.inputs.trigger_source || 'workflow_dispatch' }}"
               echo "📋 Reason: ${{ github.event.inputs.trigger_reason || 'Manual execution' }}"
+              echo "⚠️ Mode: Infrastructure testing only - AI agent execution disabled"
               
             elif [ "$AI_STATUS" = "claude_failure" ]; then
               echo "⚠️ Infrastructure healthy but Claude AI agent encountered issues"
