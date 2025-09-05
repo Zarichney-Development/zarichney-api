@@ -610,11 +610,11 @@ jobs:
           else
             # Commit all changes
             git add -A
-            git commit -m "test: improve coverage for ${{ steps.coverage-analysis.outputs.selected_target_area }} (#$EPIC_ISSUE_ID)
+            git commit -m "test: improve coverage with AI strategic analysis (#$EPIC_ISSUE_ID)
             
             Automated coverage improvement for Epic #$EPIC_ISSUE_ID
             
-            - Target Area: ${{ steps.coverage-analysis.outputs.selected_target_area }}
+            - AI Strategic Selection: Coverage improvements selected by AI analysis
             - Current Coverage: ${{ steps.coverage-analysis.outputs.current_coverage }}
             - Task ID: ${{ steps.coverage-analysis.outputs.task_identifier }}
             - AI Improvements: ${{ steps.ai-execution.outputs.coverage_improvements }}
@@ -668,7 +668,7 @@ jobs:
           echo "🔍 Performing enhanced PR analysis with GitHub MCP"
           
           TASK_BRANCH="${{ steps.task-branch.outputs.task_branch_name }}"
-          TARGET_AREA="${{ steps.coverage-analysis.outputs.selected_target_area }}"
+          # TARGET_AREA is determined by AI strategic analysis, not predefined
           
           # Use GitHub MCP for intelligent PR analysis and validation
           MCP_ANALYSIS=$(claude --dangerously-skip-permissions --print "Use GitHub MCP to:
@@ -693,12 +693,12 @@ jobs:
         run: |
           echo "📝 Creating automated pull request"
           
-          PR_TITLE="test: improve coverage for ${{ steps.coverage-analysis.outputs.selected_target_area }} (#$EPIC_ISSUE_ID)"
+          PR_TITLE="test: improve coverage with AI strategic analysis (#$EPIC_ISSUE_ID)"
           
           PR_BODY="## Coverage Improvement Summary
           
           **Epic Reference:** [Backend Testing Coverage to 90%](https://github.com/Zarichney-Development/zarichney-api/issues/$EPIC_ISSUE_ID)
-          **Target Area:** ${{ steps.coverage-analysis.outputs.selected_target_area }}
+          **Target Area:** AI strategic selection based on coverage analysis
           **Current Coverage:** ${{ steps.coverage-analysis.outputs.current_coverage }}
           **Task Identifier:** ${{ steps.coverage-analysis.outputs.task_identifier }}
           
@@ -737,19 +737,45 @@ jobs:
           **Epic Branch:** \`$EPIC_BRANCH\`  
           **Duplicate Prevention:** ✅ PR existence validated before creation"
           
-          # Create PR using GitHub CLI
-          gh pr create \
+          # Create PR using GitHub CLI with standards-compliant labels
+          if gh pr create \
             --base "$EPIC_BRANCH" \
             --title "$PR_TITLE" \
             --body "$PR_BODY" \
-            --label "ai-task,testing,coverage,epic-subtask,automation" \
-            --draft=false
-          
-          PR_URL=$(gh pr view --json url --jq .url)
-          echo "pr_created=true" >> $GITHUB_OUTPUT
-          echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
-          
-          echo "✅ Pull request created: $PR_URL"
+            --label "type: coverage,automation: agent-generated,epic: coverage-90,component: testing,priority: medium,effort: small" \
+            --draft=false; then
+            
+            PR_URL=$(gh pr view --json url --jq .url)
+            echo "pr_created=true" >> $GITHUB_OUTPUT
+            echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+            
+            echo "✅ Pull request created successfully: $PR_URL"
+          else
+            echo "❌ Failed to create pull request"
+            echo "🔍 Checking if labels exist in repository..."
+            
+            # Verify required labels exist
+            REQUIRED_LABELS=("type: coverage" "automation: agent-generated" "epic: coverage-90" "component: testing" "priority: medium" "effort: small")
+            MISSING_LABELS=()
+            
+            for label in "${REQUIRED_LABELS[@]}"; do
+              if ! gh label list --search "$label" | grep -q "^$label"; then
+                MISSING_LABELS+=("$label")
+              fi
+            done
+            
+            if [ ${#MISSING_LABELS[@]} -gt 0 ]; then
+              echo "❌ Missing required labels:"
+              printf '  - %s\n' "${MISSING_LABELS[@]}"
+              echo "📋 Please create missing labels according to GitHubLabelStandards.md"
+            else
+              echo "✅ All required labels exist - PR creation failed for other reasons"
+              echo "📋 Check repository permissions and branch protection rules"
+            fi
+            
+            echo "pr_created=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
@@ -768,7 +794,7 @@ jobs:
           echo "📝 Trigger Reason: ${{ github.event.inputs.trigger_reason || 'Manual execution' }}"
           echo "🤖 Scheduled: ${{ github.event.inputs.scheduled_trigger || 'false' }}"
           echo "🌿 Epic Branch: $EPIC_BRANCH"
-          echo "🎯 Target Area: ${{ steps.coverage-analysis.outputs.selected_target_area || 'Not determined' }}"
+          echo "🎯 Target Area: AI strategic selection (determined by Claude analysis)"
           echo "📊 Current Coverage: ${{ steps.coverage-analysis.outputs.current_coverage || 'Unknown' }}"
           echo "🔢 Task ID: ${{ steps.coverage-analysis.outputs.task_identifier || 'Not generated' }}"
           echo ""
