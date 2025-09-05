@@ -205,8 +205,8 @@ jobs:
         run: |
           echo "📊 Generating comprehensive coverage analysis for AI strategic decision-making"
           
-          # Use coverage from test validation
-          CURRENT_COVERAGE="${{ steps.test-validation.outputs.coverage-percentage }}%"
+          # Use coverage from process validation
+          CURRENT_COVERAGE="${{ steps.process-validation.outputs.current_coverage }}"
           echo "current_coverage=$CURRENT_COVERAGE" >> $GITHUB_OUTPUT
           
           # Generate coverage summary by area (for AI analysis)
@@ -214,28 +214,35 @@ jobs:
           COVERAGE_CONTEXT=""
           
           # Extract coverage information by major areas
-          if grep -q "Services.*%" coverage_analysis_full.txt; then
+          if [ -f "coverage_analysis_full.txt" ] && grep -q "Services.*%" coverage_analysis_full.txt; then
             SERVICES_COV=$(grep -o "Services.*[0-9]*\.[0-9]*%" coverage_analysis_full.txt | head -1 || echo "Services: Unknown%")
             COVERAGE_CONTEXT="${COVERAGE_CONTEXT}${SERVICES_COV}\n"
           fi
           
-          if grep -q "Controllers.*%" coverage_analysis_full.txt; then
+          if [ -f "coverage_analysis_full.txt" ] && grep -q "Controllers.*%" coverage_analysis_full.txt; then
             CONTROLLERS_COV=$(grep -o "Controllers.*[0-9]*\.[0-9]*%" coverage_analysis_full.txt | head -1 || echo "Controllers: Unknown%")
             COVERAGE_CONTEXT="${COVERAGE_CONTEXT}${CONTROLLERS_COV}\n"
           fi
           
-          if grep -q "Repositories.*%" coverage_analysis_full.txt; then
+          if [ -f "coverage_analysis_full.txt" ] && grep -q "Repositories.*%" coverage_analysis_full.txt; then
             REPOSITORIES_COV=$(grep -o "Repositories.*[0-9]*\.[0-9]*%" coverage_analysis_full.txt | head -1 || echo "Repositories: Unknown%")
             COVERAGE_CONTEXT="${COVERAGE_CONTEXT}${REPOSITORIES_COV}\n"
           fi
           
-          if grep -q "Utilities.*%" coverage_analysis_full.txt; then
+          if [ -f "coverage_analysis_full.txt" ] && grep -q "Utilities.*%" coverage_analysis_full.txt; then
             UTILITIES_COV=$(grep -o "Utilities.*[0-9]*\.[0-9]*%" coverage_analysis_full.txt | head -1 || echo "Utilities: Unknown%")
             COVERAGE_CONTEXT="${COVERAGE_CONTEXT}${UTILITIES_COV}\n"
           fi
           
           # Generate comprehensive coverage summary for AI
-          COVERAGE_SUMMARY=$(head -50 coverage_analysis_full.txt | tail -30)
+          if [ -f "coverage_analysis_full.txt" ]; then
+            COVERAGE_SUMMARY=$(head -50 coverage_analysis_full.txt | tail -30)
+          elif [ -f "TestResults/parsed_results.json" ] && [ -f "TestResults/coverage_results.json" ]; then
+            # Fallback to test results files
+            COVERAGE_SUMMARY="Coverage data from test results: $(jq -r '.line_coverage // 0' TestResults/coverage_results.json 2>/dev/null || echo '0')%"
+          else
+            COVERAGE_SUMMARY="Coverage analysis file not available - using test validation results"
+          fi
           
           echo "coverage_by_area<<EOF" >> $GITHUB_OUTPUT
           echo -e "$COVERAGE_CONTEXT" >> $GITHUB_OUTPUT
@@ -462,14 +469,11 @@ jobs:
       - name: "Execute Coverage Epic AI Agent"
         if: steps.check-existing-comment.outputs.skip_analysis != 'true'
         id: claude-coverage
-        uses: grll/claude-code-action@beta
+        uses: anthropics/claude-code-action@v1
         with:
-          use_oauth: true
-          claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
-          claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
+          prompt: ${{ steps.load-coverage-prompt.outputs.prompt }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          direct_prompt: ${{ steps.load-coverage-prompt.outputs.prompt }}
 
       - name: "Handle Coverage Epic AI Failure"
         if: failure() && steps.claude-coverage.outcome == 'failure'

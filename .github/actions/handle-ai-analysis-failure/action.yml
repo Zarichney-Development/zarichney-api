@@ -55,11 +55,32 @@ runs:
             console.log('Could not read Claude output files:', error.message);
           }
           
+          // Determine the target for comments based on event context
+          const eventName = context.eventName;
+          const isPREvent = eventName === 'pull_request' || eventName === 'pull_request_target';
+          const hasIssueContext = context.issue && context.issue.number;
+
+          // For workflow_dispatch or other non-PR events, post to Epic issue if available
+          let targetIssueNumber;
+          if (hasIssueContext) {
+            targetIssueNumber = context.issue.number;
+            console.log(`Posting to PR/Issue #${targetIssueNumber}`);
+          } else if (process.env.EPIC_ISSUE_ID) {
+            targetIssueNumber = parseInt(process.env.EPIC_ISSUE_ID);
+            console.log(`No PR/Issue context - posting to Epic Issue #${targetIssueNumber}`);
+          } else {
+            console.log('No target issue available for error reporting - skipping comment creation');
+            core.setFailed(isUsageLimitFailure ? 
+              `${{ inputs.analysis-type }} analysis failed due to Claude AI usage limit` : 
+              `${{ inputs.analysis-type }} analysis failed due to technical error`);
+            return; // Exit early if no target available
+          }
+          
           // Find existing Claude comment to update
           const comments = await github.rest.issues.listComments({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            issue_number: context.issue.number,
+            issue_number: targetIssueNumber,
           });
           
           // Build search patterns for this specific analysis type
@@ -153,7 +174,7 @@ runs:
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
+              issue_number: targetIssueNumber,
               body: failureCommentBody
             });
           }
