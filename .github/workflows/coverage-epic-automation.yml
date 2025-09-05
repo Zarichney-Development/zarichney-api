@@ -571,7 +571,7 @@ jobs:
             -e "s/{{CURRENT_COVERAGE}}/${{ steps.task-context.outputs.current_coverage }}%/g" \
             -e "s/{{TASK_IDENTIFIER}}/${{ steps.task-context.outputs.task_identifier }}/g" \
             -e "s/{{EPIC_ISSUE_ID}}/${{ steps.task-context.outputs.epic_issue_id }}/g" \
-            -e "s/{{TASK_BRANCH}}/${{ steps.task-context.outputs.task_branch }}/g" >> $GITHUB_OUTPUT
+            -e "s|{{TASK_BRANCH}}|${{ steps.task-context.outputs.task_branch }}|g" >> $GITHUB_OUTPUT
           
           # Add comprehensive coverage context section directly
           echo "" >> $GITHUB_OUTPUT
