@@ -160,7 +160,7 @@ public class GitHubServiceTests : IDisposable
             _cancellationTokenSource.CancelAfter(TimeSpan.FromMilliseconds(100));
             
             // The operation should be enqueued but will fail during processing
-            await Assert.ThrowsAnyAsync<Exception>(() => enqueueTask);
+            await enqueueTask.Should().ThrowAsync<Exception>();
         }
         finally
         {
