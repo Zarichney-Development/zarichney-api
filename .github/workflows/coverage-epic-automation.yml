@@ -7,6 +7,12 @@ name: "Coverage Epic Automation"
 # Target: 90% backend test coverage by January 2026
 
 on:
+  push:
+    branches: [main]
+    paths:
+      # Only trigger on push if this workflow file itself is modified
+      # This prevents the workflow from running on every push
+      - '.github/workflows/coverage-epic-automation.yml'
   workflow_dispatch:
     inputs:
       skip_epic_update:
@@ -62,8 +68,8 @@ jobs:
     name: "Coverage Epic AI Agent"
     runs-on: ubuntu-latest
     
-    # Only run on main repository via workflow_dispatch, prevent push event interference
-    if: github.repository == 'Zarichney-Development/zarichney-api' && github.event_name == 'workflow_dispatch'
+    # Only run on main repository (not forks)
+    if: github.repository == 'Zarichney-Development/zarichney-api'
     
     steps:
       # ========================================
