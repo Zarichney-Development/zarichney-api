@@ -122,7 +122,7 @@ public class GitHubServiceTests : IDisposable
         operation.Directory.Should().BeEmpty("directory should be empty by default");
         operation.CommitMessage.Should().BeEmpty("commit message should be empty by default");
         operation.Content.Should().BeEmpty("content should be empty by default");
-        operation.CompletionSource.Should().NotBeNull();
+        ((object)operation.CompletionSource).Should().NotBeNull("completion source should be initialized");
     }
 
     [Fact]
@@ -160,7 +160,8 @@ public class GitHubServiceTests : IDisposable
             _cancellationTokenSource.CancelAfter(TimeSpan.FromMilliseconds(100));
             
             // The operation should be enqueued but will fail during processing
-            await enqueueTask.Should().ThrowAsync<Exception>();
+            var act = async () => await enqueueTask;
+            await act.Should().ThrowAsync<Exception>();
         }
         finally
         {
@@ -209,7 +210,8 @@ public class GitHubServiceTests : IDisposable
             var storeTask = _sut.StoreAudioAndTranscriptAsync(audioFileName, audioData, transcriptFileName, transcriptText);
             _cancellationTokenSource.CancelAfter(TimeSpan.FromMilliseconds(100));
             
-            await storeTask.Should().ThrowAsync<Exception>();
+            var act = async () => await storeTask;
+            await act.Should().ThrowAsync<Exception>();
         }
         finally
         {
