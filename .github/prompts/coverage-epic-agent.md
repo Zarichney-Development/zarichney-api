@@ -201,11 +201,34 @@ public async Task ApiEndpoint_ValidInput_ReturnsExpectedResult()
 [Trait("Category", "DataMutating")]   // Modifies test data
 ```
 
-## 🧪 Framework Enhancement Opportunities
+## 🔧 Framework-First Testing Approach
 
-When implementing tests, consider these framework improvements:
+### **Framework Enhancements - First-Class Priority**
+Framework improvements are now **mandatory first-class deliverables**, not opportunistic additions. Every test implementation must prioritize enhancing and utilizing shared testing infrastructure to reduce duplication and enable consistent patterns.
 
-### **Test Data Builders** (`TestData/Builders/`)
+### **Framework-First Checklist (Required)**
+Before writing any tests, you **MUST** systematically evaluate framework enhancement opportunities:
+
+#### **Existing Infrastructure Review**
+1. **Test Data Builders**: Check `Code/Zarichney.Server.Tests/TestData/Builders/` for reusable builders
+   - **Required Action**: If no builder exists for your domain entity, create one
+   - **Enhancement Priority**: Consolidate repeated test data construction into shared builders
+   
+2. **Mock Factories**: Review `Code/Zarichney.Server.Tests/Framework/Mocks/` for service mocks
+   - **Required Action**: Use existing mock factories or create missing ones for complex service setups
+   - **Enhancement Priority**: Centralize common mock configurations to eliminate duplication
+   
+3. **Helper Utilities**: Examine `Code/Zarichney.Server.Tests/Framework/Helpers/` for test utilities
+   - **Required Action**: Enhance existing helpers or create new ones for repeated test patterns
+   - **Enhancement Priority**: Abstract common testing operations into reusable utilities
+   
+4. **AutoFixture Customizations**: Check `Code/Zarichney.Server.Tests/TestData/AutoFixtureCustomizations/`
+   - **Required Action**: Create or enhance customizations for domain-specific test data generation
+   - **Enhancement Priority**: Establish consistent test data patterns across the test suite
+
+#### **Framework Enhancement Examples**
+
+### **Enhanced Test Data Builders** (`TestData/Builders/`)
 ```csharp
 public class EntityBuilder
 {
@@ -217,11 +240,18 @@ public class EntityBuilder
         return this;
     }
     
+    public EntityBuilder WithDefaults()
+    {
+        _entity.Id = Guid.NewGuid();
+        _entity.CreatedAt = DateTime.UtcNow;
+        return this;
+    }
+    
     public Entity Build() => _entity;
 }
 ```
 
-### **Mock Factories** (`Framework/Mocks/`)
+### **Centralized Mock Factories** (`Framework/Mocks/`)
 ```csharp
 public static class MockServiceFactory
 {
@@ -229,12 +259,20 @@ public static class MockServiceFactory
     {
         var mock = new Mock<IService>();
         // Common setup here
+        mock.Setup(x => x.IsAvailable).Returns(true);
+        return mock;
+    }
+    
+    public static Mock<IService> CreateWithBehavior(ServiceBehavior behavior)
+    {
+        var mock = CreateDefault();
+        // Behavior-specific setup
         return mock;
     }
 }
 ```
 
-### **AutoFixture Customizations** (`Framework/TestData/AutoFixtureCustomizations/`)
+### **Advanced AutoFixture Customizations** (`Framework/TestData/AutoFixtureCustomizations/`)
 ```csharp
 public class EntityCustomization : ICustomization
 {
@@ -242,10 +280,69 @@ public class EntityCustomization : ICustomization
     {
         fixture.Customize<Entity>(c => c
             .With(x => x.Id, () => Guid.NewGuid())
-            .With(x => x.CreatedAt, () => DateTime.UtcNow));
+            .With(x => x.CreatedAt, () => DateTime.UtcNow)
+            .Without(x => x.InternalTracking));
     }
 }
 ```
+
+## ⚠️ Hard Requirements for Framework Usage (Non-Negotiable)
+
+### **Integration Test Requirements (Mandatory)**
+- **Base Classes**: Integration tests **MUST** inherit from `IntegrationTestBase` or `DatabaseIntegrationTestBase`
+- **Test Infrastructure**: **MUST** use `ApiClientFixture`, `CustomWebApplicationFactory`, and Refit clients
+- **Framework Violation**: **NEVER** instantiate `WebApplicationFactory<Program>` or TestServer directly
+- **Categorization**: **MUST** use `[DependencyFact]` with proper traits from `TestCategories` class
+- **Failure Protocol**: If constraints cannot be met, create missing helpers/builders **FIRST** before proceeding
+
+### **Unit Test Requirements (Mandatory)**
+- **Isolation**: Unit tests **MUST** isolate with Moq and avoid concrete external resources
+- **Data Construction**: **MUST** use builders/AutoFixture for data creation - never manual DTO construction if builder exists
+- **Framework Consistency**: Follow established patterns from `Code/Zarichney.Server.Tests/Framework/`
+- **Test Categories**: Apply proper `[Trait("Category", "Unit")]` categorization consistently
+
+### **Framework Usage Enforcement**
+```csharp
+// ✅ REQUIRED INTEGRATION TEST PATTERN
+public class ServiceIntegrationTests : IntegrationTestBase
+{
+    private readonly IServiceApi _serviceApi;
+
+    public ServiceIntegrationTests(ApiClientFixture apiClientFixture) : base(apiClientFixture)
+    {
+        _serviceApi = apiClientFixture.CreateClient<IServiceApi>();
+    }
+
+    [DependencyFact]
+    [Trait("Category", "Integration")]
+    public async Task ApiEndpoint_ValidRequest_ReturnsSuccess()
+    {
+        // Use builders, not manual construction
+        var request = new RequestBuilder().WithDefaults().Build();
+        
+        var response = await _serviceApi.ProcessRequestAsync(request);
+        
+        response.Should().NotBeNull();
+    }
+}
+
+// ❌ PROHIBITED PATTERNS
+// - Direct WebApplicationFactory instantiation
+// - Manual DTO construction when builders exist  
+// - Missing base class inheritance
+// - Bypassing established fixtures
+```
+
+### **Framework Compliance Failure Protocol**
+If existing framework components cannot satisfy test requirements:
+1. **Stop test implementation immediately**
+2. **Create missing framework components first**:
+   - Add builder to `TestData/Builders/`
+   - Create mock factory in `Framework/Mocks/`
+   - Add helper utility in `Framework/Helpers/`
+   - Implement AutoFixture customization if needed
+3. **Resume test implementation using enhanced framework**
+4. **Document framework enhancements in Implementation Summary**
 
 ## ✅ Quality Gates & Validation
 
@@ -279,28 +376,168 @@ dotnet format zarichney-api.sln --verify-no-changes
 # ✅ Framework enhancements documented
 ```
 
-## 🚫 Production Issue Discovery Protocol
+## 🔄 Safe Production Changes Protocol
 
-### **If Tests Reveal Production Bugs**
-When new tests uncover actual production issues:
+### **Production Code Assumptions and Reality**
+- **Default Assumption**: Production code is bug-free and tests should pass immediately
+- **Reality Check**: Tests may reveal defects or testability issues requiring minimal changes
 
-1. **Document Clearly:** Note discovered issues in implementation
-2. **Continue Coverage Work:** Coverage improvements remain valid
-3. **Flag for Separate Resolution:** Production bugs need dedicated issues
+### **Permitted Safe Production Changes**
+When tests reveal defects or testability issues, you are authorized to make:
 
-**Implementation Pattern:**
+#### **Minimal Behavior-Preserving Refactors**
+- **Dependency Injection**: Extract interfaces and add DI for testability
+- **Method Parameterization**: Convert hardcoded values to parameters
+- **Interface Extraction**: Create interfaces from concrete implementations
+- **Access Modifier Adjustments**: Make private members internal for testing
+
+#### **Targeted Bug Fixes with Tests**
+- **Clear Attribution**: Fix only bugs directly revealed by test implementation
+- **Test-Driven Fixes**: Add tests proving both the bug and the fix
+- **Scope Limitation**: Keep fixes surgical and behavior-preserving
+
+### **Safe Production Change Guardrails**
 ```csharp
-[Fact]
-[Trait("Category", "Unit")]
-public void Method_EdgeCase_ShouldHandleCorrectly()
+// ✅ PERMITTED: Interface extraction for testability
+public interface IEmailService
 {
-    // This test may reveal a production bug
-    // If so, document but continue with coverage improvement
-    
-    // NOTE: This test discovered potential production issue
-    // TODO: Create separate issue for production bug fix
+    Task SendAsync(string to, string subject, string body);
 }
+
+// ✅ PERMITTED: Dependency injection enhancement
+public class OrderService
+{
+    private readonly IEmailService _emailService;
+    
+    public OrderService(IEmailService emailService) // Added for testability
+    {
+        _emailService = emailService;
+    }
+}
+
+// ✅ PERMITTED: Bug fix with test proving behavior
+[Fact]
+public void CalculateTotal_NegativeQuantity_ThrowsArgumentException()
+{
+    // Test revealed bug: negative quantities should be rejected
+    var service = new OrderService();
+    
+    Action act = () => service.CalculateTotal(-1, 10.00m);
+    
+    act.Should().Throw<ArgumentException>()
+       .WithMessage("Quantity cannot be negative");
+}
+
+// ❌ PROHIBITED: Architectural rewrites
+// ❌ PROHIBITED: Breaking changes to public APIs
+// ❌ PROHIBITED: Large-scale refactoring
 ```
+
+### **Change Documentation Requirements**
+All production changes must be documented in Implementation Summary:
+- **Files Modified**: Exact files and rationale for changes
+- **Safety Justification**: Why changes are behavior-preserving
+- **Testing Validation**: How tests prove safety and correctness
+
+### **Risk Assessment Protocol**
+If production changes are large or risky:
+1. **Stop implementation immediately**
+2. **Create separate GitHub issue for production changes**
+3. **Keep coverage scope focused on existing code patterns**
+4. **Document blocked testing areas for follow-up**
+
+### **Production Change Integration**
+```csharp
+// Implementation Summary Documentation Pattern:
+// Production Refactors Applied:
+// - OrderService.cs: Added IEmailService injection for testability (behavior-preserving)
+// - PaymentProcessor.cs: Fixed null handling bug revealed by edge case tests
+// - ValidationHelper.cs: Made ValidateInput method internal for comprehensive testing
+
+// Safety Notes:
+// - All changes maintain backward compatibility
+// - No breaking changes to public contracts
+// - Tests prove both existing and new behavior
+```
+
+## 📄 Implementation Summary Artifact (Required)
+
+### **Mandatory Documentation Requirement**
+Upon completion of test implementation, you **MUST** create a comprehensive Implementation Summary artifact at:
+`Docs/Reports/CoverageEpic/${TASK_IDENTIFIER}.md`
+
+### **Implementation Summary Template**
+```markdown
+# Coverage Epic Implementation Summary
+
+**Task Identifier:** ${TASK_IDENTIFIER}
+**Branch:** ${TASK_BRANCH}  
+**Date:** $(date +%Y-%m-%d)
+**Coverage Phase:** [Current phase from coverage analysis]
+
+## Implementation Overview
+
+### Target Areas Selected
+- **Strategic Rationale**: [Why this area was chosen - coverage gaps, priority impact, phase alignment]
+- **Files Targeted**: [List of specific files/classes where tests were added]
+- **Test Method Count**: [X unit tests, Y integration tests]
+- **Expected Coverage Impact**: [Estimated percentage improvement]
+
+### Framework Enhancements Added/Updated
+- **Test Data Builders**: [New/enhanced builders created]
+- **Mock Factories**: [Mock infrastructure improvements]
+- **Helper Utilities**: [Common testing patterns abstracted]
+- **AutoFixture Customizations**: [Domain-specific test data patterns]
+
+### Production Refactors/Bug Fixes Applied
+- **Refactoring Changes**:
+  - File: [filename] - Rationale: [testability improvement] - Safety: [behavior-preserving justification]
+- **Bug Fixes**:
+  - File: [filename] - Issue: [bug description] - Fix: [resolution] - Tests: [validation approach]
+
+### Coverage Achievement Validation
+- **Pre-Implementation Coverage**: [X.X%]
+- **Post-Implementation Coverage**: [X.X%]
+- **Coverage Improvement**: [+X.X%]
+- **Tests Added**: [Total count and breakdown by type]
+- **Epic Progression**: [Contribution to 90% target and timeline status]
+
+### Follow-up Issues to Open
+- **Production Issues Discovered**: [Link to issues that need separate resolution]
+- **Framework Enhancement Opportunities**: [Additional infrastructure improvements identified]
+- **Coverage Gaps Remaining**: [Areas that need future attention]
+
+## Quality Validation Results
+
+### Test Execution Status
+- **All Tests Passing**: ✅/❌
+- **Skip Count**: [X tests] (Expected: 23)
+- **Execution Time**: [X.Xs total]
+- **Framework Compliance**: ✅/❌
+
+### Standards Adherence
+- **Testing Standards**: ✅/❌ [TestingStandards.md compliance]
+- **Framework Usage**: ✅/❌ [Base classes, fixtures, builders used correctly]
+- **Code Quality**: ✅/❌ [No regressions, clean build]
+
+## Strategic Assessment
+
+### Phase Alignment
+- **Current Phase Focus**: [Service layer basics / Edge cases / Complex scenarios]
+- **Implementation Alignment**: [How tests align with phase priorities]
+- **Next Phase Preparation**: [Foundation laid for next coverage phase]
+
+### Epic Velocity Contribution  
+- **Monthly Target**: 2.8% coverage increase
+- **This Task Contribution**: [X.X%] toward monthly goal
+- **Timeline Assessment**: [On track / Behind / Ahead for Jan 2026 target]
+```
+
+### **Artifact Integration Requirements**
+- **File Location**: Must be in `Docs/Reports/CoverageEpic/` for automated epic tracking
+- **Naming Convention**: Use exact `${TASK_IDENTIFIER}.md` format for pipeline integration
+- **Content Completeness**: All sections must be filled with specific, measurable data
+- **Quality Validation**: Include actual test execution results and coverage metrics
 
 ## 🤝 Agent Coordination & Conflict Prevention
 

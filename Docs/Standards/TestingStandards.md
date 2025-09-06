@@ -1,7 +1,7 @@
 # Overarching Automation Testing Standards
 
-**Version:** 1.7
-**Last Updated:** 2025-07-25
+**Version:** 1.8
+**Last Updated:** 2025-09-06
 
 ## 1. Introduction
 
@@ -403,11 +403,41 @@ AI agents follow the detailed workflow defined in:
 
 #### **Production Code Assumptions**
 * **Default Assumption:** Production code is bug-free; all new tests should pass
-* **Exception Handling:** If new tests reveal production issues:
-  * Document findings in PR description
-  * Create separate GitHub issue for production bug fix
-  * Advise on separating bug fix from coverage improvement work
-  * Continue with coverage improvements after production fixes
+* **Safe Production Changes Policy:** When tests reveal defects or testability issues:
+  * **Permitted inline fixes (when safe):**
+    - Minimal, behavior-preserving refactors for testability (DI, interface extraction, parameterization)
+    - Targeted bug fixes when clearly attributable, with accompanying tests
+    - Changes that maintain backward compatibility and public contracts
+  * **Require separate issue when:**
+    - Changes are large, risky, or cross-cutting
+    - Architectural rewrites would be needed
+    - Fix scope exceeds minimal viable correction
+  * **Documentation requirement:** All production changes must be documented in PR with:
+    - Clear "Production Fixes" section describing changes
+    - Rationale for inline fix vs separate issue decision
+    - Safety validation and test coverage proof
+
+### 12.8 Zero-Tolerance Brittle Tests Policy
+
+#### **Definition of Brittle Tests**
+Tests that exhibit non-deterministic behavior or environmental dependencies:
+* Tests with sleeps or time-based waits without deterministic control
+* Reliance on wall-clock time, random data without fixed seeds
+* Dependencies on real network, file system, or external services
+* Non-deterministic concurrency or race conditions
+
+#### **Enforcement Points**
+* **TestMaster Sentinel:** Flags brittle patterns as CRITICAL severity
+* **PR Reviews:** Changes requested for any brittle test patterns
+* **Coverage Epic Agent:** Required to use framework helpers for determinism
+* **CI Pipeline:** Tests must pass consistently across all runs
+
+#### **Required Patterns for Deterministic Tests**
+* Use framework fixtures (`CustomWebApplicationFactory`, `DatabaseFixture`)
+* Employ test data builders with fixed seeds
+* Mock all external dependencies
+* Use `[DependencyFact]` for conditional execution
+* Leverage AutoFixture customizations for controlled data generation
 
 ## 13. Document References
 

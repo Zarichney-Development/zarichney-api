@@ -161,6 +161,31 @@ Apply UnitTestCaseDevelopment.md and IntegrationTestCaseDevelopment.md standards
 - Validate Testcontainers usage for integration tests
 - Confirm proper test data management (AutoFixture, Builders)
 
+**CRITICAL Framework Compliance Issues:**
+- **🚨 CRITICAL**: Integration tests do not inherit from `IntegrationTestBase` or `DatabaseIntegrationTestBase`
+  - **Remediation**: Update test class to inherit from appropriate base class
+  - **Framework Path**: `Code/Zarichney.Server.Tests/Framework/IntegrationTestBase.cs`
+- **🚨 CRITICAL**: Tests bypass shared fixtures (ApiClientFixture, CustomWebApplicationFactory)
+  - **Remediation**: Use established fixtures via constructor injection
+  - **Framework Path**: `Code/Zarichney.Server.Tests/Framework/ApiClientFixture.cs`
+- **🚨 CRITICAL**: Direct instantiation of `WebApplicationFactory<Program>` or TestServer
+  - **Remediation**: Use `ApiClientFixture.CreateClient<T>()` for Refit clients
+  - **Framework Path**: See existing integration test patterns
+- **🚨 CRITICAL**: Tests bypass `[DependencyFact]` and `TestCategories` traits
+  - **Remediation**: Apply proper categorization with `[DependencyFact]` and traits
+  - **Framework Path**: `Code/Zarichney.Server.Tests/Framework/TestCategories.cs`
+- **🚨 CRITICAL**: Manual DTO construction when builders exist
+  - **Remediation**: Use existing builders from `TestData/Builders/` directory
+  - **Framework Path**: Check `Code/Zarichney.Server.Tests/TestData/Builders/`
+
+**Zero-Tolerance Brittle Tests:**
+- **🚨 CRITICAL**: Tests use sleeps, delays, or time-based waits without deterministic control
+  - **Remediation**: Use framework helpers, mocked time providers, or deterministic async patterns
+  - **Quality Standard**: All timing must be controlled and predictable
+- **🚨 CRITICAL**: Tests rely on wall-clock time, random data without seeds, or non-deterministic elements
+  - **Remediation**: Use controlled time providers, seeded random generators, or fixed test data
+  - **Quality Standard**: Tests must be 100% reproducible across runs
+
 **Test Architecture Patterns:**
 - Verify tests follow established base classes and helpers
 - Check for proper test organization within test directory structure
