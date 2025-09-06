@@ -1110,7 +1110,12 @@ jobs:
         shell: bash
         run: |
           echo "🔎 Classifying Claude failure reason"
-          CLASS="unexpected"
+          # Default heuristic: scheduled runs assume quota window to avoid noisy failures; manual runs assume unexpected
+          if [ "${{ github.event.inputs.scheduled_trigger }}" = "true" ]; then
+            CLASS="quota_window"
+          else
+            CLASS="unexpected"
+          fi
           if command -v claude >/dev/null 2>&1; then
             set +e
             OUT=$(claude --dangerously-skip-permissions --print "ping" 2>&1)
@@ -1120,10 +1125,7 @@ jobs:
               CLASS="quota_window"
             fi
           else
-            # If CLI not available, fall back to scheduled context assumption to avoid noise in background runs
-            if [ "${{ github.event.inputs.scheduled_trigger }}" = "true" ]; then
-              CLASS="quota_window"
-            fi
+            # No CLI; keep default (scheduled=quota_window, manual=unexpected)
           fi
           echo "ai_failure_class=$CLASS" >> $GITHUB_OUTPUT
           echo "Classification: $CLASS"
