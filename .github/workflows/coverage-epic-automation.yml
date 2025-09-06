@@ -108,8 +108,9 @@ jobs:
           git pull origin develop
           
           # Create or update epic branch
-          if git show-ref --verify --quiet refs/heads/$EPIC_BRANCH; then
-            echo "📝 Epic branch exists, updating from develop"
+          if git ls-remote --heads origin "$EPIC_BRANCH" | grep -q "$EPIC_BRANCH"; then
+            echo "📝 Epic branch exists remotely, fetching and checking out"
+            git fetch origin "$EPIC_BRANCH:$EPIC_BRANCH"
             git checkout $EPIC_BRANCH
             
             if ! ${{ github.event.inputs.skip_epic_update || 'false' }}; then

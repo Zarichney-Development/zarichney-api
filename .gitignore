@@ -40,6 +40,9 @@ x86/
 # Angular
 Code/Zarichney.Website/.angular/
 
+# Generated API documentation
+**/swagger.json
+
 # Application specific
 Data
 appsettings.Development.json
