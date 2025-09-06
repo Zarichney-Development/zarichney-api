@@ -6,7 +6,7 @@
 > **Related:**
 > * **Source:** [`Services/Auth/CookieAuthManager.cs`](../../../../../Zarichney.Server/Services/Auth/CookieAuthManager.cs)
 > * **Dependencies:** `SignInManager<IdentityUser>`, `UserManager<IdentityUser>` (potentially), `IHttpContextAccessor`, `ILogger<CookieAuthManager>`
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

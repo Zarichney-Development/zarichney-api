@@ -90,6 +90,7 @@ If you catch yourself about to:
 9. **WorkflowEngineer** - GitHub Actions, CI/CD automation, pipeline optimization
    - Workflow creation, deployment strategies, automation design
    - Provides CI/CD guidance through working directory
+   - Coverage Epic nuance: scheduled automation may classify Claude Code execution as `skipped_quota_window` during subscription refresh windows (workflow remains successful and retries next interval). Manual runs fail on unexpected AI errors to preserve signal. Use the `scheduled_trigger=true` input to emulate scheduler behavior during manual tests.
 
 10. **BugInvestigator** - Root cause analysis, diagnostic reporting, systematic debugging
     - Performance bottlenecks, error interpretation, reproduction analysis

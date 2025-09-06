@@ -6,7 +6,7 @@
 > **Related:**
 > * **Source:** [`PublicController.cs`](../../../../Zarichney.Server/Controllers/PublicController.cs)
 > * **Service:** [`Services/Status/IStatusService.cs`](../../../../Zarichney.Server/Services/Status/IStatusService.cs) (Potentially)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 
@@ -54,4 +54,3 @@ These tests focus on the code *within* the `PublicController` actions:
 ## 6. Changelog
 
 * **2025-04-18:** Initial creation - Defined purpose, scope, setup, and TODOs for `PublicController` unit tests. (Gemini)
-

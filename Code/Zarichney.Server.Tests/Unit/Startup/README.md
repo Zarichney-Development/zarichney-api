@@ -11,7 +11,7 @@
 >   * [`Startup/MiddlewareStartup.cs`](../../../Zarichney.Server/Startup/MiddlewareStartup.cs)
 >   * [`Startup/ServiceStartup.cs`](../../../Zarichney.Server/Startup/ServiceStartup.cs)
 >   * [`Program.cs`](../../../Zarichney.Server/Program.cs) (Entry point using startup logic)
-> * **Standards:** [`TestingStandards.md`](../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

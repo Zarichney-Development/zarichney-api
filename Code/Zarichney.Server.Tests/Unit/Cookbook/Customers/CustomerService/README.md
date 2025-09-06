@@ -8,7 +8,7 @@
 > * **Interface:** [`Cookbook/Customers/ICustomerService.cs`](../../../../../Zarichney.Server/Cookbook/Customers/CustomerService.cs) (Implicit)
 > * **Dependencies:** `ICustomerRepository`, `UserManager<IdentityUser>` (potentially), `ILogger<CustomerService>`
 > * **Models:** [`Cookbook/Customers/CustomerModels.cs`](../../../../../Zarichney.Server/Cookbook/Customers/CustomerModels.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

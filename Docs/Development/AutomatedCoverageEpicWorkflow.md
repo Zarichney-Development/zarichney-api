@@ -1,7 +1,7 @@
 # Automated Coverage Epic Workflow for AI Agents
 
-**Version:** 1.0
-**Last Updated:** 2025-08-11
+**Version:** 1.1
+**Last Updated:** 2025-09-06
 **Epic Reference:** [Issue #94](https://github.com/Zarichney-Development/zarichney-api/issues/94)
 
 ## 1. Purpose & Context
@@ -13,6 +13,20 @@ This workflow defines the **automated execution process** for AI agents working 
 - **Frequency:** 4 AI agent instances per day (6-hour cron intervals)
 - **Coordination:** Multiple agents working simultaneously with conflict prevention
 - **Success Criteria:** 100% pass rate on ~65 executable tests (23 skipped acceptable)
+
+## 1.1 Workflow Inputs (Dispatch Parameters)
+
+| Input | Type | Purpose |
+|------|------|---------|
+| `skip_epic_update` | boolean | Skip syncing epic branch from `develop` for infra-only validation |
+| `skip_ai_execution` | boolean | Skip the Claude Code agent (useful for infra/testing runs) |
+| `target_area` | string | Optional hint to focus AI on a specific area |
+| `scheduled_trigger` | string | Set to `true` to emulate scheduler semantics in manual runs |
+| `trigger_source` | string | Human-friendly source attribution (e.g., `manual`, `scheduler`) |
+| `trigger_reason` | string | Human-friendly reason for audit trail |
+
+Secrets required:
+- `CLAUDE_CODE_OAUTH_TOKEN` (OAuth token for Claude Code GitHub app)
 
 ## 2. Pre-Execution Environment Validation
 
@@ -280,6 +294,53 @@ gh pr create \
   --title "$PR_TITLE" \
   --body "$PR_BODY" \
   --label "ai-task,testing,coverage,epic-subtask"
+```
+
+## 8. AI Execution Behavior & Failure Handling
+
+The Coverage Epic workflow integrates a Claude Code agent step to propose and implement coverage improvements. To provide stable automation during subscription refresh windows, AI execution is resilient and its failures are classified.
+
+### 8.1 Execution Semantics
+- The AI step runs with `continue-on-error: true` so downstream steps can classify outcomes.
+- Quality gates (build/tests) are validated before and after AI execution.
+
+### 8.2 Classification & Outcomes
+The workflow captures a status string via `ai_execution_status` and records a human-readable note in `coverage_improvements`.
+
+- `claude_success`: AI executed successfully and produced changes.
+- `skipped_manual_override`: AI execution manually skipped via `skip_ai_execution=true`.
+- `skipped_existing_analysis`: Skipped to avoid duplicate analysis when an existing report is detected.
+- `skipped_quota_window`: AI failed due to subscription time-window/quota unavailability; treated as a skip for this interval and the workflow remains successful.
+- `claude_failure`: AI failed for unexpected reasons; workflow fails (manual and scheduled runs).
+
+### 8.3 Scheduled vs Manual Behavior
+- Scheduled runs (or manual runs with `scheduled_trigger=true`):
+  - If the AI step fails for quota/time-window reasons, classify as `skipped_quota_window` and the workflow succeeds.
+  - Any other AI failure is considered unexpected and the workflow fails.
+- Manual runs (default):
+  - Any AI failure is considered unexpected and fails the workflow unless classification clearly identifies the quota/time-window case.
+
+### 8.4 Manual Testing Patterns
+Use these patterns to validate behavior without waiting for cron:
+
+```bash
+# Emulate scheduler semantics (will skip if out of subscription window)
+gh workflow run "Coverage Epic Automation" \
+  --ref main \
+  --field skip_epic_update=false \
+  --field skip_ai_execution=false \
+  --field scheduled_trigger=true \
+  --field trigger_source=manual \
+  --field trigger_reason="Validate scheduled quota classification"
+
+# Infra-only validation (no AI execution)
+gh workflow run "Coverage Epic Automation" \
+  --ref main \
+  --field skip_epic_update=false \
+  --field skip_ai_execution=true \
+  --field scheduled_trigger=false \
+  --field trigger_source=manual \
+  --field trigger_reason="Infra-only validation"
 ```
 
 ## 8. Error Handling & Production Issue Discovery

@@ -9,7 +9,7 @@
 > * **Controller Tests:** [`Integration/Controllers/Cookbook/Recipe/README.md`](../../Controllers/Cookbook/Recipe/README.md)
 > * **Unit Tests:** [`Unit/Cookbook/Recipes/README.md`](../../../Unit/Cookbook/Recipes/README.md)
 > * **Test Infrastructure:** [`DatabaseIntegrationTestBase.cs`](../../../Integration/DatabaseIntegrationTestBase.cs), [`DatabaseFixture.cs`](../../../Framework/Fixtures/DatabaseFixture.cs), [`CustomWebApplicationFactory.cs`](../../../Framework/Fixtures/CustomWebApplicationFactory.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

@@ -7,7 +7,7 @@
 > * **Source:** [`Services/Auth/RefreshTokenCleanupService.cs`](../../../../../Zarichney.Server/Services/Auth/RefreshTokenCleanupService.cs)
 > * **Dependencies:** `IServiceScopeFactory`, `UserDbContext`, `ILogger<RefreshTokenCleanupService>`, `TimeProvider` (potentially)
 > * **Models:** [`Models/RefreshToken.cs`](../../../../../Zarichney.Server/Services/Auth/Models/RefreshToken.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

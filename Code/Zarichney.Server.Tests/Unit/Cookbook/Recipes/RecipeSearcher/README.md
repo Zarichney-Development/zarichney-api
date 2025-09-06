@@ -7,7 +7,7 @@
 > * **Source:** [`Cookbook/Recipes/RecipeSearcher.cs`](../../../../../Zarichney.Server/Cookbook/Recipes/RecipeSearcher.cs)
 > * **Dependencies:** Search Client Library Interface (e.g., `ISearchClient`, `IElasticClient`, `SearchClient`), `ILogger<RecipeSearcher>`
 > * **Models:** [`Cookbook/Recipes/RecipeModels.cs`](../../../../../Zarichney.Server/Cookbook/Recipes/RecipeModels.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

@@ -9,7 +9,7 @@
 > * **Service:** [`Cookbook/Orders/OrderService.cs`](../../../../../Zarichney.Server/Cookbook/Orders/OrderService.cs)
 > * **Models:** [`Cookbook/Orders/OrderModels.cs`](../../../../../Zarichney.Server/Cookbook/Orders/OrderModels.cs)
 > * **Other Services:** [`PdfCompiler.cs`](../../../../../Zarichney.Server/Services/PdfGeneration/PdfCompiler.cs), [`FileService.cs`](../../../../../Zarichney.Server/Services/FileSystem/FileService.cs), [`BackgroundWorker.cs`](../../../../../Zarichney.Server/Services/BackgroundTasks/BackgroundWorker.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Standards/DocumentationStandards.md)
 > * **Test Infrastructure:** [`IntegrationTestBase.cs`](../../../IntegrationTestBase.cs), [`CustomWebApplicationFactory.cs`](../../../Framework/Fixtures/CustomWebApplicationFactory.cs), [`AuthTestHelper.cs`](../../../Framework/Helpers/AuthTestHelper.cs)
 
 ## 1. Purpose & Rationale (Why?)

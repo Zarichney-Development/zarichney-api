@@ -7,7 +7,7 @@
 > **Related:**
 > * **Source:** [`Cookbook/Recipes/`](../../../../Zarichney.Server/Cookbook/Recipes/)
 > * **Subdirectories:** [`RecipeIndexer/`](RecipeIndexer/README.md), [`RecipeRepository/`](RecipeRepository/README.md), [`RecipeSearcher/`](RecipeSearcher/README.md), [`RecipeService/`](RecipeService/README.md), [`WebScraperService/`](WebScraperService/README.md)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 
