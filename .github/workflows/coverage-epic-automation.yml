@@ -1513,8 +1513,12 @@ jobs:
           **Epic Branch**: \`$EPIC_BRANCH\`
           **Implementation Summary**: ${{ steps.check_artifact.outputs.artifact_exists == 'true' && '✅ Included above' || '⚠️ Not available' }}"
           
-          # Prepare labels with conditional production fix label
-          LABELS="ai-task,testing,coverage,epic-subtask,automation"
+          # Prepare labels (use labels that exist in the repo by default)
+          LABELS="type: coverage,priority: medium,effort: small"
+          # Optionally add component/testing label if present
+          if gh label list --search "component: testing" | grep -q "^component: testing"; then
+            LABELS="$LABELS,component: testing"
+          fi
           if [ "${{ steps.check_artifact.outputs.has_production_fixes }}" == "true" ]; then
             LABELS="$LABELS,type: bugfix"
             echo "🏷️ Adding 'type: bugfix' label due to production fixes detected"
