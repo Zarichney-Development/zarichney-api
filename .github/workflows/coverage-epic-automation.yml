@@ -1089,8 +1089,55 @@ jobs:
           echo "  - skip_ai_execution != 'true': ${{ github.event.inputs.skip_ai_execution != 'true' }}"
           echo "  - Combined Condition: ${{ steps.check-existing-comment.outputs.skip_analysis != 'true' && github.event.inputs.skip_ai_execution != 'true' }}"
 
+      - name: "Preflight Check: Claude Availability"
+        id: claude-preflight
+        shell: bash
+        run: |
+          echo "🔎 Preflighting Claude availability/quota window"
+          SHOULD_SKIP=false
+          SKIP_REASON=""
+          CLI_PRESENT=false
+          AVAILABLE=true
+          BLOCKED_QUOTA=false
+
+          if [ -z "${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}" ]; then
+            SHOULD_SKIP=true
+            SKIP_REASON="missing_oauth_token"
+            AVAILABLE=false
+          else
+            if command -v claude >/dev/null 2>&1; then
+              CLI_PRESENT=true
+              set +e
+              # Try a minimal, fast request. If quota/window blocked, this typically returns an error.
+              OUTPUT=$(claude --dangerously-skip-permissions --print "ping" 2>&1)
+              EXIT_CODE=$?
+              set -e
+              if [ $EXIT_CODE -ne 0 ]; then
+                # Heuristic detection for quota/time-window exhaustion
+                if echo "$OUTPUT" | grep -Ei "(quota|rate limit|limit.*reached|time window|subscription|try again later|currently unavailable)" >/dev/null; then
+                  SHOULD_SKIP=true
+                  SKIP_REASON="quota_window"
+                  AVAILABLE=false
+                  BLOCKED_QUOTA=true
+                else
+                  AVAILABLE=false
+                fi
+              fi
+            else
+              # CLI not present; cannot preflight reliably
+              CLI_PRESENT=false
+            fi
+          fi
+
+          echo "cli_present=$CLI_PRESENT" >> $GITHUB_OUTPUT
+          echo "available=$AVAILABLE" >> $GITHUB_OUTPUT
+          echo "blocked_quota=$BLOCKED_QUOTA" >> $GITHUB_OUTPUT
+          echo "should_skip_ai=$SHOULD_SKIP" >> $GITHUB_OUTPUT
+          echo "skip_reason=$SKIP_REASON" >> $GITHUB_OUTPUT
+          echo "Preflight: cli_present=$CLI_PRESENT, available=$AVAILABLE, blocked_quota=$BLOCKED_QUOTA, should_skip_ai=$SHOULD_SKIP, reason=$SKIP_REASON"
+
       - name: "Execute Coverage Epic AI Agent"
-        if: steps.check-existing-comment.outputs.skip_analysis != 'true' && github.event.inputs.skip_ai_execution != 'true'
+        if: steps.check-existing-comment.outputs.skip_analysis != 'true' && github.event.inputs.skip_ai_execution != 'true' && steps.claude-preflight.outputs.should_skip_ai != 'true'
         id: claude-coverage
         uses: anthropics/claude-code-action@v1
         continue-on-error: true  # Gracefully handle subscription quota/time-window limits
@@ -1121,6 +1168,12 @@ jobs:
           if [ "${{ github.event.inputs.skip_ai_execution }}" = "true" ]; then
             echo "ai_execution_status=skipped_manual_override" >> $GITHUB_OUTPUT
             echo "coverage_improvements=AI execution skipped - manual override (infrastructure testing mode)" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.claude-preflight.outputs.should_skip_ai }}" = "true" ] && [ "${{ steps.claude-preflight.outputs.skip_reason }}" = "quota_window" ]; then
+            echo "ai_execution_status=skipped_quota_window" >> $GITHUB_OUTPUT
+            echo "coverage_improvements=Skipped - Claude Code quota/time window not available for this interval; will retry next schedule" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.claude-preflight.outputs.should_skip_ai }}" = "true" ] && [ "${{ steps.claude-preflight.outputs.skip_reason }}" = "missing_oauth_token" ]; then
+            echo "ai_execution_status=skipped_configuration" >> $GITHUB_OUTPUT
+            echo "coverage_improvements=Skipped - Claude configuration missing (OAuth token not provided)" >> $GITHUB_OUTPUT
           elif [ "${{ steps.check-existing-comment.outputs.skip_analysis }}" = "true" ]; then
             echo "ai_execution_status=skipped_existing_analysis" >> $GITHUB_OUTPUT
             echo "coverage_improvements=Skipped - existing analysis found in Epic Issue #$EPIC_ISSUE_ID" >> $GITHUB_OUTPUT
@@ -1129,8 +1182,13 @@ jobs:
             echo "coverage_improvements=Claude AI agent completed coverage improvements successfully" >> $GITHUB_OUTPUT
           elif [ "${{ steps.claude-coverage.outcome }}" = "failure" ] && [ "${{ github.event.inputs.scheduled_trigger }}" = "true" ]; then
             # Treat failures during scheduled runs as quota/time-window exhaustion and skip gracefully
-            echo "ai_execution_status=skipped_quota_window" >> $GITHUB_OUTPUT
-            echo "coverage_improvements=Skipped - Claude Code quota/time window not available for this interval; will retry next schedule" >> $GITHUB_OUTPUT
+            if [ "${{ steps.claude-preflight.outputs.blocked_quota }}" = "true" ]; then
+              echo "ai_execution_status=skipped_quota_window" >> $GITHUB_OUTPUT
+              echo "coverage_improvements=Skipped - Claude Code quota/time window not available for this interval; will retry next schedule" >> $GITHUB_OUTPUT
+            else
+              echo "ai_execution_status=claude_failure" >> $GITHUB_OUTPUT
+              echo "coverage_improvements=Claude AI agent encountered an unexpected error during execution" >> $GITHUB_OUTPUT
+            fi
           elif [ "${{ steps.claude-coverage.outcome }}" = "failure" ]; then
             echo "ai_execution_status=claude_failure" >> $GITHUB_OUTPUT
             echo "coverage_improvements=Claude AI agent encountered an unexpected error during execution" >> $GITHUB_OUTPUT
@@ -1140,7 +1198,7 @@ jobs:
           fi
 
       - name: "Fail on unexpected Claude errors (manual runs)"
-        if: always() && steps.task-branch.outputs.task_branch_created == 'true' && github.event.inputs.skip_ai_execution != 'true' && steps.check-existing-comment.outputs.skip_analysis != 'true' && steps.claude-coverage.outcome == 'failure' && github.event.inputs.scheduled_trigger != 'true'
+        if: always() && steps.task-branch.outputs.task_branch_created == 'true' && github.event.inputs.skip_ai_execution != 'true' && steps.check-existing-comment.outputs.skip_analysis != 'true' && github.event.inputs.scheduled_trigger != 'true' && (steps.claude-preflight.outputs.should_skip_ai != 'true') && steps.claude-coverage.outcome == 'failure'
         run: |
           echo "::error::Claude Code execution failed during a non-scheduled run. Marking job as failed."
           exit 1
