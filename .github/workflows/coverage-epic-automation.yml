@@ -1286,8 +1286,8 @@ jobs:
 
       - name: "Commit Coverage Improvements"
         id: commit-changes
-        # Only commit if validation passed AND AI execution completed successfully
-        if: steps.post-validation.outputs.validation_passed == 'true' && steps.ai-execution.outputs.ai_execution_status == 'claude_success'
+        # Commit if the AI execution completed successfully. Post-validation will influence PR draft/labels.
+        if: steps.ai-execution.outputs.ai_execution_status == 'claude_success'
         run: |
           echo "💾 Committing coverage improvements"
 
@@ -1522,13 +1522,28 @@ jobs:
           
           echo "🏷️ PR labels: $LABELS"
           
-          # Create PR using GitHub CLI with dynamic labels
+          # Determine draft status and labels based on post-validation
+          if [ "${{ steps.post-validation.outputs.validation_passed }}" = "true" ]; then
+            DRAFT_FLAG="--draft=false"
+          else
+            DRAFT_FLAG="--draft"
+            # Add 'needs: fixes' label only if it exists in the repo
+            if gh label list --search "needs: fixes" | grep -q "^needs: fixes"; then
+              LABELS="$LABELS,needs: fixes"
+            else
+              echo "ℹ️ Skipping 'needs: fixes' label (not defined in repository)"
+            fi
+            PR_TITLE="WIP: $PR_TITLE"
+            echo "⚠️ Post-validation failed - creating Draft PR with 'needs: fixes' label"
+          fi
+
+          # Create PR using GitHub CLI with dynamic labels and draft state
           if gh pr create \
             --base "$EPIC_BRANCH" \
             --title "$PR_TITLE" \
             --body "$PR_BODY" \
             --label "$LABELS" \
-            --draft=false; then
+            $DRAFT_FLAG; then
 
             PR_URL=$(gh pr view --json url --jq .url)
             echo "pr_created=true" >> $GITHUB_OUTPUT
