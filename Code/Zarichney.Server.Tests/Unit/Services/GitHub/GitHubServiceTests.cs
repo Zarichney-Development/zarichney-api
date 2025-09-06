@@ -43,7 +43,11 @@ public class GitHubServiceTests : IDisposable
     [Fact]
     public void Constructor_ValidConfig_InitializesSuccessfully()
     {
-        // Arrange & Act
+        // Arrange
+        // Clear any constructor log from the test fixture's _sut to ensure accurate verification
+        _mockLogger.Invocations.Clear();
+
+        // Act
         var service = new GitHubService(_config, _mockLogger.Object);
 
         // Assert

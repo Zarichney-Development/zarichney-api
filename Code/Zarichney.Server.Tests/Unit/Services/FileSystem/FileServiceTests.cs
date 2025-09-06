@@ -59,7 +59,10 @@ public class FileServiceTests : IDisposable
         var result = await _sut.ReadFromFile<dynamic>(_testDirectory, fileName, "json");
 
         // Assert
-        result.Should().NotBeNull("a valid JSON file should be deserialized successfully");
+        // When deserializing to dynamic, System.Text.Json returns JsonElement.
+        // Calling extension methods like Should() on dynamic causes a runtime binder error.
+        // Cast to object to enable FluentAssertions extension resolution safely.
+        ((object)result).Should().NotBeNull("a valid JSON file should be deserialized successfully");
     }
 
     [Fact]
