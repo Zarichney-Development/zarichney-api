@@ -1203,6 +1203,12 @@ jobs:
           echo "::error::Claude Code execution failed during a non-scheduled run. Marking job as failed."
           exit 1
 
+      - name: "Fail on unexpected Claude errors (scheduled runs)"
+        if: always() && steps.task-branch.outputs.task_branch_created == 'true' && github.event.inputs.skip_ai_execution != 'true' && steps.check-existing-comment.outputs.skip_analysis != 'true' && github.event.inputs.scheduled_trigger == 'true' && (steps.claude-preflight.outputs.should_skip_ai != 'true') && steps.claude-preflight.outputs.blocked_quota != 'true' && steps.claude-coverage.outcome == 'failure'
+        run: |
+          echo "::error::Claude Code execution failed during a scheduled run for a reason other than quota/time window. Marking job as failed."
+          exit 1
+
       - name: "Clean AI Transcript Artifacts"
         if: always()
         run: |
