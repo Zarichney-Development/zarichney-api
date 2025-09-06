@@ -6,7 +6,7 @@
 > **Related:**
 > * **Source:** [`PublicController.cs`](../../../../Zarichney.Server/Controllers/PublicController.cs)
 > * **Service:** [`Services/Status/IStatusService.cs`](../../../../Zarichney.Server/Services/Status/IStatusService.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Standards/DocumentationStandards.md)
 > * **Test Infrastructure:** [`IntegrationTestBase.cs`](../../IntegrationTestBase.cs), [`CustomWebApplicationFactory.cs`](../../../Framework/Fixtures/CustomWebApplicationFactory.cs)
 
 ## 1. Purpose & Rationale (Why?)
@@ -51,4 +51,3 @@ This directory contains integration tests for the `PublicController` endpoints, 
 
 * **2025-04-18:** Updated README to reflect implemented tests (`GetHealth_WhenCalled_ReturnsOkStatusAndTimeInfo`, `GetConfigurationStatus_WhenCalled_ReturnsAllExpectedConfigItems`), clarified scope, dependencies, and marked TODOs as DONE. (AI Assistant)
 * **2025-04-18:** Initial creation - Defined purpose, scope, setup, and TODOs for `PublicController` integration tests. (Gemini)
-

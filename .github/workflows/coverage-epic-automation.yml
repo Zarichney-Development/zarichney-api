@@ -1089,10 +1089,13 @@ jobs:
           echo "  - skip_ai_execution != 'true': ${{ github.event.inputs.skip_ai_execution != 'true' }}"
           echo "  - Combined Condition: ${{ steps.check-existing-comment.outputs.skip_analysis != 'true' && github.event.inputs.skip_ai_execution != 'true' }}"
 
+      # Removed preflight probing; rely on actual action outcome + post-failure classification
+
       - name: "Execute Coverage Epic AI Agent"
         if: steps.check-existing-comment.outputs.skip_analysis != 'true' && github.event.inputs.skip_ai_execution != 'true'
         id: claude-coverage
         uses: anthropics/claude-code-action@v1
+        continue-on-error: true  # Gracefully handle subscription quota/time-window limits
         with:
           prompt: ${{ steps.load-coverage-prompt.outputs.prompt }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -1100,6 +1103,27 @@ jobs:
           # Enable non-interactive execution of required tools for CI
           claude_args: |
             --allowedTools "Edit,Read,Write,MultiEdit,Bash(./Scripts/*),Bash(dotnet build:*),Bash(dotnet test:*),Bash(dotnet restore:*),Bash(dotnet format:*),Bash(ls:*),Bash(pwd:*),Bash(find:*),Bash(grep:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(jq:*)"
+
+      - name: "Classify Claude Failure Reason"
+        id: claude-classify
+        if: always() && steps.task-branch.outputs.task_branch_created == 'true' && steps.claude-coverage.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "🔎 Classifying Claude failure reason"
+          # Default heuristic: scheduled runs assume quota window to avoid noisy failures; manual runs assume unexpected
+          if [ "${{ github.event.inputs.scheduled_trigger }}" = "true" ]; then CLASS="quota_window"; else CLASS="unexpected"; fi
+
+          if command -v claude >/dev/null 2>&1; then
+            set +e
+            OUT=$(claude --dangerously-skip-permissions --print "ping" 2>&1)
+            EC=$?
+            set -e
+            if [ $EC -ne 0 ] && echo "$OUT" | grep -Ei "(quota|rate limit|limit.*reached|time window|subscription|try again later|currently unavailable)" >/dev/null; then
+              CLASS="quota_window"
+            fi
+          fi
+          echo "ai_failure_class=$CLASS" >> $GITHUB_OUTPUT
+          echo "Classification: $CLASS"
 
       - name: "Handle Coverage Epic AI Failure"
         if: failure() && steps.claude-coverage.outcome == 'failure'
@@ -1126,13 +1150,28 @@ jobs:
           elif [ "${{ steps.claude-coverage.outcome }}" = "success" ]; then
             echo "ai_execution_status=claude_success" >> $GITHUB_OUTPUT
             echo "coverage_improvements=Claude AI agent completed coverage improvements successfully" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.claude-coverage.outcome }}" = "failure" ] && [ "${{ steps.claude-classify.outputs.ai_failure_class }}" = "quota_window" ]; then
+            echo "ai_execution_status=skipped_quota_window" >> $GITHUB_OUTPUT
+            echo "coverage_improvements=Skipped - Claude Code quota/time window not available for this interval; will retry next schedule" >> $GITHUB_OUTPUT
           elif [ "${{ steps.claude-coverage.outcome }}" = "failure" ]; then
             echo "ai_execution_status=claude_failure" >> $GITHUB_OUTPUT
-            echo "coverage_improvements=Claude AI agent encountered an error during execution" >> $GITHUB_OUTPUT
+            echo "coverage_improvements=Claude AI agent encountered an unexpected error during execution" >> $GITHUB_OUTPUT
           else
             echo "ai_execution_status=not_executed" >> $GITHUB_OUTPUT
             echo "coverage_improvements=AI agent was not executed" >> $GITHUB_OUTPUT
           fi
+
+      - name: "Fail on unexpected Claude errors (manual runs)"
+        if: always() && steps.task-branch.outputs.task_branch_created == 'true' && github.event.inputs.skip_ai_execution != 'true' && steps.check-existing-comment.outputs.skip_analysis != 'true' && github.event.inputs.scheduled_trigger != 'true' && steps.claude-coverage.outcome == 'failure' && steps.claude-classify.outputs.ai_failure_class != 'quota_window'
+        run: |
+          echo "::error::Claude Code execution failed during a non-scheduled run. Marking job as failed."
+          exit 1
+
+      - name: "Fail on unexpected Claude errors (scheduled runs)"
+        if: always() && steps.task-branch.outputs.task_branch_created == 'true' && github.event.inputs.skip_ai_execution != 'true' && steps.check-existing-comment.outputs.skip_analysis != 'true' && github.event.inputs.scheduled_trigger == 'true' && steps.claude-coverage.outcome == 'failure' && steps.claude-classify.outputs.ai_failure_class != 'quota_window'
+        run: |
+          echo "::error::Claude Code execution failed during a scheduled run for a reason other than quota/time window. Marking job as failed."
+          exit 1
 
       - name: "Clean AI Transcript Artifacts"
         if: always()

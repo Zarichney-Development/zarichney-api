@@ -7,7 +7,7 @@
 > * **Source:** [`AiController.cs`](../../../../Zarichney.Server/Controllers/AiController.cs)
 > * **Services:** [`AiService.cs`](../../../../Zarichney.Server/Services/AI/AiService.cs), [`LlmService.cs`](../../../../Zarichney.Server/Services/AI/LlmService.cs), [`TranscribeService.cs`](../../../../Zarichney.Server/Services/AI/TranscribeService.cs)
 > * **Test Infrastructure:** [`IntegrationTestBase.cs`](../../IntegrationTestBase.cs), [`CustomWebApplicationFactory.cs`](../../../Framework/Fixtures/CustomWebApplicationFactory.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

@@ -98,6 +98,7 @@ For continuous test coverage improvement without manual intervention:
 - **Execution Frequency:** Every 6 hours via cron schedule
 - **Quality Gates:** 100% pass rate, 23 expected skipped tests
 - **Framework Enhancement:** Continuous testing infrastructure improvements
+ - **AI Execution Behavior:** During subscription refresh windows, scheduled runs classify AI failures as `skipped_quota_window` and the workflow remains successful (it will retry next interval). Manual runs fail on unexpected AI errors to keep the signal strong. To emulate scheduler semantics in a manual run, set the `scheduled_trigger=true` input.
 
 ### Remote Development via Claude Dispatch
 

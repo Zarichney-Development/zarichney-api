@@ -6,7 +6,7 @@
 > **Related:**
 > * **Source:** [`Services/Auth/RoleManager.cs`](../../../../../Zarichney.Server/Services/Auth/RoleManager.cs)
 > * **Dependencies:** `Microsoft.AspNetCore.Identity.RoleManager<IdentityRole>`, `Microsoft.AspNetCore.Identity.UserManager<IdentityUser>`, `ILogger<RoleManager>`
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

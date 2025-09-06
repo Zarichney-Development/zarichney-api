@@ -7,7 +7,7 @@
 > * **Source:** [`Services/Auth/ApiKeyService.cs`](../../../../../Zarichney.Server/Services/Auth/ApiKeyService.cs)
 > * **Dependencies:** `UserDbContext`, `UserManager<IdentityUser>`, `ILogger<ApiKeyService>`
 > * **Models:** [`Models/ApiKey.cs`](../../../../../Zarichney.Server/Services/Auth/Models/ApiKey.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

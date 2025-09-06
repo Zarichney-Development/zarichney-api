@@ -5,7 +5,7 @@
 > **Parent:** [`Controllers`](../README.md)
 > **Related:**
 > * **Source:** [`ApiController.cs`](../../../../Zarichney.Server/Controllers/ApiController.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Standards/DocumentationStandards.md)
 > * **Test Infrastructure:** [`IntegrationTestBase.cs`](../../IntegrationTestBase.cs), [`CustomWebApplicationFactory.cs`](../../../Framework/Fixtures/CustomWebApplicationFactory.cs)
 
 ## 1. Purpose & Rationale (Why?)
@@ -81,4 +81,3 @@ These tests cover the following endpoints defined in `ApiController`:
 
 * **2025-04-18:** Revision 2 - Updated to reflect concrete endpoints (`ValidateEmail`, `HealthCheckSecure`, `TestAuth`) in `ApiController`, added specific TODOs, acknowledged per-endpoint test file structure. (Gemini)
 * **2025-04-18:** Revision 1 - Initial creation (assuming base class only). (Gemini)
-

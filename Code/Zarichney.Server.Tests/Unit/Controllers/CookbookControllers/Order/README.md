@@ -9,7 +9,7 @@
 > * **Service:** [`Cookbook/Orders/IOrderService.cs`](../../../../../Zarichney.Server/Cookbook/Orders/IOrderService.cs)
 > * **Models:** [`Cookbook/Orders/OrderModels.cs`](../../../../../Zarichney.Server/Cookbook/Orders/OrderModels.cs)
 > * **Other Services:** [`IPdfCompiler.cs`](../../../../../Zarichney.Server/Services/PdfGeneration/IPdfCompiler.cs), [`IFileService.cs`](../../../../../Zarichney.Server/Services/FileSystem/IFileService.cs), [`IBackgroundWorker.cs`](../../../../../Zarichney.Server/Services/BackgroundTasks/IBackgroundWorker.cs), [`IEmailService.cs`](../../../../../Zarichney.Server/Services/Email/IEmailService.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

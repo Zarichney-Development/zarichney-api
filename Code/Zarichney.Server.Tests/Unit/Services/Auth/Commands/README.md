@@ -7,7 +7,7 @@
 > * **Source:** [`Services/Auth/Commands/`](../../../../../Zarichney.Server/Services/Auth/Commands/) (Contains command definitions and handlers)
 > * **Dependencies:** ASP.NET Core Identity (`UserManager`, `SignInManager`, `RoleManager`), `UserDbContext`, `IEmailService`, `IConfiguration`/`IOptions`, MediatR (`IRequestHandler`)
 > * **Models:** [`Models/AuthResult.cs`](../../../../../Zarichney.Server/Services/Auth/Models/AuthResult.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

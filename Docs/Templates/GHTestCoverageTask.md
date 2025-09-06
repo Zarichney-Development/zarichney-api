@@ -58,6 +58,7 @@ AI agent identifies specific production code files based on coverage analysis:
 ### Quality Gates (Non-Negotiable)
 - [ ] All executable tests pass (100% pass rate maintained)
 - [ ] Exactly EXPECTED_SKIP_COUNT tests skipped (fallback: 23 if unset; expected for unconfigured environment; see Docs/Standards/TestingStandards.md section 12.7 for rationale)
+- [ ] If AI step shows `skipped_quota_window` during scheduled runs, treat as a successful interval and re-run after subscription refresh window
 - [ ] No existing tests broken by new implementations
 - [ ] All new tests deterministic and repeatable in CI
 - [ ] Coverage improvement measurable and documented

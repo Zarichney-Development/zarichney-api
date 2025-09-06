@@ -8,7 +8,7 @@
 > * **Interface:** [`Cookbook/Orders/IOrderService.cs`](../../../../../Zarichney.Server/Cookbook/Orders/OrderService.cs) (Implicit)
 > * **Dependencies:** `IOrderRepository`, `ICustomerRepository` (potentially), `IRecipeService` (potentially), `IEmailService`, `IBackgroundWorker`, `IPdfCompiler`, `IFileService`, `ILogger<OrderService>`
 > * **Models:** [`Cookbook/Orders/OrderModels.cs`](../../../../../Zarichney.Server/Cookbook/Orders/OrderModels.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

@@ -8,7 +8,7 @@
 > * **Source:** [`CookbookController.cs`](../../../../../Zarichney.Server/Controllers/CookbookController.cs)
 > * **Service:** [`Cookbook/Recipes/IRecipeService.cs`](../../../../../Zarichney.Server/Cookbook/Recipes/IRecipeService.cs)
 > * **Models:** [`Cookbook/Recipes/RecipeModels.cs`](../../../../../Zarichney.Server/Cookbook/Recipes/RecipeModels.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

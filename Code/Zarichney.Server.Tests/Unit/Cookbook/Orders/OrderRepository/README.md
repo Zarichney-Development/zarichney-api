@@ -8,7 +8,7 @@
 > * **Interface:** [`Cookbook/Orders/IOrderRepository.cs`](../../../../../Zarichney.Server/Cookbook/Orders/OrderRepository.cs) (Implicit)
 > * **Dependencies:** `DbContext` (e.g., `AppDbContext`), `ILogger<OrderRepository>`
 > * **Models:** [`Cookbook/Orders/OrderModels.cs`](../../../../../Zarichney.Server/Cookbook/Orders/OrderModels.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

@@ -7,7 +7,7 @@
 > **Related:**
 > * **Source:** [`Services/PdfGeneration/PdfCompiler.cs`](../../../../Zarichney.Server/Services/PdfGeneration/PdfCompiler.cs)
 > * **Dependencies:** `IOrderService`, `IRecipeService`, `IFileService` (potentially for images), `ILogger<PdfCompiler>`, QuestPDF library
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

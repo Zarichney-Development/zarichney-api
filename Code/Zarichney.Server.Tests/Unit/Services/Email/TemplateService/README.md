@@ -7,7 +7,7 @@
 > * **Source:** [`Services/Email/TemplateService.cs`](../../../../../Zarichney.Server/Services/Email/TemplateService.cs)
 > * **Templates:** [`Services/Email/Templates/`](../../../../../Zarichney.Server/Services/Email/Templates/)
 > * **Dependencies:** `IFileService` (potentially), `ILogger<TemplateService>`
-> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

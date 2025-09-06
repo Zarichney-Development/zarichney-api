@@ -7,7 +7,7 @@
 > * **Source:** [`PaymentController.cs`](../../../../Zarichney.Server/Controllers/PaymentController.cs)
 > * **Service:** [`Services/Payment/PaymentService.cs`](../../../../Zarichney.Server/Services/Payment/PaymentService.cs), [`Services/Payment/StripeService.cs`](../../../../Zarichney.Server/Services/Payment/StripeService.cs)
 > * **Models:** [`Services/Payment/PaymentModels.cs`](../../../../Zarichney.Server/Services/Payment/PaymentModels.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Standards/DocumentationStandards.md)
 > * **Test Infrastructure:** [`IntegrationTestBase.cs`](../../IntegrationTestBase.cs), [`CustomWebApplicationFactory.cs`](../../../Framework/Fixtures/CustomWebApplicationFactory.cs), [`AuthTestHelper.cs`](../../../Framework/Helpers/AuthTestHelper.cs), [`MockStripeServiceFactory.cs`](../../../Mocks/Factories/MockStripeServiceFactory.cs)
 
 ## 1. Purpose & Rationale (Why?)
@@ -77,4 +77,3 @@ These tests cover endpoints managing the payment lifecycle:
 ## 6. Changelog
 
 * **2025-04-18:** Initial creation - Defined purpose, scope, setup, and TODOs for `PaymentController` integration tests. (Gemini)
-

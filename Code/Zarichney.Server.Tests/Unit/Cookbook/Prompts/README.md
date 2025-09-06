@@ -8,7 +8,7 @@
 > * **Source:** [`Cookbook/Prompts/`](../../../../Zarichney.Server/Cookbook/Prompts/) (Contains specific prompt classes like `AnalyzeRecipe`, `SynthesizeRecipe`, etc.)
 > * **Base Class:** [`Services/AI/PromptBase.cs`](../../../../Zarichney.Server/Services/AI/PromptBase.cs)
 > * **Dependencies:** Usually none directly, but they operate on input models (e.g., `Recipe`, `Order`).
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

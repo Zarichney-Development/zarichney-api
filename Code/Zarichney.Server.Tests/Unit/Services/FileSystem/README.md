@@ -7,7 +7,7 @@
 > **Related:**
 > * **Source:** [`Services/FileSystem/FileService.cs`](../../../../Zarichney.Server/Services/FileSystem/FileService.cs)
 > * **Dependencies:** `System.IO` classes (potentially), `ILogger<FileService>`
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 
@@ -79,4 +79,3 @@ Tests focus on the public methods exposed by `FileService`:
 ## 6. Changelog
 
 * **2025-04-18:** Initial creation - Defined purpose, scope, setup (using temporary files), and TODOs for `FileService` tests. Added note on `System.IO.Abstractions`. (Gemini)
-

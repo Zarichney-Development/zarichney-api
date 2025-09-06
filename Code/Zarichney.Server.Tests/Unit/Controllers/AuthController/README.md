@@ -7,7 +7,7 @@
 > * **Source:** [`AuthController.cs`](../../../../Zarichney.Server/Controllers/AuthController.cs)
 > * **Commands:** [`Services/Auth/Commands/`](../../../../Zarichney.Server/Services/Auth/Commands/)
 > * **Services:** [`AuthService.cs`](../../../../Zarichney.Server/Services/Auth/AuthService.cs), [`CookieAuthManager.cs`](../../../../Zarichney.Server/Services/Auth/CookieAuthManager.cs)
-> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Development/DocumentationStandards.md)
+> * **Standards:** [`TestingStandards.md`](../../../../Docs/Standards/TestingStandards.md), [`DocumentationStandards.md`](../../../../Docs/Standards/DocumentationStandards.md)
 
 ## 1. Purpose & Rationale (Why?)
 

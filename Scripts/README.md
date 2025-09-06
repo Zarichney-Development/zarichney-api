@@ -26,6 +26,7 @@
     * **Configuration Files:** `.refitter` (API client generation settings), `docker-compose.integration.yml` (integration test environment)
     * **CI/CD Pipeline Logic:** Scripts moved to `.github/scripts/`
     * **AI Analysis Prompts:** Prompts relocated to `.github/prompts/`
+    * **Coverage Epic AI Behavior:** The Coverage Epic workflow executes the AI step with classification: quota/time-window failures are treated as `skipped_quota_window` (workflow success for scheduled runs), while unexpected AI errors fail manual runs to keep signal strong.
 * **Core Workflow Integration:** Scripts integrate with the CI/CD pipeline and support local development workflows by:
     1. Generating strongly-typed API clients from OpenAPI specifications
     2. Running comprehensive test suites with coverage reporting
