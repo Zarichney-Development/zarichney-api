@@ -44,7 +44,7 @@ You **MUST** execute the workflow detailed in the referenced file below. Follow 
     * Identify specific methods, logic branches, error paths, or edge cases lacking adequate test coverage based on `/Docs/Standards/TestingStandards.md`.
     * Write new unit and/or integration tests (as appropriate for the target code) to cover these gaps.
     * Focus on validating the *existing* behavior. **Do NOT modify production code** unless explicitly instructed for testability and approved in the GitHub Issue.
-    * Adhere strictly to all testing standards (AAA, Naming, Traits, Assertions with `.Because()`, Mocking, Fixtures, etc.).
+    * Adhere strictly to all testing standards (AAA, Naming, Traits, and include clear reasons in FluentAssertions using the assertion's optional message parameter; Mocking, Fixtures, etc.).
     * {Add any specific scenarios or edge cases mentioned in the GitHub Issue that need testing.}
 
 ## 6. Task Completion & Output

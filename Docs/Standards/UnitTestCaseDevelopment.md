@@ -127,39 +127,39 @@ Moq is the mandatory mocking library for creating test doubles of dependencies.
 FluentAssertions is mandatory for its expressive, readable syntax and detailed failure messages.
 
 * **Clarity and Readability:** Assertions should clearly state the expected outcome.
-* **`.Because("...")`:** **Mandatory for all assertions.** Explain the *intent* or *reasoning* behind the assertion. This is invaluable for future maintainers (human or AI).
+* **Assertion Reasons:** Provide a reason using FluentAssertions' optional message parameter. This explains the intent behind the assertion and improves failure messages.
     ```csharp
-    result.Should().BeTrue().Because("the operation was expected to succeed under these conditions");
+    result.Should().BeTrue("because the operation is expected to succeed under these conditions");
     ```
 * **Common Assertion Patterns:**
     * **Equality and Equivalence:**
-        * `actual.Should().Be(expected).Because(...)` (for simple types or reference equality).
-        * `actual.Should().BeEquivalentTo(expectedDto, options => options.ExcludingMissingMembers()).Because(...)` (for comparing complex objects structurally. Use `options` to customize, e.g., `Excluding(x => x.Id)`).
+        * `actual.Should().Be(expected, "because ...")` (for simple types or reference equality).
+        * `actual.Should().BeEquivalentTo(expectedDto, options => options.ExcludingMissingMembers(), "because ...")` (for comparing complex objects structurally. Use `options` to customize, e.g., `Excluding(x => x.Id)`).
     * **Collections:**
-        * `collection.Should().HaveCount(expectedCount).Because(...)`
-        * `collection.Should().ContainSingle().Because(...)`
-        * `collection.Should().ContainEquivalentOf(expectedItem).Because(...)`
-        * `collection.Should().BeEmpty().Because(...)` / `NotBeEmpty()`
-        * `collection.Should().Contain(item => item.Property == value).Because(...)` (for asserting presence based on a condition).
-        * `collection.Should().OnlyContain(item => item.IsActive).Because(...)`
+        * `collection.Should().HaveCount(expectedCount, "because ...")`
+        * `collection.Should().ContainSingle("because ...")`
+        * `collection.Should().ContainEquivalentOf(expectedItem, "because ...")`
+        * `collection.Should().BeEmpty("because ...")` / `NotBeEmpty("because ...")`
+        * `collection.Should().Contain(item => item.Property == value, "because ...")` (for asserting presence based on a condition).
+        * `collection.Should().OnlyContain(item => item.IsActive, "because ...")`
     * **Exceptions:**
         ```csharp
         Action act = () => sut.ProcessRequest(invalidInput);
         act.Should().Throw<ArgumentNullException>()
            .WithMessage("*parameterName*") // Wildcards can be used
-           .And.ParamName.Should().Be("parameterName").Because("...");
+           .And.ParamName.Should().Be("parameterName", "because ...");
 
         act.Should().ThrowExactly<CustomDomainException>()
            .Where(ex => ex.ErrorCode == "ERR123")
-           .Because("a specific domain error was expected");
+           .WithMessage("*ERR123*", "because a specific domain error was expected");
         ```
-    * **Boolean values:** `actual.Should().BeTrue().Because(...)` / `BeFalse().Because(...)`.
-    * **Nulls:** `actual.Should().BeNull().Because(...)` / `NotBeNull().Because(...)`.
-    * **Strings:** `actual.Should().StartWith("prefix").And.EndWith("suffix").And.Contain("substring").Because(...)`; `actual.Should().BeNullOrEmpty().Because(...)`.
-    * **Numbers:** `actual.Should().BePositive().Because(...)`; `actual.Should().BeInRange(min, max).Because(...)`.
+    * **Boolean values:** `actual.Should().BeTrue("because ...")` / `BeFalse("because ...")`.
+    * **Nulls:** `actual.Should().BeNull("because ...")` / `NotBeNull("because ...")`.
+    * **Strings:** apply reasons to specific assertions as needed, e.g., `actual.Should().BeNullOrEmpty("because ...")`.
+    * **Numbers:** `actual.Should().BePositive("because ...")`; `actual.Should().BeInRange(min, max, "because ...")`.
     * **Dates/Times (SUT should use `TimeProvider`):**
-        * `actualDateTime.Should().Be(expectedDateTime).Because(...)` (if `FakeTimeProvider` provides exact time).
-        * `actualDateTime.Should().BeCloseTo(expected, TimeSpan.FromMilliseconds(100)).Because(...)` (if some minor variance is acceptable/unavoidable).
+        * `actualDateTime.Should().Be(expectedDateTime, "because ...")` (if `FakeTimeProvider` provides exact time).
+        * `actualDateTime.Should().BeCloseTo(expected, TimeSpan.FromMilliseconds(100), "because ...")` (if some minor variance is acceptable/unavoidable).
 * **Avoid `.Should().BeTrue()` or `.Should().BeFalse()` when a more specific and expressive assertion is available.** For example, instead of `collection.Any(x => x.IsValid).Should().BeTrue()`, use `collection.Should().Contain(x => x.IsValid)`.
 
 ## 7. Test Data Management with AutoFixture
@@ -230,8 +230,7 @@ AutoFixture helps create anonymous, yet structurally valid, test data, reducing 
             Action act = () => sut.UpdateStock(product);
 
             // Act & Assert
-            act.Should().Throw<ArgumentOutOfRangeException>()
-               .Because("quantity cannot be zero or negative");
+            act.Should().Throw<ArgumentOutOfRangeException>("because quantity cannot be zero or negative");
         }
         ```
 * **Customizing AutoFixture for Unit Tests:**
@@ -263,7 +262,7 @@ AutoFixture helps create anonymous, yet structurally valid, test data, reducing 
             var result = await sut.MyAsyncMethod();
 
             // Assert
-            result.Should().Be("test data").Because("...");
+            result.Should().Be("test data", "because ...");
         }
         ```
     * Always `await` calls to the SUT's asynchronous methods.
@@ -331,7 +330,7 @@ Before committing unit tests, quickly verify:
 2.  **Isolation:** Are ALL external dependencies (DB, network, file system, other services, `DateTime.Now`, config files) properly mocked or stubbed? No live calls?
 3.  **AAA:** Is the Arrange-Act-Assert pattern clearly followed?
 4.  **Naming:** Is the test class and method name clear, descriptive, and following `[SUT]Tests` and `[Method]_[Scenario]_[ExpectedOutcome]`?
-5.  **Assertions:** Are assertions specific, using FluentAssertions, and include a `.Because("...")` clause explaining the intent?
+5.  **Assertions:** Are assertions specific, using FluentAssertions, and include a clear reason (via the assertion's optional message parameter) explaining the intent?
 6.  **Data:** Is test data managed effectively (e.g., AutoFixture for anonymous data, explicit values only for scenario-specific inputs)? Are there minimal hardcoded complex objects?
 7.  **Speed & Determinism:** Is the test fast and consistently produces the same result?
 8.  **Coverage:** Does the test (along with others for the SUT) cover relevant positive paths, negative paths, and edge cases?
