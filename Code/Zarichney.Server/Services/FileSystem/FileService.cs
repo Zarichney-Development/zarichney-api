@@ -106,6 +106,13 @@ public class FileService : IFileService
 
   public void DeleteFile(string filePath)
   {
+    // If the file does not exist, treat as a no-op for safe idempotency
+    if (!File.Exists(filePath))
+    {
+      _logger.LogInformation("Delete requested for non-existent file: {FilePath}", filePath);
+      return;
+    }
+
     var retryPolicy = Policy
       .Handle<IOException>()
       .Or<UnauthorizedAccessException>()
