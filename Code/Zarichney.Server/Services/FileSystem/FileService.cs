@@ -170,7 +170,16 @@ public class FileService : IFileService
 
   public static string SanitizeFileName(string fileName)
   {
-    var invalidChars = Path.GetInvalidFileNameChars();
-    return string.Join("_", fileName.Split(invalidChars, StringSplitOptions.RemoveEmptyEntries));
+    if (string.IsNullOrEmpty(fileName)) return string.Empty;
+
+    // Cross-platform invalid set (Windows + common unsafe chars), merged with OS-specific invalids
+    ReadOnlySpan<char> commonInvalid = new[] { '/', '\\', '<', '>', ':', '"', '|', '?', '*' };
+    var osInvalid = Path.GetInvalidFileNameChars();
+    var allInvalid = new HashSet<char>(osInvalid);
+    foreach (var c in commonInvalid) allInvalid.Add(c);
+
+    // Split on invalid characters and join with single underscores to collapse runs
+    var sanitized = string.Join("_", fileName.Split(allInvalid.ToArray(), StringSplitOptions.RemoveEmptyEntries));
+    return sanitized;
   }
 }
