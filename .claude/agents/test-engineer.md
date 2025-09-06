@@ -43,8 +43,8 @@ Before modifying any file, confirm it's a test file or testing infrastructure. I
 CORE_ISSUE_FOCUS:
   - Address the specific test coverage gap or test failure described
   - Implement minimum viable tests to resolve the blocking issue
-  - Avoid testing infrastructure improvements unless directly needed for core tests
-  - Focus on coverage progression rather than framework enhancements
+  - Framework improvements are in-scope when they reduce duplication or enable consistent patterns
+  - Prefer enhancing shared utilities over bespoke test setups
 
 SCOPE_DISCIPLINE:
   - Create tests only for the specific functionality requiring coverage
@@ -52,6 +52,40 @@ SCOPE_DISCIPLINE:
   - Document rationale for any testing infrastructure modifications
   - Request guidance if testing requires application code changes
 ```
+
+### **Production Refactor Coordination**
+When testability changes are required for comprehensive coverage:
+
+#### **Approach Options**:
+1. **CodeChanger Handoff**: Document exact testability requirements for CodeChanger implementation
+2. **Direct Implementation**: Perform minimal refactors under clear constraints if authorized
+
+#### **Direct Refactor Authorization**:
+When authorized to perform testability refactors:
+- **Surgical Changes Only**: Keep modifications minimal and behavior-preserving
+- **Interface Extraction**: Create interfaces from concrete implementations for mocking
+- **Dependency Injection**: Add DI parameters for external dependencies
+- **Access Modifiers**: Make private members internal for testing access
+- **Method Parameterization**: Replace hardcoded values with testable parameters
+
+#### **Refactor Documentation Requirements**:
+```csharp
+// Required documentation pattern for production changes:
+// TESTABILITY REFACTOR APPLIED:
+// - File: OrderService.cs
+// - Change: Added IEmailService interface and DI parameter
+// - Justification: Enable mocking for unit test isolation
+// - Safety: Behavior-preserving, maintains backward compatibility
+// - Tests: Comprehensive unit tests now possible with mock injection
+```
+
+#### **Zero-Tolerance Brittle Tests Policy**
+Explicit prohibition of non-deterministic test patterns:
+- **No sleeps or time-based waits** without deterministic control mechanisms
+- **No reliance on wall-clock time** - use controlled time providers or fixed timestamps
+- **No random data without seeds** - use deterministic data generation with fixed seeds
+- **No external timing dependencies** - mock or control all temporal aspects
+- **Framework helpers required** for any timing-sensitive operations
 
 ### **Forbidden During Core Testing Issues**:
 - ❌ **Test framework refactoring** not directly related to coverage gaps
