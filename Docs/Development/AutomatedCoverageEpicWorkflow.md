@@ -1,6 +1,6 @@
 # Automated Coverage Epic Workflow for AI Agents
 
-**Version:** 1.1
+**Version:** 1.2
 **Last Updated:** 2025-09-06
 **Epic Reference:** [Issue #94](https://github.com/Zarichney-Development/zarichney-api/issues/94)
 
@@ -175,10 +175,30 @@ find . -name "README.md" -path "*/[target-module]/*"
 ### 5.3 Implementation Guidelines
 
 #### **Test Development Priorities**
-1. **Uncovered Code First:** Target 0% coverage files/methods
-2. **Framework Enhancements:** Improve testing infrastructure when beneficial
+1. **Framework Enhancements:** Improve testing infrastructure to enable better tests
+2. **Uncovered Code:** Target 0% coverage files/methods
 3. **Edge Case Coverage:** Address boundary conditions and error scenarios
 4. **Integration Depth:** Expand API endpoint coverage
+
+#### **Production Refactor Decision Tree**
+When tests reveal production issues, follow this decision flow:
+
+1. **Is the fix minimal and behavior-preserving?**
+   - YES → Implement inline with tests
+   - NO → Create separate issue
+
+2. **Does the fix maintain backward compatibility?**
+   - YES → Safe to include in PR
+   - NO → Requires separate issue with migration plan
+
+3. **Is the change testability-focused (DI, interfaces)?**
+   - YES → Include as minimal refactor
+   - NO → Evaluate scope and risk
+
+4. **Documentation requirement:**
+   - Create `Docs/Reports/CoverageEpic/${TASK_IDENTIFIER}.md`
+   - Include "Production Fixes" section with rationale
+   - Reference in PR description
 
 #### **Quality Standards (Non-Negotiable)**
 - **100% Pass Rate:** All new tests must pass consistently
@@ -217,7 +237,35 @@ dotnet format zarichney-api.sln --verify-no-changes
 # Should require no changes (already formatted)
 ```
 
-### 6.2 Coverage Impact Validation
+### 6.2 Implementation Summary Artifact
+
+Before committing, create comprehensive summary:
+```bash
+# Create implementation summary
+cat > Docs/Reports/CoverageEpic/${TASK_IDENTIFIER}.md << EOF
+# Coverage Epic Implementation Summary
+
+## Target Areas
+- Files: [list of files with tests added]
+- Coverage Impact: [before/after percentages]
+- Test Count: [number of new tests]
+
+## Framework Enhancements
+- Builders Added: [any new test data builders]
+- Mock Factories: [any new mock configurations]
+- Helper Utilities: [any new testing helpers]
+
+## Production Fixes (if applicable)
+- Files Modified: [production code changes]
+- Rationale: [why inline fix vs separate issue]
+- Safety Validation: [how backward compatibility maintained]
+
+## Follow-up Items
+- Issues to Create: [any deferred work]
+EOF
+```
+
+### 6.3 Coverage Impact Validation
 Confirm coverage improvement:
 
 ```bash

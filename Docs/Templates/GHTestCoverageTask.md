@@ -73,7 +73,17 @@ AI agent identifies specific production code files based on coverage analysis:
 - [ ] `/Docs/Development/AutomatedCoverageEpicWorkflow.md` - Automated workflow process
 - [ ] Local module `README.md` files for target areas
 
-### Test Implementation Standards
+### Test Implementation Standards (MUST)
+- [ ] **Framework Usage (Non-Negotiable):**
+  - [ ] Integration tests inherit from `IntegrationTestBase` or `DatabaseIntegrationTestBase`
+  - [ ] Use `ApiClientFixture`, `CustomWebApplicationFactory`, Refit clients
+  - [ ] Apply `[DependencyFact]` with proper traits from `TestCategories`
+  - [ ] Use test data builders/AutoFixture (no manual DTO construction)
+  - [ ] Mock all external dependencies with framework mocks
+- [ ] **Zero Brittle Tests:**
+  - [ ] No sleeps or time-based waits
+  - [ ] Deterministic data generation with fixed seeds
+  - [ ] Proper fixture usage for isolation
 - [ ] Unit tests: Complete isolation with Moq for all dependencies
 - [ ] Integration tests: Use `CustomWebApplicationFactory`, `DatabaseFixture`, Refit clients
 - [ ] Test categories: Appropriate `[Trait("Category", "...")]` attributes applied
@@ -87,6 +97,18 @@ When beneficial for scalability, include:
 - [ ] Mock factories for reusable configurations (`/Framework/Mocks/`)
 - [ ] Testing utilities for common patterns (`/Framework/Helpers/`)
 - [ ] AutoFixture customizations (`/Framework/TestData/AutoFixtureCustomizations/`)
+
+### Production Changes Protocol
+If tests reveal production issues:
+1. **Evaluate fix scope** using decision tree in AutomatedCoverageEpicWorkflow.md
+2. **If safe for inline fix:**
+   - Keep changes minimal and behavior-preserving
+   - Add tests proving the fix
+   - Document in Implementation Summary
+3. **If requires separate issue:**
+   - Create GitHub issue with discovered problem
+   - Continue with coverage work
+   - Reference issue in PR description
 
 ## 6. Automated Validation & Delivery
 
