@@ -38,13 +38,22 @@ The `.gitignore` file has been updated with patterns to prevent swagger files:
 Before committing, always verify:
 
 ```bash
-# Check what you're about to commit
+# Use the automated validation script
+./Scripts/validate-pre-commit.sh
+
+# Manual checks if needed
 git status
 git diff --cached
 
 # Look for large files or generated content
 git diff --cached --stat
 ```
+
+The `validate-pre-commit.sh` script automatically:
+- Detects large files in staging area
+- Warns about potential swagger/openapi files
+- Identifies modifications to auto-generated code
+- Shows summary of all changes being committed
 
 ## 📋 Copilot User Guidelines
 

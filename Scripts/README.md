@@ -11,6 +11,7 @@
 * **Key Responsibilities:** 
     * API client generation and synchronization between server and test projects
     * Comprehensive test automation with coverage reporting
+    * Pre-commit validation to prevent generated file contamination
     * Application deployment and service management
     * Development environment setup and maintenance
     * Recipe scraping functionality testing
@@ -19,8 +20,9 @@
 
 ## 2. Architecture & Key Concepts
 
-* **High-Level Design:** The scripts are organized into five main categories:
+* **High-Level Design:** The scripts are organized into six main categories:
     * **Development & Testing Scripts:** `generate-api-client.*`, `run-test-suite.sh` (unified testing)
+    * **Quality Assurance:** `validate-pre-commit.sh` (prevents generated file contamination)
     * **Deployment & Service Management:** `start-server.sh`, `cookbook-api.service`, `cleanup-playwright.sh`
     * **Domain-Specific Testing:** `test_sites.sh` (recipe scraping validation)
     * **Configuration Files:** `.refitter` (API client generation settings), `docker-compose.integration.yml` (integration test environment)
@@ -54,6 +56,11 @@
             - **Report Mode:** JSON/Markdown results in `TestResults/`, quality gate enforcement for CI/CD
             - **Both Mode:** All outputs from both modes
         * **Non-Obvious Error Handling:** Unified Docker group membership detection; supports `sg docker` fallback; mode-specific error handling and logging
+    * `validate-pre-commit.sh` (Generated File Protection):
+        * **Purpose:** Pre-commit validation to prevent contamination with auto-generated files (especially swagger.json files that cause AI Sentinel failures)
+        * **Critical Preconditions:** `git repository with staged changes`, `git diff available`
+        * **Critical Postconditions:** Warning/error messages for problematic files, summary of changes to be committed
+        * **Non-Obvious Error Handling:** Detects large files (>1000 lines), swagger/openapi patterns, auto-generated code modifications; exits with error code 1 for blocking issues
 * **Critical Assumptions:**
     * **Environment Dependencies:** Docker Desktop available for integration tests, Chrome/Chromium for Playwright
     * **Network Access:** API endpoints accessible on configured ports, external recipe sites reachable for scraping tests
@@ -105,6 +112,9 @@
     * **Functional Validation:** Test core functionality with `./Scripts/run-test-suite.sh report summary` after modifications
 * **Common Usage Patterns:**
     ```bash
+    # Pre-commit validation (recommended before all commits)
+    ./Scripts/validate-pre-commit.sh
+    
     # Complete development workflow
     ./Scripts/generate-api-client.sh
     ./Scripts/run-test-suite.sh both                   # Run comprehensive testing
