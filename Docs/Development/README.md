@@ -23,6 +23,7 @@
     * [`TestArtifactsGuide.md`](./TestArtifactsGuide.md): Guide for understanding and using CI/CD test artifacts including coverage reports and test results.
     * [`TestSuiteBaselineGuide.md`](./TestSuiteBaselineGuide.md): Practical interpretation guide for test suite baseline validation results, troubleshooting workflows, and actionable guidance for achieving progressive coverage targets.
     * [`TestSuiteEnvironmentSetup.md`](./TestSuiteEnvironmentSetup.md): Comprehensive environment setup requirements for all test classifications, external service configuration, and optimization strategies to minimize skip rates.
+    * [`GeneratedFilesGuideline.md`](./GeneratedFilesGuideline.md): **CRITICAL** - Guidelines for preventing auto-generated file contamination in PRs, including .gitignore patterns and Copilot user best practices.
     * [`ShortTermRoadmap.md`](./ShortTermRoadmap.md): Captures planned enhancements and deferred items for the codebase and development workflow.
 * **Related Templates (Located in /Docs/Templates/):**
     * [`../Templates/AICoderPromptTemplate.md`](../Templates/AICoderPromptTemplate.md): The mandatory template structure used by the Planning Assistant to generate prompts for AI Coders performing coding tasks.

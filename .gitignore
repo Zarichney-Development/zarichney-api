@@ -59,4 +59,16 @@ coverage/
 coverage.cobertura.xml
 coverage.opencover.xml
 
+# Generated API Documentation & Client Files
+# Swagger/OpenAPI generated files (should be generated dynamically)
+**/swagger.json
+**/swagger.yaml
+**/openapi.json
+**/openapi.yaml
+
+# Note: Auto-generated client files in Framework/Client/ are tracked
+# because they are generated via controlled scripts and need to be
+# available for integration tests. However, if they become problematic
+# in terms of PR size, consider excluding them and regenerating in CI.
+
 **/.claude/settings.local.json
