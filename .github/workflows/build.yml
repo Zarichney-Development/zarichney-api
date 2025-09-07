@@ -263,6 +263,7 @@ jobs:
         id: claude-testing
         uses: anthropics/claude-code-action@v1
         with:
+          track_progress: true # Forces tag mode with tracking comments
           prompt: ${{ steps.load-testing-prompt.outputs.prompt }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -454,6 +455,7 @@ jobs:
         id: claude-standards
         uses: anthropics/claude-code-action@v1
         with:
+          track_progress: true # Forces tag mode with tracking comments
           prompt: ${{ steps.load-standards-prompt.outputs.prompt }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -574,6 +576,7 @@ jobs:
         id: claude-techdebt
         uses: anthropics/claude-code-action@v1
         with:
+          track_progress: true # Forces tag mode with tracking comments
           prompt: ${{ steps.load-techdebt-prompt.outputs.prompt }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -839,6 +842,7 @@ jobs:
         id: claude-security
         uses: anthropics/claude-code-action@v1
         with:
+          track_progress: true # Forces tag mode with tracking comments
           prompt: ${{ steps.load-security-prompt.outputs.prompt }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -1003,6 +1007,7 @@ jobs:
         id: claude-orchestrator
         uses: anthropics/claude-code-action@v1
         with:
+          track_progress: true # Forces tag mode with tracking comments
           prompt: ${{ steps.load-orchestrator-prompt.outputs.prompt }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
