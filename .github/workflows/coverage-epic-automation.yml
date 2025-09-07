@@ -741,14 +741,16 @@ jobs:
             COVERAGE_SUMMARY="${COVERAGE_SUMMARY}Note: Consider running './Scripts/run-test-suite.sh report summary' for detailed analysis"
           fi
 
-          # Output coverage context with error handling
-          echo "coverage_by_area<<EOF" >> $GITHUB_OUTPUT
+          # Output coverage context with error handling using random delimiters
+          EOF_COVERAGE_AREA=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "coverage_by_area<<$EOF_COVERAGE_AREA" >> $GITHUB_OUTPUT
           echo -e "$COVERAGE_CONTEXT" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "$EOF_COVERAGE_AREA" >> $GITHUB_OUTPUT
 
-          echo "coverage_summary<<EOF" >> $GITHUB_OUTPUT
+          EOF_COVERAGE_SUMMARY=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "coverage_summary<<$EOF_COVERAGE_SUMMARY" >> $GITHUB_OUTPUT
           echo -e "$COVERAGE_SUMMARY" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "$EOF_COVERAGE_SUMMARY" >> $GITHUB_OUTPUT
 
           # Prepare manual target area override if specified
           MANUAL_TARGET_AREA="${{ github.event.inputs.target_area }}"
@@ -785,13 +787,14 @@ jobs:
             # Extract target areas from PR branches and titles
             PENDING_AREAS=$(echo "$EPIC_PRS" | jq -r '.headRefName' | grep -oE "(services|controllers|repositories|utilities)" | sort -u | tr '\n' ',' | sed 's/,$//')
 
-            echo "pending_pr_context<<EOF" >> $GITHUB_OUTPUT
+            EOF_PENDING_PR=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+            echo "pending_pr_context<<$EOF_PENDING_PR" >> $GITHUB_OUTPUT
             if [ -n "$EPIC_PRS" ]; then
               echo "$EPIC_PRS" | jq -c '.'
             else
               echo ""
             fi >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            echo "$EOF_PENDING_PR" >> $GITHUB_OUTPUT
 
             echo "pending_target_areas=$PENDING_AREAS" >> $GITHUB_OUTPUT
             echo "⚠️ Areas with pending work: $PENDING_AREAS"
@@ -810,9 +813,10 @@ jobs:
           4. Return summary of areas currently being worked on
           5. Provide recommendations for avoiding overlap" 2>/dev/null || echo "MCP analysis unavailable")
 
-          echo "mcp_pending_analysis<<EOF" >> $GITHUB_OUTPUT
+          EOF_MCP_PENDING=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "mcp_pending_analysis<<$EOF_MCP_PENDING" >> $GITHUB_OUTPUT
           echo "$MCP_PENDING_ANALYSIS" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "$EOF_MCP_PENDING" >> $GITHUB_OUTPUT
 
           echo "pending_analysis_complete=true" >> $GITHUB_OUTPUT
         env:
@@ -870,30 +874,32 @@ jobs:
 
           echo "✅ Basic AI context outputs set successfully"
 
-          # Pass coverage analysis context with safe handling
+          # Pass coverage analysis context with safe handling using random delimiters
           COVERAGE_BY_AREA="${{ steps.coverage-analysis.outputs.coverage_by_area }}"
+          EOF_COV_AREA_1=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           if [ -n "$COVERAGE_BY_AREA" ]; then
-            echo "coverage_by_area<<EOF" >> $GITHUB_OUTPUT
+            echo "coverage_by_area<<$EOF_COV_AREA_1" >> $GITHUB_OUTPUT
             echo "$COVERAGE_BY_AREA" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            echo "$EOF_COV_AREA_1" >> $GITHUB_OUTPUT
             echo "✅ Coverage by area context passed"
           else
-            echo "coverage_by_area<<EOF" >> $GITHUB_OUTPUT
+            echo "coverage_by_area<<$EOF_COV_AREA_1" >> $GITHUB_OUTPUT
             echo "Overall Backend Coverage: $CURRENT_COVERAGE (context generation pending)" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            echo "$EOF_COV_AREA_1" >> $GITHUB_OUTPUT
             echo "⚠️ Using fallback coverage by area context"
           fi
 
           COVERAGE_SUMMARY="${{ steps.coverage-analysis.outputs.coverage_summary }}"
+          EOF_COV_SUMMARY_1=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           if [ -n "$COVERAGE_SUMMARY" ]; then
-            echo "coverage_summary<<EOF" >> $GITHUB_OUTPUT
+            echo "coverage_summary<<$EOF_COV_SUMMARY_1" >> $GITHUB_OUTPUT
             echo "$COVERAGE_SUMMARY" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            echo "$EOF_COV_SUMMARY_1" >> $GITHUB_OUTPUT
             echo "✅ Coverage summary context passed"
           else
-            echo "coverage_summary<<EOF" >> $GITHUB_OUTPUT
+            echo "coverage_summary<<$EOF_COV_SUMMARY_1" >> $GITHUB_OUTPUT
             echo "Coverage Summary: $CURRENT_COVERAGE from test validation step. Detailed analysis pending." >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            echo "$EOF_COV_SUMMARY_1" >> $GITHUB_OUTPUT
             echo "⚠️ Using fallback coverage summary context"
           fi
 
@@ -925,22 +931,23 @@ jobs:
           # Handle potentially problematic JSON content safely
           # Use GitHub Actions conditional to avoid bash parsing issues
           PR_CONTEXT_EXISTS="${{ steps.pending-work-analysis.outputs.pending_pr_context != '' && 'true' || 'false' }}"
+          EOF_PENDING_PR_CONTEXT=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           if [ "$PR_CONTEXT_EXISTS" = "true" ]; then
             # Create a temporary file to safely handle complex JSON content
             TEMP_PR_FILE=$(mktemp)
             echo '${{ steps.pending-work-analysis.outputs.pending_pr_context }}' > "$TEMP_PR_FILE"
 
-            echo "pending_pr_context<<EOF" >> $GITHUB_OUTPUT
+            echo "pending_pr_context<<$EOF_PENDING_PR_CONTEXT" >> $GITHUB_OUTPUT
             # Use cat to safely output the JSON content
             cat "$TEMP_PR_FILE" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            echo "$EOF_PENDING_PR_CONTEXT" >> $GITHUB_OUTPUT
 
             rm -f "$TEMP_PR_FILE"
             echo "✅ Pending PR context passed safely via temporary file"
           else
-            echo "pending_pr_context<<EOF" >> $GITHUB_OUTPUT
+            echo "pending_pr_context<<$EOF_PENDING_PR_CONTEXT" >> $GITHUB_OUTPUT
             echo "No pending coverage-related PRs found on epic branch" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            echo "$EOF_PENDING_PR_CONTEXT" >> $GITHUB_OUTPUT
             echo "✅ No pending PR context (expected for clean state)"
           fi
 
@@ -955,15 +962,16 @@ jobs:
           fi
           rm -f "$TEMP_MCP_FILE"
 
+          EOF_MCP_PENDING_ANALYSIS=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           if [ -n "$MCP_PENDING_ANALYSIS" ] && [ "$MCP_PENDING_ANALYSIS" != "MCP analysis unavailable" ]; then
-            echo "mcp_pending_analysis<<EOF" >> $GITHUB_OUTPUT
+            echo "mcp_pending_analysis<<$EOF_MCP_PENDING_ANALYSIS" >> $GITHUB_OUTPUT
             echo "$MCP_PENDING_ANALYSIS" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            echo "$EOF_MCP_PENDING_ANALYSIS" >> $GITHUB_OUTPUT
             echo "✅ MCP pending analysis context passed"
           else
-            echo "mcp_pending_analysis<<EOF" >> $GITHUB_OUTPUT
+            echo "mcp_pending_analysis<<$EOF_MCP_PENDING_ANALYSIS" >> $GITHUB_OUTPUT
             echo "MCP analysis was not available during pending work analysis. Using standard GitHub CLI analysis only." >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            echo "$EOF_MCP_PENDING_ANALYSIS" >> $GITHUB_OUTPUT
             echo "✅ MCP analysis fallback context set"
           fi
 
@@ -1013,7 +1021,8 @@ jobs:
         run: |
           # Direct file-based approach - completely bypass bash variable processing
           # This eliminates the bash syntax error caused by JSON content with parentheses
-          echo "prompt<<PROMPT_EOF" >> $GITHUB_OUTPUT
+          PROMPT_DELIMITER=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "prompt<<$PROMPT_DELIMITER" >> $GITHUB_OUTPUT
 
           # Write prompt template with placeholder replacement directly to output
           cat .github/prompts/coverage-epic-agent.md | sed \
@@ -1072,7 +1081,7 @@ jobs:
           echo "5. **Justify your selection** in your implementation notes" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "**CRITICAL:** You are NOT constrained to any predetermined area. Use your intelligence to make the best strategic decision for maximum coverage impact." >> $GITHUB_OUTPUT
-          echo "PROMPT_EOF" >> $GITHUB_OUTPUT
+          echo "$PROMPT_DELIMITER" >> $GITHUB_OUTPUT
 
       - name: "Debug Manual Trigger Context"
         if: github.event_name == 'workflow_dispatch'
@@ -1102,7 +1111,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # Enable non-interactive execution of required tools for CI
           claude_args: |
-            --allowedTools "Edit,Read,Write,MultiEdit,Bash(./Scripts/*),Bash(dotnet build:*),Bash(dotnet test:*),Bash(dotnet restore:*),Bash(dotnet format:*),Bash(ls:*),Bash(pwd:*),Bash(find:*),Bash(grep:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(jq:*)"
+            --allowedTools "Edit,Read,Write,MultiEdit,Bash(./Scripts/*),Bash(dotnet build:*),Bash(dotnet test:*),Bash(dotnet restore:*),Bash(dotnet format:*),Bash(ls:*),Bash(pwd:*),Bash(find:*),Bash(grep:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(jq:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git branch:*),Bash(git show:*)"
 
       - name: "Classify Claude Failure Reason"
         id: claude-classify
@@ -1286,18 +1295,18 @@ jobs:
 
       - name: "Commit Coverage Improvements"
         id: commit-changes
-        # Only commit if validation passed AND AI execution completed successfully
-        if: steps.post-validation.outputs.validation_passed == 'true' && steps.ai-execution.outputs.ai_execution_status == 'claude_success'
+        # Commit if the AI execution completed successfully. Post-validation will influence PR draft/labels.
+        if: steps.ai-execution.outputs.ai_execution_status == 'claude_success'
         run: |
           echo "💾 Committing coverage improvements"
 
-          # Check if there are changes to commit
-          if git diff --quiet && git diff --cached --quiet; then
+          # Check working directory for ANY changes (including untracked files)
+          git add -A  # Stage everything first
+          if git diff --staged --quiet; then
             echo "⚠️ No changes detected - AI agent may not have implemented improvements"
             echo "changes_committed=false" >> $GITHUB_OUTPUT
           else
-            # Commit all changes
-            git add -A
+            # Commit all staged changes
             git commit -m "test: improve coverage with AI strategic analysis (#$EPIC_ISSUE_ID)
 
             Automated coverage improvement for Epic #$EPIC_ISSUE_ID
@@ -1353,12 +1362,8 @@ jobs:
           
           ARTIFACT_PATH="${{ steps.check_artifact.outputs.artifact_path }}"
           
-          # Read artifact content and escape for GitHub Actions multiline string
-          {
-            echo 'artifact_content<<EOF'
-            cat "$ARTIFACT_PATH"
-            echo 'EOF'
-          } >> $GITHUB_OUTPUT
+          # Read artifact content using base64 encoding to avoid delimiter parsing issues
+          echo "artifact_content_b64=$(base64 -w 0 "$ARTIFACT_PATH")" >> $GITHUB_OUTPUT
           
           echo "✅ Implementation Summary content prepared for PR integration"
 
@@ -1436,9 +1441,10 @@ jobs:
           4. Provide recommendations for PR title and description enhancements
           5. Return JSON with: {\"pr_exists\": boolean, \"recommendations\": string, \"should_create_pr\": boolean}" 2>/dev/null || echo "{\"error\": \"MCP analysis failed\"}")
 
-          echo "mcp_analysis_result<<EOF" >> $GITHUB_OUTPUT
+          EOF_MCP_ANALYSIS_RESULT=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "mcp_analysis_result<<$EOF_MCP_ANALYSIS_RESULT" >> $GITHUB_OUTPUT
           echo "$MCP_ANALYSIS" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "$EOF_MCP_ANALYSIS_RESULT" >> $GITHUB_OUTPUT
 
           # Log MCP analysis for transparency
           echo "📊 MCP Analysis Result:"
@@ -1461,7 +1467,7 @@ jobs:
           ### 📊 Task Details
           - **Task ID**: ${{ steps.coverage-analysis.outputs.task_identifier }}
           - **Target Area**: ${{ inputs.target_area || 'AI-selected based on coverage analysis' }}
-          - **Execution Time**: $(date -u \"+%Y-%m-%d %H:%M:%S UTC\")
+          - **Execution Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
           - **Trigger**: ${{ inputs.trigger_source || 'scheduled' }} - ${{ inputs.trigger_reason || 'Automated coverage improvement' }}
           - **Current Coverage**: ${{ steps.coverage-analysis.outputs.current_coverage }}"
           
@@ -1470,7 +1476,7 @@ jobs:
             PR_BODY="$PR_BODY
           
           ### 📄 Implementation Summary
-          ${{ steps.read_artifact.outputs.artifact_content }}"
+          $(echo '${{ steps.read_artifact.outputs.artifact_content_b64 }}' | base64 -d)"
           fi
           
           # Add production fixes warning if applicable
@@ -1513,8 +1519,12 @@ jobs:
           **Epic Branch**: \`$EPIC_BRANCH\`
           **Implementation Summary**: ${{ steps.check_artifact.outputs.artifact_exists == 'true' && '✅ Included above' || '⚠️ Not available' }}"
           
-          # Prepare labels with conditional production fix label
-          LABELS="ai-task,testing,coverage,epic-subtask,automation"
+          # Prepare labels (use labels that exist in the repo by default)
+          LABELS="type: coverage,priority: medium,effort: small"
+          # Optionally add component/testing label if present
+          if gh label list --search "component: testing" | grep -q "^component: testing"; then
+            LABELS="$LABELS,component: testing"
+          fi
           if [ "${{ steps.check_artifact.outputs.has_production_fixes }}" == "true" ]; then
             LABELS="$LABELS,type: bugfix"
             echo "🏷️ Adding 'type: bugfix' label due to production fixes detected"
@@ -1522,13 +1532,28 @@ jobs:
           
           echo "🏷️ PR labels: $LABELS"
           
-          # Create PR using GitHub CLI with dynamic labels
+          # Determine draft status and labels based on post-validation
+          if [ "${{ steps.post-validation.outputs.validation_passed }}" = "true" ]; then
+            DRAFT_FLAG="--draft=false"
+          else
+            DRAFT_FLAG="--draft"
+            # Add 'needs: fixes' label only if it exists in the repo
+            if gh label list --search "needs: fixes" | grep -q "^needs: fixes"; then
+              LABELS="$LABELS,needs: fixes"
+            else
+              echo "ℹ️ Skipping 'needs: fixes' label (not defined in repository)"
+            fi
+            PR_TITLE="WIP: $PR_TITLE"
+            echo "⚠️ Post-validation failed - creating Draft PR with 'needs: fixes' label"
+          fi
+
+          # Create PR using GitHub CLI with dynamic labels and draft state
           if gh pr create \
             --base "$EPIC_BRANCH" \
             --title "$PR_TITLE" \
             --body "$PR_BODY" \
             --label "$LABELS" \
-            --draft=false; then
+            $DRAFT_FLAG; then
 
             PR_URL=$(gh pr view --json url --jq .url)
             echo "pr_created=true" >> $GITHUB_OUTPUT
