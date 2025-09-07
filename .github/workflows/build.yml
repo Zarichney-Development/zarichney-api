@@ -261,16 +261,14 @@ jobs:
       - name: Testing Analysis with Claude AI
         if: steps.check-existing-comment.outputs.skip_analysis != 'true'
         id: claude-testing
-        uses: anthropics/claude-code-action@v1
+        uses: grll/claude-code-action@beta
         with:
-          track_progress: true # Forces tag mode with tracking comments
-          use_sticky_comment: true
-          allowed_bots: "/*"
-          prompt: ${{ steps.load-testing-prompt.outputs.prompt }}
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          use_oauth: true
+          claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
+          claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: |
-            --allowedTools "WebSearch,WebFetch,mcp__github_inline_comment__create_inline_comment,mcp__github_comment__update_claude_comment,Edit,Read,Write,MultiEdit,Bash(./Scripts/*),Bash(dotnet:*),Bash(ls:*),Bash(grep:*),Bash(find:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(jq:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+          direct_prompt: ${{ steps.load-testing-prompt.outputs.prompt }}
 
       - name: Handle Claude AI Failure
         if: failure() && steps.claude-testing.outcome == 'failure'
@@ -455,16 +453,14 @@ jobs:
       - name: Standards Compliance AI Analysis
         if: steps.check-existing-comment.outputs.skip_analysis != 'true'
         id: claude-standards
-        uses: anthropics/claude-code-action@v1
+        uses: grll/claude-code-action@beta
         with:
-          track_progress: true # Forces tag mode with tracking comments
-          use_sticky_comment: true
-          allowed_bots: "/*"
-          prompt: ${{ steps.load-standards-prompt.outputs.prompt }}
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          use_oauth: true
+          claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
+          claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: |
-            --allowedTools "WebSearch,WebFetch,mcp__github_inline_comment__create_inline_comment,mcp__github_comment__update_claude_comment,Edit,Read,Write,MultiEdit,Bash(./Scripts/*),Bash(dotnet:*),Bash(ls:*),Bash(grep:*),Bash(find:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(jq:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+          direct_prompt: ${{ steps.load-standards-prompt.outputs.prompt }}
 
       - name: Handle Standards Analysis Failure
         if: failure() && steps.claude-standards.outcome == 'failure'
@@ -578,16 +574,14 @@ jobs:
       - name: Tech Debt AI Analysis
         if: steps.check-existing-comment.outputs.skip_analysis != 'true'
         id: claude-techdebt
-        uses: anthropics/claude-code-action@v1
+        uses: grll/claude-code-action@beta
         with:
-          track_progress: true # Forces tag mode with tracking comments
-          use_sticky_comment: true
-          allowed_bots: "/*"
-          prompt: ${{ steps.load-techdebt-prompt.outputs.prompt }}
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          use_oauth: true
+          claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
+          claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: |
-            --allowedTools "WebSearch,WebFetch,mcp__github_inline_comment__create_inline_comment,mcp__github_comment__update_claude_comment,Edit,Read,Write,MultiEdit,Bash(./Scripts/*),Bash(dotnet:*),Bash(ls:*),Bash(grep:*),Bash(find:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(jq:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+          direct_prompt: ${{ steps.load-techdebt-prompt.outputs.prompt }}
 
       - name: Handle Tech Debt Analysis Failure
         if: failure() && steps.claude-techdebt.outcome == 'failure'
@@ -846,16 +840,14 @@ jobs:
       - name: Security Analysis with Claude AI
         if: steps.check-existing-comment.outputs.skip_analysis != 'true'
         id: claude-security
-        uses: anthropics/claude-code-action@v1
+        uses: grll/claude-code-action@beta
         with:
-          track_progress: true # Forces tag mode with tracking comments
-          use_sticky_comment: true
-          allowed_bots: "/*"
-          prompt: ${{ steps.load-security-prompt.outputs.prompt }}
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          use_oauth: true
+          claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
+          claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: |
-            --allowedTools "WebSearch,WebFetch,mcp__github_inline_comment__create_inline_comment,mcp__github_comment__update_claude_comment,Edit,Read,Write,MultiEdit,Bash(./Scripts/*),Bash(dotnet:*),Bash(ls:*),Bash(grep:*),Bash(find:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(jq:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+          direct_prompt: ${{ steps.load-security-prompt.outputs.prompt }}
 
       - name: Handle Security Analysis Failure
         if: failure() && steps.claude-security.outcome == 'failure'
@@ -1013,16 +1005,14 @@ jobs:
       - name: Merge Orchestrator AI Analysis
         if: steps.check-existing-comment.outputs.skip_analysis != 'true'
         id: claude-orchestrator
-        uses: anthropics/claude-code-action@v1
+        uses: grll/claude-code-action@beta
         with:
-          track_progress: true # Forces tag mode with tracking comments
-          use_sticky_comment: true
-          allowed_bots: "/*"
-          prompt: ${{ steps.load-orchestrator-prompt.outputs.prompt }}
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          use_oauth: true
+          claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
+          claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: |
-            --allowedTools "WebSearch,WebFetch,mcp__github_inline_comment__create_inline_comment,mcp__github_comment__update_claude_comment,Edit,Read,Write,MultiEdit,Bash(./Scripts/*),Bash(dotnet:*),Bash(ls:*),Bash(grep:*),Bash(find:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(jq:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+          direct_prompt: ${{ steps.load-orchestrator-prompt.outputs.prompt }}
 
       - name: Handle Merge Orchestrator Failure
         if: failure() && steps.claude-orchestrator.outcome == 'failure'
