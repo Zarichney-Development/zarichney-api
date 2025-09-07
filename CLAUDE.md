@@ -87,9 +87,10 @@ If you catch yourself about to:
    - OWASP compliance, authentication review, security patterns
    - Provides security analysis through working directory
 
-9. **WorkflowEngineer** - GitHub Actions, CI/CD automation, pipeline optimization
-   - Workflow creation, deployment strategies, automation design
+9. **WorkflowEngineer** - GitHub Actions, CI/CD automation, pipeline optimization, Coverage Epic Merge Orchestrator
+   - Workflow creation, deployment strategies, automation design, **Coverage Epic PR consolidation**
    - Provides CI/CD guidance through working directory
+   - **Coverage Epic Merge Orchestrator**: Multi-PR consolidation with AI conflict resolution, supports 8+ PR batches with flexible label matching
    - Coverage Epic nuance: scheduled automation may classify Claude Code execution as `skipped_quota_window` during subscription refresh windows (workflow remains successful and retries next interval). Manual runs fail on unexpected AI errors to preserve signal. Use the `scheduled_trigger=true` input to emulate scheduler behavior during manual tests.
 
 10. **BugInvestigator** - Root cause analysis, diagnostic reporting, systematic debugging
@@ -280,6 +281,7 @@ Next Action Decision: [CORE_ISSUE_RESOLVED/REQUIRES_REFOCUS/NEEDS_DIFFERENT_AGEN
 - Epic Progression Tracking: Direct contribution to 90% backend coverage by January 2026
 - Testable Architecture: All architectural decisions facilitate comprehensive testing
 - Coverage Validation: Integration with `/test-report` commands and AI-powered analysis
+- **Coverage Epic Orchestrator Integration**: Multi-PR consolidation via WorkflowEngineer with AI conflict resolution
 
 #### Security Throughout (SecurityAuditor integration with all workflows)
 - Defense-in-Depth Coordination: Security patterns across all agent implementations
@@ -305,6 +307,20 @@ Phase_2_Implementation:
 - Provide implementation-focused context building on their expertise
 - Maintain continuity while shifting from analysis to execution mode
 - Validate implementation aligns with their analysis recommendations
+
+#### **Coverage Epic Orchestrator Pattern**:
+```yaml
+TestEngineer_Coverage_Creation:
+  Agent: TestEngineer
+  Task: "Create coverage improvements for [specific service/component]"
+  Output: Individual coverage PRs targeting epic/testing-coverage-to-90
+  
+WorkflowEngineer_Orchestrator_Consolidation:
+  Agent: WorkflowEngineer  
+  Task: "Execute Coverage Epic Merge Orchestrator for multi-PR consolidation"
+  Context: "Consolidate 8+ coverage PRs with AI conflict resolution"
+  Integration: "Multi-PR batch processing with flexible label matching"
+```
 
 ---
 
@@ -385,6 +401,7 @@ Each AI Sentinel employs:
 - **Status**: Public repository with active development
 - **Current Focus**: Multi-agent orchestration and comprehensive test coverage (90% backend by January 2026)
 - **Epic Progression**: Backend Testing Coverage Epic targeting 90% coverage milestone
+- **Coverage Epic Integration**: Enhanced automation including individual PR creation and **Coverage Epic Merge Orchestrator** for multi-PR consolidation with AI conflict resolution
 
 ---
 
@@ -467,6 +484,22 @@ claude --dangerously-skip-permissions --print "Use GitHub MCP to analyze issue #
 ```bash
 # When backend changes affect API contracts
 ./Scripts/generate-api-client.sh
+```
+
+### Coverage Epic Merge Orchestrator (For Multi-PR Consolidation)
+```bash
+# Coverage Epic Merge Orchestrator execution
+gh workflow run "Coverage Epic Merge Orchestrator" \
+  --field dry_run=true \
+  --field max_prs=8 \
+  --field pr_label_filter="type: coverage,coverage,testing"
+
+# Monitor orchestrator consolidation
+gh run list --workflow="coverage-epic-merge-orchestrator.yml" --limit 1
+
+# Enhanced PR discovery validation
+gh pr list --base epic/testing-coverage-to-90 --json number,labels \
+  --jq '.[] | select(.labels[]?.name | test("type: coverage|coverage|testing")) | {number, labels: [.labels[].name]}'
 ```
 
 ---
@@ -567,6 +600,7 @@ When agents fail to follow communication protocols:
 - **Security Integration**: Coordinate security considerations across all development work
 - **Quality Assurance**: Epic progression tracking with TestEngineer for coverage goals
 - **Documentation Maintenance**: Real-time documentation updates coordinated with all deliverables
+- **Coverage Epic Orchestrator Integration**: WorkflowEngineer consolidates multiple TestEngineer coverage PRs with AI conflict resolution
 
 ---
 
