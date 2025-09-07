@@ -1284,6 +1284,16 @@ jobs:
       # Automated Pull Request Creation
       # ========================================
 
+      - name: "List Changed Files (Pre-Commit)"
+        if: steps.ai-execution.outputs.ai_execution_status == 'claude_success'
+        run: |
+          echo "🔍 Listing working tree changes prior to commit"
+          echo "--- git status --porcelain ---"
+          git status --porcelain || true
+          echo "--- git diff --name-only ---"
+          git diff --name-only || true
+          echo "(Note: .gitignore excludes TestResults/, CoverageReport/, working-dir/, bin/ and obj/)"
+
       - name: "Commit Coverage Improvements"
         id: commit-changes
         # Commit if the AI execution completed successfully. Post-validation will influence PR draft/labels.
@@ -1319,7 +1329,7 @@ jobs:
 
       - name: "Check for Implementation Summary Artifact"
         id: check_artifact
-        if: steps.commit-changes.outputs.changes_committed == 'true'
+        if: steps.task-branch.outputs.task_branch_created == 'true'
         run: |
           echo "🔍 Checking for Implementation Summary artifact"
           
@@ -1389,7 +1399,7 @@ jobs:
 
       - name: "Check for Existing Pull Request"
         id: check-existing-pr
-        if: steps.commit-changes.outputs.changes_committed == 'true'
+        if: (steps.commit-changes.outputs.changes_committed == 'true' || steps.check_artifact.outputs.artifact_exists == 'true')
         run: |
           echo "🔍 Checking for existing pull request on task branch"
 
@@ -1447,7 +1457,7 @@ jobs:
 
       - name: "Create Pull Request"
         id: create-pr
-        if: steps.commit-changes.outputs.changes_committed == 'true' && steps.check-existing-pr.outputs.pr_exists == 'false'
+        if: (steps.commit-changes.outputs.changes_committed == 'true' || steps.check_artifact.outputs.artifact_exists == 'true') && steps.check-existing-pr.outputs.pr_exists == 'false'
         run: |
           echo "📝 Creating automated pull request with Implementation Summary integration"
 
