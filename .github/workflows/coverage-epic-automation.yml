@@ -1284,285 +1284,42 @@ jobs:
       # Automated Pull Request Creation
       # ========================================
 
-      - name: "Comprehensive File Analysis (Pre-Commit)"
-        if: steps.ai-execution.outputs.ai_execution_status == 'claude_success'
-        run: |
-          echo "🔍 Comprehensive analysis of working tree changes prior to commit"
-          echo "=========================================="
-          
-          # ===== GIT STATUS ANALYSIS =====
-          echo "📊 Git Status Analysis:"
-          git status --porcelain | head -50 || true
-          
-          # Count different types of changes
-          UNTRACKED=$(git status --porcelain | grep '^??' | wc -l)
-          MODIFIED=$(git status --porcelain | grep '^ M' | wc -l) 
-          NEW_FILES=$(git status --porcelain | grep '^A' | wc -l)
-          DELETED=$(git status --porcelain | grep '^ D' | wc -l)
-          
-          echo ""
-          echo "📈 Change Statistics:"
-          echo "  - Untracked files: $UNTRACKED"
-          echo "  - Modified files: $MODIFIED"
-          echo "  - New files (staged): $NEW_FILES"
-          echo "  - Deleted files: $DELETED"
-          echo "  - Total changes: $((UNTRACKED + MODIFIED + NEW_FILES + DELETED))"
-          
-          # ===== DETAILED FILE LISTINGS =====
-          echo ""
-          echo "📂 Untracked Files (New Files Created by AI):"
-          git ls-files --others --exclude-standard | head -20 | sed 's/^/  /' || echo "  (none)"
-          
-          echo ""
-          echo "📝 Modified Files:"
-          git diff --name-only | head -20 | sed 's/^/  /' || echo "  (none)"
-          
-          # ===== FILE TYPE ANALYSIS =====
-          echo ""
-          echo "🧪 Test Files Analysis:"
-          TEST_FILES=$(git ls-files --others --exclude-standard | grep -i test | wc -l)
-          TEST_FILES_MODIFIED=$(git diff --name-only | grep -i test | wc -l)
-          echo "  - New test files: $TEST_FILES"
-          echo "  - Modified test files: $TEST_FILES_MODIFIED"
-          
-          if [ $TEST_FILES -gt 0 ]; then
-            echo "  - New test files list:"
-            git ls-files --others --exclude-standard | grep -i test | head -10 | sed 's/^/    /'
-          fi
-          
-          echo ""
-          echo "📄 Documentation Files:"
-          DOC_FILES=$(git ls-files --others --exclude-standard | grep -E '\.(md|txt)$' | wc -l)
-          DOC_FILES_MODIFIED=$(git diff --name-only | grep -E '\.(md|txt)$' | wc -l)
-          echo "  - New documentation files: $DOC_FILES"
-          echo "  - Modified documentation files: $DOC_FILES_MODIFIED"
-          
-          if [ $DOC_FILES -gt 0 ]; then
-            echo "  - New documentation files:"
-            git ls-files --others --exclude-standard | grep -E '\.(md|txt)$' | head -5 | sed 's/^/    /'
-          fi
-          
-          echo ""
-          echo "🔧 Source Code Files:"
-          SOURCE_FILES=$(git ls-files --others --exclude-standard | grep -E '\.(cs|ts|js|json)$' | grep -v -i test | wc -l)
-          SOURCE_FILES_MODIFIED=$(git diff --name-only | grep -E '\.(cs|ts|js|json)$' | grep -v -i test | wc -l)
-          echo "  - New source files: $SOURCE_FILES"
-          echo "  - Modified source files: $SOURCE_FILES_MODIFIED"
-          
-          if [ $SOURCE_FILES -gt 0 ]; then
-            echo "  - New source files:"
-            git ls-files --others --exclude-standard | grep -E '\.(cs|ts|js|json)$' | grep -v -i test | head -10 | sed 's/^/    /'
-          fi
-          
-          # ===== DIRECTORY ANALYSIS =====
-          echo ""
-          echo "📁 Directory Impact Analysis:"
-          if [ -n "$(git ls-files --others --exclude-standard)" ]; then
-            git ls-files --others --exclude-standard | sed 's/\/[^\/]*$//' | sort | uniq -c | sort -nr | head -10 | sed 's/^/  /'
-          else
-            echo "  (no new files in any directories)"
-          fi
-          
-          # ===== GITIGNORE COMPLIANCE CHECK =====
-          echo ""
-          echo "🚫 GitIgnore Compliance Check:"
-          echo "  (Note: .gitignore excludes TestResults/, CoverageReport/, working-dir/, bin/, obj/)"
-          
-          # Check for accidentally unignored files
-          IGNORED_DIRS="TestResults CoverageReport working-dir bin obj node_modules"
-          for dir in $IGNORED_DIRS; do
-            if git ls-files --others --exclude-standard | grep -q "^$dir/"; then
-              echo "  ⚠️ WARNING: Files found in $dir/ directory (should be ignored)"
-              git ls-files --others --exclude-standard | grep "^$dir/" | head -3 | sed 's/^/    /'
-            fi
-          done
-          
-          # ===== AI ARTIFACTS DETECTION =====
-          echo ""
-          echo "🤖 AI Artifact Detection:"
-          AI_ARTIFACTS=$(git ls-files --others --exclude-standard | grep -E "(output\.txt|transcript|claude-|ai-)" | wc -l)
-          echo "  - Potential AI artifacts: $AI_ARTIFACTS"
-          
-          if [ $AI_ARTIFACTS -gt 0 ]; then
-            echo "  - AI artifact files:"
-            git ls-files --others --exclude-standard | grep -E "(output\.txt|transcript|claude-|ai-)" | sed 's/^/    /'
-            echo "  ⚠️ These files may need cleanup before commit"
-          fi
-          
-          echo ""
-          echo "=========================================="
-          echo "✅ File analysis complete - ready for commit processing"
-
       - name: "Commit Coverage Improvements"
         id: commit-changes
         # Commit if the AI execution completed successfully. Post-validation will influence PR draft/labels.
         if: steps.ai-execution.outputs.ai_execution_status == 'claude_success'
         run: |
-          echo "💾 Committing coverage improvements with enhanced robustness"
+          echo "💾 Committing coverage improvements"
 
-          # ===== PRE-COMMIT CLEANUP & VALIDATION =====
-          echo "🧹 Pre-commit cleanup and validation"
-          
-          # Ensure clean git state
-          git config --global user.name "Coverage Epic Bot" || true
-          git config --global user.email "noreply@zarichney.dev" || true
-          
-          # Remove AI transcript artifacts that should not be committed
-          find . -name "output.txt" -type f -delete 2>/dev/null || true
-          find . -name "transcript*.txt" -type f -delete 2>/dev/null || true
-          
-          # Check current git status for debugging
-          echo "📊 Git status before staging:"
-          git status --porcelain | head -20 || true
-          
-          # ===== COMPREHENSIVE CHANGE DETECTION =====
-          echo "🔍 Detecting ALL changes in working directory"
-          
-          # Count untracked and modified files
-          UNTRACKED_COUNT=$(git ls-files --others --exclude-standard | wc -l)
-          MODIFIED_COUNT=$(git diff --name-only | wc -l)
-          TOTAL_CHANGES=$((UNTRACKED_COUNT + MODIFIED_COUNT))
-          
-          echo "📈 Change summary:"
-          echo "  - Untracked files: $UNTRACKED_COUNT"
-          echo "  - Modified files: $MODIFIED_COUNT"
-          echo "  - Total changes: $TOTAL_CHANGES"
-          
-          if [ $TOTAL_CHANGES -eq 0 ]; then
-            echo "⚠️ No changes detected in working directory"
-            echo "💡 AI agent may have worked but no files were created/modified"
-            echo "changes_committed=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          
-          # ===== COMPREHENSIVE STAGING =====
-          echo "📦 Staging ALL changes (including untracked files)"
-          
-          # Stage everything, including new files
-          git add -A
-          
-          # Verify staging was successful
-          STAGED_COUNT=$(git diff --cached --name-only | wc -l)
-          echo "✅ Files staged: $STAGED_COUNT"
-          
-          if [ $STAGED_COUNT -eq 0 ]; then
-            echo "❌ ERROR: No files were staged despite changes being detected"
-            echo "🔍 Debugging information:"
-            echo "Working directory changes:"
-            git status --porcelain
-            echo "Staged changes:"
-            git diff --cached --name-only
-            echo "changes_committed=false" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-          
-          # ===== STAGED CHANGES VALIDATION =====
-          echo "🔎 Validating staged changes"
-          
-          # Show what's being committed for transparency
-          echo "📋 Files being committed:"
-          git diff --cached --name-only | head -20 | sed 's/^/  /'
-          
-          # Check for test files (expected for coverage improvements)
-          TEST_FILES=$(git diff --cached --name-only | grep -E "\.(cs|ts|js)$" | grep -i test | wc -l)
-          SOURCE_FILES=$(git diff --cached --name-only | grep -E "\.(cs|ts|js)$" | grep -v -i test | wc -l)
-          DOC_FILES=$(git diff --cached --name-only | grep -E "\.(md)$" | wc -l)
-          
-          echo "📊 File breakdown:"
-          echo "  - Test files: $TEST_FILES"
-          echo "  - Source files: $SOURCE_FILES"
-          echo "  - Documentation files: $DOC_FILES"
-          
-          # ===== ATOMIC COMMIT WITH ERROR HANDLING =====
-          echo "💾 Performing atomic commit"
-          
+          # Check working directory for ANY changes (including untracked files)
+          git add -A  # Stage everything first
           if git diff --staged --quiet; then
-            echo "❌ UNEXPECTED: No staged changes after successful staging"
-            echo "🔍 This indicates a race condition or git state issue"
-            git status
+            echo "⚠️ No changes detected - AI agent may not have implemented improvements"
             echo "changes_committed=false" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-          
-          # Generate detailed commit message
-          COMMIT_MSG="test: improve coverage with AI strategic analysis (#$EPIC_ISSUE_ID)
-
-Automated coverage improvement for Epic #$EPIC_ISSUE_ID
-
-## Changes Summary
-- AI Strategic Selection: Coverage improvements selected by AI analysis
-- Current Coverage: ${{ steps.coverage-analysis.outputs.current_coverage }}
-- Task ID: ${{ steps.coverage-analysis.outputs.task_identifier }}
-- AI Improvements: ${{ steps.ai-execution.outputs.coverage_improvements }}
-
-## File Statistics
-- Test files added/modified: $TEST_FILES
-- Source files modified: $SOURCE_FILES
-- Documentation files: $DOC_FILES
-- Total files in commit: $STAGED_COUNT
-
-## Environment Context
-- Environment: CI (${EXPECTED_SKIP_COUNT:-23} tests skipped, 100% pass rate maintained; see Docs/Standards/TestingStandards.md section 12.7)
-- Git state validated: Clean staging and atomic commit process
-- Robustness features: Enhanced change detection and validation
-
-🤖 Generated with Coverage Epic Automation
-Co-Authored-By: Coverage Epic Bot <noreply@zarichney.dev>"
-          
-          # Perform commit with error handling
-          if git commit -m "$COMMIT_MSG"; then
-            echo "✅ Commit successful"
-            COMMIT_HASH=$(git rev-parse HEAD)
-            echo "📝 Commit hash: $COMMIT_HASH"
           else
-            echo "❌ CRITICAL: Commit failed"
-            git status
-            echo "changes_committed=false" >> $GITHUB_OUTPUT
-            exit 1
+            # Commit all staged changes
+            git commit -m "test: improve coverage with AI strategic analysis (#$EPIC_ISSUE_ID)
+
+            Automated coverage improvement for Epic #$EPIC_ISSUE_ID
+
+            - AI Strategic Selection: Coverage improvements selected by AI analysis
+            - Current Coverage: ${{ steps.coverage-analysis.outputs.current_coverage }}
+            - Task ID: ${{ steps.coverage-analysis.outputs.task_identifier }}
+            - AI Improvements: ${{ steps.ai-execution.outputs.coverage_improvements }}
+            - Environment: CI (${EXPECTED_SKIP_COUNT:-23} tests skipped, 100% pass rate maintained; see Docs/Standards/TestingStandards.md section 12.7)
+
+            🤖 Generated with Coverage Epic Automation
+            Co-Authored-By: Coverage Epic Bot <noreply@zarichney.dev>"
+
+            # Push task branch
+            git push origin "${{ steps.task-branch.outputs.task_branch_name }}"
+
+            echo "changes_committed=true" >> $GITHUB_OUTPUT
           fi
-          
-          # ===== ROBUST PUSH WITH RETRY LOGIC =====
-          echo "📤 Pushing changes with retry logic"
-          
-          TASK_BRANCH="${{ steps.task-branch.outputs.task_branch_name }}"
-          MAX_RETRIES=3
-          RETRY_COUNT=0
-          
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            if git push origin "$TASK_BRANCH"; then
-              echo "✅ Push successful on attempt $((RETRY_COUNT + 1))"
-              break
-            else
-              RETRY_COUNT=$((RETRY_COUNT + 1))
-              echo "⚠️ Push failed (attempt $RETRY_COUNT/$MAX_RETRIES)"
-              
-              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                echo "🔄 Retrying after brief delay..."
-                sleep 2
-                
-                # Fetch latest remote state
-                git fetch origin "$TASK_BRANCH" || true
-              else
-                echo "❌ CRITICAL: Push failed after $MAX_RETRIES attempts"
-                git status
-                echo "changes_committed=false" >> $GITHUB_OUTPUT
-                exit 1
-              fi
-            fi
-          done
-          
-          # ===== SUCCESS CONFIRMATION =====
-          echo "🎉 All changes committed and pushed successfully"
-          echo "📊 Final statistics:"
-          echo "  - Commit hash: $(git rev-parse HEAD)"
-          echo "  - Branch: $TASK_BRANCH"
-          echo "  - Files committed: $STAGED_COUNT"
-          echo "  - Test files: $TEST_FILES"
-          echo "changes_committed=true" >> $GITHUB_OUTPUT
 
       - name: "Check for Implementation Summary Artifact"
         id: check_artifact
-        if: steps.task-branch.outputs.task_branch_created == 'true'
+        if: steps.commit-changes.outputs.changes_committed == 'true'
         run: |
           echo "🔍 Checking for Implementation Summary artifact"
           
@@ -1632,7 +1389,7 @@ Co-Authored-By: Coverage Epic Bot <noreply@zarichney.dev>"
 
       - name: "Check for Existing Pull Request"
         id: check-existing-pr
-        if: (steps.commit-changes.outputs.changes_committed == 'true' || steps.check_artifact.outputs.artifact_exists == 'true')
+        if: steps.commit-changes.outputs.changes_committed == 'true'
         run: |
           echo "🔍 Checking for existing pull request on task branch"
 
@@ -1690,7 +1447,7 @@ Co-Authored-By: Coverage Epic Bot <noreply@zarichney.dev>"
 
       - name: "Create Pull Request"
         id: create-pr
-        if: (steps.commit-changes.outputs.changes_committed == 'true' || steps.check_artifact.outputs.artifact_exists == 'true') && steps.check-existing-pr.outputs.pr_exists == 'false'
+        if: steps.commit-changes.outputs.changes_committed == 'true' && steps.check-existing-pr.outputs.pr_exists == 'false'
         run: |
           echo "📝 Creating automated pull request with Implementation Summary integration"
 
