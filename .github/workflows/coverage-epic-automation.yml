@@ -1301,13 +1301,13 @@ jobs:
         run: |
           echo "💾 Committing coverage improvements"
 
-          # Check if there are changes to commit
-          if git diff --quiet && git diff --cached --quiet; then
-            echo "⚠️ No changes detected - AI agent may not have implemented improvements"
+          # Stage all changes (including untracked), then check what is staged
+          git add -A
+          if git diff --staged --quiet; then
+            echo "⚠️ No staged changes detected - nothing to commit"
             echo "changes_committed=false" >> $GITHUB_OUTPUT
           else
-            # Commit all changes
-            git add -A
+            # Commit staged changes
             git commit -m "test: improve coverage with AI strategic analysis (#$EPIC_ISSUE_ID)
 
             Automated coverage improvement for Epic #$EPIC_ISSUE_ID
