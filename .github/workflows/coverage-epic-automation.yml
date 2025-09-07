@@ -1467,7 +1467,7 @@ jobs:
           ### 📊 Task Details
           - **Task ID**: ${{ steps.coverage-analysis.outputs.task_identifier }}
           - **Target Area**: ${{ inputs.target_area || 'AI-selected based on coverage analysis' }}
-          - **Execution Time**: $(date -u \"+%Y-%m-%d %H:%M:%S UTC\")
+          - **Execution Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
           - **Trigger**: ${{ inputs.trigger_source || 'scheduled' }} - ${{ inputs.trigger_reason || 'Automated coverage improvement' }}
           - **Current Coverage**: ${{ steps.coverage-analysis.outputs.current_coverage }}"
           
