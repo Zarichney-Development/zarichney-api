@@ -1111,7 +1111,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # Enable non-interactive execution of required tools for CI
           claude_args: |
-            --allowedTools "Edit,Read,Write,MultiEdit,Bash(./Scripts/*),Bash(dotnet:*),Bash(ls:*),Bash(pwd:*),Bash(find:*),Bash(grep:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(jq:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*)"
+            --allowedTools "WebSearch,WebFetch,Edit,Read,Write,MultiEdit,Bash(./Scripts/*),Bash(dotnet:*),Bash(ls:*),Bash(pwd:*),Bash(find:*),Bash(grep:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(jq:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*)"
 
       - name: "Classify Claude Failure Reason"
         id: claude-classify
