@@ -55,7 +55,7 @@ public class ProcessExecutor(ILogger<ProcessExecutor> logger) : IProcessExecutor
 
             return (-1, "");
         }
-        catch (OperationCanceledException ex) when (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             // Rethrow cancellation exceptions when the original token was cancelled
             throw;
@@ -63,7 +63,7 @@ public class ProcessExecutor(ILogger<ProcessExecutor> logger) : IProcessExecutor
         catch (OperationCanceledException ex)
         {
             // Timeout from linked token source
-            logger.LogDebug("Command execution timed out: {Command} {Arguments}", command, arguments);
+            logger.LogDebug(ex, "Command execution timed out: {Command} {Arguments}", command, arguments);
             return (-1, "");
         }
         catch (Exception ex)
