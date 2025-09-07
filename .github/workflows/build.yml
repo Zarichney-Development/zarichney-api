@@ -268,7 +268,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: |
-            --allowedTools "Edit,Read,Write,MultiEdit,Bash(dotnet test:*),Bash(dotnet build:*),Bash(dotnet restore:*),Bash(ls:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*)"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,mcp__github_comment__update_claude_comment,Edit,Read,Write,MultiEdit,Bash(./Scripts/*),Bash(dotnet:*),Bash(ls:*),Bash(grep:*),Bash(find:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(jq:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
 
       - name: Handle Claude AI Failure
         if: failure() && steps.claude-testing.outcome == 'failure'
@@ -460,7 +460,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: |
-            --allowedTools "Edit,Read,Write,MultiEdit,Bash(dotnet test:*),Bash(dotnet build:*),Bash(dotnet restore:*),Bash(ls:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*)"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,mcp__github_comment__update_claude_comment,Edit,Read,Write,MultiEdit,Bash(./Scripts/*),Bash(dotnet:*),Bash(ls:*),Bash(grep:*),Bash(find:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(jq:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
 
       - name: Handle Standards Analysis Failure
         if: failure() && steps.claude-standards.outcome == 'failure'
@@ -581,7 +581,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: |
-            --allowedTools "Edit,Read,Write,MultiEdit,Bash(dotnet test:*),Bash(dotnet build:*),Bash(dotnet restore:*),Bash(ls:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*)"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,mcp__github_comment__update_claude_comment,Edit,Read,Write,MultiEdit,Bash(./Scripts/*),Bash(dotnet:*),Bash(ls:*),Bash(grep:*),Bash(find:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(jq:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
 
       - name: Handle Tech Debt Analysis Failure
         if: failure() && steps.claude-techdebt.outcome == 'failure'
@@ -847,7 +847,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: |
-            --allowedTools "Edit,Read,Write,MultiEdit,Bash(dotnet test:*),Bash(dotnet build:*),Bash(dotnet restore:*),Bash(ls:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*)"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,mcp__github_comment__update_claude_comment,Edit,Read,Write,MultiEdit,Bash(./Scripts/*),Bash(dotnet:*),Bash(ls:*),Bash(grep:*),Bash(find:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(jq:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
 
       - name: Handle Security Analysis Failure
         if: failure() && steps.claude-security.outcome == 'failure'
@@ -1012,7 +1012,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: |
-            --allowedTools "Edit,Read,Write,MultiEdit,Bash(dotnet test:*),Bash(dotnet build:*),Bash(dotnet restore:*),Bash(ls:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*)"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,mcp__github_comment__update_claude_comment,Edit,Read,Write,MultiEdit,Bash(./Scripts/*),Bash(dotnet:*),Bash(ls:*),Bash(grep:*),Bash(find:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(jq:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
 
       - name: Handle Merge Orchestrator Failure
         if: failure() && steps.claude-orchestrator.outcome == 'failure'
