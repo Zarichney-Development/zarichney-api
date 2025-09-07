@@ -1353,12 +1353,10 @@ jobs:
           
           ARTIFACT_PATH="${{ steps.check_artifact.outputs.artifact_path }}"
           
-          # Read artifact content and escape for GitHub Actions multiline string
-          {
-            echo 'artifact_content<<EOF'
-            cat "$ARTIFACT_PATH"
-            echo 'EOF'
-          } >> $GITHUB_OUTPUT
+          # Read artifact content using proper GitHub Actions multiline string format
+          echo "artifact_content<<EOF" >> $GITHUB_OUTPUT
+          cat "$ARTIFACT_PATH" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
           
           echo "✅ Implementation Summary content prepared for PR integration"
 
