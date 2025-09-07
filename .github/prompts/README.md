@@ -1,6 +1,6 @@
 # Module/Directory: AI-Powered Code Review System
 
-**Last Updated:** 2025-08-04
+**Last Updated:** 2025-09-07
 
 **Parent:** [`.github`](../README.md)
 
@@ -196,7 +196,7 @@ grep -o '{{[^}]*}}' .github/prompts/*.md | sort -u
 * **Project Documentation**: `/Docs/Standards/` - Standards that inform AI analysis criteria
 * **Research Foundation**: `/Docs/Research/Tech_Debt_Analysis_Prompt_Research.md` - Academic foundation for prompt engineering
 * **Workflow Integration**: `.github/workflows/build.yml` - CI/CD pipeline that executes AI analysis
-* **Claude AI Service**: `grll/claude-code-action@beta` - AI analysis execution engine
+* **Claude AI Service**: `anthropics/claude-code-action@v1` - AI analysis execution engine
 
 ### **Consumer Impact**
 * **Immediate Impact**: All PR analysis for `develop` and `main` branches

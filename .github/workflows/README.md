@@ -1,6 +1,6 @@
 # Module/Directory: .github/workflows
 
-**Last Updated:** 2025-09-01
+**Last Updated:** 2025-09-07
 
 **Parent:** [`.github`](../README.md)
 
@@ -132,7 +132,7 @@ graph TD
     * Progressive analysis depth: feature < develop < main
     * Security analysis reserved for main branch only
 * **Claude AI Integration:**
-    * Direct use of `grll/claude-code-action@beta` in workflow
+    * Direct use of `anthropics/claude-code-action@v1` in workflow
     * OAuth authentication for Claude Max plan
     * Separate jobs for each analysis type with template-based prompts
     * Consistent prompt loading pattern: `cat .github/prompts/{type}.md` → placeholder replacement → Claude AI
@@ -197,7 +197,7 @@ graph TD
     * `Docker Hub` - Container images for testing
     * `Package Registries` - NPM, NuGet for dependencies
 * **GitHub Actions Used:**
-    * `grll/claude-code-action@beta` - Claude AI analysis
+    * `anthropics/claude-code-action@v1` - Claude AI analysis
     * `actions/checkout@v4` - Repository checkout
     * `actions/setup-dotnet@v4` - .NET SDK setup
     * `actions/setup-node@v4` - Node.js setup
