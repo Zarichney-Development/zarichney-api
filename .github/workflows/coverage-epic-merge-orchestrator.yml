@@ -236,9 +236,9 @@ jobs:
 
           echo "📋 Found $(echo "$FILTERED_PRS" | jq length) PRs matching label filters"
 
-          # Filter by mergeable status (include both MERGEABLE and UNKNOWN for flexibility)
+          # Filter by mergeable status (include MERGEABLE, UNKNOWN, and CONFLICTING for AI resolution)
           MERGEABLE_PRS=$(echo "$FILTERED_PRS" | jq '
-            map(select(.mergeable == "MERGEABLE" or .mergeable == "UNKNOWN" or .mergeable == true))
+            map(select(.mergeable == "MERGEABLE" or .mergeable == "UNKNOWN" or .mergeable == "CONFLICTING" or .mergeable == true))
           ')
 
           TOTAL_MERGEABLE=$(echo "$MERGEABLE_PRS" | jq length)
