@@ -390,6 +390,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: "Restore Dependencies Before AI Resolution"
+        if: steps.sequential-processing.outputs.ai_resolution_count != '0' && steps.validate-inputs.outputs.dry_run == false
+        run: |
+          echo "🔧 Restoring .NET dependencies before AI conflict resolution"
+          dotnet restore
+          echo "✅ Dependencies restored for AI agent environment"
+
       - name: "Execute AI Conflict Resolution for Failed PRs"
         if: steps.sequential-processing.outputs.ai_resolution_count != '0' && steps.validate-inputs.outputs.dry_run == false
         id: ai-resolution
@@ -408,36 +415,46 @@ jobs:
             - **Failed PRs (Conflicts)**: ${{ steps.sequential-processing.outputs.failed_merges }}
             - **PRs Needing Resolution**: ${{ steps.sequential-processing.outputs.ai_resolutions_needed }}
 
+            ## Environment Restoration Protocol (CRITICAL FIRST STEP)
+            Before attempting any conflict resolution:
+            1. Run `dotnet restore` to ensure all NuGet dependencies are available
+            2. Verify build environment is stable with `dotnet build --no-restore`
+            3. Only proceed with merge operations after environment is confirmed stable
+            4. If dependencies are missing, restore them before any Git operations
+
             ## Task: Resolve Conflicts and Complete Sequential Merging
 
             For each PR in the failed merges list:
 
-            1. **Fetch and Merge**: Fetch the PR branch and attempt merge into epic branch
-            2. **Resolve Conflicts**: When conflicts occur, resolve them intelligently:
+            1. **Environment Check**: Verify `dotnet restore` and `dotnet build` work successfully
+            2. **Fetch and Merge**: Fetch the PR branch and attempt merge into epic branch
+            3. **Resolve Conflicts**: When conflicts occur, resolve them intelligently:
                - Preserve all test coverage improvements from both branches
                - Maintain code quality and testing standards
                - Focus on test-only conflicts and minimal code changes
                - Ensure no regression in test coverage or functionality
-            3. **Commit and Push**: After resolving conflicts, commit the merge and push to epic branch
-            4. **Close PR**: Close the successfully resolved PR with appropriate message
-            5. **Continue Sequential**: Process next failed PR until all are resolved
+            4. **Commit and Push**: After resolving conflicts, commit the merge and push to epic branch
+            5. **Close PR**: Close the successfully resolved PR with appropriate message
+            6. **Continue Sequential**: Process next failed PR until all are resolved
 
             ## Safety Constraints
             - Work directly on the epic branch: ${{ env.EPIC_BRANCH }}
             - If major conflicts arise, document them but continue with other PRs
             - Maintain build and test integrity throughout the process
             - Epic branch can be rolled back to: ${{ steps.sequential-processing.outputs.epic_starting_commit }}
+            - Always restore dependencies before attempting any build or merge operations
 
             ## Success Criteria
             - All conflicted PRs either successfully merged or documented as requiring manual intervention
             - Epic branch remains in a buildable and testable state
             - Test coverage progression is preserved and enhanced
+            - Build environment is stable with all dependencies restored
 
-            Please proceed with conflict resolution for the failed PRs.
+            Please proceed with environment restoration followed by conflict resolution for the failed PRs.
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: |
-            --allowedTools "Read,Edit,Glob,TodoWrite,Bash(git status),Bash(git fetch),Bash(git merge),Bash(git commit),Bash(git push),Bash(git checkout),Bash(git add),Bash(git log),Bash(git diff),Bash(git reset),Bash(git clean),Bash(dotnet build),Bash(dotnet test),Bash(find . -name \"*.cs\" -type f),Bash(gh pr close),mcp__github_comment__update_claude_comment"
+            --allowedTools "Read,Edit,Glob,TodoWrite,Bash(git status),Bash(git fetch),Bash(git merge),Bash(git commit),Bash(git push),Bash(git checkout),Bash(git add),Bash(git log),Bash(git diff),Bash(git reset),Bash(git clean),Bash(dotnet restore),Bash(dotnet build),Bash(dotnet test),Bash(find . -name \"*.cs\" -type f),Bash(gh pr close),mcp__github_comment__update_claude_comment"
 
       # ========================================
       # Validation & Testing
