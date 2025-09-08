@@ -31,7 +31,7 @@ assignees: '' # Automated execution - no human assignee
 
 **Coverage Epic Pipeline Understanding:**
 - **Your Task (Phase 1):** Create focused coverage improvements in individual PR
-- **Orchestrator Role (Phase 2):** Automatic consolidation of multiple coverage PRs
+- **Orchestrator Role (Phase 2):** Automatic direct merging of multiple coverage PRs into epic branch
 - **Epic Integration (Phase 3):** Product owner integration to develop/main
 
 **Individual Task Responsibilities:**
