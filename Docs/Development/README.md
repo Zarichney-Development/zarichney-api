@@ -1,6 +1,6 @@
 # Module/Directory: Docs/Development
 
-**Last Updated:** 2025-09-01
+**Last Updated:** 2025-09-07
 
 > **Parent:** [`Docs`](../README.md)
 
@@ -15,10 +15,12 @@
 * **Why it exists:** To establish a clear and effective **multi-agent development process**, ensuring tasks are well-defined, agents operate with comprehensive context, and standards are consistently applied across the development team.
 * **Core Documents within this Directory:**
     * **[`CodebaseManagerEvolution.md`](./CodebaseManagerEvolution.md): ARCHITECTURAL FOUNDATION** - Documents the evolution from executor to orchestrator model with 12-agent specialization.
+    * **[`CoverageEpicMergeOrchestration.md`](./CoverageEpicMergeOrchestration.md): COVERAGE EPIC ORCHESTRATOR** - Complete guide for automated multi-PR consolidation with AI conflict resolution.
+    * **[`AutomatedCoverageEpicWorkflow.md`](./AutomatedCoverageEpicWorkflow.md): ENHANCED COVERAGE EPIC PIPELINE** - 3-phase workflow from individual agents through orchestrator consolidation to epic integration.
     * [`CodingPlannerAssistant.md`](./CodingPlannerAssistant.md): Legacy workflow documentation (superseded by orchestration model).
     * [`StandardWorkflow.md`](./StandardWorkflow.md): Legacy workflow documentation (superseded by specialized agent protocols).
     * [`ComplexTaskWorkflow.md`](./ComplexTaskWorkflow.md): Legacy workflow documentation (superseded by specialized agent protocols).
-    * [`TestCoverageWorkflow.md`](./TestCoverageWorkflow.md): Legacy workflow documentation (superseded by TestEngineer agent).
+    * [`TestCoverageWorkflow.md`](./TestCoverageWorkflow.md): Legacy workflow documentation (superseded by AutomatedCoverageEpicWorkflow.md and CoverageEpicMergeOrchestration.md).
     * [`LoggingGuide.md`](./LoggingGuide.md): Comprehensive guide for the enhanced logging system, including configuration and best practices.
     * [`TestArtifactsGuide.md`](./TestArtifactsGuide.md): Guide for understanding and using CI/CD test artifacts including coverage reports and test results.
     * [`TestSuiteBaselineGuide.md`](./TestSuiteBaselineGuide.md): Practical interpretation guide for test suite baseline validation results, troubleshooting workflows, and actionable guidance for achieving progressive coverage targets.
@@ -35,7 +37,7 @@
 
 ## 2. 12-Agent Orchestrated Development Workflow Overview
 
-The core workflow leverages a **strategic codebase manager** (Claude) as the team leader orchestrating 11 specialized AI agents in a structured, coordinated process. This evolution includes pre-PR validation through the Compliance Officer partnership and rich inter-agent communication via the `/working-dir/` system. Each agent employs comprehensive **documentation grounding protocols** to ensure contextual awareness and standards alignment.
+The core workflow leverages a **strategic codebase manager** (Claude) as the team leader orchestrating 11 specialized AI agents in a structured, coordinated process. This evolution includes pre-PR validation through the Compliance Officer partnership, **Coverage Epic Merge Orchestrator for multi-PR consolidation**, and rich inter-agent communication via the `/working-dir/` system. Each agent employs comprehensive **documentation grounding protocols** to ensure contextual awareness and standards alignment.
 
 * **Orchestration Workflow Diagram:**
     *(Diagram follows conventions defined in [`../Standards/DiagrammingStandards.md`](../Standards/DiagrammingStandards.md))*

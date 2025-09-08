@@ -14,6 +14,8 @@ assignees: '' # Automated execution - no human assignee
 **Epic Branch:** `epic/testing-coverage-to-90` (off `develop`)  
 **Task Branch Pattern:** `tests/issue-94-[description]-[timestamp]`
 
+**Orchestrator Integration:** Individual task PRs will be consolidated by the [Coverage Epic Merge Orchestrator](../../Docs/Development/CoverageEpicMergeOrchestration.md) for efficient epic progression. Your task contributes to systematic coverage improvement while the orchestrator handles PR coordination and conflict resolution.
+
 ## 2. Automated Task Objective
 
 **AI Agent Mission:** Systematically increase backend test coverage through self-directed scope selection and autonomous implementation of comprehensive test suites in an unconfigured CI environment.
@@ -25,7 +27,26 @@ assignees: '' # Automated execution - no human assignee
 - **Phase 4 (50%-75%):** Complex business scenarios, integration depth
 - **Phase 5 (75%-90%):** Comprehensive edge cases, performance scenarios
 
-## 3. Self-Directed Scope Selection
+## 3. Orchestrator Consolidation Context
+
+**Coverage Epic Pipeline Understanding:**
+- **Your Task (Phase 1):** Create focused coverage improvements in individual PR
+- **Orchestrator Role (Phase 2):** Automatic direct merging of multiple coverage PRs into epic branch
+- **Epic Integration (Phase 3):** Product owner integration to develop/main
+
+**Individual Task Responsibilities:**
+- Focus on 1-3 related files to minimize orchestrator conflicts
+- Implement 15-30 test methods with comprehensive framework enhancements
+- Ensure 100% test pass rate and standards compliance
+- Create clear, descriptive PR with consolidation-friendly structure
+
+**Orchestrator Benefits for Your Work:**
+- Automatic conflict resolution for test framework overlaps
+- Coordinated integration with other AI agent contributions
+- Comprehensive quality validation across consolidated changes
+- Reduced manual PR management overhead for product owners
+
+## 4. Self-Directed Scope Selection
 
 **AI Agent must analyze and select appropriate scope:**
 
@@ -39,7 +60,7 @@ assignees: '' # Automated execution - no human assignee
 - **File-Level Focus:** Choose 1-3 related files to minimize conflicts with other agents
 - **Reasonable Size:** 15-30 new test methods maximum per task
 - **Impact Priority:** Prefer uncovered files first, then low-coverage areas
-- **Agent Coordination:** Select different modules/namespaces from concurrent agents
+- **Agent Coordination:** Select different modules/namespaces from concurrent agents (orchestrator-aware)
 
 ### Target Area Selection
 AI agent identifies specific production code files based on coverage analysis:
@@ -47,7 +68,7 @@ AI agent identifies specific production code files based on coverage analysis:
 - Related supporting classes requiring coverage
 - Integration endpoints needing test coverage
 
-## 4. CI Environment Execution Context
+## 5. CI Environment Execution Context
 
 ### Expected Test Environment
 - **Execution Environment:** GitHub Actions CI (unconfigured)
@@ -63,7 +84,7 @@ AI agent identifies specific production code files based on coverage analysis:
 - [ ] All new tests deterministic and repeatable in CI
 - [ ] Coverage improvement measurable and documented
 
-## 5. Implementation Requirements
+## 6. Implementation Requirements
 
 ### Mandatory Standards Adherence
 **Review before implementation:** 
@@ -91,12 +112,12 @@ AI agent identifies specific production code files based on coverage analysis:
 - [ ] AAA pattern: Clear Arrange-Act-Assert structure in all tests
 - [ ] FluentAssertions: Use for all test assertions and include clear reasons via the assertion's optional message parameter
 
-### Framework Enhancement (In Scope)
-When beneficial for scalability, include:
-- [ ] Test data builders for complex objects (`/TestData/Builders/`)
-- [ ] Mock factories for reusable configurations (`/Framework/Mocks/`)
-- [ ] Testing utilities for common patterns (`/Framework/Helpers/`)
-- [ ] AutoFixture customizations (`/Framework/TestData/AutoFixtureCustomizations/`)
+### Framework Enhancement Opportunities (Orchestrator-Aware)
+When implementing tests, consider these framework improvements that coordinate well with orchestrator consolidation:
+- [ ] **Test Data Builders:** Create/enhance builders for complex objects (designed for multi-agent reuse)
+- [ ] **Mock Factories:** Develop reusable mock configurations (orchestrator will consolidate overlaps)
+- [ ] **Helper Utilities:** Add testing utilities for common patterns (framework-wide integration)
+- [ ] **AutoFixture Customizations:** Improve test data generation (orchestrator-friendly patterns)
 
 ### Production Changes Protocol
 If tests reveal production issues:
@@ -110,7 +131,7 @@ If tests reveal production issues:
    - Continue with coverage work
    - Reference issue in PR description
 
-## 6. Automated Validation & Delivery
+## 7. Automated Validation & Delivery
 
 ### Pre-Commit Validation
 ```bash
@@ -135,7 +156,7 @@ gh pr create --base epic/testing-coverage-to-90 \
   --body "[Generated PR body with coverage summary]"
 ```
 
-## 7. Production Issue Discovery Protocol
+## 8. Production Issue Discovery Protocol
 
 ### If New Tests Reveal Production Bugs
 - **Document in PR:** Clearly note discovered issues in PR description
@@ -151,9 +172,11 @@ gh pr create --base epic/testing-coverage-to-90 \
 **Action Required:** Fix production code before merging coverage improvements
 ```
 
-## 8. Success Metrics
+## 9. Task Completion & Orchestrator Integration Criteria
 
-### Task Completion Criteria
+Each automated task is considered successful when:
+
+**Individual Task Success:**
 - [ ] Epic branch updated from develop before starting work
 - [ ] Coverage gaps identified through `/test-report` analysis
 - [ ] Appropriate scope selected (1-3 files, 15-30 test methods)
@@ -164,12 +187,39 @@ gh pr create --base epic/testing-coverage-to-90 \
 - [ ] Pull request created with comprehensive documentation
 - [ ] Production issues properly handled if discovered
 
+**Orchestrator Integration Readiness:**
+- [ ] PR labeled appropriately for orchestrator discovery (`coverage`, `testing`, `ai-task`)
+- [ ] Focused scope (1-3 files) to minimize consolidation conflicts
+- [ ] Clear PR description enabling effective orchestrator consolidation
+- [ ] Test framework enhancements compatible with multi-agent coordination
+- [ ] Production changes limited to testability improvements (orchestrator-safe)
+
+## 10. Coverage Epic Merge Orchestrator Integration
+
+**Orchestrator Documentation:** See [Coverage Epic Merge Orchestration Guide](../../Docs/Development/CoverageEpicMergeOrchestration.md) for complete consolidation workflow understanding.
+
+**Orchestrator Execution:** Product owners execute orchestrator manually or via scheduling:
+```bash
+# Consolidate multiple coverage PRs
+gh workflow run "Coverage Epic Merge Orchestrator" \
+  --field dry_run=false \
+  --field max_prs=8 \
+  --field pr_label_filter="coverage,testing,ai-task"
+```
+
+**Your Task's Role in Consolidation:**
+- Individual excellence enables effective orchestrator consolidation
+- Clear PR structure facilitates automatic conflict resolution
+- Framework enhancements become coordinated epic-wide improvements
+- Quality standards ensure consolidated changes maintain project excellence
+
 ### Epic Contribution
 Each task contributes to:
 - **Coverage Velocity:** ~2.8% monthly increase toward 90% target
 - **Framework Scalability:** Enhanced testing infrastructure
 - **Quality Maintenance:** ≥99% test pass rate throughout progression
 - **January 2026 Goal:** 90% backend code coverage achievement
+- **Orchestrator Efficiency:** Reduced coordination overhead through systematic consolidation
 
 ---
 

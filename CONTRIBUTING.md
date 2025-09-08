@@ -1,7 +1,7 @@
 # Contributing to Zarichney API
 
 **Version:** 1.0  
-**Last Updated:** 2025-08-31  
+**Last Updated:** 2025-09-07  
 **Parent:** [`README.md`](README.md)
 
 ---
@@ -47,7 +47,10 @@ When Claude Code activates, you gain access to a complete development team:
 - **FrontendSpecialist:** Angular 19, TypeScript, NgRx, Material Design
 - **BackendSpecialist:** .NET 8, C#, EF Core, ASP.NET Core
 - **SecurityAuditor:** Security hardening, vulnerability assessment
-- **WorkflowEngineer:** GitHub Actions, CI/CD automation
+- **WorkflowEngineer:** GitHub Actions, CI/CD automation, Coverage Epic Merge Orchestrator
+  - **Core Capabilities:** Workflow creation, deployment strategies, automation design
+  - **Coverage Epic Orchestrator:** Autonomous consolidation of multiple coverage PRs with AI conflict resolution
+  - **Integration Patterns:** Coordinates with TestEngineer coverage automation and epic management workflows
 
 #### **Analysis & Investigation**
 - **BugInvestigator:** Root cause analysis, diagnostic reporting
@@ -75,6 +78,20 @@ The AI orchestration model automatically handles:
 7. **Quality Assurance:** Comprehensive testing, documentation, and standards validation
 8. **Final Assembly:** Professional commit, push, and PR creation with AI Sentinel integration
 
+#### **Enhanced Multi-Agent Coordination with Orchestrator**
+
+**Individual Agent Excellence → Orchestrator Consolidation:**
+- Multiple TestEngineer instances create focused coverage improvements
+- WorkflowEngineer Orchestrator consolidates overlapping work automatically
+- ComplianceOfficer validates both individual PRs and consolidated results
+- SecurityAuditor ensures all changes maintain security standards throughout consolidation
+
+**Conflict Prevention & Resolution:**
+- Agents coordinate through timestamp-based scope selection
+- Orchestrator resolves framework conflicts through AI-powered analysis
+- Recovery branches preserve work during complex conflict scenarios
+- Quality gates maintain excellence throughout consolidation pipeline
+
 ## Alternative Contribution Methods
 
 ### Automated Coverage Enhancement
@@ -91,6 +108,24 @@ For continuous test coverage improvement without manual intervention:
 # - Multiple agent coordination with conflict prevention
 # - Target: 90% backend coverage by January 2026
 # - Success criteria: 100% pass rate on ~65 executable tests
+```
+
+#### **Advanced Automation Capabilities**
+
+**Coverage Epic Orchestration:**
+The WorkflowEngineer provides sophisticated Coverage Epic Merge Orchestrator capabilities:
+- **Multi-PR Consolidation:** Automatically discovers and consolidates coverage PRs targeting epic branches
+- **AI Conflict Resolution:** Uses specialized AI prompts for safe conflict resolution with strict production constraints
+- **Quality Validation:** Comprehensive testing and standards compliance before consolidation
+- **Batch Processing:** Handles 3-50 PRs per execution with staging branch safety protocols
+
+**Orchestrator Integration with Coverage Automation:**
+```bash
+# Individual coverage PRs created by TestEngineer
+gh workflow run "Coverage Epic Automation" --field target_area="Services"
+
+# Multiple PRs consolidated by WorkflowEngineer Orchestrator  
+gh workflow run "Coverage Epic Merge Orchestrator" --field max_prs=8 --field dry_run=false
 ```
 
 #### **Coverage Epic Integration**
@@ -183,11 +218,28 @@ All contribution methods follow this core pattern:
 - **Unique Elements:** Implementation planning phase, failing tests verification, red-green-refactor cycle
 - **Quality Gates:** Enhanced validation with performance analysis
 
-#### **Coverage Enhancement Process** 
+#### **Coverage Enhancement Process (Enhanced with Orchestrator)**
 - **Use Case:** Systematic test coverage improvement, quality assurance
 - **Approach:** Analytics-driven gap identification and targeted test development
 - **Unique Elements:** Coverage report analysis, testability assessment, iterative refinement
 - **Quality Gates:** Measurable coverage improvement with framework enhancements
+
+**3-Phase Coverage Epic Pipeline:**
+
+**Phase 1 - Individual Agent Execution:**
+- TestEngineer creates focused coverage improvements in individual task branches
+- AI agents work simultaneously on different coverage areas to prevent conflicts
+- Each task produces comprehensive test implementations with framework enhancements
+
+**Phase 2 - Orchestrator Consolidation (NEW):**
+- WorkflowEngineer's Coverage Epic Merge Orchestrator automatically consolidates multiple coverage PRs
+- AI-powered conflict resolution handles test framework overlaps and integration
+- Quality gates ensure consolidated changes maintain standards compliance
+
+**Phase 3 - Epic Integration:**
+- Product owners integrate consolidated epic progress into develop/main branches
+- Coverage milestone tracking toward 90% backend coverage by January 2026
+- Continuous progression monitoring and velocity optimization
 
 ## Tools and Commands
 
@@ -240,6 +292,29 @@ gh pr create --base develop --title "feat: description (#123)" \
 # API client regeneration (when contracts change)
 ./Scripts/GenerateApiClient.ps1      # PowerShell
 ./Scripts/generate-api-client.sh     # Bash
+```
+
+#### **Coverage Epic Orchestrator Usage**
+
+**Testing Current PR Backlog:**
+```bash
+# Dry run with current coverage PRs
+claude --project zarichney-api
+# AI will analyze available PRs and recommend orchestrator execution
+
+# Manual orchestrator execution
+gh workflow run "Coverage Epic Merge Orchestrator" \
+  --field dry_run=true \
+  --field max_prs=8
+```
+
+**Production Consolidation:**
+```bash
+# Consolidate multiple coverage improvements
+gh workflow run "Coverage Epic Merge Orchestrator" \
+  --field dry_run=false \
+  --field max_prs=8 \
+  --field merge_strategy=merge
 ```
 
 #### **Enhanced AI-Powered GitHub Operations**
@@ -299,6 +374,21 @@ The project features an advanced **five-agent AI review system** that automatica
 - **Working Directory Usage:** Proper artifact creation and communication protocols
 - **Pre-PR Validation:** ComplianceOfficer partnership for dual verification
 - **AI Sentinel Readiness:** Preparation for automated quality review
+
+### Benefits of AI Orchestration (Enhanced)
+
+**Core Orchestration Benefits:**
+- **Comprehensive Coverage:** All aspects of development handled systematically
+- **Quality Consistency:** Standardized application of all project requirements
+- **Efficiency Gains:** Parallel processing and specialized expertise application
+- **Knowledge Preservation:** Complete context maintenance across all development activities
+
+**Enhanced with Orchestrator Automation:**
+- **Reduced Manual Overhead:** Automatic consolidation of multiple coverage improvements
+- **Conflict Resolution Excellence:** AI-powered resolution of test framework overlaps
+- **Epic Progression Efficiency:** Systematic consolidation enables faster milestone achievement
+- **Quality Assurance Integration:** All existing AI Sentinels apply to consolidated changes
+- **Scalable Coverage Improvement:** Handle 3-50 simultaneous coverage PRs effectively
 
 ### Development Environment Requirements
 

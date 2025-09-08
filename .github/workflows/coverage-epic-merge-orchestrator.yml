@@ -1,0 +1,680 @@
+name: "Coverage Epic Merge Orchestrator"
+
+# Coverage Epic Merge Orchestrator Workflow
+# Autonomously discovers, validates, and processes Coverage Epic PRs with sequential direct merging
+# Uses AI conflict resolution for complex merge scenarios operating directly on epic branch
+# Execution via workflow_dispatch only - triggered manually or by orchestration
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run mode (preview actions without executing)'
+        required: false
+        default: true
+        type: boolean
+      max_prs:
+        description: 'Maximum PRs to process in single run'
+        required: false
+        default: '8'
+        type: string
+      pr_label_filter:
+        description: 'Comma-separated PR label filters (OR logic with flexible matching)'
+        required: false
+        default: 'type: coverage,coverage,testing,ai-task'
+        type: string
+      sync_epic_from_develop:
+        description: 'Sync epic branch from develop before merging PRs'
+        required: false
+        default: true
+        type: boolean
+      merge_strategy:
+        description: 'Merge strategy for consolidation'
+        required: false
+        default: 'merge'
+        type: choice
+        options:
+          - 'merge'
+          - 'squash'
+
+# Single concurrency group to prevent parallel orchestrator runs
+concurrency:
+  group: coverage-epic-merge
+  cancel-in-progress: false
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  EPIC_BRANCH: 'epic/testing-coverage-to-90'
+  EPIC_ISSUE_ID: '94'
+
+permissions:
+  id-token: write
+  contents: write
+  actions: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  merge-orchestrator:
+    name: "Coverage Epic Merge Orchestrator"
+    runs-on: ubuntu-latest
+
+    # Only run on main repository (not forks)
+    if: github.repository == 'Zarichney-Development/zarichney-api'
+
+    steps:
+      # ========================================
+      # Environment Setup & Validation
+      # ========================================
+
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for merge operations
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Setup Development Environment"
+        uses: ./.github/actions/shared/setup-environment
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          setup-node: false
+          cache-dependencies: true
+
+      - name: "Configure Git for Merge Operations"
+        run: |
+          git config --global user.name "Coverage Epic Merge Bot"
+          git config --global user.email "noreply@zarichney.dev"
+          git config --global init.defaultBranch main
+
+      - name: "Validate Input Parameters"
+        id: validate-inputs
+        run: |
+          echo "🔍 Validating orchestrator input parameters"
+
+          # Validate max_prs is a positive integer
+          MAX_PRS="${{ github.event.inputs.max_prs }}"
+          if ! [[ "$MAX_PRS" =~ ^[1-9][0-9]*$ ]] || [ "$MAX_PRS" -gt 50 ]; then
+            echo "❌ Invalid max_prs: $MAX_PRS (must be 1-50)"
+            exit 1
+          fi
+
+          # Validate merge strategy
+          MERGE_STRATEGY="${{ github.event.inputs.merge_strategy }}"
+          if [[ ! "$MERGE_STRATEGY" =~ ^(merge|squash)$ ]]; then
+            echo "❌ Invalid merge_strategy: $MERGE_STRATEGY"
+            exit 1
+          fi
+
+          # Parse and validate label filters
+          LABEL_FILTER="${{ github.event.inputs.pr_label_filter }}"
+          IFS=',' read -ra LABELS <<< "$LABEL_FILTER"
+          VALID_LABELS=()
+          for label in "${LABELS[@]}"; do
+            label=$(echo "$label" | xargs)  # Trim whitespace
+            if [ -n "$label" ]; then
+              VALID_LABELS+=("$label")
+            fi
+          done
+
+          if [ ${#VALID_LABELS[@]} -eq 0 ]; then
+            echo "❌ No valid labels found in filter: $LABEL_FILTER"
+            exit 1
+          fi
+
+          echo "✅ Input validation passed"
+          echo "max_prs=$MAX_PRS" >> $GITHUB_OUTPUT
+          echo "merge_strategy=$MERGE_STRATEGY" >> $GITHUB_OUTPUT
+          printf -v JOINED_LABELS '%s,' "${VALID_LABELS[@]}"
+          echo "label_filters=${JOINED_LABELS%,}" >> $GITHUB_OUTPUT
+          echo "dry_run=${{ github.event.inputs.dry_run }}" >> $GITHUB_OUTPUT
+
+      # ========================================
+      # Epic Branch Preparation
+      # ========================================
+
+      - name: "Prepare Epic Branch"
+        id: epic-preparation
+        run: |
+          echo "🔄 Preparing epic branch for merge orchestration"
+
+          # Fetch all remote data
+          git fetch --all --prune
+
+          # Ensure epic branch exists and is properly tracked
+          if ! git show-ref --verify --quiet refs/heads/$EPIC_BRANCH; then
+            if git ls-remote --heads origin "$EPIC_BRANCH" | grep -q "$EPIC_BRANCH"; then
+              echo "📥 Creating local epic branch from remote"
+              git checkout -b $EPIC_BRANCH origin/$EPIC_BRANCH
+            else
+              echo "❌ Epic branch does not exist locally or remotely"
+              exit 1
+            fi
+          else
+            echo "✅ Local epic branch exists"
+            git checkout $EPIC_BRANCH
+          fi
+
+          # Sync epic branch from develop if requested
+          if [ "${{ github.event.inputs.sync_epic_from_develop }}" = "true" ]; then
+            echo "🔄 Syncing epic branch with develop"
+            git fetch origin develop
+            
+            # Check if develop integration is needed
+            DEVELOP_COMMIT=$(git rev-parse origin/develop)
+            EPIC_BASE=$(git merge-base $EPIC_BRANCH origin/develop)
+            
+            if [ "$EPIC_BASE" != "$DEVELOP_COMMIT" ]; then
+              echo "🔄 Epic branch needs develop integration"
+              
+              if [ "${{ steps.validate-inputs.outputs.dry_run }}" = "false" ]; then
+                # Attempt merge
+                if git merge origin/develop --no-edit; then
+                  echo "✅ Epic branch synced with develop successfully"
+                  git push origin $EPIC_BRANCH
+                else
+                  echo "⚠️ Merge conflicts detected during develop sync"
+                  git merge --abort
+                  echo "sync_conflicts=true" >> $GITHUB_OUTPUT
+                  echo "📋 Manual resolution required before PR orchestration"
+                fi
+              else
+                echo "🔍 DRY RUN: Would sync epic branch with develop"
+              fi
+            else
+              echo "✅ Epic branch already up-to-date with develop"
+            fi
+          fi
+
+          CURRENT_COMMIT=$(git rev-parse HEAD)
+          echo "epic_commit=$CURRENT_COMMIT" >> $GITHUB_OUTPUT
+          echo "epic_ready=true" >> $GITHUB_OUTPUT
+
+      # ========================================
+      # PR Discovery & Filtering
+      # ========================================
+
+      - name: "Discover Coverage PRs"
+        id: pr-discovery
+        if: steps.epic-preparation.outputs.epic_ready == 'true'
+        run: |
+          echo "🔍 Discovering mergeable coverage PRs targeting epic branch"
+
+          # Get all PRs targeting the epic branch
+          ALL_PRS=$(gh pr list --base "$EPIC_BRANCH" --state open --json number,title,headRefName,labels,url,mergeable)
+
+          if [ -z "$ALL_PRS" ] || [ "$ALL_PRS" = "[]" ]; then
+            echo "ℹ️ No open PRs found targeting epic branch"
+            echo "discovered_prs=[]" >> $GITHUB_OUTPUT
+            echo "total_prs=0" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "📋 Found $(echo "$ALL_PRS" | jq length) total PRs targeting epic branch"
+
+          # Filter PRs by labels with flexible matching
+          LABEL_FILTERS="${{ steps.validate-inputs.outputs.label_filters }}"
+          IFS=',' read -ra FILTER_ARRAY <<< "$LABEL_FILTERS"
+
+          # Build flexible pattern for OR matching (escape special regex chars)
+          PATTERN_PARTS=()
+          for label in "${FILTER_ARRAY[@]}"; do
+            # Escape special regex characters and allow flexible matching
+            escaped_label=$(echo "$label" | sed 's/[(){}|^$*+?\[\]\.]/\\&/g' | sed 's/: /: ?/g')
+            PATTERN_PARTS+=("$escaped_label")
+          done
+          
+          # Join patterns with OR logic
+          printf -v LABEL_PATTERN '%s|' "${PATTERN_PARTS[@]}"
+          LABEL_PATTERN=${LABEL_PATTERN%|}
+          
+          echo "🏷️ Using label pattern: $LABEL_PATTERN"
+
+          # Apply label filtering with OR logic
+          FILTERED_PRS=$(echo "$ALL_PRS" | jq --arg pattern "$LABEL_PATTERN" '
+            map(select(.labels[]?.name | test($pattern)))
+          ')
+
+          echo "📋 Found $(echo "$FILTERED_PRS" | jq length) PRs matching label filters"
+
+          # Filter by mergeable status (include both MERGEABLE and UNKNOWN for flexibility)
+          MERGEABLE_PRS=$(echo "$FILTERED_PRS" | jq '
+            map(select(.mergeable == "MERGEABLE" or .mergeable == "UNKNOWN" or .mergeable == true))
+          ')
+
+          TOTAL_MERGEABLE=$(echo "$MERGEABLE_PRS" | jq length)
+          echo "📋 Found $TOTAL_MERGEABLE mergeable PRs"
+
+          # Limit to max PRs
+          MAX_PRS=${{ steps.validate-inputs.outputs.max_prs }}
+          if [ "$TOTAL_MERGEABLE" -gt "$MAX_PRS" ]; then
+            echo "⚠️ Limiting to first $MAX_PRS PRs (out of $TOTAL_MERGEABLE mergeable)"
+            FINAL_PRS=$(echo "$MERGEABLE_PRS" | jq ".[0:$MAX_PRS]")
+          else
+            FINAL_PRS="$MERGEABLE_PRS"
+            echo "✅ Processing all $TOTAL_MERGEABLE discovered PRs (within $MAX_PRS limit)"
+          fi
+
+          # Output discovered PRs with detailed validation
+          echo "📊 Final PR selection for orchestration:"
+          echo "$FINAL_PRS" | jq -r '.[] | "  PR #\(.number): \(.title) (Branch: \(.headRefName))"'
+          
+          # Enhanced validation for 8-PR scenario
+          if [ $(echo "$FINAL_PRS" | jq length) -ge 8 ]; then
+            echo "✅ Successfully discovered 8+ PRs for merge orchestration"
+          elif [ $(echo "$FINAL_PRS" | jq length) -gt 0 ]; then
+            echo "ℹ️ Discovered $(echo "$FINAL_PRS" | jq length) PRs (less than 8-PR test scenario)"
+          fi
+          
+          # Display PR details for validation
+          echo "📋 PR Labels and Mergeable Status:"
+          echo "$FINAL_PRS" | jq -r '.[] | "  PR #\(.number) [\(.mergeable)]: \(.labels | map(.name) | join(", "))"'
+
+          # Save results with random delimiter
+          EOF_DISCOVERED_PRS=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "discovered_prs<<$EOF_DISCOVERED_PRS" >> $GITHUB_OUTPUT
+          echo "$FINAL_PRS" >> $GITHUB_OUTPUT
+          echo "$EOF_DISCOVERED_PRS" >> $GITHUB_OUTPUT
+
+          echo "total_prs=$(echo "$FINAL_PRS" | jq length)" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ========================================
+      # Sequential PR Processing & AI Resolution
+      # ========================================
+
+      - name: "Process PRs with Direct Sequential Merging"
+        id: sequential-processing
+        if: steps.pr-discovery.outputs.total_prs != '0'
+        run: |
+          echo "🔄 Beginning sequential PR processing with direct epic branch merging"
+
+          # Ensure we're on the epic branch
+          git checkout $EPIC_BRANCH
+          
+          # Get current epic branch commit for rollback if needed
+          EPIC_STARTING_COMMIT=$(git rev-parse HEAD)
+          echo "📍 Epic branch starting commit: $EPIC_STARTING_COMMIT"
+
+          # Parse discovered PRs
+          DISCOVERED_PRS='${{ steps.pr-discovery.outputs.discovered_prs }}'
+          TOTAL_PRS=$(echo "$DISCOVERED_PRS" | jq length)
+          
+          echo "📊 Processing $TOTAL_PRS PRs sequentially with direct merging"
+
+          SUCCESSFUL_MERGES=()
+          FAILED_MERGES=()
+          AI_RESOLUTIONS_NEEDED=()
+
+          # Process each PR sequentially
+          for i in $(seq 0 $((TOTAL_PRS - 1))); do
+            PR_DATA=$(echo "$DISCOVERED_PRS" | jq -r ".[$i]")
+            PR_NUMBER=$(echo "$PR_DATA" | jq -r '.number')
+            PR_BRANCH=$(echo "$PR_DATA" | jq -r '.headRefName')
+            PR_TITLE=$(echo "$PR_DATA" | jq -r '.title')
+
+            echo ""
+            echo "🎯 Processing PR #$PR_NUMBER: $PR_TITLE"
+            echo "   Branch: $PR_BRANCH → $EPIC_BRANCH (direct merge)"
+
+            if [ "${{ steps.validate-inputs.outputs.dry_run }}" = "true" ]; then
+              echo "🔍 DRY RUN: Would directly merge PR #$PR_NUMBER"
+              SUCCESSFUL_MERGES+=("$PR_NUMBER")
+              continue
+            fi
+
+            # Attempt direct merge using GitHub CLI first
+            echo "🔄 Attempting direct GitHub CLI merge for PR #$PR_NUMBER..."
+            
+            # Determine merge strategy dynamically
+            MERGE_STRATEGY="${{ steps.validate-inputs.outputs.merge_strategy }}"
+            if [ "$MERGE_STRATEGY" = "squash" ]; then
+              MERGE_FLAG="--squash"
+            else
+              MERGE_FLAG="--merge"
+            fi
+            
+            if gh pr merge "$PR_NUMBER" $MERGE_FLAG --delete-branch=false; then
+              echo "✅ Successfully merged PR #$PR_NUMBER via GitHub CLI"
+              SUCCESSFUL_MERGES+=("$PR_NUMBER")
+              
+              # Update local epic branch to match remote
+              git pull origin $EPIC_BRANCH
+              
+            else
+              echo "⚠️ GitHub CLI merge failed - attempting manual merge with conflict detection"
+              
+              # Fetch PR branch for manual merge
+              git fetch origin "$PR_BRANCH"
+              
+              # Attempt manual merge
+              if git merge "origin/$PR_BRANCH" --no-edit; then
+                echo "✅ Manual merge successful for PR #$PR_NUMBER"
+                git push origin $EPIC_BRANCH
+                SUCCESSFUL_MERGES+=("$PR_NUMBER")
+                
+                # Close the PR since we manually merged it
+                gh pr close "$PR_NUMBER" --comment "Merged directly into epic branch via Coverage Epic Merge Orchestrator"
+                
+              else
+                echo "❌ Merge conflicts detected for PR #$PR_NUMBER - requires AI resolution"
+                git merge --abort
+                AI_RESOLUTIONS_NEEDED+=("$PR_NUMBER")
+                FAILED_MERGES+=("$PR_NUMBER")
+              fi
+            fi
+          done
+
+          # Report sequential processing results
+          echo ""
+          echo "📊 Sequential Processing Results:"
+          echo "   Total PRs Processed: $TOTAL_PRS"
+          echo "   Successful Direct Merges: ${#SUCCESSFUL_MERGES[@]} PRs"
+          echo "   Failed Merges (Conflicts): ${#FAILED_MERGES[@]} PRs"
+          echo "   AI Resolution Required: ${#AI_RESOLUTIONS_NEEDED[@]} PRs"
+
+          # Save results
+          printf -v SUCCESSFUL_JSON '%s,' "${SUCCESSFUL_MERGES[@]}"
+          echo "successful_merges=[${SUCCESSFUL_JSON%,}]" >> $GITHUB_OUTPUT
+
+          printf -v FAILED_JSON '%s,' "${FAILED_MERGES[@]}"
+          echo "failed_merges=[${FAILED_JSON%,}]" >> $GITHUB_OUTPUT
+
+          printf -v AI_JSON '%s,' "${AI_RESOLUTIONS_NEEDED[@]}"
+          echo "ai_resolutions_needed=[${AI_JSON%,}]" >> $GITHUB_OUTPUT
+
+          echo "successful_count=${#SUCCESSFUL_MERGES[@]}" >> $GITHUB_OUTPUT
+          echo "failed_count=${#FAILED_MERGES[@]}" >> $GITHUB_OUTPUT
+          echo "ai_resolution_count=${#AI_RESOLUTIONS_NEEDED[@]}" >> $GITHUB_OUTPUT
+          echo "epic_starting_commit=$EPIC_STARTING_COMMIT" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Execute AI Conflict Resolution for Failed PRs"
+        if: steps.sequential-processing.outputs.ai_resolution_count != '0' && steps.validate-inputs.outputs.dry_run == false
+        id: ai-resolution
+        uses: anthropics/claude-code-action@v1
+        continue-on-error: true
+        with:
+          prompt: |
+            # Coverage Epic Merge Orchestrator - AI Conflict Resolution
+
+            You are the AI assistant for the Coverage Epic Merge Orchestrator. Your task is to resolve merge conflicts for PRs that failed during sequential merging into the epic branch.
+
+            ## Current Situation
+            - **Epic Branch**: ${{ env.EPIC_BRANCH }}
+            - **Epic Starting Commit**: ${{ steps.sequential-processing.outputs.epic_starting_commit }}
+            - **Successfully Merged PRs**: ${{ steps.sequential-processing.outputs.successful_merges }}
+            - **Failed PRs (Conflicts)**: ${{ steps.sequential-processing.outputs.failed_merges }}
+            - **PRs Needing Resolution**: ${{ steps.sequential-processing.outputs.ai_resolutions_needed }}
+
+            ## Task: Resolve Conflicts and Complete Sequential Merging
+
+            For each PR in the failed merges list:
+
+            1. **Fetch and Merge**: Fetch the PR branch and attempt merge into epic branch
+            2. **Resolve Conflicts**: When conflicts occur, resolve them intelligently:
+               - Preserve all test coverage improvements from both branches
+               - Maintain code quality and testing standards
+               - Focus on test-only conflicts and minimal code changes
+               - Ensure no regression in test coverage or functionality
+            3. **Commit and Push**: After resolving conflicts, commit the merge and push to epic branch
+            4. **Close PR**: Close the successfully resolved PR with appropriate message
+            5. **Continue Sequential**: Process next failed PR until all are resolved
+
+            ## Safety Constraints
+            - Work directly on the epic branch: ${{ env.EPIC_BRANCH }}
+            - If major conflicts arise, document them but continue with other PRs
+            - Maintain build and test integrity throughout the process
+            - Epic branch can be rolled back to: ${{ steps.sequential-processing.outputs.epic_starting_commit }}
+
+            ## Success Criteria
+            - All conflicted PRs either successfully merged or documented as requiring manual intervention
+            - Epic branch remains in a buildable and testable state
+            - Test coverage progression is preserved and enhanced
+
+            Please proceed with conflict resolution for the failed PRs.
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: |
+            --allowedTools "Read,Edit,Glob,TodoWrite,Bash(git status),Bash(git fetch),Bash(git merge),Bash(git commit),Bash(git push),Bash(git checkout),Bash(git add),Bash(git log),Bash(git diff),Bash(git reset),Bash(git clean),Bash(dotnet build),Bash(dotnet test),Bash(find . -name \"*.cs\" -type f),Bash(gh pr close),mcp__github_comment__update_claude_comment"
+
+      # ========================================
+      # Validation & Testing
+      # ========================================
+
+      - name: "Validate Epic Branch After Sequential Processing"
+        id: validation
+        if: steps.sequential-processing.outputs.successful_count != '0' || steps.ai-resolution.outcome == 'success'
+        run: |
+          echo "🔍 Validating epic branch integrity after sequential processing"
+
+          # Ensure we're on the epic branch
+          git checkout $EPIC_BRANCH
+          
+          # Pull any changes that might have been made by AI resolution
+          git pull origin $EPIC_BRANCH
+
+          if [ "${{ steps.validate-inputs.outputs.dry_run }}" = "true" ]; then
+            echo "🔍 DRY RUN: Would validate epic branch after sequential processing"
+            echo "validation_passed=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Build validation
+          echo "🔨 Validating build integrity on epic branch"
+          if dotnet build zarichney-api.sln --configuration Release --no-restore; then
+            echo "✅ Build validation passed"
+            BUILD_VALID=true
+          else
+            echo "❌ Build validation failed on epic branch"
+            BUILD_VALID=false
+          fi
+
+          # Test execution validation
+          echo "🧪 Running test suite validation on epic branch"
+          if ./Scripts/run-test-suite.sh report summary; then
+            echo "✅ Test suite validation passed"
+            TESTS_VALID=true
+          else
+            echo "❌ Test suite validation failed on epic branch"
+            TESTS_VALID=false
+          fi
+
+          # Overall validation
+          if [ "$BUILD_VALID" = true ] && [ "$TESTS_VALID" = true ]; then
+            echo "✅ Epic branch validation passed after sequential processing"
+            echo "validation_passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Epic branch validation failed after sequential processing"
+            echo "validation_passed=false" >> $GITHUB_OUTPUT
+            
+            # If validation failed, consider rollback
+            echo "⚠️ Consider rolling back epic branch to: ${{ steps.sequential-processing.outputs.epic_starting_commit }}"
+          fi
+
+      # ========================================
+      # Epic Branch Status Update
+      # ========================================
+
+      - name: "Update Epic Issue with Sequential Processing Results"
+        id: epic-status-update
+        if: steps.validation.outputs.validation_passed == 'true' && (steps.sequential-processing.outputs.successful_count != '0' || steps.ai-resolution.outcome == 'success')
+        run: |
+          echo "📝 Updating epic issue with sequential processing orchestration results"
+
+          SUCCESSFUL_MERGES='${{ steps.sequential-processing.outputs.successful_merges }}'
+          FAILED_MERGES='${{ steps.sequential-processing.outputs.failed_merges }}'
+          AI_INTERVENTIONS='${{ steps.sequential-processing.outputs.ai_resolutions_needed }}'
+          
+          if [ "${{ steps.validate-inputs.outputs.dry_run }}" = "true" ]; then
+            echo "🔍 DRY RUN: Would update epic issue with sequential processing results"
+            echo "epic_updated=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Create status update comment for epic issue
+          TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          UPDATE_TITLE="## 🤖 Coverage Epic Merge Orchestrator - Sequential Processing Complete"
+
+          # Build update body components
+          UPDATE_INTRO="The Coverage Epic Merge Orchestrator has completed sequential PR processing with direct merging into the epic branch."
+          UPDATE_SUMMARY="### 📊 Sequential Processing Summary"
+          UPDATE_EXEC="- **Execution Time**: $TIMESTAMP"
+          UPDATE_TARGET="- **Target Branch**: \`$EPIC_BRANCH\` (sequential direct merging)"
+          UPDATE_SUCCESS="- **Successful Direct Merges**: ${{ steps.sequential-processing.outputs.successful_count }} PRs"
+          UPDATE_FAILED="- **Failed Merges**: ${{ steps.sequential-processing.outputs.failed_count }} PRs"
+          UPDATE_AI="- **AI Conflict Resolutions**: ${{ steps.sequential-processing.outputs.ai_resolution_count }} PRs"
+          UPDATE_STRATEGY="- **Merge Strategy**: ${{ steps.validate-inputs.outputs.merge_strategy }}"
+          
+          # Combine sections
+          UPDATE_BODY=$(printf '%s\n\n%s\n\n%s\n%s\n%s\n%s\n%s\n%s\n%s' \
+            "$UPDATE_TITLE" "$UPDATE_INTRO" "$UPDATE_SUMMARY" \
+            "$UPDATE_EXEC" "$UPDATE_TARGET" "$UPDATE_SUCCESS" \
+            "$UPDATE_FAILED" "$UPDATE_AI" "$UPDATE_STRATEGY")
+          
+          # Add successful merges list
+          if [ "${{ steps.sequential-processing.outputs.successful_count }}" != "0" ]; then
+            UPDATE_BODY="${UPDATE_BODY}\n\n### ✅ Successfully Processed PRs (Sequential Direct Merging)"
+            SUCCESS_LIST=$(echo "$SUCCESSFUL_MERGES" | jq -r '.[] | "- PR #\(.) - Merged directly into epic branch sequentially"' 2>/dev/null || echo "- No successful merges")
+            UPDATE_BODY="${UPDATE_BODY}\n${SUCCESS_LIST}"
+          fi
+
+          # Add AI intervention results if any
+          if [ "${{ steps.sequential-processing.outputs.ai_resolution_count }}" != "0" ]; then
+            UPDATE_BODY="${UPDATE_BODY}\n\n### 🤖 AI Conflict Resolution Results"
+            if [ "${{ steps.ai-resolution.outcome }}" = "success" ]; then
+              UPDATE_BODY="${UPDATE_BODY}\n- ✅ **AI Resolution Status**: Successful conflict resolution"
+              AI_LIST=$(echo "$AI_INTERVENTIONS" | jq -r '.[] | "- PR #\(.) - Conflicts resolved by AI assistant"' 2>/dev/null || echo "- No AI interventions")
+              UPDATE_BODY="${UPDATE_BODY}\n${AI_LIST}"
+            else
+              UPDATE_BODY="${UPDATE_BODY}\n- ⚠️ **AI Resolution Status**: Some conflicts may require manual intervention"
+            fi
+          fi
+
+          # Add validation results
+          UPDATE_BODY="${UPDATE_BODY}\n\n### 🧪 Epic Branch Validation Results"
+          UPDATE_BODY="${UPDATE_BODY}\n- ✅ **Build Status**: Epic branch builds successfully"
+          UPDATE_BODY="${UPDATE_BODY}\n- ✅ **Test Suite**: All tests pass on epic branch"
+          UPDATE_BODY="${UPDATE_BODY}\n- ✅ **Quality Gates**: Standards compliance maintained"
+          
+          # Add impact section
+          UPDATE_BODY="${UPDATE_BODY}\n\n### 📈 Epic Progress Impact"
+          UPDATE_BODY="${UPDATE_BODY}\nSequential PR processing has advanced the systematic progression toward 90% backend test coverage by January 2026."
+          UPDATE_BODY="${UPDATE_BODY}\n\n🎯 **Epic Progress**: Backend Testing Coverage to 90% goal"
+          UPDATE_BODY="${UPDATE_BODY}\n🤖 **Generated by Coverage Epic Merge Orchestrator (Sequential Processing)**"
+          UPDATE_BODY="${UPDATE_BODY}\n**Execution Time**: $TIMESTAMP"
+
+          # Post update to epic issue
+          if echo "$UPDATE_BODY" | gh issue comment $EPIC_ISSUE_ID --body-file -; then
+            echo "✅ Epic issue updated successfully"
+            echo "epic_updated=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Failed to update epic issue"
+            echo "epic_updated=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ========================================
+      # Cleanup & Error Recovery
+      # ========================================
+
+      - name: "Cleanup Temporary Resources"
+        if: always()
+        run: |
+          echo "🧹 Cleaning up temporary resources after sequential processing"
+
+          if [ "${{ steps.validate-inputs.outputs.dry_run }}" = "false" ]; then
+            # Ensure we're on epic branch
+            git checkout $EPIC_BRANCH 2>/dev/null || git checkout develop
+            
+            # Clean up any temporary branches that might have been created during AI conflict resolution
+            echo "🗑️ Cleaning up any temporary branches"
+            
+            # Remove any local branches that might have been created during conflict resolution
+            git branch | grep "temp-merge-" | xargs -r git branch -D || true
+            git branch | grep "conflict-resolution-" | xargs -r git branch -D || true
+            
+            echo "✅ Resource cleanup completed"
+          else
+            echo "🔍 DRY RUN: Would cleanup temporary resources"
+          fi
+
+      - name: "Error Recovery & Audit Trail"
+        if: failure()
+        run: |
+          echo "🚨 Sequential processing orchestrator encountered errors - implementing recovery"
+
+          # Create audit trail for sequential processing failure
+          TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          AUDIT_COMMENT=$(printf '%s\n\n%s\n%s\n%s\n\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n%s\n%s\n%s\n%s\n\n%s\n%s\n%s\n%s\n\n%s' \
+            "## 🚨 Coverage Epic Merge Orchestrator Failure (Sequential Processing Mode)" \
+            "**Execution Time**: $TIMESTAMP" \
+            "**Error Context**: Workflow failed during sequential PR processing" \
+            "**Epic Branch**: \`$EPIC_BRANCH\`" \
+            "### 📊 Execution State" \
+            "- **PRs Discovered**: ${{ steps.pr-discovery.outputs.total_prs || '0' }}" \
+            "- **Operation Mode**: Sequential PR processing with direct epic branch merging" \
+            "- **Epic Starting Commit**: ${{ steps.sequential-processing.outputs.epic_starting_commit || 'Unknown' }}" \
+            "- **Successful Merges**: ${{ steps.sequential-processing.outputs.successful_count || '0' }}" \
+            "- **Failed Merges**: ${{ steps.sequential-processing.outputs.failed_count || '0' }}" \
+            "- **AI Interventions**: ${{ steps.sequential-processing.outputs.ai_resolution_count || '0' }}" \
+            "### 🔍 Recovery Actions Needed" \
+            "1. Review workflow logs for specific failure points during sequential processing" \
+            "2. Check epic branch state - may need rollback to: ${{ steps.sequential-processing.outputs.epic_starting_commit || 'starting commit' }}" \
+            "3. Identify which PRs were successfully processed before failure" \
+            "4. Consider manual resolution of remaining PRs" \
+            "5. Validate epic branch integrity before proceeding" \
+            "### 🛡️ Safety Measures" \
+            "- Epic branch can be rolled back to starting state if needed" \
+            "- All original PRs remain available for manual processing" \
+            "- Failed PRs identified for individual attention" \
+            "**Manual intervention may be required to complete sequential processing orchestration.**")
+
+          # Post audit comment to epic issue
+          if [ -n "${{ secrets.GITHUB_TOKEN }}" ]; then
+            echo "$AUDIT_COMMENT" | gh issue comment $EPIC_ISSUE_ID --body-file - || true
+            echo "📝 Audit trail posted to Epic Issue #$EPIC_ISSUE_ID"
+          fi
+
+      # ========================================
+      # Execution Summary
+      # ========================================
+
+      - name: "Orchestrator Execution Summary"
+        if: always()
+        run: |
+          echo "=================================================="
+          echo "🎯 Coverage Epic Merge Orchestrator Summary"
+          echo "=================================================="
+          echo "📅 Execution Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "🔧 Mode: ${{ steps.validate-inputs.outputs.dry_run == 'true' && 'DRY RUN' || 'LIVE EXECUTION' }}"
+          echo "🌿 Epic Branch: $EPIC_BRANCH"
+          echo "🎯 Operation Mode: Sequential PR processing with direct epic branch merging"
+          echo "🔄 Epic Starting Commit: ${{ steps.sequential-processing.outputs.epic_starting_commit || 'Unknown' }}"
+          echo "📊 Max PRs Configured: ${{ steps.validate-inputs.outputs.max_prs || 'Unknown' }}"
+          echo "🏷️ Label Filters: ${{ steps.validate-inputs.outputs.label_filters || 'Unknown' }}"
+          echo ""
+          echo "📋 Sequential Processing Orchestration Results:"
+          echo "  PRs Discovered: ${{ steps.pr-discovery.outputs.total_prs || '0' }}"
+          echo "  Successful Sequential Merges: ${{ steps.sequential-processing.outputs.successful_count || '0' }}"
+          echo "  Failed Merges: ${{ steps.sequential-processing.outputs.failed_count || '0' }}"
+          echo "  AI Conflict Resolutions: ${{ steps.sequential-processing.outputs.ai_resolution_count || '0' }}"
+          echo "  Epic Branch Validation: ${{ steps.validation.outputs.validation_passed || 'false' }}"
+          echo "  Epic Issue Updated: ${{ steps.epic-status-update.outputs.epic_updated || 'false' }}"
+          echo ""
+          if [ "${{ steps.epic-status-update.outputs.epic_updated }}" = "true" ] && [ "${{ steps.validation.outputs.validation_passed }}" = "true" ]; then
+            echo "🎉 SUCCESS: Coverage Epic sequential processing orchestration completed"
+            echo "🎯 Epic Branch: All PRs processed sequentially into $EPIC_BRANCH"
+            echo "📈 Epic #$EPIC_ISSUE_ID progression continues with sequential processing approach"
+          elif [ "${{ steps.pr-discovery.outputs.total_prs }}" = "0" ]; then
+            echo "ℹ️ NO ACTION: No mergeable PRs found for sequential processing"
+          else
+            echo "⚠️ PARTIAL: Some PRs processed sequentially but orchestration incomplete"
+            echo "🔍 Check individual step results and epic branch state"
+            if [ -n "${{ steps.sequential-processing.outputs.epic_starting_commit }}" ]; then
+              echo "🔄 Epic branch can be rolled back to: ${{ steps.sequential-processing.outputs.epic_starting_commit }}"
+            fi
+          fi
+          echo "=================================================="

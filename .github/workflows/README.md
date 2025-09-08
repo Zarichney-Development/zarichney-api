@@ -1,6 +1,6 @@
 # Module/Directory: .github/workflows
 
-**Last Updated:** 2025-09-01
+**Last Updated:** 2025-09-07
 
 **Parent:** [`.github`](../README.md)
 
@@ -17,13 +17,14 @@
 
 ## 2. Architecture & Key Concepts
 
-* **High-Level Design:** Six core workflows with clear responsibilities:
+* **High-Level Design:** Seven core workflows with clear responsibilities:
     * **build.yml** - Consolidated mega build pipeline with all AI analysis using template-based prompts
     * **deploy.yml** - Conditional deployment based on build results
     * **maintenance.yml** - Scheduled system maintenance and monitoring
     * **claude-dispatch.yml** - Remote agent execution with enhanced environment preparation supporting **strategic codebase manager coordination**
     * **coverage-epic-automation.yml** - Automated test coverage improvement via **TestEngineer agent** (workflow_dispatch only) 
     * **coverage-epic-scheduler.yml** - Intelligent scheduler that triggers coverage automation every 6 hours with **agent activity detection**
+    * **coverage-epic-merge-orchestrator.yml** - AI-powered consolidation of multiple coverage PRs with intelligent conflict resolution (manual dispatch)
 * **Branch-Aware Execution Logic:**
     * **Feature → Epic PRs**: Build + Test only (no AI analysis)
     * **Epic → Develop PRs**: Build + Test + Quality Analysis (Testing, Standards, Tech Debt)
@@ -41,6 +42,8 @@
     coverage-epic-scheduler.yml (Scheduled, 4x daily)
         ↓
     coverage-epic-automation.yml (Workflow dispatch only)
+        ↓ (creates multiple coverage PRs)
+    coverage-epic-merge-orchestrator.yml (Manual dispatch, consolidates PRs)
     ```
 * **Concurrency Control:**
     * Automatic cancellation of previous runs when new commits are pushed
@@ -71,10 +74,22 @@ graph TD
     J[Schedule] --> K[maintenance.yml]
     K --> L[Health Checks & Cleanup]
     
+    M[Schedule 4x Daily] --> N[coverage-epic-scheduler.yml]
+    N --> O[coverage-epic-automation.yml]
+    O --> P[Individual Coverage PRs]
+    
+    Q[Manual Dispatch] --> R[coverage-epic-merge-orchestrator.yml]
+    P --> R
+    R --> S[Consolidated Coverage PR]
+    S --> D
+    
     style C fill:#90EE90
     style D fill:#87CEEB
     style E fill:#FFB6C1
     style L fill:#DDA0DD
+    style O fill:#98FB98
+    style R fill:#FFA07A
+    style S fill:#20B2AA
 ```
 
 ## 3. Interface Contract & Assumptions
@@ -114,6 +129,17 @@ graph TD
         * **Critical Preconditions:** Repository access, workflow dispatch permissions
         * **Critical Postconditions:** Coverage automation triggered if activity detected (or forced)
         * **Intelligence:** Only triggers if commits within 72 hours, reducing unnecessary runs
+    * **coverage-epic-merge-orchestrator.yml**:
+        * **Purpose:** AI-powered consolidation of multiple coverage PRs with intelligent conflict resolution
+        * **Triggers:** Manual dispatch only (workflow_dispatch with input parameters)
+        * **Critical Preconditions:** Epic branch exists, multiple mergeable PRs available, Claude OAuth tokens configured
+        * **Critical Postconditions:** Consolidation PR created or conflicts escalated, staging branches cleaned up
+        * **Capacity:** Up to 50 PRs per run (default 8, tested with 8-PR scenario)
+        * **Label Flexibility:** Handles both standard (coverage, testing) and typed (type: coverage) formats
+        * **Input Parameters:** dry_run (boolean), max_prs (1-50), pr_label_filter (flexible OR pattern), sync_epic_from_develop (boolean), merge_strategy (merge/squash)
+        * **AI Integration:** Uses enhanced CoverageConflictResolver prompt for safe test-focused conflict resolution with real-world pattern context
+        * **Safety Constraints:** Strict production code safety with test-only and minimal testability-improvement changes allowed
+        * **UNKNOWN Status Support:** Processes PRs with UNKNOWN mergeable status (common in fresh/large batches)
 * **Critical Assumptions:**
     * GitHub Actions runners provide consistent environment
     * Claude AI OAuth token remains valid for analysis
@@ -132,10 +158,16 @@ graph TD
     * Progressive analysis depth: feature < develop < main
     * Security analysis reserved for main branch only
 * **Claude AI Integration:**
-    * Direct use of `grll/claude-code-action@beta` in workflow
+    * Direct use of `anthropics/claude-code-action@v1` in workflow
     * OAuth authentication for Claude Max plan
     * Separate jobs for each analysis type with template-based prompts
     * Consistent prompt loading pattern: `cat .github/prompts/{type}.md` → placeholder replacement → Claude AI
+* **Coverage Epic Orchestration:**
+    * **Three-tier architecture**: Scheduler → Automation → Merge Orchestration
+    * **Conflict Resolution**: AI-powered merge conflict resolution using CoverageConflictResolver prompt
+    * **Safety Constraints**: Production code changes limited to testability improvements only
+    * **Branch Management**: Timestamp-based staging branches with automatic cleanup
+    * **Manual Dispatch Only**: Merge orchestrator triggered manually for controlled consolidation
 * **Concurrency Management:**
     ```yaml
     concurrency:
@@ -169,6 +201,24 @@ graph TD
     
     # Test path filtering locally
     ./.github/scripts/test-path-filtering.sh
+    
+    # Coverage Epic Merge Orchestration
+    # Test with current 8-PR scenario (PRs 138-146)
+    gh workflow run "Coverage Epic Merge Orchestrator" \
+      --field dry_run=true --field max_prs=8 \
+      --field pr_label_filter="type: coverage,coverage,testing"
+    
+    # Production consolidation of coverage PRs
+    gh workflow run "Coverage Epic Merge Orchestrator" \
+      --field dry_run=false --field max_prs=8 \
+      --field pr_label_filter="type: coverage,coverage,testing"
+    
+    # Monitor large batch consolidation
+    gh run view --log
+    
+    # Verify PR discovery with flexible label matching
+    gh pr list --base epic/testing-coverage-to-90 --json number,labels \
+      --jq '.[] | select(.labels[]?.name | test("type: coverage|coverage|testing")) | {number, labels: [.labels[].name]}'
     ```
 * **Common Pitfalls / Gotchas:**
     * Claude AI analysis only runs on PRs to develop/main branches
@@ -177,6 +227,12 @@ graph TD
     * Concurrency control may cancel runs during rapid commits
     * Claude-dispatch requires full environment setup including .NET tool restoration
     * Coverage automation depends on refitter tool being available (handled by setup-environment)
+    * **Merge orchestrator** defaults to dry run mode (dry_run=true) for safety
+    * **Orchestrator conflicts** create recovery branches that require manual cleanup
+    * **Epic branch sync** may fail if develop has conflicts requiring manual resolution
+    * **8+ PR batches** may take 10-20 minutes processing time (not an error condition)
+    * **UNKNOWN mergeable status** is normal for fresh PRs, orchestrator processes them correctly
+    * **Label pattern flexibility** required for real-world GitHub patterns (`type: coverage` vs `coverage`)
 
 ## 6. Dependencies
 
@@ -188,6 +244,7 @@ graph TD
         * `validate-test-suite` - Test baseline validation
         * `check-paths` - Intelligent path filtering
     * [`.github/prompts/`](../prompts/README.md) - AI analysis prompt templates with placeholder system
+    * [`Docs/Development/CoverageEpicMergeOrchestration.md`](../../Docs/Development/CoverageEpicMergeOrchestration.md) - Comprehensive Coverage Epic Merge Orchestrator usage guide
     * [`Code/Zarichney.Server/`](../../Code/Zarichney.Server/README.md) - Backend application
     * [`Code/Zarichney.Website/`](../../Code/Zarichney.Website/README.md) - Frontend application
 * **External Service Dependencies:**
@@ -197,7 +254,7 @@ graph TD
     * `Docker Hub` - Container images for testing
     * `Package Registries` - NPM, NuGet for dependencies
 * **GitHub Actions Used:**
-    * `grll/claude-code-action@beta` - Claude AI analysis
+    * `anthropics/claude-code-action@v1` - Claude AI analysis
     * `actions/checkout@v4` - Repository checkout
     * `actions/setup-dotnet@v4` - .NET SDK setup
     * `actions/setup-node@v4` - Node.js setup
@@ -216,8 +273,10 @@ graph TD
 * **Environment Preparation:** Enhanced claude-dispatch with full dependency restoration and test baseline generation for better AI context
 * **Tool Management:** Centralized .NET tool restoration in setup-environment action to prevent tool-related failures across all workflows
 * **Coverage Epic Architecture:** Split scheduled coverage automation into two workflows to resolve Claude Code action incompatibility with schedule events
+* **Coverage Epic Merge Orchestration:** Added AI-powered consolidation workflow to manage multiple simultaneous coverage PRs with intelligent conflict resolution
 * **12-Agent Development Integration:** Workflows designed to support the strategic codebase manager orchestration model with specialized agent coordination
 * **Agent-Triggered Automation:** Coverage epic automation specifically designed for TestEngineer agent execution with comprehensive environment preparation
+* **AI Conflict Resolution:** Implemented specialized CoverageConflictResolver prompt for safe test-focused merge conflict resolution
 * **WorkflowEngineer Integration:** CI/CD pipeline architecture that supports the WorkflowEngineer agent's automation and optimization responsibilities
 
 ## 8. Known Issues & TODOs
@@ -228,5 +287,7 @@ graph TD
 * **Deployment Rollback:** Automated rollback mechanism could enhance reliability
 * **Metrics Collection:** Workflow performance metrics would aid optimization
 * **Coverage Scheduler Enhancement:** Could add more sophisticated activity detection and PR conflict avoidance
+* **Orchestrator Automation:** Future integration of coverage-epic-scheduler with merge orchestrator for fully automated consolidation
+* **Advanced Conflict Resolution:** Enhanced AI prompts for more complex architectural conflicts requiring minimal human intervention
 
 ---
