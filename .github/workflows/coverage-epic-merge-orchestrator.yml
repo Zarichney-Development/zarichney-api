@@ -326,7 +326,15 @@ jobs:
             # Attempt direct merge using GitHub CLI first
             echo "🔄 Attempting direct GitHub CLI merge for PR #$PR_NUMBER..."
             
-            if gh pr merge "$PR_NUMBER" --${{ steps.validate-inputs.outputs.merge_strategy }} --delete-branch=false; then
+            # Determine merge strategy dynamically
+            MERGE_STRATEGY="${{ steps.validate-inputs.outputs.merge_strategy }}"
+            if [ "$MERGE_STRATEGY" = "squash" ]; then
+              MERGE_FLAG="--squash"
+            else
+              MERGE_FLAG="--merge"
+            fi
+            
+            if gh pr merge "$PR_NUMBER" $MERGE_FLAG --delete-branch=false; then
               echo "✅ Successfully merged PR #$PR_NUMBER via GitHub CLI"
               SUCCESSFUL_MERGES+=("$PR_NUMBER")
               
@@ -383,7 +391,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Execute AI Conflict Resolution for Failed PRs"
-        if: steps.sequential-processing.outputs.ai_resolution_count != '0' && steps.validate-inputs.outputs.dry_run == 'false'
+        if: steps.sequential-processing.outputs.ai_resolution_count != '0' && steps.validate-inputs.outputs.dry_run == false
         id: ai-resolution
         uses: anthropics/claude-code-action@v1
         continue-on-error: true
@@ -429,7 +437,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: |
-            --allowedTools "WebSearch,WebFetch,mcp__github_inline_comment__create_inline_comment,mcp__github_comment__update_claude_comment,Edit,Read,Write,MultiEdit,Bash(./Scripts/*),Bash(dotnet:*),Bash(ls:*),Bash(grep:*),Bash(find:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(jq:*),Bash(git:*),Bash(gh:*)"
+            --allowedTools "Read,Edit,Glob,TodoWrite,Bash(git status),Bash(git fetch),Bash(git merge),Bash(git commit),Bash(git push),Bash(git checkout),Bash(git add),Bash(git log),Bash(git diff),Bash(git reset),Bash(git clean),Bash(dotnet build),Bash(dotnet test),Bash(find . -name \"*.cs\" -type f),Bash(gh pr close),mcp__github_comment__update_claude_comment"
 
       # ========================================
       # Validation & Testing
@@ -437,7 +445,7 @@ jobs:
 
       - name: "Validate Epic Branch After Sequential Processing"
         id: validation
-        if: steps.sequential-processing.outputs.successful_count != '0' || steps.ai-resolution.conclusion == 'success'
+        if: steps.sequential-processing.outputs.successful_count != '0' || steps.ai-resolution.outcome == 'success'
         run: |
           echo "🔍 Validating epic branch integrity after sequential processing"
 
@@ -491,7 +499,7 @@ jobs:
 
       - name: "Update Epic Issue with Sequential Processing Results"
         id: epic-status-update
-        if: steps.validation.outputs.validation_passed == 'true' && (steps.sequential-processing.outputs.successful_count != '0' || steps.ai-resolution.conclusion == 'success')
+        if: steps.validation.outputs.validation_passed == 'true' && (steps.sequential-processing.outputs.successful_count != '0' || steps.ai-resolution.outcome == 'success')
         run: |
           echo "📝 Updating epic issue with sequential processing orchestration results"
 
@@ -535,7 +543,7 @@ jobs:
           # Add AI intervention results if any
           if [ "${{ steps.sequential-processing.outputs.ai_resolution_count }}" != "0" ]; then
             UPDATE_BODY="${UPDATE_BODY}\n\n### 🤖 AI Conflict Resolution Results"
-            if [ "${{ steps.ai-resolution.conclusion }}" = "success" ]; then
+            if [ "${{ steps.ai-resolution.outcome }}" = "success" ]; then
               UPDATE_BODY="${UPDATE_BODY}\n- ✅ **AI Resolution Status**: Successful conflict resolution"
               AI_LIST=$(echo "$AI_INTERVENTIONS" | jq -r '.[] | "- PR #\(.) - Conflicts resolved by AI assistant"' 2>/dev/null || echo "- No AI interventions")
               UPDATE_BODY="${UPDATE_BODY}\n${AI_LIST}"

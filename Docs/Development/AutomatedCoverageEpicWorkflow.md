@@ -486,12 +486,12 @@ done
 ```bash
 # Utilize CoverageConflictResolver AI prompt
 # Focus on test-only conflicts and minimal testability improvements
-# Create recovery branches for complex conflicts: epic/conflict-pr-{number}-{timestamp}
+# AI conflict resolution operates directly on epic branch with rollback capabilities
 ```
 
 #### **Step 6: Build & Test Validation**
 ```bash
-# Comprehensive validation on staging branch
+# Comprehensive validation after each direct merge
 dotnet build zarichney-api.sln
 ./Scripts/run-test-suite.sh report summary
 # Ensure 100% pass rate on executable tests maintained
@@ -563,7 +563,7 @@ gh workflow run "Coverage Epic Merge Orchestrator" \
 - **TEST-ONLY CONFLICTS**: Pure test file conflicts resolved automatically
 - **FRAMEWORK-ENHANCEMENT CONFLICTS**: Test infrastructure improvements consolidated
 - **TESTABILITY-IMPROVEMENT CONFLICTS**: Minimal production changes for dependency injection
-- **COMPLEX CONFLICTS**: Escalated to recovery branches for manual review
+- **COMPLEX CONFLICTS**: Trigger epic branch rollback for manual review
 
 **Safety Constraints:**
 ```yaml
@@ -821,19 +821,20 @@ gh workflow run "Coverage Epic Merge Orchestrator" \
 gh pr diff <pr_number> --name-only | grep -E "(Test|Mock|Builder)"
 
 # Recovery for multi-PR framework conflicts:
-git checkout epic/conflict-pr-<number>-<timestamp>
-git log --oneline -5  # Review AI conflict resolution attempts
-# Apply manual framework consolidation if needed
+# Epic branch rollback triggered for unresolvable conflicts
+git checkout epic/testing-coverage-to-90
+git log --oneline -5  # Review rollback to starting commit
+# Apply manual PR merging with conflict resolution
 ```
 
 #### AI Conflict Resolution Failures
 ```bash
 # Symptoms: AI conflict resolution step fails or produces unsafe changes
-# Resolution: Manual conflict resolution using recovery branches
+# Resolution: Manual conflict resolution after epic branch rollback
 
-# Access recovery branches:
-git fetch --all
-git checkout <conflict_branch_name>  # Review conflict state
+# Check epic branch rollback status:
+git checkout epic/testing-coverage-to-90
+git log --oneline -5  # Verify rollback to starting commit
 
 # Manual resolution:
 git checkout epic/testing-coverage-to-90
@@ -851,7 +852,8 @@ gh run list --workflow="Coverage Epic Merge Orchestrator" --limit 10
 git log --oneline epic/testing-coverage-to-90 --since="1 week ago"
 
 # Monitor conflict branch accumulation
-git branch -r | grep "epic/conflict-pr" | wc -l
+# Direct merge approach eliminates staging branches and recovery branches
+# Monitor epic branch rollback frequency instead
 
 # Validate epic branch progression
 git log --oneline epic/testing-coverage-to-90 --since="1 week ago"
