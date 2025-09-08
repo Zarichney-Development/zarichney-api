@@ -431,14 +431,14 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Restore Dependencies Before AI Resolution"
-        if: steps.sequential-processing.outputs.ai_resolution_count != '0' && steps.validate-inputs.outputs.dry_run == false
+        if: steps.sequential-processing.outputs.ai_resolution_count != '0' && steps.validate-inputs.outputs.dry_run == 'false'
         run: |
           echo "🔧 Restoring .NET dependencies before AI conflict resolution"
           dotnet restore
           echo "✅ Dependencies restored for AI agent environment"
 
       - name: "Execute AI Conflict Resolution for Failed PRs"
-        if: steps.sequential-processing.outputs.ai_resolution_count != '0' && steps.validate-inputs.outputs.dry_run == false
+        if: steps.sequential-processing.outputs.ai_resolution_count != '0' && steps.validate-inputs.outputs.dry_run == 'false'
         id: ai-resolution
         uses: anthropics/claude-code-action@v1
         continue-on-error: true
