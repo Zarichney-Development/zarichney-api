@@ -206,6 +206,31 @@ jobs:
             echo "ℹ️ No open PRs found targeting epic branch"
             echo "discovered_prs=[]" >> $GITHUB_OUTPUT
             echo "total_prs=0" >> $GITHUB_OUTPUT
+
+            # Extra diagnostics: show coverage-labeled PRs on other base branches
+            echo "🔎 Checking for coverage-labeled PRs on other base branches"
+            LABEL_FILTERS="${{ steps.validate-inputs.outputs.label_filters }}"
+            IFS=',' read -ra FILTER_ARRAY <<< "$LABEL_FILTERS"
+            PATTERN_PARTS=()
+            for label in "${FILTER_ARRAY[@]}"; do
+              escaped_label=$(echo "$label" | sed 's/[(){}|^$*+?\[\]\.]/\\&/g' | sed 's/: /: ?/g')
+              PATTERN_PARTS+=("$escaped_label")
+            done
+            printf -v LABEL_PATTERN '%s|' "${PATTERN_PARTS[@]}"
+            LABEL_PATTERN=${LABEL_PATTERN%|}
+
+            ALL_OPEN=$(gh pr list --state open --json number,title,baseRefName,labels,url 2>/dev/null || echo '[]')
+            ALT_BASE=$(echo "$ALL_OPEN" | jq --arg pattern "$LABEL_PATTERN" -r '
+              map(select(.labels[]?.name | test($pattern; "i"))) |
+              .[] | "  PR #\(.number) → base=\(.baseRefName): \(.title) [\(.url)]"'
+            )
+            if [ -n "$ALT_BASE" ]; then
+              echo "🔎 Found coverage-labeled PRs not targeting $EPIC_BRANCH:"
+              echo "$ALT_BASE"
+            else
+              echo "🔎 No coverage-labeled PRs found on other bases either"
+            fi
+
             exit 0
           fi
 
@@ -231,7 +256,7 @@ jobs:
 
           # Apply label filtering with OR logic
           FILTERED_PRS=$(echo "$ALL_PRS" | jq --arg pattern "$LABEL_PATTERN" '
-            map(select(.labels[]?.name | test($pattern)))
+            map(select(.labels[]?.name | test($pattern; "i")))
           ')
 
           echo "📋 Found $(echo "$FILTERED_PRS" | jq length) PRs matching label filters"
@@ -305,6 +330,7 @@ jobs:
           SUCCESSFUL_MERGES=()
           FAILED_MERGES=()
           AI_RESOLUTIONS_NEEDED=()
+          PLANNED_MERGES=()
 
           # Process each PR sequentially
           for i in $(seq 0 $((TOTAL_PRS - 1))); do
@@ -319,7 +345,7 @@ jobs:
 
             if [ "${{ steps.validate-inputs.outputs.dry_run }}" = "true" ]; then
               echo "🔍 DRY RUN: Would directly merge PR #$PR_NUMBER"
-              SUCCESSFUL_MERGES+=("$PR_NUMBER")
+              PLANNED_MERGES+=("$PR_NUMBER")
               continue
             fi
 
@@ -373,19 +399,33 @@ jobs:
           echo "   Failed Merges (Conflicts): ${#FAILED_MERGES[@]} PRs"
           echo "   AI Resolution Required: ${#AI_RESOLUTIONS_NEEDED[@]} PRs"
 
-          # Save results
-          printf -v SUCCESSFUL_JSON '%s,' "${SUCCESSFUL_MERGES[@]}"
-          echo "successful_merges=[${SUCCESSFUL_JSON%,}]" >> $GITHUB_OUTPUT
+          # Save results (handle dry-run vs live execution distinctly)
+          if [ "${{ steps.validate-inputs.outputs.dry_run }}" = "true" ]; then
+            printf -v PLANNED_JSON '%s,' "${PLANNED_MERGES[@]}"
+            echo "planned_merges=[${PLANNED_JSON%,}]" >> $GITHUB_OUTPUT
+            echo "planned_count=${#PLANNED_MERGES[@]}" >> $GITHUB_OUTPUT
 
-          printf -v FAILED_JSON '%s,' "${FAILED_MERGES[@]}"
-          echo "failed_merges=[${FAILED_JSON%,}]" >> $GITHUB_OUTPUT
+            # In dry-run, no actual merges occurred
+            echo "successful_merges=[]" >> $GITHUB_OUTPUT
+            echo "failed_merges=[]" >> $GITHUB_OUTPUT
+            echo "ai_resolutions_needed=[]" >> $GITHUB_OUTPUT
+            echo "successful_count=0" >> $GITHUB_OUTPUT
+            echo "failed_count=0" >> $GITHUB_OUTPUT
+            echo "ai_resolution_count=0" >> $GITHUB_OUTPUT
+          else
+            printf -v SUCCESSFUL_JSON '%s,' "${SUCCESSFUL_MERGES[@]}"
+            echo "successful_merges=[${SUCCESSFUL_JSON%,}]" >> $GITHUB_OUTPUT
 
-          printf -v AI_JSON '%s,' "${AI_RESOLUTIONS_NEEDED[@]}"
-          echo "ai_resolutions_needed=[${AI_JSON%,}]" >> $GITHUB_OUTPUT
+            printf -v FAILED_JSON '%s,' "${FAILED_MERGES[@]}"
+            echo "failed_merges=[${FAILED_JSON%,}]" >> $GITHUB_OUTPUT
 
-          echo "successful_count=${#SUCCESSFUL_MERGES[@]}" >> $GITHUB_OUTPUT
-          echo "failed_count=${#FAILED_MERGES[@]}" >> $GITHUB_OUTPUT
-          echo "ai_resolution_count=${#AI_RESOLUTIONS_NEEDED[@]}" >> $GITHUB_OUTPUT
+            printf -v AI_JSON '%s,' "${AI_RESOLUTIONS_NEEDED[@]}"
+            echo "ai_resolutions_needed=[${AI_JSON%,}]" >> $GITHUB_OUTPUT
+
+            echo "successful_count=${#SUCCESSFUL_MERGES[@]}" >> $GITHUB_OUTPUT
+            echo "failed_count=${#FAILED_MERGES[@]}" >> $GITHUB_OUTPUT
+            echo "ai_resolution_count=${#AI_RESOLUTIONS_NEEDED[@]}" >> $GITHUB_OUTPUT
+          fi
           echo "epic_starting_commit=$EPIC_STARTING_COMMIT" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -460,9 +500,48 @@ jobs:
       # Validation & Testing
       # ========================================
 
+      # Fail the workflow if target PRs remain open after processing (live runs only)
+      - name: "Verify All Target PRs Closed"
+        id: verify-merge-completion
+        if: steps.validate-inputs.outputs.dry_run == 'false' && steps.pr-discovery.outputs.total_prs != '0'
+        run: |
+          echo "🔍 Verifying all targeted PRs are closed after processing"
+
+          # Re-list open PRs targeting the epic branch
+          ALL_PRS=$(gh pr list --base "$EPIC_BRANCH" --state open --json number,title,labels)
+
+          if [ -z "$ALL_PRS" ] || [ "$ALL_PRS" = "[]" ]; then
+            echo "✅ No open PRs targeting epic branch"
+            echo "remaining_prs=0" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Build same label regex pattern used during discovery
+          LABEL_FILTERS="${{ steps.validate-inputs.outputs.label_filters }}"
+          IFS=',' read -ra FILTER_ARRAY <<< "$LABEL_FILTERS"
+          PATTERN_PARTS=()
+          for label in "${FILTER_ARRAY[@]}"; do
+            escaped_label=$(echo "$label" | sed 's/[(){}|^$*+?\[\]\.]/\\&/g' | sed 's/: /: ?/g')
+            PATTERN_PARTS+=("$escaped_label")
+          done
+          printf -v LABEL_PATTERN '%s|' "${PATTERN_PARTS[@]}"
+          LABEL_PATTERN=${LABEL_PATTERN%|}
+
+          REMAINING=$(echo "$ALL_PRS" | jq --arg pattern "$LABEL_PATTERN" 'map(select(.labels[]?.name | test($pattern; "i"))) | length')
+          echo "remaining_prs=$REMAINING" >> $GITHUB_OUTPUT
+
+          if [ "$REMAINING" -gt 0 ]; then
+            echo "❌ Verification failed: $REMAINING targeted PR(s) remain open"
+            exit 1
+          else
+            echo "✅ All targeted PRs have been closed/merged"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: "Validate Epic Branch After Sequential Processing"
         id: validation
-        if: steps.sequential-processing.outputs.successful_count != '0' || steps.ai-resolution.outcome == 'success'
+        if: steps.sequential-processing.outputs.successful_count != '0' || steps.ai-resolution.outcome == 'success' || steps.validate-inputs.outputs.dry_run == 'true'
         run: |
           echo "🔍 Validating epic branch integrity after sequential processing"
 
@@ -681,9 +760,12 @@ jobs:
           echo "  Epic Branch Validation: ${{ steps.validation.outputs.validation_passed || 'false' }}"
           echo "  Epic Issue Updated: ${{ steps.epic-status-update.outputs.epic_updated || 'false' }}"
           echo ""
-          if [ "${{ steps.epic-status-update.outputs.epic_updated }}" = "true" ] && [ "${{ steps.validation.outputs.validation_passed }}" = "true" ]; then
+          if [ "${{ steps.validate-inputs.outputs.dry_run }}" = "true" ]; then
+            echo "🧪 DRY RUN: Planning complete — no merges executed"
+            echo "📋 Planned PRs: ${{ steps.sequential-processing.outputs.planned_count || '0' }}"
+          elif [ "${{ steps.epic-status-update.outputs.epic_updated }}" = "true" ] && [ "${{ steps.validation.outputs.validation_passed }}" = "true" ] && [ "${{ steps.verify-merge-completion.outputs.remaining_prs || '0' }}" = "0" ]; then
             echo "🎉 SUCCESS: Coverage Epic sequential processing orchestration completed"
-            echo "🎯 Epic Branch: All PRs processed sequentially into $EPIC_BRANCH"
+            echo "🎯 Epic Branch: All targeted PRs processed sequentially into $EPIC_BRANCH"
             echo "📈 Epic #$EPIC_ISSUE_ID progression continues with sequential processing approach"
           elif [ "${{ steps.pr-discovery.outputs.total_prs }}" = "0" ]; then
             echo "ℹ️ NO ACTION: No mergeable PRs found for sequential processing"
@@ -692,6 +774,9 @@ jobs:
             echo "🔍 Check individual step results and epic branch state"
             if [ -n "${{ steps.sequential-processing.outputs.epic_starting_commit }}" ]; then
               echo "🔄 Epic branch can be rolled back to: ${{ steps.sequential-processing.outputs.epic_starting_commit }}"
+            fi
+            if [ -n "${{ steps.verify-merge-completion.outputs.remaining_prs }}" ]; then
+              echo "🚧 Remaining targeted PRs open: ${{ steps.verify-merge-completion.outputs.remaining_prs }}"
             fi
           fi
           echo "=================================================="
