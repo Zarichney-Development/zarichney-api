@@ -1,4 +1,6 @@
 using Moq;
+using Zarichney.Services.Email;
+using Microsoft.Graph.Models;
 
 namespace Zarichney.Tests.Framework.Mocks.Factories;
 
@@ -23,65 +25,25 @@ public class MockMSGraphServiceFactory : BaseMockFactory<IEmailService>
   /// <param name="mock">The mock to set up.</param>
   protected override void SetupDefaultMock(Mock<IEmailService> mock)
   {
-    // Default implementation for sending emails
-    mock.Setup(s => s.SendEmailAsync(
+    // Setup for SendEmail method
+    mock.Setup(s => s.SendEmail(
             It.IsAny<string>(),
             It.IsAny<string>(),
             It.IsAny<string>(),
-            It.IsAny<string?>()))
+            It.IsAny<Dictionary<string, object>>(),
+            It.IsAny<FileAttachment>()))
+        .Returns(Task.CompletedTask);
+
+    // Setup for ValidateEmail method
+    mock.Setup(s => s.ValidateEmail(It.IsAny<string>()))
         .ReturnsAsync(true);
 
-    // Default implementation for sending HTML emails
-    mock.Setup(s => s.SendHtmlEmailAsync(
+    // Setup for SendErrorNotification method
+    mock.Setup(s => s.SendErrorNotification(
             It.IsAny<string>(),
+            It.IsAny<Exception>(),
             It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string?>()))
-        .ReturnsAsync(true);
-
-    // Default implementation for sending emails with attachments
-    mock.Setup(s => s.SendEmailWithAttachmentsAsync(
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string?>(),
-            It.IsAny<IEnumerable<EmailAttachment>?>()))
-        .ReturnsAsync(true);
+            It.IsAny<Dictionary<string, string>>()))
+        .Returns(Task.CompletedTask);
   }
-}
-
-/// <summary>
-/// Interface for email service.
-/// This would typically be defined in the actual service project.
-/// </summary>
-public interface IEmailService
-{
-  Task<bool> SendEmailAsync(
-      string to,
-      string subject,
-      string body,
-      string? from = null);
-
-  Task<bool> SendHtmlEmailAsync(
-      string to,
-      string subject,
-      string htmlBody,
-      string? from = null);
-
-  Task<bool> SendEmailWithAttachmentsAsync(
-      string to,
-      string subject,
-      string body,
-      string? from = null,
-      IEnumerable<EmailAttachment>? attachments = null);
-}
-
-/// <summary>
-/// Represents an email attachment.
-/// </summary>
-public class EmailAttachment
-{
-  public string Name { get; set; } = string.Empty;
-  public byte[] Content { get; set; } = [];
-  public string ContentType { get; set; } = "application/octet-stream";
 }

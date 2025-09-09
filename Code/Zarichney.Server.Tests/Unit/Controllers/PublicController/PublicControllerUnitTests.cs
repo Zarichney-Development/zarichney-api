@@ -33,7 +33,7 @@ public class PublicControllerUnitTests
     _mockLoggingService = new Mock<ILoggingService>();
     _controller = new Zarichney.Controllers.PublicController(_mockStatusService.Object, _mockLoggingService.Object);
     _fixture = new Fixture();
-    
+
     // Setup HttpContext for controller
     var httpContext = new DefaultHttpContext();
     _controller.ControllerContext = new ControllerContext
@@ -63,10 +63,10 @@ public class PublicControllerUnitTests
     // Now using strongly typed DTO instead of reflection
     var healthCheckResponse = okResult.Value as HealthCheckResponse;
     healthCheckResponse.Should().NotBeNull(because: "the response should be a HealthCheckResponse");
-    
+
     // Verify all properties
     healthCheckResponse.Success.Should().BeTrue(because: "the health check should indicate success");
-    healthCheckResponse.Time.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5), 
+    healthCheckResponse.Time.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5),
       because: "the time should be approximately the current time");
     healthCheckResponse.Environment.Should().NotBeNullOrWhiteSpace(
       because: "the environment should be specified");
@@ -146,15 +146,15 @@ public class PublicControllerUnitTests
       new ConfigurationItemStatus("Setting1", "Configured", "Value1"),
       new ConfigurationItemStatus("Setting2", "Missing", null)
     };
-    
+
     _mockStatusService
       .Setup(s => s.GetConfigurationStatusAsync())
       .ReturnsAsync(expectedStatus)
       .Verifiable();
-    
+
     // Act
     var result = await _controller.Config();
-    
+
     // Assert
     result.Should()
       .BeOfType<OkObjectResult>(because: "a successful service call should return an OK status with content");
@@ -162,7 +162,7 @@ public class PublicControllerUnitTests
     okResult.Should().NotBeNull();
     okResult.Value.Should().BeEquivalentTo(expectedStatus,
       because: "the returned value should match the configuration status list from the service");
-    
+
     _mockStatusService.Verify();
   }
 
@@ -178,15 +178,15 @@ public class PublicControllerUnitTests
       .Setup(s => s.GetConfigurationStatusAsync())
       .ThrowsAsync(expectedException)
       .Verifiable();
-    
+
     // Act
     Func<Task> act = async () => await _controller.Config();
-    
+
     // Assert
     await act.Should().ThrowAsync<InvalidOperationException>(
       because: "exceptions from the service should propagate")
       .WithMessage(expectedException.Message);
-    
+
     _mockStatusService.Verify();
   }
 
@@ -201,15 +201,15 @@ public class PublicControllerUnitTests
   {
     // Arrange
     var expectedStatus = _fixture.Create<LoggingStatusResult>();
-    
+
     _mockLoggingService
       .Setup(s => s.GetLoggingStatusAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync(expectedStatus)
       .Verifiable();
-    
+
     // Act
     var result = await _controller.GetLoggingStatus();
-    
+
     // Assert
     result.Should()
       .BeOfType<OkObjectResult>(because: "a successful service call should return an OK status with content");
@@ -217,7 +217,7 @@ public class PublicControllerUnitTests
     okResult.Should().NotBeNull();
     okResult!.Value.Should().BeEquivalentTo(expectedStatus,
       because: "the returned value should match the logging status from the service");
-    
+
     _mockLoggingService.Verify();
   }
 
@@ -233,22 +233,22 @@ public class PublicControllerUnitTests
       .Setup(s => s.GetLoggingStatusAsync(It.IsAny<CancellationToken>()))
       .ThrowsAsync(expectedException)
       .Verifiable();
-    
+
     // Act
     var result = await _controller.GetLoggingStatus();
-    
+
     // Assert
     result.Should().BeOfType<ObjectResult>(because: "an error should return an object result");
     var objectResult = result as ObjectResult;
     objectResult.Should().NotBeNull();
     objectResult!.StatusCode.Should().Be(500, because: "service failure should return 500 status");
-    
+
     // Verify error response structure
     var value = objectResult.Value;
     value.Should().NotBeNull();
     value!.GetType().GetProperty("error")?.GetValue(value).Should().Be("Failed to retrieve logging status");
     value.GetType().GetProperty("details")?.GetValue(value).Should().Be(expectedException.Message);
-    
+
     _mockLoggingService.Verify();
   }
 
@@ -263,15 +263,15 @@ public class PublicControllerUnitTests
     var testUrl = "http://test.seq:5341";
     var request = new TestSeqRequest { Url = testUrl };
     var expectedResult = _fixture.Create<SeqConnectivityResult>();
-    
+
     _mockLoggingService
       .Setup(s => s.TestSeqConnectivityAsync(testUrl, It.IsAny<CancellationToken>()))
       .ReturnsAsync(expectedResult)
       .Verifiable();
-    
+
     // Act
     var result = await _controller.TestSeqConnectivity(request);
-    
+
     // Assert
     result.Should()
       .BeOfType<OkObjectResult>(because: "a successful test should return an OK status with content");
@@ -279,7 +279,7 @@ public class PublicControllerUnitTests
     okResult.Should().NotBeNull();
     okResult!.Value.Should().BeEquivalentTo(expectedResult,
       because: "the returned value should match the connectivity result from the service");
-    
+
     _mockLoggingService.Verify();
   }
 
@@ -291,15 +291,15 @@ public class PublicControllerUnitTests
   {
     // Arrange
     var expectedResult = _fixture.Create<SeqConnectivityResult>();
-    
+
     _mockLoggingService
       .Setup(s => s.TestSeqConnectivityAsync(null, It.IsAny<CancellationToken>()))
       .ReturnsAsync(expectedResult)
       .Verifiable();
-    
+
     // Act
     var result = await _controller.TestSeqConnectivity(null);
-    
+
     // Assert
     result.Should()
       .BeOfType<OkObjectResult>(because: "a successful test should return an OK status with content");
@@ -307,9 +307,9 @@ public class PublicControllerUnitTests
     okResult.Should().NotBeNull();
     okResult!.Value.Should().BeEquivalentTo(expectedResult,
       because: "the returned value should match the connectivity result from the service");
-    
+
     _mockLoggingService.Verify(
-      s => s.TestSeqConnectivityAsync(null, It.IsAny<CancellationToken>()), 
+      s => s.TestSeqConnectivityAsync(null, It.IsAny<CancellationToken>()),
       Times.Once,
       "should call the service with null URL when no request is provided");
   }
@@ -323,21 +323,21 @@ public class PublicControllerUnitTests
     // Arrange
     var request = new TestSeqRequest { Url = null };
     var expectedResult = _fixture.Create<SeqConnectivityResult>();
-    
+
     _mockLoggingService
       .Setup(s => s.TestSeqConnectivityAsync(null, It.IsAny<CancellationToken>()))
       .ReturnsAsync(expectedResult)
       .Verifiable();
-    
+
     // Act
     var result = await _controller.TestSeqConnectivity(request);
-    
+
     // Assert
     result.Should()
       .BeOfType<OkObjectResult>(because: "a successful test should return an OK status with content");
-    
+
     _mockLoggingService.Verify(
-      s => s.TestSeqConnectivityAsync(null, It.IsAny<CancellationToken>()), 
+      s => s.TestSeqConnectivityAsync(null, It.IsAny<CancellationToken>()),
       Times.Once,
       "should call the service with null URL when request URL is null");
   }
@@ -351,15 +351,15 @@ public class PublicControllerUnitTests
   {
     // Arrange
     var expectedMethods = _fixture.Create<LoggingMethodsResult>();
-    
+
     _mockLoggingService
       .Setup(s => s.GetAvailableLoggingMethodsAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync(expectedMethods)
       .Verifiable();
-    
+
     // Act
     var result = await _controller.GetAvailableLoggingMethods();
-    
+
     // Assert
     result.Should()
       .BeOfType<OkObjectResult>(because: "a successful service call should return an OK status with content");
@@ -367,7 +367,7 @@ public class PublicControllerUnitTests
     okResult.Should().NotBeNull();
     okResult!.Value.Should().BeEquivalentTo(expectedMethods,
       because: "the returned value should match the logging methods from the service");
-    
+
     _mockLoggingService.Verify();
   }
 
@@ -383,15 +383,15 @@ public class PublicControllerUnitTests
       .Setup(s => s.GetAvailableLoggingMethodsAsync(It.IsAny<CancellationToken>()))
       .ThrowsAsync(expectedException)
       .Verifiable();
-    
+
     // Act
     Func<Task> act = async () => await _controller.GetAvailableLoggingMethods();
-    
+
     // Assert
     await act.Should().ThrowAsync<InvalidOperationException>(
       because: "exceptions from the service should propagate")
       .WithMessage(expectedException.Message);
-    
+
     _mockLoggingService.Verify();
   }
 
@@ -404,28 +404,28 @@ public class PublicControllerUnitTests
     // Arrange
     using var cts = new CancellationTokenSource();
     _controller.ControllerContext.HttpContext.RequestAborted = cts.Token;
-    
+
     var statusResult = _fixture.Create<LoggingStatusResult>();
     var connectivityResult = _fixture.Create<SeqConnectivityResult>();
     var methodsResult = _fixture.Create<LoggingMethodsResult>();
-    
+
     _mockLoggingService
       .Setup(s => s.GetLoggingStatusAsync(cts.Token))
       .ReturnsAsync(statusResult);
-    
+
     _mockLoggingService
       .Setup(s => s.TestSeqConnectivityAsync(It.IsAny<string?>(), cts.Token))
       .ReturnsAsync(connectivityResult);
-    
+
     _mockLoggingService
       .Setup(s => s.GetAvailableLoggingMethodsAsync(cts.Token))
       .ReturnsAsync(methodsResult);
-    
+
     // Act
     await _controller.GetLoggingStatus();
     await _controller.TestSeqConnectivity(null);
     await _controller.GetAvailableLoggingMethods();
-    
+
     // Assert
     _mockLoggingService.Verify(s => s.GetLoggingStatusAsync(cts.Token), Times.Once,
       "GetLoggingStatus should pass the cancellation token");

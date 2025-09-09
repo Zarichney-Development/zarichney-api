@@ -12,6 +12,7 @@ using Serilog.Sinks.XUnit.Injectable;
 using Serilog.Sinks.XUnit.Injectable.Extensions;
 using Zarichney.Services.AI;
 using Zarichney.Services.Auth;
+using Zarichney.Services.Email;
 using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Helpers;
 using Zarichney.Tests.Framework.Mocks.Factories;
@@ -136,9 +137,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
       // Register test auth handler
       services.AddAuthentication(options =>
         {
-          options.DefaultAuthenticateScheme = "Test";
-          options.DefaultChallengeScheme = "Test";
-        })
+        options.DefaultAuthenticateScheme = "Test";
+        options.DefaultChallengeScheme = "Test";
+      })
         .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
 
       // Register mock external services

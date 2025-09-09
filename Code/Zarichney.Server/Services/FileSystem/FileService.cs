@@ -18,36 +18,28 @@ public interface IFileService
   bool FileExists(string? filePath);
 }
 
-public class FileService : IFileService
+public class FileService(ILogger<FileService> logger) : IFileService
 {
-  private readonly AsyncRetryPolicy _retryPolicy;
-  private readonly JsonSerializerOptions _jsonOptions;
-  private readonly ILogger<FileService> _logger;
-
-  public FileService(ILogger<FileService> logger)
-  {
-    _logger = logger;
-    _jsonOptions = new JsonSerializerOptions
-    {
-      WriteIndented = true,
-      Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-    };
-
-    _retryPolicy = Policy
+  private readonly AsyncRetryPolicy _retryPolicy = Policy
       .Handle<Exception>()
       .WaitAndRetryAsync(5, _ => TimeSpan.FromMilliseconds(200),
-        (ex, _, retryCount, ctx) =>
-        {
-          _logger.LogWarning(ex, "Read attempt {RetryCount}: Retrying due to {Message}. Context: {@Context}",
+          (ex, _, retryCount, ctx) =>
+          {
+            logger.LogWarning(ex, "Read attempt {RetryCount}: Retrying due to {Message}. Context: {@Context}",
             retryCount, ex.Message, ctx);
-        });
-  }
+          });
+
+  private readonly JsonSerializerOptions _jsonOptions = new()
+  {
+    WriteIndented = true,
+    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+  };
 
   public async Task<T> ReadFromFile<T>(string directory, string filename, string? extension = "json")
   {
     extension ??= "json";
     var filePath = GetFullPath(directory, filename, extension);
-    _logger.LogInformation("Reading file: {FilePath}", filePath);
+    logger.LogInformation("Reading file: {FilePath}", filePath);
 
     var data = await LoadExistingData(filePath, extension);
     if (data == null) return default!;
@@ -85,19 +77,19 @@ public class FileService : IFileService
           await ((Image)data).SaveAsJpegAsync(stream, new JpegEncoder { Quality = 90 });
         }
 
-        _logger.LogInformation("Created JPEG file: {FilePath}", filePath);
+        logger.LogInformation("Created JPEG file: {FilePath}", filePath);
         break;
       case "application/pdf":
         await File.WriteAllBytesAsync(filePath, (byte[])data);
-        _logger.LogInformation("Created PDF file: {FilePath}", filePath);
+        logger.LogInformation("Created PDF file: {FilePath}", filePath);
         break;
       case "application/json":
         await File.WriteAllTextAsync(filePath, JsonSerializer.Serialize(data, _jsonOptions));
-        _logger.LogInformation("Created JSON file: {FilePath}", filePath);
+        logger.LogInformation("Created JSON file: {FilePath}", filePath);
         break;
       case "text/plain":
         await File.WriteAllTextAsync(filePath, data.ToString());
-        _logger.LogInformation("Created Text file: {FilePath}", filePath);
+        logger.LogInformation("Created Text file: {FilePath}", filePath);
         break;
       default:
         throw new ArgumentException($"Unsupported file type: {fileType}");
@@ -109,7 +101,7 @@ public class FileService : IFileService
     // If the file does not exist, treat as a no-op for safe idempotency
     if (!File.Exists(filePath))
     {
-      _logger.LogInformation("Delete requested for non-existent file: {FilePath}", filePath);
+      logger.LogInformation("Delete requested for non-existent file: {FilePath}", filePath);
       return;
     }
 
@@ -119,7 +111,7 @@ public class FileService : IFileService
       .WaitAndRetry(3, _ => TimeSpan.FromMilliseconds(200),
         (ex, ts, retryCount, _) =>
         {
-          _logger.LogWarning(ex, "Retry {RetryCount}: Unable to delete file: {FilePath}. Retrying in {Delay}ms",
+          logger.LogWarning(ex, "Retry {RetryCount}: Unable to delete file: {FilePath}. Retrying in {Delay}ms",
             retryCount, filePath, ts.TotalMilliseconds);
         });
 
@@ -129,7 +121,7 @@ public class FileService : IFileService
         throw new UnauthorizedAccessException();
 
       File.Delete(filePath);
-      _logger.LogInformation("Deleted file: {FilePath}", filePath);
+      logger.LogInformation("Deleted file: {FilePath}", filePath);
     });
   }
 
@@ -175,7 +167,7 @@ public class FileService : IFileService
     // Cross-platform invalid set (Windows + common unsafe chars), merged with OS-specific invalids
     ReadOnlySpan<char> commonInvalid = new[] { '/', '\\', '<', '>', ':', '"', '|', '?', '*' };
     var osInvalid = Path.GetInvalidFileNameChars();
-    var allInvalid = new HashSet<char>(osInvalid);
+    HashSet<char> allInvalid = [.. osInvalid];
     foreach (var c in commonInvalid) allInvalid.Add(c);
 
     // Split on invalid characters and join with single underscores to collapse runs

@@ -191,35 +191,35 @@ public class FeatureAvailabilityMiddlewareTests
           webHost.UseTestServer();
           webHost.Configure(app =>
               {
-                app.UseRouting();
+              app.UseRouting();
 
                 // Add an error handling middleware to convert exceptions to status codes
-                app.Use(async (context, next) =>
-                {
-                  try
-                  {
-                    await next();
-                  }
-                  catch (ServiceUnavailableException)
-                  {
-                    context.Response.StatusCode = (int)HttpStatusCode.ServiceUnavailable;
-                  }
-                });
+              app.Use(async (context, next) =>
+              {
+              try
+              {
+                await next();
+              }
+              catch (ServiceUnavailableException)
+              {
+                context.Response.StatusCode = (int)HttpStatusCode.ServiceUnavailable;
+              }
+            });
 
-                app.UseFeatureAvailability();
-                app.UseEndpoints(endpoints =>
-                    {
-                      endpoints.MapGet("/api/test", [DependsOnService(ExternalServices.OpenAiApi)] () => "Hello World");
-                      endpoints.MapGet("/api/available", () => "Available");
-                    });
-              });
+              app.UseFeatureAvailability();
+              app.UseEndpoints(endpoints =>
+                  {
+                  endpoints.MapGet("/api/test", [DependsOnService(ExternalServices.OpenAiApi)] () => "Hello World");
+                  endpoints.MapGet("/api/available", () => "Available");
+                });
+            });
 
           webHost.ConfigureServices(services =>
               {
-                services.AddRouting();
-                services.AddSingleton(statusService.Object);
-                services.AddControllers();
-              });
+              services.AddRouting();
+              services.AddSingleton(statusService.Object);
+              services.AddControllers();
+            });
         });
 
     var host = await hostBuilder.StartAsync();

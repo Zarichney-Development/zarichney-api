@@ -291,7 +291,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     }
 
     // Determine the set of all required configuration item names based on the dependency traits
-    var requiredConfigs = new HashSet<string>();
+    HashSet<string> requiredConfigs = [];
     foreach (var (_, value) in dependencyTraits)
     {
       if (TraitToConfigNamesMap.TryGetValue(value, out var configNames))

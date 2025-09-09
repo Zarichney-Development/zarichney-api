@@ -164,7 +164,7 @@ public class LoggingStatusTests
 
     // Assert
     result.Should().NotBeNull();
-    
+
     result.NativeSeq.Should().NotBeNull();
     result.NativeSeq.Available.Should().BeTrue("native Seq is running");
     result.NativeSeq.ServiceName.Should().Be("seq");

@@ -23,26 +23,39 @@ public interface IEmailService
   Task SendErrorNotification(string stage, Exception ex, string serviceName, Dictionary<string, string>? additionalContext = null);
 }
 
-public class EmailService(
-  GraphServiceClient graphClient,
-  EmailConfig config,
-  ITemplateService templateService,
-  IMailCheckClient mailCheckClient,
-  ILogger<EmailService> logger)
-  : IEmailService
+public class EmailService : IEmailService
 {
+  private readonly GraphServiceClient _graphClient;
+  private readonly EmailConfig _config;
+  private readonly ITemplateService _templateService;
+  private readonly IMailCheckClient _mailCheckClient;
+  private readonly ILogger<EmailService> _logger;
+
+  public EmailService(
+      GraphServiceClient graphClient,
+      EmailConfig config,
+      ITemplateService templateService,
+      IMailCheckClient mailCheckClient,
+      ILogger<EmailService> logger)
+  {
+    _graphClient = graphClient ?? throw new ArgumentNullException(nameof(graphClient));
+    _config = config ?? throw new ArgumentNullException(nameof(config));
+    _templateService = templateService ?? throw new ArgumentNullException(nameof(templateService));
+    _mailCheckClient = mailCheckClient ?? throw new ArgumentNullException(nameof(mailCheckClient));
+    _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+  }
   private const int HighRiskThreshold = 70;
 
   public async Task SendEmail(string recipient, string subject, string templateName,
     Dictionary<string, object>? templateData = null, FileAttachment? attachment = null)
   {
     // ServiceUnavailableException will be thrown by the proxy if Email service is unavailable
-    ArgumentNullException.ThrowIfNull(graphClient, nameof(graphClient));
+    ArgumentNullException.ThrowIfNull(_graphClient, nameof(_graphClient));
 
     string bodyContent;
     try
     {
-      bodyContent = await templateService.ApplyTemplate(
+      bodyContent = await _templateService.ApplyTemplate(
         templateName,
         templateData ?? new Dictionary<string, object>(),
         subject
@@ -55,7 +68,7 @@ public class EmailService(
     }
     catch (Exception e)
     {
-      logger.LogError(e, "Error applying email template: {TemplateName} for recipient {Recipient}", templateName,
+      _logger.LogError(e, "Error applying email template: {TemplateName} for recipient {Recipient}", templateName,
         recipient);
       throw;
     }
@@ -63,7 +76,7 @@ public class EmailService(
     var message = new Message
     {
       Subject = subject,
-      From = new Recipient { EmailAddress = new EmailAddress { Address = config.FromEmail } },
+      From = new Recipient { EmailAddress = new EmailAddress { Address = _config.FromEmail } },
       Body = new ItemBody { ContentType = BodyType.Html, Content = bodyContent },
       ToRecipients = [new Recipient { EmailAddress = new EmailAddress { Address = recipient } }],
       Attachments = []
@@ -78,29 +91,29 @@ public class EmailService(
     {
       Message = message,
       // Only save in sent folder for non-self-sent emails (the ones as notification for debugging purposes)
-      SaveToSentItems = message.ToRecipients.Any(r => r.EmailAddress!.Address != config.FromEmail)
+      SaveToSentItems = message.ToRecipients.Any(r => r.EmailAddress!.Address != _config.FromEmail)
     };
 
     try
     {
-      logger.LogInformation("Attempting to send email with configuration: {@EmailDetails}", new
+      _logger.LogInformation("Attempting to send email with configuration: {@EmailDetails}", new
       {
-        config.FromEmail,
+        _config.FromEmail,
         ToEmail = recipient,
         Subject = subject,
         HasContent = !string.IsNullOrEmpty(message.Body.Content),
         ContentLength = message.Body.Content?.Length,
         AttachmentSize = attachment?.Size,
-        config.AzureAppId
+        _config.AzureAppId
       });
 
-      var emailAccount = graphClient.Users[config.FromEmail];
+      var emailAccount = _graphClient.Users[_config.FromEmail];
 
       await emailAccount.SendMail.PostAsync(requestBody);
 
-      logger.LogInformation("Email sent successfully. Request details: {@RequestDetails}", new
+      _logger.LogInformation("Email sent successfully. Request details: {@RequestDetails}", new
       {
-        config.FromEmail,
+        _config.FromEmail,
         ToEmail = recipient,
         Subject = subject,
         MessageId = message.Id
@@ -108,9 +121,9 @@ public class EmailService(
     }
     catch (Exception e)
     {
-      logger.LogError(e, "Error sending email. Request details: {@RequestDetails}", new
+      _logger.LogError(e, "Error sending email. Request details: {@RequestDetails}", new
       {
-        config.FromEmail,
+        _config.FromEmail,
         ToEmail = recipient,
         Subject = subject,
         MessageId = message.Id,
@@ -134,7 +147,7 @@ public class EmailService(
   {
     var domain = email.Split('@').Last();
 
-    var result = await mailCheckClient.GetValidationData(domain);
+    var result = await _mailCheckClient.GetValidationData(domain);
 
     return ValidateWithResult(email, result);
   }
@@ -166,7 +179,7 @@ public class EmailService(
     }
     catch (Exception e)
     {
-      logger.LogError(e, "Invalid email detected: {@Result}", result);
+      _logger.LogError(e, "Invalid email detected: {@Result}", result);
       throw;
     }
 
@@ -175,7 +188,7 @@ public class EmailService(
 
   private void ThrowInvalidEmailException(string message, string email, InvalidEmailReason reason)
   {
-    logger.LogWarning("{Message}: {Email} ({Reason})", message, email, reason);
+    _logger.LogWarning("{Message}: {Email} ({Reason})", message, email, reason);
     throw new InvalidEmailException(message, email, reason);
   }
 
@@ -231,17 +244,17 @@ public class EmailService(
       }
 
       await SendEmail(
-        config.FromEmail, // Send to the configured From email (self notification)
+        _config.FromEmail, // Send to the configured From email (self notification)
         $"{serviceName} Error - {stage}",
         "error-log", // Template name
         templateData
       );
 
-      logger.LogInformation("Error notification email sent for service: {ServiceName}, stage: {Stage}", serviceName, stage);
+      _logger.LogInformation("Error notification email sent for service: {ServiceName}, stage: {Stage}", serviceName, stage);
     }
     catch (Exception emailEx)
     {
-      logger.LogError(emailEx, "Failed to send error notification email for service: {ServiceName}, stage: {Stage}",
+      _logger.LogError(emailEx, "Failed to send error notification email for service: {ServiceName}, stage: {Stage}",
         serviceName, stage);
       // Intentionally swallow the exception to prevent it from bubbling up
     }

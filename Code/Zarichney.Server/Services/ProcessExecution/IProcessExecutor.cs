@@ -14,8 +14,8 @@ public interface IProcessExecutor
   /// <param name="cancellationToken">Cancellation token</param>
   /// <returns>A tuple containing the exit code and output of the command</returns>
   Task<(int exitCode, string output)> RunCommandAsync(
-    string command, 
-    string arguments, 
+    string command,
+    string arguments,
     int timeoutMs = 5000,
     CancellationToken cancellationToken = default);
 }

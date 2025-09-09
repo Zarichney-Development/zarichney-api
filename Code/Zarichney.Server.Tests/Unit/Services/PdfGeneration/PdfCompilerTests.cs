@@ -131,7 +131,7 @@ public class PdfCompilerTests
     // Arrange
     var order = CreateCookbookOrderWithRecipes(1);
     order.SynthesizedRecipes[0].Title = "Test Recipe";
-    
+
     _mockFileService.Setup(x => x.DeleteFile(It.IsAny<string>()));
 
     // Act
@@ -149,7 +149,7 @@ public class PdfCompilerTests
     var order = CreateCookbookOrderWithRecipes(1);
     order.SynthesizedRecipes[0].Title = "Complex Recipe";
     order.SynthesizedRecipes[0].Description = "A recipe with **bold** and *italic* markdown formatting";
-    
+
     // Act
     var result = await _sut.CompileCookbook(order);
 

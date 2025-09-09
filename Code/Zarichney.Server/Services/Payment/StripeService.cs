@@ -63,7 +63,7 @@ public interface IStripeService
   /// <summary>
   /// Creates a mock Stripe event for testing or handler reuse
   /// </summary>
-  Event CreateMockEvent<T>(T obj) where T : IStripeEntity;
+  Event CreateMockEvent<T>(T obj) where T : IHasObject;
 
   StripeSessionMetadata ParseSessionMetadata(Session sessionWithLineItems);
   int GetPurchasedQuantity(Session sessionWithLineItems);
@@ -89,8 +89,8 @@ public class StripeService : IStripeService
 
   public StripeService(PaymentConfig config, ILogger<StripeService> logger)
   {
-    _config = config;
-    _logger = logger;
+    _config = config ?? throw new ArgumentNullException(nameof(config));
+    _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     // Log a warning if the key is missing at startup, but don't set it globally here.
     if (string.IsNullOrEmpty(_config.StripeSecretKey))
@@ -287,7 +287,7 @@ public class StripeService : IStripeService
   /// <summary>
   /// Creates a mock Stripe event for testing or handler reuse
   /// </summary>
-  public Event CreateMockEvent<T>(T obj) where T : IStripeEntity
+  public Event CreateMockEvent<T>(T obj) where T : IHasObject
   {
     return new Event
     {
@@ -303,8 +303,14 @@ public class StripeService : IStripeService
   /// </summary>
   public StripeSessionMetadata ParseSessionMetadata(Session session)
   {
-    var metadata = session.Metadata;
     var result = new StripeSessionMetadata();
+
+    if (session == null)
+    {
+      return result; // Return default metadata for null session
+    }
+
+    var metadata = session.Metadata;
 
     if (metadata != null)
     {
@@ -340,12 +346,12 @@ public class StripeService : IStripeService
   /// </summary>
   public int GetPurchasedQuantity(Session session)
   {
-    var purchasedQuantity = 0;
-    if (session.LineItems?.Data != null)
+    if (session?.LineItems?.Data == null)
     {
-      purchasedQuantity = session.LineItems.Data.Aggregate(purchasedQuantity, (current, item) => (int)(current + item.Quantity.GetValueOrDefault()));
+      return 0; // Return zero for null session or null line items
     }
-    return purchasedQuantity;
+
+    return session.LineItems.Data.Aggregate(0, (current, item) => (int)(current + item.Quantity.GetValueOrDefault()));
   }
 
   /// <summary>

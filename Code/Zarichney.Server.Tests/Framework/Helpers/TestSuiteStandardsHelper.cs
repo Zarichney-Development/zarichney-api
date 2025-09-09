@@ -218,9 +218,9 @@ public static class TestSuiteStandardsHelper
 
     var actualSkipPercentage = totalTests > 0 ? (double)skippedTests / totalTests * 100.0 : 0.0;
     var allowedSkipPercentage = environmentInfo.ExpectedSkipPercentage;
-    var violations = new List<string>();
-    var recommendations = new List<string>();
-    var skipAnalysisByCategory = new Dictionary<string, SkipAnalysis>();
+    List<string> violations = [];
+    List<string> recommendations = [];
+    Dictionary<string, SkipAnalysis> skipAnalysisByCategory = [];
 
     // Analyze skips by category
     AnalyzeSkipsByCategory(standards, skippedTestsByCategory, totalTests, skipAnalysisByCategory, violations, recommendations);
@@ -295,10 +295,10 @@ public static class TestSuiteStandardsHelper
     ArgumentNullException.ThrowIfNull(standards, nameof(standards));
 
     var targets = standards.CoverageBaselines.ProgressiveTargets.OrderBy(t => t).ToList();
-    
+
     // Find the first target higher than current coverage
     var nextTarget = targets.FirstOrDefault(t => t > currentCoverage);
-    
+
     // If no target found, return the highest target
     return nextTarget > 0 ? nextTarget : targets.LastOrDefault();
   }
@@ -340,9 +340,9 @@ public static class TestSuiteStandardsHelper
     var actualVelocity = CalculateActualVelocity(historicalCoverage);
     var targetDate = standards.CoverageBaselines.TargetDate ?? DateTime.Now.AddYears(2);
     var monthsToTarget = (targetDate - DateTime.Now).TotalDays / 30.44;
-    var requiredVelocity = standards.CoverageBaselines.MonthlyVelocityTarget ?? 
+    var requiredVelocity = standards.CoverageBaselines.MonthlyVelocityTarget ??
                           (monthsToTarget > 0 ? (90.0 - currentCoverage) / monthsToTarget : 0);
-    
+
     var isOnTrack = actualVelocity >= requiredVelocity * 0.8; // 80% tolerance
 
     // Generate recommendations
@@ -441,13 +441,13 @@ public static class TestSuiteStandardsHelper
   {
     var targets = standards.CoverageBaselines.ProgressiveTargets.OrderBy(t => t).ToList();
     var baseline = standards.CoverageBaselines.Current;
-    
+
     // Phase 1: Baseline to first target
     if (currentCoverage < targets.FirstOrDefault())
     {
       return GetPhaseInfo(1);
     }
-    
+
     // Find which phase we're in based on targets achieved
     for (int i = 0; i < targets.Count - 1; i++)
     {
@@ -456,7 +456,7 @@ public static class TestSuiteStandardsHelper
         return GetPhaseInfo(i + 2); // Phase 2, 3, 4, etc.
       }
     }
-    
+
     // Final phase or beyond
     return GetPhaseInfo(targets.Count + 1);
   }
@@ -474,27 +474,27 @@ public static class TestSuiteStandardsHelper
         1, 14.22, 20.0, "Foundation Phase - Basic Coverage",
         new List<string> { "Service layers", "Core business logic", "API contracts" },
         "Focus on low-hanging fruit and broad coverage across key components"),
-        
+
       2 => new CoveragePhaseInfo(
         2, 20.0, 35.0, "Growth Phase - Service Layer Depth",
         new List<string> { "Service method coverage", "Integration scenarios", "Data validation" },
         "Deepen coverage in service layers and integration points"),
-        
+
       3 => new CoveragePhaseInfo(
         3, 35.0, 50.0, "Maturity Phase - Edge Cases & Error Handling",
         new List<string> { "Error handling", "Edge cases", "Input validation", "Boundary conditions" },
         "Focus on edge cases, error scenarios, and robust error handling"),
-        
+
       4 => new CoveragePhaseInfo(
         4, 50.0, 75.0, "Excellence Phase - Complex Scenarios",
         new List<string> { "Complex business scenarios", "Integration depth", "Cross-cutting concerns" },
         "Cover complex business scenarios and deep integration testing"),
-        
+
       5 => new CoveragePhaseInfo(
         5, 75.0, 90.0, "Mastery Phase - Comprehensive Coverage",
         new List<string> { "Performance scenarios", "Comprehensive edge cases", "System integration" },
         "Achieve comprehensive coverage including performance and system-wide scenarios"),
-        
+
       _ => new CoveragePhaseInfo(
         6, 90.0, 100.0, "Optimization Phase - Maintenance & Optimization",
         new List<string> { "Performance optimization", "Test maintenance", "Documentation" },
@@ -513,14 +513,14 @@ public static class TestSuiteStandardsHelper
     {
       return 0.0; // No data to calculate velocity
     }
-    
+
     var sortedData = historicalCoverage.OrderBy(h => h.Date).ToList();
     var oldest = sortedData.First();
     var newest = sortedData.Last();
-    
+
     var coverageDelta = newest.Coverage - oldest.Coverage;
     var timeDelta = (newest.Date - oldest.Date).TotalDays / 30.44; // Convert to months
-    
+
     return timeDelta > 0 ? coverageDelta / timeDelta : 0.0;
   }
 
@@ -548,14 +548,14 @@ public static class TestSuiteStandardsHelper
     var regressionTolerance = section.GetValue<double>("regressionTolerance");
     var description = section.GetValue<string>("description") ?? string.Empty;
     var progressiveTargets = section.GetSection("progressiveTargets").Get<List<double>>() ?? new List<double>();
-    
+
     // New Phase 3 fields
     var targetDateString = section.GetValue<string>("targetDate");
     var targetDate = DateTime.TryParse(targetDateString, out var parsedDate) ? parsedDate : (DateTime?)null;
     var monthlyVelocityTarget = section.GetValue<double?>("monthlyVelocityTarget");
     var priorityAreas = section.GetSection("priorityAreas").Get<List<string>>();
 
-    return new CoverageBaselines(current, incrementSize, regressionTolerance, progressiveTargets, description, 
+    return new CoverageBaselines(current, incrementSize, regressionTolerance, progressiveTargets, description,
       targetDate, monthlyVelocityTarget, priorityAreas);
   }
 

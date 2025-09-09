@@ -30,8 +30,8 @@ public static class ApplicationStartup
     {
       serverOptions.ConfigureEndpointDefaults(listenOptions =>
       {
-        listenOptions.KestrelServerOptions.ConfigureEndpointDefaults(_ => { });
-      });
+      listenOptions.KestrelServerOptions.ConfigureEndpointDefaults(_ => { });
+    });
 
       serverOptions.ListenAnyIP(5000,
         options => { options.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2; });
@@ -48,17 +48,17 @@ public static class ApplicationStartup
       options.AddPolicy("AllowSpecificOrigin",
         policyBuilder =>
         {
-          policyBuilder
-            .WithOrigins(
-              "http://localhost:3001",
-              "http://localhost:4200",
-              "http://localhost:5000",
-              "https://zarichney.com"
-            )
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
-        });
+        policyBuilder
+          .WithOrigins(
+            "http://localhost:3001",
+            "http://localhost:4200",
+            "http://localhost:5000",
+            "https://zarichney.com"
+          )
+          .AllowAnyHeader()
+          .AllowAnyMethod()
+          .AllowCredentials();
+      });
     });
 
     builder.Services.AddRequestResponseLogger(options =>

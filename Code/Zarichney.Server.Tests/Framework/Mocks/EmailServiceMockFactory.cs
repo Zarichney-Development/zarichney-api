@@ -13,96 +13,96 @@ namespace Zarichney.Tests.Framework.Mocks;
 /// </summary>
 public static class EmailServiceMockFactory
 {
-    /// <summary>
-    /// Creates a mock GraphServiceClient for unit testing.
-    /// Note: Complex Graph API interactions are better tested in integration tests.
-    /// </summary>
-    public static Mock<GraphServiceClient> CreateMockGraphServiceClient()
+  /// <summary>
+  /// Creates a mock GraphServiceClient for unit testing.
+  /// Note: Complex Graph API interactions are better tested in integration tests.
+  /// </summary>
+  public static Mock<GraphServiceClient> CreateMockGraphServiceClient()
+  {
+    var mockGraphClient = new Mock<GraphServiceClient>();
+    // Basic mock - complex Graph API mocking is done in integration tests
+    return mockGraphClient;
+  }
+
+  /// <summary>
+  /// Creates a mock EmailConfig with test-friendly default values.
+  /// </summary>
+  public static EmailConfig CreateMockEmailConfig()
+  {
+    return new EmailConfig
     {
-        var mockGraphClient = new Mock<GraphServiceClient>();
-        // Basic mock - complex Graph API mocking is done in integration tests
-        return mockGraphClient;
-    }
+      AzureTenantId = "test-tenant-id",
+      AzureAppId = "test-app-id",
+      AzureAppSecret = "test-app-secret",
+      FromEmail = "test@zarichney.com",
+      TemplateDirectory = "/test/templates",
+      MailCheckApiKey = "test-mailcheck-api-key"
+    };
+  }
 
-    /// <summary>
-    /// Creates a mock EmailConfig with test-friendly default values.
-    /// </summary>
-    public static EmailConfig CreateMockEmailConfig()
-    {
-        return new EmailConfig
-        {
-            AzureTenantId = "test-tenant-id",
-            AzureAppId = "test-app-id",
-            AzureAppSecret = "test-app-secret",
-            FromEmail = "test@zarichney.com",
-            TemplateDirectory = "/test/templates",
-            MailCheckApiKey = "test-mailcheck-api-key"
-        };
-    }
+  /// <summary>
+  /// Creates a mock ITemplateService with configurable template responses.
+  /// </summary>
+  public static Mock<ITemplateService> CreateMockTemplateService()
+  {
+    var mockTemplateService = new Mock<ITemplateService>();
 
-    /// <summary>
-    /// Creates a mock ITemplateService with configurable template responses.
-    /// </summary>
-    public static Mock<ITemplateService> CreateMockTemplateService()
-    {
-        var mockTemplateService = new Mock<ITemplateService>();
-        
-        // Default successful template application
-        mockTemplateService.Setup(x => x.ApplyTemplate(
-                It.IsAny<string>(),
-                It.IsAny<Dictionary<string, object>>(),
-                It.IsAny<string>()))
-            .ReturnsAsync((string templateName, Dictionary<string, object> templateData, string title) => 
-                $"<html><body><h1>{title}</h1><p>Template: {templateName}</p></body></html>");
+    // Default successful template application
+    mockTemplateService.Setup(x => x.ApplyTemplate(
+            It.IsAny<string>(),
+            It.IsAny<Dictionary<string, object>>(),
+            It.IsAny<string>()))
+        .ReturnsAsync((string templateName, Dictionary<string, object> templateData, string title) =>
+            $"<html><body><h1>{title}</h1><p>Template: {templateName}</p></body></html>");
 
-        return mockTemplateService;
-    }
+    return mockTemplateService;
+  }
 
-    /// <summary>
-    /// Creates a mock IMailCheckClient with configurable validation responses.
-    /// </summary>
-    public static Mock<IMailCheckClient> CreateMockMailCheckClient(EmailValidationResponse? defaultResponse = null)
-    {
-        var mockMailCheckClient = new Mock<IMailCheckClient>();
-        
-        // Use provided response or create a valid default
-        var response = defaultResponse ?? new EmailValidationResponseBuilder().WithValidDefaults().Build();
-        
-        mockMailCheckClient.Setup(x => x.GetValidationData(It.IsAny<string>()))
-            .ReturnsAsync(response);
+  /// <summary>
+  /// Creates a mock IMailCheckClient with configurable validation responses.
+  /// </summary>
+  public static Mock<IMailCheckClient> CreateMockMailCheckClient(EmailValidationResponse? defaultResponse = null)
+  {
+    var mockMailCheckClient = new Mock<IMailCheckClient>();
 
-        return mockMailCheckClient;
-    }
+    // Use provided response or create a valid default
+    var response = defaultResponse ?? new EmailValidationResponseBuilder().WithValidDefaults().Build();
 
-    /// <summary>
-    /// Creates a mock IMailCheckClient that throws a specific exception.
-    /// </summary>
-    public static Mock<IMailCheckClient> CreateMockMailCheckClientWithException<TException>() 
-        where TException : Exception, new()
-    {
-        var mockMailCheckClient = new Mock<IMailCheckClient>();
-        
-        mockMailCheckClient.Setup(x => x.GetValidationData(It.IsAny<string>()))
-            .ThrowsAsync(new TException());
+    mockMailCheckClient.Setup(x => x.GetValidationData(It.IsAny<string>()))
+        .ReturnsAsync(response);
 
-        return mockMailCheckClient;
-    }
+    return mockMailCheckClient;
+  }
 
-    /// <summary>
-    /// Creates a mock ITemplateService that throws an exception for template processing.
-    /// </summary>
-    public static Mock<ITemplateService> CreateMockTemplateServiceWithException<TException>()
-        where TException : Exception, new()
-    {
-        var mockTemplateService = new Mock<ITemplateService>();
-        
-        mockTemplateService.Setup(x => x.ApplyTemplate(
-                It.IsAny<string>(),
-                It.IsAny<Dictionary<string, object>>(),
-                It.IsAny<string>()))
-            .ThrowsAsync(new TException());
+  /// <summary>
+  /// Creates a mock IMailCheckClient that throws a specific exception.
+  /// </summary>
+  public static Mock<IMailCheckClient> CreateMockMailCheckClientWithException<TException>()
+      where TException : Exception, new()
+  {
+    var mockMailCheckClient = new Mock<IMailCheckClient>();
 
-        return mockTemplateService;
-    }
+    mockMailCheckClient.Setup(x => x.GetValidationData(It.IsAny<string>()))
+        .ThrowsAsync(new TException());
+
+    return mockMailCheckClient;
+  }
+
+  /// <summary>
+  /// Creates a mock ITemplateService that throws an exception for template processing.
+  /// </summary>
+  public static Mock<ITemplateService> CreateMockTemplateServiceWithException<TException>()
+      where TException : Exception, new()
+  {
+    var mockTemplateService = new Mock<ITemplateService>();
+
+    mockTemplateService.Setup(x => x.ApplyTemplate(
+            It.IsAny<string>(),
+            It.IsAny<Dictionary<string, object>>(),
+            It.IsAny<string>()))
+        .ThrowsAsync(new TException());
+
+    return mockTemplateService;
+  }
 
 }

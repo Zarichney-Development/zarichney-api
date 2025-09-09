@@ -44,7 +44,7 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
     var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
                          Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
                          Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
-    
+
     Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
 
     // Arrange
@@ -64,8 +64,8 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
       builder.ConfigureTestServices(services =>
       {
         // Replace the StatusService with our mock that reports MailCheck as unavailable
-        services.AddSingleton(mockStatusService.Object);
-      });
+      services.AddSingleton(mockStatusService.Object);
+    });
     });
 
     // Create a client with authentication
@@ -119,7 +119,7 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
     var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
                          Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
                          Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
-    
+
     Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
     // Arrange
     // Create a custom factory that indicates mixed service availability
@@ -144,15 +144,15 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
       builder.ConfigureServices(services =>
       {
         // Remove the existing StatusService registration
-        var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IStatusService));
-        if (descriptor != null)
-        {
-          services.Remove(descriptor);
-        }
+      var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IStatusService));
+      if (descriptor != null)
+      {
+        services.Remove(descriptor);
+      }
 
         // Add our mock as a singleton
-        services.AddSingleton(mockStatusService.Object);
-      });
+      services.AddSingleton(mockStatusService.Object);
+    });
     });
 
     using var httpClient = customFactory.CreateAuthenticatedClient("test-user", ["User"]);
@@ -195,7 +195,7 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
     var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
                          Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
                          Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
-    
+
     Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
     // Arrange
     // Create a custom factory with a mock configuration status service

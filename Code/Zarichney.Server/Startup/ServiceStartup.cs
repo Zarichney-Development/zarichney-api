@@ -229,7 +229,7 @@ public class ServiceStartup
 
     // System Services
     services.AddScoped<IProcessExecutor, ProcessExecutor>();
-    
+
     // Logging Services - provides centralized logging system management
     services.AddHttpClient<ISeqConnectivity, SeqConnectivity>();
     services.AddScoped<ILoggingStatus, LoggingStatus>();
@@ -302,13 +302,13 @@ public class ServiceStartup
 
       c.AddSecurityDefinition("Bearer",
         new OpenApiSecurityScheme
-        {
-          Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer {token}'",
-          Name = "Authorization",
-          In = ParameterLocation.Header,
-          Type = SecuritySchemeType.ApiKey,
-          Scheme = "Bearer"
-        });
+      {
+        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer {token}'",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+      });
 
       c.AddSecurityRequirement(new OpenApiSecurityRequirement
       {
