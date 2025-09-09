@@ -87,8 +87,8 @@ jobs:
 
       - name: "Configure Git for Automation"
         run: |
-          git config --global user.name "Coverage Epic Bot"
-          git config --global user.email "noreply@zarichney.dev"
+          git config --global user.name "Coverage Epic Automated Workflow"
+          git config --global user.email "bot@zarichney.com"
           git config --global init.defaultBranch main
 
       # ========================================
@@ -1331,15 +1331,15 @@ jobs:
         if: steps.commit-changes.outputs.changes_committed == 'true'
         run: |
           echo "🔍 Checking for Implementation Summary artifact"
-          
+
           # Look for Implementation Summary in standard location
           ARTIFACT_PATH="Docs/Reports/CoverageEpic/${{ steps.coverage-analysis.outputs.task_identifier }}.md"
-          
+
           if [ -f "$ARTIFACT_PATH" ]; then
             echo "✅ Implementation Summary artifact found: $ARTIFACT_PATH"
             echo "artifact_exists=true" >> $GITHUB_OUTPUT
             echo "artifact_path=$ARTIFACT_PATH" >> $GITHUB_OUTPUT
-            
+
             # Check if production fixes were documented
             if grep -q "## Production Fixes" "$ARTIFACT_PATH"; then
               echo "⚠️ Production fixes section detected in Implementation Summary"
@@ -1359,35 +1359,35 @@ jobs:
         id: read_artifact
         run: |
           echo "📄 Reading Implementation Summary content"
-          
+
           ARTIFACT_PATH="${{ steps.check_artifact.outputs.artifact_path }}"
-          
+
           # Read artifact content using base64 encoding to avoid delimiter parsing issues
           echo "artifact_content_b64=$(base64 -w 0 "$ARTIFACT_PATH")" >> $GITHUB_OUTPUT
-          
+
           echo "✅ Implementation Summary content prepared for PR integration"
 
       - name: "Commit Implementation Summary Artifact"
         if: steps.check_artifact.outputs.artifact_exists == 'true'
         run: |
           echo "💾 Ensuring Implementation Summary artifact is committed"
-          
+
           ARTIFACT_PATH="${{ steps.check_artifact.outputs.artifact_path }}"
-          
+
           # Add artifact to staging if it exists and has changes
           if [ -f "$ARTIFACT_PATH" ]; then
             git add "$ARTIFACT_PATH"
-            
+
             # Only commit if there are staged changes for this file
             if git diff --staged --quiet "$ARTIFACT_PATH"; then
               echo "ℹ️ Implementation Summary already committed or unchanged"
             else
               echo "📝 Committing Implementation Summary artifact"
               git commit -m "docs: add implementation summary for ${{ steps.coverage-analysis.outputs.task_identifier }}"$'\n\n'"Implementation Summary artifact for Coverage Epic task."$'\n\n'"- Task ID: ${{ steps.coverage-analysis.outputs.task_identifier }}"$'\n'"- Artifact Path: $ARTIFACT_PATH"$'\n'"- Production Fixes: ${{ steps.check_artifact.outputs.has_production_fixes }}"$'\n\n'"🤖 Generated with Coverage Epic Automation"$'\n'"Co-Authored-By: Coverage Epic Bot <noreply@zarichney.dev>"
-              
+
               # Push updated task branch
               git push origin "${{ steps.task-branch.outputs.task_branch_name }}"
-              
+
               echo "✅ Implementation Summary artifact committed and pushed"
             fi
           fi
@@ -1461,34 +1461,34 @@ jobs:
 
           # Base PR body
           PR_BODY="## 🤖 Automated Coverage Epic Task
-          
+
           This PR was automatically generated as part of the Backend Testing Coverage Epic (#$EPIC_ISSUE_ID).
-          
+
           ### 📊 Task Details
           - **Task ID**: ${{ steps.coverage-analysis.outputs.task_identifier }}
           - **Target Area**: ${{ inputs.target_area || 'AI-selected based on coverage analysis' }}
           - **Execution Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
           - **Trigger**: ${{ inputs.trigger_source || 'scheduled' }} - ${{ inputs.trigger_reason || 'Automated coverage improvement' }}
           - **Current Coverage**: ${{ steps.coverage-analysis.outputs.current_coverage }}"
-          
+
           # Add Implementation Summary if it exists
           if [ "${{ steps.check_artifact.outputs.artifact_exists }}" == "true" ]; then
             PR_BODY="$PR_BODY
-          
+
           ### 📄 Implementation Summary
           $(echo '${{ steps.read_artifact.outputs.artifact_content_b64 }}' | base64 -d)"
           fi
-          
+
           # Add production fixes warning if applicable
           if [ "${{ steps.check_artifact.outputs.has_production_fixes }}" == "true" ]; then
             PR_BODY="$PR_BODY
-          
+
           ### ⚠️ Production Fixes Performed
           This PR includes minimal production code changes that were necessary for testability or to fix bugs discovered during test implementation. See the Implementation Summary above for details."
           fi
-          
+
           PR_BODY="$PR_BODY
-          
+
           ### 🚀 Automated Implementation
           - 🤖 **Execution Model:** Autonomous AI agent in CI environment
           - 🎯 **Scope:** Self-selected based on coverage analysis
@@ -1509,16 +1509,16 @@ jobs:
           ${{ steps.mcp-pr-analysis.outputs.mcp_analysis_result != '' && steps.mcp-pr-analysis.outputs.mcp_analysis_result != '{\"error\": \"MCP analysis failed\"}' && '✅ MCP analysis completed - See additional insights below' || '⚠️ MCP analysis unavailable - Standard pipeline analysis used' }}
 
           ${{ steps.mcp-pr-analysis.outputs.mcp_analysis_result != '' && steps.mcp-pr-analysis.outputs.mcp_analysis_result != '{\"error\": \"MCP analysis failed\"}' && '📊 **Analysis Summary:** Enhanced PR validation completed with GitHub MCP integration' || '' }}
-          
+
           ---
-          
+
           🎯 **Epic Progress**: Contributing to Backend Testing Coverage to 90% goal
           🤖 **Generated by Coverage Epic Automation**
           **Execution Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
           **Agent Coordination**: Timestamp-based conflict prevention active
           **Epic Branch**: \`$EPIC_BRANCH\`
           **Implementation Summary**: ${{ steps.check_artifact.outputs.artifact_exists == 'true' && '✅ Included above' || '⚠️ Not available' }}"
-          
+
           # Prepare labels (use labels that exist in the repo by default)
           LABELS="type: coverage,priority: medium,effort: small"
           # Optionally add component/testing label if present
@@ -1529,9 +1529,9 @@ jobs:
             LABELS="$LABELS,type: bugfix"
             echo "🏷️ Adding 'type: bugfix' label due to production fixes detected"
           fi
-          
+
           echo "🏷️ PR labels: $LABELS"
-          
+
           # Determine draft status and labels based on post-validation
           if [ "${{ steps.post-validation.outputs.validation_passed }}" = "true" ]; then
             DRAFT_FLAG="--draft=false"
