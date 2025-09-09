@@ -13,6 +13,7 @@ using Moq;
 using Zarichney.Services.Email;
 using Zarichney.Services.Payment;
 using Microsoft.Extensions.Logging;
+using Zarichney.Server.Tests.Framework.TestData.AutoFixtureCustomizations;
 
 namespace Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
 
@@ -71,6 +72,7 @@ public class AutoMoqDataAttribute : AutoDataAttribute
     fixture.Customize(new EmailServiceCustomization());
     fixture.Customize(new HttpHeadersCustomization());
     fixture.Customize(new StripeObjectCustomization());
+    fixture.Customize(new WebScraperCustomization());
 
     // Configure AutoFixture to avoid infinite recursion with EF Core entities
     fixture.Behaviors.OfType<ThrowingRecursionBehavior>().ToList()
