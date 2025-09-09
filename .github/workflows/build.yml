@@ -2,7 +2,7 @@ name: "Build & Test"
 
 on:
   push:
-    branches: [main, develop, epic/testing-coverage-to-90]
+    branches: [main, develop]
     paths:
       - 'Code/**'
       - '.github/scripts/**'
