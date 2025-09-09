@@ -2,7 +2,7 @@ name: "Build & Test"
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop, epic/testing-coverage-to-90]
     paths:
       - 'Code/**'
       - '.github/scripts/**'
@@ -159,7 +159,7 @@ jobs:
     name: "Quality Analysis • Testing Analysis (AI)"
     runs-on: ubuntu-latest
     needs: [path-analysis, backend-build, frontend-build, build-summary]
-    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "develop"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
+    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "develop", "epic/testing-coverage-to-90"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
     timeout-minutes: 30
 
     steps:
@@ -356,7 +356,7 @@ jobs:
     name: "Quality Analysis • Standards Compliance (AI)"
     runs-on: ubuntu-latest
     needs: [path-analysis, backend-build, frontend-build, build-summary]
-    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "develop"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
+    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "develop", "epic/testing-coverage-to-90"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
     timeout-minutes: 30
 
     steps:
@@ -478,7 +478,7 @@ jobs:
     name: "Quality Analysis • Tech Debt Analysis (AI)"
     runs-on: ubuntu-latest
     needs: [path-analysis, backend-build, frontend-build, build-summary]
-    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "develop"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
+    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "develop", "epic/testing-coverage-to-90"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
     timeout-minutes: 30
 
     steps:
@@ -598,7 +598,7 @@ jobs:
     name: "Security • Comprehensive Scanning"
     runs-on: ubuntu-latest
     needs: [path-analysis, backend-build, frontend-build, build-summary]
-    if: always() && !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
+    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "epic/testing-coverage-to-90"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
     timeout-minutes: 45
 
     strategy:
@@ -722,7 +722,7 @@ jobs:
     name: "Security • AI Analysis"
     runs-on: ubuntu-latest  
     needs: [path-analysis, backend-build, frontend-build, build-summary, security-scans]
-    if: always() && !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
+    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "epic/testing-coverage-to-90"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
     timeout-minutes: 30
 
     steps:
@@ -907,7 +907,7 @@ jobs:
     name: "Final Analysis • Merge Orchestrator (AI)"
     runs-on: ubuntu-latest
     needs: [path-analysis, backend-build, frontend-build, build-summary, claude-testing-analysis, claude-standards-analysis, claude-tech-debt-analysis, security-scans, claude-security-analysis]
-    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "develop"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
+    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "develop", "epic/testing-coverage-to-90"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
     timeout-minutes: 30
 
     steps:
@@ -1110,7 +1110,7 @@ jobs:
             echo "📝 **RECOMMENDED**: Review analysis results and address issues"
           else
             echo "✅ **PIPELINE SUCCEEDED**: All jobs completed successfully"
-            if [ "${{ github.event.pull_request.base.ref }}" = "main" ] || [ "${{ github.event.pull_request.base.ref }}" = "develop" ]; then
+            if [ "${{ github.event.pull_request.base.ref }}" = "main" ] || [ "${{ github.event.pull_request.base.ref }}" = "develop" ] || [ "${{ github.event.pull_request.base.ref }}" = "epic/testing-coverage-to-90" ]; then
               echo "🤖 **AI ANALYSIS**: Claude AI feedback available in PR comments"
             fi
             echo "🎉 **READY**: Changes are ready for review and merge"

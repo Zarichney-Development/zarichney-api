@@ -199,8 +199,8 @@ jobs:
         run: |
           echo "🔍 Discovering mergeable coverage PRs targeting epic branch"
 
-          # Get all PRs targeting the epic branch
-          ALL_PRS=$(gh pr list --base "$EPIC_BRANCH" --state open --json number,title,headRefName,labels,url,mergeable)
+          # Get all PRs targeting the epic branch (including draft status)
+          ALL_PRS=$(gh pr list --base "$EPIC_BRANCH" --state open --json number,title,headRefName,labels,url,mergeable,isDraft)
 
           if [ -z "$ALL_PRS" ] || [ "$ALL_PRS" = "[]" ]; then
             echo "ℹ️ No open PRs found targeting epic branch"
@@ -260,6 +260,18 @@ jobs:
           ')
 
           echo "📋 Found $(echo "$FILTERED_PRS" | jq length) PRs matching label filters"
+
+          # Filter out draft PRs
+          DRAFT_COUNT=$(echo "$FILTERED_PRS" | jq '[.[] | select(.isDraft == true)] | length')
+          FILTERED_PRS=$(echo "$FILTERED_PRS" | jq '
+            map(select(.isDraft != true))
+          ')
+          
+          if [ "$DRAFT_COUNT" -gt 0 ]; then
+            echo "📝 Excluding $DRAFT_COUNT draft PR(s) from processing"
+          fi
+          
+          echo "📋 Found $(echo "$FILTERED_PRS" | jq length) non-draft PRs after filtering"
 
           # Filter by mergeable status (include MERGEABLE, UNKNOWN, and CONFLICTING for AI resolution)
           MERGEABLE_PRS=$(echo "$FILTERED_PRS" | jq '
