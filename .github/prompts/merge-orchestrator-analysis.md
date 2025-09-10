@@ -209,137 +209,41 @@ Provide final decision as `[MERGE]`, `[CONDITIONAL_MERGE]`, or `[BLOCK]` with de
 </analysis_instructions>
 
 <output_format>
-**Your output MUST be a single GitHub comment formatted in Markdown:**
+Your output MUST be a single GitHub comment formatted in Markdown using the following strict contract. Do not include any sections other than those specified.
 
-## 🎯 MergeOrchestrator Executive Summary
+## Code Review Report - PR Merge Review Analysis
 
-**PR Assessment:** {{PR_NUMBER}} by @{{PR_AUTHOR}} ({{SOURCE_BRANCH}} → {{TARGET_BRANCH}})  
-**Issue Context:** {{ISSUE_REF}}  
-**Analysis Scope:** Holistic deployment readiness assessment
+PR: #{{PR_NUMBER}} by @{{PR_AUTHOR}} ({{SOURCE_BRANCH}} → {{TARGET_BRANCH}}) • Issue: {{ISSUE_REF}} • Changed Files: {{CHANGED_FILES_COUNT}} • Lines Changed: {{LINES_CHANGED}}
 
-### 📊 Consolidated Analysis Overview
+Status: [✅ MERGE / 🚫 BLOCK]
 
-**Overall Assessment:** [Exceeds Expectations/Meets Requirements/Partially Complete/Requires Revision]  
-**Business Value Delivered:** [High/Medium/Low] - [Brief description of value]  
-**Technical Risk Level:** [None/Low/Medium/High/Critical]  
+Rule: Aggregate findings from all source agents (Standards, Tech Debt, Testing, Security). If any items exist in consolidated Do Now, decision is BLOCK; otherwise MERGE.
 
-**AI Sentinel Synthesis:**
-- 🔍 **DebtSentinel**: [X critical, Y high] architectural/complexity concerns
-- 🛡️ **StandardsGuardian**: [X critical, Y high] standards/documentation issues  
-- 🧪 **TestMaster**: [X critical, Y high] testing/coverage concerns
-- 🔒 **SecuritySentinel**: [BLOCK/CONDITIONAL/DEPLOY] - [Brief security assessment]
+Do Now (Pre-Merge Required)
 
----
+| File:Line | Area | Finding | Required Change | Source |
+|-----------|------|---------|-----------------|--------|
+| |
 
-### ✅ Issue Alignment & Requirements Validation
+If more than 10 items exist, list the top 10 most critical by impact and add a final row: “+X additional items”.
 
-**GitHub Issue Requirements:** {{ISSUE_REF}}
+Do Later (Backlog)
 
-| Requirement | Status | Notes |
-|-------------|--------|-------|
-| Core functionality implementation | ✅ Complete | All acceptance criteria satisfied |
-| User experience requirements | ✅ Complete | UI/UX matches specifications |
-| Performance requirements | ⚠️ Pending | Acceptable for MVP, optimization in follow-up |
+| File:Line | Area | Finding | Suggested Action | Source |
+|-----------|------|---------|------------------|--------|
+| |
 
-**Business Value Assessment:**
-- **Primary Value**: [Description of main business value delivered]
-- **User Impact**: [How this affects users and their workflows] 
-- **Strategic Alignment**: [Connection to broader product strategy]
+If more than 10 items exist, list the top 10 and add a final row: “+X additional items”.
 
----
+Summary
 
-### 🚨 Critical Actions Required (Before Merge)
+- Do Now: [N]
+- Do Later: [M]
 
-| Priority | Finding | Source Agent | Required Action | ETA |
-|----------|---------|--------------|-----------------|-----|
-| Critical | SQL injection vulnerability in UserController.cs:45 | SecuritySentinel | Implement parameterized queries | Immediate |
-| High | Missing unit tests for PaymentService.cs | TestMaster | Add comprehensive test coverage | This PR |
+Notes
 
-### 📋 Acceptable Technical Debt (Follow-up Issues Recommended)
-
-| Priority | Finding | Source Agent | Follow-up Recommendation | Timeline |
-|----------|---------|--------------|-------------------------|----------|
-| Medium | Code duplication in validation logic | DebtSentinel | Create shared validation service | Next sprint |
-| Low | README.md updates for new API endpoints | StandardsGuardian | Update module documentation | Next release |
-
-### 🎉 Excellent Patterns & Improvements
-
-**Patterns to Replicate:**
-- **Architectural Excellence**: Clean implementation of CQRS pattern in order processing
-- **Testing Quality**: Comprehensive integration tests with realistic data scenarios
-- **Documentation**: Excellent XML documentation with usage examples
-
-**Technical Debt Reduction:**
-- Eliminated 3 deprecated API endpoints, reducing maintenance burden
-- Refactored complex OrderProcessor class, reducing cyclomatic complexity from 18 to 8
-- Updated 15 legacy tests to use modern testing patterns
-
----
-
-### 🤖 AI Coder Learning Insights
-
-**Reinforced Patterns:**
-- Proper async/await usage throughout the codebase
-- Consistent application of dependency injection patterns
-- Excellent error handling with structured logging
-
-**Learning Opportunities:**
-- Consider test-driven development for complex business logic
-- Remember to update documentation when modifying public APIs
-- Look for opportunities to extract reusable patterns
-
----
-
-### 📈 System Health Impact
-
-**Overall Impact:** [Positive/Neutral/Negative]  
-**Technical Debt Trend:** [Reducing/Stable/Increasing]  
-**Code Quality Metrics:** [Improved/Maintained/Degraded]  
-**Test Coverage Impact:** [+/-X%] (Current: X%)
-
----
-
-### 🎯 FINAL DEPLOYMENT DECISION
-
-**Decision: [✅ MERGE / ⚠️ CONDITIONAL MERGE / 🚫 BLOCK]**
-
-**Justification:**
-This PR successfully delivers the core business value outlined in {{ISSUE_REF}} with acceptable technical trade-offs. While there are [X] high-priority items requiring follow-up, the functionality is complete, secure, and ready for production deployment. The identified technical debt items represent improvement opportunities rather than deployment blockers.
-
-**Business Context:**
-The implemented features directly address user pain points identified in customer feedback and support our Q4 objectives. The risk of delaying deployment outweighs the benefit of addressing non-critical technical debt items in this PR.
-
-**Risk Assessment:**
-Deployment risks are minimal with proper monitoring. The identified technical debt items have been properly categorized for follow-up work and do not impact system stability or user experience.
-
-### ✅ Required Actions Summary
-
-**Before Merge:**
-1. [Critical action 1] - SecuritySentinel requirement
-2. [Critical action 2] - TestMaster requirement
-
-**Post-Deployment Monitoring:**
-1. Monitor [specific metrics] for performance impact
-2. Validate [specific functionality] in production environment
-3. Track [specific user behaviors] for feature adoption
-
-**Recommended Follow-up Issues:**
-1. **[Issue Title]**: Address code duplication in validation layer (Medium priority)
-2. **[Issue Title]**: Implement advanced caching for improved performance (Low priority)  
-3. **[Issue Title]**: Update documentation for new API endpoints (Low priority)
-
-### 📚 Standards & Context References
-
-**For detailed context and standards:**
-- [GitHub Issue {{ISSUE_REF}}](../../../issues/{{ISSUE_REF}}) - Original requirements and acceptance criteria
-- [`/Docs/Standards/`](../Docs/Standards/) - Project standards referenced in analysis
-- [AI Sentinel Analysis Details](../prompts/README.md) - Technical analysis from all agents
-
----
-
-**🎯 DEPLOYMENT DECISION: [MERGE/CONDITIONAL_MERGE/BLOCK]**
-
-*This holistic analysis synthesizes findings from DebtSentinel, StandardsGuardian, TestMaster, and SecuritySentinel while applying business context from {{ISSUE_REF}}. The decision balances technical excellence with business delivery needs to ensure sustainable, value-driven development.*
+- Aggregate only action lists from each agent. Do not include praise or long narratives.
+*MergeOrchestrator consolidates per-agent Do Now/Do Later to produce this decision and action list.*
 </output_format>
 
 ---
