@@ -18,12 +18,14 @@
 
 ## 2. Architecture & Key Concepts
 
-* **High-Level Design:** Five core shared actions that form the foundation of workflow automation:
+* **High-Level Design:** Core shared actions that form the foundation of workflow automation:
     * **`setup-environment`** - Configures development environment with required tools
     * **`check-paths`** - Analyzes changed files to determine required workflow execution
     * **`run-tests`** - Standardized test execution with consistent error handling and structured outputs
     * **`validate-test-suite`** - Validates test results against baseline standards (Phase 2)
     * **`post-results`** - Standardizes communication of analysis results to pull requests
+    * **`extract-pr-context`** - Extracts PR number, author, branches, issue ref, and diff stats
+    * **`check-existing-comment`** - Detects existing AI analysis comments by canonical header
 * **Core Action Types:**
     * **Composite Actions** - Multi-step actions combining GitHub Actions and shell commands
     * **Environment Actions** - Setup and configuration utilities with automatic tool restoration
@@ -59,6 +61,39 @@ graph TD
 ## 3. Interface Contract & Assumptions
 
 * **Key Public Interfaces (for workflow consumption):**
+    * **`extract-pr-context`**:
+        * **Purpose:** Centralized extraction of common PR metadata for reuse across jobs
+        * **Outputs:** `issue_ref`, `pr_number`, `pr_author`, `source_branch`, `target_branch`, `changed_files_count`, `lines_changed`
+        * **Usage:**
+          ```yaml
+          - name: Extract PR Context
+            id: pr-context
+            uses: ./.github/actions/shared/extract-pr-context
+          # Then reference outputs:
+          # steps.pr-context.outputs.issue_ref
+          # steps.pr-context.outputs.changed_files_count
+          # steps.pr-context.outputs.lines_changed
+          ```
+    * **`check-existing-comment`**:
+        * **Purpose:** Skip duplicate AI analysis by detecting if a PR already has a report with the canonical header
+        * **Inputs:** `github-token`, `header`
+        * **Outputs:** `skip_analysis` (string `'true'` or `'false'`)
+        * **Usage:**
+          ```yaml
+          - name: Check for existing Testing analysis comment
+            id: check-existing-comment
+            uses: ./.github/actions/shared/check-existing-comment
+            with:
+              github-token: ${{ secrets.GITHUB_TOKEN }}
+              header: '## Code Review Report - Testing Analysis'
+          - name: Create skip status check
+            if: steps.check-existing-comment.outputs.skip_analysis == 'true'
+            uses: actions/github-script@v7
+            with:
+              github-token: ${{ secrets.GITHUB_TOKEN }}
+              script: |
+                console.log('Testing analysis skipped - existing unresolved analysis comment found');
+          ```
     * **`setup-environment`**:
         * **Purpose:** Configure development environment with .NET, Node.js, common tools, and restore .NET local tools
         * **Critical Preconditions:** GitHub Actions runner with sudo access, internet connectivity, optional .config/dotnet-tools.json

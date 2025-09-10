@@ -375,138 +375,42 @@ Provide specific file:line references and actionable testing recommendations.
 <output_specification>
 **REQUIRED OUTPUT FORMAT:**
 
-Generate a comprehensive GitHub comment using structured Markdown with data-driven insights and actionable recommendations. Maintain professional authority while celebrating testing excellence.
+Generate a single GitHub comment using concise, action-first Markdown. Do not include praise or long narratives. Use the exact structure below.
 
-**Template Structure:**
+## Code Review Report - Testing Analysis
 
-## 🧪 TestMaster Analysis Report
+PR: #{{PR_NUMBER}} by @{{PR_AUTHOR}} ({{SOURCE_BRANCH}} → {{TARGET_BRANCH}}) • Issue: {{ISSUE_REF}} • Changed Files: {{CHANGED_FILES_COUNT}} • Lines Changed: {{LINES_CHANGED}}
 
-**PR Summary:** {{PR_NUMBER}} by @{{PR_AUTHOR}} ({{SOURCE_BRANCH}} → {{TARGET_BRANCH}})  
-**Issue Context:** {{ISSUE_REF}}  
-**Strategic Testing Context:** Coverage phase alignment and epic-driven testing priorities  
-**Analysis Scope:** Comprehensive testing impact assessment
+Status: [✅ MERGE / 🚫 BLOCK]
 
-### 📊 Testing Impact Assessment
+Rule: If any items exist in Do Now, decision is BLOCK; otherwise MERGE.
 
-**Coverage Impact:** [Improved/Maintained/Degraded/Mixed]  
-**Test Execution Status:** [✅ All Passed/⚠️ Some Issues/🚨 Failures]
+Do Now (Pre-Merge Required)
 
-**Strategic Testing Analysis:**
-- **Coverage Phase Context:** [Current phase and phase-appropriate testing expectations]
-- **Epic Alignment:** [How test changes support testing coverage epic objectives]  
-- **Component Testing Focus:** [Component-specific testing patterns and priorities]
-- **Progressive Coverage Status:** [Assessment against coverage velocity targets and timeline]
+| File:Line | Area | Finding | Required Change |
+|-----------|------|---------|-----------------|
+| |
 
-**Testing Metrics:**
-- New Tests Added: [X unit, Y integration]
-- Coverage Change: [+/-X%] (Current: [X%])
-- Test Execution Time: [X.Xs] ([+/-X%] change)
-- Quality Gate Status: [✅ Met/⚠️ Below Threshold/🚨 Critical]
+If more than 10 items exist, list the top 10 most impactful and add a final row: “+X additional items”.
 
----
+Do Later (Backlog)
 
-### 🚨 Critical Testing Issues (Block Merge)
+| File:Line | Area | Finding | Suggested Action |
+|-----------|------|---------|------------------|
+| |
 
-| File:Line | Issue | Impact | Required Action |
-|-----------|-------|--------|-----------------|
-| `Service.cs:45` | New public method lacks tests | Core functionality untested | Add comprehensive unit tests with edge cases |
+If more than 10 items exist, list the top 10 and add a final row: “+X additional items”.
 
-### ⚠️ High Priority (Address in PR)
+Summary
 
-| File:Line | Issue | Impact | Recommended Action |
-|-----------|-------|--------|-------------------|
-| `Controller.cs:23` | Complex logic without branch coverage | Logic paths untested | Add test cases for all conditional branches |
+- Do Now: [N]
+- Do Later: [M]
 
-### 📋 Medium Priority (Follow-up Issue)
+Notes
 
-| File:Line | Issue | Impact | Suggested Action |
-|-----------|-------|--------|------------------|
-| `ServiceTests.cs:67` | Test could be more descriptive | Maintainability concern | Improve test naming and structure |
-
-### 💡 Low Priority (Enhancement Opportunities)
-
-| File:Line | Issue | Impact | Enhancement Suggestion |
-|-----------|-------|--------|----------------------|
-| `HelperTests.cs:89` | Could use newer xUnit patterns | Code modernization | Consider using Theory with InlineData |
-
-### 🎉 Testing Excellence Wins
-
-- **Comprehensive Coverage:** Added 15 unit tests covering all new service methods with edge cases
-- **Integration Testing:** Excellent integration test coverage for new API endpoints with realistic scenarios
-- **Test Architecture:** Proper use of test categorization and established patterns
-- **Quality Improvements:** Refactored existing tests for better maintainability and readability
-
----
-
-### 🎯 AI Coder Testing Insights
-
-**Excellent Patterns to Replicate:**
-- Proper use of Testcontainers for database integration testing
-- Clean test data setup using established Builder patterns
-- Comprehensive async testing with CancellationToken handling
-
-**Testing Patterns to Internalize:**
-- Always include edge case testing for new business logic
-- Use descriptive test names that explain the scenario being tested
-- Remember to test error conditions, not just happy path scenarios
-
-### 🎯 Progressive Coverage Analysis
-
-**Current Phase:** [Phase X - Description]  
-**Next Target:** [X.X%] (Gap: [X.X%])  
-**Timeline Status:** [On Track/Behind Schedule/Critical/Ahead]  
-**Required Velocity:** [X.X%/month] for 90% by Jan 2026
-
-**Strategic Recommendations:**
-- **Phase Focus Areas**: [List current phase priorities]
-- **High-Impact Opportunities**: [Specific areas for maximum coverage gain]
-- **Velocity Assessment**: [Analysis of current progression rate]
-- **Timeline Adjustments**: [Recommendations for meeting 90% target]
-
-**Coverage Progression Insights:**
-- **Efficient Coverage Gains**: [Low-effort, high-impact test scenarios]
-- **Strategic Test Development**: [Phase-appropriate testing priorities]
-- **AI-Driven Opportunities**: [Automated coverage improvement suggestions]
-
-### 📈 Testing Health Metrics
-
-**Test Suite Health:** [Excellent/Good/Needs Attention/Critical]  
-**Coverage Trend:** [Improving/Stable/Declining]  
-**Test Maintainability:** [High/Medium/Low]  
-**AI Coder Test Readiness:** [Fully Ready/Minor Gaps/Needs Improvement]
-
----
-
-### ✅ Immediate Action Items
-
-**For This PR:**
-1. Add unit tests for `ServiceClass.NewMethod()` covering normal and edge cases
-2. Fix failing integration test in `ControllerTests.cs:123`
-3. Update test coverage for modified business logic in `OrderService`
-
-**Suggested Commands:**
-```bash
-# Run specific test categories to validate changes
-./Scripts/run-test-suite.sh report --unit-only
-./Scripts/run-test-suite.sh report --integration-only
-
-# Check coverage for specific files
-./Scripts/run-test-suite.sh report --coverage-detail
-
-# Run tests with performance analysis
-./Scripts/run-test-suite.sh report --performance
-```
-
-### 📚 Testing Resources & Standards
-
-**For comprehensive testing guidance, reference:**
-- [`/Docs/Standards/TestingStandards.md`](../Docs/Standards/TestingStandards.md) - Testing philosophy and conventions
-- [`/Docs/Standards/UnitTestCaseDevelopment.md`](../Docs/Standards/UnitTestCaseDevelopment.md) - Unit testing patterns
-- [`/Docs/Standards/IntegrationTestCaseDevelopment.md`](../Docs/Standards/IntegrationTestCaseDevelopment.md) - Integration testing framework
-
----
-
-*This analysis was performed by TestMaster using comprehensive testing standards from `/Docs/Standards/TestingStandards.md` and established testing patterns from the test project framework. Focus areas included test coverage analysis, test quality assessment, and AI coder testing education for sustainable test development.*
+- Do Now: failing tests, missing coverage for new/changed code, or broken testing framework compliance.
+- Do Later: quality improvements, organization, edge cases, modernization.
+- Keep language concise and objective.
 </output_format>
 
 </output_specification>
