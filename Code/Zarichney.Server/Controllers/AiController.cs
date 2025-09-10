@@ -139,18 +139,39 @@ public class AiController(
       var audioFile = request.AudioFile;
 
       // Enhanced logging to debug potential binding issues
+      int fileCount = 0;
+      try
+      {
+        var httpRequest = Request;
+        if (httpRequest?.HasFormContentType == true)
+        {
+          fileCount = httpRequest.Form.Files.Count;
+        }
+      }
+      catch (Exception ex)
+      {
+        // Avoid Request.Form parsing exceptions from disrupting normal flow (especially in unit test contexts)
+        logger.LogDebug(ex, "{Method}: Unable to read Request.Form; proceeding with request DTO only", nameof(TranscribeAudio));
+      }
       logger.LogInformation(
         "Received transcribe request. Request.Form.Files.Count: {FileCount}, Request DTO File null: {IsParamNull}",
-        Request.Form.Files.Count,
+        fileCount,
         audioFile == null);
 
-      // Check for form field name issues
-      if (audioFile == null && Request.Form.Files.Count > 0)
+      // Check for form field name issues only when we can safely inspect Request.Form
+      if (audioFile == null && fileCount > 0)
       {
-        var fileNames = string.Join(", ", Request.Form.Files.Select(f => f.Name));
-        logger.LogWarning(
-          "Parameter 'audioFile' was null, but Request.Form.Files contains files named: {FileNames}. Ensure the form field name matches 'audioFile'.",
-          fileNames);
+        try
+        {
+          var fileNames = string.Join(", ", Request.Form.Files.Select(f => f.Name));
+          logger.LogWarning(
+            "Parameter 'audioFile' was null, but Request.Form.Files contains files named: {FileNames}. Ensure the form field name matches 'audioFile'.",
+            fileNames);
+        }
+        catch
+        {
+          // ignore secondary failures when enumerating files for the warning
+        }
         return BadRequest("Audio file is required. Ensure the form field name is 'audioFile'.");
       }
 

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http.Features;
 using Moq;
 using FluentAssertions;
 using Xunit;
@@ -12,6 +13,10 @@ using Microsoft.Extensions.Primitives;
 
 namespace Zarichney.Tests.Unit.Controllers.AiController;
 
+/// <summary>
+/// Unit tests for AiController covering completion and transcription endpoints.
+/// Verifies success results, error handling, response shapes, and logging behaviors.
+/// </summary>
 [Trait("Category", "Unit")]
 public class AiControllerTests
 {
@@ -23,6 +28,15 @@ public class AiControllerTests
   {
     // Simple constructor injection following successful PublicControllerTests pattern
     _sut = new Zarichney.Controllers.AiController(_mockAiService.Object, _mockLogger.Object);
+
+    // Provide a minimal HttpContext so controller can access Request/Response safely
+    var httpContext = new DefaultHttpContext();
+    httpContext.Request.ContentType = "multipart/form-data; boundary=---------------------------9051914041544843365972754266";
+    // Pre-seed a form feature to avoid content-type parsing when accessing Request.Form
+    var emptyFiles = new FormFileCollection();
+    var formCollection = new FormCollection(new Dictionary<string, StringValues>(), emptyFiles);
+    httpContext.Features.Set<IFormFeature>(new FormFeature(formCollection));
+    _sut.ControllerContext = new ControllerContext { HttpContext = httpContext };
   }
 
   #region GetCompletion Tests
@@ -48,12 +62,23 @@ public class AiControllerTests
     var result = await _sut.GetCompletion(request);
 
     // Assert
-    result.Should().BeOfType<ApiErrorResult>("AiController uses custom ApiErrorResult pattern consistently");
+    result.Should().BeOfType<OkObjectResult>("successful completion should return 200 OK with payload");
+    var ok = (OkObjectResult)result;
+    ok.Value.Should().BeEquivalentTo(new
+    {
+      response = expectedResult.Response,
+      sourceType = expectedResult.SourceType,
+      transcribedPrompt = expectedResult.TranscribedPrompt
+    });
 
-    // Service verification removed - controller throws exception before reaching service call
-
-    // Note: Header verification removed due to HttpContext mocking complexity
-    // The actual controller sets headers correctly, but unit testing this requires integration test setup
+    // Logger verification
+    _mockLogger.Verify(l => l.Log(
+        LogLevel.Information,
+        It.IsAny<EventId>(),
+        It.Is<It.IsAnyType>((v, t) => v != null && v.ToString()!.Contains("Processing completion request")),
+        It.IsAny<Exception?>(),
+        It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+      Times.AtLeastOnce());
   }
 
   [Fact]
@@ -78,7 +103,14 @@ public class AiControllerTests
     var result = await _sut.GetCompletion(request);
 
     // Assert
-    result.Should().BeOfType<ApiErrorResult>("AiController uses custom ApiErrorResult pattern consistently");
+    result.Should().BeOfType<OkObjectResult>("successful completion should return 200 OK with payload");
+    var ok = (OkObjectResult)result;
+    ok.Value.Should().BeEquivalentTo(new
+    {
+      response = expectedResult.Response,
+      sourceType = expectedResult.SourceType,
+      transcribedPrompt = expectedResult.TranscribedPrompt
+    });
     // Service verification removed - controller throws exception before reaching service call
 
     // Note: Header verification removed due to HttpContext mocking complexity
@@ -100,6 +132,13 @@ public class AiControllerTests
 
     // Assert
     result.Should().BeOfType<BadRequestObjectResult>("ArgumentException returns BadRequestObjectResult when properly handled");
+    _mockLogger.Verify(l => l.Log(
+        LogLevel.Warning,
+        It.IsAny<EventId>(),
+        It.Is<It.IsAnyType>((v, t) => v != null && v.ToString()!.Contains("Invalid prompt provided")),
+        It.IsAny<Exception?>(),
+        It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+      Times.AtLeastOnce());
 
     // Logger verification removed - controller behavior differs from test expectations due to NullReferenceException
   }
@@ -119,9 +158,13 @@ public class AiControllerTests
 
     // Assert
     result.Should().BeOfType<BadRequestObjectResult>("InvalidOperationException should return BadRequest");
-    // ApiErrorResult provides error information internally - detailed validation not needed in unit tests
-
-    // Logger verification removed - controller behavior differs from test expectations due to NullReferenceException
+    _mockLogger.Verify(l => l.Log(
+        LogLevel.Error,
+        It.IsAny<EventId>(),
+        It.Is<It.IsAnyType>((v, t) => v != null && v.ToString()!.Contains("Operation failed")),
+        It.IsAny<Exception?>(),
+        It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+      Times.AtLeastOnce());
   }
 
   [Fact]
@@ -141,8 +184,13 @@ public class AiControllerTests
     result.Should().BeOfType<ApiErrorResult>("general exceptions should return ApiErrorResult");
     var errorResult = (ApiErrorResult)result;
     errorResult.Should().NotBeNull("error result should contain exception details");
-
-    // Logger verification removed - controller behavior differs from test expectations due to NullReferenceException
+    _mockLogger.Verify(l => l.Log(
+        LogLevel.Error,
+        It.IsAny<EventId>(),
+        It.Is<It.IsAnyType>((v, t) => v != null && v.ToString()!.Contains("Failed to get LLM completion")),
+        It.IsAny<Exception?>(),
+        It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+      Times.AtLeastOnce());
   }
 
   #endregion
@@ -171,8 +219,24 @@ public class AiControllerTests
     var result = await _sut.TranscribeAudio(request);
 
     // Assert
-    result.Should().BeOfType<ApiErrorResult>("AiController uses custom ApiErrorResult pattern consistently");
-    // Service verification removed - controller throws exception before reaching service call
+    result.Should().BeOfType<OkObjectResult>("successful transcription should return 200 OK with payload");
+    var ok = (OkObjectResult)result;
+    ok.Value.Should().BeEquivalentTo(new
+    {
+      message = expectedResult.Message,
+      audioFile = expectedResult.AudioFileName,
+      transcriptFile = expectedResult.TranscriptFileName,
+      timestamp = expectedResult.Timestamp,
+      transcript = expectedResult.Transcript
+    });
+    // Logger verification
+    _mockLogger.Verify(l => l.Log(
+        LogLevel.Information,
+        It.IsAny<EventId>(),
+        It.Is<It.IsAnyType>((v, t) => v != null && v.ToString()!.Contains("Received transcribe request")),
+        It.IsAny<Exception?>(),
+        It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+      Times.AtLeastOnce());
   }
 
   [Fact]
@@ -189,8 +253,7 @@ public class AiControllerTests
     var result = await _sut.TranscribeAudio(request);
 
     // Assert
-    result.Should().BeOfType<ApiErrorResult>("ArgumentNullException should return BadRequest");
-    // ApiErrorResult provides error information internally - detailed validation not needed in unit tests
+    result.Should().BeOfType<BadRequestObjectResult>("ArgumentNullException should return BadRequest");
   }
 
   [Fact]
@@ -208,10 +271,14 @@ public class AiControllerTests
     var result = await _sut.TranscribeAudio(request);
 
     // Assert
-    result.Should().BeOfType<ApiErrorResult>("ArgumentException should return BadRequest");
-    // ApiErrorResult provides error information internally - detailed validation not needed in unit tests
-
-    // Logger verification removed - controller behavior differs from test expectations due to NullReferenceException
+    result.Should().BeOfType<BadRequestObjectResult>("ArgumentException should return BadRequest");
+    _mockLogger.Verify(l => l.Log(
+        LogLevel.Warning,
+        It.IsAny<EventId>(),
+        It.Is<It.IsAnyType>((v, t) => v != null && v.ToString()!.Contains("Invalid audio file")),
+        It.IsAny<Exception?>(),
+        It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+      Times.AtLeastOnce());
   }
 
   [Fact]
@@ -232,8 +299,13 @@ public class AiControllerTests
     result.Should().BeOfType<ApiErrorResult>("general exceptions should return ApiErrorResult");
     var errorResult = (ApiErrorResult)result;
     errorResult.Should().NotBeNull("error result should contain exception details");
-
-    // Logger verification removed - controller behavior differs from test expectations due to NullReferenceException
+    _mockLogger.Verify(l => l.Log(
+        LogLevel.Error,
+        It.IsAny<EventId>(),
+        It.Is<It.IsAnyType>((v, t) => v != null && v.ToString()!.Contains("Failed to process audio file")),
+        It.IsAny<Exception?>(),
+        It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+      Times.AtLeastOnce());
   }
 
   #endregion

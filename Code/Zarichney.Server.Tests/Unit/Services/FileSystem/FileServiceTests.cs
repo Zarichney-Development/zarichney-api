@@ -9,6 +9,11 @@ using Xunit;
 
 namespace Zarichney.Tests.Unit.Services.FileSystem;
 
+/// <summary>
+/// Unit tests for FileService covering file operations, image processing, and storage management.
+/// Verifies file reading, writing, JSON serialization, image manipulation, temporary file handling,
+/// and proper resource disposal patterns.
+/// </summary>
 [Trait("Category", "Unit")]
 public class FileServiceTests : IDisposable
 {

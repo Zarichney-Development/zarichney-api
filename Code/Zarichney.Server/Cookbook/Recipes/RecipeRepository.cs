@@ -148,19 +148,19 @@ public class RecipeFileRepository(
 
       await sessionManager.ParallelForEachAsync(parentScope, recipes, async (scope, recipe, _) =>
       {
-      try
-      {
-        await IndexAndRenameRecipeAsync(scope, recipe);
+        try
+        {
+          await IndexAndRenameRecipeAsync(scope, recipe);
 
           // Add to filesToWrite
-        var recipeBag = filesToWrite.GetOrAdd(recipe.IndexTitle!, _ => []);
-        recipeBag.Add(recipe);
-      }
-      catch (Exception ex)
-      {
-        logger.LogError(ex, "Error processing recipe '{RecipeId}'", recipe.Id);
-      }
-    }, config.MaxParallelTasks, ct);
+          var recipeBag = filesToWrite.GetOrAdd(recipe.IndexTitle!, _ => []);
+          recipeBag.Add(recipe);
+        }
+        catch (Exception ex)
+        {
+          logger.LogError(ex, "Error processing recipe '{RecipeId}'", recipe.Id);
+        }
+      }, config.MaxParallelTasks, ct);
 
       foreach (var (title, recipeBag) in filesToWrite)
       {

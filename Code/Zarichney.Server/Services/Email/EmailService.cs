@@ -50,7 +50,6 @@ public class EmailService : IEmailService
     Dictionary<string, object>? templateData = null, FileAttachment? attachment = null)
   {
     // ServiceUnavailableException will be thrown by the proxy if Email service is unavailable
-    ArgumentNullException.ThrowIfNull(_graphClient, nameof(_graphClient));
 
     string bodyContent;
     try
@@ -63,7 +62,7 @@ public class EmailService : IEmailService
 
       if (string.IsNullOrEmpty(bodyContent))
       {
-        throw new Exception("Email body content is empty");
+        throw new InvalidOperationException("Email body content is empty");
       }
     }
     catch (Exception e)
@@ -91,7 +90,7 @@ public class EmailService : IEmailService
     {
       Message = message,
       // Only save in sent folder for non-self-sent emails (the ones as notification for debugging purposes)
-      SaveToSentItems = message.ToRecipients.Any(r => r.EmailAddress!.Address != _config.FromEmail)
+      SaveToSentItems = message.ToRecipients.Any(r => r.EmailAddress?.Address != _config.FromEmail)
     };
 
     try

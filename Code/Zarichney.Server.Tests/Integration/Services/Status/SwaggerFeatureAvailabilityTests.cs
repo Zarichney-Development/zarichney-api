@@ -68,8 +68,8 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
       builder.ConfigureTestServices(services =>
           {
             // Replace the status service with our mock
-          services.AddSingleton(mockStatusService.Object);
-        });
+            services.AddSingleton(mockStatusService.Object);
+          });
     });
 
     // Create an authenticated client with admin role to access Swagger
@@ -171,8 +171,8 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
       builder.ConfigureTestServices(services =>
           {
             // Replace the status service with our mock
-          services.AddSingleton(mockStatusService.Object);
-        });
+            services.AddSingleton(mockStatusService.Object);
+          });
     });
 
     // Create an authenticated client with admin role to access Swagger
@@ -273,8 +273,8 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
       builder.ConfigureTestServices(services =>
           {
             // Replace the status service with our mock
-          services.AddSingleton(mockStatusService.Object);
-        });
+            services.AddSingleton(mockStatusService.Object);
+          });
     });
 
     // Create an authenticated client with admin role to access Swagger
@@ -385,8 +385,8 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
       builder.ConfigureTestServices(services =>
           {
             // Replace the status service with our mock
-          services.AddSingleton(mockStatusService.Object);
-        });
+            services.AddSingleton(mockStatusService.Object);
+          });
     });
 
     // Create an authenticated client with admin role to access Swagger

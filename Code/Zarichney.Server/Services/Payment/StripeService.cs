@@ -95,7 +95,7 @@ public class StripeService : IStripeService
     // Log a warning if the key is missing at startup, but don't set it globally here.
     if (string.IsNullOrEmpty(_config.StripeSecretKey))
     {
-      _logger.LogWarning("Stripe Secret Key is missing in configuration. Stripe functionality will be unavailable until configured.");
+      _logger.LogWarning("Stripe Secret Key is missing in configuration for {Service}. Functionality unavailable until configured.", nameof(StripeService));
     }
   }
 

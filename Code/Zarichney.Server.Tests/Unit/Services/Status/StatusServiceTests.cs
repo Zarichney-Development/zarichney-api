@@ -13,6 +13,11 @@ using Zarichney.Services.Payment;
 
 namespace Zarichney.Tests.Unit.Services.Status;
 
+/// <summary>
+/// Unit tests for StatusService covering system health monitoring and service status reporting.
+/// Verifies status check execution, dependency validation, health endpoint responses,
+/// and proper logging of system state information.
+/// </summary>
 public class StatusServiceTests
 {
   private const string ValidApiKey = "valid-api-key";

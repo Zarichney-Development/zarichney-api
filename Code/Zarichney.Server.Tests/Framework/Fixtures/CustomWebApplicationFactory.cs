@@ -137,9 +137,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
       // Register test auth handler
       services.AddAuthentication(options =>
         {
-        options.DefaultAuthenticateScheme = "Test";
-        options.DefaultChallengeScheme = "Test";
-      })
+          options.DefaultAuthenticateScheme = "Test";
+          options.DefaultChallengeScheme = "Test";
+        })
         .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
 
       // Register mock external services

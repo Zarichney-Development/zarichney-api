@@ -1,7 +1,7 @@
 # README: /Framework/Helpers Directory
 
-**Version:** 1.2
-**Last Updated:** 2025-08-07
+**Version:** 1.3
+**Last Updated:** 2025-09-10
 **Parent:** `../README.md`
 
 ## 1. Purpose & Responsibility
@@ -16,6 +16,7 @@ The primary responsibilities of the helpers in this directory include:
 * **Environment Information:** Providing utilities for querying or influencing the test environment (e.g., `TestEnvironmentHelper.cs`).
 * **Test Suite Standards:** Supporting test baseline management, skip categorization, and quality gate validation (e.g., `TestSuiteStandardsHelper.cs`).
 * **Common Test Operations:** Providing reusable extension methods or factory methods for frequent testing operations (e.g., `TestExtensions.cs`, `TestFactories.cs`).
+* **Mock Setup and Verification:** Standardizing common Moq patterns for dependency mocking, logging verification, and test infrastructure setup (e.g., `MockHelper.cs`).
 
 These helpers are intended to make tests cleaner, more readable, and easier to write and maintain, adhering to the DRY (Don't Repeat Yourself) principle.
 
@@ -34,6 +35,15 @@ The helpers in this directory serve various functions:
 * **`GetRandom.cs`:**
     * A static utility class providing simple, direct access to an `AutoFixture.Fixture` instance.
     * Offers methods like `String()`, `Int()`, `Email()`, `Url()` for generating common types of random data needed in tests, reducing boilerplate.
+* **`MockHelper.cs`:** *(New in v1.3)*
+    * A comprehensive static utility class providing standardized Moq setup patterns and test infrastructure helpers.
+    * **Logger Mocking:** `CreateMockLogger<T>()` creates properly configured mock loggers that accept all log levels and parameters, eliminating repetitive logger setup across test files.
+    * **Options Mocking:** `CreateMockOptions<T>()` simplifies IOptions<T> dependency mocking with clean configuration value wrapping.
+    * **HttpContext Testing:** `CreateTestHttpContext()` and `CreateTestControllerContext()` provide fully configured HttpContext instances for controller testing, including form handling setup.
+    * **Authentication Testing:** `CreateTestUser()` generates ClaimsPrincipal instances with standard claims and optional custom claims for authentication scenarios.
+    * **Logger Verification:** `VerifyLogLevel()` and `VerifyLogContains()` provide readable assertion methods for validating logging behavior without complex Mock.Verify syntax.
+    * **HttpClient Testing:** `CreateTestHttpClient()` provides basic HttpClient instances configured for service testing scenarios.
+    * **Async Task Helpers:** `SuccessTask<T>()` and `FailedTask<T>()` simplify mock setup for async operations, both successful and error scenarios.
 * **`TestAuthHandler.cs`:**
     * A custom `AuthenticationHandler` used in integration tests to simulate various authentication states (e.g., specific users, roles, claims).
     * It's typically registered in `CustomWebApplicationFactory.ConfigureTestServices` to replace the production authentication mechanisms.
@@ -89,6 +99,33 @@ The helpers in this directory serve various functions:
     string randomEmail = GetRandom.Email();
     int randomPort = GetRandom.Int(8000, 9000);
     var userDto = GetRandom.Object<UserDto>(); // Creates a UserDto with random data
+    ```
+* **`MockHelper.cs`:** *(New in v1.3)*
+    ```csharp
+    // Logger mocking made simple
+    var mockLogger = MockHelper.CreateMockLogger<MyService>();
+    var myService = new MyService(mockLogger.Object);
+    
+    // Verify logging behavior
+    MockHelper.VerifyLogLevel(mockLogger, LogLevel.Information, Times.AtLeastOnce());
+    MockHelper.VerifyLogContains(mockLogger, LogLevel.Error, "Database connection failed", Times.Once());
+    
+    // Options mocking for configuration dependencies
+    var config = new MyConfig { ApiKey = "test-key" };
+    var mockOptions = MockHelper.CreateMockOptions(config);
+    var myService = new MyService(mockOptions.Object);
+    
+    // Controller testing with HttpContext
+    var controller = new MyController();
+    controller.ControllerContext = MockHelper.CreateTestControllerContext();
+    
+    // Authentication testing
+    var testUser = MockHelper.CreateTestUser("user-123", "test@example.com", 
+        new Claim(ClaimTypes.Role, "Admin"));
+    
+    // Async error testing simplified
+    mockService.Setup(x => x.ProcessAsync(It.IsAny<string>()))
+        .Returns(MockHelper.FailedTask<Result>(new InvalidOperationException("Test error")));
     ```
 * **`TestExtensions.cs` (e.g., `WithTestUser`):**
     ```csharp

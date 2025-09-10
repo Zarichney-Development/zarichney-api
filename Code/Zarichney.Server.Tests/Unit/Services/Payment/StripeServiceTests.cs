@@ -69,9 +69,9 @@ public class StripeServiceTests
         x => x.Log(
             LogLevel.Warning,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Stripe Secret Key is missing")),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+            It.Is<It.IsAnyType>((v, t) => v != null && v.ToString()!.Contains("Stripe Secret Key is missing")),
+            It.IsAny<Exception?>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
         Times.Once,
         "because missing Stripe configuration should be logged as warning");
   }
@@ -102,9 +102,9 @@ public class StripeServiceTests
         x => x.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Stripe Webhook Secret is missing")),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+            It.Is<It.IsAnyType>((v, t) => v != null && v.ToString()!.Contains("Stripe Webhook Secret is missing")),
+            It.IsAny<Exception?>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
         Times.Once,
         "because missing webhook configuration should be logged as error");
   }
@@ -483,7 +483,7 @@ public class StripeServiceTests
     act.Should().Throw<ArgumentNullException>("because null configuration should be rejected");
   }
 
-  [Theory, AutoMoqData]
+  [Fact]
   [Trait("Category", "Unit")]
   public void Constructor_WithNullLogger_ThrowsArgumentNullException()
   {

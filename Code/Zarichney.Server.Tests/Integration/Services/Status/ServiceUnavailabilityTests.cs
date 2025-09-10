@@ -64,8 +64,8 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
       builder.ConfigureTestServices(services =>
       {
         // Replace the StatusService with our mock that reports MailCheck as unavailable
-      services.AddSingleton(mockStatusService.Object);
-    });
+        services.AddSingleton(mockStatusService.Object);
+      });
     });
 
     // Create a client with authentication
@@ -144,15 +144,15 @@ public class ServiceUnavailabilityTests(ApiClientFixture apiClientFixture, ITest
       builder.ConfigureServices(services =>
       {
         // Remove the existing StatusService registration
-      var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IStatusService));
-      if (descriptor != null)
-      {
-        services.Remove(descriptor);
-      }
+        var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IStatusService));
+        if (descriptor != null)
+        {
+          services.Remove(descriptor);
+        }
 
         // Add our mock as a singleton
-      services.AddSingleton(mockStatusService.Object);
-    });
+        services.AddSingleton(mockStatusService.Object);
+      });
     });
 
     using var httpClient = customFactory.CreateAuthenticatedClient("test-user", ["User"]);
