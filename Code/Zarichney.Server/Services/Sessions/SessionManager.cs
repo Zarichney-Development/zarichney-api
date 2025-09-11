@@ -150,7 +150,7 @@ public class SessionManager(
       }
 
       // Write conversations in parallel
-      var tasks = new List<Task>();
+      List<Task> tasks = [];
       tasks.AddRange(conversationsToWrite.Select(conversation =>
         llmRepository.WriteConversationAsync(conversation, session)));
       // Wait for GitHub service to complete

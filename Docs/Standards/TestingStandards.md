@@ -68,7 +68,7 @@
 * **Coverage Goal:** Strive for >=90% coverage of non-trivial logic in services, handlers, utilities, etc.
 * **Key Principles:**
     * **Isolation:** Mock *all* dependencies using Moq.
-    * **Assertions:** Use FluentAssertions with `.Because("...")`.
+    * **Assertions:** Use FluentAssertions and include a reason via the optional message parameter, e.g., `actual.Should().BeTrue("because the operation should succeed")`.
     * **Data:** Leverage AutoFixture and custom Builders.
 * **Detailed Guidance:** For comprehensive instructions on writing unit tests, including SUT design for testability, advanced mocking, assertion patterns, and AutoFixture usage, refer to:
     * **`Docs/Standards/UnitTestCaseDevelopment.md`**

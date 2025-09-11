@@ -97,7 +97,7 @@ public class ProcessExecutorTests
     var command = "sleep";
     var arguments = "5"; // Sleep for 5 seconds
     using var cts = new CancellationTokenSource();
-    
+
     // Act & Assert
     var task = _sut.RunCommandAsync(command, arguments, 5000, cts.Token);
     cts.Cancel();

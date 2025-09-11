@@ -68,15 +68,15 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
 
   private async Task<string?> ProcessFirstValidImage(IEnumerable<string> imageUrls, string recipeTitle)
   {
-    var urlList = imageUrls.ToList();
+    var imageUrlsList = imageUrls.ToList();
     logger.LogInformation("Attempting to process {Count} image URLs for recipe: {RecipeTitle}",
-      urlList.Count, recipeTitle);
+      imageUrlsList.Count, recipeTitle);
 
-    for (var i = 0; i < urlList.Count; i++)
+    for (var i = 0; i < imageUrlsList.Count; i++)
     {
-      var url = urlList[i];
+      var url = imageUrlsList[i];
       logger.LogInformation("Trying image URL {Index}/{Total} for {RecipeTitle}: {Url}",
-        i + 1, urlList.Count, recipeTitle, url);
+        i + 1, imageUrlsList.Count, recipeTitle, url);
 
       try
       {
@@ -91,19 +91,19 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
         if (!string.IsNullOrEmpty(imagePath))
         {
           logger.LogInformation("Successfully processed image {Index}/{Total} for {RecipeTitle}",
-            i + 1, urlList.Count, recipeTitle);
+            i + 1, imageUrlsList.Count, recipeTitle);
           return imagePath;
         }
       }
       catch (Exception ex)
       {
         logger.LogWarning(ex, "Failed to process image URL {Index}/{Total} for {RecipeTitle}: {Url}",
-          i + 1, urlList.Count, recipeTitle, url);
+          i + 1, imageUrlsList.Count, recipeTitle, url);
       }
     }
 
     logger.LogWarning("No valid images found for recipe: {RecipeTitle} after trying {Count} URLs",
-      recipeTitle, urlList.Count);
+      recipeTitle, imageUrlsList.Count);
     return null;
   }
 

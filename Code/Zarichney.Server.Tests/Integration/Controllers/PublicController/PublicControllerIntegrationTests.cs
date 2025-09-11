@@ -220,8 +220,8 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture,
         because: "logging methods result should not be null");
 
       // Check that at least one logging method is available
-      var hasAnyMethod = loggingMethods.NativeSeq != null || 
-                        loggingMethods.DockerSeq != null || 
+      var hasAnyMethod = loggingMethods.NativeSeq != null ||
+                        loggingMethods.DockerSeq != null ||
                         loggingMethods.FileLogging != null;
       hasAnyMethod.Should().BeTrue(
         because: "at least one logging method should be available");

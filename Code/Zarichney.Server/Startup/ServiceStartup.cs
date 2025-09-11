@@ -229,7 +229,7 @@ public class ServiceStartup
 
     // System Services
     services.AddScoped<IProcessExecutor, ProcessExecutor>();
-    
+
     // Logging Services - provides centralized logging system management
     services.AddHttpClient<ISeqConnectivity, SeqConnectivity>();
     services.AddScoped<ILoggingStatus, LoggingStatus>();

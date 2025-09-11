@@ -80,7 +80,7 @@ public static class TestEnvironmentHelper
 
     // Get service status information
     var serviceStatuses = await ConfigurationStatusHelper.GetServiceStatusAsync(factory);
-    
+
     // Check external service availability
     var externalServices = new Dictionary<string, bool>
     {
@@ -142,7 +142,7 @@ public static class TestEnvironmentHelper
   public static TestEnvironmentClassification GetCurrentTestEnvironmentClassification()
   {
     var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-    
+
     return string.Equals(environment, "Production", StringComparison.OrdinalIgnoreCase)
       ? TestEnvironmentClassification.Production
       : TestEnvironmentClassification.Unconfigured; // Default to unconfigured for safety
@@ -244,10 +244,10 @@ public static class TestEnvironmentHelper
       process.StartInfo.RedirectStandardOutput = true;
       process.StartInfo.RedirectStandardError = true;
       process.StartInfo.CreateNoWindow = true;
-      
+
       process.Start();
       process.WaitForExit(5000); // 5 second timeout
-      
+
       return process.ExitCode == 0;
     }
     catch

@@ -62,7 +62,7 @@ public class CookbookController(
         RecipeSpecificationType = "specific", // Or "criteria" etc. based on your models
         SpecificRecipes = ["Classic Beef Burger", "Chocolate Chip Cookies"], // Example recipes
         ExpectedRecipeCount = 5 // Example count
-        // Add other relevant fields from CookbookContent
+                                // Add other relevant fields from CookbookContent
       }
       // Add other relevant fields from CookbookOrderSubmission
     };

@@ -158,7 +158,7 @@ Based on TDD FRMK-004 and Research Report Sec 2.4.1, 6.5.
     var requests = server.FindLogEntries(
         Request.Create().WithPath("/v1/external-payments").UsingPost()
     );
-    requests.Should().HaveCount(1).Because("the payment service should have been called once");
+    requests.Should().HaveCount(1, "because the payment service should have been called once");
     ```
 
 ### 6.3. Simulating Authentication and Authorization
@@ -213,16 +213,16 @@ Integration tests often require more complex and realistic data setups than unit
 
 ## 8. Writing Assertions for Integration Tests
 
-Use FluentAssertions for all assertions. Include `.Because("...")` for clarity.
+Use FluentAssertions for all assertions. Include a clear reason using the assertion's optional message parameter for clarity.
 
 * **Asserting HTTP Response Details:**
-    * **Status Codes:** `response.StatusCode.Should().Be(HttpStatusCode.Created).Because("a new resource was expected");`
-    * **Headers:** `response.Headers.Location.Should().NotBeNull().And.BeValidAbsoluteUri().Because("a location header pointing to the new resource is expected");`
+    * **Status Codes:** `response.StatusCode.Should().Be(HttpStatusCode.Created, "because a new resource was expected");`
+    * **Headers:** `response.Headers.Location.Should().NotBeNull("because a location header is expected").And.BeValidAbsoluteUri();`
     * **Content/Body:**
         * Deserialize JSON content: `var resultDto = await response.Content.ReadFromJsonAsync<MyResourceDto>();`
-        * `resultDto.Should().NotBeNull().Because("a valid resource DTO was expected");`
-        * `resultDto.Should().BeEquivalentTo(expectedDto, options => options.Excluding(d => d.CreatedAt)).Because("the returned DTO should match the input, except for server-generated fields");`
-        * For collections: `resultList.Should().HaveCount(3).And.Contain(item => item.Name == "TestItem").Because("...");`
+        * `resultDto.Should().NotBeNull("because a valid resource DTO is expected");`
+        * `resultDto.Should().BeEquivalentTo(expectedDto, options => options.Excluding(d => d.CreatedAt), "because the returned DTO should match the input, except for server-generated fields");`
+        * For collections: `resultList.Should().HaveCount(3, "because ...").And.Contain(item => item.Name == "TestItem");`
         * For error responses (e.g., `ProblemDetails` or `ApiErrorResult`):
             ```csharp
             var errorResult = await response.Content.ReadFromJsonAsync<ProblemDetails>(); // Or your custom error DTO
@@ -235,7 +235,7 @@ Use FluentAssertions for all assertions. Include `.Because("...")` for clarity.
     await using var assertContext = DbFixture.GetContext();
     var newEntity = await assertContext.MyEntities.FindAsync(newResourceId);
     newEntity.Should().NotBeNull();
-    newEntity.SomeProperty.Should().Be(expectedValue).Because("the API call should have updated this property");
+    newEntity.SomeProperty.Should().Be(expectedValue, "because the API call should have updated this property");
     ```
 * **Asserting Interactions with Virtualized Services (WireMock.Net):**
     * Verify that the `WireMock.Net` server received the expected requests from your application.
@@ -244,7 +244,7 @@ Use FluentAssertions for all assertions. Include `.Because("...")` for clarity.
     var loggedRequests = wiremockServer.FindLogEntries(
         Request.Create().WithPath("/external-api/expected-path").UsingPost()
     );
-    loggedRequests.Should().HaveCount(1).Because("the external service should have been called once");
+    loggedRequests.Should().HaveCount(1, "because the external service should have been called once");
     // Further assertions on loggedRequest.RequestMessage.BodyAsJson, etc.
     ```
 
@@ -294,7 +294,7 @@ Before committing integration tests, quickly verify:
 4.  **Database State:** If stateful, is `ResetDatabaseAsync()` called? Is data seeded appropriately and state verified correctly?
 5.  **External HTTP Services:** Are external HTTP dependencies properly virtualized (e.g., with WireMock.Net stubs)? No live external calls?
 6.  **Authentication/Authorization:** If testing secured endpoints, are different authentication states and roles considered using `AuthTestHelper`?
-7.  **Assertions:** Are assertions clear, using FluentAssertions with `.Because("...")`, and verifying relevant aspects (status, headers, body, DB state)?
+7.  **Assertions:** Are assertions clear, using FluentAssertions with explicit reasons (via the assertion's optional message parameter), and verifying relevant aspects (status, headers, body, DB state)?
 8.  **Data Management:** Is test data (DTOs, DB entities) managed effectively (AutoFixture, Builders) and isolated per test?
 9.  **Conditional Execution:** Does the test use `[DependencyFact]` if it relies on specific configurations or infrastructure like Docker?
 10. **Performance:** Is the test reasonably performant for an integration test? No unnecessary delays?

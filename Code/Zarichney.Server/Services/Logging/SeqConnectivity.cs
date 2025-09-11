@@ -44,7 +44,7 @@ public class SeqConnectivity(
     catch (Exception ex)
     {
       logger.LogError(ex, "Error testing Seq connectivity to {Url}", urlToTest);
-      
+
       return new SeqConnectivityResult
       {
         Url = urlToTest,
@@ -66,7 +66,7 @@ public class SeqConnectivity(
     {
       using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
       timeoutCts.CancelAfter(TimeSpan.FromSeconds(_config.SeqTimeoutSeconds));
-      
+
       var response = await httpClient.GetAsync($"{url}/api/events/raw", timeoutCts.Token);
       return response.IsSuccessStatusCode;
     }
@@ -110,10 +110,10 @@ public class SeqConnectivity(
     if (_config.EnableDockerFallback && await TryStartDockerSeqAsync(cancellationToken))
     {
       logger.LogInformation("Attempting to start Docker Seq container...");
-      
+
       // Wait for container startup with proper cancellation token propagation
       await Task.Delay(_config.DockerStartupDelayMs, cancellationToken);
-      
+
       if (await TryConnectToSeqAsync("http://localhost:5341", cancellationToken))
       {
         logger.LogInformation("Successfully started Docker Seq container");
@@ -129,7 +129,7 @@ public class SeqConnectivity(
   public async Task<string?> GetActiveSeqUrlAsync(CancellationToken cancellationToken = default)
   {
     var configuredUrl = _config.SeqUrl;
-    
+
     if (!string.IsNullOrEmpty(configuredUrl) && await TryConnectToSeqAsync(configuredUrl, cancellationToken))
       return configuredUrl;
 
@@ -186,9 +186,9 @@ public class SeqConnectivity(
     try
     {
       var result = await processExecutor.RunCommandAsync(
-        "docker", 
-        "ps --filter name=seq --format {{.Names}}", 
-        _config.ProcessTimeoutMs, 
+        "docker",
+        "ps --filter name=seq --format {{.Names}}",
+        _config.ProcessTimeoutMs,
         cancellationToken);
       return !string.IsNullOrWhiteSpace(result.output);
     }

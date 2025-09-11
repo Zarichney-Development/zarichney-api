@@ -94,7 +94,7 @@ This workflow is designed to be iterative and ensure quality.
     * Clear Arrange-Act-Assert (AAA) structure.
     * Descriptive test naming.
     * Using AutoFixture (e.g., `[AutoData]`, `[Frozen]`) for test data.
-    * Writing expressive assertions with FluentAssertions and `.Because("...")`.
+    * Writing expressive assertions with FluentAssertions and including clear reasons using the assertion's optional message parameter.
     * Marking tests with `[Trait("Category", "Unit")]`.
 
 **Step 5: Write Integration Tests (If Applicable to Scope)**
