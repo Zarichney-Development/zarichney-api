@@ -1,7 +1,6 @@
-import { Component, Directive, ElementRef, Input, ViewChild } from '@angular/core';
+import { Component, Directive, ElementRef, ViewChild } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { ResponsiveService } from '../../services/responsive.service';
-import { LoggingService } from '../../services/log.service';
+// Removed unused service imports
 
 @Directive({
   selector: 'ul[menuDirective]',
@@ -29,14 +28,14 @@ export class MenuComponent {
   menuOverflow: boolean = false;
   showMobileMenu: boolean = false;
 
-  constructor(private log: LoggingService, private responsiveService: ResponsiveService) {
+  constructor() {
     // Removed afterNextRender from constructor
   }
 
   ngAfterViewInit() {
   }
 
-  handleResize(resize: any) {
+  handleResize(_resize: any) {
     // this.log.info('onResize', resize);
     // let height = this.menuContainer!.nativeElement.clientHeight;
     // let width = this.menuContainer!.nativeElement.clientWidth;
@@ -45,7 +44,6 @@ export class MenuComponent {
 
   hasOverflowingChildren(element: HTMLElement): boolean {
     let totalWidth = 0;
-    const children = element.children;
     // for (let child of children) {
     //   totalWidth += (child as HTMLElement).offsetWidth;
     // }

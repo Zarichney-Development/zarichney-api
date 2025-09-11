@@ -185,19 +185,88 @@ install_dependencies() {
 }
 
 run_linting() {
-    log_section "Running Frontend Linting"
+    log_section "Running Frontend Linting with Warning Enforcement"
     
-    # Check if lint script exists
-    if npm run --silent | grep -q "lint"; then
-        log_info "Running linting checks..."
-        if npm run lint; then
-            log_success "Linting passed"
+    # Check for CI-specific lint script with zero-warning enforcement
+    if npm run --silent | grep -q "lint:ci"; then
+        log_info "Running zero-warning enforcement: npm run lint:ci"
+        log_info "Policy: --max-warnings=0 (zero-tolerance)"
+        
+        # Capture lint output for detailed failure analysis
+        local lint_output
+        if lint_output=$(npm run lint:ci 2>&1); then
+            log_success "✅ ESLint passed with zero warnings"
+            
+            # Validate zero-warning configuration
+            if grep -q "max-warnings.*0" <<< "$lint_output" 2>/dev/null; then
+                log_info "✅ Zero-warning enforcement confirmed active"
+            fi
         else
-            log_error "Linting failed"
+            local exit_code=$?
+            log_error "❌ LINTING FAILED: ESLint warnings detected (zero-warning policy)"
+            
+            # Extract warning details for developer guidance
+            if grep -qi "warning" <<< "$lint_output" 2>/dev/null; then
+                log_error "Fix all ESLint warnings before proceeding:"
+                echo "$lint_output" | grep -A 2 -B 2 "warning" | head -15 || true
+                
+                # Count warnings for summary
+                local warning_count
+                warning_count=$(echo "$lint_output" | grep -c "warning" 2>/dev/null || echo "unknown")
+                log_error "Total ESLint warnings: $warning_count"
+                
+                # Set GitHub Actions outputs for workflow annotations
+                if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+                    echo "lint_failure_type=warnings" >> "$GITHUB_OUTPUT"
+                    echo "eslint_warning_count=$warning_count" >> "$GITHUB_OUTPUT"
+                    echo "warning_enforcement_active=true" >> "$GITHUB_OUTPUT"
+                fi
+            else
+                log_error "ESLint configuration or execution error:"
+                echo "$lint_output"
+                
+                if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+                    echo "lint_failure_type=configuration" >> "$GITHUB_OUTPUT"
+                    echo "warning_enforcement_active=true" >> "$GITHUB_OUTPUT"
+                fi
+            fi
+            
+            return 1
+        fi
+        
+        # Additional TypeScript strict compilation check
+        log_info "Running TypeScript strict compilation check..."
+        if npm run check-warnings 2>/dev/null; then
+            log_success "✅ TypeScript strict compilation passed"
+        else
+            log_warning "⚠️ TypeScript strict compilation detected issues (check-warnings script)"
+            log_info "Note: This is supplementary validation - ESLint enforcement is primary"
+        fi
+        
+    elif npm run --silent | grep -q "lint"; then
+        log_warning "⚠️ Using fallback lint script (lint:ci not found)"
+        log_warning "Zero-warning enforcement may not be fully active"
+        log_info "Running basic linting checks..."
+        
+        if npm run lint; then
+            log_success "Basic linting passed"
+        else
+            log_error "Basic linting failed"
+            
+            if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+                echo "lint_failure_type=basic" >> "$GITHUB_OUTPUT"
+                echo "warning_enforcement_active=false" >> "$GITHUB_OUTPUT"
+            fi
+            
             return 1
         fi
     else
-        log_warning "No lint script found in package.json, skipping..."
+        log_warning "No lint scripts found in package.json, skipping..."
+        
+        if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+            echo "lint_failure_type=missing" >> "$GITHUB_OUTPUT"
+            echo "warning_enforcement_active=false" >> "$GITHUB_OUTPUT"
+        fi
     fi
 }
 

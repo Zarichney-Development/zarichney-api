@@ -174,11 +174,56 @@ build_solution() {
     log_section "Building Solution"
     
     log_info "Building $SOLUTION_FILE in $BUILD_CONFIG configuration..."
+    log_info "Warning enforcement: TreatWarningsAsErrors=true enabled"
     
-    if dotnet build "$SOLUTION_FILE" --configuration "$BUILD_CONFIG" --no-restore; then
-        log_success "Solution built successfully"
+    # Capture build output for warning analysis
+    local build_output
+    if build_output=$(dotnet build "$SOLUTION_FILE" --configuration "$BUILD_CONFIG" --no-restore 2>&1); then
+        log_success "Solution built successfully with zero warnings"
+        
+        # Validate warning-as-error enforcement is working
+        if grep -q "TreatWarningsAsErrors" <<< "$build_output" 2>/dev/null; then
+            log_info "✅ Warning-as-error enforcement confirmed active"
+        fi
     else
-        die "Solution build failed"
+        # Analyze build failure for warning-related issues
+        local exit_code=$?
+        
+        # Check if failure is due to warnings treated as errors
+        if grep -qi "warning.*treated as error" <<< "$build_output" 2>/dev/null; then
+            log_error "❌ BUILD FAILED: Warnings detected and treated as errors"
+            log_error "Fix all compiler warnings before proceeding:"
+            echo "$build_output" | grep -i "warning" | head -10 || true
+            
+            # Add GitHub Actions annotation for warning failures
+            if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+                echo "build_failure_type=warnings" >> "$GITHUB_OUTPUT"
+                echo "warning_enforcement_active=true" >> "$GITHUB_OUTPUT"
+            fi
+            
+            die "Build failed due to compiler warnings (zero-warning policy enforced)"
+        elif grep -qi "error" <<< "$build_output" 2>/dev/null; then
+            log_error "❌ BUILD FAILED: Compilation errors detected"
+            echo "$build_output" | grep -i "error" | head -10 || true
+            
+            # Add GitHub Actions annotation for compilation failures
+            if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+                echo "build_failure_type=compilation" >> "$GITHUB_OUTPUT"
+                echo "warning_enforcement_active=true" >> "$GITHUB_OUTPUT"
+            fi
+            
+            die "Solution build failed due to compilation errors"
+        else
+            log_error "❌ BUILD FAILED: Unknown build failure"
+            echo "$build_output"
+            
+            if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+                echo "build_failure_type=unknown" >> "$GITHUB_OUTPUT"
+                echo "warning_enforcement_active=true" >> "$GITHUB_OUTPUT"
+            fi
+            
+            die "Solution build failed"
+        fi
     fi
 }
 

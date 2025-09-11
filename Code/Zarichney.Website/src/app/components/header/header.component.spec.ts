@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
-import { HeaderComponent } from './header.component';
+import { provideMockStore } from '@ngrx/store/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { AppHeaderComponent } from './header.component';
 
 @Component({
   selector: 'app-logo',
@@ -16,16 +18,17 @@ class MockLogoComponent {}
 })
 class MockMenuComponent {}
 
-describe('HeaderComponent', () => {
-  let component: HeaderComponent;
-  let fixture: ComponentFixture<HeaderComponent>;
+describe('AppHeaderComponent', () => {
+  let component: AppHeaderComponent;
+  let fixture: ComponentFixture<AppHeaderComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [HeaderComponent, MockLogoComponent, MockMenuComponent]
+      imports: [AppHeaderComponent, MockLogoComponent, MockMenuComponent, RouterTestingModule],
+      providers: [provideMockStore({})]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(HeaderComponent);
+    fixture = TestBed.createComponent(AppHeaderComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
@@ -34,8 +37,8 @@ describe('HeaderComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should render header element', () => {
+  it('should render header container', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('header')).toBeTruthy();
+    expect(compiled.querySelector('.header-container')).toBeTruthy();
   });
 });

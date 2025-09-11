@@ -31,8 +31,9 @@ const DEFAULT_CONFIG: LogConfig = {
 
 @Injectable({ providedIn: 'root' })
 export class LoggingService {
-    private debugMode = !environment.production;
-    private config: LogConfig = DEFAULT_CONFIG;
+  private debugMode = !environment.production;
+  private config: LogConfig = DEFAULT_CONFIG;
+  private readonly isBrowser = typeof window !== 'undefined' && typeof localStorage !== 'undefined';
 
     constructor() {
         // Check for stored configuration
@@ -45,7 +46,11 @@ export class LoggingService {
      */
     configure(config: Partial<LogConfig>): void {
         this.config = { ...this.config, ...config };
-        localStorage.setItem('log_config', JSON.stringify(this.config));
+        if (this.isBrowser) {
+            try {
+                localStorage.setItem('log_config', JSON.stringify(this.config));
+            } catch { /* ignore SSR or storage errors */ }
+        }
         this.info('LoggingService configuration updated:', this.config);
     }
 
@@ -53,6 +58,7 @@ export class LoggingService {
      * Load logging configuration from localStorage
      */
     private loadConfig(): void {
+        if (!this.isBrowser) return;
         try {
             const savedConfig = localStorage.getItem('log_config');
             if (savedConfig) {
@@ -66,7 +72,10 @@ export class LoggingService {
                 this.config = { ...this.config, ...parsedConfig };
             }
         } catch (e) {
-            console.error('Error loading log configuration:', e);
+            // Use console only in browser to avoid SSR noise
+            if (this.isBrowser) {
+                console.error('Error loading log configuration:', e);
+            }
         }
     }
 

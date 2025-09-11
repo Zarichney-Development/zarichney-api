@@ -6,7 +6,7 @@ import {
   HttpInterceptor,
   HttpErrorResponse
 } from '@angular/common/http';
-import { BehaviorSubject, Observable, throwError, of } from 'rxjs';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, filter, switchMap, take, finalize, tap } from 'rxjs/operators';
 import { LoggingService } from '../../services/log.service';
 import { ToastrService } from 'ngx-toastr';
@@ -182,7 +182,7 @@ export class AuthInterceptor implements HttpInterceptor {
         tap(response => {
           this.log.debug('Token refresh successful, response:', response);
         }),
-        switchMap(response => {
+        switchMap(() => {
           // Mark the refresh as complete
           this.isRefreshing = false;
 

@@ -72,9 +72,12 @@ public class RecipeFileRepository(
           try
           {
             var recipes = await fileService.ReadFromFile<List<Recipe>>(config.OutputDirectory, fileName);
-            foreach (var recipe in recipes)
+            if (recipes != null)
             {
-              AddRecipeToRepository(recipe);
+              foreach (var recipe in recipes)
+              {
+                AddRecipeToRepository(recipe);
+              }
             }
           }
           catch (Exception ex)

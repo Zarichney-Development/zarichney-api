@@ -165,7 +165,7 @@ public class StripeServiceTests
 
   [Theory, AutoData]
   [Trait("Category", "Unit")]
-  public async Task GetSession_WithEmptySessionId_ShouldHandleGracefully(
+  public Task GetSession_WithEmptySessionId_ShouldHandleGracefully(
       [Frozen] Mock<ILogger<StripeService>> mockLogger)
   {
     // Arrange
@@ -176,11 +176,12 @@ public class StripeServiceTests
     // In practice, this would test the actual Stripe API call handling
     // For now, verify the service is properly configured
     sut.Should().NotBeNull("because the service should handle empty session ID gracefully");
+    return Task.CompletedTask;
   }
 
   [Theory, AutoData]
   [Trait("Category", "Unit")]
-  public async Task GetSessionWithLineItems_WithValidSessionId_ShouldExpandLineItems(
+  public Task GetSessionWithLineItems_WithValidSessionId_ShouldExpandLineItems(
       [Frozen] Mock<ILogger<StripeService>> mockLogger)
   {
     // Arrange
@@ -191,11 +192,12 @@ public class StripeServiceTests
     // This would test that the session is retrieved with line items expanded
     // In practice, we would verify the Stripe API call includes the proper expand parameter
     sut.Should().NotBeNull("because the service should support line item expansion");
+    return Task.CompletedTask;
   }
 
   [Theory, AutoData]
   [Trait("Category", "Unit")]
-  public async Task FindSessionsByPaymentIntent_WithValidPaymentIntentId_ShouldReturnMatchingSessions(
+  public Task FindSessionsByPaymentIntent_WithValidPaymentIntentId_ShouldReturnMatchingSessions(
       [Frozen] Mock<ILogger<StripeService>> mockLogger)
   {
     // Arrange
@@ -206,11 +208,12 @@ public class StripeServiceTests
     // This would test the search functionality for sessions by payment intent
     // In practice, we would verify the proper Stripe API search parameters
     sut.Should().NotBeNull("because the service should support session search by payment intent");
+    return Task.CompletedTask;
   }
 
   [Theory, AutoData]
   [Trait("Category", "Unit")]
-  public async Task GetPaymentIntent_WithValidId_ShouldRetrievePaymentIntent(
+  public Task GetPaymentIntent_WithValidId_ShouldRetrievePaymentIntent(
       [Frozen] Mock<ILogger<StripeService>> mockLogger)
   {
     // Arrange
@@ -220,11 +223,12 @@ public class StripeServiceTests
     // Act & Assert
     // This would test payment intent retrieval with proper cancellation token handling
     sut.Should().NotBeNull("because the service should support payment intent retrieval");
+    return Task.CompletedTask;
   }
 
   [Theory, AutoData]
   [Trait("Category", "Unit")]
-  public async Task CreatePaymentIntentAsync_WithValidParameters_ShouldCreatePaymentIntent(
+  public Task CreatePaymentIntentAsync_WithValidParameters_ShouldCreatePaymentIntent(
       [Frozen] Mock<ILogger<StripeService>> mockLogger)
   {
     // Arrange
@@ -234,6 +238,7 @@ public class StripeServiceTests
     // Act & Assert
     // This would test payment intent creation with all specified parameters
     sut.Should().NotBeNull("because the service should support payment intent creation");
+    return Task.CompletedTask;
   }
 
   [Theory, AutoMoqData]

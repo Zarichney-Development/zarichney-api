@@ -20,7 +20,7 @@ namespace Zarichney.Server.Tests.Integration.Services.FileSystem;
 [Trait("Component", "Service")]
 [Trait("Feature", "FileSystem")]
 [Collection("IntegrationCore")]
-public class FileServiceIntegrationTests : IntegrationTestBase
+public class FileServiceIntegrationTests : IntegrationTestBase, IDisposable
 {
   private readonly string _tempDirectory;
 
@@ -340,8 +340,9 @@ public class FileServiceIntegrationTests : IntegrationTestBase
 
   /// <summary>
   /// Cleanup temporary test directory after tests complete.
+  /// Implement IDisposable to avoid conflicting with IAsyncLifetime in base.
   /// </summary>
-  public new async Task DisposeAsync()
+  public void Dispose()
   {
     try
     {
@@ -355,8 +356,6 @@ public class FileServiceIntegrationTests : IntegrationTestBase
       // Log but don't fail test cleanup
       System.Diagnostics.Debug.WriteLine($"Failed to cleanup test directory: {ex.Message}");
     }
-
-    await base.DisposeAsync();
   }
 
   #endregion

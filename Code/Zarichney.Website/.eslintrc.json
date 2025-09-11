@@ -1,0 +1,54 @@
+{
+  "root": true,
+  "env": {
+    "browser": true,
+    "es2022": true,
+    "node": true
+  },
+  "extends": [
+    "eslint:recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "ignorePatterns": [
+    "dist/**/*",
+    "node_modules/**/*",
+    "coverage/**/*",
+    "*.js",
+    "*.mjs"
+  ],
+  "rules": {
+    // WARNING ENFORCEMENT RULES - Key for zero-warning builds
+    "@typescript-eslint/no-unused-vars": ["error", { 
+      "argsIgnorePattern": "^_",
+      "varsIgnorePattern": "^_" 
+    }],
+    
+    // TYPESCRIPT-SPECIFIC RULES
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-inferrable-types": "off",
+    
+    // GENERAL CODE QUALITY
+    "no-console": ["warn", { "allow": ["warn", "error", "log"] }],
+    "no-debugger": "error", 
+    "prefer-const": "error",
+    "no-var": "error",
+    "no-undef": "off"
+  },
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "rules": {
+        // TypeScript handles these checks
+        "no-undef": "off",
+        "no-unused-vars": "off"
+      }
+    }
+  ]
+}

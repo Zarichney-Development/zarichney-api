@@ -67,7 +67,7 @@ public class FileServiceTests : IDisposable
     // When deserializing to dynamic, System.Text.Json returns JsonElement.
     // Calling extension methods like Should() on dynamic causes a runtime binder error.
     // Cast to object to enable FluentAssertions extension resolution safely.
-    ((object)result).Should().NotBeNull("a valid JSON file should be deserialized successfully");
+    ((object?)result).Should().NotBeNull("a valid JSON file should be deserialized successfully");
   }
 
   [Fact]

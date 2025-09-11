@@ -26,7 +26,7 @@ export const clientAppConfig: ApplicationConfig = {
     provideClientHydration(
       withHttpTransferCacheOptions({
         includePostRequests: true,
-        filter: (req) => false // enable this to turn off client side api calls
+        filter: (_req) => false // enable this to turn off client side api calls
       })
     ),
     { provide: 'APP_BASE_HREF', useValue: '/' },
@@ -58,8 +58,8 @@ const initializeApp = async () => {
     if (typeof window !== 'undefined') { // Ensure we're in browser context
       console.log('Initializing browser application');
 
-      if (environment.development && environment.hmr && (window as any)['module']?.hot) {
-        hmrBootstrap((window as any)['module'], bootstrap);
+      if (environment.development && environment.hmr && (window as unknown as { module?: { hot?: unknown } })['module']?.hot) {
+        hmrBootstrap((window as unknown as { module: unknown })['module'], bootstrap);
         return;
       }
 

@@ -113,8 +113,10 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Execute backend build and test
+        id: backend-execution
         run: |
           echo "🚀 Running backend build and test pipeline..."
+          echo "⚠️  Warning Enforcement: MSBuild TreatWarningsAsErrors=true (zero-tolerance policy)"
           
           # Set CI environment variables
           export CI_ENVIRONMENT=true
@@ -139,6 +141,24 @@ jobs:
           
           # Execute the pipeline script (disable parallel for accurate coverage collection)
           ./.github/scripts/build-backend.sh --threshold 16 $COVERAGE_FLAGS
+      
+      - name: Annotate backend build failures
+        if: failure() && steps.backend-execution.outcome == 'failure'
+        run: |
+          echo "📊 Analyzing backend build failure for warning-related issues..."
+          
+          # Check if build failure was due to warnings
+          if [[ "${{ steps.backend-execution.outputs.build_failure_type }}" == "warnings" ]]; then
+            echo "::error title=Backend Build Failed - Warnings Detected::Zero-warning policy enforced: MSBuild TreatWarningsAsErrors=true caused build failure. Fix all compiler warnings before proceeding."
+            echo "::notice title=Warning Enforcement Active::This build uses zero-tolerance warning policy. All compiler warnings must be resolved."
+          elif [[ "${{ steps.backend-execution.outputs.build_failure_type }}" == "compilation" ]]; then
+            echo "::error title=Backend Build Failed - Compilation Errors::Fix compilation errors in .NET codebase before proceeding."
+          else
+            echo "::error title=Backend Build Failed::Unknown build failure - check build logs for details."
+          fi
+          
+          # Summary annotation
+          echo "::notice title=Zero-Warning Build Policy::This project enforces zero compiler warnings. Warning-as-error enforcement: ${{ steps.backend-execution.outputs.warning_enforcement_active }}"
         
       - name: Upload backend artifacts
         if: always()
@@ -268,14 +288,39 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Execute frontend build and test
+        id: frontend-execution
         run: |
           echo "🚀 Running frontend build and test pipeline..."
+          echo "⚠️  Warning Enforcement: ESLint --max-warnings=0 (zero-tolerance policy)"
           
           # Set CI environment variables
           export CI_ENVIRONMENT=true
           
           # Execute the pipeline script
           ./.github/scripts/build-frontend.sh --prod
+      
+      - name: Annotate frontend build failures
+        if: failure() && steps.frontend-execution.outcome == 'failure'
+        run: |
+          echo "📊 Analyzing frontend build failure for warning-related issues..."
+          
+          # Check if build failure was due to warnings
+          if [[ "${{ steps.frontend-execution.outputs.lint_failure_type }}" == "warnings" ]]; then
+            echo "::error title=Frontend Build Failed - ESLint Warnings Detected::Zero-warning policy enforced: ESLint --max-warnings=0 caused build failure. Fix all linting warnings before proceeding."
+            echo "::notice title=ESLint Warning Count::${{ steps.frontend-execution.outputs.eslint_warning_count }} warnings detected"
+            echo "::notice title=Warning Enforcement Active::This build uses zero-tolerance ESLint warning policy. All warnings must be resolved."
+          elif [[ "${{ steps.frontend-execution.outputs.lint_failure_type }}" == "configuration" ]]; then
+            echo "::error title=Frontend Build Failed - ESLint Configuration Error::Fix ESLint configuration issues before proceeding."
+          elif [[ "${{ steps.frontend-execution.outputs.lint_failure_type }}" == "basic" ]]; then
+            echo "::warning title=Frontend Build Failed - Basic Linting Issues::Using fallback lint script. Consider implementing lint:ci for zero-warning enforcement."
+          elif [[ "${{ steps.frontend-execution.outputs.lint_failure_type }}" == "missing" ]]; then
+            echo "::warning title=Frontend Build - No Linting Configuration::No ESLint scripts found. Consider adding linting for code quality."
+          else
+            echo "::error title=Frontend Build Failed::Unknown build failure - check build logs for details."
+          fi
+          
+          # Summary annotation
+          echo "::notice title=Zero-Warning Build Policy::This project enforces zero ESLint warnings. Warning-as-error enforcement: ${{ steps.frontend-execution.outputs.warning_enforcement_active }}"
         
       - name: Upload frontend artifacts
         if: always()

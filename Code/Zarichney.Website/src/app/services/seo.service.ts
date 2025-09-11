@@ -1,5 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
+import { DOCUMENT } from '@angular/common';
 
 interface MetaTagDefinition {
   name?: string;
@@ -13,7 +14,8 @@ interface MetaTagDefinition {
 export class SeoService {
   constructor(
     private meta: Meta,
-    private title: Title
+    private title: Title,
+    @Inject(DOCUMENT) private document: Document
   ) { }
 
   updateTitle(pageTitle: string) {
@@ -39,11 +41,12 @@ export class SeoService {
   }
 
   updateCanonicalURL(url: string) {
-    let canonicalLink = document.querySelector("link[rel='canonical']");
+    const head = this.document.head || this.document.getElementsByTagName('head')[0];
+    let canonicalLink = head.querySelector("link[rel='canonical']") as HTMLLinkElement | null;
     if (!canonicalLink) {
-      canonicalLink = document.createElement('link');
+      canonicalLink = this.document.createElement('link');
       canonicalLink.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonicalLink);
+      head.appendChild(canonicalLink);
     }
     canonicalLink.setAttribute('href', url);
   }
