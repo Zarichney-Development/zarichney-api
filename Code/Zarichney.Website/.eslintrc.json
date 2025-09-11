@@ -35,7 +35,7 @@
     "@typescript-eslint/no-inferrable-types": "off",
     
     // GENERAL CODE QUALITY
-    "no-console": ["warn", { "allow": ["warn", "error", "log"] }],
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
     "no-debugger": "error", 
     "prefer-const": "error",
     "no-var": "error",
@@ -48,6 +48,13 @@
         // TypeScript handles these checks
         "no-undef": "off",
         "no-unused-vars": "off"
+      }
+    },
+    {
+      "files": ["src/startup/**/*.ts", "src/app/app.module.*.ts"],
+      "rules": {
+        // Allow console.log for startup/infrastructure code
+        "no-console": ["warn", { "allow": ["warn", "error", "log"] }]
       }
     }
   ]

@@ -136,7 +136,14 @@ public class RecipeFileRepository(
       await InitializeAsync();
     }
 
-    return await searcher.SearchRecipes(query!, minimumScore, requiredCount, ct);
+    // Handle null query parameter properly instead of using null-forgiving operator
+    if (string.IsNullOrWhiteSpace(query))
+    {
+      logger.LogDebug("Empty or null query provided to SearchRecipes, returning empty results");
+      return [];
+    }
+
+    return await searcher.SearchRecipes(query, minimumScore, requiredCount, ct);
   }
 
   public void AddUpdateRecipesAsync(List<Recipe> recipes)

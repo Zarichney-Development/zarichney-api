@@ -10,7 +10,7 @@ interface LogConfig {
 }
 
 const APP_SRC_PATTERN = /\/src\/app\//;
-const DEFAULT_CONFIG: LogConfig = {
+const DEFAULT_CONFIG = {
     showStackTrace: true,
     maxStackDepth: 10,
     excludePatterns: [
@@ -27,7 +27,7 @@ const DEFAULT_CONFIG: LogConfig = {
     ],
     showTimestamps: true,
     logLevel: 'debug',
-};
+} as const satisfies LogConfig;
 
 @Injectable({ providedIn: 'root' })
 export class LoggingService {

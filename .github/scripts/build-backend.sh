@@ -170,15 +170,42 @@ setup_dotnet_environment() {
     die "Failed to restore dependencies after 3 attempts"
 }
 
+# Structured output analysis functions for cleaner parsing
+is_warning_failure() {
+    local output="$1"
+    grep -qi "warning.*treated as error" <<< "$output" 2>/dev/null
+}
+
+is_compilation_error() {
+    local output="$1"
+    grep -qi "error" <<< "$output" 2>/dev/null
+}
+
+extract_warning_details() {
+    local output="$1"
+    echo "$output" | grep -i "warning" | head -10 || true
+}
+
+extract_error_details() {
+    local output="$1"
+    echo "$output" | grep -i "error" | head -10 || true
+}
+
 build_solution() {
     log_section "Building Solution"
     
     log_info "Building $SOLUTION_FILE in $BUILD_CONFIG configuration..."
     log_info "Warning enforcement: TreatWarningsAsErrors=true enabled"
     
-    # Capture build output for warning analysis
+    # Execute build with structured output capture
     local build_output
-    if build_output=$(dotnet build "$SOLUTION_FILE" --configuration "$BUILD_CONFIG" --no-restore 2>&1); then
+    local build_exit_code
+    
+    # Clean output capture pattern
+    build_output=$(dotnet build "$SOLUTION_FILE" --configuration "$BUILD_CONFIG" --no-restore 2>&1)
+    build_exit_code=$?
+    
+    if [[ $build_exit_code -eq 0 ]]; then
         log_success "Solution built successfully with zero warnings"
         
         # Validate warning-as-error enforcement is working
@@ -189,11 +216,11 @@ build_solution() {
         # Analyze build failure for warning-related issues
         local exit_code=$?
         
-        # Check if failure is due to warnings treated as errors
-        if grep -qi "warning.*treated as error" <<< "$build_output" 2>/dev/null; then
+        # Structured analysis of build failure type
+        if is_warning_failure "$build_output"; then
             log_error "❌ BUILD FAILED: Warnings detected and treated as errors"
             log_error "Fix all compiler warnings before proceeding:"
-            echo "$build_output" | grep -i "warning" | head -10 || true
+            extract_warning_details "$build_output"
             
             # Add GitHub Actions annotation for warning failures
             if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
@@ -202,9 +229,9 @@ build_solution() {
             fi
             
             die "Build failed due to compiler warnings (zero-warning policy enforced)"
-        elif grep -qi "error" <<< "$build_output" 2>/dev/null; then
+        elif is_compilation_error "$build_output"; then
             log_error "❌ BUILD FAILED: Compilation errors detected"
-            echo "$build_output" | grep -i "error" | head -10 || true
+            extract_error_details "$build_output"
             
             # Add GitHub Actions annotation for compilation failures
             if [[ -n "${GITHUB_OUTPUT:-}" ]]; then

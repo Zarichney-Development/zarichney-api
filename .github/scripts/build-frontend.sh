@@ -184,6 +184,41 @@ install_dependencies() {
     die "Failed to install dependencies after 3 attempts"
 }
 
+# Structured linting output analysis functions for improved maintainability
+analyze_lint_output() {
+    local output="$1"
+    local result="success"
+    
+    # Check for ESLint warning patterns using structured detection
+    if contains_eslint_warnings "$output"; then
+        result="warnings_detected"
+    elif contains_eslint_errors "$output"; then
+        result="errors_detected"
+    fi
+    
+    echo "$result"
+}
+
+contains_eslint_warnings() {
+    local output="$1"
+    grep -qi "warning" <<< "$output" 2>/dev/null
+}
+
+contains_eslint_errors() {
+    local output="$1"
+    grep -qi "error" <<< "$output" 2>/dev/null && ! contains_eslint_warnings "$output"
+}
+
+extract_lint_warnings() {
+    local output="$1"
+    echo "$output" | grep -A 2 -B 2 "warning" | head -15 || true
+}
+
+count_lint_warnings() {
+    local output="$1"
+    echo "$output" | grep -c "warning" 2>/dev/null || echo "0"
+}
+
 run_linting() {
     log_section "Running Frontend Linting with Warning Enforcement"
     
@@ -192,9 +227,15 @@ run_linting() {
         log_info "Running zero-warning enforcement: npm run lint:ci"
         log_info "Policy: --max-warnings=0 (zero-tolerance)"
         
-        # Capture lint output for detailed failure analysis
+        # Execute linting with structured output capture
         local lint_output
-        if lint_output=$(npm run lint:ci 2>&1); then
+        local lint_exit_code
+        
+        # Clean output capture pattern
+        lint_output=$(npm run lint:ci 2>&1)
+        lint_exit_code=$?
+        
+        if [[ $lint_exit_code -eq 0 ]]; then
             log_success "✅ ESLint passed with zero warnings"
             
             # Validate zero-warning configuration
@@ -205,14 +246,17 @@ run_linting() {
             local exit_code=$?
             log_error "❌ LINTING FAILED: ESLint warnings detected (zero-warning policy)"
             
-            # Extract warning details for developer guidance
-            if grep -qi "warning" <<< "$lint_output" 2>/dev/null; then
+            # Structured analysis of linting failure
+            local analysis_result
+            analysis_result=$(analyze_lint_output "$lint_output")
+            
+            if [[ "$analysis_result" == "warnings_detected" ]]; then
                 log_error "Fix all ESLint warnings before proceeding:"
-                echo "$lint_output" | grep -A 2 -B 2 "warning" | head -15 || true
+                extract_lint_warnings "$lint_output"
                 
-                # Count warnings for summary
+                # Count warnings using structured function
                 local warning_count
-                warning_count=$(echo "$lint_output" | grep -c "warning" 2>/dev/null || echo "unknown")
+                warning_count=$(count_lint_warnings "$lint_output")
                 log_error "Total ESLint warnings: $warning_count"
                 
                 # Set GitHub Actions outputs for workflow annotations
