@@ -11,15 +11,15 @@ namespace Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
 /// </summary>
 public class LoggerCustomization : ICustomization
 {
-    public void Customize(IFixture fixture)
-    {
-        // Ensure ILogger<PaymentService> is properly handled by AutoMoq
-        // This explicit registration ensures proper dependency injection for PaymentService constructor
-        fixture.Customize<ILogger<PaymentService>>(composer =>
-            composer.FromFactory(() => Mock.Of<ILogger<PaymentService>>()));
+  public void Customize(IFixture fixture)
+  {
+    // Ensure ILogger<PaymentService> is properly handled by AutoMoq
+    // This explicit registration ensures proper dependency injection for PaymentService constructor
+    fixture.Customize<ILogger<PaymentService>>(composer =>
+        composer.FromFactory(() => Mock.Of<ILogger<PaymentService>>()));
 
-        // Generic logger customization for any ILogger<T> not explicitly handled
-        // This helps AutoFixture create appropriate mocks for any logger dependency
-        // Note: AutoMoqCustomization is applied in the main AutoMoqDataAttribute, so we don't need to re-apply it here
-    }
+    // Generic logger customization for any ILogger<T> not explicitly handled
+    // This helps AutoFixture create appropriate mocks for any logger dependency
+    // Note: AutoMoqCustomization is applied in the main AutoMoqDataAttribute, so we don't need to re-apply it here
+  }
 }

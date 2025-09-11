@@ -74,7 +74,7 @@ public static class ApplicationStartup
   /// <summary>
   /// Configures the StatusService with Identity Database availability status
   /// </summary>
-  public static void ConfigureStatusService(WebApplication application)
+  public static async Task ConfigureStatusService(WebApplication application)
   {
     // Update the StatusService with the Identity DB availability
     if (application.Services.GetService<IStatusService>() is StatusService statusService)
@@ -84,7 +84,7 @@ public static class ApplicationStartup
         ? null
         : new List<string> { $"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}" };
 
-      statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, ValidateStartup.IsIdentityDbAvailable, missingConfigurations);
+      await statusService.SetServiceAvailabilityAsync(ExternalServices.PostgresIdentityDb, ValidateStartup.IsIdentityDbAvailable, missingConfigurations);
     }
   }
 
@@ -94,7 +94,7 @@ public static class ApplicationStartup
   public static async Task ConfigureApplication(WebApplication application)
   {
     // Configure status service with Identity DB availability
-    ConfigureStatusService(application);
+    await ConfigureStatusService(application);
 
     // Add correlation ID middleware early in pipeline for request tracing
     application.UseMiddleware<CorrelationIdMiddleware>();

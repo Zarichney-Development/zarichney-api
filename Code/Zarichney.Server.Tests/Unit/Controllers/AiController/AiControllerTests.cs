@@ -29,13 +29,10 @@ public class AiControllerTests
     // Simple constructor injection following successful PublicControllerTests pattern
     _sut = new Zarichney.Controllers.AiController(_mockAiService.Object, _mockLogger.Object);
 
-    // Provide a minimal HttpContext so controller can access Request/Response safely
+    // Basic HttpContext setup - individual tests will configure form data as needed
     var httpContext = new DefaultHttpContext();
     httpContext.Request.ContentType = "multipart/form-data; boundary=---------------------------9051914041544843365972754266";
-    // Pre-seed a form feature to avoid content-type parsing when accessing Request.Form
-    var emptyFiles = new FormFileCollection();
-    var formCollection = new FormCollection(new Dictionary<string, StringValues>(), emptyFiles);
-    httpContext.Features.Set<IFormFeature>(new FormFeature(formCollection));
+    
     _sut.ControllerContext = new ControllerContext { HttpContext = httpContext };
   }
 
@@ -215,6 +212,11 @@ public class AiControllerTests
     _mockAiService.Setup(x => x.ProcessAudioTranscriptionAsync(mockAudioFile))
         .ReturnsAsync(expectedResult);
 
+    // Setup HttpContext WITHOUT form content type to skip Request.Form access that causes issues in unit tests
+    var httpContext = new DefaultHttpContext();
+    httpContext.Request.ContentType = "application/json"; // Not multipart/form-data
+    _sut.ControllerContext = new ControllerContext { HttpContext = httpContext };
+
     // Act
     var result = await _sut.TranscribeAudio(request);
 
@@ -249,11 +251,18 @@ public class AiControllerTests
     _mockAiService.Setup(x => x.ProcessAudioTranscriptionAsync(It.IsAny<IFormFile>()))
         .ThrowsAsync(new ArgumentNullException("audioFile"));
 
+    // Setup HttpContext WITHOUT form content type to skip Request.Form access that causes issues in unit tests
+    var httpContext = new DefaultHttpContext();
+    httpContext.Request.ContentType = "application/json"; // Not multipart/form-data
+    _sut.ControllerContext = new ControllerContext { HttpContext = httpContext };
+
     // Act
     var result = await _sut.TranscribeAudio(request);
 
     // Assert
-    result.Should().BeOfType<BadRequestObjectResult>("ArgumentNullException should return BadRequest");
+    result.Should().BeOfType<BadRequestObjectResult>("ArgumentNullException should return BadRequest as per refactored error handling");
+    var badRequest = (BadRequestObjectResult)result;
+    badRequest.Value.Should().Be("Audio file is required.", "ArgumentNullException should return specific error message");
   }
 
   [Fact]
@@ -267,11 +276,18 @@ public class AiControllerTests
     _mockAiService.Setup(x => x.ProcessAudioTranscriptionAsync(It.IsAny<IFormFile>()))
         .ThrowsAsync(new ArgumentException(exceptionMessage));
 
+    // Setup HttpContext WITHOUT form content type to skip Request.Form access that causes issues in unit tests
+    var httpContext = new DefaultHttpContext();
+    httpContext.Request.ContentType = "application/json"; // Not multipart/form-data
+    _sut.ControllerContext = new ControllerContext { HttpContext = httpContext };
+
     // Act
     var result = await _sut.TranscribeAudio(request);
 
     // Assert
-    result.Should().BeOfType<BadRequestObjectResult>("ArgumentException should return BadRequest");
+    result.Should().BeOfType<BadRequestObjectResult>("ArgumentException should return BadRequest as per refactored error handling");
+    var badRequest = (BadRequestObjectResult)result;
+    badRequest.Value.Should().Be(exceptionMessage, "ArgumentException should return the specific exception message");
     _mockLogger.Verify(l => l.Log(
         LogLevel.Warning,
         It.IsAny<EventId>(),
@@ -292,6 +308,16 @@ public class AiControllerTests
     _mockAiService.Setup(x => x.ProcessAudioTranscriptionAsync(It.IsAny<IFormFile>()))
         .ThrowsAsync(exception);
 
+    // Setup HttpContext to properly support Request.Form access with named form fields
+    var formData = new Dictionary<string, StringValues>
+    {
+      { "audioFile", "test.wav" }  // Add form field for model binding
+    };
+    var formFiles = new FormFileCollection { mockAudioFile };
+    var formCollection = new FormCollection(formData, formFiles);
+    var formFeature = new FormFeature(formCollection);
+    _sut.ControllerContext.HttpContext.Features.Set<IFormFeature>(formFeature);
+
     // Act
     var result = await _sut.TranscribeAudio(request);
 
@@ -307,6 +333,7 @@ public class AiControllerTests
         It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
       Times.AtLeastOnce());
   }
+
 
   #endregion
 

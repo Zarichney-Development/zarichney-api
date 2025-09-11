@@ -100,32 +100,35 @@ The helpers in this directory serve various functions:
     int randomPort = GetRandom.Int(8000, 9000);
     var userDto = GetRandom.Object<UserDto>(); // Creates a UserDto with random data
     ```
-* **`MockHelper.cs`:** *(New in v1.3)*
+* **`MockHelper.cs`:** *(New in v1.3, Updated to instance-based v1.4)*
     ```csharp
+    // Get MockHelper instance from DI container (in test classes inheriting from IntegrationTestBase)
+    var mockHelper = GetService<MockHelper>();
+    
     // Logger mocking made simple
-    var mockLogger = MockHelper.CreateMockLogger<MyService>();
+    var mockLogger = mockHelper.CreateMockLogger<MyService>();
     var myService = new MyService(mockLogger.Object);
     
     // Verify logging behavior
-    MockHelper.VerifyLogLevel(mockLogger, LogLevel.Information, Times.AtLeastOnce());
-    MockHelper.VerifyLogContains(mockLogger, LogLevel.Error, "Database connection failed", Times.Once());
+    mockHelper.VerifyLogLevel(mockLogger, LogLevel.Information, Times.AtLeastOnce());
+    mockHelper.VerifyLogContains(mockLogger, LogLevel.Error, "Database connection failed", Times.Once());
     
     // Options mocking for configuration dependencies
     var config = new MyConfig { ApiKey = "test-key" };
-    var mockOptions = MockHelper.CreateMockOptions(config);
+    var mockOptions = mockHelper.CreateMockOptions(config);
     var myService = new MyService(mockOptions.Object);
     
     // Controller testing with HttpContext
     var controller = new MyController();
-    controller.ControllerContext = MockHelper.CreateTestControllerContext();
+    controller.ControllerContext = mockHelper.CreateTestControllerContext();
     
     // Authentication testing
-    var testUser = MockHelper.CreateTestUser("user-123", "test@example.com", 
+    var testUser = mockHelper.CreateTestUser("user-123", "test@example.com", 
         new Claim(ClaimTypes.Role, "Admin"));
     
     // Async error testing simplified
     mockService.Setup(x => x.ProcessAsync(It.IsAny<string>()))
-        .Returns(MockHelper.FailedTask<Result>(new InvalidOperationException("Test error")));
+        .Returns(mockHelper.FailedTask<Result>(new InvalidOperationException("Test error")));
     ```
 * **`TestExtensions.cs` (e.g., `WithTestUser`):**
     ```csharp

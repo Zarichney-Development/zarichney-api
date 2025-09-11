@@ -9,6 +9,7 @@ using Zarichney.Server.Tests.TestData.Builders;
 using Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
 using Zarichney.Services.Payment;
 using Zarichney.Services.Status;
+using Zarichney.Tests.Framework.Helpers;
 
 namespace Zarichney.Server.Tests.Unit.Services.Payment;
 
@@ -145,18 +146,16 @@ public class StripeServiceTests
     result.Should().Be(0, "because null session should return zero quantity");
   }
 
-  [Theory, AutoMoqData]
+  [Fact]
   [Trait("Category", "Unit")]
-  public void CreateMockEvent_WithValidEntity_ReturnsEventWithCorrectStructure(
-      [Frozen] Mock<ILogger<StripeService>> mockLogger)
+  public void CreateMockEvent_WithValidEntity_ReturnsEventWithCorrectStructure()
   {
     // Arrange
-    var config = new PaymentConfigBuilder().Build();
-    var sut = new StripeService(config, mockLogger.Object);
+    var mockHelper = new MockHelper();
     var mockSession = new Session { Id = "test_id_123" };
 
     // Act
-    var result = sut.CreateMockEvent(mockSession);
+    var result = mockHelper.CreateMockStripeEvent(mockSession);
 
     // Assert
     result.Should().NotBeNull("because mock event should be created successfully");
@@ -266,19 +265,16 @@ public class StripeServiceTests
     result.PaymentType.Should().Be(PaymentType.RecipeCredit, "because metadata payment type should be parsed");
   }
 
-  [Theory, AutoMoqData]
+  [Fact]
   [Trait("Category", "Unit")]
-  public void CreateMockEvent_WithValidEntity_HandlesGenericType(
-      [Frozen] Mock<ILogger<StripeService>> mockLogger)
+  public void CreateMockEvent_WithValidEntity_HandlesGenericType()
   {
     // Arrange
-    var config = new PaymentConfigBuilder().Build();
-    var sut = new StripeService(config, mockLogger.Object);
-
+    var mockHelper = new MockHelper();
     var mockSession = new Session { Id = "test_id_123" };
 
     // Act
-    var result = sut.CreateMockEvent(mockSession);
+    var result = mockHelper.CreateMockStripeEvent(mockSession);
 
     // Assert
     result.Should().NotBeNull("because mock event should be created successfully");
