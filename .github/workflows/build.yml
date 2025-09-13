@@ -98,7 +98,8 @@ jobs:
     name: "Backend • Build & Test"
     runs-on: ubuntu-latest
     needs: path-analysis
-    if: needs.path-analysis.outputs.backend-changed == 'true'
+    # Run backend build when backend code OR tests changed
+    if: needs.path-analysis.outputs.backend-changed == 'true' || needs.path-analysis.outputs.tests-changed == 'true'
     timeout-minutes: 30
 
     steps:
@@ -551,9 +552,9 @@ jobs:
       - name: Build for CodeQL
         if: matrix.scan-type == 'codeql'
         run: |
-          # Build backend for CodeQL analysis
-          dotnet restore zarichney-api.sln
-          dotnet build zarichney-api.sln --configuration Release --no-restore
+          # Build backend for CodeQL analysis (exclude test projects to avoid test-only compile errors)
+          dotnet restore Code/Zarichney.Server/Zarichney.Server.csproj
+          dotnet build Code/Zarichney.Server/Zarichney.Server.csproj --configuration Release --no-restore
 
           # Build frontend for CodeQL analysis
           cd Code/Zarichney.Website
