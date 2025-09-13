@@ -551,9 +551,9 @@ jobs:
       - name: Build for CodeQL
         if: matrix.scan-type == 'codeql'
         run: |
-          # Build backend for CodeQL analysis
-          dotnet restore zarichney-api.sln
-          dotnet build zarichney-api.sln --configuration Release --no-restore
+          # Build backend for CodeQL analysis (exclude test projects to avoid test-only compile errors)
+          dotnet restore Code/Zarichney.Server/Zarichney.Server.csproj
+          dotnet build Code/Zarichney.Server/Zarichney.Server.csproj --configuration Release --no-restore
 
           # Build frontend for CodeQL analysis
           cd Code/Zarichney.Website
