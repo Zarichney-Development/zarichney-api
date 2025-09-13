@@ -4,6 +4,7 @@ using OpenAI.Chat;
 using Zarichney.Services.AI;
 using Zarichney.Services.GitHub;
 using Zarichney.Services.Status;
+using System.Reflection;
 
 namespace Zarichney.Tests.Framework.Mocks;
 
@@ -100,20 +101,79 @@ public static class AiServiceMockFactory
     /// This is a complex object from the OpenAI SDK that's difficult to instantiate directly.
     /// </summary>
     /// <param name="content">The content to include in the completion (default: "Test completion")</param>
-    /// <returns>Mock ChatCompletion or null if creation fails</returns>
+    /// <returns>A best-effort ChatCompletion test double (never throws)</returns>
     public static ChatCompletion? CreateMockChatCompletion(string content = "Test completion")
     {
         try
         {
-            // Note: ChatCompletion is from Azure.AI.OpenAI and may be difficult to mock
-            // In real scenarios, we might need to use reflection or a different approach
-            // This is a placeholder implementation - may need adjustment based on SDK version
-            return null; // For now, returning null - tests will handle accordingly
+            var t = typeof(ChatCompletion);
+
+            // Prefer a parameterless constructor if available (public or non-public)
+            var ctor = t.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                binder: null,
+                types: Type.EmptyTypes,
+                modifiers: null);
+
+            object instance;
+            if (ctor is not null)
+            {
+                instance = ctor.Invoke(null);
+            }
+            else
+            {
+                // Fallback: try the shortest constructor with defaultable arguments
+                var anyCtor = t.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                    .OrderBy(c => c.GetParameters().Length)
+                    .FirstOrDefault();
+
+                if (anyCtor is not null)
+                {
+                    var args = anyCtor.GetParameters().Select(p => GetDefaultValue(p.ParameterType)).ToArray();
+                    instance = anyCtor.Invoke(args);
+                }
+                else
+                {
+                    // No usable constructor found
+                    return null;
+                }
+            }
+
+            // Try to populate a plausible textual field/property for easier debugging/serialization
+            var candidates = new[] { "Content", "Text", "Message", "OutputText", "ResponseText" };
+            foreach (var name in candidates)
+            {
+                var prop = t.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (prop is not null && prop.CanWrite)
+                {
+                    prop.SetValue(instance, content);
+                    break;
+                }
+
+                // Try setting compiler-generated backing field for auto-properties
+                var backing = t.GetField($"<{name}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic);
+                if (backing is not null)
+                {
+                    backing.SetValue(instance, content);
+                    break;
+                }
+            }
+
+            return (ChatCompletion)instance;
         }
         catch
         {
+            // Ensure we never throw from test helpers
             return null;
         }
+    }
+
+    private static object? GetDefaultValue(Type type)
+    {
+        if (type.IsValueType)
+        {
+            return Activator.CreateInstance(type);
+        }
+        return null;
     }
 
     /// <summary>

@@ -1,6 +1,7 @@
 using OpenAI.Chat;
 using Zarichney.Services.AI;
 using Zarichney.Tests.TestData.Builders;
+using Zarichney.Tests.Framework.Mocks;
 
 namespace Zarichney.Server.Tests.TestData.Builders;
 
@@ -177,9 +178,12 @@ public class LlmMessageBuilder
     /// </summary>
     private static ChatCompletion CreateMockChatCompletion()
     {
-        // Note: ChatCompletion is part of the Azure.AI.OpenAI SDK and is difficult to mock directly
-        // In this simplified testing approach, we return null and tests will handle the mocking appropriately
-        // Real tests would typically mock the service layer rather than dealing with SDK objects directly
-        return null!;
+        // Delegate to centralized mock factory to keep consistency and avoid null-forgiving operator
+        var completion = AiServiceMockFactory.CreateMockChatCompletion("Test completion");
+        if (completion is null)
+        {
+            throw new NotImplementedException("ChatCompletion mocking should be handled at service layer");
+        }
+        return completion;
     }
 }

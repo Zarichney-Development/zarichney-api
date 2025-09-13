@@ -5,10 +5,10 @@ using Zarichney.Services;
 
 namespace Zarichney.Tests.Unit.Services;
 
+[Trait("Category", "Unit")]
 public class UtilsTests
 {
     [Fact]
-    [Trait("Category", "Unit")]
     public void GenerateId_ReturnsEightCharacterString()
     {
         // Act
@@ -21,7 +21,6 @@ public class UtilsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void GenerateId_ReturnsUniqueIds_OnMultipleCalls()
     {
         // Act
@@ -36,7 +35,6 @@ public class UtilsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void Deserialize_WithValidJsonString_ReturnsDeserializedObject()
     {
         // Arrange
@@ -52,7 +50,6 @@ public class UtilsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void Deserialize_WithCaseInsensitiveProperties_DeserializesCorrectly()
     {
         // Arrange
@@ -68,7 +65,6 @@ public class UtilsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void Deserialize_WithInvalidJson_ThrowsJsonException()
     {
         // Arrange
@@ -82,7 +78,6 @@ public class UtilsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void Deserialize_WithJsonDocumentInput_ReturnsDeserializedObject()
     {
         // Arrange
@@ -105,7 +100,6 @@ public class UtilsTests
     [InlineData("ID", "I D")]
     [InlineData("lowercase", "lowercase")]
     [InlineData("", "")]
-    [Trait("Category", "Unit")]
     public void SplitCamelCase_WithVariousInputs_ReturnsSplitString(string input, string expected)
     {
         // Act
@@ -116,7 +110,6 @@ public class UtilsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void GetPropertyValue_WithValidProperty_ReturnsPropertyValue()
     {
         // Arrange
@@ -130,7 +123,6 @@ public class UtilsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void GetPropertyValue_WithNonExistentProperty_ReturnsEmptyString()
     {
         // Arrange
@@ -144,7 +136,6 @@ public class UtilsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void GetListPropertyValue_WithValidListProperty_ReturnsListValues()
     {
         // Arrange
@@ -165,7 +156,6 @@ public class UtilsTests
     [InlineData("Deep Header", 6, "###### Deep Header\n\n")]
     [InlineData("", 1, "# \n\n")]
     [InlineData(null, 1, "# \n\n")]
-    [Trait("Category", "Unit")]
     public void ToMarkdownHeader_WithVariousInputs_ReturnsCorrectMarkdown(string? input, int level, string expected)
     {
         // Act
@@ -179,7 +169,6 @@ public class UtilsTests
     [InlineData("Alt Text", "https://example.com/image.jpg", "![Alt Text](https://example.com/image.jpg)\n\n")]
     [InlineData("", "https://example.com/image.jpg", "![](https://example.com/image.jpg)\n\n")]
     [InlineData(null, "https://example.com/image.jpg", "![](https://example.com/image.jpg)\n\n")]
-    [Trait("Category", "Unit")]
     public void ToMarkdownImage_WithVariousInputs_ReturnsCorrectMarkdown(string? altText, string? url, string expected)
     {
         // Act
@@ -193,7 +182,6 @@ public class UtilsTests
     [InlineData("Property", "Value", "**Property:** Value\n")]
     [InlineData("Property", "", "**Property:** \n")]
     [InlineData("Property", null, "**Property:** \n")]
-    [Trait("Category", "Unit")]
     public void ToMarkdownProperty_WithValidInputs_ReturnsCorrectMarkdown(string? name, string? value, string expected)
     {
         // Act
@@ -204,7 +192,6 @@ public class UtilsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void ToMarkdownProperty_WithEmptyName_FormatsCorrectly()
     {
         // Act
@@ -215,7 +202,6 @@ public class UtilsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void ToMarkdownProperty_WithNullName_FormatsCorrectly()
     {
         // Act
@@ -226,7 +212,6 @@ public class UtilsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void ToMarkdownList_WithUnorderedList_ReturnsCorrectMarkdown()
     {
         // Arrange
@@ -241,7 +226,6 @@ public class UtilsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void ToMarkdownList_WithOrderedList_ReturnsCorrectMarkdown()
     {
         // Arrange
@@ -256,7 +240,6 @@ public class UtilsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void ToMarkdownList_WithEmptyList_ReturnsEmptyWithNewlines()
     {
         // Arrange
@@ -274,7 +257,6 @@ public class UtilsTests
     [InlineData("", "Content", "Content\n\n")]
     [InlineData(null, "Content", "Content\n\n")]
     [InlineData("Title", "", "## Title\n\n\n\n")]
-    [Trait("Category", "Unit")]
     public void ToMarkdownSection_WithVariousInputs_ReturnsCorrectMarkdown(string? title, string? content, string expected)
     {
         // Act
@@ -285,7 +267,6 @@ public class UtilsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void ToMarkdownBlockquote_WithMultilineText_ReturnsCorrectMarkdown()
     {
         // Arrange
@@ -303,7 +284,6 @@ public class UtilsTests
     [InlineData("console.log('Hello')", "javascript", "```javascript\nconsole.log('Hello')\n```\n\n")]
     [InlineData("SELECT * FROM users", "sql", "```sql\nSELECT * FROM users\n```\n\n")]
     [InlineData("code", "", "```\ncode\n```\n\n")]
-    [Trait("Category", "Unit")]
     public void ToMarkdownCodeBlock_WithVariousInputs_ReturnsCorrectMarkdown(string code, string language, string expected)
     {
         // Act
@@ -317,7 +297,6 @@ public class UtilsTests
     [InlineData("Example", "https://example.com", "[Example](https://example.com)")]
     [InlineData("", "https://example.com", "[](https://example.com)")]
     [InlineData("Example", "", "[Example]()")]
-    [Trait("Category", "Unit")]
     public void ToMarkdownLink_WithVariousInputs_ReturnsCorrectMarkdown(string text, string url, string expected)
     {
         // Act
@@ -328,7 +307,6 @@ public class UtilsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void ToMarkdownHorizontalRule_ReturnsCorrectMarkdown()
     {
         // Act
@@ -339,7 +317,6 @@ public class UtilsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void ToMarkdownTable_WithRows_ReturnsCorrectMarkdown()
     {
         // Arrange
@@ -371,10 +348,10 @@ public class UtilsTests
     }
 }
 
+[Trait("Category", "Unit")]
 public class ObjectExtensionsTests
 {
     [Fact]
-    [Trait("Category", "Unit")]
     public void ToMarkdown_WithSimpleObject_ReturnsFormattedMarkdown()
     {
         // Arrange
@@ -396,7 +373,6 @@ public class ObjectExtensionsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void ToMarkdown_WithEmptyObject_ReturnsNoContentMessage()
     {
         // Arrange
@@ -411,7 +387,6 @@ public class ObjectExtensionsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void ToMarkdownHeader_WithValidProperty_ReturnsFormattedHeader()
     {
         // Arrange
@@ -425,7 +400,6 @@ public class ObjectExtensionsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void ToMarkdownHeader_WithEmptyProperty_ReturnsEmptyString()
     {
         // Arrange
@@ -439,7 +413,6 @@ public class ObjectExtensionsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void ToMarkdownImage_WithValidProperties_ReturnsFormattedImage()
     {
         // Arrange
@@ -458,7 +431,6 @@ public class ObjectExtensionsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void ToMarkdownProperty_WithValidProperty_ReturnsFormattedProperty()
     {
         // Arrange
@@ -473,7 +445,6 @@ public class ObjectExtensionsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void ToMarkdownList_WithValidListProperty_ReturnsFormattedList()
     {
         // Arrange
@@ -492,7 +463,6 @@ public class ObjectExtensionsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void ToMarkdownNumberedList_WithValidListProperty_ReturnsFormattedNumberedList()
     {
         // Arrange
@@ -511,7 +481,6 @@ public class ObjectExtensionsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void ToMarkdownSection_WithValidProperty_ReturnsFormattedSection()
     {
         // Arrange
@@ -526,7 +495,6 @@ public class ObjectExtensionsTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void ToMarkdownSection_WithIncludeTitleFalse_ReturnsContentOnly()
     {
         // Arrange
@@ -561,10 +529,10 @@ public class ObjectExtensionsTests
     }
 }
 
+[Trait("Category", "Unit")]
 public class AtomicCounterTests
 {
     [Fact]
-    [Trait("Category", "Unit")]
     public void Increment_ReturnsIncrementedValue()
     {
         // Arrange
@@ -582,7 +550,6 @@ public class AtomicCounterTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public async Task Increment_IsThreadSafe()
     {
         // Arrange
@@ -605,6 +572,7 @@ public class AtomicCounterTests
     }
 }
 
+[Trait("Category", "Unit")]
 public class HtmlStripperTests
 {
     [Theory]
@@ -613,7 +581,6 @@ public class HtmlStripperTests
     [InlineData("<span>Text</span>", "Text")]
     [InlineData("", "")]
     [InlineData(null, "")]
-    [Trait("Category", "Unit")]
     public void StripHtml_WithBasicHtml_RemovesTagsCorrectly(string? input, string expected)
     {
         // Act
@@ -624,7 +591,6 @@ public class HtmlStripperTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void StripHtml_WithBreakTags_ConvertsToNewlines()
     {
         // Arrange
@@ -639,7 +605,6 @@ public class HtmlStripperTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void StripHtml_WithHeadingTags_ConvertsToUppercaseWithNewlines()
     {
         // Arrange
@@ -654,7 +619,6 @@ public class HtmlStripperTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void StripHtml_WithListItems_ConvertsToBulletPoints()
     {
         // Arrange
@@ -669,7 +633,6 @@ public class HtmlStripperTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void StripHtml_WithHtmlEntities_DecodesCorrectly()
     {
         // Arrange
@@ -684,7 +647,6 @@ public class HtmlStripperTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void StripHtml_WithComplexHtml_CleansCorrectly()
     {
         // Arrange
@@ -713,7 +675,6 @@ public class HtmlStripperTests
     }
 
     [Fact]
-    [Trait("Category", "Unit")]
     public void StripHtml_WithNonBreakingSpaces_CleansCorrectly()
     {
         // Arrange
