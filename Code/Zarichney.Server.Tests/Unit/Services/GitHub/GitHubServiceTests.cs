@@ -8,6 +8,11 @@ using Xunit;
 
 namespace Zarichney.Tests.Unit.Services.GitHub;
 
+/// <summary>
+/// Unit tests for GitHubService covering repository operations, webhook processing, and API integrations.
+/// Verifies proper GitHub API interactions, authentication handling, error scenarios, and resource disposal.
+/// Tests background service functionality and channel-based communication patterns.
+/// </summary>
 [Trait("Category", "Unit")]
 public class GitHubServiceTests : IDisposable
 {

@@ -7,6 +7,7 @@ using Stripe.Checkout;
 using Xunit;
 using Zarichney.Server.Tests.TestData.Builders;
 using Zarichney.Services.Payment;
+using Zarichney.Tests.Framework.Helpers;
 
 namespace Zarichney.Server.Tests.Unit.Services.Payment;
 
@@ -89,18 +90,16 @@ public class StripeServiceBasicTests
   public void CreateMockEvent_WithValidEntity_ReturnsEventWithCorrectType()
   {
     // Arrange
-    var config = new PaymentConfigBuilder().Build();
-    var mockLogger = new Mock<ILogger<StripeService>>();
-    var sut = new StripeService(config, mockLogger.Object);
+    var mockHelper = new MockHelper();
     var testSession = new Session { Id = "test_id_123" };
 
     // Act
-    var result = sut.CreateMockEvent(testSession);
+    var result = mockHelper.CreateMockStripeEvent(testSession);
 
     // Assert
     result.Should().NotBeNull("because mock event should be created successfully");
-    // Note: CreateMockEvent method implementation returns null Id - test updated to match actual behavior
-    result.Id.Should().BeNull("CreateMockEvent returns event with null Id based on current implementation");
+    result.Data.Should().NotBeNull("because event data should be populated");
+    result.Data.Object.Should().Be(testSession, "because event data object should match input entity");
   }
 
   [Fact]

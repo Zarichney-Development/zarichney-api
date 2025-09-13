@@ -1,4 +1,4 @@
-import { CanActivateFn, UrlTree } from '@angular/router';
+import { CanActivateFn } from '@angular/router';
 import { inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Router } from '@angular/router';
@@ -8,7 +8,7 @@ import { LoggingService } from '../../services/log.service';
 import { AuthService } from '../../services/auth.service';
 import * as AuthActions from './store/auth.actions';
 
-export const adminGuard: CanActivateFn = (route, state) => {
+export const adminGuard: CanActivateFn = (_route, state) => {
   const store = inject(Store);
   const router = inject(Router);
   const log = inject(LoggingService);

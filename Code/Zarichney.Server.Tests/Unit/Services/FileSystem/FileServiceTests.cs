@@ -9,6 +9,11 @@ using Xunit;
 
 namespace Zarichney.Tests.Unit.Services.FileSystem;
 
+/// <summary>
+/// Unit tests for FileService covering file operations, image processing, and storage management.
+/// Verifies file reading, writing, JSON serialization, image manipulation, temporary file handling,
+/// and proper resource disposal patterns.
+/// </summary>
 [Trait("Category", "Unit")]
 public class FileServiceTests : IDisposable
 {
@@ -62,7 +67,7 @@ public class FileServiceTests : IDisposable
     // When deserializing to dynamic, System.Text.Json returns JsonElement.
     // Calling extension methods like Should() on dynamic causes a runtime binder error.
     // Cast to object to enable FluentAssertions extension resolution safely.
-    ((object)result).Should().NotBeNull("a valid JSON file should be deserialized successfully");
+    ((object?)result).Should().NotBeNull("a valid JSON file should be deserialized successfully");
   }
 
   [Fact]

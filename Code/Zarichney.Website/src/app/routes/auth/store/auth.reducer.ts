@@ -49,7 +49,7 @@ export const authReducer = createReducer(
     status: 'loading'
   })),
 
-  on(AuthActions.loginSuccess, (state, { email }): AuthState => ({
+  on(AuthActions.loginSuccess, (state): AuthState => ({
     ...state,
     isAuthenticated: true,
     loading: false,

@@ -11,6 +11,11 @@ using Zarichney.Services.Status;
 
 namespace Zarichney.Tests.Unit.Services.AI;
 
+/// <summary>
+/// Unit tests for AiService covering completion processing, audio transcription, and integrated AI workflows.
+/// Verifies proper orchestration of LLM services, transcription services, GitHub integration, email handling,
+/// session management, and error handling behaviors.
+/// </summary>
 [Trait("Category", "Unit")]
 public class AiServiceTests
 {

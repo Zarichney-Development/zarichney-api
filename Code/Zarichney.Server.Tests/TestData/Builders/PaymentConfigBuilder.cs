@@ -8,199 +8,103 @@ namespace Zarichney.Server.Tests.TestData.Builders;
 /// </summary>
 public class PaymentConfigBuilder
 {
-  private PaymentConfig _entity;
+  // Internal field state to avoid repetitive object copying for init-only properties
+  private string _stripeSecretKey = string.Empty;
+  private string _stripePublishableKey = string.Empty;
+  private string _stripeWebhookSecret = string.Empty;
+  private string _successUrl = string.Empty;
+  private string _cancelUrl = string.Empty;
+  private decimal _recipePrice;
+  private string _currency = string.Empty;
+  private int[] _recipePackageSizes = Array.Empty<int>();
 
   /// <summary>
   /// Creates a builder with default PaymentConfig values suitable for testing.
   /// </summary>
   public PaymentConfigBuilder()
   {
-    _entity = new PaymentConfig
-    {
-      StripeSecretKey = "sk_test_" + Guid.NewGuid().ToString("N")[..24],
-      StripePublishableKey = "pk_test_" + Guid.NewGuid().ToString("N")[..24],
-      StripeWebhookSecret = "whsec_" + Guid.NewGuid().ToString("N")[..24],
-      SuccessUrl = "/order/success/{0}",
-      CancelUrl = "/order/cancel/{0}",
-      RecipePrice = 1.50m,
-      Currency = "usd",
-      RecipePackageSizes = [5, 10, 20, 50]
-    };
+    _stripeSecretKey = "sk_test_" + Guid.NewGuid().ToString("N")[..24];
+    _stripePublishableKey = "pk_test_" + Guid.NewGuid().ToString("N")[..24];
+    _stripeWebhookSecret = "whsec_" + Guid.NewGuid().ToString("N")[..24];
+    _successUrl = "/order/success/{0}";
+    _cancelUrl = "/order/cancel/{0}";
+    _recipePrice = 1.50m;
+    _currency = "usd";
+    _recipePackageSizes = new[] { 5, 10, 20, 50 };
   }
 
-  /// <summary>
-  /// Sets the Stripe secret key for testing.
-  /// </summary>
   public PaymentConfigBuilder WithStripeSecretKey(string secretKey)
-  {
-    _entity = new PaymentConfig
-    {
-      StripeSecretKey = secretKey,
-      StripePublishableKey = _entity.StripePublishableKey,
-      StripeWebhookSecret = _entity.StripeWebhookSecret,
-      SuccessUrl = _entity.SuccessUrl,
-      CancelUrl = _entity.CancelUrl,
-      RecipePrice = _entity.RecipePrice,
-      Currency = _entity.Currency,
-      RecipePackageSizes = _entity.RecipePackageSizes
-    };
-    return this;
-  }
+  { _stripeSecretKey = secretKey; return this; }
 
-  /// <summary>
-  /// Sets the Stripe publishable key for testing.
-  /// </summary>
   public PaymentConfigBuilder WithStripePublishableKey(string publishableKey)
-  {
-    _entity = new PaymentConfig
-    {
-      StripeSecretKey = _entity.StripeSecretKey,
-      StripePublishableKey = publishableKey,
-      StripeWebhookSecret = _entity.StripeWebhookSecret,
-      SuccessUrl = _entity.SuccessUrl,
-      CancelUrl = _entity.CancelUrl,
-      RecipePrice = _entity.RecipePrice,
-      Currency = _entity.Currency,
-      RecipePackageSizes = _entity.RecipePackageSizes
-    };
-    return this;
-  }
+  { _stripePublishableKey = publishableKey; return this; }
 
-  /// <summary>
-  /// Sets the Stripe webhook secret for testing.
-  /// </summary>
   public PaymentConfigBuilder WithStripeWebhookSecret(string webhookSecret)
-  {
-    _entity = new PaymentConfig
-    {
-      StripeSecretKey = _entity.StripeSecretKey,
-      StripePublishableKey = _entity.StripePublishableKey,
-      StripeWebhookSecret = webhookSecret,
-      SuccessUrl = _entity.SuccessUrl,
-      CancelUrl = _entity.CancelUrl,
-      RecipePrice = _entity.RecipePrice,
-      Currency = _entity.Currency,
-      RecipePackageSizes = _entity.RecipePackageSizes
-    };
-    return this;
-  }
+  { _stripeWebhookSecret = webhookSecret; return this; }
 
-  /// <summary>
-  /// Sets the recipe price for testing.
-  /// </summary>
   public PaymentConfigBuilder WithRecipePrice(decimal price)
-  {
-    _entity = new PaymentConfig
-    {
-      StripeSecretKey = _entity.StripeSecretKey,
-      StripePublishableKey = _entity.StripePublishableKey,
-      StripeWebhookSecret = _entity.StripeWebhookSecret,
-      SuccessUrl = _entity.SuccessUrl,
-      CancelUrl = _entity.CancelUrl,
-      RecipePrice = price,
-      Currency = _entity.Currency,
-      RecipePackageSizes = _entity.RecipePackageSizes
-    };
-    return this;
-  }
+  { _recipePrice = price; return this; }
 
-  /// <summary>
-  /// Sets the currency for testing.
-  /// </summary>
   public PaymentConfigBuilder WithCurrency(string currency)
-  {
-    _entity = new PaymentConfig
-    {
-      StripeSecretKey = _entity.StripeSecretKey,
-      StripePublishableKey = _entity.StripePublishableKey,
-      StripeWebhookSecret = _entity.StripeWebhookSecret,
-      SuccessUrl = _entity.SuccessUrl,
-      CancelUrl = _entity.CancelUrl,
-      RecipePrice = _entity.RecipePrice,
-      Currency = currency,
-      RecipePackageSizes = _entity.RecipePackageSizes
-    };
-    return this;
-  }
+  { _currency = currency; return this; }
 
-  /// <summary>
-  /// Sets custom recipe package sizes for testing.
-  /// </summary>
   public PaymentConfigBuilder WithRecipePackageSizes(params int[] packageSizes)
-  {
-    _entity = new PaymentConfig
-    {
-      StripeSecretKey = _entity.StripeSecretKey,
-      StripePublishableKey = _entity.StripePublishableKey,
-      StripeWebhookSecret = _entity.StripeWebhookSecret,
-      SuccessUrl = _entity.SuccessUrl,
-      CancelUrl = _entity.CancelUrl,
-      RecipePrice = _entity.RecipePrice,
-      Currency = _entity.Currency,
-      RecipePackageSizes = packageSizes
-    };
-    return this;
-  }
+  { _recipePackageSizes = packageSizes; return this; }
 
-  /// <summary>
-  /// Sets the success URL pattern for testing.
-  /// </summary>
   public PaymentConfigBuilder WithSuccessUrl(string successUrl)
-  {
-    _entity = new PaymentConfig
-    {
-      StripeSecretKey = _entity.StripeSecretKey,
-      StripePublishableKey = _entity.StripePublishableKey,
-      StripeWebhookSecret = _entity.StripeWebhookSecret,
-      SuccessUrl = successUrl,
-      CancelUrl = _entity.CancelUrl,
-      RecipePrice = _entity.RecipePrice,
-      Currency = _entity.Currency,
-      RecipePackageSizes = _entity.RecipePackageSizes
-    };
-    return this;
-  }
+  { _successUrl = successUrl; return this; }
 
-  /// <summary>
-  /// Sets the cancel URL pattern for testing.
-  /// </summary>
   public PaymentConfigBuilder WithCancelUrl(string cancelUrl)
-  {
-    _entity = new PaymentConfig
-    {
-      StripeSecretKey = _entity.StripeSecretKey,
-      StripePublishableKey = _entity.StripePublishableKey,
-      StripeWebhookSecret = _entity.StripeWebhookSecret,
-      SuccessUrl = _entity.SuccessUrl,
-      CancelUrl = cancelUrl,
-      RecipePrice = _entity.RecipePrice,
-      Currency = _entity.Currency,
-      RecipePackageSizes = _entity.RecipePackageSizes
-    };
-    return this;
-  }
+  { _cancelUrl = cancelUrl; return this; }
 
   /// <summary>
   /// Creates a PaymentConfig without Stripe credentials for testing scenarios where Stripe is unavailable.
   /// </summary>
   public PaymentConfigBuilder WithoutStripeCredentials()
   {
-    _entity = new PaymentConfig
-    {
-      StripeSecretKey = string.Empty,
-      StripePublishableKey = string.Empty,
-      StripeWebhookSecret = string.Empty,
-      SuccessUrl = _entity.SuccessUrl,
-      CancelUrl = _entity.CancelUrl,
-      RecipePrice = _entity.RecipePrice,
-      Currency = _entity.Currency,
-      RecipePackageSizes = _entity.RecipePackageSizes
-    };
+    _stripeSecretKey = string.Empty;
+    _stripePublishableKey = string.Empty;
+    _stripeWebhookSecret = string.Empty;
     return this;
   }
 
   /// <summary>
-  /// Builds the PaymentConfig instance.
+  /// Creates a PaymentConfig configured for development/testing with standard test values.
   /// </summary>
-  public PaymentConfig Build() => _entity;
+  public PaymentConfigBuilder ForDevelopmentTesting()
+  {
+    _stripeSecretKey = "sk_test_development_key";
+    _stripePublishableKey = "pk_test_development_key";
+    _stripeWebhookSecret = "whsec_development_secret";
+    _recipePrice = 2.99m;
+    _currency = "usd";
+    _recipePackageSizes = new[] { 1, 5, 10, 25 };
+    return this;
+  }
+
+  /// <summary>
+  /// Creates a PaymentConfig with minimal valid configuration for basic testing.
+  /// </summary>
+  public PaymentConfigBuilder WithMinimalConfiguration()
+  {
+    _recipePrice = 1.00m;
+    _currency = "usd";
+    _recipePackageSizes = new[] { 1 };
+    return this;
+  }
+
+  /// <summary>
+  /// Builds the PaymentConfig instance from the current builder state.
+  /// </summary>
+  public PaymentConfig Build() => new()
+  {
+    StripeSecretKey = _stripeSecretKey,
+    StripePublishableKey = _stripePublishableKey,
+    StripeWebhookSecret = _stripeWebhookSecret,
+    SuccessUrl = _successUrl,
+    CancelUrl = _cancelUrl,
+    RecipePrice = _recipePrice,
+    Currency = _currency,
+    RecipePackageSizes = _recipePackageSizes
+  };
 }

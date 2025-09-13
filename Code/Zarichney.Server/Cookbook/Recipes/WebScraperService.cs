@@ -40,6 +40,7 @@ public class WebScraperService(
 {
   private static Dictionary<string, Dictionary<string, string>>? _siteSelectors;
   private static Dictionary<string, Dictionary<string, string>>? _siteTemplates;
+  private static readonly object _siteSelectorsInitLock = new();
 
   public async Task<List<ScrapedRecipe>> ScrapeForRecipesAsync(string query, int? acceptableScore = null,
     int? recipesNeeded = null,
@@ -488,37 +489,60 @@ public class WebScraperService(
 
   private async Task LoadSiteSelectors()
   {
+    // Fast path if already initialized
     if (_siteSelectors != null && _siteTemplates != null)
       return;
 
+    // Build new selector sets without mutating shared state
     var selectorsData = await fileService.ReadFromFile<SiteSelectors>("/Config", "site_selectors");
-    _siteTemplates = selectorsData.Templates;
-    _siteSelectors = new Dictionary<string, Dictionary<string, string>>();
 
-    // Process sites and apply templates
-    foreach (var (siteKey, siteConfig) in selectorsData.Sites)
+    var newTemplates = new Dictionary<string, Dictionary<string, string>>();
+    var newSelectors = new Dictionary<string, Dictionary<string, string>>();
+
+    if (selectorsData?.Templates != null)
     {
-      if (siteConfig.TryGetValue("use_template", out var templateName))
+      // Copy templates (reference copy of inner dictionaries is acceptable; outer map will be replaced atomically)
+      foreach (var kv in selectorsData.Templates)
       {
-        if (!_siteTemplates.TryGetValue(templateName, out var templateConfig))
-        {
-          throw new Exception($"Template {templateName} not found for site {siteKey}");
-        }
-
-        // Merge template and site config
-        var mergedConfig = new Dictionary<string, string>(templateConfig);
-
-        // Overwrite with site-specific values
-        foreach (var kvp in siteConfig)
-        {
-          mergedConfig[kvp.Key] = kvp.Value;
-        }
-
-        _siteSelectors[siteKey] = mergedConfig;
+        newTemplates[kv.Key] = kv.Value;
       }
-      else
+    }
+
+    if (selectorsData?.Sites != null)
+    {
+      // Process sites and apply templates into local dictionary
+      foreach (var (siteKey, siteConfig) in selectorsData.Sites)
       {
-        _siteSelectors[siteKey] = siteConfig;
+        if (siteConfig.TryGetValue("use_template", out var templateName))
+        {
+          if (!newTemplates.TryGetValue(templateName, out var templateConfig))
+          {
+            throw new Exception($"Template {templateName} not found for site {siteKey}");
+          }
+
+          // Merge template and site config into a fresh dictionary
+          var mergedConfig = new Dictionary<string, string>(templateConfig);
+          foreach (var kvp in siteConfig)
+          {
+            mergedConfig[kvp.Key] = kvp.Value;
+          }
+          newSelectors[siteKey] = mergedConfig;
+        }
+        else
+        {
+          // Use site-specific config directly
+          newSelectors[siteKey] = new Dictionary<string, string>(siteConfig);
+        }
+      }
+    }
+
+    // Publish the built dictionaries atomically under a short lock to avoid races
+    lock (_siteSelectorsInitLock)
+    {
+      if (_siteSelectors == null || _siteTemplates == null)
+      {
+        _siteTemplates = newTemplates;
+        _siteSelectors = newSelectors;
       }
     }
   }

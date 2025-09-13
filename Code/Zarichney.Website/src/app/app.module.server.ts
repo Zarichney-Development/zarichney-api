@@ -7,7 +7,6 @@ import { ssrRoutes } from './routes/ssr.routes';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
-import { provideAnimations } from '@angular/platform-browser/animations';
 
 @NgModule({
     imports: [

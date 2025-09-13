@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { LoggingService } from '../../../services/log.service';
 import { UserRoleInfo } from '../../../models/auth.models';
-import { Observable, BehaviorSubject, catchError, map, of, switchMap, tap, finalize } from 'rxjs';
+import { Observable, BehaviorSubject, catchError, map, of, switchMap, tap } from 'rxjs';
 
 @Component({
   selector: 'app-role-users',

@@ -1,6 +1,6 @@
 # Module/Directory: /Zarichney.Server.Tests/TestData/Builders
 
-**Last Updated:** 2025-04-18
+**Last Updated:** 2025-09-10
 
 > **Parent:** [`Zarichney.Server.Tests/TestData/`](../TestData/README.md) (Assuming a parent TestData README exists or will be created)
 > If `/Zarichney.Server.Tests/TestData/README.md` doesn't exist, the parent link should be:
@@ -68,3 +68,98 @@
 ## 8. Known Issues & TODOs
 
 * Need to implement builders for other core entities/DTOs as identified in the TDD (e.g., `User`, `Customer`, `Order`).
+
+---
+
+## Enhanced Builder Patterns (Added 2025-09-10)
+
+### EmailValidationResponseBuilder - Intention-Revealing Methods
+
+The `EmailValidationResponseBuilder` has been enhanced with intention-revealing method names that make test scenarios more explicit:
+
+#### New Enhanced Methods:
+- **`AsValidEmail()`** - Creates a valid email validation response with safe defaults
+- **`AsInvalidEmail()`** - Creates an invalid email validation response with syntax errors
+- **`AsBlockedEmail()`** - Creates a blocked email validation response for restricted domains
+- **`AsDisposableEmail()`** - Creates a disposable email validation response for temporary mail services
+- **`AsHighRiskEmail(riskScore)`** - Creates a high-risk email validation response with configurable risk score
+- **`WithTypoSuggestions(suggestions)`** - Creates an email with possible typo corrections
+
+#### Usage Examples:
+```csharp
+// Clear intention for AI coders - immediately understand the test scenario
+var validEmailResponse = new EmailValidationResponseBuilder()
+    .AsValidEmail()
+    .Build();
+
+var blockedEmailResponse = new EmailValidationResponseBuilder()
+    .AsBlockedEmail()
+    .WithDomain("spammer.com")
+    .Build();
+
+var disposableEmailResponse = new EmailValidationResponseBuilder()
+    .AsDisposableEmail()
+    .WithRisk(85)
+    .Build();
+
+var typoEmailResponse = new EmailValidationResponseBuilder()
+    .WithTypoSuggestions("john@gmail.com", "john@hotmail.com")
+    .Build();
+```
+
+#### Backward Compatibility:
+All original method names remain available as aliases:
+- `Valid()` → `AsValidEmail()`
+- `Invalid()` → `AsInvalidEmail()`
+- `Blocked()` → `AsBlockedEmail()`
+- `Disposable()` → `AsDisposableEmail()`
+- `HighRisk()` → `AsHighRiskEmail()`
+- `WithTypos()` → `WithTypoSuggestions()`
+
+### PaymentConfigBuilder - Test Scenario Methods
+
+The `PaymentConfigBuilder` has been enhanced with scenario-specific methods for common testing patterns:
+
+#### New Enhanced Methods:
+- **`ForDevelopmentTesting()`** - Creates PaymentConfig with standard development/testing values
+- **`WithMinimalConfiguration()`** - Creates PaymentConfig with minimal valid configuration for basic testing
+
+#### Usage Examples:
+```csharp
+// Development testing scenario - consistent test values
+var devConfig = new PaymentConfigBuilder()
+    .ForDevelopmentTesting()
+    .Build();
+
+// Minimal configuration for simple tests
+var minimalConfig = new PaymentConfigBuilder()
+    .WithMinimalConfiguration()
+    .Build();
+
+// Custom scenario building on standard patterns
+var customConfig = new PaymentConfigBuilder()
+    .ForDevelopmentTesting()
+    .WithRecipePrice(4.99m)
+    .WithCurrency("eur")
+    .Build();
+```
+
+### AI Coder Benefits
+
+These enhanced builders provide several benefits for stateless AI assistants:
+
+1. **Intention-Revealing Names**: Method names clearly express the test scenario being created
+2. **Reduced Cognitive Load**: AI coders can quickly understand test data setup without analyzing property values
+3. **Consistent Test Patterns**: Standard scenarios ensure consistent test data across the test suite
+4. **Backward Compatibility**: Existing tests continue to work while new tests can use enhanced methods
+5. **Scenario-Based Testing**: Common testing scenarios are pre-built and easily accessible
+
+### Design Philosophy
+
+The enhanced builder patterns follow these principles:
+
+- **Explicit Over Implicit**: Method names should clearly state the intended scenario
+- **Scenario-Driven**: Methods represent common testing scenarios, not just property setters
+- **Backward Compatible**: All existing method names remain functional
+- **AI-Friendly**: Names and patterns optimized for stateless AI assistant understanding
+- **Test Clarity**: Reading a test should immediately reveal the scenario being tested

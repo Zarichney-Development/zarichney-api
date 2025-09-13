@@ -5,7 +5,7 @@ import { EffectsModule } from '@ngrx/effects';
 import { authReducer } from './auth.reducer';
 import { AuthEffects } from './auth.effects';
 import { AUTH_FEATURE_KEY } from './auth.state';
-import { importProvidersFrom } from '@angular/core';
+// Removed unused importProvidersFrom
 
 // For NgModule-based approach
 @NgModule({

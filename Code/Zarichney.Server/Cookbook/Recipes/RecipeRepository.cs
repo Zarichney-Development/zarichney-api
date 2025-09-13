@@ -72,9 +72,12 @@ public class RecipeFileRepository(
           try
           {
             var recipes = await fileService.ReadFromFile<List<Recipe>>(config.OutputDirectory, fileName);
-            foreach (var recipe in recipes)
+            if (recipes != null)
             {
-              AddRecipeToRepository(recipe);
+              foreach (var recipe in recipes)
+              {
+                AddRecipeToRepository(recipe);
+              }
             }
           }
           catch (Exception ex)
@@ -133,7 +136,14 @@ public class RecipeFileRepository(
       await InitializeAsync();
     }
 
-    return await searcher.SearchRecipes(query!, minimumScore, requiredCount, ct);
+    // Handle null query parameter properly instead of using null-forgiving operator
+    if (string.IsNullOrWhiteSpace(query))
+    {
+      logger.LogDebug("Empty or null query provided to SearchRecipes, returning empty results");
+      return [];
+    }
+
+    return await searcher.SearchRecipes(query, minimumScore, requiredCount, ct);
   }
 
   public void AddUpdateRecipesAsync(List<Recipe> recipes)
@@ -148,19 +158,19 @@ public class RecipeFileRepository(
 
       await sessionManager.ParallelForEachAsync(parentScope, recipes, async (scope, recipe, _) =>
       {
-      try
-      {
-        await IndexAndRenameRecipeAsync(scope, recipe);
+        try
+        {
+          await IndexAndRenameRecipeAsync(scope, recipe);
 
           // Add to filesToWrite
-        var recipeBag = filesToWrite.GetOrAdd(recipe.IndexTitle!, _ => []);
-        recipeBag.Add(recipe);
-      }
-      catch (Exception ex)
-      {
-        logger.LogError(ex, "Error processing recipe '{RecipeId}'", recipe.Id);
-      }
-    }, config.MaxParallelTasks, ct);
+          var recipeBag = filesToWrite.GetOrAdd(recipe.IndexTitle!, _ => []);
+          recipeBag.Add(recipe);
+        }
+        catch (Exception ex)
+        {
+          logger.LogError(ex, "Error processing recipe '{RecipeId}'", recipe.Id);
+        }
+      }, config.MaxParallelTasks, ct);
 
       foreach (var (title, recipeBag) in filesToWrite)
       {
