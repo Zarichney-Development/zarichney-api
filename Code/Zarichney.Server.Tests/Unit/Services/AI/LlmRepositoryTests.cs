@@ -129,7 +129,6 @@ public class LlmRepositoryTests
             .Setup(x => x.IsFeatureAvailable(ExternalServices.GitHubAccess))
             .Returns(true);
 
-        var testEmail = "test@example.com";
         var conversation = new LlmConversationBuilder()
             .WithId("test-conversation")
             .WithPromptCatalogName("test-catalog")
@@ -369,7 +368,7 @@ public class LlmRepositoryTests
             .Build();
 
         var session = new SessionBuilder().Build();
-        byte[] capturedBytes = null;
+        byte[]? capturedBytes = null;
 
         _mockGitHubService
             .Setup(x => x.EnqueueCommitAsync("message_1.json", It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -417,7 +416,7 @@ public class LlmRepositoryTests
             .Build();
 
         var session = new SessionBuilder().Build();
-        byte[] capturedBytes = null;
+        byte[]? capturedBytes = null;
 
         _mockGitHubService
             .Setup(x => x.EnqueueCommitAsync("conversation.metadata.json", It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -505,7 +504,7 @@ public class LlmRepositoryTests
             .Build();
 
         var session = new SessionBuilder().Build();
-        byte[] capturedBytes = null;
+        byte[]? capturedBytes = null;
 
         _mockGitHubService
             .Setup(x => x.EnqueueCommitAsync("message_1.json", It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -548,7 +547,7 @@ public class LlmRepositoryTests
             .Build();
 
         var session = new SessionBuilder().Build();
-        byte[] capturedBytes = null;
+        byte[]? capturedBytes = null;
 
         _mockGitHubService
             .Setup(x => x.EnqueueCommitAsync("message_1.json", It.IsAny<byte[]>(), It.IsAny<string>(), It.IsAny<string>()))
