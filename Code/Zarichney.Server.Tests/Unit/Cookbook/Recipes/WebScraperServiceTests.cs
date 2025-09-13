@@ -8,8 +8,10 @@ using Zarichney.Cookbook.Prompts;
 using Zarichney.Cookbook.Recipes;
 using Zarichney.Services.AI;
 using Zarichney.Services.FileSystem;
+using Zarichney.Services.Status;
 using Zarichney.Services.Web;
 using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Helpers;
 using Zarichney.Tests.Framework.Mocks.Factories;
 
 namespace Zarichney.Tests.Unit.Cookbook.Recipes
@@ -28,30 +30,31 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
   [Trait(TestCategories.Component, TestCategories.Service)]
   [Trait(TestCategories.Feature, TestCategories.Cookbook)]
   [Trait(TestCategories.Dependency, TestCategories.ExternalOpenAI)]
-  public class WebScraperServiceTests : IDisposable
+  public class WebScraperServiceTests : IAsyncLifetime
   {
     // Mock dependencies
-    private readonly Mock<ILlmService> _mockLlmService;
-    private readonly Mock<IFileService> _mockFileService;
-    private readonly Mock<IBrowserService> _mockBrowserService;
-    private readonly Mock<IRecipeRepository> _mockRecipeRepository;
-    private readonly Mock<ILogger<WebScraperService>> _mockLogger;
+    private Mock<ILlmService> _mockLlmService = null!;
+    private Mock<IFileService> _mockFileService = null!;
+    private Mock<IBrowserService> _mockBrowserService = null!;
+    private Mock<IRecipeRepository> _mockRecipeRepository = null!;
+    private Mock<ILogger<WebScraperService>> _mockLogger = null!;
 
     // Test configuration
-    private readonly WebscraperConfig _config;
-    private readonly RecipeConfig _recipeConfig;
-    private readonly ChooseRecipesPrompt _chooseRecipesPrompt;
+    private WebscraperConfig _config = null!;
+    private RecipeConfig _recipeConfig = null!;
+    private ChooseRecipesPrompt _chooseRecipesPrompt = null!;
 
     // Test data and fixtures
-    private readonly IFixture _fixture;
+    private IFixture _fixture = null!;
     
     // System under test
-    private readonly WebScraperService _webScraperService;
+    private WebScraperService _webScraperService = null!;
 
-    public WebScraperServiceTests()
+    public async Task InitializeAsync()
     {
       // Reset static cache in WebScraperService to ensure fresh state for each test
-      ResetWebScraperServiceStaticCache();
+      StaticFieldResetHelper.ResetStaticField<WebScraperService>("_siteSelectors");
+      StaticFieldResetHelper.ResetStaticField<WebScraperService>("_siteTemplates");
       
       // Initialize mocks
       _mockLlmService = MockOpenAIServiceFactory.CreateMock();
@@ -91,6 +94,13 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
         _mockLogger.Object,
         _mockRecipeRepository.Object
       );
+      
+      await Task.CompletedTask;
+    }
+
+    public async Task DisposeAsync()
+    {
+      await Task.CompletedTask;
     }
 
     #region ScrapeForRecipesAsync Tests - Testing Main Orchestration Method
@@ -417,18 +427,6 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
 
     #region Helper Methods
 
-    private static void ResetWebScraperServiceStaticCache()
-    {
-      // Use reflection to reset static fields for isolated test execution
-      var webScraperType = typeof(WebScraperService);
-      var siteSelectorsField = webScraperType.GetField("_siteSelectors", 
-        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-      var siteTemplatesField = webScraperType.GetField("_siteTemplates", 
-        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-      
-      siteSelectorsField?.SetValue(null, null);
-      siteTemplatesField?.SetValue(null, null);
-    }
 
     private void SetupSiteSelectorsData()
     {
@@ -564,15 +562,6 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
 
     #endregion
 
-    #region IDisposable Implementation
-
-    public void Dispose()
-    {
-      // No explicit disposal needed for mocks, but implementing for completeness
-      GC.SuppressFinalize(this);
-    }
-
-    #endregion
   }
 
 }

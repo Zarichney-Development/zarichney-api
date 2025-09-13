@@ -9,6 +9,7 @@ using Zarichney.Services.AI;
 using Zarichney.Services.BackgroundTasks;
 using Zarichney.Services.FileSystem;
 using Zarichney.Services.Sessions;
+using Zarichney.Services.Status;
 using Zarichney.Tests.Framework.Attributes;
 using Zarichney.Tests.Framework.Mocks.Factories;
 
@@ -23,30 +24,30 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
   [Trait(TestCategories.Component, TestCategories.Service)]
   [Trait(TestCategories.Feature, TestCategories.Cookbook)]
   [Trait(TestCategories.Dependency, TestCategories.ExternalOpenAI)]
-  public class RecipeRepositoryTests
+  public class RecipeRepositoryTests : IAsyncLifetime
   {
     // Mock dependencies
-    private readonly Mock<IFileService> _mockFileService;
-    private readonly Mock<ILlmService> _mockLlmService;
-    private readonly Mock<IFileWriteQueueService> _mockFileWriteQueueService;
-    private readonly Mock<IMapper> _mockMapper;
-    private readonly Mock<IBackgroundWorker> _mockBackgroundWorker;
-    private readonly Mock<ISessionManager> _mockSessionManager;
-    private readonly Mock<IScopeContainer> _mockScopeContainer;
-    private readonly Mock<ILogger<RecipeFileRepository>> _mockLogger;
-    private readonly Mock<IRecipeSearcher> _mockRecipeSearcher;
-    private readonly Mock<IRecipeIndexer> _mockRecipeIndexer;
+    private Mock<IFileService> _mockFileService = null!;
+    private Mock<ILlmService> _mockLlmService = null!;
+    private Mock<IFileWriteQueueService> _mockFileWriteQueueService = null!;
+    private Mock<IMapper> _mockMapper = null!;
+    private Mock<IBackgroundWorker> _mockBackgroundWorker = null!;
+    private Mock<ISessionManager> _mockSessionManager = null!;
+    private Mock<IScopeContainer> _mockScopeContainer = null!;
+    private Mock<ILogger<RecipeFileRepository>> _mockLogger = null!;
+    private Mock<IRecipeSearcher> _mockRecipeSearcher = null!;
+    private Mock<IRecipeIndexer> _mockRecipeIndexer = null!;
 
     // Test data
-    private readonly RecipeConfig _recipeConfig;
-    private readonly CleanRecipePrompt _cleanRecipePrompt;
-    private readonly RecipeNamerPrompt _recipeNamerPrompt;
-    private readonly List<Recipe> _testRecipes;
+    private RecipeConfig _recipeConfig = null!;
+    private CleanRecipePrompt _cleanRecipePrompt = null!;
+    private RecipeNamerPrompt _recipeNamerPrompt = null!;
+    private List<Recipe> _testRecipes = null!;
 
     // System under test
-    private readonly RecipeFileRepository _repository;
+    private RecipeFileRepository _repository = null!;
 
-    public RecipeRepositoryTests()
+    public async Task InitializeAsync()
     {
       // Initialize mocks
       _mockFileService = new Mock<IFileService>();
@@ -129,6 +130,13 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
         _mockRecipeSearcher.Object,
         _mockRecipeIndexer.Object
       );
+
+      await Task.CompletedTask;
+    }
+
+    public async Task DisposeAsync()
+    {
+      await Task.CompletedTask;
     }
 
     private void SetupDefaultMockBehaviors()
