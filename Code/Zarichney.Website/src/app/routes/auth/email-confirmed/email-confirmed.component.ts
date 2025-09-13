@@ -1,6 +1,6 @@
 import { Component, OnInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { Store } from '@ngrx/store';
 import { LoggingService } from '../../../services/log.service';
@@ -18,7 +18,7 @@ import * as AuthActions from '../store/auth.actions';
 export class EmailConfirmedComponent implements OnInit {
 
   constructor(
-    private route: ActivatedRoute,
+    // private route: ActivatedRoute,
     private router: Router,
     private toastr: ToastrService,
     private log: LoggingService,
@@ -36,7 +36,7 @@ export class EmailConfirmedComponent implements OnInit {
     this.actions$.pipe(
       ofType(AuthActions.checkAuthSuccess),
       take(1),
-      tap(action => {
+      tap(() => {
         this.toastr.success('Email confirmed successfully!', 'Success');
         this.log.debug('Email confirmation successful, dispatching UI flow complete');
 
@@ -57,7 +57,7 @@ export class EmailConfirmedComponent implements OnInit {
     ).subscribe();
 
     // Set a fallback timeout in case nothing else works
-    const navigationTimeout = setTimeout(() => {
+    setTimeout(() => {
       this.log.debug('Fallback timeout triggered - forcing navigation to home');
       window.location.href = '/';
     }, 5000);

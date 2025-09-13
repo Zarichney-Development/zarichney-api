@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { AuthService } from '../../../services/auth.service';
 import { LoggingService } from '../../../services/log.service';
 import { ToastrService } from 'ngx-toastr';
-import { ForgotPasswordRequest } from '../../../models/auth.models';
+// Removed unused ForgotPasswordRequest import
 
 @Component({
   selector: 'app-forgot-password',
@@ -40,7 +40,7 @@ export class ForgotPasswordComponent {
     const email = this.forgotPasswordForm.get('email')?.value;
     
     this.authService.forgotPassword({ email }).subscribe({
-      next: (response) => {
+      next: () => {
         this.isLoading = false;
         this.logger.info('Password reset request submitted successfully', { email });
         // Form is kept as is to show the success message

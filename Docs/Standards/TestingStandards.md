@@ -1,7 +1,7 @@
 # Overarching Automation Testing Standards
 
 **Version:** 1.8
-**Last Updated:** 2025-09-06
+**Last Updated:** 2025-09-10
 
 ## 1. Introduction
 
@@ -139,7 +139,8 @@
 * **Requirement:** New/updated tests **must** be included in the *same Pull Request* as the code changes they cover.
 * **Local Testing (Mandatory Pre-PR):**
     1.  Run `Scripts/generate-api-client.ps1` (or `.sh`) if API contracts changed.
-    2.  Run the unified test suite for comprehensive validation:
+    2.  **Verify Warning-Free Build:** Ensure build completes with zero compiler or linter warnings
+    3.  Run the unified test suite for comprehensive validation:
         ```bash
         # Quick validation with AI-powered analysis
         /test-report summary
@@ -150,12 +151,12 @@
         # Traditional HTML coverage report
         Scripts/run-test-suite.sh automation
         ```
-    3.  For specific test categories during development:
+    4.  For specific test categories during development:
         ```bash
         Scripts/run-test-suite.sh report --unit-only
         Scripts/run-test-suite.sh report --integration-only
         ```
-    4.  Ensure **all** locally run tests pass and quality gates are met.
+    5.  Ensure **all** locally run tests pass, build is warning-free, and quality gates are met.
 * **CI/CD (GitHub Actions - Phase 3 Enhanced):**
     * Workflow runs on Pull Requests and merges to both `main` and `develop` branches.
     * **Parallel Test Execution:** Tests run in parallel collections (IntegrationAuth, IntegrationCore, etc.) with up to 4 concurrent threads.
@@ -337,6 +338,7 @@ When adding tests, consider current coverage phase:
 * **Phase Progression:** Must reach phase targets before advancing focus areas
 * **Velocity Requirements:** Maintain 2.8%/month average for 90% by Jan 2026
 * **Quality Maintenance:** Test pass rate must remain ≥99% throughout progression
+* **Warning-Free Requirement:** All coverage work must maintain zero build warnings policy
 
 #### Velocity Monitoring
 * **Monthly Reviews:** Track coverage progression against velocity targets
@@ -384,7 +386,7 @@ In the automated CI environment, the test suite operates with specific constrain
   * Database integration tests: 6 tests skipped
   * Production safety tests: 1 test skipped
 * **Success Criteria:** 100% pass rate on ~65 executable tests
-* **Quality Gate:** All executable tests must pass; skipped tests (EXPECTED_SKIP_COUNT) are acceptable and expected in unconfigured environments.
+* **Quality Gate:** All executable tests must pass with zero build warnings; skipped tests (EXPECTED_SKIP_COUNT) are acceptable and expected in unconfigured environments.
 
 **Rationale:** In CI environments where external dependencies are not configured, tests requiring those services are intentionally skipped to prevent false negatives. The skip count is set via EXPECTED_SKIP_COUNT (default: 23) and should be referenced in all validation scripts and documentation. See also Docs/Development/AutomatedCoverageEpicWorkflow.md for workflow details.
 

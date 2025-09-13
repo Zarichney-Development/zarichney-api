@@ -2,7 +2,7 @@ import { Routes, Router, NavigationEnd } from '@angular/router';
 import { DynamicScreenComponent } from './dynamic/dynamic.component';
 import { RecorderComponent } from './recorder/recorder.component';
 import { OrderOverviewComponent } from '../cookbook/routes/order-overview/order-overview.component';
-import { COOKBOOK_ROUTES, COOKBOOK_PATHS, isCookbookOrderDetailRoute } from '../cookbook/routes/cookbook.routes';
+import { COOKBOOK_PATHS, isCookbookOrderDetailRoute } from '../cookbook/routes/cookbook.routes';
 import { staticRoutes, getStaticPaths } from './ssr.routes';
 import { inject, NgZone, PLATFORM_ID, APP_INITIALIZER, Provider } from '@angular/core';
 import { LoggingService } from '../services/log.service';
@@ -64,7 +64,7 @@ function dynamicRouteGuard() {
     const platformId = inject(PLATFORM_ID);
     const ngZone = inject(NgZone);
     const request = inject(REQUEST, { optional: true });
-    const router = inject(Router);
+    // Removed unused router injection
 
     return ngZone.runOutsideAngular(() => {
         let path = '/';

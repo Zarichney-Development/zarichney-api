@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { LoggingService } from '../../../services/log.service';
 import { ToastrService } from 'ngx-toastr';
@@ -52,7 +52,6 @@ export class ResetPasswordComponent implements OnInit {
     private authService: AuthService,
     private formBuilder: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router,
     private toastr: ToastrService,
     private logger: LoggingService,
     private store: Store
@@ -118,7 +117,7 @@ export class ResetPasswordComponent implements OnInit {
     };
 
     this.authService.resetPassword(resetPasswordRequest).subscribe({
-      next: (response) => {
+      next: () => {
         this.isLoading = false;
         this.success = true;
         this.logger.info('Password reset successful', { email: this.email });

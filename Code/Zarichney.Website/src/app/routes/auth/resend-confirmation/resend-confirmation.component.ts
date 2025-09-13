@@ -40,7 +40,7 @@ export class ResendConfirmationComponent {
     const email = this.resendForm.get('email')?.value;
     
     this.authService.resendConfirmation({ email } as ResendConfirmationRequest).subscribe({
-      next: (response) => {
+      next: () => {
         this.isLoading = false;
         this.logger.info('Confirmation email resend request submitted', { email });
         // Form is kept as is to show the success message
