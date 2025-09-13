@@ -21,7 +21,7 @@ public class TranscribeServiceBasicTests
 
     public TranscribeServiceBasicTests()
     {
-        _mockAudioClient = new Mock<AudioClient>();
+        _mockAudioClient = new Mock<AudioClient>("whisper-1", "fake_api_key");
         _mockEmailService = new Mock<IEmailService>();
         _mockLogger = new Mock<ILogger<TranscribeService>>();
         _config = new TranscribeConfigBuilder().Build();
@@ -48,8 +48,7 @@ public class TranscribeServiceBasicTests
         );
 
         // Assert
-        service.Should().NotBeNull()
-            .Because("the service should initialize with valid dependencies");
+        service.Should().NotBeNull();
     }
 
     [Fact]
@@ -64,8 +63,7 @@ public class TranscribeServiceBasicTests
         );
 
         act.Should().Throw<ArgumentNullException>()
-            .WithParameterName("client")
-            .Because("AudioClient is a required dependency");
+            .WithParameterName("client");
     }
 
     [Fact]
@@ -80,8 +78,7 @@ public class TranscribeServiceBasicTests
         );
 
         act.Should().Throw<ArgumentNullException>()
-            .WithParameterName("config")
-            .Because("TranscribeConfig is a required dependency");
+            .WithParameterName("config");
     }
 
     [Fact]
@@ -96,8 +93,7 @@ public class TranscribeServiceBasicTests
         );
 
         act.Should().Throw<ArgumentNullException>()
-            .WithParameterName("emailService")
-            .Because("IEmailService is a required dependency");
+            .WithParameterName("emailService");
     }
 
     [Fact]
@@ -112,8 +108,7 @@ public class TranscribeServiceBasicTests
         );
 
         act.Should().Throw<ArgumentNullException>()
-            .WithParameterName("logger")
-            .Because("ILogger is a required dependency");
+            .WithParameterName("logger");
     }
 
     #endregion
@@ -130,10 +125,8 @@ public class TranscribeServiceBasicTests
         var (isValid, errorMessage) = service.ValidateAudioFile(null);
 
         // Assert
-        isValid.Should().BeFalse()
-            .Because("null audio files should be invalid");
-        errorMessage.Should().Be("Audio file is required.")
-            .Because("the error message should indicate that the file is required");
+        isValid.Should().BeFalse();
+        errorMessage.Should().Be("Audio file is required.");
     }
 
     [Fact]
@@ -147,10 +140,8 @@ public class TranscribeServiceBasicTests
         var (isValid, errorMessage) = service.ValidateAudioFile(emptyFile.Object);
 
         // Assert
-        isValid.Should().BeFalse()
-            .Because("empty audio files should be invalid");
-        errorMessage.Should().Be("Audio file must not be empty.")
-            .Because("the error message should indicate that empty files are not allowed");
+        isValid.Should().BeFalse();
+        errorMessage.Should().Be("Audio file must not be empty.");
     }
 
     [Fact]
@@ -164,10 +155,8 @@ public class TranscribeServiceBasicTests
         var (isValid, errorMessage) = service.ValidateAudioFile(fileWithNullContentType.Object);
 
         // Assert
-        isValid.Should().BeFalse()
-            .Because("files with null content type should be invalid");
-        errorMessage.Should().Contain("Invalid or missing content type")
-            .Because("the error message should indicate the content type issue");
+        isValid.Should().BeFalse();
+        errorMessage.Should().Contain("Invalid or missing content type");
     }
 
     [Fact]
@@ -181,10 +170,8 @@ public class TranscribeServiceBasicTests
         var (isValid, errorMessage) = service.ValidateAudioFile(fileWithEmptyContentType.Object);
 
         // Assert
-        isValid.Should().BeFalse()
-            .Because("files with empty content type should be invalid");
-        errorMessage.Should().Contain("Invalid or missing content type")
-            .Because("the error message should indicate the content type issue");
+        isValid.Should().BeFalse();
+        errorMessage.Should().Contain("Invalid or missing content type");
     }
 
     [Fact]
@@ -198,8 +185,7 @@ public class TranscribeServiceBasicTests
         var (isValid, errorMessage) = service.ValidateAudioFile(nonAudioFile.Object);
 
         // Assert
-        isValid.Should().BeFalse()
-            .Because("non-audio files should be invalid");
+        isValid.Should().BeFalse();
         errorMessage.Should().Contain("Invalid or missing content type");
         errorMessage.Should().Contain("Expected audio/*");
     }
@@ -219,10 +205,8 @@ public class TranscribeServiceBasicTests
         var (isValid, errorMessage) = service.ValidateAudioFile(validAudioFile.Object);
 
         // Assert
-        isValid.Should().BeTrue()
-            .Because("valid audio files should pass validation");
-        errorMessage.Should().BeNull()
-            .Because("valid files should not have error messages");
+        isValid.Should().BeTrue();
+        errorMessage.Should().BeNull();
     }
 
     #endregion
@@ -239,8 +223,7 @@ public class TranscribeServiceBasicTests
         var act = async () => await service.ProcessAudioFileAsync(null!);
 
         await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("audioFile")
-            .Because("audio file is required for processing");
+            .WithParameterName("audioFile");
     }
 
     [Fact]
@@ -254,8 +237,7 @@ public class TranscribeServiceBasicTests
         var act = async () => await service.ProcessAudioFileAsync(invalidFile.Object);
 
         await act.Should().ThrowAsync<ArgumentException>()
-            .WithParameterName("audioFile")
-            .Because("invalid audio files should not be processed");
+            .WithParameterName("audioFile");
     }
 
     #endregion
@@ -272,8 +254,7 @@ public class TranscribeServiceBasicTests
         var act = async () => await service.TranscribeAudioAsync(null!);
 
         await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("audioStream")
-            .Because("audio stream is required for transcription");
+            .WithParameterName("audioStream");
     }
 
     #endregion
@@ -287,10 +268,8 @@ public class TranscribeServiceBasicTests
         var config = new TranscribeConfig();
 
         // Assert
-        config.ModelName.Should().Be("whisper-1")
-            .Because("the default model should be whisper-1");
-        config.RetryAttempts.Should().Be(5)
-            .Because("the default retry attempts should be 5");
+        config.ModelName.Should().Be("whisper-1");
+        config.RetryAttempts.Should().Be(5);
     }
 
     [Fact]
@@ -303,10 +282,8 @@ public class TranscribeServiceBasicTests
             .Build();
 
         // Assert
-        config.ModelName.Should().Be("custom-model")
-            .Because("the builder should set the custom model name");
-        config.RetryAttempts.Should().Be(3)
-            .Because("the builder should set the custom retry attempts");
+        config.ModelName.Should().Be("custom-model");
+        config.RetryAttempts.Should().Be(3);
     }
 
     #endregion
@@ -325,14 +302,10 @@ public class TranscribeServiceBasicTests
             .Build();
 
         // Assert
-        result.Transcript.Should().Be("Custom transcript")
-            .Because("the builder should set the custom transcript");
-        result.AudioFileName.Should().Be("custom_audio.mp3")
-            .Because("the builder should set the custom audio filename");
-        result.TranscriptFileName.Should().Be("custom_transcript.txt")
-            .Because("the builder should set the custom transcript filename");
-        result.Timestamp.Should().Be("2025-01-01T00-00-00Z")
-            .Because("the builder should set the custom timestamp");
+        result.Transcript.Should().Be("Custom transcript");
+        result.AudioFileName.Should().Be("custom_audio.mp3");
+        result.TranscriptFileName.Should().Be("custom_transcript.txt");
+        result.Timestamp.Should().Be("2025-01-01T00-00-00Z");
     }
 
     #endregion
@@ -353,7 +326,7 @@ public class TranscribeServiceBasicTests
     {
         var mockFile = new Mock<IFormFile>();
         mockFile.Setup(f => f.FileName).Returns(fileName);
-        mockFile.Setup(f => f.ContentType).Returns(contentType);
+        mockFile.Setup(f => f.ContentType).Returns(contentType ?? string.Empty);
         mockFile.Setup(f => f.Length).Returns(length);
         return mockFile;
     }

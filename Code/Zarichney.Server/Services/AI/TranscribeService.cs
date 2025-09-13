@@ -74,6 +74,11 @@ public class TranscribeService : ITranscribeService
 
   public TranscribeService(AudioClient client, TranscribeConfig config, IEmailService emailService, ILogger<TranscribeService> logger)
   {
+    ArgumentNullException.ThrowIfNull(client, nameof(client));
+    ArgumentNullException.ThrowIfNull(config, nameof(config));
+    ArgumentNullException.ThrowIfNull(emailService, nameof(emailService));
+    ArgumentNullException.ThrowIfNull(logger, nameof(logger));
+
     _client = client;
     _emailService = emailService;
     _logger = logger;
@@ -103,6 +108,7 @@ public class TranscribeService : ITranscribeService
   {
     // ServiceUnavailableException will be thrown by the proxy if LLM service is unavailable
     ArgumentNullException.ThrowIfNull(_client, nameof(_client));
+    ArgumentNullException.ThrowIfNull(audioStream, nameof(audioStream));
 
     try
     {

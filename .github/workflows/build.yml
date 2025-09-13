@@ -98,7 +98,8 @@ jobs:
     name: "Backend • Build & Test"
     runs-on: ubuntu-latest
     needs: path-analysis
-    if: needs.path-analysis.outputs.backend-changed == 'true'
+    # Run backend build when backend code OR tests changed
+    if: needs.path-analysis.outputs.backend-changed == 'true' || needs.path-analysis.outputs.tests-changed == 'true'
     timeout-minutes: 30
 
     steps:
