@@ -583,7 +583,7 @@ public class AtomicCounterTests
 
     [Fact]
     [Trait("Category", "Unit")]
-    public void Increment_IsThreadSafe()
+    public async Task Increment_IsThreadSafe()
     {
         // Arrange
         var counter = new AtomicCounter();
@@ -596,7 +596,7 @@ public class AtomicCounterTests
             tasks.Add(Task.Run(() => counter.Increment()));
         }
 
-        var results = Task.WhenAll(tasks).Result;
+        var results = await Task.WhenAll(tasks);
 
         // Assert
         results.Should().HaveCount(numTasks, "because all tasks should complete");
