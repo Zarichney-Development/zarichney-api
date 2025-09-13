@@ -235,14 +235,34 @@ public class AtomicCounter
 
 public static class HtmlStripper
 {
-  private static readonly Regex StripHtmlRegex = new(
-    @"</?(?!h[1-6]|p|br/?|strong|em|ul|ol|li|blockquote)[^>]+>|<(h[1-6]|p|blockquote)[\s>]",
+  private static readonly Regex ScriptTagRegex = new(
+    @"<script[^>]*>.*?</script>",
+    RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+  );
+
+  private static readonly Regex BrTagRegex = new(
+    @"<br\s*/?>",
     RegexOptions.IgnoreCase | RegexOptions.Compiled
   );
 
-  private static readonly Regex CleanupRegex = new(
-    @"^\s+|&nbsp;|\s+$|\n\s*\n\s*\n",
-    RegexOptions.Multiline | RegexOptions.Compiled
+  private static readonly Regex LiTagRegex = new(
+    @"<li[^>]*>(.*?)</li>",
+    RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+  );
+
+  private static readonly Regex HeadingTagRegex = new(
+    @"<h([1-6])[^>]*>(.*?)</h\1>",
+    RegexOptions.IgnoreCase | RegexOptions.Singleline | RegexOptions.Compiled
+  );
+
+  private static readonly Regex AnyTagRegex = new(
+    @"<[^>]+>",
+    RegexOptions.Compiled
+  );
+
+  private static readonly Regex ExcessBlankLinesRegex = new(
+    @"\n{3,}",
+    RegexOptions.Compiled
   );
 
   public static string StripHtml(string html)
@@ -250,28 +270,31 @@ public static class HtmlStripper
     if (string.IsNullOrEmpty(html))
       return string.Empty;
 
-    // Replace <br> tags with newlines
-    html = Regex.Replace(html, @"<br\s*/?>\s*", "\n", RegexOptions.IgnoreCase);
+    // Remove script tags and their content entirely
+    html = ScriptTagRegex.Replace(html, string.Empty);
 
-    // Strip most HTML tags, but keep headings, paragraphs, and some inline elements
-    html = StripHtmlRegex.Replace(html, string.Empty);
+    // Convert <br> tags to newlines
+    html = BrTagRegex.Replace(html, "\n");
 
-    // Convert remaining heading tags to uppercase text with newlines
-    html = Regex.Replace(html, @"<h([1-6])>(.*?)</h\1>", m =>
-      $"\n{m.Groups[2].Value.ToUpper()}\n", RegexOptions.IgnoreCase);
+    // Convert list items to bullet points (each on its own line)
+    html = LiTagRegex.Replace(html, m => $"\n• {m.Groups[1].Value}");
 
-    // Convert <li> to bullet points
-    html = Regex.Replace(html, @"<li>(.*?)</li>", m => $"\n• {m.Groups[1].Value}", RegexOptions.IgnoreCase);
+    // Convert heading tags to uppercase with surrounding newlines
+    html = HeadingTagRegex.Replace(html, m => $"\n{m.Groups[2].Value.ToUpper()}\n");
 
-    // Remove any remaining HTML tags
-    html = Regex.Replace(html, @"<[^>]+>", string.Empty);
+    // Remove all remaining HTML tags
+    html = AnyTagRegex.Replace(html, string.Empty);
 
     // Decode HTML entities
     html = System.Net.WebUtility.HtmlDecode(html);
 
-    // Clean up extra whitespace and blank lines
-    html = CleanupRegex.Replace(html, string.Empty);
+    // Remove non-breaking spaces (U+00A0) entirely
+    html = html.Replace("\u00A0", string.Empty);
 
+    // Collapse excessive blank lines to at most two newlines
+    html = ExcessBlankLinesRegex.Replace(html, "\n\n");
+
+    // Trim leading/trailing whitespace
     return html.Trim();
   }
 }
