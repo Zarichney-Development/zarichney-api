@@ -49,6 +49,10 @@ public class EmailValidationResponseBuilder
     return this;
   }
 
+  // Aliases for fluent readability - more intention-revealing method names
+  public EmailValidationResponseBuilder AsValidEmail() => WithValidDefaults();
+  public EmailValidationResponseBuilder Valid() => WithValidDefaults(); // Backward compatibility
+
   /// <summary>
   /// Creates an invalid email validation response.
   /// </summary>
@@ -60,6 +64,9 @@ public class EmailValidationResponseBuilder
     _entity.Risk = 95;
     return this;
   }
+
+  public EmailValidationResponseBuilder AsInvalidEmail() => WithInvalidEmail();
+  public EmailValidationResponseBuilder Invalid() => WithInvalidEmail(); // Backward compatibility
 
   /// <summary>
   /// Creates a blocked email validation response.
@@ -73,6 +80,9 @@ public class EmailValidationResponseBuilder
     _entity.Risk = 90;
     return this;
   }
+
+  public EmailValidationResponseBuilder AsBlockedEmail() => WithBlockedEmail();
+  public EmailValidationResponseBuilder Blocked() => WithBlockedEmail(); // Backward compatibility
 
   /// <summary>
   /// Creates a disposable email validation response.
@@ -88,6 +98,9 @@ public class EmailValidationResponseBuilder
     return this;
   }
 
+  public EmailValidationResponseBuilder AsDisposableEmail() => WithDisposableEmail();
+  public EmailValidationResponseBuilder Disposable() => WithDisposableEmail(); // Backward compatibility
+
   /// <summary>
   /// Creates a high-risk email validation response.
   /// </summary>
@@ -99,6 +112,9 @@ public class EmailValidationResponseBuilder
     _entity.Text = $"High risk email (score: {riskScore})";
     return this;
   }
+
+  public EmailValidationResponseBuilder AsHighRiskEmail(int riskScore = 80) => WithHighRiskEmail(riskScore);
+  public EmailValidationResponseBuilder HighRisk(int riskScore = 80) => WithHighRiskEmail(riskScore); // Backward compatibility
 
   /// <summary>
   /// Creates an email with possible typo suggestions.
@@ -112,6 +128,9 @@ public class EmailValidationResponseBuilder
     _entity.Risk = 60;
     return this;
   }
+
+  public EmailValidationResponseBuilder WithTypoSuggestions(params string[] typoSuggestions) => WithPossibleTypo(typoSuggestions);
+  public EmailValidationResponseBuilder WithTypos(params string[] typoSuggestions) => WithPossibleTypo(typoSuggestions); // Backward compatibility
 
   public EmailValidationResponseBuilder WithDomain(string domain)
   {

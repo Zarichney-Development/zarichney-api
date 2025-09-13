@@ -131,7 +131,7 @@ public class CustomerServiceTests
   public async Task GetOrCreateCustomer_WithInvalidEmail_ThrowsArgumentException(string? invalidEmail)
   {
     // Act
-    var act = () => _customerService.GetOrCreateCustomer(invalidEmail);
+    var act = () => _customerService.GetOrCreateCustomer(invalidEmail!);
 
     // Assert
     await act.Should().ThrowAsync<ArgumentException>("because invalid email addresses should be rejected")

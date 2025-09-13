@@ -13,6 +13,11 @@ using Zarichney.Services.Payment;
 
 namespace Zarichney.Tests.Unit.Services.Status;
 
+/// <summary>
+/// Unit tests for StatusService covering system health monitoring and service status reporting.
+/// Verifies status check execution, dependency validation, health endpoint responses,
+/// and proper logging of system state information.
+/// </summary>
 public class StatusServiceTests
 {
   private const string ValidApiKey = "valid-api-key";
@@ -308,13 +313,13 @@ public class StatusServiceTests
 
   [Trait("Category", "Unit")]
   [Fact]
-  public void SetServiceAvailability_ForIdentityDb_ShouldUpdateStatus()
+  public async Task SetServiceAvailability_ForIdentityDb_ShouldUpdateStatus()
   {
     // Arrange
     var missingConfigs = new List<string> { $"ConnectionStrings:{Zarichney.Services.Auth.UserDbContext.UserDatabaseConnectionName}" };
 
     // Act
-    _statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, false, missingConfigs);
+    await _statusService.SetServiceAvailabilityAsync(ExternalServices.PostgresIdentityDb, false, missingConfigs);
     var result = _statusService.GetFeatureStatus(ExternalServices.PostgresIdentityDb);
 
     // Assert
@@ -329,7 +334,7 @@ public class StatusServiceTests
   public async Task SetServiceAvailability_ForIdentityDb_ShouldUpdateAvailabilityEvenAfterGetServiceStatusAsync()
   {
     // Arrange - Mark the service as unavailable
-    _statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, false,
+    await _statusService.SetServiceAvailabilityAsync(ExternalServices.PostgresIdentityDb, false,
       ["ConnectionStrings:UserDatabase"]);
 
     // Act - Call GetServiceStatusAsync() which shouldn't override our setting
@@ -343,10 +348,10 @@ public class StatusServiceTests
 
   [Trait("Category", "Unit")]
   [Fact]
-  public void IsFeatureAvailable_ForIdentityDb_ShouldReturnCorrectValue()
+  public async Task IsFeatureAvailable_ForIdentityDb_ShouldReturnCorrectValue()
   {
     // Arrange
-    _statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, true);
+    await _statusService.SetServiceAvailabilityAsync(ExternalServices.PostgresIdentityDb, true);
 
     // Act
     var result = _statusService.IsFeatureAvailable(ExternalServices.PostgresIdentityDb);
@@ -355,7 +360,7 @@ public class StatusServiceTests
     result.Should().BeTrue();
 
     // Change the status and verify the result changes
-    _statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, false);
+    await _statusService.SetServiceAvailabilityAsync(ExternalServices.PostgresIdentityDb, false);
     result = _statusService.IsFeatureAvailable(ExternalServices.PostgresIdentityDb);
     result.Should().BeFalse();
   }

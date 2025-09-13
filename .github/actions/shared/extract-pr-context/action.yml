@@ -1,0 +1,55 @@
+name: 'Extract PR Context'
+description: 'Extracts PR context (issue ref, author, branches, diff stats) and exposes them as outputs.'
+inputs: {}
+outputs:
+  issue_ref:
+    description: 'First #issue reference found in PR body, or fallback text'
+    value: ${{ steps.compute.outputs.issue_ref }}
+  pr_number:
+    description: 'Pull request number'
+    value: ${{ steps.compute.outputs.pr_number }}
+  pr_author:
+    description: 'PR author login'
+    value: ${{ steps.compute.outputs.pr_author }}
+  source_branch:
+    description: 'Source branch'
+    value: ${{ steps.compute.outputs.source_branch }}
+  target_branch:
+    description: 'Target branch'
+    value: ${{ steps.compute.outputs.target_branch }}
+  changed_files_count:
+    description: 'Number of changed files in the PR'
+    value: ${{ steps.compute.outputs.changed_files_count }}
+  lines_changed:
+    description: 'Sum of additions + deletions in the PR'
+    value: ${{ steps.compute.outputs.lines_changed }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Compute PR context
+      id: compute
+      shell: bash
+      env:
+        PR_BODY: ${{ github.event.pull_request.body }}
+        PR_NUMBER: ${{ github.event.number }}
+        PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        SOURCE_BRANCH: ${{ github.event.pull_request.head.ref }}
+        TARGET_BRANCH: ${{ github.event.pull_request.base.ref }}
+        CHANGED_FILES: ${{ github.event.pull_request.changed_files }}
+        ADDITIONS: ${{ github.event.pull_request.additions }}
+        DELETIONS: ${{ github.event.pull_request.deletions }}
+      run: |
+        set -euo pipefail
+        ISSUE_NUMBERS=$(echo "${PR_BODY:-}" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || true)
+        if [ -n "${ISSUE_NUMBERS:-}" ]; then
+          echo "issue_ref=#${ISSUE_NUMBERS}" >> "$GITHUB_OUTPUT"
+        else
+          echo "issue_ref=No linked issue" >> "$GITHUB_OUTPUT"
+        fi
+        echo "pr_number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+        echo "pr_author=${PR_AUTHOR}" >> "$GITHUB_OUTPUT"
+        echo "source_branch=${SOURCE_BRANCH}" >> "$GITHUB_OUTPUT"
+        echo "target_branch=${TARGET_BRANCH}" >> "$GITHUB_OUTPUT"
+        echo "changed_files_count=${CHANGED_FILES:-0}" >> "$GITHUB_OUTPUT"
+        lines_changed=$(( ${ADDITIONS:-0} + ${DELETIONS:-0} ))
+        echo "lines_changed=${lines_changed}" >> "$GITHUB_OUTPUT"

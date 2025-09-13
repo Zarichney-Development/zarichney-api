@@ -56,8 +56,8 @@ public class WebScraperServiceTests
 
     mockLlmService
         .Setup(x => x.CallFunction<SearchResult>(
-            It.IsAny<string>(), 
-            It.IsAny<string>(), 
+            It.IsAny<string>(),
+            It.IsAny<string>(),
             It.IsAny<FunctionDefinition>(),
             It.IsAny<string>(),
             It.IsAny<int?>()))
@@ -76,15 +76,15 @@ public class WebScraperServiceTests
     // Assert
     // Unit test focuses on business logic verification, not actual HTTP scraping
     result.Should().BeEmpty("because unit tests cannot perform actual HTTP scraping without proper HTTP mocking");
-    
+
     // Verify the business logic flow was executed correctly
     // Note: ReadFromFile may not be called if site selectors are cached from previous tests
     mockFileService.Verify(x => x.ReadFromFile<SiteSelectors>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.AtMost(1));
     mockBrowserService.Verify(x => x.GetContentAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     mockRecipeRepository.Verify(x => x.ContainsRecipeUrl(It.IsAny<string>()), Times.AtLeastOnce);
     mockLlmService.Verify(x => x.CallFunction<SearchResult>(
-        It.IsAny<string>(), 
-        It.IsAny<string>(), 
+        It.IsAny<string>(),
+        It.IsAny<string>(),
         It.IsAny<FunctionDefinition>(),
         It.IsAny<string>(),
         It.IsAny<int?>()), Times.Once);

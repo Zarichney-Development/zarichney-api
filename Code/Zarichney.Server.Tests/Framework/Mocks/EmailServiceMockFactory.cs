@@ -10,14 +10,15 @@ namespace Zarichney.Tests.Framework.Mocks;
 /// <summary>
 /// Factory for creating mock dependencies for EmailService testing.
 /// Provides common mock configurations to reduce test setup duplication.
+/// Register as singleton in DI container for access via GetService&lt;EmailServiceMockFactory&gt;().
 /// </summary>
-public static class EmailServiceMockFactory
+public class EmailServiceMockFactory
 {
   /// <summary>
   /// Creates a mock GraphServiceClient for unit testing.
   /// Note: Complex Graph API interactions are better tested in integration tests.
   /// </summary>
-  public static Mock<GraphServiceClient> CreateMockGraphServiceClient()
+  public Mock<GraphServiceClient> CreateMockGraphServiceClient()
   {
     var mockGraphClient = new Mock<GraphServiceClient>();
     // Basic mock - complex Graph API mocking is done in integration tests
@@ -27,7 +28,7 @@ public static class EmailServiceMockFactory
   /// <summary>
   /// Creates a mock EmailConfig with test-friendly default values.
   /// </summary>
-  public static EmailConfig CreateMockEmailConfig()
+  public EmailConfig CreateMockEmailConfig()
   {
     return new EmailConfig
     {
@@ -43,7 +44,7 @@ public static class EmailServiceMockFactory
   /// <summary>
   /// Creates a mock ITemplateService with configurable template responses.
   /// </summary>
-  public static Mock<ITemplateService> CreateMockTemplateService()
+  public Mock<ITemplateService> CreateMockTemplateService()
   {
     var mockTemplateService = new Mock<ITemplateService>();
 
@@ -61,7 +62,7 @@ public static class EmailServiceMockFactory
   /// <summary>
   /// Creates a mock IMailCheckClient with configurable validation responses.
   /// </summary>
-  public static Mock<IMailCheckClient> CreateMockMailCheckClient(EmailValidationResponse? defaultResponse = null)
+  public Mock<IMailCheckClient> CreateMockMailCheckClient(EmailValidationResponse? defaultResponse = null)
   {
     var mockMailCheckClient = new Mock<IMailCheckClient>();
 
@@ -77,7 +78,7 @@ public static class EmailServiceMockFactory
   /// <summary>
   /// Creates a mock IMailCheckClient that throws a specific exception.
   /// </summary>
-  public static Mock<IMailCheckClient> CreateMockMailCheckClientWithException<TException>()
+  public Mock<IMailCheckClient> CreateMockMailCheckClientWithException<TException>()
       where TException : Exception, new()
   {
     var mockMailCheckClient = new Mock<IMailCheckClient>();
@@ -91,7 +92,7 @@ public static class EmailServiceMockFactory
   /// <summary>
   /// Creates a mock ITemplateService that throws an exception for template processing.
   /// </summary>
-  public static Mock<ITemplateService> CreateMockTemplateServiceWithException<TException>()
+  public Mock<ITemplateService> CreateMockTemplateServiceWithException<TException>()
       where TException : Exception, new()
   {
     var mockTemplateService = new Mock<ITemplateService>();

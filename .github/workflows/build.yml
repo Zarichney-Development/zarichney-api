@@ -2,7 +2,7 @@ name: "Build & Test"
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - 'Code/**'
       - '.github/scripts/**'
@@ -82,6 +82,18 @@ jobs:
           echo "  - Changed components: ${{ steps.check-paths.outputs.changed-files }}"
           echo "  - Test run: End-to-end validation"
 
+  ai-headers-check:
+    name: "AI Headers • Contract Check"
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate canonical AI header keys
+        run: |
+          ./.github/scripts/validate-ai-headers.sh
+
   backend-build:
     name: "Backend • Build & Test"
     runs-on: ubuntu-latest
@@ -101,8 +113,10 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Execute backend build and test
+        id: backend-execution
         run: |
           echo "🚀 Running backend build and test pipeline..."
+          echo "⚠️  Warning Enforcement: MSBuild TreatWarningsAsErrors=true (zero-tolerance policy)"
           
           # Set CI environment variables
           export CI_ENVIRONMENT=true
@@ -127,6 +141,24 @@ jobs:
           
           # Execute the pipeline script (disable parallel for accurate coverage collection)
           ./.github/scripts/build-backend.sh --threshold 16 $COVERAGE_FLAGS
+      
+      - name: Annotate backend build failures
+        if: failure() && steps.backend-execution.outcome == 'failure'
+        run: |
+          echo "📊 Analyzing backend build failure for warning-related issues..."
+          
+          # Check if build failure was due to warnings
+          if [[ "${{ steps.backend-execution.outputs.build_failure_type }}" == "warnings" ]]; then
+            echo "::error title=Backend Build Failed - Warnings Detected::Zero-warning policy enforced: MSBuild TreatWarningsAsErrors=true caused build failure. Fix all compiler warnings before proceeding."
+            echo "::notice title=Warning Enforcement Active::This build uses zero-tolerance warning policy. All compiler warnings must be resolved."
+          elif [[ "${{ steps.backend-execution.outputs.build_failure_type }}" == "compilation" ]]; then
+            echo "::error title=Backend Build Failed - Compilation Errors::Fix compilation errors in .NET codebase before proceeding."
+          else
+            echo "::error title=Backend Build Failed::Unknown build failure - check build logs for details."
+          fi
+          
+          # Summary annotation
+          echo "::notice title=Zero-Warning Build Policy::This project enforces zero compiler warnings. Warning-as-error enforcement: ${{ steps.backend-execution.outputs.warning_enforcement_active }}"
         
       - name: Upload backend artifacts
         if: always()
@@ -159,7 +191,7 @@ jobs:
     name: "Quality Analysis • Testing Analysis (AI)"
     runs-on: ubuntu-latest
     needs: [path-analysis, backend-build, frontend-build, build-summary]
-    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "develop"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
+    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "develop", "epic/testing-coverage-to-90"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
     timeout-minutes: 30
 
     steps:
@@ -168,25 +200,7 @@ jobs:
 
       - name: Extract PR Context
         id: pr-context
-        run: |
-          # Extract issue numbers from PR body (using safe heredoc to prevent code injection)
-          PR_BODY=$(cat <<'EOF'
-          ${{ github.event.pull_request.body }}
-          EOF
-          )
-          ISSUE_NUMBERS=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo "")
-          
-          if [ -n "$ISSUE_NUMBERS" ]; then
-            echo "issue_ref=#$ISSUE_NUMBERS" >> $GITHUB_OUTPUT
-          else
-            echo "issue_ref=No linked issue" >> $GITHUB_OUTPUT
-          fi
-          
-          # Output PR context
-          echo "pr_number=${{ github.event.number }}" >> $GITHUB_OUTPUT
-          echo "pr_author=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
-          echo "source_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
-          echo "target_branch=${{ github.event.pull_request.base.ref }}" >> $GITHUB_OUTPUT
+        uses: ./.github/actions/shared/extract-pr-context
 
       - name: Download test results
         uses: actions/download-artifact@v4
@@ -195,41 +209,12 @@ jobs:
           name: test-results-${{ github.run_number }}
           path: ./
 
-      - name: Check for existing TestMaster analysis comment
+      - name: Check for existing Testing analysis comment
         id: check-existing-comment
-        uses: actions/github-script@v7
+        uses: ./.github/actions/shared/check-existing-comment
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            // Get all comments on this PR
-            const comments = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            
-            // Check for existing unresolved TestMaster analysis comments
-            const hasExistingAnalysis = comments.data.some(comment => {
-              const body = comment.body || '';
-              return (
-                // Contains the TestMaster analysis header
-                body.includes('## 🧪 TestMaster Analysis Report') &&
-                // Is not an error message
-                !body.includes('Claude encountered an error') &&
-                !body.includes('TestMaster Analysis Failed') &&
-                // Contains substantial analysis content (not just a placeholder)
-                (body.includes('### 📊 Testing Impact Assessment') || 
-                 body.includes('Testing Metrics:') ||
-                 body.includes('Coverage Impact:'))
-              );
-            });
-            
-            console.log(`Found existing TestMaster analysis: ${hasExistingAnalysis}`);
-            core.setOutput('skip_analysis', hasExistingAnalysis.toString());
-            
-            if (hasExistingAnalysis) {
-              console.log('Skipping TestMaster analysis - existing unresolved analysis comment found');
-            }
+          header: '## Code Review Report - Testing Analysis'
 
       - name: Create skip status check
         if: steps.check-existing-comment.outputs.skip_analysis == 'true'
@@ -252,6 +237,8 @@ jobs:
           PROMPT="${PROMPT//\{\{ISSUE_REF\}\}/${{ steps.pr-context.outputs.issue_ref }}}"
           PROMPT="${PROMPT//\{\{SOURCE_BRANCH\}\}/${{ github.event.pull_request.head.ref }}}"
           PROMPT="${PROMPT//\{\{TARGET_BRANCH\}\}/${{ github.event.pull_request.base.ref }}}"
+          PROMPT="${PROMPT//\{\{CHANGED_FILES_COUNT\}\}/${{ steps.pr-context.outputs.changed_files_count }}}"
+          PROMPT="${PROMPT//\{\{LINES_CHANGED\}\}/${{ steps.pr-context.outputs.lines_changed }}}"
           
           # Output for use in Claude action
           echo "prompt<<EOF" >> $GITHUB_OUTPUT
@@ -301,14 +288,39 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Execute frontend build and test
+        id: frontend-execution
         run: |
           echo "🚀 Running frontend build and test pipeline..."
+          echo "⚠️  Warning Enforcement: ESLint --max-warnings=0 (zero-tolerance policy)"
           
           # Set CI environment variables
           export CI_ENVIRONMENT=true
           
           # Execute the pipeline script
           ./.github/scripts/build-frontend.sh --prod
+      
+      - name: Annotate frontend build failures
+        if: failure() && steps.frontend-execution.outcome == 'failure'
+        run: |
+          echo "📊 Analyzing frontend build failure for warning-related issues..."
+          
+          # Check if build failure was due to warnings
+          if [[ "${{ steps.frontend-execution.outputs.lint_failure_type }}" == "warnings" ]]; then
+            echo "::error title=Frontend Build Failed - ESLint Warnings Detected::Zero-warning policy enforced: ESLint --max-warnings=0 caused build failure. Fix all linting warnings before proceeding."
+            echo "::notice title=ESLint Warning Count::${{ steps.frontend-execution.outputs.eslint_warning_count }} warnings detected"
+            echo "::notice title=Warning Enforcement Active::This build uses zero-tolerance ESLint warning policy. All warnings must be resolved."
+          elif [[ "${{ steps.frontend-execution.outputs.lint_failure_type }}" == "configuration" ]]; then
+            echo "::error title=Frontend Build Failed - ESLint Configuration Error::Fix ESLint configuration issues before proceeding."
+          elif [[ "${{ steps.frontend-execution.outputs.lint_failure_type }}" == "basic" ]]; then
+            echo "::warning title=Frontend Build Failed - Basic Linting Issues::Using fallback lint script. Consider implementing lint:ci for zero-warning enforcement."
+          elif [[ "${{ steps.frontend-execution.outputs.lint_failure_type }}" == "missing" ]]; then
+            echo "::warning title=Frontend Build - No Linting Configuration::No ESLint scripts found. Consider adding linting for code quality."
+          else
+            echo "::error title=Frontend Build Failed::Unknown build failure - check build logs for details."
+          fi
+          
+          # Summary annotation
+          echo "::notice title=Zero-Warning Build Policy::This project enforces zero ESLint warnings. Warning-as-error enforcement: ${{ steps.frontend-execution.outputs.warning_enforcement_active }}"
         
       - name: Upload frontend artifacts
         if: always()
@@ -356,7 +368,7 @@ jobs:
     name: "Quality Analysis • Standards Compliance (AI)"
     runs-on: ubuntu-latest
     needs: [path-analysis, backend-build, frontend-build, build-summary]
-    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "develop"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
+    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "develop", "epic/testing-coverage-to-90"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
     timeout-minutes: 30
 
     steps:
@@ -365,63 +377,14 @@ jobs:
 
       - name: Extract PR Context
         id: pr-context
-        run: |
-          # Extract issue numbers from PR body (using safe heredoc to prevent code injection)
-          PR_BODY=$(cat <<'EOF'
-          ${{ github.event.pull_request.body }}
-          EOF
-          )
-          ISSUE_NUMBERS=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo "")
-          
-          if [ -n "$ISSUE_NUMBERS" ]; then
-            echo "issue_ref=#$ISSUE_NUMBERS" >> $GITHUB_OUTPUT
-          else
-            echo "issue_ref=No linked issue" >> $GITHUB_OUTPUT
-          fi
-          
-          # Output PR context
-          echo "pr_number=${{ github.event.number }}" >> $GITHUB_OUTPUT
-          echo "pr_author=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
-          echo "source_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
-          echo "target_branch=${{ github.event.pull_request.base.ref }}" >> $GITHUB_OUTPUT
+        uses: ./.github/actions/shared/extract-pr-context
 
-      - name: Check for existing StandardsGuardian analysis comment
+      - name: Check for existing Standards analysis comment
         id: check-existing-comment
-        uses: actions/github-script@v7
+        uses: ./.github/actions/shared/check-existing-comment
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            // Get all comments on this PR
-            const comments = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            
-            // Check for existing unresolved StandardsGuardian analysis comments
-            const hasExistingAnalysis = comments.data.some(comment => {
-              const body = comment.body || '';
-              return (
-                // Contains the StandardsGuardian analysis header (check both possible formats)
-                (body.includes('## 🛡️ StandardsGuardian Analysis Report') || 
-                 body.includes('## 🛡️ StandardsGuardian Compliance Report')) &&
-                // Is not an error message
-                !body.includes('Claude encountered an error') &&
-                !body.includes('StandardsGuardian Analysis Failed') &&
-                // Contains substantial analysis content (not just a placeholder)
-                (body.includes('### 📊 Standards Compliance Overview') || 
-                 body.includes('### 📊 Compliance Assessment') ||
-                 body.includes('Overall Compliance Score:') ||
-                 body.includes('Standards Compliance Status:'))
-              );
-            });
-            
-            console.log(`Found existing StandardsGuardian analysis: ${hasExistingAnalysis}`);
-            core.setOutput('skip_analysis', hasExistingAnalysis.toString());
-            
-            if (hasExistingAnalysis) {
-              console.log('Skipping StandardsGuardian analysis - existing unresolved analysis comment found');
-            }
+          header: '## Code Review Report - Standards Compliance Analysis'
 
       - name: Create skip status check
         if: steps.check-existing-comment.outputs.skip_analysis == 'true'
@@ -444,6 +407,8 @@ jobs:
           PROMPT="${PROMPT//\{\{ISSUE_REF\}\}/${{ steps.pr-context.outputs.issue_ref }}}"
           PROMPT="${PROMPT//\{\{SOURCE_BRANCH\}\}/${{ github.event.pull_request.head.ref }}}"
           PROMPT="${PROMPT//\{\{TARGET_BRANCH\}\}/${{ github.event.pull_request.base.ref }}}"
+          PROMPT="${PROMPT//\{\{CHANGED_FILES_COUNT\}\}/${{ steps.pr-context.outputs.changed_files_count }}}"
+          PROMPT="${PROMPT//\{\{LINES_CHANGED\}\}/${{ steps.pr-context.outputs.lines_changed }}}"
           
           # Output for use in Claude action
           echo "prompt<<EOF" >> $GITHUB_OUTPUT
@@ -478,7 +443,7 @@ jobs:
     name: "Quality Analysis • Tech Debt Analysis (AI)"
     runs-on: ubuntu-latest
     needs: [path-analysis, backend-build, frontend-build, build-summary]
-    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "develop"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
+    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "develop", "epic/testing-coverage-to-90"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
     timeout-minutes: 30
 
     steps:
@@ -487,62 +452,14 @@ jobs:
 
       - name: Extract PR Context
         id: pr-context
-        run: |
-          # Extract issue numbers from PR body (using safe heredoc to prevent code injection)
-          PR_BODY=$(cat <<'EOF'
-          ${{ github.event.pull_request.body }}
-          EOF
-          )
-          ISSUE_NUMBERS=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo "")
-          
-          if [ -n "$ISSUE_NUMBERS" ]; then
-            echo "issue_ref=#$ISSUE_NUMBERS" >> $GITHUB_OUTPUT
-          else
-            echo "issue_ref=No linked issue" >> $GITHUB_OUTPUT
-          fi
-          
-          # Output PR context
-          echo "pr_number=${{ github.event.number }}" >> $GITHUB_OUTPUT
-          echo "pr_author=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
-          echo "source_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
-          echo "target_branch=${{ github.event.pull_request.base.ref }}" >> $GITHUB_OUTPUT
+        uses: ./.github/actions/shared/extract-pr-context
 
-      - name: Check for existing DebtSentinel analysis comment
+      - name: Check for existing Tech Debt analysis comment
         id: check-existing-comment
-        uses: actions/github-script@v7
+        uses: ./.github/actions/shared/check-existing-comment
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            // Get all comments on this PR
-            const comments = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            
-            // Check for existing unresolved DebtSentinel analysis comments
-            const hasExistingAnalysis = comments.data.some(comment => {
-              const body = comment.body || '';
-              return (
-                // Contains the DebtSentinel analysis header
-                body.includes('## 🔍 DebtSentinel Analysis Report') &&
-                // Is not an error message
-                !body.includes('Claude encountered an error') &&
-                !body.includes('DebtSentinel Analysis Failed') &&
-                // Contains substantial analysis content (not just a placeholder)
-                (body.includes('### 📊 Technical Debt Impact Assessment') || 
-                 body.includes('### 📊 Technical Debt Assessment') ||
-                 body.includes('Overall Debt Impact:') ||
-                 body.includes('Technical Debt Impact:'))
-              );
-            });
-            
-            console.log(`Found existing DebtSentinel analysis: ${hasExistingAnalysis}`);
-            core.setOutput('skip_analysis', hasExistingAnalysis.toString());
-            
-            if (hasExistingAnalysis) {
-              console.log('Skipping DebtSentinel analysis - existing unresolved analysis comment found');
-            }
+          header: '## Code Review Report - Tech Debt Analysis'
 
       - name: Create skip status check
         if: steps.check-existing-comment.outputs.skip_analysis == 'true'
@@ -565,6 +482,8 @@ jobs:
           PROMPT="${PROMPT//\{\{ISSUE_REF\}\}/${{ steps.pr-context.outputs.issue_ref }}}"
           PROMPT="${PROMPT//\{\{SOURCE_BRANCH\}\}/${{ github.event.pull_request.head.ref }}}"
           PROMPT="${PROMPT//\{\{TARGET_BRANCH\}\}/${{ github.event.pull_request.base.ref }}}"
+          PROMPT="${PROMPT//\{\{CHANGED_FILES_COUNT\}\}/${{ steps.pr-context.outputs.changed_files_count }}}"
+          PROMPT="${PROMPT//\{\{LINES_CHANGED\}\}/${{ steps.pr-context.outputs.lines_changed }}}"
           
           # Output for use in Claude action
           echo "prompt<<EOF" >> $GITHUB_OUTPUT
@@ -598,7 +517,7 @@ jobs:
     name: "Security • Comprehensive Scanning"
     runs-on: ubuntu-latest
     needs: [path-analysis, backend-build, frontend-build, build-summary]
-    if: always() && !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
+    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "epic/testing-coverage-to-90"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
     timeout-minutes: 45
 
     strategy:
@@ -722,7 +641,7 @@ jobs:
     name: "Security • AI Analysis"
     runs-on: ubuntu-latest  
     needs: [path-analysis, backend-build, frontend-build, build-summary, security-scans]
-    if: always() && !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
+    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "epic/testing-coverage-to-90"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
     timeout-minutes: 30
 
     steps:
@@ -731,25 +650,7 @@ jobs:
 
       - name: Extract PR Context
         id: pr-context
-        run: |
-          # Extract issue numbers from PR body (using safe heredoc to prevent code injection)
-          PR_BODY=$(cat <<'EOF'
-          ${{ github.event.pull_request.body }}
-          EOF
-          )
-          ISSUE_NUMBERS=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo "")
-          
-          if [ -n "$ISSUE_NUMBERS" ]; then
-            echo "issue_ref=#$ISSUE_NUMBERS" >> $GITHUB_OUTPUT
-          else
-            echo "issue_ref=No linked issue" >> $GITHUB_OUTPUT
-          fi
-          
-          # Output PR context
-          echo "pr_number=${{ github.event.number }}" >> $GITHUB_OUTPUT
-          echo "pr_author=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
-          echo "source_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
-          echo "target_branch=${{ github.event.pull_request.base.ref }}" >> $GITHUB_OUTPUT
+        uses: ./.github/actions/shared/extract-pr-context
 
       - name: Download all security scan results
         uses: actions/download-artifact@v4
@@ -773,42 +674,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check for existing SecuritySentinel analysis comment
+      - name: Check for existing Security analysis comment
         id: check-existing-comment
-        uses: actions/github-script@v7
+        uses: ./.github/actions/shared/check-existing-comment
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            // Get all comments on this PR
-            const comments = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            
-            // Check for existing unresolved SecuritySentinel analysis comments
-            const hasExistingAnalysis = comments.data.some(comment => {
-              const body = comment.body || '';
-              return (
-                // Contains the SecuritySentinel analysis header
-                body.includes('## 🛡️ SecuritySentinel Analysis Report') &&
-                // Is not an error message
-                !body.includes('Claude encountered an error') &&
-                !body.includes('SecuritySentinel Analysis Failed') &&
-                // Contains substantial analysis content (not just a placeholder)
-                (body.includes('### 🛡️ Security Assessment Overview') || 
-                 body.includes('### 📊 Security Impact Assessment') ||
-                 body.includes('Security Posture:') ||
-                 body.includes('Vulnerability Impact:'))
-              );
-            });
-            
-            console.log(`Found existing SecuritySentinel analysis: ${hasExistingAnalysis}`);
-            core.setOutput('skip_analysis', hasExistingAnalysis.toString());
-            
-            if (hasExistingAnalysis) {
-              console.log('Skipping SecuritySentinel analysis - existing unresolved analysis comment found');
-            }
+          header: '## Code Review Report - Security Analysis'
 
       - name: Create skip status check
         if: steps.check-existing-comment.outputs.skip_analysis == 'true'
@@ -831,6 +702,8 @@ jobs:
           PROMPT="${PROMPT//\{\{ISSUE_REF\}\}/${{ steps.pr-context.outputs.issue_ref }}}"
           PROMPT="${PROMPT//\{\{SOURCE_BRANCH\}\}/${{ github.event.pull_request.head.ref }}}"
           PROMPT="${PROMPT//\{\{TARGET_BRANCH\}\}/${{ github.event.pull_request.base.ref }}}"
+          PROMPT="${PROMPT//\{\{CHANGED_FILES_COUNT\}\}/${{ steps.pr-context.outputs.changed_files_count }}}"
+          PROMPT="${PROMPT//\{\{LINES_CHANGED\}\}/${{ steps.pr-context.outputs.lines_changed }}}"
           
           # Output for use in Claude action
           echo "prompt<<EOF" >> $GITHUB_OUTPUT
@@ -907,7 +780,7 @@ jobs:
     name: "Final Analysis • Merge Orchestrator (AI)"
     runs-on: ubuntu-latest
     needs: [path-analysis, backend-build, frontend-build, build-summary, claude-testing-analysis, claude-standards-analysis, claude-tech-debt-analysis, security-scans, claude-security-analysis]
-    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "develop"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
+    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "develop", "epic/testing-coverage-to-90"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
     timeout-minutes: 30
 
     steps:
@@ -916,64 +789,14 @@ jobs:
 
       - name: Extract PR Context
         id: pr-context
-        run: |
-          # Extract issue numbers from PR body (using safe heredoc to prevent code injection)
-          PR_BODY=$(cat <<'EOF'
-          ${{ github.event.pull_request.body }}
-          EOF
-          )
-          ISSUE_NUMBERS=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | grep -oE '[0-9]+' | head -1 || echo "")
-          
-          if [ -n "$ISSUE_NUMBERS" ]; then
-            echo "issue_ref=#$ISSUE_NUMBERS" >> $GITHUB_OUTPUT
-          else
-            echo "issue_ref=No linked issue" >> $GITHUB_OUTPUT
-          fi
-          
-          # Output PR context
-          echo "pr_number=${{ github.event.number }}" >> $GITHUB_OUTPUT
-          echo "pr_author=${{ github.event.pull_request.user.login }}" >> $GITHUB_OUTPUT
-          echo "source_branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
-          echo "target_branch=${{ github.event.pull_request.base.ref }}" >> $GITHUB_OUTPUT
+        uses: ./.github/actions/shared/extract-pr-context
 
-      - name: Check for existing MergeOrchestrator analysis comment
+      - name: Check for existing PR Merge Review analysis comment
         id: check-existing-comment
-        uses: actions/github-script@v7
+        uses: ./.github/actions/shared/check-existing-comment
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            // Get all comments on this PR
-            const comments = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            
-            // Check for existing unresolved MergeOrchestrator analysis comments
-            const hasExistingAnalysis = comments.data.some(comment => {
-              const body = comment.body || '';
-              return (
-                // Contains the MergeOrchestrator analysis header
-                (body.includes('## 🎯 MergeOrchestrator Analysis Report') ||
-                 body.includes('## 🎯 MergeOrchestrator Executive Summary')) &&
-                // Is not an error message
-                !body.includes('Claude encountered an error') &&
-                !body.includes('MergeOrchestrator Analysis Failed') &&
-                // Contains substantial analysis content (not just a placeholder)
-                (body.includes('### 🎯 Final Deployment Decision') || 
-                 body.includes('### 📊 Consolidated Analysis Overview') ||
-                 body.includes('Deployment Decision:') ||
-                 body.includes('Overall Analysis Summary:') ||
-                 body.includes('Overall Assessment:'))
-              );
-            });
-            
-            console.log(`Found existing MergeOrchestrator analysis: ${hasExistingAnalysis}`);
-            core.setOutput('skip_analysis', hasExistingAnalysis.toString());
-            
-            if (hasExistingAnalysis) {
-              console.log('Skipping MergeOrchestrator analysis - existing unresolved analysis comment found');
-            }
+          header: '## Code Review Report - PR Merge Review Analysis'
 
       - name: Create skip status check
         if: steps.check-existing-comment.outputs.skip_analysis == 'true'
@@ -996,6 +819,8 @@ jobs:
           PROMPT="${PROMPT//\\{\\{ISSUE_REF\\}\\}/${{ steps.pr-context.outputs.issue_ref }}}"
           PROMPT="${PROMPT//\\{\\{SOURCE_BRANCH\\}\\}/${{ github.event.pull_request.head.ref }}}"
           PROMPT="${PROMPT//\\{\\{TARGET_BRANCH\\}\\}/${{ github.event.pull_request.base.ref }}}"
+          PROMPT="${PROMPT//\\{\\{CHANGED_FILES_COUNT\\}\\}/${{ steps.pr-context.outputs.changed_files_count }}}"
+          PROMPT="${PROMPT//\\{\\{LINES_CHANGED\\}\\}/${{ steps.pr-context.outputs.lines_changed }}}"
           
           # Output for use in Claude action
           echo "prompt<<EOF" >> $GITHUB_OUTPUT
@@ -1110,7 +935,7 @@ jobs:
             echo "📝 **RECOMMENDED**: Review analysis results and address issues"
           else
             echo "✅ **PIPELINE SUCCEEDED**: All jobs completed successfully"
-            if [ "${{ github.event.pull_request.base.ref }}" = "main" ] || [ "${{ github.event.pull_request.base.ref }}" = "develop" ]; then
+            if [ "${{ github.event.pull_request.base.ref }}" = "main" ] || [ "${{ github.event.pull_request.base.ref }}" = "develop" ] || [ "${{ github.event.pull_request.base.ref }}" = "epic/testing-coverage-to-90" ]; then
               echo "🤖 **AI ANALYSIS**: Claude AI feedback available in PR comments"
             fi
             echo "🎉 **READY**: Changes are ready for review and merge"

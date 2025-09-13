@@ -49,10 +49,10 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     {
       builder.ConfigureTestServices(services =>
           {
-          services.AddSingleton(mockStatusService.Object);
+            services.AddSingleton(mockStatusService.Object);
             // Register the test controller
-          services.AddControllers().AddApplicationPart(typeof(Framework.TestControllers.FeatureTestController).Assembly);
-        });
+            services.AddControllers().AddApplicationPart(typeof(Framework.TestControllers.FeatureTestController).Assembly);
+          });
     });
 
     // Create a client
@@ -111,10 +111,10 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     {
       builder.ConfigureTestServices(services =>
           {
-          services.AddSingleton(mockStatusService.Object);
+            services.AddSingleton(mockStatusService.Object);
             // Register the test controller
-          services.AddControllers().AddApplicationPart(typeof(Framework.TestControllers.FeatureTestController).Assembly);
-        });
+            services.AddControllers().AddApplicationPart(typeof(Framework.TestControllers.FeatureTestController).Assembly);
+          });
     });
 
     // Create a client
@@ -165,10 +165,10 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     {
       builder.ConfigureTestServices(services =>
           {
-          services.AddSingleton(mockStatusService.Object);
+            services.AddSingleton(mockStatusService.Object);
             // Register the test controller
-          services.AddControllers().AddApplicationPart(typeof(Framework.TestControllers.FeatureTestController).Assembly);
-        });
+            services.AddControllers().AddApplicationPart(typeof(Framework.TestControllers.FeatureTestController).Assembly);
+          });
     });
 
     // Create a client

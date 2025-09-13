@@ -138,14 +138,21 @@ public class AiController(
       // Access the file via the request object
       var audioFile = request.AudioFile;
 
-      // Enhanced logging to debug potential binding issues
+      // Enhanced logging to debug potential binding issues with safe Request.Form access
+      int fileCount = 0;
+      var httpRequest = Request;
+      if (httpRequest?.HasFormContentType == true)
+      {
+        fileCount = httpRequest.Form.Files.Count;
+      }
+
       logger.LogInformation(
         "Received transcribe request. Request.Form.Files.Count: {FileCount}, Request DTO File null: {IsParamNull}",
-        Request.Form.Files.Count,
+        fileCount,
         audioFile == null);
 
-      // Check for form field name issues
-      if (audioFile == null && Request.Form.Files.Count > 0)
+      // Check for form field name issues when files are present but audioFile is null
+      if (audioFile == null && fileCount > 0)
       {
         var fileNames = string.Join(", ", Request.Form.Files.Select(f => f.Name));
         logger.LogWarning(
@@ -154,30 +161,55 @@ public class AiController(
         return BadRequest("Audio file is required. Ensure the form field name is 'audioFile'.");
       }
 
-      // Process the audio file through the service
-      try
-      {
-        var result = await aiService.ProcessAudioTranscriptionAsync(audioFile!);
-
-        // Return the result
-        return Ok(new
-        {
-          message = result.Message,
-          audioFile = result.AudioFileName,
-          transcriptFile = result.TranscriptFileName,
-          timestamp = result.Timestamp,
-          transcript = result.Transcript
-        });
-      }
-      catch (ArgumentNullException)
+      // Ensure audioFile is not null before processing
+      if (audioFile == null)
       {
         return BadRequest("Audio file is required.");
       }
-      catch (ArgumentException ex)
+
+      // Process the audio file through the service
+      var result = await aiService.ProcessAudioTranscriptionAsync(audioFile);
+
+      // Return the result
+      return Ok(new
       {
-        logger.LogWarning(ex, "Invalid audio file");
-        return BadRequest(ex.Message);
+        message = result.Message,
+        audioFile = result.AudioFileName,
+        transcriptFile = result.TranscriptFileName,
+        timestamp = result.Timestamp,
+        transcript = result.Transcript
+      });
+    }
+    catch (InvalidDataException ex)
+    {
+      // Handle Request.Form parsing exceptions gracefully
+      logger.LogDebug(ex, "{Method}: Unable to read Request.Form; proceeding with request DTO validation only", nameof(TranscribeAudio));
+
+      // Fallback to basic audioFile validation when Request.Form is unavailable
+      if (request.AudioFile == null)
+      {
+        return BadRequest("Audio file is required.");
       }
+
+      // Process with available audioFile data
+      var result = await aiService.ProcessAudioTranscriptionAsync(request.AudioFile);
+      return Ok(new
+      {
+        message = result.Message,
+        audioFile = result.AudioFileName,
+        transcriptFile = result.TranscriptFileName,
+        timestamp = result.Timestamp,
+        transcript = result.Transcript
+      });
+    }
+    catch (ArgumentNullException)
+    {
+      return BadRequest("Audio file is required.");
+    }
+    catch (ArgumentException ex)
+    {
+      logger.LogWarning(ex, "Invalid audio file");
+      return BadRequest(ex.Message);
     }
     catch (Exception ex)
     {

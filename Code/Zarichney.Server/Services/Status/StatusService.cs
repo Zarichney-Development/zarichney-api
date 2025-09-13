@@ -48,7 +48,7 @@ public interface IStatusService
   /// <param name="service">The service to set the status for.</param>
   /// <param name="isAvailable">Whether the service is available or not.</param>
   /// <param name="missingConfigurations">Optional list of missing configuration items that make the service unavailable.</param>
-  void SetServiceAvailability(ExternalServices service, bool isAvailable, List<string>? missingConfigurations = null);
+  Task SetServiceAvailabilityAsync(ExternalServices service, bool isAvailable, List<string>? missingConfigurations = null);
 }
 
 /// <summary>
@@ -180,10 +180,10 @@ public class StatusService : IStatusService
   }
 
   /// <inheritdoc />
-  public void SetServiceAvailability(ExternalServices service, bool isAvailable, List<string>? missingConfigurations = null)
+  public async Task SetServiceAvailabilityAsync(ExternalServices service, bool isAvailable, List<string>? missingConfigurations = null)
   {
     // Acquire lock first to prevent race conditions with other cache updates
-    _cacheLock.Wait();
+    await _cacheLock.WaitAsync();
     try
     {
       // Initialize the cache if needed

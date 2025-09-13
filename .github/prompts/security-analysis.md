@@ -235,131 +235,42 @@ Provide specific file:line references and actionable security remediation steps.
 </analysis_instructions>
 
 <output_format>
-**Your output MUST be a single GitHub comment formatted in Markdown:**
+Your output MUST be a single GitHub comment formatted in Markdown using the following strict contract. Do not include any sections other than those specified.
 
-## 🛡️ SecuritySentinel Analysis Report
+## Code Review Report - Security Analysis
 
-**PR Summary:** {{PR_NUMBER}} by @{{PR_AUTHOR}} ({{SOURCE_BRANCH}} → {{TARGET_BRANCH}})  
-**Issue Context:** {{ISSUE_REF}}  
-**Security Context:** Automation-aware security analysis with component-specific threat assessment  
-**Analysis Scope:** Comprehensive security impact assessment
+PR: #{{PR_NUMBER}} by @{{PR_AUTHOR}} ({{SOURCE_BRANCH}} → {{TARGET_BRANCH}}) • Issue: {{ISSUE_REF}} • Changed Files: {{CHANGED_FILES_COUNT}} • Lines Changed: {{LINES_CHANGED}}
 
-### 🔒 Security Posture Assessment
+Status: [✅ MERGE / 🚫 BLOCK]
 
-**Overall Security Impact:** [Security Enhanced/Neutral/Degraded/Critical Risk]  
-**Threat Level:** [None/Low/Medium/High/Critical]
+Rule: If any items exist in Do Now, decision is BLOCK; otherwise MERGE. SecuritySentinel remains authoritative on security blocks.
 
-**Strategic Security Analysis:**
-- **Automation Context:** [How security assessment considers CI/CD and automated deployment context]
-- **Component Threat Focus:** [Component-specific security analysis based on architectural areas]  
-- **Epic Security Alignment:** [How security changes support strategic security initiatives]
-- **Priority-Based Assessment:** [Security analysis rigor adjusted for strategic importance]
+Do Now (Pre-Merge Required)
 
-**Security Metrics:**
-- Vulnerabilities Introduced: [X critical, Y high, Z medium]
-- Security Fixes Applied: [X vulnerabilities resolved]
-- Dependency Security: [✅ Clean/⚠️ Updates Needed/🚨 Critical Issues]
-- **Deployment Decision: [🚨 BLOCK/⚠️ CONDITIONAL/📋 DEPLOY]**
+| File:Line | Area | Finding | Required Change |
+|-----------|------|---------|-----------------|
+| |
 
----
+If more than 10 items exist, list the top 10 most critical by security impact and add a final row: “+X additional items”.
 
-### 🚨 Critical Security Issues (Block Deployment)
+Do Later (Backlog)
 
-| File:Line | Vulnerability Type | Severity | Impact | Required Action |
-|-----------|-------------------|----------|---------|-----------------|
-| `UserController.cs:45` | SQL Injection | Critical | Data breach risk | Implement parameterized queries |
-| `config.ts:12` | Hardcoded API Key | Critical | Credential exposure | Move to environment variables |
+| File:Line | Area | Finding | Suggested Action |
+|-----------|------|---------|------------------|
+| |
 
-### ⚠️ High Priority Security Issues (Security Review Required)
+If more than 10 items exist, list the top 10 and add a final row: “+X additional items”.
 
-| File:Line | Vulnerability Type | Severity | Impact | Recommended Action |
-|-----------|-------------------|----------|--------|-------------------|
-| `AuthService.cs:67` | Insufficient Authorization | High | Privilege escalation | Add role-based checks |
-| `payment.component.ts:89` | XSS Vulnerability | High | Client-side attacks | Implement proper sanitization |
+Summary
 
-### 📋 Medium Priority Security Issues (Deploy with Monitoring)
+- Do Now: [N]
+- Do Later: [M]
 
-| File:Line | Vulnerability Type | Severity | Impact | Suggested Action |
-|-----------|-------------------|----------|--------|------------------|
-| `ApiClient.cs:123` | Missing Input Validation | Medium | Data integrity | Add validation attributes |
-| `user.service.ts:45` | CSRF Vulnerability | Medium | Session attacks | Implement anti-forgery tokens |
+Notes
 
-### 💡 Security Enhancement Opportunities
-
-| File:Line | Enhancement | Benefit | Implementation Suggestion |
-|-----------|------------|---------|--------------------------|
-| `Startup.cs:78` | Security Headers | Defense in depth | Add HSTS, CSP headers |
-| `auth.guard.ts:34` | Token Refresh Logic | Session security | Implement automatic refresh |
-
-### 🛡️ Security Improvements & Wins
-
-- **Authentication Enhancement:** Implemented proper JWT validation with expiration handling
-- **Input Validation:** Added comprehensive validation for user registration endpoints  
-- **Dependency Security:** Updated 3 packages with known vulnerabilities
-- **Security Testing:** Added 8 new security-focused unit tests
-
----
-
-### 🎯 AI Coder Security Insights
-
-**Excellent Security Patterns to Replicate:**
-- Proper parameterized query usage in data access layer
-- Comprehensive input validation using established patterns
-- Secure JWT token handling with proper expiration logic
-
-**Security Patterns to Internalize:**
-- Always validate input at both client and server boundaries
-- Use established authentication middleware patterns consistently
-- Remember to update security tests when modifying authentication logic
-
-### 📊 Security Health Metrics
-
-**Security Posture:** [Excellent/Good/Needs Attention/Critical]  
-**Vulnerability Trend:** [Improving/Stable/Degrading]  
-**AI Coder Security Readiness:** [Fully Secure/Minor Gaps/Needs Training]
-
----
-
-### ✅ Immediate Security Actions
-
-**For This PR:**
-1. Fix SQL injection vulnerability in `UserController.ProcessQuery()` method
-2. Remove hardcoded API key from configuration file
-3. Add input validation for new API endpoints
-
-**Post-Deployment Monitoring:**
-1. Monitor authentication failure rates for unusual patterns
-2. Review dependency security alerts weekly
-3. Validate security headers are properly configured
-
-**Suggested Security Commands:**
-```bash
-# Run security-focused tests
-dotnet test --filter "Category=Security"
-
-# Check for secrets in codebase
-git secrets --scan
-
-# Validate security headers
-curl -I https://zarichney.com/api/health | grep -E "(Strict-Transport-Security|Content-Security-Policy)"
-```
-
-### 📚 Security Resources & Standards
-
-**For comprehensive security guidance, reference:**
-- [OWASP Top 10](https://owasp.org/www-project-top-ten/) - Current threat landscape
-- [`/Docs/Standards/CodingStandards.md`](../Docs/Standards/CodingStandards.md) - Security coding requirements
-- [.NET Security Guidelines](https://docs.microsoft.com/en-us/dotnet/standard/security/) - Framework-specific security
-
----
-
-**🚨 DEPLOYMENT DECISION: [BLOCK/CONDITIONAL/DEPLOY]**
-
-*Justification: [Specific reasoning based on highest severity findings and business impact assessment]*
-
----
-
-*This analysis was performed by SecuritySentinel using comprehensive security standards, CodeQL analysis results, dependency vulnerability scans, and established secure coding patterns from the project framework. Focus areas included authentication security, input validation, dependency management, and cross-stack security integration.*
+- Do Now examples: hardcoded secrets, auth bypass, critical dependency risks, injection vulnerabilities.
+- Keep language concise and objective. No praise or celebrations.
+*Analysis generated by SecuritySentinel using project security standards, scans, and best practices.*
 </output_format>
 
 ---

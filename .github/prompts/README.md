@@ -101,23 +101,24 @@ graph TD
 
 ### **AI Analysis Input Requirements**
 * **Git Context**: PR number, author, source/target branches, linked issues, git diff with file changes
+* **Diff Stats**: `{{CHANGED_FILES_COUNT}}` and `{{LINES_CHANGED}}` passed into prompts
 * **GitHub Label Context**: Issue labels providing strategic, component, and priority context for targeted analysis
 * **Project Documentation**: Access to `CLAUDE.md`, `/Docs/Standards/`, module `README.md` files
 * **Build Artifacts**: Test results, coverage reports, security scan results (when available)
 * **Branch Context**: Target branch determines analysis depth and security requirements
 
 ### **AI Analysis Output Guarantees**
-* **Standardized Format**: GitHub markdown comments with consistent structure and emoji indicators
-* **Specific References**: File:line locations with actionable remediation steps
-* **Objective Prioritization**: Critical/High/Medium/Low categorization with clear justification
-* **Educational Value**: AI coder learning insights and pattern reinforcement
-* **Deployment Decisions**: Clear recommendations for merge/block with security assessment
+* **Unified Header**: `## Code Review Report - <Agent Name> Analysis`
+* **Action-First**: `Status: [✅ MERGE / 🚫 BLOCK]` (BLOCK if any Do Now)
+* **Two Buckets**: Do Now (Required) and Do Later (Backlog), with concise tables
+* **Specific References**: File:Line with clear Required Change/Suggested Action
+* **Concise Summary**: Final counts for Do Now [N] and Do Later [M]
 
 ### **Quality Gate Contracts**
-* **Critical Issues**: Automatically block merge until resolved (security vulnerabilities, breaking standards violations)
-* **High Priority**: Must be addressed in current PR or immediate follow-up with tracking
-* **Medium/Low Priority**: Tracked for future improvement with backlog integration
-* **Celebration**: Positive reinforcement for excellent patterns and debt reduction wins
+* **Deterministic Decision**: Any Do Now items ⇒ `Status: 🚫 BLOCK`; otherwise `✅ MERGE`
+* **Do Now**: Must be resolved in this PR before merge
+* **Do Later**: Tracked as backlog items; non-blocking
+* **No Fluff**: No celebrations, praise, or long narratives
 
 ### **Context Ingestion Requirements**
 Each AI agent MUST perform comprehensive context analysis before evaluation:
@@ -159,17 +160,16 @@ Each AI agent follows consistent structural patterns:
 * **GitHub Integration**: Results appear as comprehensive comments on PR conversations
 
 ### **Understanding AI Analysis Output**
-Each AI agent provides structured analysis with consistent formatting:
-* **Executive Summary**: Overall assessment with clear metrics and quality indicators
-* **Categorized Findings**: Critical/High/Medium/Low priority issues with specific file:line references
-* **Educational Insights**: AI coder learning patterns and reinforcement guidance
-* **Actionable Recommendations**: Specific steps for remediation with reasoning and examples
+Each AI agent outputs a concise, standardized report:
+* **Header**: `## Code Review Report - <Agent Name> Analysis`
+* **Decision**: `Status: [✅ MERGE / 🚫 BLOCK]` with implicit rule
+* **Action Lists**: Do Now and Do Later tables (top 10, summarize remainder)
+* **Summary**: Count of Do Now [N], Do Later [M]
 
 ### **Working with AI Feedback**
-* **Critical Issues**: Must be resolved before merge - these block deployment
-* **High Priority**: Address in current PR or create immediate follow-up issues
-* **Medium/Low Priority**: Add to backlog for future improvement sprints
-* **Celebration Sections**: Positive reinforcement for excellent patterns to replicate
+* **Do Now**: Resolve before merge (merging is blocked until cleared)
+* **Do Later**: Create follow-up issues and prioritize in backlog
+* **Clarity**: Prefer precise Required Change/Suggested Action over narrative
 
 ### **Prompt Evolution and Customization**
 When modifying AI analysis capabilities:
@@ -197,6 +197,16 @@ grep -o '{{[^}]*}}' .github/prompts/*.md | sort -u
 * **Research Foundation**: `/Docs/Research/Tech_Debt_Analysis_Prompt_Research.md` - Academic foundation for prompt engineering
 * **Workflow Integration**: `.github/workflows/build.yml` - CI/CD pipeline that executes AI analysis
 * **Claude AI Service**: `anthropics/claude-code-action@v1` - AI analysis execution engine
+
+### Header Detection & De‑Duplication
+- Canonical headers used for detection (must match exactly):
+  - `## Code Review Report - Standards Compliance Analysis`
+  - `## Code Review Report - Tech Debt Analysis`
+  - `## Code Review Report - Testing Analysis`
+  - `## Code Review Report - Security Analysis`
+  - `## Code Review Report - PR Merge Review Analysis`
+- Workflows skip reruns by searching PR comments for these headers plus basic body markers (`Status`, `Do Now`, `Do Later`). If found, the analysis job is skipped to prevent duplicates.
+- CI check: `AI Headers • Contract Check` runs `./.github/scripts/validate-ai-headers.sh` to ensure prompts and workflow detection strings stay in sync.
 
 ### **Consumer Impact**
 * **Immediate Impact**: All PR analysis for `develop` and `main` branches

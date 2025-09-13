@@ -9,6 +9,7 @@ using Zarichney.Server.Tests.TestData.Builders;
 using Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
 using Zarichney.Services.Payment;
 using Zarichney.Services.Status;
+using Zarichney.Tests.Framework.Helpers;
 
 namespace Zarichney.Server.Tests.Unit.Services.Payment;
 
@@ -69,9 +70,9 @@ public class StripeServiceTests
         x => x.Log(
             LogLevel.Warning,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Stripe Secret Key is missing")),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+            It.Is<It.IsAnyType>((v, t) => v != null && v.ToString()!.Contains("Stripe Secret Key is missing")),
+            It.IsAny<Exception?>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
         Times.Once,
         "because missing Stripe configuration should be logged as warning");
   }
@@ -102,9 +103,9 @@ public class StripeServiceTests
         x => x.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Stripe Webhook Secret is missing")),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+            It.Is<It.IsAnyType>((v, t) => v != null && v.ToString()!.Contains("Stripe Webhook Secret is missing")),
+            It.IsAny<Exception?>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
         Times.Once,
         "because missing webhook configuration should be logged as error");
   }
@@ -145,18 +146,16 @@ public class StripeServiceTests
     result.Should().Be(0, "because null session should return zero quantity");
   }
 
-  [Theory, AutoMoqData]
+  [Fact]
   [Trait("Category", "Unit")]
-  public void CreateMockEvent_WithValidEntity_ReturnsEventWithCorrectStructure(
-      [Frozen] Mock<ILogger<StripeService>> mockLogger)
+  public void CreateMockEvent_WithValidEntity_ReturnsEventWithCorrectStructure()
   {
     // Arrange
-    var config = new PaymentConfigBuilder().Build();
-    var sut = new StripeService(config, mockLogger.Object);
+    var mockHelper = new MockHelper();
     var mockSession = new Session { Id = "test_id_123" };
 
     // Act
-    var result = sut.CreateMockEvent(mockSession);
+    var result = mockHelper.CreateMockStripeEvent(mockSession);
 
     // Assert
     result.Should().NotBeNull("because mock event should be created successfully");
@@ -166,7 +165,7 @@ public class StripeServiceTests
 
   [Theory, AutoData]
   [Trait("Category", "Unit")]
-  public async Task GetSession_WithEmptySessionId_ShouldHandleGracefully(
+  public Task GetSession_WithEmptySessionId_ShouldHandleGracefully(
       [Frozen] Mock<ILogger<StripeService>> mockLogger)
   {
     // Arrange
@@ -177,11 +176,12 @@ public class StripeServiceTests
     // In practice, this would test the actual Stripe API call handling
     // For now, verify the service is properly configured
     sut.Should().NotBeNull("because the service should handle empty session ID gracefully");
+    return Task.CompletedTask;
   }
 
   [Theory, AutoData]
   [Trait("Category", "Unit")]
-  public async Task GetSessionWithLineItems_WithValidSessionId_ShouldExpandLineItems(
+  public Task GetSessionWithLineItems_WithValidSessionId_ShouldExpandLineItems(
       [Frozen] Mock<ILogger<StripeService>> mockLogger)
   {
     // Arrange
@@ -192,11 +192,12 @@ public class StripeServiceTests
     // This would test that the session is retrieved with line items expanded
     // In practice, we would verify the Stripe API call includes the proper expand parameter
     sut.Should().NotBeNull("because the service should support line item expansion");
+    return Task.CompletedTask;
   }
 
   [Theory, AutoData]
   [Trait("Category", "Unit")]
-  public async Task FindSessionsByPaymentIntent_WithValidPaymentIntentId_ShouldReturnMatchingSessions(
+  public Task FindSessionsByPaymentIntent_WithValidPaymentIntentId_ShouldReturnMatchingSessions(
       [Frozen] Mock<ILogger<StripeService>> mockLogger)
   {
     // Arrange
@@ -207,11 +208,12 @@ public class StripeServiceTests
     // This would test the search functionality for sessions by payment intent
     // In practice, we would verify the proper Stripe API search parameters
     sut.Should().NotBeNull("because the service should support session search by payment intent");
+    return Task.CompletedTask;
   }
 
   [Theory, AutoData]
   [Trait("Category", "Unit")]
-  public async Task GetPaymentIntent_WithValidId_ShouldRetrievePaymentIntent(
+  public Task GetPaymentIntent_WithValidId_ShouldRetrievePaymentIntent(
       [Frozen] Mock<ILogger<StripeService>> mockLogger)
   {
     // Arrange
@@ -221,11 +223,12 @@ public class StripeServiceTests
     // Act & Assert
     // This would test payment intent retrieval with proper cancellation token handling
     sut.Should().NotBeNull("because the service should support payment intent retrieval");
+    return Task.CompletedTask;
   }
 
   [Theory, AutoData]
   [Trait("Category", "Unit")]
-  public async Task CreatePaymentIntentAsync_WithValidParameters_ShouldCreatePaymentIntent(
+  public Task CreatePaymentIntentAsync_WithValidParameters_ShouldCreatePaymentIntent(
       [Frozen] Mock<ILogger<StripeService>> mockLogger)
   {
     // Arrange
@@ -235,6 +238,7 @@ public class StripeServiceTests
     // Act & Assert
     // This would test payment intent creation with all specified parameters
     sut.Should().NotBeNull("because the service should support payment intent creation");
+    return Task.CompletedTask;
   }
 
   [Theory, AutoMoqData]
@@ -266,19 +270,16 @@ public class StripeServiceTests
     result.PaymentType.Should().Be(PaymentType.RecipeCredit, "because metadata payment type should be parsed");
   }
 
-  [Theory, AutoMoqData]
+  [Fact]
   [Trait("Category", "Unit")]
-  public void CreateMockEvent_WithValidEntity_HandlesGenericType(
-      [Frozen] Mock<ILogger<StripeService>> mockLogger)
+  public void CreateMockEvent_WithValidEntity_HandlesGenericType()
   {
     // Arrange
-    var config = new PaymentConfigBuilder().Build();
-    var sut = new StripeService(config, mockLogger.Object);
-
+    var mockHelper = new MockHelper();
     var mockSession = new Session { Id = "test_id_123" };
 
     // Act
-    var result = sut.CreateMockEvent(mockSession);
+    var result = mockHelper.CreateMockStripeEvent(mockSession);
 
     // Assert
     result.Should().NotBeNull("because mock event should be created successfully");
@@ -483,7 +484,7 @@ public class StripeServiceTests
     act.Should().Throw<ArgumentNullException>("because null configuration should be rejected");
   }
 
-  [Theory, AutoMoqData]
+  [Fact]
   [Trait("Category", "Unit")]
   public void Constructor_WithNullLogger_ThrowsArgumentNullException()
   {

@@ -60,11 +60,6 @@ public interface IStripeService
   /// </summary>
   Task<PaymentIntent> GetPaymentIntent(string paymentIntentId, CancellationToken cancellationToken = default);
 
-  /// <summary>
-  /// Creates a mock Stripe event for testing or handler reuse
-  /// </summary>
-  Event CreateMockEvent<T>(T obj) where T : IHasObject;
-
   StripeSessionMetadata ParseSessionMetadata(Session sessionWithLineItems);
   int GetPurchasedQuantity(Session sessionWithLineItems);
 
@@ -95,7 +90,7 @@ public class StripeService : IStripeService
     // Log a warning if the key is missing at startup, but don't set it globally here.
     if (string.IsNullOrEmpty(_config.StripeSecretKey))
     {
-      _logger.LogWarning("Stripe Secret Key is missing in configuration. Stripe functionality will be unavailable until configured.");
+      _logger.LogWarning("Stripe Secret Key is missing in configuration for {Service}. Functionality unavailable until configured.", nameof(StripeService));
     }
   }
 
@@ -282,20 +277,6 @@ public class StripeService : IStripeService
     EnsureStripeKeyConfigured();
     var paymentIntentService = new PaymentIntentService();
     return await paymentIntentService.GetAsync(paymentIntentId, cancellationToken: cancellationToken);
-  }
-
-  /// <summary>
-  /// Creates a mock Stripe event for testing or handler reuse
-  /// </summary>
-  public Event CreateMockEvent<T>(T obj) where T : IHasObject
-  {
-    return new Event
-    {
-      Data = new EventData
-      {
-        Object = (IHasObject)obj
-      }
-    };
   }
 
   /// <summary>

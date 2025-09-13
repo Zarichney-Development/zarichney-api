@@ -286,7 +286,7 @@ public class SessionManagerTests
   public async Task GetSessionByUserId_WithInvalidUserId_ThrowsArgumentException(string? invalidUserId)
   {
     // Act & Assert
-    Func<Task> act = async () => await _sessionManager.GetSessionByUserId(invalidUserId, Guid.NewGuid());
+    Func<Task> act = async () => await _sessionManager.GetSessionByUserId(invalidUserId!, Guid.NewGuid());
 
     await act.Should().ThrowAsync<ArgumentException>()
         .WithParameterName("userId");
@@ -357,7 +357,7 @@ public class SessionManagerTests
   public async Task GetSessionByApiKey_WithInvalidApiKey_ThrowsArgumentException(string? invalidApiKey)
   {
     // Act & Assert
-    Func<Task> act = async () => await _sessionManager.GetSessionByApiKey(invalidApiKey, Guid.NewGuid());
+    Func<Task> act = async () => await _sessionManager.GetSessionByApiKey(invalidApiKey!, Guid.NewGuid());
 
     await act.Should().ThrowAsync<ArgumentException>()
         .WithParameterName("apiKey");
@@ -503,7 +503,7 @@ public class SessionManagerTests
   public async Task EndSession_ByOrderId_WithInvalidOrderId_ThrowsArgumentException(string? invalidOrderId)
   {
     // Act & Assert
-    Func<Task> act = async () => await _sessionManager.EndSession(invalidOrderId);
+    Func<Task> act = async () => await _sessionManager.EndSession(invalidOrderId!);
 
     await act.Should().ThrowAsync<ArgumentException>()
         .WithParameterName("orderId");

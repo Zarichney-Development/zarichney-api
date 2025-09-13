@@ -517,12 +517,12 @@ public class OrderService(
         "cookbook-ready",
         templateData,
         new FileAttachment
-      {
-        Name = "Cookbook.pdf",
-        ContentType = "application/pdf",
-        ContentBytes = pdf,
-        Size = pdf.Length
-      }
+        {
+          Name = "Cookbook.pdf",
+          ContentType = "application/pdf",
+          ContentBytes = pdf,
+          Size = pdf.Length
+        }
       );
 
       logger.LogInformation("Cookbook emailed to {Email}", order.Email);

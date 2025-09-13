@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Zarichney.Services.FileSystem;
 
-public interface IFileWriteQueueService : IDisposable
+public interface IFileWriteQueueService : IDisposable, IAsyncDisposable
 {
   void QueueWrite(string directory, string filename, object data, string? extension = "json");
   Task WriteToFileAndWaitAsync(string directory, string filename, object data, string? extension = "json");
@@ -139,10 +139,15 @@ internal class FileWriteQueueService : IFileWriteQueueService
 
   void IDisposable.Dispose()
   {
+    DisposeAsync().AsTask().Wait();
+  }
+
+  public async ValueTask DisposeAsync()
+  {
     _cancellationTokenSource.Cancel();
     try
     {
-      _processingTask.Wait();
+      await _processingTask;
     }
     catch
     {

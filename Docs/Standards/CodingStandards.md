@@ -1,7 +1,7 @@
 # Project Coding Standards for AI Assistants
 
 **Version:** 1.7
-**Last Updated:** 2025-05-25
+**Last Updated:** 2025-09-10
 
 ## 1. Core Principles
 
@@ -135,7 +135,72 @@ To ensure code remains highly testable, actively avoid the following common anti
 * **Overly Complex Constructors:** Constructors with excessive logic or too many parameters can make object creation difficult in tests. Consider using Factory patterns or refactoring the class.
 * **Time-Dependent Logic without Abstraction:** Directly using `DateTime.Now` or `DateTime.UtcNow` makes code hard to test deterministically. Inject `System.TimeProvider` instead (see `Code/Zarichney.Server.Tests/TechnicalDesignDocument.md` FRMK-001).
 
-## 12. Security
+## 12. Build Cleanliness & Warnings Policy
+
+### Core Policy: Zero Tolerance for New Warnings
+* **Absolute Requirement:** No Pull Request may introduce new compiler warnings or linter warnings
+* **CI Enforcement:** Build pipelines **MUST** fail when any warning is detected
+* **Developer Responsibility:** All developers and AI agents must ensure warning-free builds before PR submission
+* **Legacy Warning Remediation:** When modifying code with existing warnings, those warnings **MUST** be addressed as part of the change
+
+### .NET Backend Warning Standards
+* **Compiler Warnings:**
+    * All C# compiler warnings (`CS####`) are treated as build failures
+    * Use `#pragma warning disable` sparingly and only with explicit code comments explaining necessity
+    * Common remediation patterns:
+        * **Unused variables/parameters:** Remove or prefix with `_` for intentionally unused parameters
+        * **Unreachable code:** Refactor control flow or remove dead code
+        * **Missing documentation:** Add XML documentation comments for public APIs
+        * **Nullable reference warnings:** Properly handle null checks and nullable annotations
+* **Static Analysis:**
+    * Address all StyleCop, SonarAnalyzer, and FxCop warnings
+    * Use `[SuppressMessage]` attribute only with detailed justification in code comments
+    * Follow existing code analysis rule configurations in `.editorconfig` and analyzer rulesets
+* **Exception Handling Patterns:**
+    * **Filtered Catch Blocks:** Replace generic `catch (Exception ex)` with specific exception types where possible
+    * **Exception Logging:** Always log exceptions with structured logging as defined in Section 13 (Logging Standards)
+        ```csharp
+        try
+        {
+            // risky operation
+        }
+        catch (SpecificException ex)
+        {
+            _logger.LogError(ex, "Operation failed processing {Data}", contextData);
+            // appropriate handling
+        }
+        ```
+
+### TypeScript/Angular Frontend Warning Standards
+* **TypeScript Compiler:**
+    * All TypeScript compiler errors and warnings **MUST** be resolved
+    * Strict type checking enabled; avoid `any` types except for legitimate external library integration
+    * Use proper type annotations and interfaces for all data contracts
+* **ESLint/Angular Linting:**
+    * All ESLint and Angular-specific linting warnings **MUST** be addressed
+    * Common remediation patterns:
+        * **Unused imports/variables:** Remove or use ESLint disable comments with justification
+        * **Component lifecycle:** Properly implement Angular lifecycle hooks
+        * **Accessibility warnings:** Address ARIA and accessibility linting warnings
+        * **Performance warnings:** Resolve OnPush change detection and performance linting issues
+* **Build Tool Warnings:**
+    * Address Angular CLI warnings during build process
+    * Resolve webpack warnings and optimization hints
+    * Fix source map warnings and development tool integration issues
+
+### Warning Remediation Workflow
+1. **Pre-Development:** Run builds locally to understand current warning baseline
+2. **During Development:** Address warnings immediately as they appear
+3. **Pre-Commit:** Verify zero warnings using local build commands
+4. **PR Validation:** CI pipeline automatically rejects PRs with warnings
+5. **Legacy Remediation:** Document and plan systematic cleanup of existing warnings
+
+### Technical Implementation Notes
+* **Configuration Options:** Project supports both `TreatWarningsAsErrors` MSBuild property and `-warnaserror` compiler flags
+* **CI Integration:** Build configurations will be enhanced to enforce warning-free builds
+* **Selective Enforcement:** Critical warnings enforced immediately; systematic plan for addressing existing warnings
+
+## 13. Security
 
 * Be mindful of potential security vulnerabilities:
     * Validate and sanitize inputs, especially those originating from external sources (user input, API requests, scraped data).
@@ -145,7 +210,7 @@ To ensure code remains highly testable, actively avoid the following common anti
 * Handle API keys and secrets securely. Do not hardcode them; use configuration providers like User Secrets, Environment Variables, AWS Secrets Manager, or Parameter Store.
 * Adhere to existing authentication (`[Authorize]`, `AuthenticationMiddleware`, `CookieAuthManager`) and authorization (`RoleManager`, `[Authorize(Roles = "...")]`) patterns.
 
-## 13. Logging Standards
+## 14. Logging Standards
 
 * **Logger Injection:**
     * **MUST** use constructor injection with the generic `ILogger<T>` type (e.g., `private readonly ILogger<MyService> _logger;`). This provides type safety, easier testing, and automatic source context.
@@ -198,7 +263,7 @@ To ensure code remains highly testable, actively avoid the following common anti
     * Prefer structured logging over string concatenation or interpolation for better performance and searchability.
     * Consider the performance impact of logging expensive-to-compute values and evaluate if the information is necessary at the chosen log level.
 
-## 14. External Libraries
+## 15. External Libraries
 
 * Utilize the existing libraries (e.g., Serilog, Polly, MediatR, AutoMapper, EF Core, OpenAI, Playwright, Octokit, QuestPDF, AngleSharp, RestSharp) according to established patterns within the codebase.
 * Do not add new major dependencies (NuGet packages) without prior architectural review/approval.

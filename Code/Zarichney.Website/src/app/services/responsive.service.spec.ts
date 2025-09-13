@@ -13,7 +13,7 @@ describe('ResponsiveService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should have initial screen size observable', () => {
-    expect(service.screenSize$).toBeDefined();
+  it('should have initial screen size', () => {
+    expect(service.screenSize).toBeDefined();
   });
 });

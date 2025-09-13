@@ -68,15 +68,15 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
 
   private async Task<string?> ProcessFirstValidImage(IEnumerable<string> imageUrls, string recipeTitle)
   {
-    var urlList = imageUrls.ToList();
+    var imageUrlsList = imageUrls.ToList();
     logger.LogInformation("Attempting to process {Count} image URLs for recipe: {RecipeTitle}",
-      urlList.Count, recipeTitle);
+      imageUrlsList.Count, recipeTitle);
 
-    for (var i = 0; i < urlList.Count; i++)
+    for (var i = 0; i < imageUrlsList.Count; i++)
     {
-      var url = urlList[i];
+      var url = imageUrlsList[i];
       logger.LogInformation("Trying image URL {Index}/{Total} for {RecipeTitle}: {Url}",
-        i + 1, urlList.Count, recipeTitle, url);
+        i + 1, imageUrlsList.Count, recipeTitle, url);
 
       try
       {
@@ -91,19 +91,19 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
         if (!string.IsNullOrEmpty(imagePath))
         {
           logger.LogInformation("Successfully processed image {Index}/{Total} for {RecipeTitle}",
-            i + 1, urlList.Count, recipeTitle);
+            i + 1, imageUrlsList.Count, recipeTitle);
           return imagePath;
         }
       }
       catch (Exception ex)
       {
         logger.LogWarning(ex, "Failed to process image URL {Index}/{Total} for {RecipeTitle}: {Url}",
-          i + 1, urlList.Count, recipeTitle, url);
+          i + 1, imageUrlsList.Count, recipeTitle, url);
       }
     }
 
     logger.LogWarning("No valid images found for recipe: {RecipeTitle} after trying {Count} URLs",
-      recipeTitle, urlList.Count);
+      recipeTitle, imageUrlsList.Count);
     return null;
   }
 
@@ -228,42 +228,42 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
       container.Page(page =>
       {
         // Page setup
-      page.Size(PageSizes.A4);
-      page.Margin(1, Unit.Centimetre);
-      page.PageColor(Colors.White);
-      page.DefaultTextStyle(x => x
-        .FontFamily(config.FontName)
-        .FontSize(config.FontSize)
-        .LineHeight(1.2f));
+        page.Size(PageSizes.A4);
+        page.Margin(1, Unit.Centimetre);
+        page.PageColor(Colors.White);
+        page.DefaultTextStyle(x => x
+          .FontFamily(config.FontName)
+          .FontSize(config.FontSize)
+          .LineHeight(1.2f));
 
         // Main content
-      page.Content()
-        .Shrink() // Allows content to take minimum required space
-        .Column(column =>
-        {
-        column.Spacing(20);
-
-        foreach (var (doc, imagePath) in content)
-        {
-          column.Item().Component(new RecipeComponent(doc, imagePath, config, fileService));
-
-            // Only add page break if not the last item
-          if (doc != content.Last().Content)
+        page.Content()
+          .Shrink() // Allows content to take minimum required space
+          .Column(column =>
           {
-            column.Item().PageBreak();
-          }
-        }
-      });
+            column.Spacing(20);
+
+            foreach (var (doc, imagePath) in content)
+            {
+              column.Item().Component(new RecipeComponent(doc, imagePath, config, fileService));
+
+              // Only add page break if not the last item
+              if (doc != content.Last().Content)
+              {
+                column.Item().PageBreak();
+              }
+            }
+          });
 
         // Footer
-      page.Footer()
-        .AlignCenter()
-        .Text(text =>
-        {
-        text.Span("Page ");
-        text.CurrentPageNumber();
+        page.Footer()
+          .AlignCenter()
+          .Text(text =>
+          {
+            text.Span("Page ");
+            text.CurrentPageNumber();
+          });
       });
-    });
     }).GeneratePdf();
   }
 
@@ -289,27 +289,27 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
             var firstBlock = isFirstBlock;
             column.Item().Element(elementContainer =>
             {
-            switch (block)
-            {
-              case HeadingBlock heading:
-                RenderHeading(elementContainer, heading, firstBlock);
-                break;
-              case Table table:
-                RenderTable(elementContainer, table);
-                break;
-              case ParagraphBlock paragraph:
-                RenderParagraph(elementContainer, paragraph, metadata);
-                break;
-              case ListBlock list:
-                RenderList(elementContainer, list);
-                break;
-              case ThematicBreakBlock:
-                elementContainer
-                  .Border(1)
-                  .BorderColor(Colors.Grey.Lighten2);
-                break;
-            }
-          });
+              switch (block)
+              {
+                case HeadingBlock heading:
+                  RenderHeading(elementContainer, heading, firstBlock);
+                  break;
+                case Table table:
+                  RenderTable(elementContainer, table);
+                  break;
+                case ParagraphBlock paragraph:
+                  RenderParagraph(elementContainer, paragraph, metadata);
+                  break;
+                case ListBlock list:
+                  RenderList(elementContainer, list);
+                  break;
+                case ThematicBreakBlock:
+                  elementContainer
+                    .Border(1)
+                    .BorderColor(Colors.Grey.Lighten2);
+                  break;
+              }
+            });
 
             isFirstBlock = false;
           }
@@ -343,14 +343,14 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
         table.ColumnsDefinition(columns =>
         {
           // Count number of cells in first row to determine column count
-      if (tableBlock.FirstOrDefault() is not TableRow firstRow) return;
+          if (tableBlock.FirstOrDefault() is not TableRow firstRow) return;
 
-      var columnCount = firstRow.Count;
-      for (var i = 0; i < columnCount; i++)
-      {
-        columns.RelativeColumn();
-      }
-    });
+          var columnCount = firstRow.Count;
+          for (var i = 0; i < columnCount; i++)
+          {
+            columns.RelativeColumn();
+          }
+        });
 
         // Process each row
         foreach (var row in tableBlock)
@@ -369,14 +369,14 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
                 .Padding(5)
                 .Text(text =>
                 {
-              foreach (var block in tableCell)
-              {
-                if (block is ParagraphBlock { Inline: not null } para)
-                {
-                  text.Span(GetInlineText(para.Inline));
-                }
-              }
-            });
+                  foreach (var block in tableCell)
+                  {
+                    if (block is ParagraphBlock { Inline: not null } para)
+                    {
+                      text.Span(GetInlineText(para.Inline));
+                    }
+                  }
+                });
             });
           }
         }
@@ -395,12 +395,12 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
           {
             row.RelativeItem().Text(textBlock =>
             {
-        textBlock.Span("Servings: ")
-          .FontSize(12)
-          .Bold();
-        textBlock.Span(text["Servings: ".Length..])
-          .FontSize(14);
-      });
+              textBlock.Span("Servings: ")
+                .FontSize(12)
+                .Bold();
+              textBlock.Span(text["Servings: ".Length..])
+                .FontSize(14);
+            });
           });
         return;
       }
@@ -428,11 +428,11 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
                 row.RelativeItem()
                   .Text(textBlock =>
                   {
-              textBlock.Span($"{label}: ")
-                .SemiBold()
-                .FontSize(12);
-              textBlock.Span(value);
-            });
+                    textBlock.Span($"{label}: ")
+                      .SemiBold()
+                      .FontSize(12);
+                    textBlock.Span(value);
+                  });
 
                 if (metadata != timeMetadata.Last())
                 {
@@ -533,13 +533,13 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
             var index2 = index;
             column.Item().Row(row =>
             {
-            var index1 = index2;
-            row.ConstantItem(20).Text(text =>
-              text.Span(list.IsOrdered ? $"{index1}." : "•"));
+              var index1 = index2;
+              row.ConstantItem(20).Text(text =>
+                text.Span(list.IsOrdered ? $"{index1}." : "•"));
 
-            row.RelativeItem().Text(text =>
-              RenderInlines(text, paragraph.Inline));
-          });
+              row.RelativeItem().Text(text =>
+                RenderInlines(text, paragraph.Inline));
+            });
 
             index++;
           }

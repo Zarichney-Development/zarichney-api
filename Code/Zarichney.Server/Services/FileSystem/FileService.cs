@@ -9,7 +9,7 @@ namespace Zarichney.Services.FileSystem;
 
 public interface IFileService
 {
-  Task<T> ReadFromFile<T>(string directory, string filename, string? extension = "json");
+  Task<T?> ReadFromFile<T>(string directory, string filename, string? extension = "json");
   string[] GetFiles(string directoryPath);
   string GetFile(string filePath);
   Task<string> GetFileAsync(string filePath);
@@ -35,14 +35,14 @@ public class FileService(ILogger<FileService> logger) : IFileService
     Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
   };
 
-  public async Task<T> ReadFromFile<T>(string directory, string filename, string? extension = "json")
+  public async Task<T?> ReadFromFile<T>(string directory, string filename, string? extension = "json")
   {
     extension ??= "json";
     var filePath = GetFullPath(directory, filename, extension);
     logger.LogInformation("Reading file: {FilePath}", filePath);
 
     var data = await LoadExistingData(filePath, extension);
-    if (data == null) return default!;
+    if (data == null) return default;
 
     if (extension.Equals("pdf", StringComparison.OrdinalIgnoreCase))
       return (T)data;
@@ -62,7 +62,7 @@ public class FileService(ILogger<FileService> logger) : IFileService
   }
 
   public string GetFile(string filePath)
-    => GetFileAsync(filePath).GetAwaiter().GetResult();
+    => File.ReadAllText(filePath);
 
   public async Task<string> GetFileAsync(string filePath)
     => await File.ReadAllTextAsync(filePath);

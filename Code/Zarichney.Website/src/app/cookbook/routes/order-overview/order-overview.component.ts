@@ -233,8 +233,8 @@ export class OrderOverviewComponent implements OnInit {
         return synthesizedRecipes.some(recipe => recipe.title === recipeName);
     }
 
-    trackByRecipeTitle(index: number, recipe: SynthesizedRecipe): string {
-        return recipe.title;
+    trackByRecipeTitle(_index: number, recipe: SynthesizedRecipe): string {
+      return recipe.title;
     }
 
     async viewPdf(): Promise<void> {
