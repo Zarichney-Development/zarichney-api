@@ -92,6 +92,16 @@ jobs:
           git config --global init.defaultBranch main
 
       # ========================================
+      # Main Branch Validation (Before Epic Operations)
+      # ========================================
+
+      - name: "Restore Dependencies"
+        run: dotnet restore zarichney-api.sln
+
+      - name: "Build Solution (Main Branch)"
+        run: dotnet build zarichney-api.sln --configuration Release --no-restore
+
+      # ========================================
       # Production-Ready Epic Branch Management with Comprehensive Safety Features
       # ========================================
 
@@ -587,34 +597,61 @@ jobs:
           fi
 
       # ========================================
-      # Pre-Flight Validation
+      # Epic Branch Validation & Test Environment
       # ========================================
 
-      - name: "Restore Dependencies"
-        run: dotnet restore zarichney-api.sln
-
-      - name: "Build Solution"
-        run: dotnet build zarichney-api.sln --configuration Release --no-restore
+      - name: "Build Epic Branch (with Error Handling)"
+        id: epic-build
+        continue-on-error: true
+        run: |
+          echo "🔨 Building epic branch to check for compilation issues..."
+          if dotnet build zarichney-api.sln --configuration Release --no-restore; then
+            echo "✅ Epic branch builds successfully"
+            echo "epic_build_success=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Epic branch has build issues - this may be expected for work-in-progress"
+            echo "epic_build_success=false" >> $GITHUB_OUTPUT
+            echo "🔄 Continuing with workflow as epic branches may have WIP code"
+          fi
 
       - name: "Validate Test Environment"
         id: test-validation
         run: |
-          echo "🧪 Executing test suite validation with fixed exit code handling..."
+          echo "🧪 Executing test suite validation with enhanced exit code handling..."
 
           # Set CI environment for proper quality gate behavior
           export CI_ENVIRONMENT=true
           export QUALITY_GATE_ENABLED=true
           export COVERAGE_THRESHOLD=16
 
-          # Execute test suite with fixed exit code (our main fix)
-          if ./Scripts/run-test-suite.sh report summary; then
+          # Add debugging output
+          echo "🔍 Debug: Working directory: $(pwd)"
+          echo "🔍 Debug: Test script exists: $(test -f ./Scripts/run-test-suite.sh && echo 'YES' || echo 'NO')"
+          echo "🔍 Debug: Test script permissions: $(ls -la ./Scripts/run-test-suite.sh)"
+
+          # Execute test suite with enhanced exit code handling
+          set +e  # Temporarily disable exit on error to capture exit code properly
+          ./Scripts/run-test-suite.sh report summary
+          TEST_EXIT_CODE=$?
+          set -e  # Re-enable exit on error
+
+          echo "🔍 Debug: Test script exit code: $TEST_EXIT_CODE"
+
+          if [[ $TEST_EXIT_CODE -eq 0 ]]; then
             echo "✅ Test suite executed successfully"
             echo "tests-passed=true" >> $GITHUB_OUTPUT
           else
-            TEST_EXIT_CODE=$?
             echo "❌ Test suite failed with exit code: $TEST_EXIT_CODE"
             echo "tests-passed=false" >> $GITHUB_OUTPUT
-            exit $TEST_EXIT_CODE
+
+            # Show last 20 lines of any log files for debugging
+            if ls TestResults/test-suite-*.log >/dev/null 2>&1; then
+              echo "📋 Last 20 lines of test suite log:"
+              tail -20 TestResults/test-suite-*.log | head -20
+            fi
+
+            # Don't exit immediately - let the next step handle the failure
+            echo "🔄 Continuing to process validation results step for proper error handling"
           fi
 
       - name: "Process Test Validation Results"
@@ -648,6 +685,25 @@ jobs:
           else
             echo "❌ Test environment validation failed"
             echo "environment_valid=false" >> $GITHUB_OUTPUT
+
+            # Add enhanced debugging output for failed tests
+            echo "🔍 Enhanced debugging for test failure:"
+            echo "🔍 Current working directory: $(pwd)"
+            echo "🔍 Available files in root:"
+            ls -la . | head -10
+            echo "🔍 Available test result files:"
+            find TestResults -type f -name "*.log" -o -name "*.json" -o -name "*.xml" 2>/dev/null | head -10 || echo "No test result files found"
+
+            # Check if there are any specific error patterns
+            if ls TestResults/test-suite-*.log >/dev/null 2>&1; then
+              echo "🔍 Checking for common error patterns in logs:"
+              if grep -i "error\|fail\|exception" TestResults/test-suite-*.log | head -5; then
+                echo "🔍 Found error patterns in logs"
+              else
+                echo "🔍 No obvious error patterns found in logs"
+              fi
+            fi
+
             exit 1
           fi
 
