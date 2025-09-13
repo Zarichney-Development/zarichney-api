@@ -2,7 +2,7 @@
 
 
 **Version:** 1.2
-**Last Updated:** 2025-09-07
+**Last Updated:** 2025-09-10
 
 ## 1. Purpose and Scope
 
@@ -93,6 +93,7 @@ These standards **MUST** be consulted and followed by AI Coders during task exec
 * **Body:** PR bodies **MUST** include:
     * A link that closes/references the associated GitHub Issue (e.g., `Closes #123.`).
     * A brief summary of the changes made.
+    * **Warning-Free Build Confirmation:** Explicit statement that build completes with zero warnings
     * **Label Validation:** Confirm that PR changes align with GitHub Issue labels, particularly `component:`, `epic:`, and `automation:` labels.
 * **Implementation:** Use the GitHub CLI (`gh`) within the relevant AI Coder Workflow steps file. Ensure `gh` is authenticated (environment prerequisite).
     ```bash
@@ -335,8 +336,9 @@ Labels: type: epic-task, epic: coverage-90, coverage: phase-2,
 All tasks and pull requests **MUST** meet these quality requirements:
 
 * **Build Success:** All changes must compile without errors
+* **Warning-Free Build:** Build must complete with zero compiler or linter warnings (CI fails on any warning)
 * **Test Pass Rate:** 100% of executable tests must pass
-* **Standards Compliance:** Code must adhere to all project coding standards
+* **Standards Compliance:** Code must adhere to all project coding standards including "No New Warnings" policy
 * **Documentation Updates:** Any interface or contract changes require documentation updates
 * **Label Validation:** PR changes must align with GitHub Issue labels
 

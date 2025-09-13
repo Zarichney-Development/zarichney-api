@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, Input, afterNextRender } from '@angular/core';
+import { Component, afterNextRender } from '@angular/core';
 import { LoggingService } from '../../../services/log.service';
 
 @Component({

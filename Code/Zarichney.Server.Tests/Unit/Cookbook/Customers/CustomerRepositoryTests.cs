@@ -48,7 +48,6 @@ public class CustomerRepositoryTests
   {
     // Arrange
     const string email = "test@example.com";
-    const string expectedSafeFileName = "test_at_example_dot_com";
 
     var expectedCustomer = new Customer
     {

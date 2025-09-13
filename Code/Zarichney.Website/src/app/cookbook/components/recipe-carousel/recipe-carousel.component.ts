@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, ElementRef, NgZone, OnDestroy, HostListener, PLATFORM_ID, Inject } from '@angular/core';
+import { Component, Input, ViewChild, ElementRef, OnDestroy, HostListener, PLATFORM_ID, Inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RecipeImageComponent } from '../recipe-image/recipe-image.component';
 import { SynthesizedRecipe } from '../../order/order.model';
@@ -31,7 +31,6 @@ export class RecipeCarouselComponent implements OnDestroy {
     private isBrowser: boolean;
 
     constructor(
-        private ngZone: NgZone,
         @Inject(PLATFORM_ID) platformId: Object
     ) {
         this.isBrowser = isPlatformBrowser(platformId);
@@ -111,7 +110,6 @@ export class RecipeCarouselComponent implements OnDestroy {
         if (!this.touchStartX || !this.touchMoveX) return;
 
         const deltaX = this.touchMoveX - this.touchStartX;
-        const movePercentage = (deltaX / this.track.nativeElement.offsetWidth) * 100;
 
         this.track.nativeElement.style.transition = 'transform 0.3s ease-out';
 
