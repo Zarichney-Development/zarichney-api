@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Zarichney.Cookbook.Orders;
 using Zarichney.Services.Sessions;
 using Zarichney.Tests.TestData.Builders;
 
@@ -142,6 +143,15 @@ public class SessionBuilder : BaseBuilder<SessionBuilder, Session>
   public SessionBuilder WithExpiresAt(DateTime expiresAt)
   {
     Entity.ExpiresAt = expiresAt;
+    return Self();
+  }
+
+  /// <summary>
+  /// Associates a CookbookOrder with the session.
+  /// </summary>
+  public SessionBuilder WithOrder(CookbookOrder? order)
+  {
+    Entity.Order = order;
     return Self();
   }
 }
