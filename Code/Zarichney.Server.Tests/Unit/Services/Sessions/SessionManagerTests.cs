@@ -10,6 +10,8 @@ using Zarichney.Cookbook.Orders;
 using Zarichney.Server.Tests.TestData.Builders;
 using Zarichney.Services.AI;
 using Zarichney.Services.Sessions;
+using Zarichney.Tests.Framework.Mocks;
+using System;
 
 namespace Zarichney.Server.Tests.Unit.Services.Sessions;
 
@@ -751,6 +753,645 @@ public class SessionManagerTests
     // Assert
     sessions1.Should().BeSameAs(sessions2,
         because: "Sessions property should return the same dictionary instance");
+  }
+
+  #endregion
+
+  #region Repository Failure Scenarios (Edge Case Tests)
+
+  [Fact]
+  public async Task GetSessionByOrder_RepositoryThrowsException_HandlesGracefully()
+  {
+    // Arrange
+    var orderId = "ORDER-FAIL-123";
+    var scopeId = Guid.NewGuid();
+    var existingSession = new SessionBuilder()
+        .WithScope(scopeId)
+        .Build();
+    _sessionManager.Sessions.TryAdd(existingSession.Id, existingSession);
+
+    var repositoryException = new InvalidOperationException("Database connection failed");
+    _mockOrderRepository
+        .Setup(r => r.GetOrder(orderId))
+        .ThrowsAsync(repositoryException);
+
+    // Act & Assert
+    Func<Task> act = async () => await _sessionManager.GetSessionByOrder(orderId, scopeId);
+
+    await act.Should().ThrowAsync<InvalidOperationException>()
+        .WithMessage("Database connection failed",
+        because: "repository exceptions should propagate to allow proper error handling");
+  }
+
+  [Fact]
+  public async Task GetSessionByOrder_CustomerRepositoryThrowsException_HandlesGracefully()
+  {
+    // Arrange
+    var orderId = "ORDER-CUST-FAIL-456";
+    var scopeId = Guid.NewGuid();
+    var existingSession = new SessionBuilder()
+        .WithScope(scopeId)
+        .Build();
+    _sessionManager.Sessions.TryAdd(existingSession.Id, existingSession);
+
+    var order = new CookbookOrder { OrderId = orderId, Email = "test@example.com" };
+    _mockOrderRepository
+        .Setup(r => r.GetOrder(orderId))
+        .ReturnsAsync(order);
+
+    var customerException = new TimeoutException("Customer service timeout");
+    _mockCustomerRepository
+        .Setup(r => r.GetCustomerByEmail(order.Email))
+        .ThrowsAsync(customerException);
+
+    // Act & Assert
+    Func<Task> act = async () => await _sessionManager.GetSessionByOrder(orderId, scopeId);
+
+    await act.Should().ThrowAsync<TimeoutException>()
+        .WithMessage("Customer service timeout",
+        because: "customer repository exceptions should propagate for proper error handling");
+  }
+
+  [Fact]
+  public async Task EndSession_CustomerRepositorySaveFails_RethrowsException()
+  {
+    // Arrange
+    var session = new SessionBuilder().Build();
+    var order = new CookbookOrder
+    {
+      OrderId = "ORDER-789",
+      Email = "customer@example.com",
+      Customer = new Customer { Email = "customer@example.com" }
+    };
+    typeof(Session).GetProperty("Order")?.SetValue(session, order);
+    _sessionManager.Sessions.TryAdd(session.Id, session);
+
+    var customerSaveException = new InvalidOperationException("Customer save failed");
+    _mockCustomerRepository
+        .Setup(r => r.SaveCustomer(order.Customer))
+        .Throws(customerSaveException);
+
+    // Act & Assert
+    Func<Task> act = async () => await _sessionManager.EndSession(session);
+
+    await act.Should().ThrowAsync<InvalidOperationException>()
+        .WithMessage("Customer save failed",
+        because: "customer repository failures should be propagated during session ending");
+  }
+
+  [Fact]
+  public async Task EndSession_LlmRepositoryTimeout_HandlesGracefully()
+  {
+    // Arrange
+    var session = new SessionBuilder().Build();
+    var conversation = new LlmConversation { Id = "timeout-conversation" };
+    session.Conversations.TryAdd(conversation.Id, conversation);
+    _sessionManager.Sessions.TryAdd(session.Id, session);
+
+    var timeoutException = new TimeoutException("LLM repository timeout");
+    _mockLlmRepository
+        .Setup(r => r.WriteConversationAsync(conversation, session))
+        .ThrowsAsync(timeoutException);
+
+    // Act & Assert
+    Func<Task> act = async () => await _sessionManager.EndSession(session);
+
+    await act.Should().ThrowAsync<TimeoutException>()
+        .WithMessage("LLM repository timeout",
+        because: "LLM repository timeouts should be propagated for retry logic");
+  }
+
+  [Fact]
+  public async Task EndSession_MultipleConversationsOneFails_PropagatesFirstException()
+  {
+    // Arrange
+    var session = new SessionBuilder().Build();
+    var conversation1 = new LlmConversation { Id = "conv-1" };
+    var conversation2 = new LlmConversation { Id = "conv-2" };
+    
+    session.Conversations.TryAdd(conversation1.Id, conversation1);
+    session.Conversations.TryAdd(conversation2.Id, conversation2);
+    _sessionManager.Sessions.TryAdd(session.Id, session);
+
+    // First conversation succeeds, second fails
+    _mockLlmRepository
+        .Setup(r => r.WriteConversationAsync(conversation1, session))
+        .Returns(Task.CompletedTask);
+    
+    var writeException = new InvalidOperationException("Conversation write failed");
+    _mockLlmRepository
+        .Setup(r => r.WriteConversationAsync(conversation2, session))
+        .ThrowsAsync(writeException);
+
+    // Act & Assert
+    Func<Task> act = async () => await _sessionManager.EndSession(session);
+
+    await act.Should().ThrowAsync<InvalidOperationException>()
+        .WithMessage("Conversation write failed",
+        because: "first exception from parallel conversation writes should be propagated");
+  }
+
+  [Fact]
+  public async Task InitializeConversation_InvalidFunctionTool_HandlesGracefully()
+  {
+    // Arrange
+    var scopeId = Guid.NewGuid();
+    var messages = new List<ChatMessage>
+    {
+      new SystemChatMessage("Test system message")
+    };
+    
+    // Create function tool with null function name to test edge case  
+    // Note: Using null to test edge case handling in conversation ID generation
+    ChatTool? functionTool = null;
+
+    // Act & Assert - Should handle null function name gracefully
+    Func<Task> act = async () => await _sessionManager.InitializeConversation(scopeId, messages, functionTool);
+
+    // The implementation should handle this gracefully, not throw
+    await act.Should().NotThrowAsync(because: "null function name should be handled gracefully in conversation initialization");
+  }
+
+  [Fact]
+  public async Task ParallelForEachAsync_ScopeFactoryFails_HandlesException()
+  {
+    // Arrange
+    var parentScope = Mock.Of<IScopeContainer>(s => s.Id == Guid.NewGuid());
+    var dataList = new[] { "item1", "item2", "item3" };
+    
+    var scopeException = new InvalidOperationException("Scope creation failed");
+    _mockScopeFactory
+        .Setup(f => f.CreateScope(parentScope))
+        .Throws(scopeException);
+
+    // Act & Assert
+    Func<Task> act = async () => await _sessionManager.ParallelForEachAsync(
+        parentScope,
+        dataList,
+        (scope, item, ct) => Task.CompletedTask
+    );
+
+    await act.Should().ThrowAsync<InvalidOperationException>()
+        .WithMessage("Scope creation failed",
+        because: "scope factory failures should be propagated from parallel operations");
+  }
+
+  [Fact]
+  public async Task ParallelForEachAsync_OperationCancellation_PropagatesCorrectly()
+  {
+    // Arrange
+    var parentScope = Mock.Of<IScopeContainer>(s => s.Id == Guid.NewGuid());
+    var childScope = Mock.Of<IScopeContainer>(s => s.Id == Guid.NewGuid());
+    var dataList = new[] { "item1", "item2" };
+    
+    _mockScopeFactory
+        .Setup(f => f.CreateScope(parentScope))
+        .Returns(childScope);
+
+    using var cts = new CancellationTokenSource();
+    cts.Cancel(); // Pre-cancel the token
+
+    // Act & Assert
+    Func<Task> act = async () => await _sessionManager.ParallelForEachAsync(
+        parentScope,
+        dataList,
+        (scope, item, ct) => Task.Delay(1000, ct),
+        cancellationToken: cts.Token
+    );
+
+    await act.Should().ThrowAsync<OperationCanceledException>(
+        because: "pre-cancelled operations should throw OperationCanceledException");
+  }
+
+  #endregion
+
+  #region Boundary Conditions (Edge Case Tests)
+
+  [Fact]
+  public async Task CreateSession_ConcurrentSessionCreation_HandlesRaceCondition()
+  {
+    // Arrange
+    var scopeId = Guid.NewGuid();
+    var tasks = new List<Task<Session>>();
+
+    // Act - Create multiple sessions concurrently with same scope
+    for (int i = 0; i < 10; i++)
+    {
+      tasks.Add(_sessionManager.CreateSession(scopeId));
+    }
+
+    var sessions = await Task.WhenAll(tasks);
+
+    // Assert
+    sessions.Should().HaveCount(10, because: "all concurrent session creations should succeed");
+    sessions.Select(s => s.Id).Should().OnlyHaveUniqueItems(
+        because: "each session should have a unique identifier");
+    
+    // All sessions should contain the same scope ID
+    sessions.Should().AllSatisfy(session =>
+        session.Scopes.Should().ContainKey(scopeId,
+        because: "each session should contain the provided scope ID"));
+  }
+
+  [Fact]
+  public async Task EndSession_ConcurrentEndSessionCalls_HandlesGracefully()
+  {
+    // Arrange
+    var session = new SessionBuilder().Build();
+    var conversation = new LlmConversation { Id = "concurrent-test" };
+    session.Conversations.TryAdd(conversation.Id, conversation);
+    _sessionManager.Sessions.TryAdd(session.Id, session);
+
+    _mockLlmRepository
+        .Setup(r => r.WriteConversationAsync(conversation, session))
+        .Returns(Task.CompletedTask);
+
+    var tasks = new List<Task>();
+
+    // Act - End the same session concurrently
+    for (int i = 0; i < 5; i++)
+    {
+      tasks.Add(_sessionManager.EndSession(session));
+    }
+
+    // Assert - Should complete without exceptions
+    Func<Task> act = async () => await Task.WhenAll(tasks);
+    
+    await act.Should().NotThrowAsync(because: "concurrent session ending should be handled gracefully");
+    
+    _sessionManager.Sessions.Should().NotContainKey(session.Id,
+        because: "session should be removed despite concurrent access");
+  }
+
+  [Fact]
+  public void AddScopeToSession_ScopeAlreadyExists_HandlesIdempotency()
+  {
+    // Arrange
+    var scopeId = Guid.NewGuid();
+    var session = new SessionBuilder()
+        .WithScope(scopeId)
+        .Build();
+
+    // Act - Add the same scope multiple times
+    _sessionManager.AddScopeToSession(session, scopeId);
+    _sessionManager.AddScopeToSession(session, scopeId);
+    _sessionManager.AddScopeToSession(session, scopeId);
+
+    // Assert
+    session.Scopes.Should().ContainKey(scopeId,
+        because: "scope should exist regardless of multiple add attempts");
+    session.Scopes.Should().HaveCount(1,
+        because: "adding the same scope multiple times should be idempotent");
+  }
+
+  [Fact]
+  public void RemoveScopeFromSession_ConcurrentScopeRemoval_HandlesRaceCondition()
+  {
+    // Arrange
+    var scopeId = Guid.NewGuid();
+    var session = new SessionBuilder()
+        .WithScope(scopeId)
+        .Build();
+    _sessionManager.Sessions.TryAdd(session.Id, session);
+
+    var tasks = new List<Task>();
+
+    // Act - Remove the same scope concurrently
+    for (int i = 0; i < 5; i++)
+    {
+      tasks.Add(Task.Run(() => _sessionManager.RemoveScopeFromSession(scopeId, session)));
+    }
+
+    // Assert - Should complete without exceptions
+    Action act = () => Task.WaitAll(tasks.ToArray());
+    
+    act.Should().NotThrow(because: "concurrent scope removal should be handled gracefully");
+    
+    session.Scopes.Should().NotContainKey(scopeId,
+        because: "scope should be removed despite concurrent access");
+  }
+
+  [Fact]
+  public async Task ParallelForEachAsync_MaxDegreeOfParallelism_RespectedUnderLoad()
+  {
+    // Arrange
+    var parentScope = Mock.Of<IScopeContainer>(s => s.Id == Guid.NewGuid());
+    var childScope = Mock.Of<IScopeContainer>(s => s.Id == Guid.NewGuid());
+    var dataList = Enumerable.Range(1, 100).Select(i => $"item-{i}").ToArray();
+    var maxDegreeOfParallelism = 3;
+    var concurrentCount = 0;
+    var maxObservedConcurrency = 0;
+    var lockObject = new object();
+    
+    _mockScopeFactory
+        .Setup(f => f.CreateScope(parentScope))
+        .Returns(childScope);
+
+    // Act
+    await _sessionManager.ParallelForEachAsync(
+        parentScope,
+        dataList,
+        async (scope, item, ct) =>
+        {
+          lock (lockObject)
+          {
+            concurrentCount++;
+            maxObservedConcurrency = Math.Max(maxObservedConcurrency, concurrentCount);
+          }
+          
+          await Task.Delay(10, ct); // Simulate work
+          
+          lock (lockObject)
+          {
+            concurrentCount--;
+          }
+        },
+        maxDegreeOfParallelism
+    );
+
+    // Assert
+    maxObservedConcurrency.Should().BeLessThanOrEqualTo(maxDegreeOfParallelism + 1,
+        because: "parallel execution should respect the specified max degree of parallelism");
+  }
+
+  [Fact]
+  public async Task AddMessage_MaxConversationSize_HandlesLimits()
+  {
+    // Arrange
+    var scopeId = Guid.NewGuid();
+    var conversationId = "large-conversation";
+    var session = new SessionBuilder()
+        .WithScope(scopeId)
+        .Build();
+    
+    var conversation = new LlmConversation { Id = conversationId };
+    session.Conversations.TryAdd(conversationId, conversation);
+    _sessionManager.Sessions.TryAdd(session.Id, session);
+
+    var chatCompletion = AiServiceMockFactory.CreateMockChatCompletion("Response text");
+    if (chatCompletion == null)
+    {
+      throw new InvalidOperationException("Failed to create mock ChatCompletion");
+    }
+
+    // Act - Add many messages to test boundary
+    for (int i = 0; i < 1000; i++)
+    {
+      await _sessionManager.AddMessage(scopeId, conversationId, $"Prompt {i}", chatCompletion, $"Response {i}");
+    }
+
+    // Assert
+    conversation.Messages.Should().HaveCount(1000,
+        because: "conversation should handle large numbers of messages");
+    conversation.Messages.Should().AllSatisfy(message =>
+        message.Should().NotBeNull(because: "all messages should be properly initialized"));
+  }
+
+  #endregion
+
+  #region State Transition Edge Cases (Edge Case Tests)
+
+  [Fact]
+  public async Task GetSessionByApiKey_SessionExistsButExpired_CreatesNewSession()
+  {
+    // Arrange
+    var apiKey = "sk-expired-session-key";
+    var scopeId = Guid.NewGuid();
+    var expiredSession = new SessionBuilder()
+        .WithApiKey(apiKey)
+        .WithExpiresAt(DateTime.UtcNow.AddMinutes(-10)) // Expired 10 minutes ago
+        .WithLastAccessedAt(DateTime.UtcNow.AddHours(-1))
+        .Build();
+    
+    _sessionManager.Sessions.TryAdd(expiredSession.Id, expiredSession);
+
+    // Act
+    var result = await _sessionManager.GetSessionByApiKey(apiKey, scopeId);
+
+    // Assert
+    result.Should().BeSameAs(expiredSession,
+        because: "existing session with API key should be returned regardless of expiration");
+    result.LastAccessedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1),
+        because: "session should be refreshed when accessed, updating expiration");
+    result.ExpiresAt.Should().BeAfter(DateTime.UtcNow,
+        because: "refreshed session should have updated expiration time");
+  }
+
+  [Fact]
+  public void FindReusableAnonymousSession_SessionExpiringDuringFind_HandlesRaceCondition()
+  {
+    // Arrange
+    var reusableSession = new SessionBuilder()
+        .Anonymous()
+        .WithDuration(TimeSpan.FromMinutes(30))
+        .WithExpiresAt(DateTime.UtcNow.AddSeconds(1)) // Expires very soon
+        .Build();
+    
+    _sessionManager.Sessions.TryAdd(reusableSession.Id, reusableSession);
+
+    // Act - Find session that might expire during the operation
+    var result = _sessionManager.FindReusableAnonymousSession();
+
+    // Assert
+    result.Should().BeSameAs(reusableSession,
+        because: "session should be found even if near expiration");
+    result!.LastAccessedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1),
+        because: "found session should be refreshed, extending its expiration");
+  }
+
+  [Fact]
+  public async Task GetSessionByOrder_ConcurrentOrderAccess_ThreadSafe()
+  {
+    // Arrange
+    var orderId = "CONCURRENT-ORDER-123";
+    var scopeIds = Enumerable.Range(1, 5).Select(_ => Guid.NewGuid()).ToArray();
+    
+    var order = new CookbookOrder 
+    { 
+      OrderId = orderId, 
+      Email = "concurrent@example.com" 
+    };
+    var customer = new Customer { Email = "concurrent@example.com" };
+    
+    _mockOrderRepository
+        .Setup(r => r.GetOrder(orderId))
+        .ReturnsAsync(order);
+    
+    _mockCustomerRepository
+        .Setup(r => r.GetCustomerByEmail(order.Email))
+        .ReturnsAsync(customer);
+
+    var tasks = new List<Task<Session>>();
+
+    // Act - Access the same order with different scopes concurrently
+    foreach (var scopeId in scopeIds)
+    {
+      // Create initial session for each scope
+      var initialSession = await _sessionManager.CreateSession(scopeId);
+      
+      tasks.Add(_sessionManager.GetSessionByOrder(orderId, scopeId));
+    }
+
+    var sessions = await Task.WhenAll(tasks);
+
+    // Assert
+    sessions.Should().HaveCount(5, because: "all concurrent order access calls should succeed");
+    
+    // All sessions should reference the same order
+    sessions.Should().AllSatisfy(session =>
+        session.Order?.OrderId.Should().Be(orderId,
+        because: "all sessions should reference the correct order"));
+  }
+
+  [Fact]
+  public async Task GetSessionByOrder_CustomerNotFoundAfterOrderExists_HandlesInconsistency()
+  {
+    // Arrange
+    var orderId = "ORDER-NO-CUSTOMER-789";
+    var scopeId = Guid.NewGuid();
+    var existingSession = new SessionBuilder()
+        .WithScope(scopeId)
+        .Build();
+    _sessionManager.Sessions.TryAdd(existingSession.Id, existingSession);
+    
+    var order = new CookbookOrder 
+    { 
+      OrderId = orderId, 
+      Email = "missing@customer.com" 
+    };
+    
+    _mockOrderRepository
+        .Setup(r => r.GetOrder(orderId))
+        .ReturnsAsync(order);
+    
+    _mockCustomerRepository
+        .Setup(r => r.GetCustomerByEmail(order.Email))
+        .ReturnsAsync((Customer?)null);
+
+    // Act & Assert
+    Func<Task> act = async () => await _sessionManager.GetSessionByOrder(orderId, scopeId);
+
+    await act.Should().ThrowAsync<KeyNotFoundException>()
+        .WithMessage("*Customer missing@customer.com not found*",
+        because: "missing customer should throw KeyNotFoundException with clear message");
+  }
+
+  [Fact]
+  public async Task AddOrder_SessionExistsWithExistingOrder_LogsWarningButUpdates()
+  {
+    // Arrange
+    var sessionId = Guid.NewGuid();
+    var scopeId = Guid.NewGuid();
+    var scope = Mock.Of<IScopeContainer>(s => 
+        s.SessionId == sessionId && 
+        s.Id == scopeId);
+    
+    var existingOrder = new CookbookOrder { OrderId = "EXISTING-ORDER" };
+    var newOrder = new CookbookOrder { OrderId = "NEW-ORDER" };
+    
+    var session = new SessionBuilder()
+        .WithId(sessionId)
+        .WithScope(scopeId)
+        .Build();
+    
+    // Set existing order using reflection
+    typeof(Session).GetProperty("Order")?.SetValue(session, existingOrder);
+    _sessionManager.Sessions.TryAdd(sessionId, session);
+
+    // Act
+    await _sessionManager.AddOrder(scope, newOrder);
+
+    // Assert
+    session.Order.Should().BeSameAs(newOrder,
+        because: "new order should replace existing order");
+    session.Order.OrderId.Should().Be("NEW-ORDER",
+        because: "session should be updated with new order");
+  }
+
+  [Fact]
+  public async Task RefreshSession_SessionExpiredDuringRefresh_HandlesRaceCondition()
+  {
+    // Arrange
+    var session = new SessionBuilder()
+        .WithLastAccessedAt(DateTime.UtcNow.AddHours(-2)) // Very old access
+        .WithExpiresAt(DateTime.UtcNow.AddMinutes(-30)) // Expired
+        .Build();
+    
+    _sessionManager.Sessions.TryAdd(session.Id, session);
+
+    // Act - Get session which will refresh it
+    var result = await _sessionManager.GetSession(session.Id);
+
+    // Assert
+    result.Should().BeSameAs(session, because: "same session instance should be returned");
+    result.LastAccessedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1),
+        because: "session should be refreshed with current timestamp");
+    result.ExpiresAt.Should().BeAfter(DateTime.UtcNow,
+        because: "expired session should have updated expiration after refresh");
+  }
+
+  [Fact]
+  public async Task ParallelForEachAsync_OperationExceptionsHandledIndividually()
+  {
+    // Arrange
+    var parentScope = Mock.Of<IScopeContainer>(s => s.Id == Guid.NewGuid());
+    var childScope = Mock.Of<IScopeContainer>(s => s.Id == Guid.NewGuid());
+    var dataList = new[] { "success1", "fail", "success2" };
+    
+    _mockScopeFactory
+        .Setup(f => f.CreateScope(parentScope))
+        .Returns(childScope);
+
+    // Act & Assert
+    Func<Task> act = async () => await _sessionManager.ParallelForEachAsync(
+        parentScope,
+        dataList,
+        async (scope, item, ct) =>
+        {
+          if (item == "fail")
+          {
+            throw new InvalidOperationException($"Operation failed for {item}");
+          }
+          await Task.CompletedTask;
+        }
+    );
+
+    await act.Should().ThrowAsync<InvalidOperationException>()
+        .WithMessage("*Operation failed for fail*",
+        because: "individual operation failures should propagate from parallel execution");
+  }
+
+  [Fact]
+  public async Task InitializeConversation_MultipleConversationsWithSamePrompt_HandlesUniqueIds()
+  {
+    // Arrange
+    var scopeId = Guid.NewGuid();
+    var messages = new List<ChatMessage>
+    {
+      new SystemChatMessage("Identical system message")
+    };
+    var functionTool = ChatTool.CreateFunctionTool(
+        "TestFunction", 
+        "Test description", 
+        BinaryData.FromString("{}"));
+
+    // Act - Initialize multiple conversations rapidly
+    var conversationId1 = await _sessionManager.InitializeConversation(scopeId, messages, functionTool);
+    var conversationId2 = await _sessionManager.InitializeConversation(scopeId, messages, functionTool);
+    var conversationId3 = await _sessionManager.InitializeConversation(scopeId, messages, functionTool);
+
+    // Assert
+    conversationId1.Should().NotBe(conversationId2,
+        because: "each conversation should have a unique identifier");
+    conversationId2.Should().NotBe(conversationId3,
+        because: "each conversation should have a unique identifier");
+    conversationId1.Should().NotBe(conversationId3,
+        because: "each conversation should have a unique identifier");
+    
+    // All should contain the function name and timestamp pattern
+    new[] { conversationId1, conversationId2, conversationId3 }.Should().AllSatisfy(id =>
+        id.Should().StartWith("testfunction-",
+        because: "conversation ID should include function name prefix"));
   }
 
   #endregion

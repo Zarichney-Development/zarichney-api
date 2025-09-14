@@ -445,7 +445,7 @@ public class SessionManager(
 
     var promptCatalogName = functionTool?.FunctionName;
 
-    var conversationId = $"{promptCatalogName + "-"}{DateTime.UtcNow:yyyyMMdd-HHmmss.fff}".ToLower();
+    var conversationId = $"{promptCatalogName + "-"}{DateTime.UtcNow:yyyyMMdd-HHmmss.fff}-{Guid.NewGuid().ToString("N")[..8]}".ToLower();
     var conversation = new LlmConversation
     {
       Id = conversationId,
