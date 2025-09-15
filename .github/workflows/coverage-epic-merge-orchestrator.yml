@@ -452,10 +452,11 @@ jobs:
       - name: "Execute AI Conflict Resolution for Failed PRs"
         if: steps.sequential-processing.outputs.ai_resolution_count != '0' && steps.validate-inputs.outputs.dry_run == 'false'
         id: ai-resolution
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@eap
         continue-on-error: true
         with:
-          prompt: |
+          mode: 'remote-agent'
+          direct_prompt: |
             # Coverage Epic Merge Orchestrator - AI Conflict Resolution
 
             You are the AI assistant for the Coverage Epic Merge Orchestrator. Your task is to resolve merge conflicts for PRs that failed during sequential merging into the epic branch.
@@ -503,10 +504,27 @@ jobs:
             - Build environment is stable with all dependencies restored
 
             Please proceed with environment restoration followed by conflict resolution for the failed PRs.
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
+          claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: |
-            --allowedTools "Read,Edit,Glob,TodoWrite,Bash(git status),Bash(git fetch),Bash(git merge),Bash(git commit),Bash(git push),Bash(git checkout),Bash(git add),Bash(git log),Bash(git diff),Bash(git reset),Bash(git clean),Bash(dotnet restore),Bash(dotnet build),Bash(dotnet test),Bash(find . -name \"*.cs\" -type f),Bash(gh pr close),mcp__github_comment__update_claude_comment"
+          allowed_tools: |
+            Bash(git status)
+            Bash(git fetch)
+            Bash(git merge)
+            Bash(git commit)
+            Bash(git push)
+            Bash(git checkout)
+            Bash(git add)
+            Bash(git log)
+            Bash(git diff)
+            Bash(git reset)
+            Bash(git clean)
+            Bash(dotnet restore)
+            Bash(dotnet build)
+            Bash(dotnet test)
+            Bash(find . -name "*.cs" -type f)
+            Bash(gh pr close)
 
       # ========================================
       # Validation & Testing
