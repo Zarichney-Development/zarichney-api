@@ -147,11 +147,13 @@ public class SessionBuilder : BaseBuilder<SessionBuilder, Session>
   }
 
   /// <summary>
-  /// Associates a CookbookOrder with the session.
+  /// Sets the CookbookOrder associated with this session.
   /// </summary>
   public SessionBuilder WithOrder(CookbookOrder? order)
   {
-    Entity.Order = order;
+    // Use reflection to set the internal setter property
+    var orderProperty = typeof(Session).GetProperty(nameof(Session.Order));
+    orderProperty?.SetValue(Entity, order);
     return Self();
   }
 }
