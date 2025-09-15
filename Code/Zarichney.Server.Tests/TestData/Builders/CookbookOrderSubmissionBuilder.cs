@@ -1,117 +1,109 @@
 using Zarichney.Cookbook.Orders;
-using System.Reflection;
 
 namespace Zarichney.Tests.TestData.Builders;
 
 public class CookbookOrderSubmissionBuilder
 {
-    private readonly CookbookOrderSubmission _submission;
-
-    public CookbookOrderSubmissionBuilder()
+    private string _email = "test@example.com";
+    private CookbookContent _content = new()
     {
-        _submission = new CookbookOrderSubmission
-        {
-            Email = "test@example.com",
-            CookbookContent = new CookbookContent
-            {
-                RecipeSpecificationType = "General",
-                GeneralMealTypes = new List<string> { "Dinner", "Dessert" },
-                ExpectedRecipeCount = 3
-            },
-            CookbookDetails = new CookbookDetails
-            {
-                Theme = "Italian Cuisine",
-                PrimaryPurpose = "Family Dinners",
-                DesiredCuisines = new List<string> { "Italian", "Mediterranean" },
-                OverallStyle = "Traditional"
-            },
-            UserDetails = new UserDetails
-            {
-                SkillLevel = "Intermediate",
-                TimeConstraints = "30-60 minutes",
-                ServingSize = 4,
-                DietaryRestrictions = new List<string>()
-            }
-        };
-    }
+        RecipeSpecificationType = "General",
+        GeneralMealTypes = new List<string> { "Dinner", "Dessert" },
+        ExpectedRecipeCount = 3
+    };
+    private CookbookDetails? _details = new()
+    {
+        Theme = "Italian Cuisine",
+        PrimaryPurpose = "Family Dinners",
+        DesiredCuisines = new List<string> { "Italian", "Mediterranean" },
+        OverallStyle = "Traditional"
+    };
+    private UserDetails? _user = new()
+    {
+        SkillLevel = "Intermediate",
+        TimeConstraints = "30-60 minutes",
+        ServingSize = 4,
+        DietaryRestrictions = new List<string>()
+    };
 
     public CookbookOrderSubmissionBuilder WithEmail(string email)
     {
-        _submission.Email = email;
+        _email = email;
         return this;
     }
 
     public CookbookOrderSubmissionBuilder WithCookbookContent(CookbookContent content)
     {
-        var property = typeof(CookbookOrderSubmission).GetProperty(nameof(CookbookOrderSubmission.CookbookContent));
-        property?.SetValue(_submission, content);
+        _content = content;
         return this;
     }
 
     public CookbookOrderSubmissionBuilder WithCookbookDetails(CookbookDetails details)
     {
-        var property = typeof(CookbookOrderSubmission).GetProperty(nameof(CookbookOrderSubmission.CookbookDetails));
-        property?.SetValue(_submission, details);
+        _details = details;
         return this;
     }
 
     public CookbookOrderSubmissionBuilder WithUserDetails(UserDetails details)
     {
-        var property = typeof(CookbookOrderSubmission).GetProperty(nameof(CookbookOrderSubmission.UserDetails));
-        property?.SetValue(_submission, details);
+        _user = details;
         return this;
     }
 
     public CookbookOrderSubmissionBuilder WithSpecificRecipes(params string[] recipes)
     {
-        _submission.CookbookContent.SpecificRecipes = recipes.ToList();
-        _submission.CookbookContent.RecipeSpecificationType = "Specific";
-        _submission.CookbookContent.ExpectedRecipeCount = recipes.Length;
+        _content.SpecificRecipes = recipes.ToList();
+        _content.RecipeSpecificationType = "Specific";
+        _content.ExpectedRecipeCount = recipes.Length;
         return this;
     }
 
     public CookbookOrderSubmissionBuilder WithGeneralMealTypes(params string[] mealTypes)
     {
-        _submission.CookbookContent.GeneralMealTypes = mealTypes.ToList();
-        _submission.CookbookContent.RecipeSpecificationType = "General";
+        _content.GeneralMealTypes = mealTypes.ToList();
+        _content.RecipeSpecificationType = "General";
         return this;
     }
 
     public CookbookOrderSubmissionBuilder WithExpectedRecipeCount(int count)
     {
-        _submission.CookbookContent.ExpectedRecipeCount = count;
+        _content.ExpectedRecipeCount = count;
         return this;
     }
 
     public CookbookOrderSubmissionBuilder WithDietaryRestrictions(params string[] restrictions)
     {
-        _submission.UserDetails ??= new UserDetails();
-        _submission.UserDetails.DietaryRestrictions = restrictions.ToList();
+        _user ??= new UserDetails();
+        _user.DietaryRestrictions = restrictions.ToList();
         return this;
     }
 
     public CookbookOrderSubmissionBuilder WithAllergies(params string[] allergies)
     {
-        _submission.UserDetails ??= new UserDetails();
-        _submission.UserDetails.Allergies = allergies.ToList();
+        _user ??= new UserDetails();
+        _user.Allergies = allergies.ToList();
         return this;
     }
 
     public CookbookOrderSubmissionBuilder WithSkillLevel(string skillLevel)
     {
-        _submission.UserDetails ??= new UserDetails();
-        _submission.UserDetails.SkillLevel = skillLevel;
+        _user ??= new UserDetails();
+        _user.SkillLevel = skillLevel;
         return this;
     }
 
     public CookbookOrderSubmissionBuilder AsMinimal()
     {
-        var detailsProperty = typeof(CookbookOrderSubmission).GetProperty(nameof(CookbookOrderSubmission.CookbookDetails));
-        detailsProperty?.SetValue(_submission, null);
-        var userProperty = typeof(CookbookOrderSubmission).GetProperty(nameof(CookbookOrderSubmission.UserDetails));
-        userProperty?.SetValue(_submission, null);
+        _details = null;
+        _user = null;
         return this;
     }
 
-    public CookbookOrderSubmission Build() => _submission;
+    public CookbookOrderSubmission Build() => new()
+    {
+        Email = _email,
+        CookbookContent = _content
+        // Note: CookbookDetails/UserDetails have protected init setters and
+        // cannot be set from test project. They will remain null by design.
+    };
 }

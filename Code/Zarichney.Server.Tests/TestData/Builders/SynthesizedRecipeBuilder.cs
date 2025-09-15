@@ -33,7 +33,7 @@ public class SynthesizedRecipeBuilder
             Notes = "This is a test recipe for unit testing",
             InspiredBy = new List<string>(),
             ImageUrls = new List<string>(),
-            SourceRecipes = new List<Recipe>(),
+            SourceRecipes = new List<Zarichney.Cookbook.Recipes.Recipe>(),
             AttemptCount = 1
         };
     }
@@ -104,7 +104,7 @@ public class SynthesizedRecipeBuilder
         return this;
     }
 
-    public SynthesizedRecipeBuilder WithSourceRecipes(params Recipe[] recipes)
+    public SynthesizedRecipeBuilder WithSourceRecipes(params Zarichney.Cookbook.Recipes.Recipe[] recipes)
     {
         _recipe.SourceRecipes = recipes.ToList();
         return this;

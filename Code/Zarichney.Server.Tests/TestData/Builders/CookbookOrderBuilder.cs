@@ -1,139 +1,166 @@
 using Zarichney.Cookbook.Customers;
 using Zarichney.Cookbook.Orders;
 using Zarichney.Cookbook.Recipes;
-using System.Reflection;
 
 namespace Zarichney.Tests.TestData.Builders;
 
 public class CookbookOrderBuilder
 {
-    private readonly CookbookOrder _order;
+    private string? _orderId;
+    private string _email;
+    private Customer _customer;
+    private CookbookOrderSubmission _submission;
+    private CookbookContent _content;
+    private CookbookDetails? _details;
+    private UserDetails? _user;
+    private List<string> _recipeList;
+    private List<SynthesizedRecipe> _synthesizedRecipes = new();
+    private OrderStatus _status = OrderStatus.Submitted;
+    private bool _requiresPayment = false;
+    private string? _llmConversationId;
 
     public CookbookOrderBuilder()
     {
-        var customer = new CustomerBuilder().Build();
-        var submission = new CookbookOrderSubmissionBuilder().Build();
-        var recipeList = new List<string> { "Pasta Carbonara", "Caesar Salad", "Chocolate Cake" };
-        
-        _order = new CookbookOrder(customer, submission, recipeList)
-        {
-            Status = OrderStatus.Submitted,
-            SynthesizedRecipes = new List<SynthesizedRecipe>(),
-            LlmConversationId = "conv_" + Guid.NewGuid().ToString("N")
-        };
+        _customer = new CustomerBuilder().Build();
+        var submissionBuilder = new CookbookOrderSubmissionBuilder();
+        _submission = submissionBuilder.Build();
+        _email = _submission.Email;
+        _content = _submission.CookbookContent;
+        _details = null; // cannot be set from tests (protected init)
+        _user = null;    // cannot be set from tests (protected init)
+        _recipeList = new List<string> { "Pasta Carbonara", "Caesar Salad", "Chocolate Cake" };
+        _llmConversationId = "conv_" + Guid.NewGuid().ToString("N");
     }
 
     public CookbookOrderBuilder WithOrderId(string orderId)
     {
-        var property = typeof(CookbookOrder).GetProperty(nameof(CookbookOrder.OrderId));
-        property?.SetValue(_order, orderId);
+        _orderId = orderId;
         return this;
     }
 
     public CookbookOrderBuilder WithEmail(string email)
     {
-        _order.Email = email;
+        _email = email;
         return this;
     }
 
     public CookbookOrderBuilder WithStatus(OrderStatus status)
     {
-        _order.Status = status;
+        _status = status;
         return this;
     }
 
     public CookbookOrderBuilder WithCustomer(Customer customer)
     {
-        _order.Customer = customer;
+        _customer = customer;
         return this;
     }
 
     public CookbookOrderBuilder WithRecipeList(List<string> recipeList)
     {
-        var property = typeof(CookbookOrder).GetProperty(nameof(CookbookOrder.RecipeList));
-        property?.SetValue(_order, recipeList);
+        _recipeList = recipeList;
         return this;
     }
 
     public CookbookOrderBuilder WithSynthesizedRecipes(List<SynthesizedRecipe> synthesizedRecipes)
     {
-        var property = typeof(CookbookOrder).GetProperty(nameof(CookbookOrder.SynthesizedRecipes));
-        property?.SetValue(_order, synthesizedRecipes);
+        _synthesizedRecipes = synthesizedRecipes;
         return this;
     }
 
     public CookbookOrderBuilder WithRequiresPayment(bool requiresPayment)
     {
-        _order.RequiresPayment = requiresPayment;
+        _requiresPayment = requiresPayment;
         return this;
     }
 
     public CookbookOrderBuilder WithLlmConversationId(string conversationId)
     {
-        _order.LlmConversationId = conversationId;
+        _llmConversationId = conversationId;
         return this;
     }
 
     public CookbookOrderBuilder WithCookbookContent(CookbookContent content)
     {
-        var property = typeof(CookbookOrder).GetProperty(nameof(CookbookOrder.CookbookContent));
-        property?.SetValue(_order, content);
+        _content = content;
         return this;
     }
 
     public CookbookOrderBuilder WithCookbookDetails(CookbookDetails details)
     {
-        var property = typeof(CookbookOrder).GetProperty(nameof(CookbookOrder.CookbookDetails));
-        property?.SetValue(_order, details);
+        _details = details; // not applied (protected init), kept for API symmetry
         return this;
     }
 
     public CookbookOrderBuilder WithUserDetails(UserDetails details)
     {
-        var property = typeof(CookbookOrder).GetProperty(nameof(CookbookOrder.UserDetails));
-        property?.SetValue(_order, details);
+        _user = details; // not applied (protected init), kept for API symmetry
         return this;
     }
 
     public CookbookOrderBuilder AsCompleted()
     {
-        _order.Status = OrderStatus.Completed;
-        _order.RequiresPayment = false;
-        
-        // Ensure we have synthesized recipes matching the recipe list
-        if (_order.SynthesizedRecipes.Count == 0 && _order.RecipeList.Count > 0)
+        _status = OrderStatus.Completed;
+        _requiresPayment = false;
+
+        if (_synthesizedRecipes.Count == 0 && _recipeList.Count > 0)
         {
-            var synthesizedRecipes = _order.RecipeList.Select(recipeName =>
-                new SynthesizedRecipeBuilder()
-                    .WithTitle(recipeName)
-                    .Build()
-            ).ToList();
-            
-            var property = typeof(CookbookOrder).GetProperty(nameof(CookbookOrder.SynthesizedRecipes));
-            property?.SetValue(_order, synthesizedRecipes);
+            _synthesizedRecipes = _recipeList.Select(name =>
+                new SynthesizedRecipeBuilder().WithTitle(name).Build()).ToList();
         }
-        
+
         return this;
     }
 
     public CookbookOrderBuilder AsAwaitingPayment()
     {
-        _order.Status = OrderStatus.AwaitingPayment;
-        _order.RequiresPayment = true;
+        _status = OrderStatus.AwaitingPayment;
+        _requiresPayment = true;
         return this;
     }
 
     public CookbookOrderBuilder AsFailed()
     {
-        _order.Status = OrderStatus.Failed;
+        _status = OrderStatus.Failed;
         return this;
     }
 
     public CookbookOrderBuilder AsInProgress()
     {
-        _order.Status = OrderStatus.InProgress;
+        _status = OrderStatus.InProgress;
         return this;
     }
 
-    public CookbookOrder Build() => _order;
+    public CookbookOrder Build()
+    {
+        // Rebuild submission with allowed fields
+        var submission = new CookbookOrderSubmission
+        {
+            Email = _email,
+            CookbookContent = _content
+            // CookbookDetails/UserDetails cannot be set from tests
+        };
+
+        if (_orderId != null)
+        {
+            return new CookbookOrder(_customer, submission, _recipeList)
+            {
+                OrderId = _orderId,
+                SynthesizedRecipes = _synthesizedRecipes,
+                Status = _status,
+                RequiresPayment = _requiresPayment,
+                LlmConversationId = _llmConversationId
+            };
+        }
+        else
+        {
+            return new CookbookOrder(_customer, submission, _recipeList)
+            {
+                SynthesizedRecipes = _synthesizedRecipes,
+                Status = _status,
+                RequiresPayment = _requiresPayment,
+                LlmConversationId = _llmConversationId
+            };
+        }
+    }
 }

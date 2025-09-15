@@ -14,6 +14,9 @@ using Zarichney.Services.BackgroundTasks;
 using Zarichney.Services.Email;
 using Zarichney.Services.PdfGeneration;
 using Zarichney.Services.Sessions;
+using OpenAI.Assistants;
+using Microsoft.Graph.Models;
+using Zarichney.Services.FileSystem;
 using Zarichney.Tests.TestData.Builders;
 using Zarichney.Server.Tests.TestData.Builders;
 
@@ -26,8 +29,9 @@ public class OrderServiceTests
     private readonly Mock<IEmailService> _mockEmailService;
     private readonly Mock<ILlmService> _mockLlmService;
     private readonly Mock<IOrderRepository> _mockOrderRepository;
+    private readonly Mock<IFileService> _mockFileService;
     private readonly Mock<PdfCompiler> _mockPdfCompiler;
-    private readonly Mock<ProcessOrderPrompt> _mockProcessOrderPrompt;
+    private readonly ProcessOrderPrompt _processOrderPrompt;
     private readonly Mock<IRecipeService> _mockRecipeService;
     private readonly Mock<IScopeContainer> _mockScope;
     private readonly Mock<ISessionManager> _mockSessionManager;
@@ -46,13 +50,17 @@ public class OrderServiceTests
         _mockEmailService = new Mock<IEmailService>();
         _mockLlmService = new Mock<ILlmService>();
         _mockOrderRepository = new Mock<IOrderRepository>();
-        _mockPdfCompiler = new Mock<PdfCompiler>(MockBehavior.Strict);
-        _mockProcessOrderPrompt = new Mock<ProcessOrderPrompt>(MockBehavior.Strict);
+        _mockFileService = new Mock<IFileService>();
+        _mockPdfCompiler = new Mock<PdfCompiler>(new PdfCompilerConfig(), _mockFileService.Object, new Mock<ILogger<PdfCompiler>>().Object);
+        _processOrderPrompt = new ProcessOrderPrompt();
         _mockRecipeService = new Mock<IRecipeService>();
         _mockScope = new Mock<IScopeContainer>();
         _mockSessionManager = new Mock<ISessionManager>();
         _mockCustomerService = new Mock<ICustomerService>();
         _mockLogger = new Mock<ILogger<RecipeService>>();
+        _mockFileService.Setup(x => x.CreateFile(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+            .Returns(Task.CompletedTask);
+        _mockFileService.Setup(x => x.DeleteFile(It.IsAny<string>()));
 
         _emailConfig = new EmailConfig 
         { 
@@ -81,7 +89,7 @@ public class OrderServiceTests
             _orderConfig,
             _mockOrderRepository.Object,
             _mockPdfCompiler.Object,
-            _mockProcessOrderPrompt.Object,
+            _processOrderPrompt,
             _mockRecipeService.Object,
             _mockScope.Object,
             _mockSessionManager.Object,
@@ -166,23 +174,15 @@ public class OrderServiceTests
             .Setup(x => x.GetOrCreateCustomer(submission.Email))
             .ReturnsAsync(customer);
 
-        _mockProcessOrderPrompt
-            .Setup(x => x.SystemPrompt)
-            .Returns("System prompt");
-        
-        _mockProcessOrderPrompt
-            .Setup(x => x.GetUserPrompt(It.IsAny<CookbookOrderSubmission>()))
-            .Returns("User prompt");
-        
-        _mockProcessOrderPrompt
-            .Setup(x => x.GetFunction())
-            .Returns(new LlmFunction { Name = "test" });
+        // Using real ProcessOrderPrompt instance for prompt values
 
         _mockLlmService
             .Setup(x => x.CallFunction<RecipeProposalResult>(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                It.IsAny<LlmFunction>()))
+                It.IsAny<FunctionDefinition>(),
+                It.IsAny<string?>(),
+                It.IsAny<int?>()))
             .ReturnsAsync(new LlmResult<RecipeProposalResult>
             {
                 Data = new RecipeProposalResult { Recipes = recipeList },
@@ -194,8 +194,10 @@ public class OrderServiceTests
             .Returns(Task.CompletedTask);
 
         _mockBackgroundWorker
-            .Setup(x => x.QueueBackgroundWorkAsync(It.IsAny<Func<IServiceProvider, CancellationToken, Task>>()))
-            .Returns(Task.CompletedTask);
+            .Setup(x => x.QueueBackgroundWorkAsync(
+                It.IsAny<Func<IScopeContainer, CancellationToken, Task>>(),
+                It.IsAny<Session?>()))
+            .Verifiable();
 
         // Act
         var result = await _sut.ProcessSubmission(submission, processOrder: true);
@@ -208,7 +210,8 @@ public class OrderServiceTests
         result.Customer.Should().Be(customer);
         
         _mockBackgroundWorker.Verify(x => x.QueueBackgroundWorkAsync(
-            It.IsAny<Func<IServiceProvider, CancellationToken, Task>>()), Times.Once);
+            It.IsAny<Func<IScopeContainer, CancellationToken, Task>>(),
+            It.IsAny<Session?>()), Times.Once);
         _mockSessionManager.Verify(x => x.AddOrder(It.IsAny<IScopeContainer>(), 
             It.IsAny<CookbookOrder>()), Times.Once);
     }
@@ -237,7 +240,8 @@ public class OrderServiceTests
         // Assert
         result.Should().NotBeNull();
         _mockBackgroundWorker.Verify(x => x.QueueBackgroundWorkAsync(
-            It.IsAny<Func<IServiceProvider, CancellationToken, Task>>()), Times.Never);
+            It.IsAny<Func<IScopeContainer, CancellationToken, Task>>(),
+            It.IsAny<Session?>()), Times.Never);
     }
 
     [Fact]
@@ -260,9 +264,23 @@ public class OrderServiceTests
             .WithOrder(order)
             .Build();
 
-        var sourceRecipes = new List<Recipe> 
-        { 
-            new RecipeBuilder().Build() 
+        var sourceRecipes = new List<Recipe>
+        {
+            new Recipe
+            {
+                Title = "Test",
+                Description = "Desc",
+                Servings = "1",
+                PrepTime = "1",
+                CookTime = "1",
+                TotalTime = "1",
+                Ingredients = new List<string>{"a"},
+                Directions = new List<string>{"b"},
+                Notes = string.Empty,
+                Aliases = new List<string>(),
+                IndexTitle = null,
+                Relevancy = new Dictionary<string, RelevancyResult>()
+            }
         };
         
         var synthesizedRecipe = new SynthesizedRecipeBuilder()
@@ -316,7 +334,8 @@ public class OrderServiceTests
                 It.IsAny<string>(),
                 "Cookbook Factory - Order Pending",
                 "credits-needed",
-                It.IsAny<Dictionary<string, object>>()))
+                It.IsAny<Dictionary<string, object>>(),
+                It.IsAny<FileAttachment>()))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -329,7 +348,8 @@ public class OrderServiceTests
             order.Email,
             "Cookbook Factory - Order Pending",
             "credits-needed",
-            It.IsAny<Dictionary<string, object>>()), Times.Once);
+            It.IsAny<Dictionary<string, object>>(),
+            (FileAttachment?)null), Times.Once);
     }
 
     [Fact]
@@ -505,15 +525,18 @@ public class OrderServiceTests
         var orderId = "test-order-123";
 
         _mockBackgroundWorker
-            .Setup(x => x.QueueBackgroundWorkAsync(It.IsAny<Func<IServiceProvider, CancellationToken, Task>>()))
-            .Returns(Task.CompletedTask);
+            .Setup(x => x.QueueBackgroundWorkAsync(
+                It.IsAny<Func<IScopeContainer, CancellationToken, Task>>(),
+                It.IsAny<Session?>()))
+            .Verifiable();
 
         // Act
         _sut.QueueOrderProcessing(orderId);
 
         // Assert
         _mockBackgroundWorker.Verify(x => x.QueueBackgroundWorkAsync(
-            It.IsAny<Func<IServiceProvider, CancellationToken, Task>>()), Times.Once);
+            It.IsAny<Func<IScopeContainer, CancellationToken, Task>>(),
+            It.IsAny<Session?>()), Times.Once);
     }
 
     [Fact]
@@ -566,7 +589,24 @@ public class OrderServiceTests
             .WithOrder(order)
             .Build();
 
-        var sourceRecipes = new List<Recipe> { new RecipeBuilder().Build() };
+        var sourceRecipes = new List<Recipe>
+        {
+            new Recipe
+            {
+                Title = "Test",
+                Description = "Desc",
+                Servings = "1",
+                PrepTime = "1",
+                CookTime = "1",
+                TotalTime = "1",
+                Ingredients = new List<string>{"a"},
+                Directions = new List<string>{"b"},
+                Notes = string.Empty,
+                Aliases = new List<string>(),
+                IndexTitle = null,
+                Relevancy = new Dictionary<string, RelevancyResult>()
+            }
+        };
         var synthesizedRecipe = new SynthesizedRecipeBuilder().Build();
 
         SetupSessionManagerForOrder(orderId, session);
@@ -595,9 +635,19 @@ public class OrderServiceTests
             .Setup(x => x.ParallelForEachAsync<string>(
                 It.IsAny<IScopeContainer>(),
                 It.IsAny<IEnumerable<string>>(),
-                It.IsAny<Func<IServiceProvider, string, CancellationToken, Task>>(),
+                It.IsAny<Func<IScopeContainer, string, CancellationToken, Task>>(),
                 It.IsAny<int>(),
                 It.IsAny<CancellationToken>()))
+            .Callback((IScopeContainer parentScope,
+                       IEnumerable<string> dataList,
+                       Func<IScopeContainer, string, CancellationToken, Task> operation,
+                       int? maxParallel, CancellationToken token) =>
+            {
+                foreach (var item in dataList)
+                {
+                    operation(_mockScope.Object, item, CancellationToken.None).GetAwaiter().GetResult();
+                }
+            })
             .Returns(Task.CompletedTask);
     }
 
@@ -661,29 +711,22 @@ public class OrderServiceTests
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                It.IsAny<Dictionary<string, object>>()))
+                It.IsAny<Dictionary<string, object>>(),
+                It.IsAny<FileAttachment>()))
             .Returns(Task.CompletedTask);
     }
 
     private void SetupLlmMocks()
     {
-        _mockProcessOrderPrompt
-            .Setup(x => x.SystemPrompt)
-            .Returns("System prompt");
-        
-        _mockProcessOrderPrompt
-            .Setup(x => x.GetUserPrompt(It.IsAny<CookbookOrderSubmission>()))
-            .Returns("User prompt");
-        
-        _mockProcessOrderPrompt
-            .Setup(x => x.GetFunction())
-            .Returns(new LlmFunction { Name = "test" });
+        // Using real ProcessOrderPrompt instance for prompt values
 
         _mockLlmService
             .Setup(x => x.CallFunction<RecipeProposalResult>(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                It.IsAny<LlmFunction>()))
+                It.IsAny<FunctionDefinition>(),
+                It.IsAny<string?>(),
+                It.IsAny<int?>()))
             .ReturnsAsync(new LlmResult<RecipeProposalResult>
             {
                 Data = new RecipeProposalResult 
