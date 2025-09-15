@@ -2,258 +2,161 @@ using Zarichney.Cookbook.Recipes;
 
 namespace Zarichney.Tests.TestData.Builders;
 
-/// <summary>
-/// Test data builder for SynthesizedRecipe objects.
-/// Provides a fluent interface for creating synthesized recipe test data.
-/// </summary>
 public class SynthesizedRecipeBuilder
 {
-    private string? _title = "Test Recipe";
-    private string _description = "A delicious test recipe";
-    private string _servings = "4";
-    private string _prepTime = "15 minutes";
-    private string _cookTime = "30 minutes";
-    private string _totalTime = "45 minutes";
-    private List<string> _ingredients = ["Ingredient 1", "Ingredient 2", "Ingredient 3"];
-    private List<string> _directions = ["Step 1", "Step 2", "Step 3"];
-    private string _notes = "Test notes";
-    private List<string>? _inspiredBy = [];
-    private List<string>? _imageUrls = [];
-    private List<Zarichney.Cookbook.Recipes.Recipe>? _sourceRecipes = [];
-    private int? _qualityScore = null;
-    private string? _analysis = null;
-    private string? _suggestions = null;
-    private int _attemptCount = 0;
-    private List<SynthesizedRecipe>? _revisions = null;
+    private readonly SynthesizedRecipe _recipe;
 
-    /// <summary>
-    /// Sets the recipe title.
-    /// </summary>
-    public SynthesizedRecipeBuilder WithTitle(string? title)
+    public SynthesizedRecipeBuilder()
     {
-        _title = title;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the recipe description.
-    /// </summary>
-    public SynthesizedRecipeBuilder WithDescription(string description)
-    {
-        _description = description;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the servings.
-    /// </summary>
-    public SynthesizedRecipeBuilder WithServings(string servings)
-    {
-        _servings = servings;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the preparation time.
-    /// </summary>
-    public SynthesizedRecipeBuilder WithPrepTime(string prepTime)
-    {
-        _prepTime = prepTime;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the cooking time.
-    /// </summary>
-    public SynthesizedRecipeBuilder WithCookTime(string cookTime)
-    {
-        _cookTime = cookTime;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the total time.
-    /// </summary>
-    public SynthesizedRecipeBuilder WithTotalTime(string totalTime)
-    {
-        _totalTime = totalTime;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the ingredients list.
-    /// </summary>
-    public SynthesizedRecipeBuilder WithIngredients(params string[] ingredients)
-    {
-        _ingredients = ingredients.ToList();
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the directions list.
-    /// </summary>
-    public SynthesizedRecipeBuilder WithDirections(params string[] directions)
-    {
-        _directions = directions.ToList();
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the notes.
-    /// </summary>
-    public SynthesizedRecipeBuilder WithNotes(string notes)
-    {
-        _notes = notes;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the URLs this recipe was inspired by.
-    /// </summary>
-    public SynthesizedRecipeBuilder WithInspiredBy(params string[] urls)
-    {
-        _inspiredBy = urls.ToList();
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the image URLs.
-    /// </summary>
-    public SynthesizedRecipeBuilder WithImageUrls(params string[] urls)
-    {
-        _imageUrls = urls.ToList();
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the source recipes.
-    /// </summary>
-    public SynthesizedRecipeBuilder WithSourceRecipes(params Zarichney.Cookbook.Recipes.Recipe[] recipes)
-    {
-        _sourceRecipes = recipes.ToList();
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the quality score.
-    /// </summary>
-    public SynthesizedRecipeBuilder WithQualityScore(int? qualityScore)
-    {
-        _qualityScore = qualityScore;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the analysis.
-    /// </summary>
-    public SynthesizedRecipeBuilder WithAnalysis(string? analysis)
-    {
-        _analysis = analysis;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the suggestions.
-    /// </summary>
-    public SynthesizedRecipeBuilder WithSuggestions(string? suggestions)
-    {
-        _suggestions = suggestions;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the attempt count.
-    /// </summary>
-    public SynthesizedRecipeBuilder WithAttemptCount(int attemptCount)
-    {
-        _attemptCount = attemptCount;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the revisions.
-    /// </summary>
-    public SynthesizedRecipeBuilder WithRevisions(List<SynthesizedRecipe>? revisions)
-    {
-        _revisions = revisions;
-        return this;
-    }
-
-    /// <summary>
-    /// Configures as a simple recipe with minimal details.
-    /// </summary>
-    public SynthesizedRecipeBuilder AsSimpleRecipe()
-    {
-        _qualityScore = null;
-        _analysis = null;
-        _suggestions = null;
-        _revisions = null;
-        return this;
-    }
-
-    /// <summary>
-    /// Configures as a detailed recipe with all information.
-    /// </summary>
-    public SynthesizedRecipeBuilder AsDetailedRecipe()
-    {
-        _qualityScore = 85;
-        _analysis = "Well-structured recipe with clear instructions";
-        _suggestions = "Consider adding garnish options";
-        _inspiredBy = ["https://example.com/recipe1", "https://example.com/recipe2"];
-        _imageUrls = ["https://example.com/image1.jpg", "https://example.com/image2.jpg"];
-        return this;
-    }
-
-    /// <summary>
-    /// Configures as an analyzed recipe with quality metrics.
-    /// </summary>
-    public SynthesizedRecipeBuilder AsAnalyzedRecipe()
-    {
-        _qualityScore = 90;
-        _analysis = "Excellent recipe with comprehensive instructions and ingredient list";
-        _suggestions = "Recipe is well-optimized, no changes needed";
-        return this;
-    }
-
-    /// <summary>
-    /// Builds and returns the SynthesizedRecipe instance.
-    /// </summary>
-    public SynthesizedRecipe Build()
-    {
-        return new SynthesizedRecipe
+        _recipe = new SynthesizedRecipe
         {
-            Title = _title,
-            Description = _description,
-            Servings = _servings,
-            PrepTime = _prepTime,
-            CookTime = _cookTime,
-            TotalTime = _totalTime,
-            Ingredients = _ingredients,
-            Directions = _directions,
-            Notes = _notes,
-            InspiredBy = _inspiredBy,
-            ImageUrls = _imageUrls,
-            SourceRecipes = _sourceRecipes,
-            QualityScore = _qualityScore,
-            Analysis = _analysis,
-            Suggestions = _suggestions,
-            AttemptCount = _attemptCount,
-            Revisions = _revisions
+            Title = "Test Recipe",
+            Description = "A delicious test recipe",
+            Servings = "4",
+            PrepTime = "15 minutes",
+            CookTime = "30 minutes",
+            TotalTime = "45 minutes",
+            Ingredients = new List<string>
+            {
+                "2 cups flour",
+                "1 cup sugar",
+                "3 eggs",
+                "1 cup milk"
+            },
+            Directions = new List<string>
+            {
+                "Preheat oven to 350°F",
+                "Mix dry ingredients",
+                "Add wet ingredients",
+                "Bake for 30 minutes"
+            },
+            Notes = "This is a test recipe for unit testing",
+            InspiredBy = new List<string>(),
+            ImageUrls = new List<string>(),
+            SourceRecipes = new List<Zarichney.Cookbook.Recipes.Recipe>(),
+            AttemptCount = 1
         };
     }
 
-    /// <summary>
-    /// Creates multiple recipes with different characteristics.
-    /// </summary>
-    public static List<SynthesizedRecipe> BuildMultiple(int count, string baseTitle = "Recipe {0}")
+    public SynthesizedRecipeBuilder WithTitle(string title)
     {
-        List<SynthesizedRecipe> recipes = [];
-        for (int i = 1; i <= count; i++)
-        {
-            recipes.Add(new SynthesizedRecipeBuilder()
-                .WithTitle(string.Format(baseTitle, i))
-                .Build());
-        }
-        return recipes;
+        _recipe.Title = title;
+        return this;
     }
+
+    public SynthesizedRecipeBuilder WithDescription(string description)
+    {
+        _recipe.Description = description;
+        return this;
+    }
+
+    public SynthesizedRecipeBuilder WithServings(string servings)
+    {
+        _recipe.Servings = servings;
+        return this;
+    }
+
+    public SynthesizedRecipeBuilder WithPrepTime(string prepTime)
+    {
+        _recipe.PrepTime = prepTime;
+        return this;
+    }
+
+    public SynthesizedRecipeBuilder WithCookTime(string cookTime)
+    {
+        _recipe.CookTime = cookTime;
+        return this;
+    }
+
+    public SynthesizedRecipeBuilder WithTotalTime(string totalTime)
+    {
+        _recipe.TotalTime = totalTime;
+        return this;
+    }
+
+    public SynthesizedRecipeBuilder WithIngredients(params string[] ingredients)
+    {
+        _recipe.Ingredients = ingredients.ToList();
+        return this;
+    }
+
+    public SynthesizedRecipeBuilder WithDirections(params string[] directions)
+    {
+        _recipe.Directions = directions.ToList();
+        return this;
+    }
+
+    public SynthesizedRecipeBuilder WithNotes(string notes)
+    {
+        _recipe.Notes = notes;
+        return this;
+    }
+
+    public SynthesizedRecipeBuilder WithInspiredBy(params string[] urls)
+    {
+        _recipe.InspiredBy = urls.ToList();
+        return this;
+    }
+
+    public SynthesizedRecipeBuilder WithImageUrls(params string[] urls)
+    {
+        _recipe.ImageUrls = urls.ToList();
+        return this;
+    }
+
+    public SynthesizedRecipeBuilder WithSourceRecipes(params Zarichney.Cookbook.Recipes.Recipe[] recipes)
+    {
+        _recipe.SourceRecipes = recipes.ToList();
+        return this;
+    }
+
+    public SynthesizedRecipeBuilder WithQualityScore(int score)
+    {
+        _recipe.QualityScore = score;
+        return this;
+    }
+
+    public SynthesizedRecipeBuilder WithAnalysis(string analysis)
+    {
+        _recipe.Analysis = analysis;
+        return this;
+    }
+
+    public SynthesizedRecipeBuilder WithSuggestions(string suggestions)
+    {
+        _recipe.Suggestions = suggestions;
+        return this;
+    }
+
+    public SynthesizedRecipeBuilder WithAttemptCount(int count)
+    {
+        _recipe.AttemptCount = count;
+        return this;
+    }
+
+    public SynthesizedRecipeBuilder WithRevisions(params SynthesizedRecipe[] revisions)
+    {
+        _recipe.Revisions = revisions.ToList();
+        return this;
+    }
+
+    public SynthesizedRecipeBuilder AsAnalyzed(int qualityScore = 85)
+    {
+        _recipe.QualityScore = qualityScore;
+        _recipe.Analysis = "This recipe has been analyzed and meets quality standards.";
+        _recipe.Suggestions = "Consider adding more seasoning for enhanced flavor.";
+        return this;
+    }
+
+    public SynthesizedRecipeBuilder AsSimple()
+    {
+        _recipe.Ingredients = new List<string> { "1 ingredient" };
+        _recipe.Directions = new List<string> { "1 step" };
+        _recipe.PrepTime = "5 minutes";
+        _recipe.CookTime = "10 minutes";
+        _recipe.TotalTime = "15 minutes";
+        return this;
+    }
+
+    public SynthesizedRecipe Build() => _recipe;
 }

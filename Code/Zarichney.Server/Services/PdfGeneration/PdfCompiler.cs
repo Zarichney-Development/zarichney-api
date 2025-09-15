@@ -33,7 +33,7 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
     .UsePipeTables()
     .Build();
 
-  public async Task<byte[]> CompileCookbook(CookbookOrder order)
+  public virtual async Task<byte[]> CompileCookbook(CookbookOrder order)
   {
     QuestPDF.Settings.License = LicenseType.Community;
     QuestPDF.Settings.EnableDebugging = false;
