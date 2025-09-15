@@ -295,7 +295,7 @@ public class ApiErrorResultBuilderTests
     private string GetResponseBody()
     {
         _responseStream.Position = 0;
-        using var reader = new StreamReader(_responseStream, Encoding.UTF8);
+        using var reader = new StreamReader(_responseStream, Encoding.UTF8, leaveOpen: true);
         return reader.ReadToEnd();
     }
 

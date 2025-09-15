@@ -565,7 +565,14 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
               span.Italic();
             break;
           case LinkInline { IsImage: false } link:
-            text.Hyperlink(link.Title ?? link.Url!, link.Url!);
+            if (string.IsNullOrWhiteSpace(link.Url))
+            {
+              text.Span(link.Title ?? string.Empty);
+            }
+            else
+            {
+              text.Hyperlink(link.Title ?? link.Url!, link.Url!);
+            }
             break;
         }
       }
