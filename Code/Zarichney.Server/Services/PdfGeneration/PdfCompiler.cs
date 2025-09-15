@@ -66,7 +66,7 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
     }
   }
 
-  private async Task<string?> ProcessFirstValidImage(IEnumerable<string> imageUrls, string recipeTitle)
+  protected internal virtual async Task<string?> ProcessFirstValidImage(IEnumerable<string> imageUrls, string recipeTitle)
   {
     var imageUrlsList = imageUrls.ToList();
     logger.LogInformation("Attempting to process {Count} image URLs for recipe: {RecipeTitle}",
@@ -107,7 +107,7 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
     return null;
   }
 
-  private bool IsValidImageUrl(string url)
+  protected internal virtual bool IsValidImageUrl(string url)
   {
     if (string.IsNullOrWhiteSpace(url))
     {
@@ -133,7 +133,7 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
            && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
   }
 
-  private async Task<string> ProcessImage(string url, string fileName)
+  protected internal virtual async Task<string> ProcessImage(string url, string fileName)
   {
     try
     {
@@ -199,7 +199,7 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
     }
   }
 
-  private Task CleanupImages(List<string?> fileNames)
+  protected internal virtual Task CleanupImages(List<string?> fileNames)
   {
     foreach (var fileName in fileNames)
     {
@@ -221,7 +221,7 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
     return Task.CompletedTask;
   }
 
-  private byte[] GeneratePdf(IReadOnlyList<(MarkdownDocument Content, string? ImagePath)> content)
+  protected internal virtual byte[] GeneratePdf(IReadOnlyList<(MarkdownDocument Content, string? ImagePath)> content)
   {
     return Document.Create(container =>
     {
