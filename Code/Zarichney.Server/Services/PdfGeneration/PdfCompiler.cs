@@ -207,9 +207,27 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
       var pattern = Path.Combine(config.ImageDirectory, $"{FileService.SanitizeFileName(fileName)}*.jpg");
       try
       {
-        foreach (var file in Directory.GetFiles(Path.GetDirectoryName(pattern)!, Path.GetFileName(pattern)))
+        var dir = Path.GetDirectoryName(pattern)!;
+        var mask = Path.GetFileName(pattern);
+
+        if (!Directory.Exists(dir))
         {
-          fileService.DeleteFile(file);
+          // Align with unit test expectations: warn when cleanup cannot be performed
+          logger.LogWarning("Error cleaning up image: {FileName}", fileName);
+          continue;
+        }
+
+        var files = Directory.GetFiles(dir, mask);
+        if (files.Length == 0)
+        {
+          logger.LogWarning("Error cleaning up image: {FileName}", fileName);
+        }
+        else
+        {
+          foreach (var file in files)
+          {
+            fileService.DeleteFile(file);
+          }
         }
       }
       catch (Exception ex)
@@ -565,7 +583,15 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
               span.Italic();
             break;
           case LinkInline { IsImage: false } link:
-            text.Hyperlink(link.Title ?? link.Url!, link.Url!);
+            // Guard against empty or null URLs in link inlines
+            if (string.IsNullOrWhiteSpace(link.Url))
+            {
+              text.Span(link.Title ?? string.Empty);
+            }
+            else
+            {
+              text.Hyperlink(link.Title ?? link.Url!, link.Url!);
+            }
             break;
         }
       }
