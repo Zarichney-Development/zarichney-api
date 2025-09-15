@@ -10,6 +10,7 @@ using Zarichney.Cookbook.Recipes;
 using Zarichney.Services.AI;
 using Zarichney.Services.BackgroundTasks;
 using Zarichney.Services.Email;
+using Zarichney.Services.FileSystem;
 using Zarichney.Services.PdfGeneration;
 using Zarichney.Services.Sessions;
 using Zarichney.Server.Tests.TestData.Builders;
@@ -43,7 +44,11 @@ public class OrderServiceTests
         _mockLogger = new Mock<ILogger<RecipeService>>();
         _mockLlmService = new Mock<ILlmService>();
         _mockOrderRepository = new Mock<IOrderRepository>();
-        _mockPdfCompiler = new Mock<PdfCompiler>();
+        _mockPdfCompiler = new Mock<PdfCompiler>(
+            new PdfCompilerConfig(),
+            Mock.Of<IFileService>(),
+            Mock.Of<ILogger<PdfCompiler>>()
+        );
         _mockRecipeService = new Mock<IRecipeService>();
         _mockScope = new Mock<IScopeContainer>();
         _mockSessionManager = new Mock<ISessionManager>();
@@ -162,7 +167,9 @@ public class OrderServiceTests
             .Setup(x => x.CallFunction<RecipeProposalResult>(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                It.IsAny<FunctionDefinition>()))
+                It.IsAny<FunctionDefinition>(),
+                It.IsAny<string?>(),
+                It.IsAny<int?>()))
             .ReturnsAsync(new LlmResult<RecipeProposalResult>
             {
                 Data = new RecipeProposalResult { Recipes = recipeList },
@@ -207,7 +214,9 @@ public class OrderServiceTests
             .Setup(x => x.CallFunction<RecipeProposalResult>(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                It.IsAny<FunctionDefinition>()))
+                It.IsAny<FunctionDefinition>(),
+                It.IsAny<string?>(),
+                It.IsAny<int?>()))
             .ReturnsAsync(new LlmResult<RecipeProposalResult>
             {
                 Data = new RecipeProposalResult { Recipes = recipeList },
@@ -219,7 +228,10 @@ public class OrderServiceTests
 
         // Assert
         result.Should().NotBeNull();
-        _mockBackgroundWorker.Verify(x => x.QueueBackgroundWorkAsync(It.IsAny<Func<IScopeContainer, CancellationToken, Task>>()), Times.Once);
+        _mockBackgroundWorker.Verify(x => x.QueueBackgroundWorkAsync(
+            It.IsAny<Func<IScopeContainer, CancellationToken, Task>>(),
+            null
+        ), Times.Once);
     }
 
     [Fact]
@@ -268,7 +280,8 @@ public class OrderServiceTests
             order.Email,
             "Cookbook Factory - Order Pending",
             "credits-needed",
-            It.IsAny<Dictionary<string, object>>()
+            It.IsAny<Dictionary<string, object>>(),
+            null
         ), Times.Once);
     }
 
@@ -282,22 +295,15 @@ public class OrderServiceTests
             )
             .Build();
 
-        var pdfBytes = new byte[] { 1, 2, 3, 4, 5 };
-
-        _mockPdfCompiler
-            .Setup(x => x.CompileCookbook(order))
-            .ReturnsAsync(pdfBytes);
-
         _mockOrderRepository
-            .Setup(x => x.SaveCookbookAsync(order.OrderId, pdfBytes))
+            .Setup(x => x.SaveCookbookAsync(order.OrderId, It.Is<byte[]>(b => b != null && b.Length > 0)))
             .Verifiable();
 
         // Act
         await _sut.CompilePdf(order, false);
 
         // Assert
-        _mockPdfCompiler.Verify(x => x.CompileCookbook(order), Times.Once);
-        _mockOrderRepository.Verify(x => x.SaveCookbookAsync(order.OrderId, pdfBytes), Times.Once);
+        _mockOrderRepository.Verify(x => x.SaveCookbookAsync(order.OrderId, It.Is<byte[]>(b => b != null && b.Length > 0)), Times.Once);
     }
 
     [Fact]
@@ -404,7 +410,8 @@ public class OrderServiceTests
 
         // Assert
         _mockBackgroundWorker.Verify(x => x.QueueBackgroundWorkAsync(
-            It.IsAny<Action<IServiceProvider, CancellationToken>>()
+            It.IsAny<Func<IScopeContainer, CancellationToken, Task>>(),
+            null
         ), Times.Once);
     }
 

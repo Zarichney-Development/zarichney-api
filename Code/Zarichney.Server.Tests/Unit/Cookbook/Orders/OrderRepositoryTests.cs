@@ -49,7 +49,7 @@ public class OrderRepositoryTests
         var expectedPath = Path.Combine(_orderConfig.OutputDirectory, orderId);
 
         _mockFileService
-            .Setup(x => x.ReadFromFile<CookbookOrder?>(expectedPath, "Order", null))
+            .Setup(x => x.ReadFromFile<CookbookOrder?>(expectedPath, "Order", It.IsAny<string?>()))
             .ReturnsAsync(expectedOrder);
 
         // Act
@@ -58,7 +58,7 @@ public class OrderRepositoryTests
         // Assert
         result.Should().NotBeNull();
         result.Should().BeEquivalentTo(expectedOrder);
-        _mockFileService.Verify(x => x.ReadFromFile<CookbookOrder?>(expectedPath, "Order"), Times.Once);
+        _mockFileService.Verify(x => x.ReadFromFile<CookbookOrder?>(expectedPath, "Order", It.IsAny<string?>()), Times.Once);
     }
 
     [Fact]
@@ -69,7 +69,7 @@ public class OrderRepositoryTests
         var expectedPath = Path.Combine(_orderConfig.OutputDirectory, orderId);
 
         _mockFileService
-            .Setup(x => x.ReadFromFile<CookbookOrder?>(expectedPath, "Order", null))
+            .Setup(x => x.ReadFromFile<CookbookOrder?>(expectedPath, "Order", It.IsAny<string?>()))
             .ReturnsAsync((CookbookOrder?)null);
 
         // Act
@@ -77,7 +77,7 @@ public class OrderRepositoryTests
 
         // Assert
         result.Should().BeNull();
-        _mockFileService.Verify(x => x.ReadFromFile<CookbookOrder?>(expectedPath, "Order"), Times.Once);
+        _mockFileService.Verify(x => x.ReadFromFile<CookbookOrder?>(expectedPath, "Order", It.IsAny<string?>()), Times.Once);
     }
 
     [Fact]
@@ -97,7 +97,8 @@ public class OrderRepositoryTests
         _mockFileWriteQueueService.Verify(x => x.QueueWrite(
             expectedPath,
             "Order",
-            order
+            order,
+            It.IsAny<string?>()
         ), Times.Once);
     }
 

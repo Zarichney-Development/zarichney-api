@@ -19,7 +19,7 @@ public class SynthesizedRecipeBuilder
     private string _notes = "Test notes";
     private List<string>? _inspiredBy = [];
     private List<string>? _imageUrls = [];
-    private List<Recipe>? _sourceRecipes = [];
+    private List<Zarichney.Cookbook.Recipes.Recipe>? _sourceRecipes = [];
     private int? _qualityScore = null;
     private string? _analysis = null;
     private string? _suggestions = null;
@@ -128,7 +128,7 @@ public class SynthesizedRecipeBuilder
     /// <summary>
     /// Sets the source recipes.
     /// </summary>
-    public SynthesizedRecipeBuilder WithSourceRecipes(params Recipe[] recipes)
+    public SynthesizedRecipeBuilder WithSourceRecipes(params Zarichney.Cookbook.Recipes.Recipe[] recipes)
     {
         _sourceRecipes = recipes.ToList();
         return this;
