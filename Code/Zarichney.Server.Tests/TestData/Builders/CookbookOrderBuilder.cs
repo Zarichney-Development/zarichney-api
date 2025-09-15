@@ -62,9 +62,23 @@ public class CookbookOrderBuilder
         return this;
     }
 
+    // Convenience overload used by some tests
+    public CookbookOrderBuilder WithRecipeList(params string[] recipes)
+    {
+        _recipeList = recipes.ToList();
+        return this;
+    }
+
     public CookbookOrderBuilder WithSynthesizedRecipes(List<SynthesizedRecipe> synthesizedRecipes)
     {
         _synthesizedRecipes = synthesizedRecipes;
+        return this;
+    }
+
+    // Convenience overload used by some tests
+    public CookbookOrderBuilder WithSynthesizedRecipes(params SynthesizedRecipe[] synthesizedRecipes)
+    {
+        _synthesizedRecipes = synthesizedRecipes.ToList();
         return this;
     }
 
