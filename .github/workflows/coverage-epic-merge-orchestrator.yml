@@ -519,8 +519,8 @@ jobs:
         run: |
           echo "🔍 Verifying all targeted PRs are closed after processing"
 
-          # Re-list open PRs targeting the epic branch
-          ALL_PRS=$(gh pr list --base "$EPIC_BRANCH" --state open --json number,title,labels)
+          # Re-list open PRs targeting the epic branch (including draft status for accurate filtering)
+          ALL_PRS=$(gh pr list --base "$EPIC_BRANCH" --state open --json number,title,labels,isDraft)
 
           if [ -z "$ALL_PRS" ] || [ "$ALL_PRS" = "[]" ]; then
             echo "✅ No open PRs targeting epic branch"
@@ -539,7 +539,9 @@ jobs:
           printf -v LABEL_PATTERN '%s|' "${PATTERN_PARTS[@]}"
           LABEL_PATTERN=${LABEL_PATTERN%|}
 
-          REMAINING=$(echo "$ALL_PRS" | jq --arg pattern "$LABEL_PATTERN" 'map(select(.labels[]?.name | test($pattern; "i"))) | length')
+          # Only consider non-draft PRs (match discovery behavior)
+          REMAINING=$(echo "$ALL_PRS" | jq --arg pattern "$LABEL_PATTERN" '
+            map(select(.isDraft != true) | select(.labels[]?.name | test($pattern; "i"))) | length')
           echo "remaining_prs=$REMAINING" >> $GITHUB_OUTPUT
 
           if [ "$REMAINING" -gt 0 ]; then
