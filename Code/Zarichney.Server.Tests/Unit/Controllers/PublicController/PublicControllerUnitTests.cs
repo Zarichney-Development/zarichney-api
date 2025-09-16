@@ -435,5 +435,373 @@ public class PublicControllerUnitTests
       "GetAvailableLoggingMethods should pass the cancellation token");
   }
 
+  /// <summary>
+  /// Verifies that TestSeqConnectivity handles service exceptions gracefully.
+  /// </summary>
+  [Fact]
+  public async Task TestSeqConnectivity_WhenServiceThrows_ThrowsException()
+  {
+    // Arrange
+    var testUrl = "http://test.seq:5341";
+    var request = new TestSeqRequest { Url = testUrl };
+    var expectedException = new InvalidOperationException("Seq connectivity test failed");
+
+    _mockLoggingService
+      .Setup(s => s.TestSeqConnectivityAsync(testUrl, It.IsAny<CancellationToken>()))
+      .ThrowsAsync(expectedException)
+      .Verifiable();
+
+    // Act
+    Func<Task> act = async () => await _controller.TestSeqConnectivity(request);
+
+    // Assert
+    await act.Should().ThrowAsync<InvalidOperationException>(
+      because: "exceptions from the service should propagate")
+      .WithMessage(expectedException.Message);
+
+    _mockLoggingService.Verify();
+  }
+
+  /// <summary>
+  /// Verifies that GetServicesStatus handles empty status dictionary correctly.
+  /// </summary>
+  [Fact]
+  public async Task GetServicesStatus_WithEmptyDictionary_ReturnsEmptyList()
+  {
+    // Arrange
+    var emptyStatusDict = new Dictionary<ExternalServices, ServiceStatusInfo>();
+
+    _mockStatusService
+      .Setup(s => s.GetServiceStatusAsync())
+      .ReturnsAsync(emptyStatusDict)
+      .Verifiable();
+
+    // Act
+    var result = await _controller.GetServicesStatus();
+
+    // Assert
+    result.Should()
+      .BeOfType<OkObjectResult>(because: "an empty result should still return OK status");
+    var okResult = result as OkObjectResult;
+    okResult.Should().NotBeNull();
+    var valueList = okResult.Value as List<ServiceStatusInfo>;
+    valueList.Should().NotBeNull();
+    valueList.Should().BeEmpty(because: "an empty dictionary should result in an empty list");
+
+    _mockStatusService.Verify();
+  }
+
+  /// <summary>
+  /// Verifies that Config handles empty configuration list correctly.
+  /// </summary>
+  [Fact]
+  public async Task Config_WithEmptyList_ReturnsEmptyList()
+  {
+    // Arrange
+    var emptyStatus = new List<ConfigurationItemStatus>();
+
+    _mockStatusService
+      .Setup(s => s.GetConfigurationStatusAsync())
+      .ReturnsAsync(emptyStatus)
+      .Verifiable();
+
+    // Act
+    var result = await _controller.Config();
+
+    // Assert
+    result.Should()
+      .BeOfType<OkObjectResult>(because: "an empty configuration should still return OK status");
+    var okResult = result as OkObjectResult;
+    okResult.Should().NotBeNull();
+    var valueList = okResult.Value as IEnumerable<ConfigurationItemStatus>;
+    valueList.Should().NotBeNull();
+    valueList.Should().BeEmpty(because: "an empty configuration list should be returned as-is");
+
+    _mockStatusService.Verify();
+  }
+
+  /// <summary>
+  /// Verifies that GetServicesStatus handles large result sets correctly.
+  /// </summary>
+  [Fact]
+  public async Task GetServicesStatus_WithLargeResultSet_ReturnsAllStatuses()
+  {
+    // Arrange
+    var largeStatusDict = new Dictionary<ExternalServices, ServiceStatusInfo>();
+    var allServices = Enum.GetValues<ExternalServices>();
+    
+    foreach (var service in allServices)
+    {
+      largeStatusDict.Add(service, new ServiceStatusInfo(
+        service, 
+        _fixture.Create<bool>(), 
+        _fixture.CreateMany<string>(3).ToList()));
+    }
+
+    _mockStatusService
+      .Setup(s => s.GetServiceStatusAsync())
+      .ReturnsAsync(largeStatusDict)
+      .Verifiable();
+
+    // Act
+    var result = await _controller.GetServicesStatus();
+
+    // Assert
+    result.Should()
+      .BeOfType<OkObjectResult>(because: "large result sets should be handled correctly");
+    var okResult = result as OkObjectResult;
+    okResult.Should().NotBeNull();
+    var valueList = okResult.Value as List<ServiceStatusInfo>;
+    valueList.Should().NotBeNull();
+    valueList.Should().HaveCount(allServices.Length, 
+      because: "all service statuses should be included");
+
+    _mockStatusService.Verify();
+  }
+
+  /// <summary>
+  /// Verifies that Config handles configuration items with special characters.
+  /// </summary>
+  [Fact]
+  public async Task Config_WithSpecialCharacters_HandlesCorrectly()
+  {
+    // Arrange
+    var configStatus = new List<ConfigurationItemStatus>
+    {
+      new ConfigurationItemStatus("Setting.With.Dots", "Configured", "value-with-dashes"),
+      new ConfigurationItemStatus("Setting_With_Underscores", "Missing", null),
+      new ConfigurationItemStatus("Setting:With:Colons", "Configured", "value@with#special$chars")
+    };
+
+    _mockStatusService
+      .Setup(s => s.GetConfigurationStatusAsync())
+      .ReturnsAsync(configStatus)
+      .Verifiable();
+
+    // Act
+    var result = await _controller.Config();
+
+    // Assert
+    result.Should()
+      .BeOfType<OkObjectResult>(because: "special characters should be handled");
+    var okResult = result as OkObjectResult;
+    okResult.Should().NotBeNull();
+    okResult.Value.Should().BeEquivalentTo(configStatus,
+      because: "configuration items with special characters should be preserved");
+
+    _mockStatusService.Verify();
+  }
+
+  /// <summary>
+  /// Verifies that TestSeqConnectivity handles whitespace-only URLs correctly.
+  /// </summary>
+  [Fact]
+  public async Task TestSeqConnectivity_WithWhitespaceUrl_TreatsAsNull()
+  {
+    // Arrange
+    var request = new TestSeqRequest { Url = "   " };
+    var expectedResult = _fixture.Create<SeqConnectivityResult>();
+
+    _mockLoggingService
+      .Setup(s => s.TestSeqConnectivityAsync("   ", It.IsAny<CancellationToken>()))
+      .ReturnsAsync(expectedResult)
+      .Verifiable();
+
+    // Act
+    var result = await _controller.TestSeqConnectivity(request);
+
+    // Assert
+    result.Should()
+      .BeOfType<OkObjectResult>(because: "whitespace URLs should be handled");
+    
+    _mockLoggingService.Verify(
+      s => s.TestSeqConnectivityAsync("   ", It.IsAny<CancellationToken>()),
+      Times.Once,
+      "should pass the whitespace URL to the service as-is");
+  }
+
+  /// <summary>
+  /// Verifies that GetLoggingStatus handles complex nested result from service.
+  /// </summary>
+  [Fact]
+  public async Task GetLoggingStatus_WithComplexResult_ReturnsCorrectly()
+  {
+    // Arrange
+    var complexStatus = new LoggingStatusResult
+    {
+      SeqAvailable = true,
+      SeqUrl = "http://seq:5341",
+      Method = "Seq",
+      FallbackActive = false,
+      ConfiguredSeqUrl = "http://configured-seq:5341",
+      LogLevel = "Debug",
+      FileLoggingPath = "/var/log/app.log",
+      Timestamp = DateTime.UtcNow
+    };
+
+    _mockLoggingService
+      .Setup(s => s.GetLoggingStatusAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync(complexStatus)
+      .Verifiable();
+
+    // Act
+    var result = await _controller.GetLoggingStatus();
+
+    // Assert
+    result.Should()
+      .BeOfType<OkObjectResult>(because: "complex results should be handled correctly");
+    var okResult = result as OkObjectResult;
+    okResult.Should().NotBeNull();
+    okResult.Value.Should().BeEquivalentTo(complexStatus,
+      because: "complex nested objects should be preserved correctly");
+
+    _mockLoggingService.Verify();
+  }
+
+  /// <summary>
+  /// Verifies that GetAvailableLoggingMethods handles results with all methods unavailable.
+  /// </summary>
+  [Fact]
+  public async Task GetAvailableLoggingMethods_WithAllMethodsUnavailable_ReturnsCorrectResult()
+  {
+    // Arrange
+    var unavailableResult = new LoggingMethodsResult
+    {
+      NativeSeq = new LoggingMethodInfo
+      {
+        Available = false,
+        ServiceName = "seq-native",
+        Port = 5341,
+        Method = "Native Seq"
+      },
+      DockerSeq = new LoggingMethodInfo
+      {
+        Available = false,
+        ServiceName = "seq-docker",
+        Port = 5341,
+        Method = "Docker Seq"
+      },
+      FileLogging = new LoggingMethodInfo
+      {
+        Available = false,
+        Method = "File Logging",
+        Path = "/var/log/app.log"
+      },
+      CurrentMethod = "Console Fallback"
+    };
+
+    _mockLoggingService
+      .Setup(s => s.GetAvailableLoggingMethodsAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync(unavailableResult)
+      .Verifiable();
+
+    // Act
+    var result = await _controller.GetAvailableLoggingMethods();
+
+    // Assert
+    result.Should()
+      .BeOfType<OkObjectResult>(because: "unavailable methods should still return OK");
+    var okResult = result as OkObjectResult;
+    okResult.Should().NotBeNull();
+    okResult.Value.Should().BeEquivalentTo(unavailableResult,
+      because: "unavailable methods should be reported correctly");
+
+    _mockLoggingService.Verify();
+  }
+
+  /// <summary>
+  /// Verifies that GetLoggingStatus handles TaskCanceledException appropriately.
+  /// </summary>
+  [Fact]
+  public async Task GetLoggingStatus_WhenCancelled_Returns500WithCancellationMessage()
+  {
+    // Arrange
+    var cancelledException = new TaskCanceledException("Operation was cancelled");
+    _mockLoggingService
+      .Setup(s => s.GetLoggingStatusAsync(It.IsAny<CancellationToken>()))
+      .ThrowsAsync(cancelledException)
+      .Verifiable();
+
+    // Act
+    var result = await _controller.GetLoggingStatus();
+
+    // Assert
+    result.Should().BeOfType<ObjectResult>(because: "cancellation should return an error result");
+    var objectResult = result as ObjectResult;
+    objectResult.Should().NotBeNull();
+    objectResult!.StatusCode.Should().Be(500, because: "cancellation should return 500 status");
+
+    var value = objectResult.Value;
+    value.Should().NotBeNull();
+    value!.GetType().GetProperty("error")?.GetValue(value).Should().Be("Failed to retrieve logging status");
+    value.GetType().GetProperty("details")?.GetValue(value).Should().Be(cancelledException.Message);
+
+    _mockLoggingService.Verify();
+  }
+
+  /// <summary>
+  /// Verifies that TestSeqConnectivity handles very long URLs correctly.
+  /// </summary>
+  [Fact]
+  public async Task TestSeqConnectivity_WithVeryLongUrl_HandlesCorrectly()
+  {
+    // Arrange
+    var longUrl = "http://" + new string('a', 2000) + ".seq:5341";
+    var request = new TestSeqRequest { Url = longUrl };
+    var expectedResult = _fixture.Create<SeqConnectivityResult>();
+
+    _mockLoggingService
+      .Setup(s => s.TestSeqConnectivityAsync(longUrl, It.IsAny<CancellationToken>()))
+      .ReturnsAsync(expectedResult)
+      .Verifiable();
+
+    // Act
+    var result = await _controller.TestSeqConnectivity(request);
+
+    // Assert
+    result.Should()
+      .BeOfType<OkObjectResult>(because: "long URLs should be handled");
+    var okResult = result as OkObjectResult;
+    okResult.Should().NotBeNull();
+    okResult!.Value.Should().BeEquivalentTo(expectedResult);
+
+    _mockLoggingService.Verify();
+  }
+
+  /// <summary>
+  /// Verifies that HealthCheck returns consistent environment value.
+  /// </summary>
+  [Theory]
+  [InlineData("Development")]
+  [InlineData("Staging")]
+  [InlineData("Production")]
+  [InlineData("")]
+  public void HealthCheck_WithDifferentEnvironments_ReturnsCorrectEnvironment(string? environmentValue)
+  {
+    // Arrange
+    var originalEnv = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+    try
+    {
+      Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", environmentValue);
+
+      // Act
+      var result = _controller.HealthCheck();
+
+      // Assert
+      result.Should().BeOfType<OkObjectResult>();
+      var okResult = result as OkObjectResult;
+      var healthCheckResponse = okResult!.Value as HealthCheckResponse;
+      healthCheckResponse.Should().NotBeNull();
+      
+      var expectedEnv = string.IsNullOrEmpty(environmentValue) ? "Development" : environmentValue;
+      healthCheckResponse.Environment.Should().Be(expectedEnv,
+        because: "the environment should match the configured value or default to Development");
+    }
+    finally
+    {
+      Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", originalEnv);
+    }
+  }
+
   #endregion
 }
