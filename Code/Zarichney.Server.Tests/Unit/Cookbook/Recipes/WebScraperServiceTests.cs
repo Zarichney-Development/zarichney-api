@@ -128,10 +128,10 @@ public class WebScraperServiceTests
         .Setup(x => x.ReadFromFile<SiteSelectors>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
         .ReturnsAsync(siteSelectors);
 
-    var testUrls = new List<string> 
-    { 
-      "https://example.com/existing-recipe", 
-      "https://example.com/new-recipe" 
+    var testUrls = new List<string>
+    {
+      "https://example.com/existing-recipe",
+      "https://example.com/new-recipe"
     };
 
     mockBrowserService
@@ -189,8 +189,8 @@ public class WebScraperServiceTests
 
     mockLlmService
         .Setup(x => x.CallFunction<SearchResult>(
-            It.IsAny<string>(), 
-            It.IsAny<string>(), 
+            It.IsAny<string>(),
+            It.IsAny<string>(),
             It.IsAny<FunctionDefinition>(),
             It.IsAny<string>(),
             It.IsAny<int?>()))
@@ -209,7 +209,7 @@ public class WebScraperServiceTests
     // Assert
     // Unit test focuses on verifying acceptableScore parameter is passed correctly
     result.Should().BeEmpty("because unit tests cannot perform actual HTTP scraping without proper HTTP mocking");
-    
+
     // Verify that LLM was called with acceptableScore parameter in the user prompt
     mockLlmService.Verify(x => x.CallFunction<SearchResult>(
         It.IsAny<string>(),
@@ -253,8 +253,8 @@ public class WebScraperServiceTests
 
     mockLlmService
         .Setup(x => x.CallFunction<SearchResult>(
-            It.IsAny<string>(), 
-            It.IsAny<string>(), 
+            It.IsAny<string>(),
+            It.IsAny<string>(),
             It.IsAny<FunctionDefinition>(),
             It.IsAny<string>(),
             It.IsAny<int?>()))
@@ -273,7 +273,7 @@ public class WebScraperServiceTests
     // Assert
     // Unit test focuses on verifying recipesNeeded parameter affects URL selection logic
     result.Should().BeEmpty("because unit tests cannot perform actual HTTP scraping without proper HTTP mocking");
-    
+
     // Verify that recipesNeeded was used in LLM prompt generation (impacts maxResults calculation)
     mockLlmService.Verify(x => x.CallFunction<SearchResult>(
         It.IsAny<string>(),
@@ -281,7 +281,7 @@ public class WebScraperServiceTests
         It.IsAny<FunctionDefinition>(),
         It.IsAny<string>(),
         It.IsAny<int?>()), Times.Once, "because LLM should be called for URL ranking even with recipesNeeded parameter");
-        
+
     // Verify URL collection still occurred
     mockBrowserService.Verify(x => x.GetContentAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
   }
@@ -305,8 +305,8 @@ public class WebScraperServiceTests
     var testUrls = new List<string> { "https://example.com/recipe1", "https://example.com/recipe2", "https://example.com/recipe3", "https://example.com/recipe4" };
     mockBrowserService
         .Setup(x => x.GetContentAsync(
-            It.Is<string>(url => url.Contains("example.com")), 
-            It.IsAny<string>(), 
+            It.Is<string>(url => url.Contains("example.com")),
+            It.IsAny<string>(),
             It.IsAny<CancellationToken>()))
         .ReturnsAsync(testUrls);
 
@@ -320,8 +320,8 @@ public class WebScraperServiceTests
     // Assert
     // Should not throw exception and should attempt to scrape from the target site
     mockBrowserService.Verify(x => x.GetContentAsync(
-        It.Is<string>(url => url.Contains("example.com")), 
-        It.IsAny<string>(), 
+        It.Is<string>(url => url.Contains("example.com")),
+        It.IsAny<string>(),
         It.IsAny<CancellationToken>()), Times.Once);
   }
 
@@ -354,8 +354,8 @@ public class WebScraperServiceTests
     // LLM service throws exception
     mockLlmService
         .Setup(x => x.CallFunction<SearchResult>(
-            It.IsAny<string>(), 
-            It.IsAny<string>(), 
+            It.IsAny<string>(),
+            It.IsAny<string>(),
             It.IsAny<FunctionDefinition>(),
             It.IsAny<string>(),
             It.IsAny<int?>()))
@@ -374,7 +374,7 @@ public class WebScraperServiceTests
     // Assert
     // Unit test focuses on verifying fallback behavior when LLM service fails
     result.Should().BeEmpty("because unit tests cannot perform actual HTTP scraping without proper HTTP mocking");
-    
+
     // Verify that LLM was called and failed as expected
     mockLlmService.Verify(x => x.CallFunction<SearchResult>(
         It.IsAny<string>(),
@@ -382,7 +382,7 @@ public class WebScraperServiceTests
         It.IsAny<FunctionDefinition>(),
         It.IsAny<string>(),
         It.IsAny<int?>()), Times.Once);
-        
+
     // Verify URL collection still occurred (fallback should attempt all URLs)
     mockBrowserService.Verify(x => x.GetContentAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
   }
@@ -455,8 +455,8 @@ public class WebScraperServiceTests
 
     mockLlmService
         .Setup(x => x.CallFunction<SearchResult>(
-            It.IsAny<string>(), 
-            It.IsAny<string>(), 
+            It.IsAny<string>(),
+            It.IsAny<string>(),
             It.IsAny<FunctionDefinition>(),
             It.IsAny<string>(),
             It.IsAny<int?>()))
@@ -475,7 +475,7 @@ public class WebScraperServiceTests
     // Assert
     // Unit test focuses on verifying error buffer configuration is used correctly
     result.Should().BeEmpty("because unit tests cannot perform actual HTTP scraping without proper HTTP mocking");
-    
+
     // Verify that LLM was called with the correct count including error buffer
     mockLlmService.Verify(x => x.CallFunction<SearchResult>(
         It.IsAny<string>(),
@@ -483,7 +483,7 @@ public class WebScraperServiceTests
         It.IsAny<FunctionDefinition>(),
         It.IsAny<string>(),
         It.IsAny<int?>()), Times.Once);
-        
+
     // Verify the business logic flow included proper URL collection
     mockBrowserService.Verify(x => x.GetContentAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
   }
@@ -523,8 +523,8 @@ public class WebScraperServiceTests
 
     mockLlmService
         .Setup(x => x.CallFunction<SearchResult>(
-            It.IsAny<string>(), 
-            It.IsAny<string>(), 
+            It.IsAny<string>(),
+            It.IsAny<string>(),
             It.IsAny<FunctionDefinition>(),
             It.IsAny<string>(),
             It.IsAny<int?>()))
@@ -536,7 +536,7 @@ public class WebScraperServiceTests
     // Assert
     // Unit test focuses on verifying fallback behavior when LLM returns empty indices
     result.Should().BeEmpty("because unit tests cannot perform actual HTTP scraping without proper HTTP mocking");
-    
+
     // Verify that LLM was called and the service handled empty indices gracefully
     mockLlmService.Verify(x => x.CallFunction<SearchResult>(
         It.IsAny<string>(),
@@ -544,7 +544,7 @@ public class WebScraperServiceTests
         It.IsAny<FunctionDefinition>(),
         It.IsAny<string>(),
         It.IsAny<int?>()), Times.Once);
-        
+
     // Verify URL collection occurred (fallback should attempt all URLs)
     mockBrowserService.Verify(x => x.GetContentAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
   }

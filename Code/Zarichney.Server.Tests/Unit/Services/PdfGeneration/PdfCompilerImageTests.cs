@@ -30,7 +30,7 @@ public class PdfCompilerImageTests
   {
     // Set QuestPDF license
     QuestPDF.Settings.License = LicenseType.Community;
-    
+
     _fixture = new Fixture();
     _mockFileService = new Mock<IFileService>();
     _mockLogger = new Mock<ILogger<PdfCompiler>>();
@@ -40,7 +40,7 @@ public class PdfCompilerImageTests
       FontSize = 12,
       ImageDirectory = "test-images"
     };
-    
+
     // Create partial mock to test protected methods
     _mockPdfCompiler = new Mock<PdfCompiler>(_config, _mockFileService.Object, _mockLogger.Object)
     {
@@ -57,7 +57,7 @@ public class PdfCompilerImageTests
     var imageUrls = new[] { "https://example.com/image1.jpg" };
     var recipeTitle = "Test Recipe";
     var expectedPath = "test-images/TestRecipe_abc123.jpg";
-    
+
     _mockPdfCompiler
       .Protected()
       .Setup<Task<string>>("ProcessImage", ItExpr.IsAny<string>(), ItExpr.IsAny<string>())
@@ -75,15 +75,15 @@ public class PdfCompilerImageTests
   public async Task ProcessFirstValidImage_WithMultipleUrls_ShouldReturnFirstValidImagePath()
   {
     // Arrange
-    var imageUrls = new[] 
-    { 
+    var imageUrls = new[]
+    {
       "invalid-url",
       "https://example.com/valid.jpg",
-      "https://example.com/another.jpg" 
+      "https://example.com/another.jpg"
     };
     var recipeTitle = "Test Recipe";
     var expectedPath = "test-images/TestRecipe_abc123.jpg";
-    
+
     _mockPdfCompiler
       .Protected()
       .Setup<Task<string>>("ProcessImage", "https://example.com/valid.jpg", recipeTitle)
@@ -122,14 +122,14 @@ public class PdfCompilerImageTests
   public async Task ProcessFirstValidImage_WithProcessingException_ShouldContinueToNextUrl()
   {
     // Arrange
-    var imageUrls = new[] 
-    { 
+    var imageUrls = new[]
+    {
       "https://example.com/fail.jpg",
-      "https://example.com/success.jpg" 
+      "https://example.com/success.jpg"
     };
     var recipeTitle = "Test Recipe";
     var expectedPath = "test-images/TestRecipe_abc123.jpg";
-    
+
     _mockPdfCompiler
       .Protected()
       .SetupSequence<Task<string>>("ProcessImage", ItExpr.IsAny<string>(), ItExpr.IsAny<string>())
@@ -230,7 +230,7 @@ public class PdfCompilerImageTests
     // Arrange
     var dataUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
     var fileName = "TestRecipe";
-    
+
     _mockFileService
       .Setup(x => x.CreateFile(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
       .Returns(Task.CompletedTask);
@@ -300,7 +300,7 @@ public class PdfCompilerImageTests
   {
     // Arrange
     var fileNames = new List<string?> { "Recipe1", "Recipe2", "Recipe3" };
-    
+
     _mockFileService
       .Setup(x => x.DeleteFile(It.IsAny<string>()))
       .Verifiable();
@@ -365,7 +365,7 @@ public class PdfCompilerImageTests
     // Arrange
     var order = CreateCookbookOrderWithImages();
     var pdfCompiler = new PdfCompiler(_config, _mockFileService.Object, _mockLogger.Object);
-    
+
     _mockFileService
       .Setup(x => x.CreateFile(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
       .Returns(Task.CompletedTask);
@@ -384,7 +384,7 @@ public class PdfCompilerImageTests
     // Arrange
     var order = CreateCookbookOrderWithImages();
     var pdfCompiler = new PdfCompiler(_config, _mockFileService.Object, _mockLogger.Object);
-    
+
     _mockFileService
       .Setup(x => x.CreateFile(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
       .ThrowsAsync(new IOException("Cannot save image"));
@@ -422,8 +422,8 @@ public class PdfCompilerImageTests
     {
       Title = "Test Recipe with Images",
       Description = "A recipe with image URLs",
-      ImageUrls = new List<string> 
-      { 
+      ImageUrls = new List<string>
+      {
         "https://example.com/image1.jpg",
         "https://example.com/image2.jpg"
       },
@@ -450,8 +450,8 @@ public class PdfCompilerImageTests
     {
       Title = "Test Recipe with Mixed Images",
       Description = "A recipe with valid and invalid image URLs",
-      ImageUrls = new List<string> 
-      { 
+      ImageUrls = new List<string>
+      {
         "invalid-url",
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
         "",

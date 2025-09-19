@@ -868,7 +868,7 @@ public class SessionManagerTests
     var session = new SessionBuilder().Build();
     var conversation1 = new LlmConversation { Id = "conv-1" };
     var conversation2 = new LlmConversation { Id = "conv-2" };
-    
+
     session.Conversations.TryAdd(conversation1.Id, conversation1);
     session.Conversations.TryAdd(conversation2.Id, conversation2);
     _sessionManager.Sessions.TryAdd(session.Id, session);
@@ -877,7 +877,7 @@ public class SessionManagerTests
     _mockLlmRepository
         .Setup(r => r.WriteConversationAsync(conversation1, session))
         .Returns(Task.CompletedTask);
-    
+
     var writeException = new InvalidOperationException("Conversation write failed");
     _mockLlmRepository
         .Setup(r => r.WriteConversationAsync(conversation2, session))
@@ -900,7 +900,7 @@ public class SessionManagerTests
     {
       new SystemChatMessage("Test system message")
     };
-    
+
     // Create function tool with null function name to test edge case  
     // Note: Using null to test edge case handling in conversation ID generation
     ChatTool? functionTool = null;
@@ -918,7 +918,7 @@ public class SessionManagerTests
     // Arrange
     var parentScope = Mock.Of<IScopeContainer>(s => s.Id == Guid.NewGuid());
     var dataList = new[] { "item1", "item2", "item3" };
-    
+
     var scopeException = new InvalidOperationException("Scope creation failed");
     _mockScopeFactory
         .Setup(f => f.CreateScope(parentScope))
@@ -943,7 +943,7 @@ public class SessionManagerTests
     var parentScope = Mock.Of<IScopeContainer>(s => s.Id == Guid.NewGuid());
     var childScope = Mock.Of<IScopeContainer>(s => s.Id == Guid.NewGuid());
     var dataList = new[] { "item1", "item2" };
-    
+
     _mockScopeFactory
         .Setup(f => f.CreateScope(parentScope))
         .Returns(childScope);
@@ -986,7 +986,7 @@ public class SessionManagerTests
     sessions.Should().HaveCount(10, because: "all concurrent session creations should succeed");
     sessions.Select(s => s.Id).Should().OnlyHaveUniqueItems(
         because: "each session should have a unique identifier");
-    
+
     // All sessions should contain the same scope ID
     sessions.Should().AllSatisfy(session =>
         session.Scopes.Should().ContainKey(scopeId,
@@ -1016,9 +1016,9 @@ public class SessionManagerTests
 
     // Assert - Should complete without exceptions
     Func<Task> act = async () => await Task.WhenAll(tasks);
-    
+
     await act.Should().NotThrowAsync(because: "concurrent session ending should be handled gracefully");
-    
+
     _sessionManager.Sessions.Should().NotContainKey(session.Id,
         because: "session should be removed despite concurrent access");
   }
@@ -1064,9 +1064,9 @@ public class SessionManagerTests
 
     // Assert - Should complete without exceptions
     Action act = () => Task.WaitAll(tasks.ToArray());
-    
+
     act.Should().NotThrow(because: "concurrent scope removal should be handled gracefully");
-    
+
     session.Scopes.Should().NotContainKey(scopeId,
         because: "scope should be removed despite concurrent access");
   }
@@ -1082,7 +1082,7 @@ public class SessionManagerTests
     var concurrentCount = 0;
     var maxObservedConcurrency = 0;
     var lockObject = new object();
-    
+
     _mockScopeFactory
         .Setup(f => f.CreateScope(parentScope))
         .Returns(childScope);
@@ -1098,9 +1098,9 @@ public class SessionManagerTests
             concurrentCount++;
             maxObservedConcurrency = Math.Max(maxObservedConcurrency, concurrentCount);
           }
-          
+
           await Task.Delay(10, ct); // Simulate work
-          
+
           lock (lockObject)
           {
             concurrentCount--;
@@ -1123,7 +1123,7 @@ public class SessionManagerTests
     var session = new SessionBuilder()
         .WithScope(scopeId)
         .Build();
-    
+
     var conversation = new LlmConversation { Id = conversationId };
     session.Conversations.TryAdd(conversationId, conversation);
     _sessionManager.Sessions.TryAdd(session.Id, session);
@@ -1162,7 +1162,7 @@ public class SessionManagerTests
         .WithExpiresAt(DateTime.UtcNow.AddMinutes(-10)) // Expired 10 minutes ago
         .WithLastAccessedAt(DateTime.UtcNow.AddHours(-1))
         .Build();
-    
+
     _sessionManager.Sessions.TryAdd(expiredSession.Id, expiredSession);
 
     // Act
@@ -1186,7 +1186,7 @@ public class SessionManagerTests
         .WithDuration(TimeSpan.FromMinutes(30))
         .WithExpiresAt(DateTime.UtcNow.AddSeconds(1)) // Expires very soon
         .Build();
-    
+
     _sessionManager.Sessions.TryAdd(reusableSession.Id, reusableSession);
 
     // Act - Find session that might expire during the operation
@@ -1205,18 +1205,18 @@ public class SessionManagerTests
     // Arrange
     var orderId = "CONCURRENT-ORDER-123";
     var scopeIds = Enumerable.Range(1, 5).Select(_ => Guid.NewGuid()).ToArray();
-    
-    var order = new CookbookOrder 
-    { 
-      OrderId = orderId, 
-      Email = "concurrent@example.com" 
+
+    var order = new CookbookOrder
+    {
+      OrderId = orderId,
+      Email = "concurrent@example.com"
     };
     var customer = new Customer { Email = "concurrent@example.com" };
-    
+
     _mockOrderRepository
         .Setup(r => r.GetOrder(orderId))
         .ReturnsAsync(order);
-    
+
     _mockCustomerRepository
         .Setup(r => r.GetCustomerByEmail(order.Email))
         .ReturnsAsync(customer);
@@ -1228,7 +1228,7 @@ public class SessionManagerTests
     {
       // Create initial session for each scope
       var initialSession = await _sessionManager.CreateSession(scopeId);
-      
+
       tasks.Add(_sessionManager.GetSessionByOrder(orderId, scopeId));
     }
 
@@ -1236,7 +1236,7 @@ public class SessionManagerTests
 
     // Assert
     sessions.Should().HaveCount(5, because: "all concurrent order access calls should succeed");
-    
+
     // All sessions should reference the same order
     sessions.Should().AllSatisfy(session =>
         session.Order?.OrderId.Should().Be(orderId,
@@ -1253,17 +1253,17 @@ public class SessionManagerTests
         .WithScope(scopeId)
         .Build();
     _sessionManager.Sessions.TryAdd(existingSession.Id, existingSession);
-    
-    var order = new CookbookOrder 
-    { 
-      OrderId = orderId, 
-      Email = "missing@customer.com" 
+
+    var order = new CookbookOrder
+    {
+      OrderId = orderId,
+      Email = "missing@customer.com"
     };
-    
+
     _mockOrderRepository
         .Setup(r => r.GetOrder(orderId))
         .ReturnsAsync(order);
-    
+
     _mockCustomerRepository
         .Setup(r => r.GetCustomerByEmail(order.Email))
         .ReturnsAsync((Customer?)null);
@@ -1282,18 +1282,18 @@ public class SessionManagerTests
     // Arrange
     var sessionId = Guid.NewGuid();
     var scopeId = Guid.NewGuid();
-    var scope = Mock.Of<IScopeContainer>(s => 
-        s.SessionId == sessionId && 
+    var scope = Mock.Of<IScopeContainer>(s =>
+        s.SessionId == sessionId &&
         s.Id == scopeId);
-    
+
     var existingOrder = new CookbookOrder { OrderId = "EXISTING-ORDER" };
     var newOrder = new CookbookOrder { OrderId = "NEW-ORDER" };
-    
+
     var session = new SessionBuilder()
         .WithId(sessionId)
         .WithScope(scopeId)
         .Build();
-    
+
     // Set existing order using reflection
     typeof(Session).GetProperty("Order")?.SetValue(session, existingOrder);
     _sessionManager.Sessions.TryAdd(sessionId, session);
@@ -1316,7 +1316,7 @@ public class SessionManagerTests
         .WithLastAccessedAt(DateTime.UtcNow.AddHours(-2)) // Very old access
         .WithExpiresAt(DateTime.UtcNow.AddMinutes(-30)) // Expired
         .Build();
-    
+
     _sessionManager.Sessions.TryAdd(session.Id, session);
 
     // Act - Get session which will refresh it
@@ -1337,7 +1337,7 @@ public class SessionManagerTests
     var parentScope = Mock.Of<IScopeContainer>(s => s.Id == Guid.NewGuid());
     var childScope = Mock.Of<IScopeContainer>(s => s.Id == Guid.NewGuid());
     var dataList = new[] { "success1", "fail", "success2" };
-    
+
     _mockScopeFactory
         .Setup(f => f.CreateScope(parentScope))
         .Returns(childScope);
@@ -1371,8 +1371,8 @@ public class SessionManagerTests
       new SystemChatMessage("Identical system message")
     };
     var functionTool = ChatTool.CreateFunctionTool(
-        "TestFunction", 
-        "Test description", 
+        "TestFunction",
+        "Test description",
         BinaryData.FromString("{}"));
 
     // Act - Initialize multiple conversations rapidly
@@ -1387,7 +1387,7 @@ public class SessionManagerTests
         because: "each conversation should have a unique identifier");
     conversationId1.Should().NotBe(conversationId3,
         because: "each conversation should have a unique identifier");
-    
+
     // All should contain the function name and timestamp pattern
     new[] { conversationId1, conversationId2, conversationId3 }.Should().AllSatisfy(id =>
         id.Should().StartWith("testfunction-",

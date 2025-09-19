@@ -529,12 +529,12 @@ public class PublicControllerUnitTests
     // Arrange
     var largeStatusDict = new Dictionary<ExternalServices, ServiceStatusInfo>();
     var allServices = Enum.GetValues<ExternalServices>();
-    
+
     foreach (var service in allServices)
     {
       largeStatusDict.Add(service, new ServiceStatusInfo(
-        service, 
-        _fixture.Create<bool>(), 
+        service,
+        _fixture.Create<bool>(),
         _fixture.CreateMany<string>(3).ToList()));
     }
 
@@ -553,7 +553,7 @@ public class PublicControllerUnitTests
     okResult.Should().NotBeNull();
     var valueList = okResult.Value as List<ServiceStatusInfo>;
     valueList.Should().NotBeNull();
-    valueList.Should().HaveCount(allServices.Length, 
+    valueList.Should().HaveCount(allServices.Length,
       because: "all service statuses should be included");
 
     _mockStatusService.Verify();
@@ -613,7 +613,7 @@ public class PublicControllerUnitTests
     // Assert
     result.Should()
       .BeOfType<OkObjectResult>(because: "whitespace URLs should be handled");
-    
+
     _mockLoggingService.Verify(
       s => s.TestSeqConnectivityAsync("   ", It.IsAny<CancellationToken>()),
       Times.Once,
@@ -792,7 +792,7 @@ public class PublicControllerUnitTests
       var okResult = result as OkObjectResult;
       var healthCheckResponse = okResult!.Value as HealthCheckResponse;
       healthCheckResponse.Should().NotBeNull();
-      
+
       var expectedEnv = string.IsNullOrEmpty(environmentValue) ? "Development" : environmentValue;
       healthCheckResponse.Environment.Should().Be(expectedEnv,
         because: "the environment should match the configured value or default to Development");

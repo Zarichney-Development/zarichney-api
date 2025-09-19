@@ -55,7 +55,7 @@ public class MailCheckClientTests
       .WithValidDefaults()
       .WithDomain(domain)
       .Build();
-    
+
     object cacheValue = cachedResponse;
     _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
       .Returns(true);
@@ -66,7 +66,7 @@ public class MailCheckClientTests
     // Assert
     result.Should().BeEquivalentTo(cachedResponse,
       "the cached value should be returned without making an API call");
-    
+
     _mockCache.Verify(x => x.TryGetValue(domain, out It.Ref<object>.IsAny), Times.Once);
   }
 
@@ -80,7 +80,7 @@ public class MailCheckClientTests
       .WithDisposableEmail()
       .WithDomain(domain)
       .Build();
-    
+
     object cacheValue = disposableResponse;
     _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
       .Returns(true);
@@ -105,7 +105,7 @@ public class MailCheckClientTests
       .WithBlockedEmail()
       .WithDomain(domain)
       .Build();
-    
+
     object cacheValue = blockedResponse;
     _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
       .Returns(true);
@@ -132,7 +132,7 @@ public class MailCheckClientTests
       .WithHighRiskEmail(riskScore)
       .WithDomain(domain)
       .Build();
-    
+
     object cacheValue = highRiskResponse;
     _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
       .Returns(true);
@@ -158,7 +158,7 @@ public class MailCheckClientTests
       .WithPossibleTypo(typoSuggestions)
       .WithDomain(domain)
       .Build();
-    
+
     object cacheValue = typoResponse;
     _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
       .Returns(true);
@@ -185,7 +185,7 @@ public class MailCheckClientTests
       .WithDomain(domain)
       .WithReason("invalid domain syntax")
       .Build();
-    
+
     object cacheValue = invalidResponse;
     _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
       .Returns(true);
@@ -211,7 +211,7 @@ public class MailCheckClientTests
       .WithValidDefaults()
       .WithDomain(domain)
       .Build();
-    
+
     object cacheValue = cachedResponse;
     _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
       .Returns(true);
@@ -225,7 +225,7 @@ public class MailCheckClientTests
     result1.Should().BeEquivalentTo(cachedResponse);
     result2.Should().BeEquivalentTo(cachedResponse);
     result3.Should().BeEquivalentTo(cachedResponse);
-    
+
     _mockCache.Verify(x => x.TryGetValue(domain, out It.Ref<object>.IsAny), Times.Exactly(3),
       "each call should check the cache");
   }
@@ -237,20 +237,20 @@ public class MailCheckClientTests
     // Arrange
     const string domain1 = "domain1.com";
     const string domain2 = "domain2.com";
-    
+
     var response1 = new EmailValidationResponseBuilder()
       .WithValidDefaults()
       .WithDomain(domain1)
       .Build();
-    
+
     var response2 = new EmailValidationResponseBuilder()
       .WithDisposableEmail()
       .WithDomain(domain2)
       .Build();
-    
+
     object cacheValue1 = response1;
     object cacheValue2 = response2;
-    
+
     _mockCache.Setup(x => x.TryGetValue(domain1, out cacheValue1))
       .Returns(true);
     _mockCache.Setup(x => x.TryGetValue(domain2, out cacheValue2))
@@ -263,10 +263,10 @@ public class MailCheckClientTests
     // Assert
     result1.Domain.Should().Be(domain1);
     result1.Disposable.Should().BeFalse();
-    
+
     result2.Domain.Should().Be(domain2);
     result2.Disposable.Should().BeTrue();
-    
+
     _mockCache.Verify(x => x.TryGetValue(It.IsAny<object>(), out It.Ref<object>.IsAny), Times.Exactly(2));
   }
 
@@ -283,7 +283,7 @@ public class MailCheckClientTests
     forwarderResponse.EmailForwarder = true;
     forwarderResponse.Risk = 75;
     forwarderResponse.Reason = "email forwarder detected";
-    
+
     object cacheValue = forwarderResponse;
     _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
       .Returns(true);
@@ -310,7 +310,7 @@ public class MailCheckClientTests
       .WithRisk(5)
       .WithMxHost("mx.trusted.org")
       .Build();
-    
+
     object cacheValue = trustedResponse;
     _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
       .Returns(true);
@@ -341,7 +341,7 @@ public class MailCheckClientTests
     complexResponse.MxIp = "192.168.1.1, 192.168.1.2";
     complexResponse.MxInfo = "Multiple MX records with failover";
     complexResponse.LastChangedAt = DateTime.UtcNow.AddMonths(-6);
-    
+
     object cacheValue = complexResponse;
     _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
       .Returns(true);
@@ -371,7 +371,7 @@ public class MailCheckClientTests
     recentChangeResponse.LastChangedAt = DateTime.UtcNow.AddDays(-2);
     recentChangeResponse.Reason = "recent DNS changes detected";
     recentChangeResponse.Risk = 45;
-    
+
     object cacheValue = recentChangeResponse;
     _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
       .Returns(true);
@@ -400,7 +400,7 @@ public class MailCheckClientTests
     noMxResponse.MxHost = string.Empty;
     noMxResponse.MxIp = string.Empty;
     noMxResponse.MxInfo = "No MX records configured";
-    
+
     object cacheValue = noMxResponse;
     _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
       .Returns(true);

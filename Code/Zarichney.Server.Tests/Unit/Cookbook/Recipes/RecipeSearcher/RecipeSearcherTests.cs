@@ -287,7 +287,7 @@ public class RecipeSearcherTests
     // Arrange
     var query = "healthy salad";
     var minScore = 70;
-    
+
     var highRelevancyRecipe = new RecipeBuilder()
       .WithTitle("Green Salad")
       .WithId("high-relevancy")
@@ -341,7 +341,7 @@ public class RecipeSearcherTests
       .ToList();
 
     var matchDict = new ConcurrentDictionary<string, Recipe>();
-    
+
     // Add all 5 recipes to the dictionary to simulate many matches
     recipes.ForEach(r => matchDict.TryAdd(r.Id!, r));
 
@@ -428,7 +428,7 @@ public class RecipeSearcherTests
   {
     // Arrange
     var query = "pasta";
-    
+
     var highRelevancyLowMatch = new RecipeBuilder()
       .WithTitle("Spaghetti")
       .WithId("recipe-1")

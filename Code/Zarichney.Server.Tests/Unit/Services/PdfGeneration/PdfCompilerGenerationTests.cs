@@ -30,7 +30,7 @@ public class PdfCompilerGenerationTests
   {
     // Set QuestPDF license
     QuestPDF.Settings.License = LicenseType.Community;
-    
+
     _fixture = new Fixture();
     _mockFileService = new Mock<IFileService>();
     _mockLogger = new Mock<ILogger<PdfCompiler>>();
@@ -40,7 +40,7 @@ public class PdfCompilerGenerationTests
       FontSize = 12,
       ImageDirectory = "test-images"
     };
-    
+
     // Create partial mock to test protected methods
     _mockPdfCompiler = new Mock<PdfCompiler>(_config, _mockFileService.Object, _mockLogger.Object)
     {
@@ -77,7 +77,7 @@ public class PdfCompilerGenerationTests
     // Arrange
     var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
     var content = new List<(MarkdownDocument Content, string? ImagePath)>();
-    
+
     for (int i = 1; i <= 3; i++)
     {
       var markdown = $"# Recipe {i}\n\nDescription for recipe {i}.";
@@ -139,7 +139,7 @@ This recipe contains:
 > Blockquote text
 
 `Code block`";
-    
+
     var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
     var document = Markdown.Parse(markdown, pipeline);
     var content = new List<(MarkdownDocument Content, string? ImagePath)>
@@ -167,7 +167,7 @@ This recipe contains:
     {
       (document, imagePath)
     };
-    
+
     _mockFileService.Setup(x => x.FileExists(imagePath)).Returns(false);
 
     // Act
@@ -196,7 +196,7 @@ Servings: 4
 
 ## Description
 A wonderful recipe for any occasion.";
-    
+
     var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
     var document = Markdown.Parse(markdown, pipeline);
     var content = new List<(MarkdownDocument Content, string? ImagePath)>
@@ -226,7 +226,7 @@ A wonderful recipe for any occasion.";
 | Protein  | 15g    | 30%           |
 | Carbs    | 30g    | 10%           |
 | Fat      | 8g     | 12%           |";
-    
+
     var pipeline = new MarkdownPipelineBuilder()
       .UseAdvancedExtensions()
       .UsePipeTables()
@@ -263,7 +263,7 @@ A wonderful recipe for any occasion.";
 1. Mix dry ingredients
 2. Add wet ingredients
 3. Combine thoroughly";
-    
+
     var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
     var document = Markdown.Parse(markdown, pipeline);
     var content = new List<(MarkdownDocument Content, string? ImagePath)>
@@ -293,7 +293,7 @@ A wonderful recipe for any occasion.";
 - 'Special' sauce
 - Item with <brackets>
 - Item with $pecial symbols";
-    
+
     var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
     var document = Markdown.Parse(markdown, pipeline);
     var content = new List<(MarkdownDocument Content, string? ImagePath)>
@@ -314,7 +314,7 @@ A wonderful recipe for any occasion.";
     // Arrange
     var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
     var content = new List<(MarkdownDocument Content, string? ImagePath)>();
-    
+
     // Create 10 recipes with substantial content
     for (int i = 1; i <= 10; i++)
     {
@@ -328,7 +328,7 @@ A wonderful recipe for any occasion.";
 
 ## Directions
 {string.Join("\n", Enumerable.Range(1, 15).Select(j => $"{j}. Detailed step {j} with comprehensive instructions for preparation"))}";
-      
+
       var document = Markdown.Parse(markdown, pipeline);
       content.Add((document, null));
     }
@@ -358,7 +358,7 @@ A wonderful recipe for any occasion.";
 1. Mix crème with sugar
 2. Add spices: κανέλα & 辣椒
 3. Garnish with 🍓 and 🥝";
-    
+
     var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
     var document = Markdown.Parse(markdown, pipeline);
     var content = new List<(MarkdownDocument Content, string? ImagePath)>
@@ -387,9 +387,9 @@ A wonderful recipe for any occasion.";
       FontSize = 14,
       ImageDirectory = "custom-images"
     };
-    
+
     var customCompiler = new PdfCompiler(customConfig, _mockFileService.Object, _mockLogger.Object);
-    
+
     var markdown = "# Test Recipe\n\nTest content.";
     var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
     var document = Markdown.Parse(markdown, pipeline);

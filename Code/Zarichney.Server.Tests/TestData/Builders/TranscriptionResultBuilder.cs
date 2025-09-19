@@ -7,43 +7,43 @@ namespace Zarichney.Tests.TestData.Builders;
 /// </summary>
 public class TranscriptionResultBuilder
 {
-    private string _transcript = "This is a sample transcription.";
-    private string _audioFileName = "2025-09-10T06-12-00Z_audio.webm";
-    private string _transcriptFileName = "2025-09-10T06-12-00Z_audio.txt";
-    private string _timestamp = "2025-09-10T06-12-00Z";
+  private string _transcript = "This is a sample transcription.";
+  private string _audioFileName = "2025-09-10T06-12-00Z_audio.webm";
+  private string _transcriptFileName = "2025-09-10T06-12-00Z_audio.txt";
+  private string _timestamp = "2025-09-10T06-12-00Z";
 
-    public TranscriptionResultBuilder WithTranscript(string transcript)
-    {
-        _transcript = transcript;
-        return this;
-    }
+  public TranscriptionResultBuilder WithTranscript(string transcript)
+  {
+    _transcript = transcript;
+    return this;
+  }
 
-    public TranscriptionResultBuilder WithAudioFileName(string audioFileName)
-    {
-        _audioFileName = audioFileName;
-        return this;
-    }
+  public TranscriptionResultBuilder WithAudioFileName(string audioFileName)
+  {
+    _audioFileName = audioFileName;
+    return this;
+  }
 
-    public TranscriptionResultBuilder WithTranscriptFileName(string transcriptFileName)
-    {
-        _transcriptFileName = transcriptFileName;
-        return this;
-    }
+  public TranscriptionResultBuilder WithTranscriptFileName(string transcriptFileName)
+  {
+    _transcriptFileName = transcriptFileName;
+    return this;
+  }
 
-    public TranscriptionResultBuilder WithTimestamp(string timestamp)
-    {
-        _timestamp = timestamp;
-        return this;
-    }
+  public TranscriptionResultBuilder WithTimestamp(string timestamp)
+  {
+    _timestamp = timestamp;
+    return this;
+  }
 
-    public TranscriptionResult Build()
+  public TranscriptionResult Build()
+  {
+    return new TranscriptionResult
     {
-        return new TranscriptionResult
-        {
-            Transcript = _transcript,
-            AudioFileName = _audioFileName,
-            TranscriptFileName = _transcriptFileName,
-            Timestamp = _timestamp
-        };
-    }
+      Transcript = _transcript,
+      AudioFileName = _audioFileName,
+      TranscriptFileName = _transcriptFileName,
+      Timestamp = _timestamp
+    };
+  }
 }

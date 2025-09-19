@@ -7,34 +7,34 @@ namespace Zarichney.Tests.TestData.Builders;
 /// </summary>
 public class TranscribeConfigBuilder
 {
-    private string _modelName = "whisper-1";
-    private int _retryAttempts = 5;
+  private string _modelName = "whisper-1";
+  private int _retryAttempts = 5;
 
-    public TranscribeConfigBuilder WithDefaults()
-    {
-        _modelName = "whisper-1";
-        _retryAttempts = 5;
-        return this;
-    }
+  public TranscribeConfigBuilder WithDefaults()
+  {
+    _modelName = "whisper-1";
+    _retryAttempts = 5;
+    return this;
+  }
 
-    public TranscribeConfigBuilder WithModelName(string modelName)
-    {
-        _modelName = modelName;
-        return this;
-    }
+  public TranscribeConfigBuilder WithModelName(string modelName)
+  {
+    _modelName = modelName;
+    return this;
+  }
 
-    public TranscribeConfigBuilder WithRetryAttempts(int retryAttempts)
-    {
-        _retryAttempts = retryAttempts;
-        return this;
-    }
+  public TranscribeConfigBuilder WithRetryAttempts(int retryAttempts)
+  {
+    _retryAttempts = retryAttempts;
+    return this;
+  }
 
-    public TranscribeConfig Build()
+  public TranscribeConfig Build()
+  {
+    return new TranscribeConfig
     {
-        return new TranscribeConfig
-        {
-            ModelName = _modelName,
-            RetryAttempts = _retryAttempts
-        };
-    }
+      ModelName = _modelName,
+      RetryAttempts = _retryAttempts
+    };
+  }
 }
