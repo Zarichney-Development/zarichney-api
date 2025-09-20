@@ -18,7 +18,6 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
   [Trait(TestCategories.Category, TestCategories.Unit)]
   [Trait(TestCategories.Component, TestCategories.Service)]
   [Trait(TestCategories.Feature, TestCategories.Cookbook)]
-  [Trait(TestCategories.Dependency, "External:OpenAI")]
   public class RecipeServiceTests
   {
     private readonly Mock<IRecipeRepository> _mockRepository;
