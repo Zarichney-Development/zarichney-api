@@ -4,11 +4,11 @@ using Moq;
 using FluentAssertions;
 using Xunit;
 using Zarichney.Services.Email;
-using Zarichney.Tests.TestData.Builders;
+using Zarichney.Server.Tests.TestData.Builders;
 using Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
 using AutoFixture.Xunit2;
 
-namespace Zarichney.Tests.Unit.Services.Email;
+namespace Zarichney.Server.Tests.Unit.Services.Email;
 
 /// <summary>
 /// Unit tests for EmailService covering email validation and error notification functionality.

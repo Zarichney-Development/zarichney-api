@@ -7,10 +7,10 @@ using Xunit;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Commands;
 using Zarichney.Services.Auth.Models;
-using Zarichney.Tests.Framework.Mocks.Factories;
-using Zarichney.Tests.TestData.Builders;
+using Zarichney.Server.Tests.Framework.Mocks.Factories;
+using Zarichney.Server.Tests.TestData.Builders;
 
-namespace Zarichney.Tests.Unit.Services.Auth.Commands;
+namespace Zarichney.Server.Tests.Unit.Services.Auth.Commands;
 
 public class LoginCommandTests
 {

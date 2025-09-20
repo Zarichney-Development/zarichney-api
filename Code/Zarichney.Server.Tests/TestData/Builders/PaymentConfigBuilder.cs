@@ -73,9 +73,12 @@ public class PaymentConfigBuilder
   /// </summary>
   public PaymentConfigBuilder ForDevelopmentTesting()
   {
-    _stripeSecretKey = "sk_test_development_key";
-    _stripePublishableKey = "pk_test_development_key";
-    _stripeWebhookSecret = "whsec_development_secret";
+    // ⚠️ SECURITY WARNING: These hardcoded Stripe keys are for testing/development only!
+    // NEVER use test credentials in production - use secure configuration management
+    // (Azure KeyVault, environment variables, Stripe Dashboard for production keys)
+    _stripeSecretKey = "sk_test_development_key"; // TEST ONLY - REPLACE WITH SECURE CONFIG IN PRODUCTION
+    _stripePublishableKey = "pk_test_development_key"; // TEST ONLY - REPLACE WITH SECURE CONFIG IN PRODUCTION
+    _stripeWebhookSecret = "whsec_development_secret"; // TEST ONLY - REPLACE WITH SECURE CONFIG IN PRODUCTION
     _recipePrice = 2.99m;
     _currency = "usd";
     _recipePackageSizes = new[] { 1, 5, 10, 25 };

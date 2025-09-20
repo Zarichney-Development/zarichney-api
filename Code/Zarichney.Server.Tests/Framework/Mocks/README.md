@@ -1,7 +1,7 @@
 # README: /Framework/Mocks Directory
 
-**Version:** 1.1
-**Last Updated:** 2025-01-20
+**Version:** 1.2
+**Last Updated:** 2025-09-20
 **Parent:** `../README.md`
 
 ## 1. Purpose & Responsibility
@@ -142,6 +142,129 @@ The overall goal is to enable robust and reliable integration tests by providing
     * Establishing patterns for defining and managing WireMock stubs.
     * Documenting its usage thoroughly in `../../../Docs/Standards/IntegrationTestCaseDevelopment.md`.
 * **Factory Coverage Expansion**: Recently completed addition of 5 new mock factories (AudioClient, AuthService, SessionManager, Swagger, UserManager) significantly improves integration testing coverage for authentication, audio processing, and session management workflows.
+### Interface Wrapper Pattern
+
+#### Overview & Rationale
+
+The **Interface Wrapper Pattern** was introduced in PR #179 to replace reflection-based mocking with testable interface abstractions for OpenAI SDK interactions. This pattern provides:
+
+* **Type Safety**: Eliminates runtime reflection errors and provides compile-time type checking
+* **Performance**: Avoids reflection overhead during test execution
+* **Maintainability**: Clear interface contracts that are easier to understand and modify
+* **Testability**: Simplified mock creation and verification patterns
+
+**Context**: Previously, tests used reflection to create mock `ChatCompletion` objects, which was brittle and difficult to maintain. The wrapper pattern abstracts OpenAI SDK types behind testable interfaces.
+
+#### Implementation Details
+
+**Interface Definitions** (`/Code/Zarichney.Server/AI/Interfaces/`):
+
+* **`IChatCompletionWrapper`**: Abstracts `ChatCompletion` responses with properties:
+  - `Content`: Gets the chat completion response content
+  - `Role`: Gets the role (e.g., "assistant", "user")
+  - `CreatedAt`: Gets the completion creation timestamp
+
+* **`IChatClientWrapper`**: Abstracts chat client operations with methods:
+  - `CompleteChatAsync()`: Completes chat conversations with model, messages, options, and cancellation token
+
+**Test Implementation** (`TestChatCompletionWrapper.cs`):
+
+* **`TestChatCompletionWrapper`**: Concrete test implementation of `IChatCompletionWrapper`
+  - Simple constructor accepting content and role parameters
+  - Automatic `CreatedAt` timestamp generation
+  - Settable properties for test customization
+
+#### Factory Integration
+
+The `AiServiceMockFactory` provides standardized creation methods:
+
+```csharp
+// Create wrapper instances for testing
+var completion = AiServiceMockFactory.CreateChatCompletionWrapper("Test response", "assistant");
+
+// Create mock client wrapper with default behavior
+var clientMock = AiServiceMockFactory.CreateChatClientWrapper("Custom response");
+
+// Migration method for existing reflection-based tests
+var migrated = AiServiceMockFactory.CreateMockCompletion("Legacy test content");
+```
+
+#### Usage in Tests
+
+**Basic Wrapper Usage**:
+```csharp
+// Create test completion wrapper
+var completion = new TestChatCompletionWrapper("AI response", "assistant");
+Assert.Equal("AI response", completion.Content);
+Assert.Equal("assistant", completion.Role);
+
+// Use factory method for standard cases
+var factoryCompletion = AiServiceMockFactory.CreateChatCompletionWrapper("Factory response");
+```
+
+**Mock Client Wrapper Setup**:
+```csharp
+// Create mock client with custom behavior
+var mockClient = AiServiceMockFactory.CreateChatClientWrapper("Expected response", mock => {
+    mock.Setup(x => x.CompleteChatAsync(
+            "gpt-4",
+            It.IsAny<IEnumerable<object>>(),
+            It.IsAny<ChatCompletionOptions>(),
+            It.IsAny<CancellationToken>()))
+        .ReturnsAsync(new TestChatCompletionWrapper("Custom response", "assistant"));
+});
+
+// Verify interactions
+mockClient.Verify(x => x.CompleteChatAsync(
+    It.IsAny<string>(),
+    It.IsAny<IEnumerable<object>>(),
+    It.IsAny<ChatCompletionOptions>(),
+    It.IsAny<CancellationToken>()), Times.Once);
+```
+
+**Integration with Existing Infrastructure**:
+```csharp
+// Works seamlessly with existing mock factory patterns
+var llmService = AiServiceMockFactory.CreateLlmService();
+var chatClient = AiServiceMockFactory.CreateChatClientWrapper();
+
+// Combine with other factory methods
+var (repository, gitHubMock, statusMock, loggerMock) = AiServiceMockFactory.CreateLlmRepository();
+```
+
+#### Migration from Reflection-Based Approach
+
+**Before (Reflection-Based)**:
+```csharp
+// Problematic reflection approach
+var completion = CreateMockChatCompletion("Test content"); // Used reflection internally
+```
+
+**After (Interface Wrapper)**:
+```csharp
+// Clean interface-based approach
+var completion = AiServiceMockFactory.CreateChatCompletionWrapper("Test content");
+// OR
+var completion = new TestChatCompletionWrapper("Test content", "assistant");
+```
+
+The factory provides `CreateMockCompletion()` as a migration helper that internally uses the new wrapper pattern while maintaining the same external interface.
+
+#### Cross-References
+
+* **Related Standards**: [`../../../Docs/Standards/TestingStandards.md`](../../../Docs/Standards/TestingStandards.md) - Testing patterns and mock strategies
+* **Interface Contracts**: [`../../../Code/Zarichney.Server/AI/Interfaces/IChatCompletionWrapper.cs`](../../../Code/Zarichney.Server/AI/Interfaces/IChatCompletionWrapper.cs) - Complete interface definitions
+* **Historical Context**: PR #179 - Introduction of interface wrapper pattern replacing reflection-based mocking
+* **Factory Documentation**: See factory usage examples in Section 5 above
+
+#### Benefits for Test Development
+
+* **Simplified Test Setup**: Clear constructor parameters and factory methods
+* **Enhanced Debugging**: No reflection means stack traces point to actual test code
+* **Improved IDE Support**: IntelliSense and refactoring tools work properly with interfaces
+* **Consistent Patterns**: Aligns with standard dependency injection and mocking practices
+* **Future Extensibility**: Easy to add new wrapper methods as OpenAI SDK evolves
+
 * **Dynamic Mock Configuration:** The current mock factories provide basic `Mock<T>` instances. More complex shared default behaviors for mocks, if needed, might require enhancements to the factories or a different strategy.
 * **Contract Testing (PactNet - TDD FRMK-005):** Once WireMock.Net is in place, contract testing should be evaluated to ensure WireMock stubs stay synchronized with actual external API contracts.
 * Refer to the "Framework Augmentation Roadmap (TODOs)" in `../../TechnicalDesignDocument.md` for broader framework enhancements.

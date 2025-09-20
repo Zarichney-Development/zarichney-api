@@ -6,7 +6,7 @@ using Xunit;
 using Zarichney.Services.FileSystem;
 using FluentAssertions;
 
-namespace Zarichney.Tests.Unit.Services.FileSystem;
+namespace Zarichney.Server.Tests.Unit.Services.FileSystem;
 
 public class BackgroundFileWriterTests : IDisposable
 {

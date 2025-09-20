@@ -4,7 +4,7 @@ using Xunit;
 using Zarichney.Services.Email;
 using Zarichney.Services.FileSystem;
 
-namespace Zarichney.Tests.Unit.Services.Email;
+namespace Zarichney.Server.Tests.Unit.Services.Email;
 
 public class TemplateServiceTests : IDisposable
 {

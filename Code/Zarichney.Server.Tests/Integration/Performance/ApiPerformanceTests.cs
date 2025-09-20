@@ -1,10 +1,10 @@
 using System.Diagnostics;
 using Xunit;
 using Xunit.Abstractions;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Server.Tests.Framework.Fixtures;
 
-namespace Zarichney.Tests.Integration.Performance;
+namespace Zarichney.Server.Tests.Integration.Performance;
 
 /// <summary>
 /// Performance tests for the API.

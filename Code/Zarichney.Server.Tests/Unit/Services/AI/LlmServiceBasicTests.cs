@@ -10,9 +10,9 @@ using Zarichney.Services.Sessions;
 using Zarichney.Services.Status;
 using AutoMapper;
 using System.ClientModel;
-using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Server.Tests.Framework.Attributes;
 
-namespace Zarichney.Tests.Unit.Services.AI;
+namespace Zarichney.Server.Tests.Unit.Services.AI;
 
 [Trait(TestCategories.Feature, TestCategories.AI)]
 public class LlmServiceBasicTests

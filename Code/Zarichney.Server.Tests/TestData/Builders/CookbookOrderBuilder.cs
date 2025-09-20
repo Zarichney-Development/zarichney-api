@@ -2,7 +2,7 @@ using Zarichney.Cookbook.Customers;
 using Zarichney.Cookbook.Orders;
 using Zarichney.Cookbook.Recipes;
 
-namespace Zarichney.Tests.TestData.Builders;
+namespace Zarichney.Server.Tests.TestData.Builders;
 
 public class CookbookOrderBuilder
 {

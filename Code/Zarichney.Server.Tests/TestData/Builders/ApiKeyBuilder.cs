@@ -1,7 +1,8 @@
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Identity;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Models;
-using Zarichney.Tests.TestData.Builders;
+using Zarichney.Server.Tests.TestData.Builders;
 
 namespace Zarichney.Server.Tests.TestData.Builders;
 
@@ -97,8 +98,9 @@ public class ApiKeyBuilder : BaseBuilder<ApiKeyBuilder, ApiKey>
   private static string GenerateSecureKey(int length = 32)
   {
     const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    var random = new Random();
-    return new string(Enumerable.Repeat(chars, length)
-        .Select(s => s[random.Next(s.Length)]).ToArray());
+    using var rng = RandomNumberGenerator.Create();
+    var randomBytes = new byte[length];
+    rng.GetBytes(randomBytes);
+    return new string(randomBytes.Select(b => chars[b % chars.Length]).ToArray());
   }
 }

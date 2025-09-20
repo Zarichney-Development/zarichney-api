@@ -2,7 +2,7 @@ using Xunit;
 using Xunit.Sdk;
 using Zarichney.Services.Status;
 
-namespace Zarichney.Tests.Framework.Attributes;
+namespace Zarichney.Server.Tests.Framework.Attributes;
 
 /// <summary>
 /// Custom Fact attribute that runs tests ONLY when the specified external service is UNAVAILABLE.

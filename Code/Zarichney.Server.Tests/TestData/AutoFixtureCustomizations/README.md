@@ -1,39 +1,81 @@
 # README: /Framework/TestData/AutoFixtureCustomizations Directory
 
-**Version:** 1.0
-**Last Updated:** 2025-05-22
+**Version:** 2.0
+**Last Updated:** 2025-09-20
 **Parent:** `../README.md`
 
 ## 1. Purpose & Responsibility
 
-This directory is designated to house advanced, reusable **AutoFixture customizations** for the `Zarichney.Server.Tests` project. These customizations typically involve implementations of `AutoFixture.ISpecimenBuilder` and `AutoFixture.ICustomization`.
+This directory houses **8 production AutoFixture customizations** for the `Zarichney.Server.Tests` project, providing comprehensive test data generation across all application domains. These customizations implement `AutoFixture.ISpecimenBuilder` and `AutoFixture.ICustomization` interfaces to ensure consistent, realistic test data.
 
-The primary responsibilities of components within this directory are:
-* **To simplify the generation of complex, valid, and realistic test data** for domain models, Entity Framework Core (EF Core) entities, and Data Transfer Objects (DTOs) used in both unit and integration tests.
-* **To encapsulate common data generation rules and constraints** that go beyond basic AutoFixture capabilities, ensuring consistency and reducing boilerplate in test setup.
-* **To handle specific challenges** in test data generation, such as managing EF Core navigation properties, omitting database-generated IDs, or ensuring data adheres to specific invariants.
+**Current Customizations (8 total):**
+- **PaymentCustomization** (Framework) - Stripe payment entities and configurations
+- **WebScraperCustomization** (Framework) - Recipe scraping models and configurations
+- **ConfigurationCustomization** (TestData) - Application configuration objects
+- **GraphServiceCustomization** (TestData) - Microsoft Graph SDK objects
+- **AutoMoqDataAttribute** (TestData) - Enhanced AutoData with mocking integration
+- **HttpContextCustomization** (TestData) - HTTP infrastructure types
+- **LoggerCustomization** (TestData) - ILogger dependency mocking
+- **StripeObjectCustomization** (TestData) - Stripe SDK concrete objects
 
-This initiative directly supports the goals outlined in the `../../TechnicalDesignDocument.md` (specifically TDD FRMK-002) and aligns with best practices for robust test data management detailed in the "Research Report" (Sec 4.1) and the specific testing guides (`../../../Docs/Standards/UnitTestCaseDevelopment.md`, `../../../Docs/Standards/IntegrationTestCaseDevelopment.md`).
+**Primary Responsibilities:**
+* **Simplify complex test data generation** for domain models, EF Core entities, and DTOs across unit and integration tests
+* **Encapsulate domain-specific data rules** ensuring payment configurations, recipe models, and service dependencies have realistic test values
+* **Handle integration challenges** such as Stripe SDK objects, Microsoft Graph clients, and HTTP infrastructure that cannot be directly instantiated
+* **Provide unified test experience** through AutoMoqDataAttribute that combines all customizations with automatic mocking
 
-**Note:** This directory is being established as per the framework augmentation roadmap. It will be populated with customizations as they are developed.
+This implementation supports Epic #94 testing coverage goals and aligns with `/Docs/Standards/TestingStandards.md` requirements for comprehensive test data management.
+
 
 ## 2. Architecture & Key Concepts
 
-AutoFixture's extensibility is leveraged through two main interfaces:
+### Implementation Patterns
 
-* **`ISpecimenBuilder`:**
-    * Allows fine-grained control over how AutoFixture creates instances of specific types or how it populates specific properties.
-    * Useful for:
-        * Ensuring domain model invariants (e.g., a `Product`'s price is always positive, an SKU matches a defined pattern).
-        * Customizing the creation of EF Core entities (e.g., setting default states, ignoring certain navigation properties by default, or correctly initializing backing fields).
-        * Providing default values for specific properties across multiple types.
-        * Omitting auto-generation for properties that should not be set by tests (e.g., database-generated IDs before an entity is saved).
-* **`ICustomization`:**
-    * Provides a way to group multiple `ISpecimenBuilder` instances and other `IFixture` configurations (like adding behaviors or injecting specific instances) into a single, reusable unit.
-    * Example: A `ProductDomainCustomization` might include specimen builders for `Product`, `Category`, and `Review` entities, along with a behavior like `OmitOnRecursionBehavior` to handle circular dependencies in EF Core navigation properties.
-* **Application:**
-    * These customizations can be applied directly to an `IFixture` instance within test setup: `fixture.Customize(new MyDomainCustomization());`.
-    * They can also be incorporated into custom `[AutoData]` attributes to ensure project-wide consistency in how certain types of test data are generated.
+Our 8 customizations follow three primary patterns for AutoFixture extensibility:
+
+**1. ICustomization Pattern (7 customizations):**
+* **Domain-Specific Customizations**: PaymentCustomization, WebScraperCustomization provide realistic data for Stripe payments and recipe scraping
+* **Infrastructure Customizations**: ConfigurationCustomization, GraphServiceCustomization, HttpContextCustomization handle complex object creation
+* **Testing Infrastructure**: LoggerCustomization, StripeObjectCustomization provide mock and concrete object creation
+
+**2. Enhanced AutoData Attribute (1 customization):**
+* **AutoMoqDataAttribute**: Unified attribute combining all 7 customizations with AutoMoq for comprehensive test setup
+
+**3. Domain Architecture:**
+```mermaid
+flowchart TD
+    A[AutoMoqDataAttribute] --> B[AutoMoq + All Customizations]
+    B --> C[ConfigurationCustomization]
+    B --> D[PaymentCustomization]
+    B --> E[WebScraperCustomization]
+    B --> F[GraphServiceCustomization]
+    B --> G[HttpContextCustomization]
+    B --> H[LoggerCustomization]
+    B --> I[StripeObjectCustomization]
+
+    C --> J[PaymentConfig, ClientConfig, EmailConfig]
+    D --> K[Stripe SDK Objects]
+    E --> L[Recipe Models & Configs]
+    F --> M[GraphServiceClient]
+    G --> N[HTTP Infrastructure]
+    H --> O[ILogger Mocks]
+    I --> P[Stripe Concrete Objects]
+
+    classDef primary fill:#e1f5fe
+    classDef domain fill:#f3e5f5
+    classDef infra fill:#e8f5e8
+
+    class A primary
+    class C,D,E domain
+    class F,G,H,I infra
+```
+
+### Key Benefits
+
+* **Realistic Test Data**: Payment configurations use proper Stripe format patterns, recipe configs have reasonable test values
+* **Infrastructure Handling**: Complex objects like GraphServiceClient and HttpResponseHeaders created properly
+* **Unified Experience**: Single [AutoMoqData] attribute provides all customizations plus automatic mocking
+* **Domain Accuracy**: Each customization ensures domain-specific invariants (payment amounts, recipe counts, etc.)
 
 ## 3. Interface Contract & Assumptions
 
@@ -58,68 +100,132 @@ AutoFixture's extensibility is leveraged through two main interfaces:
 
 ## 5. How to Work With This Code
 
-### Defining Customizations (Conceptual Examples)
+### Current Customization Catalog
 
-* **Example `ISpecimenBuilder` (e.g., for omitting DB IDs):**
-    ```csharp
-    // In SomeEntityIdOmitterBuilder.cs
-    public class SomeEntityIdOmitterBuilder : ISpecimenBuilder
-    {
-        public object Create(object request, ISpecimenContext context)
-        {
-            var pi = request as PropertyInfo;
-            if (pi != null && pi.Name == "Id" && pi.DeclaringType.Name.EndsWith("Entity"))
-            {
-                return OmitSpecimen.Instance; // Prevents AutoFixture from setting the Id
-            }
-            return new NoSpecimen();
-        }
-    }
-    ```
-* **Example `ICustomization` (e.g., for EF Core entities):**
-    ```csharp
-    // In EfCoreEntityCustomization.cs
-    public class EfCoreEntityCustomization : ICustomization
-    {
-        public void Customize(IFixture fixture)
-        {
-            fixture.Behaviors.OfType<ThrowingRecursionBehavior>().ToList()
-                .ForEach(b => fixture.Behaviors.Remove(b));
-            fixture.Behaviors.Add(new OmitOnRecursionBehavior());
+#### Framework Location Customizations
 
-            // Could add multiple ISpecimenBuilders relevant to EF Core entities
-            fixture.Customizations.Add(new SomeEntityIdOmitterBuilder());
-            // fixture.Customizations.Add(new IgnoreVirtualMembersSpecimenBuilder()); // If needed
-        }
-    }
-    ```
+**PaymentCustomization** - Stripe Payment Entities
+```csharp
+// Provides realistic Stripe test data
+fixture.Customize(new PaymentCustomization());
+var paymentConfig = fixture.Create<PaymentConfig>(); // sk_test_*, proper URLs
+var session = fixture.Create<Session>(); // cs_test_*, complete status
+var paymentIntent = fixture.Create<PaymentIntent>(); // pi_test_*, succeeded
+```
 
-### Using Customizations in Tests
+**WebScraperCustomization** - Recipe Scraping Models
+```csharp
+// Provides realistic recipe and webscraper configs
+fixture.Customize(new WebScraperCustomization());
+var scrapedRecipe = fixture.Create<ScrapedRecipe>(); // Uses ScrapedRecipeBuilder
+var webConfig = fixture.Create<WebscraperConfig>(); // Reduced parallel tasks for tests
+var recipeConfig = fixture.Create<RecipeConfig>(); // Reasonable test thresholds
+```
 
-* **Directly:**
-    ```csharp
-    // In a test method's Arrange block:
+#### TestData Location Customizations
+
+**ConfigurationCustomization** - Application Configuration
+```csharp
+// Creates all major configuration objects
+fixture.Customize(new ConfigurationCustomization());
+var paymentConfig = fixture.Create<PaymentConfig>(); // Via PaymentConfigBuilder
+var clientConfig = fixture.Create<ClientConfig>(); // test.example.com
+var emailConfig = fixture.Create<EmailConfig>(); // Azure test credentials
+```
+
+**GraphServiceCustomization** - Microsoft Graph SDK
+```csharp
+// Handles GraphServiceClient creation
+fixture.Customize(new GraphServiceCustomization());
+var graphClient = fixture.Create<GraphServiceClient>(); // Concrete instance with HttpClient
+// Note: ITemplateService, IMailCheckClient use AutoMoq
+```
+
+**HttpContextCustomization** - HTTP Infrastructure
+```csharp
+// Handles non-instantiable HTTP types
+fixture.Customize(new HttpContextCustomization());
+var headers = fixture.Create<HttpResponseHeaders?>(); // Returns null safely
+// Prevents AutoFixture creation errors with Stripe objects
+```
+
+**LoggerCustomization** - ILogger Dependencies
+```csharp
+// Ensures proper logger mocking
+fixture.Customize(new LoggerCustomization());
+var logger = fixture.Create<ILogger<PaymentService>>(); // Proper mock
+// Works with AutoMoq for other ILogger<T> types
+```
+
+**StripeObjectCustomization** - Stripe SDK Objects
+```csharp
+// Creates concrete Stripe objects
+fixture.Customize(new StripeObjectCustomization());
+var session = fixture.Create<Session>(); // Concrete with metadata
+var event = fixture.Create<Event>(); // checkout.session.completed with data
+```
+
+**AutoMoqDataAttribute** - Enhanced AutoData Integration
+```csharp
+// Single attribute provides all customizations + AutoMoq
+[Theory, AutoMoqData]
+public async Task EmailService_SendEmail_WithGraphClient(
+    [Frozen] Mock<ITemplateService> mockTemplate,
+    EmailConfig emailConfig, // From ConfigurationCustomization
+    GraphServiceClient graphClient, // From GraphServiceCustomization
+    EmailService sut)
+{
+    // All infrastructure properly configured
+    // All interfaces automatically mocked
+    // All configuration objects have realistic test data
+}
+```
+
+### Recommended Usage Patterns
+
+**1. Use AutoMoqDataAttribute (Recommended)**
+```csharp
+[Theory, AutoMoqData]
+public async Task PaymentService_ProcessPayment_Success(
+    [Frozen] Mock<IStripeService> mockStripe,
+    PaymentConfig paymentConfig, // Automatically configured
+    PaymentService sut)
+{
+    // All customizations applied automatically
+    // PaymentConfig has realistic test values
+    // IStripeService is mocked via AutoMoq
+    Assert.NotNull(paymentConfig.StripeSecretKey);
+    Assert.StartsWith("sk_test_", paymentConfig.StripeSecretKey);
+}
+```
+
+**2. Individual Customizations (For Specific Needs)**
+```csharp
+[Fact]
+public void WebScraper_Config_HasValidTestValues()
+{
     var fixture = new Fixture();
-    fixture.Customize(new EfCoreEntityCustomization()); // Apply your custom rules
-    // fixture.Customize(new CookbookDomainCustomization()); // Apply more specific rules
+    fixture.Customize(new WebScraperCustomization());
 
-    var recipe = fixture.Create<RecipeEntity>(); // Will be created according to customizations
-    ```
-* **Via Custom `AutoData` Attribute (More Advanced - For Project-Wide Consistency):**
-  A custom attribute could be created that automatically applies common customizations:
-    ```csharp
-    // public class ProjectAutoDataAttribute : AutoDataAttribute
-    // {
-    //     public ProjectAutoDataAttribute()
-    //         : base(() => new Fixture().Customize(new EfCoreEntityCustomization())
-    //                                   .Customize(new CookbookDomainCustomization()))
-    //     { }
-    // }
+    var config = fixture.Create<WebscraperConfig>();
 
-    // [Theory, ProjectAutoData] // Hypothetical usage
-    // public void MyTestMethod(RecipeEntity recipe) { /* ... */ }
-    ```
-  Guidance on creating such attributes will be provided if this pattern is adopted widely.
+    Assert.Equal(3, config.MaxNumResultsPerQuery);
+    Assert.Equal(2, config.MaxParallelTasks); // Reduced for tests
+}
+```
+
+**3. Combined Customizations (For Complex Scenarios)**
+```csharp
+var fixture = new Fixture();
+fixture.Customize(new AutoMoqCustomization());
+fixture.Customize(new PaymentCustomization());
+fixture.Customize(new ConfigurationCustomization());
+fixture.Customize(new StripeObjectCustomization());
+
+// Now create complex payment test scenarios
+var paymentService = fixture.Create<PaymentService>();
+var stripeSession = fixture.Create<Session>();
+```
 
 ## 6. Dependencies
 
@@ -145,11 +251,34 @@ This approach is based on established best practices for test data management us
 
 ## 8. Known Issues & TODOs
 
-* **Initial Population (TDD FRMK-002):** The immediate TODO is to identify key domain entities and DTOs within `Zarichney.Server` that would most benefit from initial `ISpecimenBuilder` and `ICustomization` implementations. This includes:
-    * Common EF Core entity patterns (ID omission, navigation property handling).
-    * Core domain models from services like `Cookbook`, `Auth`, `Payment`.
-* **Development of Custom `AutoData` Attributes:** Evaluate and potentially implement custom `[ProjectAutoData]` attributes that bundle common customizations for ease of use in tests.
-* **Ongoing Identification:** Continuously identify new areas where custom AutoFixture setups can simplify test data generation as the application evolves.
-* Refer to the "Framework Augmentation Roadmap (TODOs)" in `../../TechnicalDesignDocument.md` for broader framework enhancements.
+### Current Status: Complete Implementation ✅
+
+**TDD FRMK-002 Implementation Complete:** All major domain areas now have comprehensive AutoFixture customizations:
+* ✅ **Payment Domain**: PaymentCustomization + StripeObjectCustomization provide complete Stripe SDK support
+* ✅ **Recipe Domain**: WebScraperCustomization handles recipe scraping models and configurations
+* ✅ **Configuration Domain**: ConfigurationCustomization covers PaymentConfig, ClientConfig, EmailConfig
+* ✅ **Infrastructure Domain**: HTTP, logging, and Graph SDK handled by specialized customizations
+* ✅ **Integration Pattern**: AutoMoqDataAttribute provides unified experience with automatic mocking
+
+### Integration with Test Coverage Epic #94
+
+**Current Customizations Support 90% Coverage Goal:**
+* All service dependencies properly mocked via AutoMoqDataAttribute
+* Realistic configuration data enables comprehensive integration testing
+* Stripe SDK objects support payment service testing scenarios
+* Microsoft Graph integration supports email service testing
+
+### Future Enhancements (As Needed)
+
+* **EF Core Entity Patterns**: Consider adding specific entity customizations if database testing expands
+* **Authentication Models**: Add auth-specific customizations if identity testing scenarios increase
+* **Performance Optimizations**: Monitor AutoFixture creation performance in large test suites
+* **Documentation Examples**: Add more complex integration examples as testing patterns evolve
+
+### Cross-References
+
+* See `/Docs/Standards/TestingStandards.md` for testing strategy integration
+* Review `../Builders/README.md` for test data builder patterns that work with these customizations
+* Check `../../Unit/Services/` for examples of AutoMoqDataAttribute usage patterns
 
 ---

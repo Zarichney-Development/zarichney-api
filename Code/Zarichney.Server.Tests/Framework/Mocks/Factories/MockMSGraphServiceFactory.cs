@@ -2,7 +2,7 @@ using Moq;
 using Zarichney.Services.Email;
 using Microsoft.Graph.Models;
 
-namespace Zarichney.Tests.Framework.Mocks.Factories;
+namespace Zarichney.Server.Tests.Framework.Mocks.Factories;
 
 /// <summary>
 /// Factory for creating mock MS Graph service for email functionality.

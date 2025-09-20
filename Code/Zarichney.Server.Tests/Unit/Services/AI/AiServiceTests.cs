@@ -9,7 +9,7 @@ using Zarichney.Services.GitHub;
 using Zarichney.Services.Sessions;
 using Zarichney.Services.Status;
 
-namespace Zarichney.Tests.Unit.Services.AI;
+namespace Zarichney.Server.Tests.Unit.Services.AI;
 
 /// <summary>
 /// Unit tests for AiService covering completion processing, audio transcription, and integrated AI workflows.

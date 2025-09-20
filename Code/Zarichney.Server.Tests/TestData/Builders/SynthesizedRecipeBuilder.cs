@@ -1,6 +1,6 @@
 using Zarichney.Cookbook.Recipes;
 
-namespace Zarichney.Tests.TestData.Builders;
+namespace Zarichney.Server.Tests.TestData.Builders;
 
 public class SynthesizedRecipeBuilder
 {

@@ -1,10 +1,10 @@
 using Zarichney.Services.Status;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Server.Tests.Framework.Fixtures;
 
-namespace Zarichney.Tests.Framework.Helpers;
+namespace Zarichney.Server.Tests.Framework.Helpers;
 
 /// <summary>
 /// Helper for checking the status of configuration items and feature dependencies in the application.

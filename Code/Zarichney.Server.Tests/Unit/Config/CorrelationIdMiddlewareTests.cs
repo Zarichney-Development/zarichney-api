@@ -7,7 +7,7 @@ using AutoFixture;
 using Serilog.Context;
 using Microsoft.Extensions.Primitives;
 
-namespace Zarichney.Tests.Unit.Config;
+namespace Zarichney.Server.Tests.Unit.Config;
 
 public class CorrelationIdMiddlewareTests
 {

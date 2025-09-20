@@ -1,6 +1,6 @@
 using Zarichney.Services.AI;
 
-namespace Zarichney.Tests.TestData.Builders;
+namespace Zarichney.Server.Tests.TestData.Builders;
 
 /// <summary>
 /// Test data builder for TranscriptionResult objects.

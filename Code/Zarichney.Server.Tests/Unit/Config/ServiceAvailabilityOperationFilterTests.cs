@@ -6,9 +6,9 @@ using Microsoft.OpenApi.Models;
 using Moq;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Xunit;
-using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Server.Tests.Framework.Attributes;
 
-namespace Zarichney.Tests.Unit.Config;
+namespace Zarichney.Server.Tests.Unit.Config;
 
 [Trait(TestCategories.Category, TestCategories.Unit)]
 public class ServiceAvailabilityOperationFilterTests

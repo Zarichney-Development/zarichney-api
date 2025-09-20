@@ -10,7 +10,7 @@ using Zarichney.Cookbook.Orders;
 using Zarichney.Server.Tests.TestData.Builders;
 using Zarichney.Services.AI;
 using Zarichney.Services.Sessions;
-using Zarichney.Tests.Framework.Mocks;
+using Zarichney.Server.Tests.Framework.Mocks;
 using System;
 
 namespace Zarichney.Server.Tests.Unit.Services.Sessions;

@@ -4,9 +4,9 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using Zarichney.Cookbook.Recipes;
-using Zarichney.Tests.TestData.Builders;
+using Zarichney.Server.Tests.TestData.Builders;
 
-namespace Zarichney.Tests.Unit.Cookbook.Recipes.RecipeSearcher;
+namespace Zarichney.Server.Tests.Unit.Cookbook.Recipes.RecipeSearcher;
 
 public class RecipeSearcherTests
 {

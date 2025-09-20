@@ -12,7 +12,7 @@ using Moq;
 using Xunit;
 using Zarichney.Controllers;
 
-namespace Zarichney.Tests.Unit.Controllers;
+namespace Zarichney.Server.Tests.Unit.Controllers;
 
 /// <summary>
 /// Unit tests for ApiErrorResult - tests error response formatting and HTTP status code handling
@@ -39,8 +39,8 @@ public class ApiErrorResultTests : IDisposable
     services.AddControllers()
         .AddJsonOptions(options =>
         {
-            options.JsonSerializerOptions.WriteIndented = true;
-            options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+          options.JsonSerializerOptions.WriteIndented = true;
+          options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         });
 
     return services.BuildServiceProvider();

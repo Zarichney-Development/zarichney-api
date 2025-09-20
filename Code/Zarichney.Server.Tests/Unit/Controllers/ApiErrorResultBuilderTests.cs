@@ -10,9 +10,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Xunit;
 using Zarichney.Controllers;
-using Zarichney.Tests.TestData.Builders;
+using Zarichney.Server.Tests.TestData.Builders;
 
-namespace Zarichney.Tests.Unit.Controllers;
+namespace Zarichney.Server.Tests.Unit.Controllers;
 
 /// <summary>
 /// Unit tests for ApiErrorResult using the builder pattern - demonstrates builder usage and additional scenarios
@@ -39,8 +39,8 @@ public class ApiErrorResultBuilderTests : IDisposable
     services.AddControllers()
         .AddJsonOptions(options =>
         {
-            options.JsonSerializerOptions.WriteIndented = true;
-            options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+          options.JsonSerializerOptions.WriteIndented = true;
+          options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         });
 
     return services.BuildServiceProvider();

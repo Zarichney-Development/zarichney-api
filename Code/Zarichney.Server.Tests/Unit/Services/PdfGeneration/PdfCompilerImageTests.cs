@@ -11,7 +11,7 @@ using Zarichney.Cookbook.Recipes;
 using Zarichney.Services.FileSystem;
 using Zarichney.Services.PdfGeneration;
 
-namespace Zarichney.Tests.Unit.Services.PdfGeneration;
+namespace Zarichney.Server.Tests.Unit.Services.PdfGeneration;
 
 /// <summary>
 /// Unit tests for PdfCompiler image processing functionality

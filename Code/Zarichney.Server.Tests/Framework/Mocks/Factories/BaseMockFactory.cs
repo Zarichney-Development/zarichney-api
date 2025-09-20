@@ -1,6 +1,6 @@
 using Moq;
 
-namespace Zarichney.Tests.Framework.Mocks.Factories;
+namespace Zarichney.Server.Tests.Framework.Mocks.Factories;
 
 /// <summary>
 /// Base factory for creating mock services.

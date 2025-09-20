@@ -6,10 +6,10 @@ using Xunit;
 using OpenAI.Audio;
 using Zarichney.Services.AI;
 using Zarichney.Services.Email;
-using Zarichney.Tests.TestData.Builders;
-using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Server.Tests.Framework.Attributes;
 
-namespace Zarichney.Tests.Unit.Services.AI;
+namespace Zarichney.Server.Tests.Unit.Services.AI;
 
 [Trait(TestCategories.Category, TestCategories.Unit)]
 [Trait(TestCategories.Feature, TestCategories.AI)]
@@ -327,8 +327,10 @@ public class TranscribeServiceValidationTests
   {
     var mockFile = new Mock<IFormFile>();
     mockFile.Setup(f => f.FileName).Returns(fileName);
-    // Avoid nullable warning by returning empty string when null; validation treats both as invalid
-    mockFile.Setup(f => f.ContentType).Returns(contentType ?? string.Empty);
+
+    // Handle null ContentType by suppressing nullable warnings since we need to test null scenarios
+    mockFile.SetupGet(f => f.ContentType).Returns(contentType!);
+
     mockFile.Setup(f => f.Length).Returns(length);
     return mockFile;
   }

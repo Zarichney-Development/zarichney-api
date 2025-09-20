@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Configuration;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
-using static Zarichney.Tests.Framework.Helpers.TestEnvironmentHelper;
+using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Server.Tests.Framework.Fixtures;
+using static Zarichney.Server.Tests.Framework.Helpers.TestEnvironmentHelper;
 
-namespace Zarichney.Tests.Framework.Helpers;
+namespace Zarichney.Server.Tests.Framework.Helpers;
 
 /// <summary>
 /// Helper for loading and validating test suite standards and baselines.

@@ -11,7 +11,7 @@ using Zarichney.Services.Email;
 using Zarichney.Services.GitHub;
 using Zarichney.Services.Payment;
 
-namespace Zarichney.Tests.Unit.Services.Status;
+namespace Zarichney.Server.Tests.Unit.Services.Status;
 
 /// <summary>
 /// Unit tests for StatusService covering system health monitoring and service status reporting.

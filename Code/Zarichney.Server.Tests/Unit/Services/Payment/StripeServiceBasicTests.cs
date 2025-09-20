@@ -7,7 +7,7 @@ using Stripe.Checkout;
 using Xunit;
 using Zarichney.Server.Tests.TestData.Builders;
 using Zarichney.Services.Payment;
-using Zarichney.Tests.Framework.Helpers;
+using Zarichney.Server.Tests.Framework.Helpers;
 
 namespace Zarichney.Server.Tests.Unit.Services.Payment;
 

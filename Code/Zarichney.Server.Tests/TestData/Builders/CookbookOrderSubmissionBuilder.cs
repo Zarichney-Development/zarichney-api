@@ -1,6 +1,6 @@
 using Zarichney.Cookbook.Orders;
 
-namespace Zarichney.Tests.TestData.Builders;
+namespace Zarichney.Server.Tests.TestData.Builders;
 
 public class CookbookOrderSubmissionBuilder
 {

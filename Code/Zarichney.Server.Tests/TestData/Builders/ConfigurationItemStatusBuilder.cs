@@ -1,7 +1,7 @@
 using Zarichney.Services.Status;
-using Zarichney.Tests.Framework.Helpers;
+using Zarichney.Server.Tests.Framework.Helpers;
 
-namespace Zarichney.Tests.TestData.Builders;
+namespace Zarichney.Server.Tests.TestData.Builders;
 
 /// <summary>
 /// Builder for creating test configuration item status objects.

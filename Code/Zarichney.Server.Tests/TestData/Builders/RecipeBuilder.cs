@@ -1,8 +1,8 @@
 using Zarichney.Cookbook.Prompts;
 using Zarichney.Cookbook.Recipes;
-using Zarichney.Tests.Framework.Helpers;
+using Zarichney.Server.Tests.Framework.Helpers;
 
-namespace Zarichney.Tests.TestData.Builders;
+namespace Zarichney.Server.Tests.TestData.Builders;
 
 /// <summary>
 /// Builder for Recipe test data.

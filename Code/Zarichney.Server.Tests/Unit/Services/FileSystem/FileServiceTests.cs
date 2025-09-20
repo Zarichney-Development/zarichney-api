@@ -7,7 +7,7 @@ using Zarichney.Services.FileSystem;
 using FluentAssertions;
 using Xunit;
 
-namespace Zarichney.Tests.Unit.Services.FileSystem;
+namespace Zarichney.Server.Tests.Unit.Services.FileSystem;
 
 /// <summary>
 /// Unit tests for FileService covering file operations, image processing, and storage management.

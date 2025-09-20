@@ -10,9 +10,9 @@ using Moq;
 using Xunit;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Models;
-using Zarichney.Tests.TestData.Builders;
+using Zarichney.Server.Tests.TestData.Builders;
 
-namespace Zarichney.Tests.Unit.Services.Auth.AuthService;
+namespace Zarichney.Server.Tests.Unit.Services.Auth.AuthService;
 
 public class AuthServiceTests : IDisposable
 {
@@ -29,9 +29,12 @@ public class AuthServiceTests : IDisposable
     _fixture = new Fixture();
 
     // Create JWT settings
+    // ⚠️ SECURITY WARNING: This hardcoded JWT secret is for testing only!
+    // NEVER use hardcoded secrets in production code - use secure configuration
+    // management (Azure KeyVault, environment variables, etc.)
     _jwtSettings = new JwtSettings
     {
-      SecretKey = "ThisIsAVeryLongSecretKeyForTestingPurposesOnly123456789",
+      SecretKey = "ThisIsAVeryLongSecretKeyForTestingPurposesOnly123456789", // TEST ONLY - DO NOT COPY TO PRODUCTION
       Issuer = "TestIssuer",
       Audience = "TestAudience",
       ExpiryMinutes = 60,

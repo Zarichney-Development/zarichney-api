@@ -5,7 +5,7 @@ using Zarichney.Services.Status;
 using AutoFixture;
 using System.Reflection;
 
-namespace Zarichney.Tests.Unit.Config;
+namespace Zarichney.Server.Tests.Unit.Config;
 
 public class ConfigModelsTests
 {

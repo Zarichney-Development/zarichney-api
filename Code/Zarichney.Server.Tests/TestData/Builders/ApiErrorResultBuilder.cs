@@ -1,7 +1,7 @@
 using System.Net;
 using Zarichney.Controllers;
 
-namespace Zarichney.Tests.TestData.Builders;
+namespace Zarichney.Server.Tests.TestData.Builders;
 
 /// <summary>
 /// Test data builder for ApiErrorResult - provides fluent API for creating test error results

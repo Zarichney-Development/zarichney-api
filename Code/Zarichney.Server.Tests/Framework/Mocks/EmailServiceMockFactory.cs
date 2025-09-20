@@ -3,9 +3,9 @@ using Microsoft.Graph.Models;
 using Moq;
 using Zarichney.Config;
 using Zarichney.Services.Email;
-using Zarichney.Tests.TestData.Builders;
+using Zarichney.Server.Tests.TestData.Builders;
 
-namespace Zarichney.Tests.Framework.Mocks;
+namespace Zarichney.Server.Tests.Framework.Mocks;
 
 /// <summary>
 /// Factory for creating mock dependencies for EmailService testing.

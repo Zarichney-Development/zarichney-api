@@ -4,10 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Zarichney.Services.Logging;
 using Zarichney.Services.ProcessExecution;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Server.Tests.Framework.Fixtures;
 using Xunit.Abstractions;
-using Zarichney.Tests.Integration;
+using Zarichney.Server.Tests.Integration;
 
 namespace Zarichney.Server.Tests.Integration.Services.Logging;
 

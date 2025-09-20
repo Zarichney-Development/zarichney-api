@@ -4,9 +4,9 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
-using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Server.Tests.Framework.Attributes;
 
-namespace Zarichney.Tests.Unit.Controllers.PublicController;
+namespace Zarichney.Server.Tests.Unit.Controllers.PublicController;
 
 /// <summary>
 /// Unit tests for the <see cref="Zarichney.Controllers.PublicController"/>.

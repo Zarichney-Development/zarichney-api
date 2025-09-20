@@ -1,6 +1,6 @@
 using Zarichney.Controllers.Responses;
 
-namespace Zarichney.Tests.TestData.Builders;
+namespace Zarichney.Server.Tests.TestData.Builders;
 
 /// <summary>
 /// Test data builder for HealthCheckResponse - provides fluent API for creating test health check responses

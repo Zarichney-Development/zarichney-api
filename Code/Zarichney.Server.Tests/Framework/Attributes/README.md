@@ -1,7 +1,7 @@
 # README: /Framework/Attributes Directory
 
 **Version:** 1.3
-**Last Updated:** 2025-08-06
+**Last Updated:** 2025-09-20
 **Parent:** `../README.md`
 
 ## 1. Purpose & Responsibility
@@ -33,6 +33,11 @@ The primary attributes and their mechanisms are:
     * **Purpose:** A specialized `[Fact]` attribute that runs tests ONLY when the specified external service is UNAVAILABLE. This is the inverse of `DependencyFactAttribute` - it's used for integration tests that verify HTTP 503 responses from dependency-aware API endpoints when their specific external dependencies are unavailable.
     * **Mechanism:** It leverages the `IStatusService` from the `Zarichney.Server` to check feature availability via `ExternalServices` enum. If the service is available, the test is skipped. If the service is unavailable, the test runs normally.
     * **Usage:** Decorated on test methods, e.g., `[ServiceUnavailableFact(ExternalServices.OpenAiApi)]` for testing that an endpoint returns HTTP 503 when OpenAI is unavailable.
+
+* **`LogTestStartEndAttribute.cs`**:
+    * **Purpose:** A specialized attribute that logs test execution start and end information to aid in debugging test execution timing and flow.
+    * **Mechanism:** Inherits from `BeforeAfterTestAttribute` and uses Serilog to log structured information before and after test method execution.
+    * **Usage:** Decorated on test methods that require execution timing visibility, e.g., `[LogTestStartEnd]` for debugging slow tests or complex integration scenarios.
 
 * **`TestCategories.cs`**:
     * **Purpose:** This static class does not define attributes itself but provides string constants for standardized test category names used with xUnit's `[Trait("Category", TestCategories.Unit)]` attribute.
@@ -108,6 +113,19 @@ These attributes often work in conjunction with custom xUnit test case discovere
     {
         var response = await client.GetAiResponse();
         response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    }
+    ```
+* **`LogTestStartEndAttribute`**:
+    ```csharp
+    // Example: Log execution timing for performance debugging
+    [LogTestStartEnd]
+    [Fact]
+    [Trait("Category", TestCategories.Integration)]
+    public async Task ComplexIntegrationTest_WithTiming_ExecutesCorrectly()
+    {
+        // Test execution will be logged: "=== START TEST: TestClassName.ComplexIntegrationTest_WithTiming_ExecutesCorrectly ==="
+        // ... test logic ...
+        // Test completion will be logged: "=== END TEST: TestClassName.ComplexIntegrationTest_WithTiming_ExecutesCorrectly ==="
     }
     ```
 * **`TestCategories.cs`**:

@@ -6,7 +6,7 @@ using Xunit;
 using Zarichney.Services.Logging;
 using Zarichney.Services.Logging.Models;
 
-namespace Zarichney.Tests.Unit.Services.Logging;
+namespace Zarichney.Server.Tests.Unit.Services.Logging;
 
 /// <summary>
 /// Unit tests for LoggingService - tests the orchestration layer that delegates to focused services

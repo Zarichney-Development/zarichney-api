@@ -6,7 +6,7 @@ using OpenAI.Audio;
 using System.ClientModel;
 using System.ClientModel.Primitives;
 
-namespace Zarichney.Tests.Framework.Mocks.Factories;
+namespace Zarichney.Server.Tests.Framework.Mocks.Factories;
 
 /// <summary>
 /// Factory for creating mock dependencies for TranscribeService testing.

@@ -2,7 +2,7 @@ using Moq;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Models;
 
-namespace Zarichney.Tests.Framework.Mocks.Factories;
+namespace Zarichney.Server.Tests.Framework.Mocks.Factories;
 
 public static class AuthServiceMockFactory
 {

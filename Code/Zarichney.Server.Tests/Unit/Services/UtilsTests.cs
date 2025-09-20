@@ -3,7 +3,7 @@ using System.Text.Json;
 using Xunit;
 using Zarichney.Services;
 
-namespace Zarichney.Tests.Unit.Services;
+namespace Zarichney.Server.Tests.Unit.Services;
 
 [Trait("Category", "Unit")]
 public class UtilsTests

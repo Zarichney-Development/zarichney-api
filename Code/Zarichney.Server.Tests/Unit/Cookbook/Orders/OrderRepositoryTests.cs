@@ -4,9 +4,9 @@ using Moq;
 using Xunit;
 using Zarichney.Cookbook.Orders;
 using Zarichney.Services.FileSystem;
-using Zarichney.Tests.TestData.Builders;
+using Zarichney.Server.Tests.TestData.Builders;
 
-namespace Zarichney.Tests.Unit.Cookbook.Orders;
+namespace Zarichney.Server.Tests.Unit.Cookbook.Orders;
 
 [Trait("Category", "Unit")]
 public class OrderRepositoryTests
