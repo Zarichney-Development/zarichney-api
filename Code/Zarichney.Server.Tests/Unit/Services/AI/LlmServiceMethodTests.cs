@@ -10,12 +10,14 @@ using Zarichney.Services.AI;
 using Zarichney.Services.Sessions;
 using Zarichney.Services.Status;
 using AutoMapper;
+using Zarichney.Tests.Framework.Attributes;
 
 namespace Zarichney.Tests.Unit.Services.AI;
 
 /// <summary>
 /// Unit tests for LlmService method behaviors
 /// </summary>
+[Trait(TestCategories.Feature, TestCategories.AI)]
 public class LlmServiceMethodTests
 {
   private readonly Mock<ILogger<LlmService>> _mockLogger;

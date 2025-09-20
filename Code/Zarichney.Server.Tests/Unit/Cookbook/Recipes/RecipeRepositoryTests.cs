@@ -23,7 +23,6 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
   [Trait(TestCategories.Category, TestCategories.Unit)]
   [Trait(TestCategories.Component, TestCategories.Service)]
   [Trait(TestCategories.Feature, TestCategories.Cookbook)]
-  [Trait(TestCategories.Dependency, TestCategories.ExternalOpenAI)]
   public class RecipeRepositoryTests : IAsyncLifetime
   {
     // Mock dependencies

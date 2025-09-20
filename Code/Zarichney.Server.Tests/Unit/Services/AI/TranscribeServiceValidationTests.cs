@@ -7,10 +7,12 @@ using OpenAI.Audio;
 using Zarichney.Services.AI;
 using Zarichney.Services.Email;
 using Zarichney.Tests.TestData.Builders;
+using Zarichney.Tests.Framework.Attributes;
 
 namespace Zarichney.Tests.Unit.Services.AI;
 
-[Trait("Category", "Unit")]
+[Trait(TestCategories.Category, TestCategories.Unit)]
+[Trait(TestCategories.Feature, TestCategories.AI)]
 public class TranscribeServiceValidationTests
 {
   private readonly Mock<AudioClient> _mockAudioClient;

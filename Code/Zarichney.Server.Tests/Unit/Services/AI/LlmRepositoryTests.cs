@@ -10,10 +10,12 @@ using Zarichney.Services.GitHub;
 using Zarichney.Services.Status;
 using Zarichney.Services.Sessions;
 using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.Framework.Attributes;
 
 namespace Zarichney.Tests.Unit.Services.AI;
 
-[Trait("Category", "Unit")]
+[Trait(TestCategories.Category, TestCategories.Unit)]
+[Trait(TestCategories.Feature, TestCategories.AI)]
 public class LlmRepositoryTests
 {
   private readonly Mock<IGitHubService> _mockGitHubService;

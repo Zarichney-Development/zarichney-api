@@ -8,10 +8,12 @@ using Zarichney.Services.AI;
 using Zarichney.Services.Email;
 using Zarichney.Tests.TestData.Builders;
 using System.Text;
+using Zarichney.Tests.Framework.Attributes;
 
 namespace Zarichney.Tests.Unit.Services.AI;
 
-[Trait("Category", "Unit")]
+[Trait(TestCategories.Category, TestCategories.Unit)]
+[Trait(TestCategories.Feature, TestCategories.AI)]
 public class TranscribeServiceBasicTests
 {
   private readonly Mock<AudioClient> _mockAudioClient;

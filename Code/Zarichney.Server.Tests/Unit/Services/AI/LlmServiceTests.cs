@@ -8,12 +8,15 @@ using Zarichney.Services.AI;
 using Zarichney.Services.Sessions;
 using Zarichney.Services.Status;
 using AutoMapper;
+using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.Framework.Attributes;
 
 namespace Zarichney.Tests.Unit.Services.AI;
 
 /// <summary>
 /// Simplified unit tests for LlmService focusing on essential behaviors
 /// </summary>
+[Trait(TestCategories.Feature, TestCategories.AI)]
 public class LlmServiceTests
 {
   private readonly Mock<ILogger<LlmService>> _mockLogger;
@@ -61,14 +64,14 @@ public class LlmServiceTests
   public async Task CreateThread_WhenClientIsNull_ThrowsConfigurationMissingException()
   {
     // Arrange
-    var sutWithNullClient = new LlmService(
-        null!,
-        _mockMapper.Object,
-        _config,
-        _mockSessionManager.Object,
-        _mockScope.Object,
-        _mockLogger.Object
-    );
+    var sutWithNullClient = new LlmServiceBuilder()
+        .WithNullClient()
+        .WithMapper(_mockMapper.Object)
+        .WithConfig(_config)
+        .WithSessionManager(_mockSessionManager)
+        .WithScope(_mockScope.Object)
+        .WithLogger(_mockLogger)
+        .Build();
 
     // Act
     var act = () => sutWithNullClient.CreateThread();
@@ -83,14 +86,14 @@ public class LlmServiceTests
   public async Task CreateMessage_WhenClientIsNull_ThrowsConfigurationMissingException()
   {
     // Arrange
-    var sutWithNullClient = new LlmService(
-        null!,
-        _mockMapper.Object,
-        _config,
-        _mockSessionManager.Object,
-        _mockScope.Object,
-        _mockLogger.Object
-    );
+    var sutWithNullClient = new LlmServiceBuilder()
+        .WithNullClient()
+        .WithMapper(_mockMapper.Object)
+        .WithConfig(_config)
+        .WithSessionManager(_mockSessionManager)
+        .WithScope(_mockScope.Object)
+        .WithLogger(_mockLogger)
+        .Build();
 
     // Act
     var act = () => sutWithNullClient.CreateMessage("thread_123", "content");
@@ -104,14 +107,14 @@ public class LlmServiceTests
   public async Task CreateRun_WhenClientIsNull_ThrowsConfigurationMissingException()
   {
     // Arrange
-    var sutWithNullClient = new LlmService(
-        null!,
-        _mockMapper.Object,
-        _config,
-        _mockSessionManager.Object,
-        _mockScope.Object,
-        _mockLogger.Object
-    );
+    var sutWithNullClient = new LlmServiceBuilder()
+        .WithNullClient()
+        .WithMapper(_mockMapper.Object)
+        .WithConfig(_config)
+        .WithSessionManager(_mockSessionManager)
+        .WithScope(_mockScope.Object)
+        .WithLogger(_mockLogger)
+        .Build();
 
     // Act
     var act = () => sutWithNullClient.CreateRun("thread_123", "asst_456");
@@ -125,14 +128,14 @@ public class LlmServiceTests
   public async Task GetRun_WhenClientIsNull_ThrowsConfigurationMissingException()
   {
     // Arrange
-    var sutWithNullClient = new LlmService(
-        null!,
-        _mockMapper.Object,
-        _config,
-        _mockSessionManager.Object,
-        _mockScope.Object,
-        _mockLogger.Object
-    );
+    var sutWithNullClient = new LlmServiceBuilder()
+        .WithNullClient()
+        .WithMapper(_mockMapper.Object)
+        .WithConfig(_config)
+        .WithSessionManager(_mockSessionManager)
+        .WithScope(_mockScope.Object)
+        .WithLogger(_mockLogger)
+        .Build();
 
     // Act
     var act = () => sutWithNullClient.GetRun("thread_123", "run_456");
@@ -146,14 +149,14 @@ public class LlmServiceTests
   public async Task SubmitToolOutputToRun_WhenClientIsNull_ThrowsConfigurationMissingException()
   {
     // Arrange
-    var sutWithNullClient = new LlmService(
-        null!,
-        _mockMapper.Object,
-        _config,
-        _mockSessionManager.Object,
-        _mockScope.Object,
-        _mockLogger.Object
-    );
+    var sutWithNullClient = new LlmServiceBuilder()
+        .WithNullClient()
+        .WithMapper(_mockMapper.Object)
+        .WithConfig(_config)
+        .WithSessionManager(_mockSessionManager)
+        .WithScope(_mockScope.Object)
+        .WithLogger(_mockLogger)
+        .Build();
 
     // Act
     var act = () => sutWithNullClient.SubmitToolOutputToRun("thread_123", "run_456", "tool_789", "output");
