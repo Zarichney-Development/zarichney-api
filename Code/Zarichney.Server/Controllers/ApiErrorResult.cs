@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using Zarichney.Controllers.Responses;
 
 namespace Zarichney.Controllers;
 
@@ -12,44 +13,79 @@ public class ApiErrorResult(
 {
   public async Task ExecuteResultAsync(ActionContext context)
   {
-    var response = new
-    {
-      Error = new
-      {
-        Message = userMessage,
-        Type = exception?.GetType().Name,
-        Details = exception?.Message,
-        exception?.Source,
-        StackTrace = exception?.StackTrace?.Split(Environment.NewLine)
-          .Select(line => line.TrimStart())
-          .ToList(),
-      },
-      Request = new
-      {
-        Path = context.HttpContext.Request.Path.Value,
-        context.HttpContext.Request.Method,
-        Controller = context.ActionDescriptor.DisplayName
-      },
-      TraceId = context.HttpContext.TraceIdentifier,
-      InnerException = exception?.InnerException == null
-        ? null
-        : new
-        {
-          exception.InnerException.Message,
-          Type = exception.InnerException.GetType().Name,
-          StackTrace = exception.InnerException.StackTrace?.Split(Environment.NewLine)
-            .Select(line => line.TrimStart())
-            .ToList()
-        }
-    };
+    // Build structured DTO
+    var response = BuildApiErrorResponse(context);
 
-    context.HttpContext.Response.StatusCode = (int)statusCode;
-    context.HttpContext.Response.ContentType = "application/json";
-
-    await context.HttpContext.Response.WriteAsJsonAsync(response, new JsonSerializerOptions
+    // Use JsonResult with explicit formatting to match original behavior
+    var jsonSerializerOptions = new JsonSerializerOptions
     {
       WriteIndented = true,
-      PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    });
+      PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+      DictionaryKeyPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    var jsonResult = new JsonResult(response, jsonSerializerOptions)
+    {
+      StatusCode = (int)statusCode,
+      ContentType = "application/json"
+    };
+
+    await jsonResult.ExecuteResultAsync(context);
+  }
+
+  private ApiErrorResponse BuildApiErrorResponse(ActionContext context)
+  {
+    var errorDetails = BuildErrorDetails();
+    var requestDetails = BuildRequestDetails(context);
+    var innerException = BuildInnerExceptionDetails();
+
+    return new ApiErrorResponse(
+      Error: errorDetails,
+      Request: requestDetails,
+      TraceId: context.HttpContext.TraceIdentifier,
+      InnerException: innerException
+    );
+  }
+
+  private ErrorDetails BuildErrorDetails()
+  {
+    var stackTrace = exception?.StackTrace?.Split(Environment.NewLine)
+      .Select(line => line.TrimStart())
+      .ToList()
+      .AsReadOnly();
+
+    return new ErrorDetails(
+      Message: userMessage,
+      Type: exception?.GetType().Name,
+      Details: exception?.Message,
+      Source: exception?.Source,
+      StackTrace: stackTrace
+    );
+  }
+
+  private RequestDetails BuildRequestDetails(ActionContext context)
+  {
+    return new RequestDetails(
+      Path: context.HttpContext.Request.Path.Value,
+      Method: context.HttpContext.Request.Method,
+      Controller: context.ActionDescriptor.DisplayName
+    );
+  }
+
+  private InnerExceptionDetails? BuildInnerExceptionDetails()
+  {
+    if (exception?.InnerException is null)
+      return null;
+
+    var innerStackTrace = exception.InnerException.StackTrace?.Split(Environment.NewLine)
+      .Select(line => line.TrimStart())
+      .ToList()
+      .AsReadOnly();
+
+    return new InnerExceptionDetails(
+      Message: exception.InnerException.Message,
+      Type: exception.InnerException.GetType().Name,
+      StackTrace: innerStackTrace
+    );
   }
 }

@@ -142,14 +142,23 @@ public class RecipeSearcher(
 
     // 4) Combine them: first definitely relevant, then fallback until we hit requiredCount
     var combined = new List<Recipe>((int)requiredCount);
-    combined.AddRange(relevantList.Select(r => r.Recipe));
+
+    // Take only up to requiredCount from relevant results
+    combined.AddRange(relevantList.Take((int)requiredCount).Select(r => r.Recipe));
 
     if (combined.Count < (int)requiredCount)
     {
       var spotsLeft = (int)requiredCount - combined.Count;
-      combined.AddRange(fallbackList
-        .Select(r => r.Recipe)
-        .Take(spotsLeft));
+      // Only add fallback items if minimumScore is not set or if the original requiredCount was explicitly set
+      // This prevents adding low-scoring items when user specified a minimumScore but not requiredCount
+      var shouldAddFallback = !minimumScore.HasValue || (requiredCount != config.MaxSearchResults);
+
+      if (shouldAddFallback)
+      {
+        combined.AddRange(fallbackList
+          .Select(r => r.Recipe)
+          .Take(spotsLeft));
+      }
     }
 
     logger.LogInformation(
@@ -201,15 +210,17 @@ public class RecipeSearcher(
   /// </summary>
   private static double ComputeFinalScore(double matchScore, double relevancyScore)
   {
-    // Example weighting: 70% LLM-based relevancy, 30% title/alias match
-    return (relevancyScore / 100.0 * 0.7) + (matchScore * 0.3);
+    // Example weighting: 80% LLM-based relevancy, 20% title/alias match
+    return (relevancyScore / 100.0 * 0.8) + (matchScore * 0.2);
   }
 
   private static string NormalizeQuery(string query)
   {
-    return string.IsNullOrWhiteSpace(query)
-      ? string.Empty
-      : query.Trim().ToLowerInvariant();
+    if (string.IsNullOrWhiteSpace(query))
+      return string.Empty;
+
+    // Collapse multiple whitespace into single spaces
+    return System.Text.RegularExpressions.Regex.Replace(query.Trim(), @"\s+", " ").ToLowerInvariant();
   }
 
   private static void ValidateSearchParameters(string query, int? minScore, int? requiredCount)

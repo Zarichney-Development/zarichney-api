@@ -235,6 +235,9 @@ public class ServiceStartup
     services.AddScoped<ILoggingStatus, LoggingStatus>();
     services.AddScoped<ILoggingService, LoggingService>();
 
+    // PDF Generation Services - provides HTTP client for image downloading
+    services.AddHttpClient<PdfCompiler>();
+
     // Repositories
     services.AddSingleton<ILlmRepository, LlmRepository>();
     services.AddSingleton<IRecipeRepository, RecipeFileRepository>();

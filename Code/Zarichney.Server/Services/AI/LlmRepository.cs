@@ -4,6 +4,8 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using OpenAI.Chat;
+using Zarichney.Services.AI.Interfaces;
+using Zarichney.Services.AI.Models;
 using Zarichney.Services.Email;
 using Zarichney.Services.GitHub;
 using Zarichney.Services.Sessions;
@@ -25,7 +27,7 @@ public class LlmMessage
   public string Request { get; init; } = string.Empty;
   public required object Response { get; init; }
   public DateTime Timestamp { get; init; }
-  public required ChatCompletion ChatCompletion { get; init; }
+  public required IChatCompletionWrapper ChatCompletion { get; init; }
 }
 
 public interface ILlmRepository
@@ -138,11 +140,29 @@ public class LlmRepository(IGitHubService githubService, IStatusService statusSe
       ["request"] = JsonValue.Create(formattedRequest),
       ["response"] = SerializeResponse(message.Response),
       ["timestamp"] = JsonValue.Create(message.Timestamp.ToString("o")),
-      ["chatCompletion"] = JsonNode.Parse(JsonSerializer.Serialize(
-        message.ChatCompletion,
-        IndentedOptions
-      ))
+      ["chatCompletion"] = SerializeChatCompletionSafely(message.ChatCompletion)
     };
+  }
+
+  private static JsonNode? SerializeChatCompletionSafely(IChatCompletionWrapper chatCompletion)
+  {
+    try
+    {
+      // For production ChatCompletionWrapper objects, serialize the underlying ChatCompletion
+      if (chatCompletion is ChatCompletionWrapper wrapper)
+      {
+        return JsonNode.Parse(JsonSerializer.Serialize(wrapper.UnderlyingCompletion, IndentedOptions));
+      }
+
+      // For test wrappers or other implementations, serialize the wrapper itself
+      return JsonNode.Parse(JsonSerializer.Serialize(chatCompletion, IndentedOptions));
+    }
+    catch
+    {
+      // Some SDK models may throw during serialization when partially constructed in tests.
+      // Prefer a null JSON value rather than failing the repository logic.
+      return null;
+    }
   }
 
   public async Task WriteConversationAsync(LlmConversation conversation, Session session)

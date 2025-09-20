@@ -19,6 +19,7 @@ public class PdfCompilerTests
 {
   private readonly IFixture _fixture;
   private readonly Mock<IFileService> _mockFileService;
+  private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
   private readonly Mock<ILogger<PdfCompiler>> _mockLogger;
   private readonly PdfCompilerConfig _config;
   private readonly PdfCompiler _sut;
@@ -27,6 +28,7 @@ public class PdfCompilerTests
   {
     _fixture = new Fixture();
     _mockFileService = new Mock<IFileService>();
+    _mockHttpClientFactory = new Mock<IHttpClientFactory>();
     _mockLogger = new Mock<ILogger<PdfCompiler>>();
     _config = new PdfCompilerConfig
     {
@@ -34,7 +36,7 @@ public class PdfCompilerTests
       FontSize = 12,
       ImageDirectory = "test-images"
     };
-    _sut = new PdfCompiler(_config, _mockFileService.Object, _mockLogger.Object);
+    _sut = new PdfCompiler(_config, _mockFileService.Object, _mockHttpClientFactory.Object, _mockLogger.Object);
   }
 
   #region Configuration Tests

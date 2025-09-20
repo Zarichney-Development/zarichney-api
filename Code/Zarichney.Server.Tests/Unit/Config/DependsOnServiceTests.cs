@@ -1,9 +1,11 @@
 using Zarichney.Services.Status;
 using FluentAssertions;
 using Xunit;
+using Zarichney.Tests.Framework.Attributes;
 
 namespace Zarichney.Tests.Unit.Config;
 
+[Trait(TestCategories.Category, TestCategories.Unit)]
 public class DependsOnServiceTests
 {
   [Fact]

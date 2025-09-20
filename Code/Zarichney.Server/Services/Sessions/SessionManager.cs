@@ -4,6 +4,7 @@ using Zarichney.Config;
 using Zarichney.Cookbook.Customers;
 using Zarichney.Cookbook.Orders;
 using Zarichney.Services.AI;
+using Zarichney.Services.AI.Interfaces;
 
 namespace Zarichney.Services.Sessions;
 
@@ -28,7 +29,7 @@ public interface ISessionManager
   void RemoveScopeFromSession(Guid scopeId, Session? session = null);
   Task AddOrder(IScopeContainer scope, CookbookOrder order);
 
-  Task AddMessage(Guid scopeId, string conversationId, string prompt, ChatCompletion completion,
+  Task AddMessage(Guid scopeId, string conversationId, string prompt, IChatCompletionWrapper completion,
     object? toolResponse = null);
 
   Task<string> InitializeConversation(Guid scopeId, List<ChatMessage> messages, ChatTool? functionTool = null);
@@ -386,7 +387,7 @@ public class SessionManager(
     Guid scopeId,
     string conversationId,
     string prompt,
-    ChatCompletion completion,
+    IChatCompletionWrapper completion,
     object? toolResponse = null)
   {
     ArgumentNullException.ThrowIfNull(completion);
@@ -415,7 +416,7 @@ public class SessionManager(
       throw new KeyNotFoundException($"Conversation {conversationId} not found in Session {session.Id}");
     }
 
-    var response = toolResponse ?? completion.Content[0].Text;
+    var response = toolResponse ?? completion.Content ?? "No content";
 
     var message = new LlmMessage
     {
@@ -445,7 +446,7 @@ public class SessionManager(
 
     var promptCatalogName = functionTool?.FunctionName;
 
-    var conversationId = $"{promptCatalogName + "-"}{DateTime.UtcNow:yyyyMMdd-HHmmss.fff}".ToLower();
+    var conversationId = $"{promptCatalogName + "-"}{DateTime.UtcNow:yyyyMMdd-HHmmss.fff}-{Guid.NewGuid().ToString("N")[..8]}".ToLower();
     var conversation = new LlmConversation
     {
       Id = conversationId,

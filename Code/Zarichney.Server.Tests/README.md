@@ -1,7 +1,7 @@
 # README: Code/Zarichney.Server.Tests Project
 
 **Version:** 1.5
-**Last Updated:** 2025-08-06
+**Last Updated:** 2025-09-20
 **Parent:** `../Zarichney.Server/README.md` (Conceptual link to the main application's README)
 
 ## 1. Purpose & Responsibility
@@ -31,6 +31,9 @@ The testing strategy employed aims for high confidence through realistic test sc
     * **FluentAssertions:** Expressive and readable assertions.
     * **Moq:** Mocking framework for unit tests.
     * **AutoFixture:** Test data generation, including advanced customizations for complex objects.
+    * **Interface Wrapper Pattern:** Clean abstractions for external SDK dependencies (e.g., `IChatCompletionWrapper`) eliminating reflection-based mocking.
+    * **Builder Pattern Extensions:** Fluent test data builders (e.g., `LlmServiceBuilder`) for complex service scenarios.
+    * **Enhanced Dependency Traits:** Comprehensive test categorization system supporting CI/CD filtering and external service management.
 * **Fixture Strategy:** A consolidated fixture strategy is employed, primarily using xUnit's `ICollectionFixture` with the `"Integration"` collection to share expensive resources like `CustomWebApplicationFactory` and `DatabaseFixture` across test classes, optimizing performance.
 
 ## 3. Project Structure
@@ -42,8 +45,9 @@ This test project is organized into the following main directories:
     * `Client/`: The auto-generated Refit API clients (multiple interface files). (See `./Framework/Client/README.md`)
     * `Fixtures/`: Shared test fixtures like `CustomWebApplicationFactory`, `DatabaseFixture`, and `ApiClientFixture`. (See `./Framework/Fixtures/README.md`)
     * `Helpers/`: Utility classes for testing, such as `AuthTestHelper` and `TestConfigurationHelper`. (See `./Framework/Helpers/README.md`)
-    * `Mocks/`: Contains mock factories (e.g., `MockStripeServiceFactory`) for configuring mocked services within the `CustomWebApplicationFactory`, and will include configurations for WireMock.Net. (See `./Framework/Mocks/README.md`)
-    * `TestData/AutoFixtureCustomizations/`: (New) Will house advanced AutoFixture customizations.
+    * `Mocks/`: Contains mock factories (e.g., `MockStripeServiceFactory`) for configuring mocked services within the `CustomWebApplicationFactory`, and will include configurations for WireMock.Net. Enhanced with interface wrapper patterns eliminating reflection-based approaches. (See `./Framework/Mocks/README.md`)
+    * `TestData/Builders/`: Test data builders using fluent patterns (e.g., `LlmServiceBuilder`) for complex scenarios.
+    * `TestData/AutoFixtureCustomizations/`: Enhanced AutoFixture customizations including proper namespace organization following framework standards.
     * (See `./Framework/README.md`)
 * **`/Unit/`**: Contains all unit tests, mirroring the structure of the `Zarichney.Server` project. (See `./Unit/README.md`)
 * **`/Integration/`**: Contains all integration tests, generally organized by API controllers or features. (See `./Integration/README.md`)
@@ -116,6 +120,11 @@ Tests use the `[DependencyFact]` attribute system for conditional execution base
 
 # Verify all environment variables are set
 echo $OPENAI_API_KEY && echo $STRIPE_SECRET_KEY && echo $MSGRAPH_TENANT_ID
+
+# Test dependency trait filtering (new PR #179 capability)
+dotnet test --filter "Dependency=ExternalOpenAI"   # 119 OpenAI-dependent tests
+dotnet test --filter "Dependency=ExternalGitHub"   # 13 GitHub-dependent tests
+dotnet test --filter "Category=Unit&Dependency!=ExternalOpenAI"  # Unit tests without external dependencies
 ```
 
 ### Running Tests

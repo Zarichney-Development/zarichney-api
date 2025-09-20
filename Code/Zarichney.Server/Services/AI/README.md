@@ -1,6 +1,6 @@
 # Module/Directory: /Services/AI
 
-**Last Updated:** 2025-04-14
+**Last Updated:** 2025-01-20
 
 > **Parent:** [`/Services`](../README.md)
 
@@ -108,12 +108,13 @@ graph TD
 
 ## 3. Interface Contract & Assumptions
 
-* **Key Public Interfaces:** 
+* **Key Public Interfaces:**
     * `IAiService`: High-level service interface for AI operations. Provides coordinated methods for audio transcription workflows and LLM completions that leverage multiple underlying services.
     * `ILlmService`: Provides methods for interacting with OpenAI's LLM models.
     * `ITranscribeService`: Provides methods for audio transcription, validation, and processing. Includes `TranscribeAudioAsync` for basic transcription, `ValidateAudioFile` for audio file validation, and `ProcessAudioFileAsync` for full audio processing workflow with metadata generation.
     * `ILlmRepository`: Provides methods for persisting LLM conversation logs.
     * `PromptBase`: Base class for creating structured prompts for LLM interactions.
+    * `IChatCompletionWrapper`: Interface abstraction for ChatCompletion objects that eliminates reflection usage. Provides standard properties (Content, Role, CreatedAt) for test scenarios. Implemented by ChatCompletionWrapper for production and TestChatCompletionWrapper in test framework.
 * **Return Types:**
     * `CallFunction<T>` and `GetCompletionContent(List<ChatMessage>...)` now return an `LlmResult<T>` object containing both the primary `Data` and the `ConversationId`. This facilitates multi-turn conversations managed by the caller without requiring manual history reconstruction.
     * The single-prompt overload `GetCompletionContent(string userPrompt...)` continues to return just the completion string for backward compatibility.
@@ -121,6 +122,7 @@ graph TD
     * All methods in `LlmService` will throw `ConfigurationMissingException` if the required API key is missing or invalid, resulting in the `OpenAIClient` being null.
     * Similarly, `TranscribeService.TranscribeAudioAsync()` will throw `ConfigurationMissingException` if the `AudioClient` is null due to missing API key configuration.
     * These exceptions are thrown at runtime when the methods are called, rather than at startup, allowing the application to start with partial functionality even when some configuration is missing.
+* **Wrapper Pattern Contract**: Tests should use `AiServiceMockFactory.CreateChatCompletionWrapper()` instead of `CreateMockChatCompletion()` to avoid reflection-based object creation. The wrapper provides clean interface-based mocking with proper null handling and content extraction.
 * **Assumptions:**
     * **API Keys:** Valid and correctly configured OpenAI API keys are essential (`LlmConfig.ApiKey`). [cite: Zarichney.Server/Services/AI/LlmService.cs]
     * **OpenAI Client Availability:** The injected `OpenAIClient` and `AudioClient` instances might be `null` if the required API key configuration is missing or invalid. The `LlmService` and `TranscribeService` implementations will need to handle this possibility appropriately by checking for null before using these clients. [cite: Zarichney.Server/Startup/ServiceStartup.cs]
@@ -149,6 +151,8 @@ graph TD
     3. Define the function schema in `GetFunction()` if using function calling
     4. The prompt is automatically registered via DI during startup (via `AddPrompts` method)
 * **Testing:** Requires mocking `OpenAIClient`, `AudioClient`, `IGitHubService` (for `LlmRepository`), and potentially `ISessionManager`. Mocking `ILlmService` itself is common when testing services that consume it. Testing actual AI interactions requires careful consideration due to cost and latency.
+* **Testing with Wrapper Pattern**: Use `IChatCompletionWrapper` for test scenarios requiring ChatCompletion objects. The `TestChatCompletionWrapper` class provides interface-based testing without reflection. Production code uses `ChatCompletionWrapper` to wrap OpenAI SDK objects.
+* **Migration from Reflection**: Replace `AiServiceMockFactory.CreateMockChatCompletion()` calls with `CreateChatCompletionWrapper()` for clean interface-based testing. The new approach eliminates reflection usage identified as technical debt in PR #179.
 * **Common Pitfalls / Gotchas:** Invalid or missing API keys. OpenAI API rate limits or downtime. Errors in function definition schemas provided by `PromptBase` implementations. Incorrect state management when using the Assistants API flow. OpenAI content filtering unexpectedly blocking requests or responses. Issues with `IGitHubService` preventing conversation log persistence.
 
 ## 6. Dependencies
@@ -158,6 +162,7 @@ graph TD
     * [`/Services/GitHub`](../GitHub/README.md): Consumed by `LlmRepository`.
     * [`/Services/Sessions`](../Sessions/README.md): Consumed by `LlmService` and `LlmRepository`.
     * [`/Startup/Configuration`](../../Startup/ConfigurationStartup.cs): For registration of prompts via DI.
+    * [`/Tests/Framework/Mocks`](../../Tests/Framework/Mocks/README.md): Test framework provides `TestChatCompletionWrapper` implementation and `AiServiceMockFactory` wrapper methods for interface-based testing.
 * **External Library Dependencies:**
     * `OpenAI`: The official .NET SDK for interacting with OpenAI APIs.
     * `Polly`: Used for implementing retry logic.
@@ -183,3 +188,4 @@ graph TD
 * The `LlmRepository`'s dependency on `IGitHubService` makes conversation logging dependent on GitHub availability and configuration. Consider alternative logging destinations (database, dedicated logging service) for better robustness or scalability.
 * Lack of support for streaming responses from the LLM, which could improve perceived latency for longer completions.
 * Could be extended to support other AI models or providers if needed in the future.
+* Migration opportunity: Production code could be gradually migrated to use IChatCompletionWrapper pattern for improved testability, though current wrapper approach maintains compatibility with OpenAI SDK.

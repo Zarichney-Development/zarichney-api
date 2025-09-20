@@ -131,6 +131,37 @@
 * **Usage Principles:**
     * Use **Builders** for core domain models or complex DTOs requiring specific, controlled states.
     * Use **AutoFixture** for anonymous data, simple DTOs, and populating non-critical properties.
+    * **Enhanced Service Builders (PR #179):** Use fluent builder patterns (e.g., `LlmServiceBuilder`) for complex service scenarios with invalid state testing capabilities.
+* **Resource Management (PR #179):** Test classes managing unmanaged resources (e.g., `MemoryStream`, external connections) **must** implement `IDisposable` pattern:
+    ```csharp
+    public class ApiErrorResultTests : IDisposable
+    {
+        private readonly MemoryStream _responseStream;
+        private bool _disposed = false;
+
+        public ApiErrorResultTests()
+        {
+            _responseStream = new MemoryStream();
+            // Test setup
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed && disposing)
+            {
+                _responseStream?.Dispose();
+                _disposed = true;
+            }
+        }
+    }
+    ```
+* **Interface Wrapper Pattern (PR #179):** Eliminate reflection-based mocking by creating testable abstractions for external SDK dependencies (e.g., `IChatCompletionWrapper` for OpenAI integration).
 * **Detailed Guidance:** Refer to `Docs/Standards/UnitTestCaseDevelopment.md` and `Docs/Standards/IntegrationTestCaseDevelopment.md` for specific AutoFixture customization and builder patterns.
 * **Clarity:** Test data setup should be clear and maintainable within the Arrange block.
 
@@ -144,10 +175,10 @@
         ```bash
         # Quick validation with AI-powered analysis
         /test-report summary
-        
+
         # Full test suite with detailed recommendations
         Scripts/run-test-suite.sh report
-        
+
         # Traditional HTML coverage report
         Scripts/run-test-suite.sh automation
         ```
@@ -155,6 +186,11 @@
         ```bash
         Scripts/run-test-suite.sh report --unit-only
         Scripts/run-test-suite.sh report --integration-only
+
+        # Enhanced dependency trait filtering (PR #179)
+        dotnet test --filter "Dependency=ExternalOpenAI"   # 119 OpenAI-dependent tests
+        dotnet test --filter "Dependency=ExternalGitHub"   # 13 GitHub-dependent tests
+        dotnet test --filter "Category=Unit&Dependency!=ExternalOpenAI"  # Unit tests without external dependencies
         ```
     5.  Ensure **all** locally run tests pass, build is warning-free, and quality gates are met.
 * **CI/CD (GitHub Actions - Phase 3 Enhanced):**

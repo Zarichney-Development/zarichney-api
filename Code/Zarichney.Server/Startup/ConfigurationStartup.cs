@@ -29,6 +29,14 @@ public static class ConfigurationStartup
 
     builder.Configuration.AddEnvironmentVariables();
 
+    // Add path transformation for development and testing environments
+    if (builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing"))
+    {
+      var dataPath = DetermineDataPath(builder.Environment);
+      builder.Configuration.AddPathTransformation(
+        builder.Configuration, dataPath, DataFolderName);
+    }
+
     if (builder.Environment.IsProduction())
     {
       builder.Configuration.AddSystemsManager("/cookbook-api", new Amazon.Extensions.NETCore.Setup.AWSOptions
@@ -92,71 +100,8 @@ public static class ConfigurationStartup
   public static void RegisterConfigurationServices(this IServiceCollection services, IConfiguration configuration,
     IWebHostEnvironment environment)
   {
-    string dataPath;
-    if (environment.IsDevelopment())
-    {
-      // Try to find the solution root directory by looking for a .sln file
-      var currentDir = AppContext.BaseDirectory; // Use BaseDirectory for better consistency
-      var directory = new DirectoryInfo(currentDir);
-
-      while (directory != null && !directory.GetFiles("*.sln").Any())
-      {
-        directory = directory.Parent;
-      }
-
-      if (directory != null && directory.GetFiles("*.sln").Any())
-      {
-        var solutionRoot = directory;
-        dataPath = Path.GetFullPath(Path.Combine(solutionRoot.FullName, DataFolderName));
-        Log.Information(
-          "Development environment detected. Found solution root at {SolutionRoot}. Using calculated data path: {DataPath}",
-          solutionRoot.FullName, dataPath);
-      }
-      else
-      {
-        // Fallback if .sln not found (might happen in specific deployment/test scenarios)
-        Log.Warning(
-          "Could not determine solution root directory. Falling back to relative path based on execution directory: {BaseDirectory}",
-          currentDir);
-        // This fallback might still result in the test output path, consider if another fallback is better.
-        // Maybe try the original parent logic as a secondary fallback?
-        var parentDirectory = Directory.GetParent(Environment.CurrentDirectory)?.FullName;
-        if (!string.IsNullOrEmpty(parentDirectory))
-        {
-          dataPath = Path.GetFullPath(Path.Combine(parentDirectory, DataFolderName));
-          Log.Debug("Fallback using parent of CurrentDirectory ({CurrentDirectory}). Path: {DataPath}",
-            Environment.CurrentDirectory, dataPath);
-        }
-        else
-        {
-          dataPath = Path.GetFullPath(DataFolderName); // Relative to current execution dir
-          Log.Warning("Fallback using relative path from execution directory. Path: {DataPath}", dataPath);
-        }
-      }
-    }
-    else // Production or other environments
-    {
-      dataPath = Environment.GetEnvironmentVariable("APP_DATA_PATH") ?? DataFolderName;
-      Log.Information(
-        "Production/Other environment detected. Using APP_DATA_PATH environment variable (or default): {DataPath}",
-        dataPath);
-      // Consider adding validation here to ensure APP_DATA_PATH provides an absolute path in production if required.
-    }
-
-    var transformedPaths = TransformConfigurationPaths(configuration, dataPath, DataFolderName);
-
-    if (transformedPaths.Count != 0)
-    {
-      ((IConfigurationBuilder)configuration).AddInMemoryCollection(transformedPaths!);
-
-      // Verify final configuration
-      Log.Debug("Final configuration paths:");
-      foreach (var key in transformedPaths.Keys)
-      {
-        var finalValue = configuration[key];
-        Log.Debug("{Key}: {Value}", key, finalValue);
-      }
-    }
+    // Configuration is already properly transformed by ConfigureConfiguration
+    // No reflection needed - proceed directly to config type registration
 
     var configTypes = Assembly.GetAssembly(typeof(Program))!
       .GetTypes()
@@ -247,40 +192,62 @@ public static class ConfigurationStartup
   }
 
   /// <summary>
-  /// Transforms paths in configuration that start with a specified prefix.
-  /// This method is designed to be reusable across both production and test environments.
+  /// Determines the appropriate data path based on the environment.
   /// </summary>
-  /// <param name="configuration">The configuration to scan for paths</param>
-  /// <param name="basePath">The base path to prepend after removing the prefix</param>
-  /// <param name="prefix">The prefix to look for and remove from paths (e.g., "Data/")</param>
-  /// <returns>Dictionary of transformed paths with keys being the config keys and values being the transformed paths</returns>
-  private static Dictionary<string, string> TransformConfigurationPaths(
-    IConfiguration configuration,
-    string basePath,
-    string prefix)
+  /// <param name="environment">The web host environment</param>
+  /// <returns>The absolute path to use for data files</returns>
+  private static string DetermineDataPath(IWebHostEnvironment environment)
   {
-    // Find all paths that start with the prefix
-    var pathConfigs = configuration.AsEnumerable()
-      .Where(kvp => kvp.Value?.StartsWith(prefix) == true)
-      .ToList();
-
-    Log.Debug("Found {Count} {Prefix} paths in configuration:", pathConfigs.Count, prefix);
-
-    // Log transformations
-    foreach (var kvp in pathConfigs.Where(kvp =>
-               Path.Combine(basePath, kvp.Value![prefix.Length..]) != kvp.Value))
+    if (environment.IsDevelopment() || environment.IsEnvironment("Testing"))
     {
-      var newPath = Path.Combine(basePath, kvp.Value![prefix.Length..]);
-      Log.Debug("Transforming path: {OldPath} -> {NewPath}", kvp.Value, newPath);
-    }
+      // Try to find the solution root directory by looking for a .sln file
+      var currentDir = AppContext.BaseDirectory; // Use BaseDirectory for better consistency
+      var directory = new DirectoryInfo(currentDir);
 
-    // Create the transformed paths dictionary
-    return pathConfigs
-      .Select(kvp => new KeyValuePair<string, string>(
-        kvp.Key,
-        Path.Combine(basePath, kvp.Value![prefix.Length..])
-      ))
-      .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+      while (directory != null && !directory.GetFiles("*.sln").Any())
+      {
+        directory = directory.Parent;
+      }
+
+      if (directory != null && directory.GetFiles("*.sln").Any())
+      {
+        var solutionRoot = directory;
+        var dataPath = Path.GetFullPath(Path.Combine(solutionRoot.FullName, DataFolderName));
+        Log.Information(
+          "Development environment detected. Found solution root at {SolutionRoot}. Using calculated data path: {DataPath}",
+          solutionRoot.FullName, dataPath);
+        return dataPath;
+      }
+      else
+      {
+        // Fallback if .sln not found (might happen in specific deployment/test scenarios)
+        Log.Warning(
+          "Could not determine solution root directory. Falling back to relative path based on execution directory: {BaseDirectory}",
+          currentDir);
+        var parentDirectory = Directory.GetParent(Environment.CurrentDirectory)?.FullName;
+        if (!string.IsNullOrEmpty(parentDirectory))
+        {
+          var dataPath = Path.GetFullPath(Path.Combine(parentDirectory, DataFolderName));
+          Log.Debug("Fallback using parent of CurrentDirectory ({CurrentDirectory}). Path: {DataPath}",
+            Environment.CurrentDirectory, dataPath);
+          return dataPath;
+        }
+        else
+        {
+          var dataPath = Path.GetFullPath(DataFolderName); // Relative to current execution dir
+          Log.Warning("Fallback using relative path from execution directory. Path: {DataPath}", dataPath);
+          return dataPath;
+        }
+      }
+    }
+    else // Production or other environments
+    {
+      var dataPath = Environment.GetEnvironmentVariable("APP_DATA_PATH") ?? DataFolderName;
+      Log.Information(
+        "Production/Other environment detected. Using APP_DATA_PATH environment variable (or default): {DataPath}",
+        dataPath);
+      return dataPath;
+    }
   }
 
   #endregion
