@@ -23,7 +23,7 @@ public class PdfCompilerConfig : IConfig
   public string ImageDirectory { get; init; } = "temp";
 }
 
-public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILogger<PdfCompiler> logger)
+public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, IHttpClientFactory httpClientFactory, ILogger<PdfCompiler> logger)
 {
   private readonly MarkdownPipeline _markdownPipeline = new MarkdownPipelineBuilder()
     .UseAdvancedExtensions()
@@ -148,7 +148,7 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
       else if (url.StartsWith("http://") || url.StartsWith("https://"))
       {
         logger.LogInformation("Downloading image from URL for {FileName}", fileName);
-        using var httpClient = new HttpClient();
+        using var httpClient = httpClientFactory.CreateClient();
         imageBytes = await httpClient.GetByteArrayAsync(url);
       }
       else

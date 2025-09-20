@@ -22,6 +22,7 @@ public class PdfCompilerGenerationTests
 {
   private readonly IFixture _fixture;
   private readonly Mock<IFileService> _mockFileService;
+  private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
   private readonly Mock<ILogger<PdfCompiler>> _mockLogger;
   private readonly PdfCompilerConfig _config;
   private readonly Mock<PdfCompiler> _mockPdfCompiler;
@@ -33,6 +34,7 @@ public class PdfCompilerGenerationTests
 
     _fixture = new Fixture();
     _mockFileService = new Mock<IFileService>();
+    _mockHttpClientFactory = new Mock<IHttpClientFactory>();
     _mockLogger = new Mock<ILogger<PdfCompiler>>();
     _config = new PdfCompilerConfig
     {
@@ -42,7 +44,7 @@ public class PdfCompilerGenerationTests
     };
 
     // Create partial mock to test protected methods
-    _mockPdfCompiler = new Mock<PdfCompiler>(_config, _mockFileService.Object, _mockLogger.Object)
+    _mockPdfCompiler = new Mock<PdfCompiler>(_config, _mockFileService.Object, _mockHttpClientFactory.Object, _mockLogger.Object)
     {
       CallBase = true
     };
@@ -388,7 +390,7 @@ A wonderful recipe for any occasion.";
       ImageDirectory = "custom-images"
     };
 
-    var customCompiler = new PdfCompiler(customConfig, _mockFileService.Object, _mockLogger.Object);
+    var customCompiler = new PdfCompiler(customConfig, _mockFileService.Object, _mockHttpClientFactory.Object, _mockLogger.Object);
 
     var markdown = "# Test Recipe\n\nTest content.";
     var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();

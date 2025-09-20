@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Xunit;
 using Zarichney.Controllers;
@@ -20,38 +21,29 @@ namespace Zarichney.Tests.Unit.Controllers;
 [Trait("Component", "Controllers")]
 public class ApiErrorResultTests : IDisposable
 {
-  private readonly Mock<HttpContext> _mockHttpContext;
-  private readonly Mock<HttpRequest> _mockRequest;
-  private readonly Mock<HttpResponse> _mockResponse;
-  private readonly ActionContext _actionContext;
-  private readonly MemoryStream _responseStream;
+  private readonly IServiceProvider _serviceProvider;
   private bool _disposed;
 
   public ApiErrorResultTests()
   {
-    _mockHttpContext = new Mock<HttpContext>();
-    _mockRequest = new Mock<HttpRequest>();
-    _mockResponse = new Mock<HttpResponse>();
-    _responseStream = new MemoryStream();
+    _serviceProvider = CreateServiceProvider();
+  }
 
-    // Setup basic HTTP context
-    _mockHttpContext.Setup(x => x.Request).Returns(_mockRequest.Object);
-    _mockHttpContext.Setup(x => x.Response).Returns(_mockResponse.Object);
-    _mockHttpContext.Setup(x => x.TraceIdentifier).Returns("test-trace-id");
+  private static IServiceProvider CreateServiceProvider()
+  {
+    var services = new ServiceCollection();
 
-    _mockRequest.Setup(x => x.Path).Returns(new PathString("/api/test"));
-    _mockRequest.Setup(x => x.Method).Returns("GET");
+    // Add required services for JsonResult to work
+    services.AddLogging();
+    services.AddOptions();
+    services.AddControllers()
+        .AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.WriteIndented = true;
+            options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        });
 
-    _mockResponse.SetupGet(x => x.Body).Returns(_responseStream);
-    _mockResponse.SetupProperty(x => x.StatusCode);
-    _mockResponse.SetupProperty(x => x.ContentType);
-    _mockResponse.SetupGet(x => x.HasStarted).Returns(false);
-
-    _actionContext = new ActionContext(
-        _mockHttpContext.Object,
-        new RouteData(),
-        new ActionDescriptor { DisplayName = "TestController.TestAction" }
-    );
+    return services.BuildServiceProvider();
   }
 
   #region Constructor Tests
@@ -97,12 +89,13 @@ public class ApiErrorResultTests : IDisposable
   {
     // Arrange
     var result = new ApiErrorResult(statusCode: statusCode);
+    var (actionContext, _) = CreateTestActionContext();
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    await result.ExecuteResultAsync(actionContext);
 
     // Assert
-    _mockResponse.Object.StatusCode.Should().Be(expectedCode,
+    actionContext.HttpContext.Response.StatusCode.Should().Be(expectedCode,
         $"because the HTTP status code should be {expectedCode} for {statusCode}");
   }
 
@@ -111,12 +104,13 @@ public class ApiErrorResultTests : IDisposable
   {
     // Arrange
     var result = new ApiErrorResult();
+    var (actionContext, _) = CreateTestActionContext();
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    await result.ExecuteResultAsync(actionContext);
 
     // Assert
-    _mockResponse.Object.StatusCode.Should().Be(500,
+    actionContext.HttpContext.Response.StatusCode.Should().Be(500,
         "because the default status code should be Internal Server Error (500)");
   }
 
@@ -129,12 +123,13 @@ public class ApiErrorResultTests : IDisposable
   {
     // Arrange
     var result = new ApiErrorResult();
+    var (actionContext, _) = CreateTestActionContext();
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    await result.ExecuteResultAsync(actionContext);
 
     // Assert
-    _mockResponse.Object.ContentType.Should().Be("application/json",
+    actionContext.HttpContext.Response.ContentType.Should().Be("application/json",
         "because the response should always be JSON");
   }
 
@@ -150,10 +145,9 @@ public class ApiErrorResultTests : IDisposable
     var result = new ApiErrorResult(exception, "User friendly message");
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    var responseBody = await GetJsonResultContent(result);
 
     // Assert
-    var responseBody = GetResponseBody();
     responseBody.Should().Contain("\"message\": \"User friendly message\"",
         "because the user message should be included");
     responseBody.Should().Contain("\"type\": \"InvalidOperationException\"",
@@ -169,10 +163,9 @@ public class ApiErrorResultTests : IDisposable
     var result = new ApiErrorResult(userMessage: "Just an error message");
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    var responseBody = await GetJsonResultContent(result);
 
     // Assert
-    var responseBody = GetResponseBody();
     responseBody.Should().Contain("\"message\": \"Just an error message\"",
         "because the user message should be included");
     responseBody.Should().NotContain("\"type\": \"InvalidOperationException\"",
@@ -186,10 +179,9 @@ public class ApiErrorResultTests : IDisposable
     var result = new ApiErrorResult();
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    var responseBody = await GetJsonResultContent(result);
 
     // Assert
-    var responseBody = GetResponseBody();
     responseBody.Should().Contain("\"path\": \"/api/test\"",
         "because the request path should be included");
     responseBody.Should().Contain("\"method\": \"GET\"",
@@ -205,10 +197,9 @@ public class ApiErrorResultTests : IDisposable
     var result = new ApiErrorResult();
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    var responseBody = await GetJsonResultContent(result);
 
     // Assert
-    var responseBody = GetResponseBody();
     responseBody.Should().Contain("\"traceId\": \"test-trace-id\"",
         "because the trace ID should be included for debugging");
   }
@@ -226,10 +217,9 @@ public class ApiErrorResultTests : IDisposable
     var result = new ApiErrorResult(outerException);
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    var responseBody = await GetJsonResultContent(result);
 
     // Assert
-    var responseBody = GetResponseBody();
     responseBody.Should().Contain("\"innerException\"",
         "because inner exception section should be present");
     responseBody.Should().Contain("\"message\": \"Inner exception message\"",
@@ -246,12 +236,11 @@ public class ApiErrorResultTests : IDisposable
     var result = new ApiErrorResult(exception);
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    var responseBody = await GetJsonResultContent(result);
 
     // Assert
-    var responseBody = GetResponseBody();
-    responseBody.Should().NotContain("\"innerException\"",
-        "because inner exception section should not be present when there's no inner exception");
+    responseBody.Should().Contain("\"innerException\": null",
+        "because inner exception should be null when there's no inner exception");
   }
 
   #endregion
@@ -275,10 +264,9 @@ public class ApiErrorResultTests : IDisposable
     var result = new ApiErrorResult(capturedEx);
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    var responseBody = await GetJsonResultContent(result);
 
     // Assert
-    var responseBody = GetResponseBody();
     responseBody.Should().Contain("\"stackTrace\": [",
         "because stack trace should be formatted as an array");
     responseBody.Should().Contain("ApiErrorResultTests.ExecuteResultAsync_WithStackTrace_FormatsStackTraceAsArray",
@@ -294,10 +282,9 @@ public class ApiErrorResultTests : IDisposable
     var result = new ApiErrorResult(exception);
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    var responseBody = await GetJsonResultContent(result);
 
     // Assert
-    var responseBody = GetResponseBody();
     // Should not throw and should handle null stack trace gracefully
     responseBody.Should().Contain("\"details\": \"Exception without stack trace\"",
         "because the exception message should still be included");
@@ -311,14 +298,13 @@ public class ApiErrorResultTests : IDisposable
   public async Task ExecuteResultAsync_WithNullRequestPath_HandlesGracefully()
   {
     // Arrange
-    _mockRequest.Setup(x => x.Path).Returns(new PathString());
     var result = new ApiErrorResult();
+    var (actionContext, _) = CreateTestActionContext(requestPath: "");
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    var responseBody = await GetJsonResultContent(result, actionContext);
 
     // Assert
-    var responseBody = GetResponseBody();
     responseBody.Should().Contain("\"request\"",
         "because request section should still be included");
     // Should not throw when path is null
@@ -328,14 +314,13 @@ public class ApiErrorResultTests : IDisposable
   public async Task ExecuteResultAsync_WithNullControllerDisplayName_HandlesGracefully()
   {
     // Arrange
-    _actionContext.ActionDescriptor.DisplayName = null;
     var result = new ApiErrorResult();
+    var (actionContext, _) = CreateTestActionContext(controllerDisplayName: null);
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    var responseBody = await GetJsonResultContent(result, actionContext);
 
     // Assert
-    var responseBody = GetResponseBody();
     responseBody.Should().Contain("\"controller\": null",
         "because null controller name should be handled");
   }
@@ -349,10 +334,9 @@ public class ApiErrorResultTests : IDisposable
     var result = new ApiErrorResult(exception);
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    var responseBody = await GetJsonResultContent(result);
 
     // Assert
-    var responseBody = GetResponseBody();
     responseBody.Should().Contain(longMessage.Substring(0, 100),
         "because the full exception message should be included regardless of length");
   }
@@ -368,10 +352,9 @@ public class ApiErrorResultTests : IDisposable
     var result = new ApiErrorResult();
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    var responseBody = await GetJsonResultContent(result);
 
     // Assert
-    var responseBody = GetResponseBody();
     responseBody.Should().Contain("\n  ",
         "because JSON should be indented for readability");
   }
@@ -383,10 +366,9 @@ public class ApiErrorResultTests : IDisposable
     var result = new ApiErrorResult();
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    var responseBody = await GetJsonResultContent(result);
 
     // Assert
-    var responseBody = GetResponseBody();
     responseBody.Should().Contain("\"error\"",
         "because property names should be in camelCase");
     responseBody.Should().Contain("\"traceId\"",
@@ -401,11 +383,52 @@ public class ApiErrorResultTests : IDisposable
 
   #region Helper Methods
 
-  private string GetResponseBody()
+  private (ActionContext actionContext, MemoryStream responseStream) CreateTestActionContext(
+      string requestPath = "/api/test",
+      string requestMethod = "GET",
+      string? controllerDisplayName = "TestController.TestAction",
+      string traceId = "test-trace-id")
   {
-    _responseStream.Position = 0;
-    using var reader = new StreamReader(_responseStream, Encoding.UTF8);
-    return reader.ReadToEnd();
+    var httpContext = new DefaultHttpContext();
+    httpContext.RequestServices = _serviceProvider;
+    httpContext.TraceIdentifier = traceId;
+    httpContext.Request.Path = new PathString(requestPath);
+    httpContext.Request.Method = requestMethod;
+
+    var responseStream = new MemoryStream();
+    httpContext.Response.Body = responseStream;
+
+    var actionContext = new ActionContext(
+        httpContext,
+        new RouteData(),
+        new ActionDescriptor { DisplayName = controllerDisplayName }
+    );
+
+    return (actionContext, responseStream);
+  }
+
+  private async Task<string> GetJsonResultContent(ApiErrorResult result, ActionContext? customActionContext = null)
+  {
+    ActionContext actionContext;
+    MemoryStream responseStream;
+
+    if (customActionContext != null)
+    {
+      actionContext = customActionContext;
+      responseStream = (MemoryStream)actionContext.HttpContext.Response.Body;
+    }
+    else
+    {
+      (actionContext, responseStream) = CreateTestActionContext();
+    }
+
+    // Execute the result
+    await result.ExecuteResultAsync(actionContext);
+
+    // Read the JSON content
+    responseStream.Position = 0;
+    using var reader = new StreamReader(responseStream, Encoding.UTF8);
+    return await reader.ReadToEndAsync();
   }
 
   #endregion
@@ -424,7 +447,7 @@ public class ApiErrorResultTests : IDisposable
     {
       if (disposing)
       {
-        _responseStream?.Dispose();
+        (_serviceProvider as IDisposable)?.Dispose();
       }
       _disposed = true;
     }

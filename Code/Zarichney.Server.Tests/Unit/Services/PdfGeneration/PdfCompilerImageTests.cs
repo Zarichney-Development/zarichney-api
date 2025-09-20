@@ -22,6 +22,7 @@ public class PdfCompilerImageTests
 {
   private readonly IFixture _fixture;
   private readonly Mock<IFileService> _mockFileService;
+  private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
   private readonly Mock<ILogger<PdfCompiler>> _mockLogger;
   private readonly PdfCompilerConfig _config;
   private readonly Mock<PdfCompiler> _mockPdfCompiler;
@@ -33,6 +34,7 @@ public class PdfCompilerImageTests
 
     _fixture = new Fixture();
     _mockFileService = new Mock<IFileService>();
+    _mockHttpClientFactory = new Mock<IHttpClientFactory>();
     _mockLogger = new Mock<ILogger<PdfCompiler>>();
     _config = new PdfCompilerConfig
     {
@@ -42,7 +44,7 @@ public class PdfCompilerImageTests
     };
 
     // Create partial mock to test protected methods
-    _mockPdfCompiler = new Mock<PdfCompiler>(_config, _mockFileService.Object, _mockLogger.Object)
+    _mockPdfCompiler = new Mock<PdfCompiler>(_config, _mockFileService.Object, _mockHttpClientFactory.Object, _mockLogger.Object)
     {
       CallBase = true
     };
@@ -364,7 +366,7 @@ public class PdfCompilerImageTests
   {
     // Arrange
     var order = CreateCookbookOrderWithImages();
-    var pdfCompiler = new PdfCompiler(_config, _mockFileService.Object, _mockLogger.Object);
+    var pdfCompiler = new PdfCompiler(_config, _mockFileService.Object, _mockHttpClientFactory.Object, _mockLogger.Object);
 
     _mockFileService
       .Setup(x => x.CreateFile(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
@@ -383,7 +385,7 @@ public class PdfCompilerImageTests
   {
     // Arrange
     var order = CreateCookbookOrderWithImages();
-    var pdfCompiler = new PdfCompiler(_config, _mockFileService.Object, _mockLogger.Object);
+    var pdfCompiler = new PdfCompiler(_config, _mockFileService.Object, _mockHttpClientFactory.Object, _mockLogger.Object);
 
     _mockFileService
       .Setup(x => x.CreateFile(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
@@ -402,7 +404,7 @@ public class PdfCompilerImageTests
   {
     // Arrange
     var order = CreateCookbookOrderWithMixedImages();
-    var pdfCompiler = new PdfCompiler(_config, _mockFileService.Object, _mockLogger.Object);
+    var pdfCompiler = new PdfCompiler(_config, _mockFileService.Object, _mockHttpClientFactory.Object, _mockLogger.Object);
 
     // Act
     var result = await pdfCompiler.CompileCookbook(order);

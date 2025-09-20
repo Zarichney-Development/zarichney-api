@@ -1,8 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Moq;
 using OpenAI.Chat;
-using System.ClientModel;
-using System.Text.Json;
 using Zarichney.Services.AI;
 using Zarichney.Services.AI.Interfaces;
 using Zarichney.Services.GitHub;
@@ -120,36 +118,6 @@ public static class AiServiceMockFactory
     return CreateChatCompletionWrapper(content);
   }
 
-  /// <summary>
-  /// Creates a ChatCompletion for testing purposes using a non-reflection approach.
-  /// Uses Moq to create a mockable test double instead of reflection-based construction.
-  /// </summary>
-  /// <param name="content">The content to include in the completion (default: "Test completion")</param>
-  /// <returns>A ChatCompletion for testing (never null)</returns>
-  public static ChatCompletion CreateMockChatCompletion(string content = "Test completion")
-  {
-    // REFLECTION USAGE ELIMINATED - Use Moq mocking instead of reflection
-    // Since ChatCompletion is sealed and can't be easily constructed, try alternative approaches
-
-    // CRITICAL: REFLECTION USAGE HAS BEEN SUCCESSFULLY ELIMINATED
-    // The previous reflection-based implementation (lines 105-168) has been completely removed
-    // This resolves the technical debt identified in PR #179
-
-    // ChatCompletion is a sealed class from OpenAI SDK that cannot be:
-    // - Constructed without reflection (by design)
-    // - Mocked with Moq (sealed class)
-    // - Deserialized with System.Text.Json (no parameterless constructor)
-
-    throw new InvalidOperationException(
-      $"REFLECTION USAGE ELIMINATED: ChatCompletion cannot be created without reflection.\n\n" +
-      $"MISSION ACCOMPLISHED: The brittle reflection-based approach has been removed.\n\n" +
-      $"TEST MIGRATION REQUIRED: Update this test to use service-level mocking:\n" +
-      $"• Mock ILlmService.GetCompletion() instead of creating ChatCompletion directly\n" +
-      $"• Use IChatCompletionWrapper for new functionality (see IChatCompletionWrapper.cs)\n" +
-      $"• Consider integration testing with real OpenAI responses\n\n" +
-      $"Current request content: '{content}'\n" +
-      $"See working-dir/reflection-removal-implementation-notes.md for detailed guidance.");
-  }
 
   /// <summary>
   /// Creates a mock IChatClientWrapper with standard behavior.

@@ -1,12 +1,15 @@
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Xunit;
+using Zarichney.Controllers;
 using Zarichney.Tests.TestData.Builders;
 
 namespace Zarichney.Tests.Unit.Controllers;
@@ -16,38 +19,31 @@ namespace Zarichney.Tests.Unit.Controllers;
 /// </summary>
 [Trait("Category", "Unit")]
 [Trait("Component", "Controllers")]
-public class ApiErrorResultBuilderTests
+public class ApiErrorResultBuilderTests : IDisposable
 {
-  private readonly Mock<HttpContext> _mockHttpContext;
-  private readonly Mock<HttpRequest> _mockRequest;
-  private readonly Mock<HttpResponse> _mockResponse;
-  private readonly ActionContext _actionContext;
-  private readonly MemoryStream _responseStream;
+  private readonly IServiceProvider _serviceProvider;
+  private bool _disposed;
 
   public ApiErrorResultBuilderTests()
   {
-    _mockHttpContext = new Mock<HttpContext>();
-    _mockRequest = new Mock<HttpRequest>();
-    _mockResponse = new Mock<HttpResponse>();
-    _responseStream = new MemoryStream();
+    _serviceProvider = CreateServiceProvider();
+  }
 
-    _mockHttpContext.Setup(x => x.Request).Returns(_mockRequest.Object);
-    _mockHttpContext.Setup(x => x.Response).Returns(_mockResponse.Object);
-    _mockHttpContext.Setup(x => x.TraceIdentifier).Returns("test-trace-id");
+  private static IServiceProvider CreateServiceProvider()
+  {
+    var services = new ServiceCollection();
 
-    _mockRequest.Setup(x => x.Path).Returns(new PathString("/api/test"));
-    _mockRequest.Setup(x => x.Method).Returns("POST");
+    // Add required services for JsonResult to work
+    services.AddLogging();
+    services.AddOptions();
+    services.AddControllers()
+        .AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.WriteIndented = true;
+            options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        });
 
-    _mockResponse.SetupGet(x => x.Body).Returns(_responseStream);
-    _mockResponse.SetupProperty(x => x.StatusCode);
-    _mockResponse.SetupProperty(x => x.ContentType);
-    _mockResponse.SetupGet(x => x.HasStarted).Returns(false);
-
-    _actionContext = new ActionContext(
-        _mockHttpContext.Object,
-        new RouteData(),
-        new ActionDescriptor { DisplayName = "TestController.TestAction" }
-    );
+    return services.BuildServiceProvider();
   }
 
   #region Builder Pattern Tests
@@ -59,13 +55,14 @@ public class ApiErrorResultBuilderTests
     var result = new ApiErrorResultBuilder()
         .WithBadRequest("Invalid input provided")
         .Build();
+    var (actionContext, _) = CreateTestActionContext();
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    await result.ExecuteResultAsync(actionContext);
 
     // Assert
-    _mockResponse.Object.StatusCode.Should().Be(400, "because it's a bad request");
-    var responseBody = GetResponseBody();
+    actionContext.HttpContext.Response.StatusCode.Should().Be(400, "because it's a bad request");
+    var responseBody = await GetJsonResultContent(result);
     responseBody.Should().Contain("\"message\": \"Invalid input provided\"");
   }
 
@@ -76,13 +73,14 @@ public class ApiErrorResultBuilderTests
     var result = new ApiErrorResultBuilder()
         .WithNotFound("User not found")
         .Build();
+    var (actionContext, _) = CreateTestActionContext();
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    await result.ExecuteResultAsync(actionContext);
 
     // Assert
-    _mockResponse.Object.StatusCode.Should().Be(404, "because it's a not found error");
-    var responseBody = GetResponseBody();
+    actionContext.HttpContext.Response.StatusCode.Should().Be(404, "because it's a not found error");
+    var responseBody = await GetJsonResultContent(result);
     responseBody.Should().Contain("\"message\": \"User not found\"");
   }
 
@@ -93,13 +91,14 @@ public class ApiErrorResultBuilderTests
     var result = new ApiErrorResultBuilder()
         .WithUnauthorized("Please login to continue")
         .Build();
+    var (actionContext, _) = CreateTestActionContext();
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    await result.ExecuteResultAsync(actionContext);
 
     // Assert
-    _mockResponse.Object.StatusCode.Should().Be(401, "because it's an unauthorized error");
-    var responseBody = GetResponseBody();
+    actionContext.HttpContext.Response.StatusCode.Should().Be(401, "because it's an unauthorized error");
+    var responseBody = await GetJsonResultContent(result);
     responseBody.Should().Contain("\"message\": \"Please login to continue\"");
   }
 
@@ -110,12 +109,13 @@ public class ApiErrorResultBuilderTests
     var result = new ApiErrorResultBuilder()
         .WithForbidden("You don't have permission to access this resource")
         .Build();
+    var (actionContext, _) = CreateTestActionContext();
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    await result.ExecuteResultAsync(actionContext);
 
     // Assert
-    _mockResponse.Object.StatusCode.Should().Be(403, "because it's a forbidden error");
+    actionContext.HttpContext.Response.StatusCode.Should().Be(403, "because it's a forbidden error");
   }
 
   #endregion
@@ -132,10 +132,9 @@ public class ApiErrorResultBuilderTests
         .Build();
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    var responseBody = await GetJsonResultContent(result);
 
     // Assert
-    var responseBody = GetResponseBody();
     responseBody.Should().Contain("\"type\": \"InvalidOperationException\"");
     responseBody.Should().Contain("\"details\": \"Operation is not valid in current state\"");
   }
@@ -150,10 +149,9 @@ public class ApiErrorResultBuilderTests
         .Build();
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    var responseBody = await GetJsonResultContent(result);
 
     // Assert
-    var responseBody = GetResponseBody();
     responseBody.Should().Contain("\"type\": \"ArgumentException\"");
     responseBody.Should().Contain("userId");
   }
@@ -166,13 +164,14 @@ public class ApiErrorResultBuilderTests
         .WithNullReferenceException("Object reference not set")
         .WithInternalServerError()
         .Build();
+    var (actionContext, _) = CreateTestActionContext();
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    await result.ExecuteResultAsync(actionContext);
 
     // Assert
-    _mockResponse.Object.StatusCode.Should().Be(500);
-    var responseBody = GetResponseBody();
+    actionContext.HttpContext.Response.StatusCode.Should().Be(500);
+    var responseBody = await GetJsonResultContent(result);
     responseBody.Should().Contain("\"type\": \"NullReferenceException\"");
   }
 
@@ -190,13 +189,14 @@ public class ApiErrorResultBuilderTests
         .WithUserMessage("Something went wrong, please try again")
         .WithStatusCode(HttpStatusCode.ServiceUnavailable)
         .Build();
+    var (actionContext, _) = CreateTestActionContext();
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    await result.ExecuteResultAsync(actionContext);
 
     // Assert
-    _mockResponse.Object.StatusCode.Should().Be(503);
-    var responseBody = GetResponseBody();
+    actionContext.HttpContext.Response.StatusCode.Should().Be(503);
+    var responseBody = await GetJsonResultContent(result);
     responseBody.Should().Contain("\"message\": \"Something went wrong, please try again\"");
     responseBody.Should().Contain("\"type\": \"InvalidOperationException\"");
   }
@@ -208,13 +208,14 @@ public class ApiErrorResultBuilderTests
     var result = new ApiErrorResultBuilder()
         .WithDefaults()
         .Build();
+    var (actionContext, _) = CreateTestActionContext();
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    await result.ExecuteResultAsync(actionContext);
 
     // Assert
-    _mockResponse.Object.StatusCode.Should().Be(500);
-    var responseBody = GetResponseBody();
+    actionContext.HttpContext.Response.StatusCode.Should().Be(500);
+    var responseBody = await GetJsonResultContent(result);
     responseBody.Should().Contain("\"message\": \"An unexpected error occurred\"");
   }
 
@@ -231,19 +232,16 @@ public class ApiErrorResultBuilderTests
         .Build();
 
     // Act
-    await result1.ExecuteResultAsync(_actionContext);
-    var response1 = GetResponseBody();
+    var response1 = await GetJsonResultContent(result1);
+    var response2 = await GetJsonResultContent(result2);
 
-    _responseStream.SetLength(0); // Clear stream
-    _responseStream.Position = 0;
-
-    await result2.ExecuteResultAsync(_actionContext);
-    var response2 = GetResponseBody();
+    var (actionContext, _) = CreateTestActionContext();
+    await result2.ExecuteResultAsync(actionContext);
 
     // Assert
     response1.Should().Contain("First error");
     response2.Should().Contain("Second error");
-    _mockResponse.Object.StatusCode.Should().Be(404, "because the second build used NotFound");
+    actionContext.HttpContext.Response.StatusCode.Should().Be(404, "because the second build used NotFound");
   }
 
   #endregion
@@ -259,10 +257,9 @@ public class ApiErrorResultBuilderTests
         .Build();
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    var responseBody = await GetJsonResultContent(result);
 
     // Assert
-    var responseBody = GetResponseBody();
     responseBody.Should().Contain("\"type\": \"Exception\"");
     responseBody.Should().Contain("\"details\": \"Simple error message\"");
   }
@@ -280,10 +277,9 @@ public class ApiErrorResultBuilderTests
         .Build();
 
     // Act
-    await result.ExecuteResultAsync(_actionContext);
+    var responseBody = await GetJsonResultContent(result);
 
     // Assert
-    var responseBody = GetResponseBody();
     responseBody.Should().Contain("\"innerException\"");
     responseBody.Should().Contain("ArgumentNullException");
   }
@@ -292,11 +288,74 @@ public class ApiErrorResultBuilderTests
 
   #region Helper Methods
 
-  private string GetResponseBody()
+  private (ActionContext actionContext, MemoryStream responseStream) CreateTestActionContext(
+      string requestPath = "/api/test",
+      string requestMethod = "POST",
+      string? controllerDisplayName = "TestController.TestAction",
+      string traceId = "test-trace-id")
   {
-    _responseStream.Position = 0;
-    using var reader = new StreamReader(_responseStream, Encoding.UTF8, leaveOpen: true);
-    return reader.ReadToEnd();
+    var httpContext = new DefaultHttpContext();
+    httpContext.RequestServices = _serviceProvider;
+    httpContext.TraceIdentifier = traceId;
+    httpContext.Request.Path = new PathString(requestPath);
+    httpContext.Request.Method = requestMethod;
+
+    var responseStream = new MemoryStream();
+    httpContext.Response.Body = responseStream;
+
+    var actionContext = new ActionContext(
+        httpContext,
+        new RouteData(),
+        new ActionDescriptor { DisplayName = controllerDisplayName }
+    );
+
+    return (actionContext, responseStream);
+  }
+
+  private async Task<string> GetJsonResultContent(ApiErrorResult result, ActionContext? customActionContext = null)
+  {
+    ActionContext actionContext;
+    MemoryStream responseStream;
+
+    if (customActionContext != null)
+    {
+      actionContext = customActionContext;
+      responseStream = (MemoryStream)actionContext.HttpContext.Response.Body;
+    }
+    else
+    {
+      (actionContext, responseStream) = CreateTestActionContext();
+    }
+
+    // Execute the result
+    await result.ExecuteResultAsync(actionContext);
+
+    // Read the JSON content
+    responseStream.Position = 0;
+    using var reader = new StreamReader(responseStream, Encoding.UTF8);
+    return await reader.ReadToEndAsync();
+  }
+
+  #endregion
+
+  #region IDisposable Implementation
+
+  public void Dispose()
+  {
+    Dispose(true);
+    GC.SuppressFinalize(this);
+  }
+
+  protected virtual void Dispose(bool disposing)
+  {
+    if (!_disposed)
+    {
+      if (disposing)
+      {
+        (_serviceProvider as IDisposable)?.Dispose();
+      }
+      _disposed = true;
+    }
   }
 
   #endregion

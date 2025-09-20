@@ -30,6 +30,7 @@ public class OrderServiceTests
   private readonly Mock<ILlmService> _mockLlmService;
   private readonly Mock<IOrderRepository> _mockOrderRepository;
   private readonly Mock<IFileService> _mockFileService;
+  private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
   private readonly Mock<PdfCompiler> _mockPdfCompiler;
   private readonly ProcessOrderPrompt _processOrderPrompt;
   private readonly Mock<IRecipeService> _mockRecipeService;
@@ -51,7 +52,8 @@ public class OrderServiceTests
     _mockLlmService = new Mock<ILlmService>();
     _mockOrderRepository = new Mock<IOrderRepository>();
     _mockFileService = new Mock<IFileService>();
-    _mockPdfCompiler = new Mock<PdfCompiler>(new PdfCompilerConfig(), _mockFileService.Object, new Mock<ILogger<PdfCompiler>>().Object);
+    _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+    _mockPdfCompiler = new Mock<PdfCompiler>(new PdfCompilerConfig(), _mockFileService.Object, _mockHttpClientFactory.Object, new Mock<ILogger<PdfCompiler>>().Object);
     _processOrderPrompt = new ProcessOrderPrompt();
     _mockRecipeService = new Mock<IRecipeService>();
     _mockScope = new Mock<IScopeContainer>();
