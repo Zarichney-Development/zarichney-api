@@ -4,6 +4,8 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using OpenAI.Chat;
+using Zarichney.Services.AI.Interfaces;
+using Zarichney.Services.AI.Models;
 using Zarichney.Services.Email;
 using Zarichney.Services.GitHub;
 using Zarichney.Services.Sessions;
@@ -25,7 +27,7 @@ public class LlmMessage
   public string Request { get; init; } = string.Empty;
   public required object Response { get; init; }
   public DateTime Timestamp { get; init; }
-  public required ChatCompletion ChatCompletion { get; init; }
+  public required IChatCompletionWrapper ChatCompletion { get; init; }
 }
 
 public interface ILlmRepository
@@ -142,10 +144,17 @@ public class LlmRepository(IGitHubService githubService, IStatusService statusSe
     };
   }
 
-  private static JsonNode? SerializeChatCompletionSafely(ChatCompletion chatCompletion)
+  private static JsonNode? SerializeChatCompletionSafely(IChatCompletionWrapper chatCompletion)
   {
     try
     {
+      // For production ChatCompletionWrapper objects, serialize the underlying ChatCompletion
+      if (chatCompletion is ChatCompletionWrapper wrapper)
+      {
+        return JsonNode.Parse(JsonSerializer.Serialize(wrapper.UnderlyingCompletion, IndentedOptions));
+      }
+
+      // For test wrappers or other implementations, serialize the wrapper itself
       return JsonNode.Parse(JsonSerializer.Serialize(chatCompletion, IndentedOptions));
     }
     catch

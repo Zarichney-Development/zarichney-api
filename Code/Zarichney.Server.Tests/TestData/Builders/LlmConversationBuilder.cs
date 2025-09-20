@@ -1,5 +1,6 @@
 using OpenAI.Chat;
 using Zarichney.Services.AI;
+using Zarichney.Services.AI.Interfaces;
 using Zarichney.Tests.TestData.Builders;
 using Zarichney.Tests.Framework.Mocks;
 
@@ -106,7 +107,7 @@ public class LlmMessageBuilder
   private object _response = "Test response";
   private DateTime _timestamp = DateTime.UtcNow;
   private ChatCompletionOptions? _options;
-  private ChatCompletion? _chatCompletion;
+  private IChatCompletionWrapper? _chatCompletion;
 
   /// <summary>
   /// Sets a specific request message.
@@ -147,7 +148,7 @@ public class LlmMessageBuilder
   /// <summary>
   /// Sets a specific ChatCompletion.
   /// </summary>
-  public LlmMessageBuilder WithChatCompletion(ChatCompletion chatCompletion)
+  public LlmMessageBuilder WithChatCompletion(IChatCompletionWrapper chatCompletion)
   {
     _chatCompletion = chatCompletion;
     return this;
@@ -176,14 +177,9 @@ public class LlmMessageBuilder
   /// <summary>
   /// Creates a mock ChatCompletion for testing purposes.
   /// </summary>
-  private static ChatCompletion CreateMockChatCompletion()
+  private static IChatCompletionWrapper CreateMockChatCompletion()
   {
-    // Delegate to centralized mock factory to keep consistency and avoid null-forgiving operator
-    var completion = AiServiceMockFactory.CreateMockChatCompletion("Test completion");
-    if (completion is null)
-    {
-      throw new NotImplementedException("ChatCompletion mocking should be handled at service layer");
-    }
-    return completion;
+    // Use new wrapper pattern instead of reflection-based approach
+    return AiServiceMockFactory.CreateChatCompletionWrapper("Test completion");
   }
 }

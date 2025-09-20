@@ -1128,11 +1128,7 @@ public class SessionManagerTests
     session.Conversations.TryAdd(conversationId, conversation);
     _sessionManager.Sessions.TryAdd(session.Id, session);
 
-    var chatCompletion = AiServiceMockFactory.CreateMockChatCompletion("Response text");
-    if (chatCompletion == null)
-    {
-      throw new InvalidOperationException("Failed to create mock ChatCompletion");
-    }
+    var chatCompletion = AiServiceMockFactory.CreateChatCompletionWrapper("Response text");
 
     // Act - Add many messages to test boundary
     for (int i = 0; i < 1000; i++)

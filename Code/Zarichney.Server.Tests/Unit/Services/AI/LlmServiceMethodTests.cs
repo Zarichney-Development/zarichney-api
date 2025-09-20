@@ -75,7 +75,7 @@ public class LlmServiceMethodTests
   public void LlmModels_Constants_HaveCorrectValues()
   {
     // Assert
-    LlmModels.Gpt4Omini.Should().Be("gpt-4.1-mini-2025-04-14");
+    LlmModels.Gpt4Omini.Should().Be("gpt-5-mini-2025-08-07");
     LlmModels.Gpt4O.Should().Be("gpt-4o");
     LlmModels.O1Mini.Should().Be("gpt-o1-mini");
     LlmModels.O1.Should().Be("gpt-o1");

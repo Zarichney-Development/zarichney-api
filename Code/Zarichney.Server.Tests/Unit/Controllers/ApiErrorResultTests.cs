@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -17,13 +18,14 @@ namespace Zarichney.Tests.Unit.Controllers;
 /// </summary>
 [Trait("Category", "Unit")]
 [Trait("Component", "Controllers")]
-public class ApiErrorResultTests
+public class ApiErrorResultTests : IDisposable
 {
   private readonly Mock<HttpContext> _mockHttpContext;
   private readonly Mock<HttpRequest> _mockRequest;
   private readonly Mock<HttpResponse> _mockResponse;
   private readonly ActionContext _actionContext;
   private readonly MemoryStream _responseStream;
+  private bool _disposed;
 
   public ApiErrorResultTests()
   {
@@ -404,6 +406,28 @@ public class ApiErrorResultTests
     _responseStream.Position = 0;
     using var reader = new StreamReader(_responseStream, Encoding.UTF8);
     return reader.ReadToEnd();
+  }
+
+  #endregion
+
+  #region IDisposable Implementation
+
+  public void Dispose()
+  {
+    Dispose(true);
+    GC.SuppressFinalize(this);
+  }
+
+  protected virtual void Dispose(bool disposing)
+  {
+    if (!_disposed)
+    {
+      if (disposing)
+      {
+        _responseStream?.Dispose();
+      }
+      _disposed = true;
+    }
   }
 
   #endregion

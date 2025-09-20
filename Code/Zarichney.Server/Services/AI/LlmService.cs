@@ -7,6 +7,8 @@ using OpenAI.Chat;
 using Polly;
 using Polly.Retry;
 using Zarichney.Config;
+using Zarichney.Services.AI.Interfaces;
+using Zarichney.Services.AI.Models;
 using Zarichney.Services.Sessions;
 namespace Zarichney.Services.AI;
 
@@ -38,7 +40,7 @@ public class LlmConfig : IConfig
 public static class LlmModels
 {
   // TODO: clean this up and add param support with default model
-  public const string Gpt4Omini = "gpt-4.1-mini-2025-04-14";
+  public const string Gpt4Omini = "gpt-5-mini-2025-08-07";
   public const string Gpt4O = "gpt-4o";
   public const string O1Mini = "gpt-o1-mini";
   public const string O1 = "gpt-o1";
@@ -513,7 +515,7 @@ public class LlmService : ILlmService
 
         var prompt = messages.Last(m => m is UserChatMessage).Content[0].Text;
         // Store the message in the session
-        await _sessionManager.AddMessage(_scope.Id, conversationId, prompt, chatCompletion, result);
+        await _sessionManager.AddMessage(_scope.Id, conversationId, prompt, new ChatCompletionWrapper(chatCompletion), result);
 
         return new LlmResult<T>
         {
@@ -576,7 +578,7 @@ public class LlmService : ILlmService
     var response = completion.Content[0].Text;
 
     // Store the message in the session
-    await _sessionManager.AddMessage(_scope.Id, conversationId, prompt, completion);
+    await _sessionManager.AddMessage(_scope.Id, conversationId, prompt, new ChatCompletionWrapper(completion));
 
     return new LlmResult<string>
     {
