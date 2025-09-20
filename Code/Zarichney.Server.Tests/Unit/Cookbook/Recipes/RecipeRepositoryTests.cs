@@ -23,7 +23,6 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
   [Trait(TestCategories.Category, TestCategories.Unit)]
   [Trait(TestCategories.Component, TestCategories.Service)]
   [Trait(TestCategories.Feature, TestCategories.Cookbook)]
-  [Trait(TestCategories.Dependency, TestCategories.ExternalOpenAI)]
   public class RecipeRepositoryTests : IAsyncLifetime
   {
     // Mock dependencies
@@ -95,7 +94,7 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
         },
         new Recipe
         {
-          Id = "recipe2", 
+          Id = "recipe2",
           Title = "Test Recipe 2",
           Description = "Test description 2",
           Servings = "2",
@@ -263,7 +262,7 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
       await _repository.InitializeAsync();
 
       // Assert
-      _mockFileService.Verify(fs => fs.GetFiles(_recipeConfig.OutputDirectory), Times.Once, 
+      _mockFileService.Verify(fs => fs.GetFiles(_recipeConfig.OutputDirectory), Times.Once,
         "Because initialization should load recipe files from the configured directory");
       _mockFileService.Verify(fs => fs.ReadFromFile<List<Recipe>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()), Times.AtLeastOnce,
         "Because initialization should read recipe data from each found file");
@@ -296,8 +295,8 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
       // Act & Assert
       var actualException = await Assert.ThrowsAsync<InvalidOperationException>(
         () => _repository.InitializeAsync());
-      
-      actualException.Should().Be(expectedException, 
+
+      actualException.Should().Be(expectedException,
         "Because file service errors during initialization should be propagated to caller");
     }
 
@@ -585,7 +584,7 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
       };
 
       _mockFileService.Setup(fs => fs.ReadFromFile<List<Recipe>?>(
-        _recipeConfig.OutputDirectory, 
+        _recipeConfig.OutputDirectory,
         It.IsAny<string>(),
         It.IsAny<string?>()))
         .ReturnsAsync(existingRecipes);

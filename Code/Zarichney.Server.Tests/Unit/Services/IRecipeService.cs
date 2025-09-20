@@ -1,3 +1,4 @@
+using Zarichney.Cookbook.Recipes;
 using Zarichney.Tests.TestData;
 
 namespace Zarichney.Tests.Unit.Services;

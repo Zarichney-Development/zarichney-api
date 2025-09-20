@@ -32,7 +32,7 @@ public class AiControllerTests
     // Basic HttpContext setup - individual tests will configure form data as needed
     var httpContext = new DefaultHttpContext();
     httpContext.Request.ContentType = "multipart/form-data; boundary=---------------------------9051914041544843365972754266";
-    
+
     _sut.ControllerContext = new ControllerContext { HttpContext = httpContext };
   }
 

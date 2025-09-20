@@ -6,9 +6,11 @@ using Microsoft.OpenApi.Models;
 using Moq;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Xunit;
+using Zarichney.Tests.Framework.Attributes;
 
 namespace Zarichney.Tests.Unit.Config;
 
+[Trait(TestCategories.Category, TestCategories.Unit)]
 public class ServiceAvailabilityOperationFilterTests
 {
   private readonly Mock<IStatusService> _mockStatusService;

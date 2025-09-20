@@ -13,6 +13,7 @@ namespace Zarichney.Tests.Integration.Smoke;
 /// Smoke tests for verifying that the most critical parts of the API are working.
 /// These tests are lightweight and run quickly to provide confidence that the system is operational.
 /// </summary>
+[Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Category, TestCategories.Smoke)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
 [Trait(TestCategories.Dependency, TestCategories.Docker)]

@@ -2,6 +2,7 @@ using AutoFixture;
 using AutoFixture.AutoMoq;
 using AutoFixture.Xunit2;
 using AutoFixture.Kernel;
+using Zarichney.Server.Tests.Framework.TestData.AutoFixtureCustomizations;
 
 namespace Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
 
@@ -62,6 +63,7 @@ public class AutoMoqDataAttribute : AutoDataAttribute
     fixture.Customize(new HttpContextCustomization());
     fixture.Customize(new GraphServiceCustomization());
     fixture.Customize(new StripeObjectCustomization());
+    fixture.Customize(new WebScraperCustomization());
 
     // Configure AutoFixture to avoid infinite recursion with EF Core entities
     var behaviorsToRemove = fixture.Behaviors.OfType<ThrowingRecursionBehavior>().ToList();

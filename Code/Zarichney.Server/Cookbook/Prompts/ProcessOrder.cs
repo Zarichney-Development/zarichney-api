@@ -59,7 +59,7 @@ public class ProcessOrderPrompt : PromptBase
     </SystemPrompt>
     """;
 
-  public string GetUserPrompt(CookbookOrderSubmission order)
+  public virtual string GetUserPrompt(CookbookOrderSubmission order)
     => $"""
         Order:
         ```md

@@ -246,7 +246,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     services.AddSingleton(sp => sp.GetRequiredService<Mock<ILlmService>>().Object);
     services.AddSingleton(sp => sp.GetRequiredService<Mock<IGitHubService>>().Object);
     services.AddSingleton(sp => sp.GetRequiredService<Mock<IEmailService>>().Object);
-    
+
     // Register test framework helper services
     services.AddSingleton<MockHelper>();
     services.AddSingleton<EmailServiceMockFactory>();
