@@ -151,8 +151,8 @@ public class RecipeRepositoryTests : IAsyncLifetime
     _mockBackgroundWorker.Setup(bw => bw.QueueBackgroundWorkAsync(It.IsAny<Func<IScopeContainer, CancellationToken, Task>>(), It.IsAny<Session?>()))
       .Callback<Func<IScopeContainer, CancellationToken, Task>, Session?>((work, session) =>
       {
-        // Execute the work synchronously for testing
-        work(_mockScopeContainer.Object, CancellationToken.None).GetAwaiter().GetResult();
+        // Execute the work on the thread pool to avoid potential deadlocks in sync test contexts
+        Task.Run(async () => await work(_mockScopeContainer.Object, CancellationToken.None)).Wait();
       });
 
     // Setup session manager for parallel processing
