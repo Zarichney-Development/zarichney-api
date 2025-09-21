@@ -11,6 +11,7 @@ source "$SCRIPT_DIR/common-functions.sh"
 
 # Script configuration
 readonly FRONTEND_DIR="Code/Zarichney.Website"
+readonly REPO_ROOT="$(pwd)"
 readonly S3_BUCKET="static.zarichney.com"
 readonly EC2_USERNAME="ec2-user"
 
@@ -195,8 +196,8 @@ download_build_artifacts() {
 
 deploy_to_s3() {
     log_section "Deploying Static Assets to S3"
-    
-    cd "$FRONTEND_DIR" || die "Failed to change to frontend directory"
+    # Work within frontend directory, then return to repo root
+    pushd "$FRONTEND_DIR" >/dev/null || die "Failed to change to frontend directory"
     
     local s3_bucket="${S3_BUCKET}"
     if [[ "$TARGET_ENV" != "production" ]]; then
@@ -217,6 +218,7 @@ deploy_to_s3() {
         
         if aws s3 sync dist/browser "s3://$s3_bucket" --delete; then
             log_success "S3 deployment successful"
+            popd >/dev/null
             return 0
         else
             log_warning "S3 deployment attempt $attempt failed"
@@ -227,13 +229,15 @@ deploy_to_s3() {
         fi
     done
     
+    popd >/dev/null
     die "S3 deployment failed after 3 attempts"
 }
 
 deploy_to_ec2() {
     log_section "Deploying to EC2 Instance"
-    
-    cd "$FRONTEND_DIR" || die "Failed to change to frontend directory"
+    # Ensure we start from repo root, then work within frontend directory
+    cd "$REPO_ROOT" || true
+    pushd "$FRONTEND_DIR" >/dev/null || die "Failed to change to frontend directory"
     
     # Prepare server files
     prepare_server_files
@@ -249,6 +253,7 @@ deploy_to_ec2() {
     
     # Cleanup SSH key
     cleanup_ssh_key
+    popd >/dev/null
 }
 
 prepare_server_files() {
