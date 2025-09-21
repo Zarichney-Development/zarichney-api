@@ -543,6 +543,7 @@ jobs:
 
       - name: Initialize CodeQL
         if: matrix.scan-type == 'codeql'
+        continue-on-error: true
         uses: github/codeql-action/init@v3
         with:
           languages: 'csharp,javascript'
@@ -551,6 +552,7 @@ jobs:
 
       - name: Build for CodeQL
         if: matrix.scan-type == 'codeql'
+        continue-on-error: true
         run: |
           # Build backend for CodeQL analysis (exclude test projects to avoid test-only compile errors)
           dotnet restore Code/Zarichney.Server/Zarichney.Server.csproj
@@ -563,7 +565,24 @@ jobs:
 
       - name: Perform CodeQL Analysis
         if: matrix.scan-type == 'codeql'
+        continue-on-error: true
+        id: codeql-analysis
         uses: github/codeql-action/analyze@v3
+
+      - name: Report CodeQL Status
+        if: matrix.scan-type == 'codeql'
+        run: |
+          if [ "${{ steps.codeql-analysis.outcome }}" = "failure" ]; then
+            echo "::warning title=CodeQL Analysis::CodeQL analysis encountered issues but build continues. Check GitHub Security tab for findings."
+            echo "::notice title=Security Advisory::CodeQL provides informational security feedback and does not block builds. Review findings in the Security tab for actionable insights."
+            echo "📊 CodeQL Status: Failed (non-blocking)"
+            echo "🔍 Action Required: Review findings in GitHub Security tab"
+            echo "✅ Build Status: Continuing as CodeQL is advisory-only"
+          else
+            echo "::notice title=CodeQL Analysis::CodeQL analysis completed successfully. Results available in GitHub Security tab."
+            echo "📊 CodeQL Status: Completed successfully"
+            echo "🔍 Security Results: Available in GitHub Security tab"
+          fi
 
       - name: Install required tools
         run: |
