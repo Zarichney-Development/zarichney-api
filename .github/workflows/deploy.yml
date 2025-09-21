@@ -34,7 +34,10 @@ jobs:
   deployment-decision:
     name: "Deployment Decision"
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.event == 'push' || github.event_name == 'workflow_dispatch'
+    # Run when triggered by:
+    # - Build & Test workflow completion (push or manual dispatch)
+    # - Manual deployment dispatch
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch'
     outputs:
       deploy-backend: ${{ steps.decision.outputs.deploy-backend }}
       deploy-frontend: ${{ steps.decision.outputs.deploy-frontend }}
@@ -245,6 +248,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Node.js for build fallback
+        uses: ./.github/actions/shared/setup-environment
+        with:
+          setup-dotnet: 'false'
+          setup-node: 'true'
+          node-version: '18.x'
+
       - name: Download frontend build artifacts (from triggering build)
         if: github.event_name == 'workflow_run'
         env:
@@ -256,13 +266,22 @@ jobs:
             -n frontend-build-${{ github.event.workflow_run.run_number }} \
             -D Code/Zarichney.Website/
 
-      - name: Download frontend build artifacts (manual testing)
+      - name: Download frontend build artifacts (manual dispatch)
         if: github.event_name == 'workflow_dispatch'
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
           name: frontend-build-${{ github.run_number }}
           path: Code/Zarichney.Website/
+
+      - name: Fallback • Build frontend if no artifacts found
+        run: |
+          if [ ! -d "Code/Zarichney.Website/dist" ]; then
+            echo "No dist/ artifacts found. Building frontend for deploy..."
+            ./.github/scripts/build-frontend.sh --prod
+          else
+            echo "dist/ artifacts found; skipping local build."
+          fi
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
