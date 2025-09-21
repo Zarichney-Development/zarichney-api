@@ -195,23 +195,20 @@ Architectural_Benefits:
 
 **Risk Assessment**: ✅ **LOW RISK** - Clear interfaces and limited surface area
 
-### 4.2 Issue #188: Build.yml Refactor & Coverage-Build.yml
+### 4.2 Issue #212: Build.yml Refactor
 
-#### Refactor + Coverage Architecture
+#### Build.yml Refactor Architecture
 ```yaml
 Refactor_Goals:
   Parity: "Preserve triggers, permissions, concurrency, and branch logic"
   Composability: "Consume extracted components with no duplication"
-
-Coverage_Workflow_Goals:
-  Path_Awareness: "Run only when relevant components change"
-  Coverage_Focus: "Coverage-flexible runs with artifact publication"
-  Separation: "No AI analysis unless explicitly enabled"
+  Canonical_Pattern: "Establish standard for Issue #184 coverage-build.yml"
 
 Architectural_Benefits:
-  Consistency: "Both workflows share identical building blocks"
-  Maintainability: "Single source of truth for build behavior"
-  Evolvability: "New features land once in components, used everywhere"
+  Consistency: "Single source of truth for build behavior"
+  Maintainability: "Clear component boundaries and interfaces"
+  Evolvability: "Pattern enables future workflow variations"
+  Foundation: "Prepares canonical pattern for coverage workflows in #184"
 ```
 
 **Risk Assessment**: ✅ **LOW RISK** - Behaviorally conservative refactor with strict parity checks

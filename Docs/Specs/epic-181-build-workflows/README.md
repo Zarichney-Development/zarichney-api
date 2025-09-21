@@ -23,7 +23,7 @@
   - Security scanning integration with automated vulnerability reporting
 * **Why it exists:** To address current CI/CD limitations affecting development velocity, deployment reliability, and operational visibility while establishing foundation for scalable development workflow automation.
 
-> **Implementation Status:** Comprehensive foundation analysis complete (2025-09-21). Working directory analysis has been formalized into specifications enabling coordinated team execution through issues #183, #188, #184-#187.
+> **Implementation Status:** Comprehensive foundation analysis complete (2025-09-21). Working directory analysis has been formalized into specifications enabling coordinated team execution through issues #183, #212, #184-#187.
 
 ### Component Specifications
 * **Component Analysis Available:** [`Components Directory`](./components/README.md) - Detailed component specifications and analysis
@@ -33,7 +33,7 @@
 * **[02 - Architectural Assessment](./02-architectural-assessment.md)** - SOLID principles validation and system design analysis
 * **[03 - Security Analysis](./03-security-analysis.md)** - Security boundary validation and mandatory controls framework
 * **[04 - Implementation Roadmap](./04-implementation-roadmap.md)** - Phase-based implementation strategy with team coordination
-* **[05 - Issue #188: Build.yml Refactor & Coverage Workflow](./05-issue-188-build-refactor-and-coverage-workflow.md)** - Detailed scope and acceptance criteria
+* **[05 - Issue #212: Build.yml Refactor](./05-issue-212-build-refactor.md)** - Detailed scope and acceptance criteria
 
 ## 2. Architecture & Key Concepts
 
@@ -158,12 +158,12 @@
 * **Implementation Status:**
   - ✅ **Foundation Analysis Complete** - Component extraction strategy, architectural validation, and security assessment formalized
   - ✅ **Implementation Specifications Ready** - Phase-based roadmap with team coordination protocols established
-  - 🔄 **Next Phase**: Begin implementation with dependency order `#183 → #188 → #184 → #185/#186 → #187`
+  - 🔄 **Next Phase**: Begin implementation with dependency order `#183 → #212 → #184 → #185/#186 → #187`
 
 * **Implementation Tracking:**
   - **Issue #183**: Foundation extractions (path-analysis, backend-build, concurrency standards)
-  - **Issue #188**: Refactor build.yml to reusables and create coverage-build.yml
-  - **Issue #184**: Iterative AI review implementation (ai-sentinel-base, ai-testing-analysis components)
+  - **Issue #212**: Refactor build.yml to consume reusable actions (canonical workflow pattern)
+  - **Issue #184**: Create coverage-build.yml and iterative AI review implementation (ai-sentinel-base, ai-testing-analysis components)
   - **Issues #185-#186**: Advanced analysis framework (security-framework, remaining AI Sentinels)
   - **Issue #187**: Epic workflow coordination (workflow-infrastructure, integration testing)
 

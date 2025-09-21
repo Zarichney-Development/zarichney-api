@@ -193,8 +193,8 @@ This specification provides comprehensive component analysis of the current `.gi
    - Preserve zero-warning enforcement and coverage flexibility
    - Integrate with `setup-environment`, `validate-test-suite`
 
-### Phase 2: Build.yml Refactor & Coverage Workflow (Issue #188)
-**Objective**: Refactor build.yml to reusable components and add coverage-build.yml
+### Phase 2: Build.yml Refactor (Issue #212)
+**Objective**: Refactor build.yml to consume reusable components (canonical pattern for Issue #184)
 
 1. **Refactor build.yml to composites** (Days 4-5)
    - Replace inline path analysis with `/.github/actions/shared/path-analysis`
@@ -257,7 +257,7 @@ This specification provides comprehensive component analysis of the current `.gi
 
 ## 6. Architecture Foundation for Epic Progression
 
-### 6.1 Coverage Workflow Enablement (Issue #188)
+### 6.1 Coverage Workflow Enablement (Issue #184)
 **Component Dependencies for coverage-build.yml**:
 ```yaml
 Required_Extractions:
@@ -372,7 +372,7 @@ AI_Epic_Integration:
 - [ ] **Architecture Foundation** enabling epic progression validated
 
 #### Epic Integration Readiness
-- [ ] **coverage-build.yml Requirements** clearly defined (Issue #188)
+- [ ] **coverage-build.yml Requirements** clearly defined (Issue #184)
 - [ ] **AI Framework Dependencies** mapped for iterative review (Issue #184)
 - [ ] **Security Integration Points** identified for advanced analysis (Issues #185-#186)
 - [ ] **Epic Coordination Framework** designed for workflow integration (Issue #187)
@@ -406,9 +406,9 @@ AI_Framework_Validation:
 
 ### 8.3 Epic Progression Metrics
 
-#### Issues #183-#187 (+#188) Enablement
+#### Issues #183-#187 (+#212) Enablement
 - **Issue #183**: Foundation components extracted
-- **Issue #188**: build.yml refactored to reusables and coverage-build.yml created
+- **Issue #212**: build.yml refactored to consume reusables (canonical pattern for coverage workflow)
 - **Issue #184**: AI framework extracted enabling iterative review implementation
 - **Issue #185**: Security framework extracted supporting advanced analysis
 - **Issue #186**: Complete AI suite extracted with epic coordination
@@ -436,5 +436,5 @@ AI_Framework_Validation:
 **Migration Note**: This specification was migrated from working directory analysis conducted on 2025-09-21. All technical analysis and component inventories have been preserved exactly to maintain implementation guidance integrity.
 
 **Epic Foundation Status**: ✅ **ANALYSIS COMPLETE**
-**Next Epic Phase**: Ready for issues #183, #188, #184-#187 progression
+**Next Epic Phase**: Ready for issues #183, #212, #184-#187 progression
 **Coverage Goal Integration**: Foundation supports 90% backend coverage milestone progression
