@@ -245,12 +245,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download frontend build artifacts
+      - name: Download frontend build artifacts (from triggering build)
+        if: github.event_name == 'workflow_run'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Downloading artifacts from build run: ${{ github.event.workflow_run.id }}"
+          echo "Artifact name: frontend-build-${{ github.event.workflow_run.run_number }}"
+          gh run download ${{ github.event.workflow_run.id }} \
+            -n frontend-build-${{ github.event.workflow_run.run_number }} \
+            -D Code/Zarichney.Website/
+
+      - name: Download frontend build artifacts (manual testing)
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
           name: frontend-build-${{ github.run_number }}
-          path: artifacts/frontend/
+          path: Code/Zarichney.Website/
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2

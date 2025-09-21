@@ -369,7 +369,13 @@ The deployment pipeline uses AWS OIDC (OpenID Connect) authentication for secure
 - **Role Name**: `GitHubActionsDeploymentRole`
 - **ARN**: `arn:aws:iam::${AWS_ACCOUNT_ID}:role/GitHubActionsDeploymentRole`
 - **Trust Policy**: Allows GitHub Actions from `Zarichney-Development/zarichney-api` repository
-- **Branch Restrictions**: Limited to `main` and `develop` branches only
+- **Subject Restrictions**:
+  - If workflow jobs use GitHub Environments (e.g., `environment: production`), the OIDC token `sub` claim is environment-scoped (`repo:<org>/<repo>:environment:<env>`).
+  - Allow both branch and environment subjects when using environments:
+    - `repo:Zarichney-Development/zarichney-api:ref:refs/heads/main`
+    - `repo:Zarichney-Development/zarichney-api:ref:refs/heads/develop`
+    - `repo:Zarichney-Development/zarichney-api:environment:production`
+    - `repo:Zarichney-Development/zarichney-api:environment:staging`
 
 #### 3. Permission Policies
 The role includes permissions for:
@@ -416,6 +422,26 @@ steps:
       role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
       aws-region: us-east-2
       role-session-name: GitHubActions-Backend-${{ github.run_id }}
+```
+
+Example trust policy Condition (merge with your existing policy):
+
+```json
+{
+  "Condition": {
+    "StringEquals": {
+      "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+    },
+    "StringLike": {
+      "token.actions.githubusercontent.com:sub": [
+        "repo:Zarichney-Development/zarichney-api:ref:refs/heads/main",
+        "repo:Zarichney-Development/zarichney-api:ref:refs/heads/develop",
+        "repo:Zarichney-Development/zarichney-api:environment:production",
+        "repo:Zarichney-Development/zarichney-api:environment:staging"
+      ]
+    }
+  }
+}
 ```
 
 ### Security Features
