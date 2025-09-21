@@ -378,13 +378,13 @@ run_health_checks() {
     local health_url
     case "$TARGET_ENV" in
         "production")
-            health_url="https://zarichney.com/health"
+            health_url="https://zarichney.com"
             ;;
         "staging")
-            health_url="https://staging.zarichney.com/health"
+            health_url="https://staging.zarichney.com"
             ;;
         "dev")
-            health_url="http://${EC2_HOST_FRONTEND}:3000/health"
+            health_url="http://${EC2_HOST_FRONTEND}:3000"
             ;;
         *)
             log_warning "Unknown environment: $TARGET_ENV, skipping health checks"
@@ -392,7 +392,7 @@ run_health_checks() {
             ;;
     esac
     
-    log_info "Running health check against: $health_url"
+    log_info "Running health check against: $health_url (expect HTTP 200)"
     
     # Wait for application to be ready
     sleep 10
@@ -401,11 +401,13 @@ run_health_checks() {
     for attempt in {1..5}; do
         log_info "Health check attempt $attempt/5"
         
-        if curl -f -s -o /dev/null --max-time 30 "$health_url"; then
-            log_success "Health check passed"
+        # Require an explicit 200 OK response for validation
+        http_code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$health_url")
+        if [[ "$http_code" == "200" ]]; then
+            log_success "Health check passed (HTTP 200)"
             return 0
         else
-            log_warning "Health check attempt $attempt failed"
+            log_warning "Health check attempt $attempt failed (HTTP $http_code)"
             if [[ $attempt -lt 5 ]]; then
                 log_info "Retrying in 15 seconds..."
                 sleep 15
