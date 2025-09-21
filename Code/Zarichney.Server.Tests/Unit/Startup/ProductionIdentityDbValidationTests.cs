@@ -8,7 +8,7 @@ using Xunit;
 using Zarichney.Services.Auth;
 using Zarichney.Startup;
 
-namespace Zarichney.Tests.Unit.Startup;
+namespace Zarichney.Server.Tests.Unit.Startup;
 
 /// <summary>
 /// Tests the validation of the Identity Database connection string in both Production and non-Production environments.

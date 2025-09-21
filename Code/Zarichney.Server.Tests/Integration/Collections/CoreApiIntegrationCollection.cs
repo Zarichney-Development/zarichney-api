@@ -1,5 +1,5 @@
 using Xunit;
-using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.Server.Tests.Framework.Fixtures;
 
 namespace Zarichney.Server.Tests.Integration.Collections;
 

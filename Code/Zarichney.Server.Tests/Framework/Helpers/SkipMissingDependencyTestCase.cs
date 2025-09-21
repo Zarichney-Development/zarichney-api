@@ -3,7 +3,7 @@ using Xunit;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
-namespace Zarichney.Tests.Framework.Helpers;
+namespace Zarichney.Server.Tests.Framework.Helpers;
 
 /// <summary>
 /// A test case decorator that skips tests when the skip condition is met.

@@ -1,4 +1,4 @@
-namespace Zarichney.Tests.Framework.Attributes;
+namespace Zarichney.Server.Tests.Framework.Attributes;
 
 /// <summary>
 /// Defines common infrastructure dependencies required for tests.

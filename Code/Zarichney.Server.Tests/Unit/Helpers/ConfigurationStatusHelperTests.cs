@@ -1,10 +1,10 @@
 using Zarichney.Services.Status;
 using FluentAssertions;
 using Xunit;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Helpers;
+using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Server.Tests.Framework.Helpers;
 
-namespace Zarichney.Tests.Unit.Helpers;
+namespace Zarichney.Server.Tests.Unit.Helpers;
 
 /// <summary>
 /// Unit tests for the ConfigurationStatusHelper class.

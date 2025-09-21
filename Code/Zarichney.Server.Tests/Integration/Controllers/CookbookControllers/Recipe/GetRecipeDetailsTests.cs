@@ -1,10 +1,10 @@
 using Refit;
 using Xunit;
 using Xunit.Abstractions;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Server.Tests.Framework.Fixtures;
 
-namespace Zarichney.Tests.Integration.Controllers.CookbookControllers.Recipe;
+namespace Zarichney.Server.Tests.Integration.Controllers.CookbookControllers.Recipe;
 
 /// <summary>
 /// Integration tests for the CookbookController.

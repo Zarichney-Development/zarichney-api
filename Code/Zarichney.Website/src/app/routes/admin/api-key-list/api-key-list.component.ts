@@ -71,7 +71,7 @@ export class ApiKeyListComponent implements OnInit {
 
     this.revokingKeyId = id;
     this.authService.revokeApiKey(id).subscribe({
-      next: (response) => {
+      next: () => {
         this.toastr.success('API key revoked successfully.');
         this.loadKeys();
         this.revokingKeyId = null;

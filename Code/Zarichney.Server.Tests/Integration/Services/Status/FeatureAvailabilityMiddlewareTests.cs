@@ -6,11 +6,11 @@ using Moq;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Services.Status;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Server.Tests.Framework.Fixtures;
 using StatusInfo = Zarichney.Services.Status.ServiceStatusInfo;
 
-namespace Zarichney.Tests.Integration.Services.Status;
+namespace Zarichney.Server.Tests.Integration.Services.Status;
 
 /// <summary>
 /// Integration tests for the <see cref="FeatureAvailabilityMiddleware"/> to verify it correctly
@@ -33,7 +33,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
                          Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
                          Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
-    
+
     Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
 
     // Arrange
@@ -90,7 +90,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
                          Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
                          Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
-    
+
     Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
     // Arrange
     var mockStatusService = new Mock<IStatusService>();
@@ -144,7 +144,7 @@ public class FeatureAvailabilityMiddlewareTests(ApiClientFixture apiClientFixtur
     var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
                          Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
                          Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
-    
+
     Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
     // Arrange
     var mockStatusService = new Mock<IStatusService>();

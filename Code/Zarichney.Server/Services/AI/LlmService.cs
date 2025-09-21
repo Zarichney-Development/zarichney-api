@@ -7,6 +7,8 @@ using OpenAI.Chat;
 using Polly;
 using Polly.Retry;
 using Zarichney.Config;
+using Zarichney.Services.AI.Interfaces;
+using Zarichney.Services.AI.Models;
 using Zarichney.Services.Sessions;
 namespace Zarichney.Services.AI;
 
@@ -38,7 +40,7 @@ public class LlmConfig : IConfig
 public static class LlmModels
 {
   // TODO: clean this up and add param support with default model
-  public const string Gpt4Omini = "gpt-4.1-mini-2025-04-14";
+  public const string Gpt4Omini = "gpt-5-mini-2025-08-07";
   public const string Gpt4O = "gpt-4o";
   public const string O1Mini = "gpt-o1-mini";
   public const string O1 = "gpt-o1";
@@ -78,6 +80,8 @@ public class LlmService : ILlmService
   private readonly ISessionManager _sessionManager;
   private readonly IScopeContainer _scope;
   private readonly Dictionary<string, List<(string toolCallId, string output)>> _runToolOutputs = new();
+  // Prevent duplicate error logs for the same (threadId, runId) pair in rapid succession
+  private readonly HashSet<string> _getRunErrorLogged = new();
 
   private readonly AsyncRetryPolicy _retryPolicy;
 
@@ -243,13 +247,18 @@ public class LlmService : ILlmService
       if (run.Status.IsTerminal)
       {
         _runToolOutputs.Remove(runId);
+        _getRunErrorLogged.Remove($"{threadId}:{runId}");
       }
 
       return (run.Status.IsTerminal, run.Status);
     }
     catch (Exception e)
     {
-      _logger.LogError(e, "Error occurred while getting run {runId} for thread {threadId}", runId, threadId);
+      var key = $"{threadId}:{runId}";
+      if (_getRunErrorLogged.Add(key))
+      {
+        _logger.LogError(e, "Error occurred while getting run {runId} for thread {threadId}", runId, threadId);
+      }
       throw;
     }
   }
@@ -258,19 +267,14 @@ public class LlmService : ILlmService
   {
     if (_client == null)
     {
-      throw new ConfigurationMissingException(nameof(LlmConfig), nameof(LlmConfig.ApiKey));
+      _logger.LogError("Error occurred while cancelling run {runId} for thread {threadId}: LLM client not configured", runId, threadId);
+      return "Failed to cancel run.";
     }
 
     _logger.LogInformation("Cancelling run: {runId} for thread: {threadId}", runId, threadId);
     try
     {
       var assistantClient = _client.GetAssistantClient();
-
-      var run = await GetRun(threadId, runId);
-      if (run.isComplete)
-      {
-        return "Run is already complete.";
-      }
 
       var responseResult = await assistantClient.CancelRunAsync(threadId, runId);
 
@@ -346,7 +350,8 @@ public class LlmService : ILlmService
     }
     catch (Exception e)
     {
-      _logger.LogError(e, "Error occurred while getting run {runId} for thread {threadId}", runId, threadId);
+      // Log at a lower level here to avoid duplicate error logs; the caller handles error-level logging
+      _logger.LogWarning(e, "Failed retrieving run {runId} for thread {threadId}", runId, threadId);
       throw;
     }
   }
@@ -510,7 +515,7 @@ public class LlmService : ILlmService
 
         var prompt = messages.Last(m => m is UserChatMessage).Content[0].Text;
         // Store the message in the session
-        await _sessionManager.AddMessage(_scope.Id, conversationId, prompt, chatCompletion, result);
+        await _sessionManager.AddMessage(_scope.Id, conversationId, prompt, new ChatCompletionWrapper(chatCompletion), result);
 
         return new LlmResult<T>
         {
@@ -573,7 +578,7 @@ public class LlmService : ILlmService
     var response = completion.Content[0].Text;
 
     // Store the message in the session
-    await _sessionManager.AddMessage(_scope.Id, conversationId, prompt, completion);
+    await _sessionManager.AddMessage(_scope.Id, conversationId, prompt, new ChatCompletionWrapper(completion));
 
     return new LlmResult<string>
     {

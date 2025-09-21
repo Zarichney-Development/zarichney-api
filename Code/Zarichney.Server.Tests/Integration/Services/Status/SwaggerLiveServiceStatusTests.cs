@@ -3,10 +3,10 @@ using FluentAssertions;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Config;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Server.Tests.Framework.Fixtures;
 
-namespace Zarichney.Tests.Integration.Services.Status;
+namespace Zarichney.Server.Tests.Integration.Services.Status;
 
 /// <summary>
 /// Tests that verify the real-world scenario of fetching the service status and
@@ -27,7 +27,7 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
     var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
                          Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
                          Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
-    
+
     Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
 
     // Arrange - Create an authenticated client
@@ -101,7 +101,7 @@ public class SwaggerLiveServiceStatusTests(ApiClientFixture apiClientFixture, IT
     var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
                          Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
                          Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
-    
+
     Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
 
     // This test focuses specifically on LLM endpoints since they have clear API endpoints

@@ -7,7 +7,7 @@ using Zarichney.Client;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Status;
 
-namespace Zarichney.Tests.Framework.Fixtures;
+namespace Zarichney.Server.Tests.Framework.Fixtures;
 
 /// <summary>
 /// xUnit fixture for shared API client instances (unauthenticated and authenticated).
@@ -113,7 +113,7 @@ public class ApiClientFixture : IAsyncLifetime
     await _databaseFixture.InitializeAsync();
 
     // Configure StatusService to report PostgreSQL as available when database container is running
-    ConfigureStatusServiceForTesting();
+    await ConfigureStatusServiceForTesting();
 
     // Create HTTP client for unauthenticated calls
     var unauthHttpClient = _factory.CreateClient();
@@ -163,7 +163,7 @@ public class ApiClientFixture : IAsyncLifetime
   /// Configures the StatusService to report PostgreSQL as available when the database container is running.
   /// This overrides the normal startup check to allow integration tests to pass.
   /// </summary>
-  private void ConfigureStatusServiceForTesting()
+  private async Task ConfigureStatusServiceForTesting()
   {
     if (_factory.Services.GetService<IStatusService>() is StatusService statusService)
     {
@@ -173,7 +173,7 @@ public class ApiClientFixture : IAsyncLifetime
         ? null
         : new List<string> { $"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}" };
 
-      statusService.SetServiceAvailability(ExternalServices.PostgresIdentityDb, isDatabaseAvailable, missingConfigurations);
+      await statusService.SetServiceAvailabilityAsync(ExternalServices.PostgresIdentityDb, isDatabaseAvailable, missingConfigurations);
     }
   }
 }

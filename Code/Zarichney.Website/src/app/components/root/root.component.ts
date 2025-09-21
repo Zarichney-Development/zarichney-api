@@ -6,7 +6,7 @@ import { catchError, map, of, tap } from 'rxjs';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { HelperComponent } from '../../components/helper/helper.component';
 import { RouterModule } from '@angular/router';
-import { AuthStoreModule, provideAuthFeature } from '../../routes/auth/store/auth-store.module';
+// Removed unused imports
 
 @Component({
   selector: 'app-root',

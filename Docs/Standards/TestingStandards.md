@@ -1,7 +1,7 @@
 # Overarching Automation Testing Standards
 
 **Version:** 1.8
-**Last Updated:** 2025-09-06
+**Last Updated:** 2025-09-10
 
 ## 1. Introduction
 
@@ -68,7 +68,7 @@
 * **Coverage Goal:** Strive for >=90% coverage of non-trivial logic in services, handlers, utilities, etc.
 * **Key Principles:**
     * **Isolation:** Mock *all* dependencies using Moq.
-    * **Assertions:** Use FluentAssertions with `.Because("...")`.
+    * **Assertions:** Use FluentAssertions and include a reason via the optional message parameter, e.g., `actual.Should().BeTrue("because the operation should succeed")`.
     * **Data:** Leverage AutoFixture and custom Builders.
 * **Detailed Guidance:** For comprehensive instructions on writing unit tests, including SUT design for testability, advanced mocking, assertion patterns, and AutoFixture usage, refer to:
     * **`Docs/Standards/UnitTestCaseDevelopment.md`**
@@ -131,6 +131,37 @@
 * **Usage Principles:**
     * Use **Builders** for core domain models or complex DTOs requiring specific, controlled states.
     * Use **AutoFixture** for anonymous data, simple DTOs, and populating non-critical properties.
+    * **Enhanced Service Builders (PR #179):** Use fluent builder patterns (e.g., `LlmServiceBuilder`) for complex service scenarios with invalid state testing capabilities.
+* **Resource Management (PR #179):** Test classes managing unmanaged resources (e.g., `MemoryStream`, external connections) **must** implement `IDisposable` pattern:
+    ```csharp
+    public class ApiErrorResultTests : IDisposable
+    {
+        private readonly MemoryStream _responseStream;
+        private bool _disposed = false;
+
+        public ApiErrorResultTests()
+        {
+            _responseStream = new MemoryStream();
+            // Test setup
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed && disposing)
+            {
+                _responseStream?.Dispose();
+                _disposed = true;
+            }
+        }
+    }
+    ```
+* **Interface Wrapper Pattern (PR #179):** Eliminate reflection-based mocking by creating testable abstractions for external SDK dependencies (e.g., `IChatCompletionWrapper` for OpenAI integration).
 * **Detailed Guidance:** Refer to `Docs/Standards/UnitTestCaseDevelopment.md` and `Docs/Standards/IntegrationTestCaseDevelopment.md` for specific AutoFixture customization and builder patterns.
 * **Clarity:** Test data setup should be clear and maintainable within the Arrange block.
 
@@ -139,23 +170,29 @@
 * **Requirement:** New/updated tests **must** be included in the *same Pull Request* as the code changes they cover.
 * **Local Testing (Mandatory Pre-PR):**
     1.  Run `Scripts/generate-api-client.ps1` (or `.sh`) if API contracts changed.
-    2.  Run the unified test suite for comprehensive validation:
+    2.  **Verify Warning-Free Build:** Ensure build completes with zero compiler or linter warnings
+    3.  Run the unified test suite for comprehensive validation:
         ```bash
         # Quick validation with AI-powered analysis
         /test-report summary
-        
+
         # Full test suite with detailed recommendations
         Scripts/run-test-suite.sh report
-        
+
         # Traditional HTML coverage report
         Scripts/run-test-suite.sh automation
         ```
-    3.  For specific test categories during development:
+    4.  For specific test categories during development:
         ```bash
         Scripts/run-test-suite.sh report --unit-only
         Scripts/run-test-suite.sh report --integration-only
+
+        # Enhanced dependency trait filtering (PR #179)
+        dotnet test --filter "Dependency=ExternalOpenAI"   # 119 OpenAI-dependent tests
+        dotnet test --filter "Dependency=ExternalGitHub"   # 13 GitHub-dependent tests
+        dotnet test --filter "Category=Unit&Dependency!=ExternalOpenAI"  # Unit tests without external dependencies
         ```
-    4.  Ensure **all** locally run tests pass and quality gates are met.
+    5.  Ensure **all** locally run tests pass, build is warning-free, and quality gates are met.
 * **CI/CD (GitHub Actions - Phase 3 Enhanced):**
     * Workflow runs on Pull Requests and merges to both `main` and `develop` branches.
     * **Parallel Test Execution:** Tests run in parallel collections (IntegrationAuth, IntegrationCore, etc.) with up to 4 concurrent threads.
@@ -337,6 +374,7 @@ When adding tests, consider current coverage phase:
 * **Phase Progression:** Must reach phase targets before advancing focus areas
 * **Velocity Requirements:** Maintain 2.8%/month average for 90% by Jan 2026
 * **Quality Maintenance:** Test pass rate must remain ≥99% throughout progression
+* **Warning-Free Requirement:** All coverage work must maintain zero build warnings policy
 
 #### Velocity Monitoring
 * **Monthly Reviews:** Track coverage progression against velocity targets
@@ -384,7 +422,7 @@ In the automated CI environment, the test suite operates with specific constrain
   * Database integration tests: 6 tests skipped
   * Production safety tests: 1 test skipped
 * **Success Criteria:** 100% pass rate on ~65 executable tests
-* **Quality Gate:** All executable tests must pass; skipped tests (EXPECTED_SKIP_COUNT) are acceptable and expected in unconfigured environments.
+* **Quality Gate:** All executable tests must pass with zero build warnings; skipped tests (EXPECTED_SKIP_COUNT) are acceptable and expected in unconfigured environments.
 
 **Rationale:** In CI environments where external dependencies are not configured, tests requiring those services are intentionally skipped to prevent false negatives. The skip count is set via EXPECTED_SKIP_COUNT (default: 23) and should be referenced in all validation scripts and documentation. See also Docs/Development/AutomatedCoverageEpicWorkflow.md for workflow details.
 

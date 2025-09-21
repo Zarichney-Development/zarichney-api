@@ -54,7 +54,7 @@ public class ServiceAvailabilityOperationFilter : IOperationFilter
     }
 
     // Track all unavailable features
-    var unavailableFeatures = new Dictionary<ExternalServices, ServiceStatusInfo>();
+    Dictionary<ExternalServices, ServiceStatusInfo> unavailableFeatures = [];
 
     // Check each feature from all attributes
     foreach (var attribute in allAttributes)

@@ -9,6 +9,7 @@
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
         <NoWarn>OPENAI001</NoWarn>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     </PropertyGroup>
 
     <ItemGroup>
@@ -38,6 +39,7 @@
         <PackageReference Include="Respawn" Version="6.2.1" />
         <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
         <PackageReference Include="Xunit.SkippableFact" Version="1.5.23" />
+        <PackageReference Include="System.ClientModel" Version="1.1.0" />
         
         <!-- Security vulnerability fixes for transitive dependencies -->
         <PackageReference Include="System.Formats.Asn1" Version="8.0.1" />

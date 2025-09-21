@@ -39,7 +39,7 @@
 
 * **Directory Structure:** Maintain subdirectories named after the corresponding controller (e.g., `AuthController/` contains `LoginEndpointTests.cs`).
 * **Test Structure:** Follow AAA pattern. Use descriptive method names (`[MethodName]_[Scenario]_[ExpectedOutcome]`).
-* **Assertions:** Use `FluentAssertions`. Focus on asserting API response details (status code, headers, body content using `Should().BeEquivalentTo()` for DTOs) and verifying expected side effects (e.g., mock interactions, database state changes *if necessary*, though verifying via subsequent API calls is preferred). Include `.Because("...")`.
+* **Assertions:** Use `FluentAssertions`. Focus on asserting API response details (status code, headers, body content using `Should().BeEquivalentTo()` for DTOs) and verifying expected side effects (e.g., mock interactions, database state changes when needed; prefer verifying via follow-up API calls). Include clear reasons using the assertion's optional message parameter.
 * **Collection:** All tests **MUST** belong to `[Collection("Integration")]`.
 * **Base Class:** Inherit `IntegrationTestBase` or `DatabaseIntegrationTestBase`.
 * **API Client Usage:** **MUST** use `ApiClient` or `AuthenticatedApiClient` from the base class.
@@ -77,4 +77,3 @@
 
 * Ensure comprehensive test coverage for all actions, scenarios (success/failure), and authorization paths within each controller.
 * Specific TODOs related to individual controllers or endpoints should be tracked within the relevant test files or controller-specific READMEs if created.
-

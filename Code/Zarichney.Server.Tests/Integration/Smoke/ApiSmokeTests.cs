@@ -3,16 +3,17 @@ using Refit;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Client.Contracts;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Server.Tests.Framework.Fixtures;
 using Zarichney.Services.Status;
 
-namespace Zarichney.Tests.Integration.Smoke;
+namespace Zarichney.Server.Tests.Integration.Smoke;
 
 /// <summary>
 /// Smoke tests for verifying that the most critical parts of the API are working.
 /// These tests are lightweight and run quickly to provide confidence that the system is operational.
 /// </summary>
+[Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Category, TestCategories.Smoke)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
 [Trait(TestCategories.Dependency, TestCategories.Docker)]

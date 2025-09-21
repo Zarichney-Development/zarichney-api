@@ -1,7 +1,7 @@
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
-namespace Zarichney.Tests.Framework.Helpers;
+namespace Zarichney.Server.Tests.Framework.Helpers;
 
 /// <summary>
 /// Custom test case discoverer for dependency-aware tests.

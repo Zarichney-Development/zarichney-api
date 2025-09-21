@@ -3,11 +3,11 @@ using Refit;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Client.Contracts;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Server.Tests.Framework.Fixtures;
 using ExternalServices = Zarichney.Services.Status.ExternalServices;
 
-namespace Zarichney.Tests.Integration.Controllers.PublicController;
+namespace Zarichney.Server.Tests.Integration.Controllers.PublicController;
 
 /// <summary>
 /// Integration tests for the PublicController.
@@ -220,8 +220,8 @@ public class PublicControllerIntegrationTests(ApiClientFixture apiClientFixture,
         because: "logging methods result should not be null");
 
       // Check that at least one logging method is available
-      var hasAnyMethod = loggingMethods.NativeSeq != null || 
-                        loggingMethods.DockerSeq != null || 
+      var hasAnyMethod = loggingMethods.NativeSeq != null ||
+                        loggingMethods.DockerSeq != null ||
                         loggingMethods.FileLogging != null;
       hasAnyMethod.Should().BeTrue(
         because: "at least one logging method should be available");

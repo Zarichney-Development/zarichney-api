@@ -10,7 +10,7 @@ using Zarichney.Services.Logging;
 using Zarichney.Services.Logging.Models;
 using Zarichney.Services.ProcessExecution;
 
-namespace Zarichney.Tests.Unit.Services.Logging;
+namespace Zarichney.Server.Tests.Unit.Services.Logging;
 
 /// <summary>
 /// Unit tests for SeqConnectivity service - tests Seq connectivity and container management
@@ -233,7 +233,7 @@ public class SeqConnectivityTests
   {
     // Arrange
     var expectedUrl = _loggingConfig.CommonSeqUrls[1];
-    
+
     // Use SetupSequence to setup different responses for the same URL endpoint
     _mockHttpMessageHandler.Protected()
       .SetupSequence<Task<HttpResponseMessage>>(
@@ -293,7 +293,7 @@ public class SeqConnectivityTests
         StatusCode = HttpStatusCode.OK,
         Content = new StringContent("{}")
       }); // After Docker starts, localhost:5341 succeeds
-    
+
     _mockProcessExecutor
       .Setup(x => x.RunCommandAsync("docker", It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync((0, "seq"));

@@ -229,11 +229,14 @@ public class ServiceStartup
 
     // System Services
     services.AddScoped<IProcessExecutor, ProcessExecutor>();
-    
+
     // Logging Services - provides centralized logging system management
     services.AddHttpClient<ISeqConnectivity, SeqConnectivity>();
     services.AddScoped<ILoggingStatus, LoggingStatus>();
     services.AddScoped<ILoggingService, LoggingService>();
+
+    // PDF Generation Services - provides HTTP client for image downloading
+    services.AddHttpClient<PdfCompiler>();
 
     // Repositories
     services.AddSingleton<ILlmRepository, LlmRepository>();

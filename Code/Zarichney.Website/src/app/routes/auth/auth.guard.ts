@@ -1,4 +1,4 @@
-import { CanActivateFn, UrlTree } from '@angular/router';
+import { CanActivateFn } from '@angular/router';
 import { inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Router } from '@angular/router';

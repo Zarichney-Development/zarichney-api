@@ -13,7 +13,7 @@ public class FeatureAvailabilityMiddleware
   private readonly IStatusService _statusService;
 
   // Cache to avoid repeatedly extracting attributes for the same route
-  private static readonly ConcurrentDictionary<string, List<ExternalServices>> AttributeCache = new();
+  private readonly ConcurrentDictionary<string, List<ExternalServices>> _attributeCache = new();
 
   /// <summary>
   /// Initializes a new instance of the <see cref="FeatureAvailabilityMiddleware"/> class.
@@ -118,10 +118,10 @@ public class FeatureAvailabilityMiddleware
   /// <param name="endpoint">The endpoint to check.</param>
   /// <param name="cacheKey">A key to use for caching the results.</param>
   /// <returns>A list of all required features for the endpoint.</returns>
-  private static List<ExternalServices> GetRequiredFeatures(Endpoint endpoint, string cacheKey)
+  private List<ExternalServices> GetRequiredFeatures(Endpoint endpoint, string cacheKey)
   {
     // Check if we have cached the attributes for this endpoint
-    if (AttributeCache.TryGetValue(cacheKey, out var cachedFeatures))
+    if (_attributeCache.TryGetValue(cacheKey, out var cachedFeatures))
     {
       return cachedFeatures;
     }
@@ -145,7 +145,7 @@ public class FeatureAvailabilityMiddleware
     }
 
     // Add to cache and return
-    AttributeCache[cacheKey] = features;
+    _attributeCache[cacheKey] = features;
     return features;
   }
 }

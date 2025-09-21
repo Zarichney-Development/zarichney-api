@@ -1,7 +1,7 @@
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 
-namespace Zarichney.Tests.Framework.Helpers;
+namespace Zarichney.Server.Tests.Framework.Helpers;
 
 /// <summary>
 /// Helper for loading and managing test configuration.

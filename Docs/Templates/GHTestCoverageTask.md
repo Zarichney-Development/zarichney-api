@@ -110,7 +110,7 @@ AI agent identifies specific production code files based on coverage analysis:
 - [ ] Test categories: Appropriate `[Trait("Category", "...")]` attributes applied
 - [ ] Naming conventions: `[MethodName]_[Scenario]_[ExpectedOutcome]` pattern
 - [ ] AAA pattern: Clear Arrange-Act-Assert structure in all tests
-- [ ] FluentAssertions: Use for all test assertions with `.Because("...")` explanations
+- [ ] FluentAssertions: Use for all test assertions and include clear reasons via the assertion's optional message parameter
 
 ### Framework Enhancement Opportunities (Orchestrator-Aware)
 When implementing tests, consider these framework improvements that coordinate well with orchestrator consolidation:

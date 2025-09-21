@@ -21,7 +21,7 @@ public class LoggingConfig : IConfig
   /// <summary>
   /// Common URLs to test for Seq availability
   /// </summary>
-  public string[] CommonSeqUrls { get; set; } = 
+  public string[] CommonSeqUrls { get; set; } =
   [
     "http://localhost:5341",
     "http://127.0.0.1:5341",

@@ -1,12 +1,15 @@
 using Zarichney.Services.Status;
 using FluentAssertions;
 using Xunit;
+using Zarichney.Server.Tests.Framework.Attributes;
 
-namespace Zarichney.Tests.Unit.Config;
+namespace Zarichney.Server.Tests.Unit.Config;
 
+[Trait(TestCategories.Category, TestCategories.Unit)]
 public class DependsOnServiceTests
 {
   [Fact]
+  [Trait(TestCategories.Category, TestCategories.Unit)]
   public void Constructor_ValidFeatures_InitializesCorrectly()
   {
     // Arrange & Act
@@ -18,6 +21,7 @@ public class DependsOnServiceTests
   }
 
   [Fact]
+  [Trait(TestCategories.Category, TestCategories.Unit)]
   public void Constructor_SingleFeature_InitializesCorrectly()
   {
     // Arrange & Act
@@ -29,6 +33,7 @@ public class DependsOnServiceTests
   }
 
   [Fact]
+  [Trait(TestCategories.Category, TestCategories.Unit)]
   public void Constructor_EmptyFeaturesArray_ThrowsArgumentException()
   {
     // Arrange, Act & Assert
@@ -38,6 +43,7 @@ public class DependsOnServiceTests
   }
 
   [Fact]
+  [Trait(TestCategories.Category, TestCategories.Unit)]
   public void Constructor_NullFeaturesArray_ThrowsArgumentException()
   {
     // Arrange, Act & Assert
@@ -48,6 +54,7 @@ public class DependsOnServiceTests
   }
 
   [Fact]
+  [Trait(TestCategories.Category, TestCategories.Unit)]
   public void AttributeUsage_ClassTargetAndMethodTarget_AllowsMultiple()
   {
     // Arrange & Act

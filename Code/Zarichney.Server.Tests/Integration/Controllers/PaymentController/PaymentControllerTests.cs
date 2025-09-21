@@ -4,15 +4,15 @@ using Moq;
 using System.Net;
 using Xunit;
 using Zarichney.Services.Payment;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
-using Zarichney.Tests.Framework.Helpers;
+using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Server.Tests.Framework.Fixtures;
+using Zarichney.Server.Tests.Framework.Helpers;
 using Refit;
 using Xunit.Abstractions;
 using Zarichney.Client.Contracts;
 using ExternalServices = Zarichney.Services.Status.ExternalServices;
 
-namespace Zarichney.Tests.Integration.Controllers.PaymentController;
+namespace Zarichney.Server.Tests.Integration.Controllers.PaymentController;
 
 /// <summary>
 /// Integration tests for the PaymentController.

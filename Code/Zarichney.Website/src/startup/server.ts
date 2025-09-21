@@ -108,7 +108,7 @@ function run(): void {
     // Start up the Node server
     const server = app();
 
-    server.use((req, res, next) => {
+    server.use((req, _res, next) => {
       console.log(`Request received: ${req.method} ${req.url}`);
       next();
     });

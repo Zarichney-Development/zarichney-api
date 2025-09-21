@@ -2,7 +2,7 @@ using System.Reflection;
 using Serilog;
 using Xunit.Sdk;
 
-namespace Zarichney.Tests.Framework.Attributes;
+namespace Zarichney.Server.Tests.Framework.Attributes;
 
 /// <summary>
 /// Attribute that logs test method start and end information to aid in debugging test execution timing.

@@ -1,6 +1,6 @@
 # Module/Directory: /Services/Sessions
 
-**Last Updated:** 2025-04-13
+**Last Updated:** 2025-01-20
 
 > **Parent:** [`/Services`](../README.md)
 
@@ -104,6 +104,7 @@ graph TD
 
 * **Key Public Interfaces:** `ISessionManager`, `IScopeContainer`, `IScopeFactory`.
   * **New Method:** `FindReusableAnonymousSession()` returns an existing anonymous session (with no `UserId` or `ApiKeyValue`) that is not set to expire immediately, or `null` if none is found. This allows background tasks to reuse existing sessions rather than always creating new ones.
+  * **Interface Update:** `AddMessage` method now accepts `IChatCompletionWrapper` instead of `ChatCompletion` directly. This change eliminates reflection dependencies and provides clean interface-based testing while maintaining full functionality through the wrapper pattern.
 * **Assumptions:**
     * **Middleware Order:** Assumes `SessionMiddleware` (`UseSessionManagement`) is registered *after* Authentication middleware in `Program.cs` so that user identity is available when the session middleware runs. [cite: Zarichney.Server/Program.cs]
     * **DI Registration:** Assumes all services (`ISessionManager`, `IScopeFactory`, `SessionCleanupService`, etc.) are correctly registered with appropriate lifetimes in `Program.cs` via `AddSessionManagement`. [cite: Zarichney.Server/Services/Sessions/SessionExtensions.cs]
@@ -111,6 +112,7 @@ graph TD
     * **Persistence on EndSession:** Assumes that the `EndSession` logic in `SessionManager` correctly identifies and persists necessary related data (like Orders, Conversations) via injected repositories (`IOrderRepository`, `ILlmRepository`). The session data *itself* (besides the persisted related data) is lost. [cite: Zarichney.Server/Services/Sessions/SessionManager.cs]
     * **Scope Usage:** Assumes consumers (especially background tasks) correctly use the provided `IScopeContainer` to resolve scoped dependencies.
     * **Reusable Sessions:** When reusing an anonymous session, assumes callers are aware that any existing state in that session (such as conversation history) will be accessible to the new task.
+    * **Wrapper Pattern Integration:** `AddMessage` method expects callers to provide `IChatCompletionWrapper` instances rather than raw `ChatCompletion` objects. Production code should use `ChatCompletionWrapper` to wrap OpenAI SDK objects, while test scenarios should use `TestChatCompletionWrapper` for interface-based testing.
 
 ## 4. Local Conventions & Constraints (Beyond Global Standards)
 

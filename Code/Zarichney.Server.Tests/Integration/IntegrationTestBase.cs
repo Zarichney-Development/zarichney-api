@@ -3,11 +3,11 @@ using System.Reflection;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Services.Status;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
-using Zarichney.Tests.Framework.Helpers;
+using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Server.Tests.Framework.Fixtures;
+using Zarichney.Server.Tests.Framework.Helpers;
 
-namespace Zarichney.Tests.Integration;
+namespace Zarichney.Server.Tests.Integration;
 
 /// <summary>
 /// Base class for integration tests that provides common setup and accessors.
@@ -291,7 +291,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     }
 
     // Determine the set of all required configuration item names based on the dependency traits
-    var requiredConfigs = new HashSet<string>();
+    HashSet<string> requiredConfigs = [];
     foreach (var (_, value) in dependencyTraits)
     {
       if (TraitToConfigNamesMap.TryGetValue(value, out var configNames))

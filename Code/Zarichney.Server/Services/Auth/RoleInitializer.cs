@@ -74,7 +74,7 @@ public class RoleInitializer(
     string adminUserName;
     string adminPassword;
 
-    if (adminConfig != null && 
+    if (adminConfig != null &&
         !string.IsNullOrWhiteSpace(adminConfig.Email) &&
         !string.IsNullOrWhiteSpace(adminConfig.UserName) &&
         !string.IsNullOrWhiteSpace(adminConfig.Password))
@@ -88,12 +88,12 @@ public class RoleInitializer(
     else
     {
       // Use fallback logic
-      adminEmail = !string.IsNullOrWhiteSpace(emailConfig?.FromEmail) 
-        ? emailConfig.FromEmail 
+      adminEmail = !string.IsNullOrWhiteSpace(emailConfig?.FromEmail)
+        ? emailConfig.FromEmail
         : "test@gmail.com";
       adminUserName = adminEmail; // Use email as username for fallback
       adminPassword = "nimda";
-      
+
       logger.LogInformation("DefaultAdminUser configuration incomplete. Using fallback: email='{Email}', password='nimda'", adminEmail);
     }
 

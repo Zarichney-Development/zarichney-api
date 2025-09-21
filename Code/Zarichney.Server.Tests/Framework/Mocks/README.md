@@ -1,14 +1,14 @@
 # README: /Framework/Mocks Directory
 
-**Version:** 1.1
-**Last Updated:** 2025-05-22
+**Version:** 1.2
+**Last Updated:** 2025-09-20
 **Parent:** `../README.md`
 
 ## 1. Purpose & Responsibility
 
 This directory is central to the strategy of isolating the `Zarichney.Server` during integration tests, particularly from external service dependencies. Its primary responsibilities include:
 
-* **Mock Factories (`./Factories/`):** Providing a standardized way to create and register `Moq.Mock<T>` instances for service interfaces defined in the `Zarichney.Server` project. These are primarily consumed by the `CustomWebApplicationFactory` to inject test doubles into the dependency injection container when the test server starts. This allows integration tests to control the behavior of these dependencies.
+* **Mock Factories (`./Factories/`):** Providing a standardized way to create and register `Moq.Mock<T>` instances for service interfaces defined in the `Zarichney.Server` project. These are primarily consumed by the `CustomWebApplicationFactory` to inject test doubles into the dependency injection container when the test server starts. This allows integration tests to control the behavior of these dependencies. Recent additions include factories for OpenAI AudioClient, authentication services, session management, Swagger documentation, and ASP.NET Identity UserManager components.
 * **External HTTP Service Virtualization (Planned - WireMock.Net):** This directory (or a new subdirectory like `./Virtualization/`) will house the configurations, stubs, and potentially helper utilities for `WireMock.Net`. This tool will be used to simulate external HTTP APIs, ensuring tests are deterministic and independent of live third-party services. (Corresponds to TDD FRMK-004).
 
 The overall goal is to enable robust and reliable integration tests by providing fine-grained control over the behavior of dependencies.
@@ -25,6 +25,11 @@ The overall goal is to enable robust and reliable integration tests by providing
     * They might provide default `Setup()` configurations for common behaviors if applicable, though often the `Mock<T>` is returned without specific setups, allowing individual tests to configure behavior as needed.
     * A `BaseMockFactory.cs` may exist to provide common functionality for these factories.
     * These factories are invoked within `CustomWebApplicationFactory.ConfigureTestServices` to register the `Mock<T>.Object` as a singleton service in the test server's DI container. Integration tests can then retrieve the `Mock<T>` instance itself from the `Factory.Services` provider to customize setups or verify interactions.
+    * `AudioClientMockFactory`: Creates `Mock<AudioClient>` instances for OpenAI audio transcription service testing, enabling controlled testing of audio processing workflows without actual OpenAI API calls.
+    * `AuthServiceMockFactory`: Provides `Mock<IAuthService>` instances for authentication workflow testing, supporting login, registration, and token management scenarios.
+    * `SessionManagerMockFactory`: Creates `Mock<ISessionManager>` instances for session state management testing, enabling controlled session lifecycle testing.
+    * `SwaggerMockFactory`: Provides mocking for Swagger/OpenAPI documentation generation components, supporting API documentation testing scenarios.
+    * `UserManagerMockFactory`: Creates `Mock<UserManager<ApplicationUser>>` instances for ASP.NET Identity testing, enabling controlled user management testing without database dependencies.
 * **HTTP Service Virtualization with `WireMock.Net` (Planned - TDD FRMK-004):**
     * **Concept:** Instead of just mocking an internal interface that *calls* an external HTTP service, WireMock.Net runs an actual lightweight HTTP server during tests. The `HttpClient` instances used by the `Zarichney.Server` to call real external services will be reconfigured (by `CustomWebApplicationFactory`) to target this local WireMock.Net server.
     * **Stubs:** Tests (or global setup) will define "stubs" on the WireMock.Net server, specifying how it should respond to particular incoming HTTP requests (e.g., "if GET /v1/external-resource, respond with 200 OK and this JSON body").
@@ -53,7 +58,7 @@ The overall goal is to enable robust and reliable integration tests by providing
 
 ### Using Mock Factories in Integration Tests
 
-1.  Ensure the relevant mock factory (e.g., `MockOpenAIServiceFactory`) is registered in `CustomWebApplicationFactory.ConfigureTestServices`.
+1.  Ensure the relevant mock factory (e.g., `MockOpenAIServiceFactory`, `AudioClientMockFactory`, `AuthServiceMockFactory`, `SessionManagerMockFactory`, `SwaggerMockFactory`, `UserManagerMockFactory`) is registered in `CustomWebApplicationFactory.ConfigureTestServices`.
 2.  In your integration test method (which has access to `Factory` from a base class like `IntegrationTestBase`):
     ```csharp
     // Arrange
@@ -70,6 +75,20 @@ The overall goal is to enable robust and reliable integration tests by providing
     // ... further assertions based on the mocked response ...
 
     mockLlmService.Verify(s => s.GetCompletionAsync("Test", It.IsAny<CancellationToken>()), Times.Once);
+
+    // Examples with new factories
+    var mockAuthService = Factory.Services.GetRequiredService<Mock<IAuthService>>();
+    mockAuthService
+        .Setup(s => s.AuthenticateAsync(It.IsAny<LoginRequest>()))
+        .ReturnsAsync(new AuthResult { Success = true });
+
+    var mockAudioClient = Factory.Services.GetRequiredService<Mock<AudioClient>>();
+    // Configure audio client mock behavior
+
+    var mockSessionManager = Factory.Services.GetRequiredService<Mock<ISessionManager>>();
+    mockSessionManager
+        .Setup(s => s.GetSessionAsync(It.IsAny<string>()))
+        .ReturnsAsync(new Session { Id = "test-session" });
     ```
 
 ### Using WireMock.Net (Conceptual - Based on TDD FRMK-004)
@@ -101,8 +120,9 @@ The overall goal is to enable robust and reliable integration tests by providing
 ### Internal Dependencies
 
 * **`../Fixtures/CustomWebApplicationFactory.cs`:** The primary consumer of the mock factories. It will also be responsible for integrating WireMock.Net.
-* **`Zarichney.Server` project:** Provides the interfaces (e.g., `ILlmService`, `IStripeService`) that are mocked by the factories. The HTTP client configurations within `Zarichney.Server` will be targeted by WireMock.Net redirection.
+* **`Zarichney.Server` project:** Provides the interfaces (e.g., `ILlmService`, `IStripeService`, `IAuthService`, `ISessionManager`) that are mocked by the factories. The HTTP client configurations within `Zarichney.Server` will be targeted by WireMock.Net redirection.
 * **`../../Integration/` tests:** Consume the `Mock<T>` instances provided via `Factory.Services` or interact with APIs whose external calls are handled by WireMock.Net.
+* **Mock Factories in `./Factories/`**: AudioClientMockFactory, AuthServiceMockFactory, SessionManagerMockFactory, SwaggerMockFactory, UserManagerMockFactory, and existing factories provide standardized mock creation for integration testing.
 
 ### Key External Libraries
 
@@ -121,6 +141,130 @@ The overall goal is to enable robust and reliable integration tests by providing
     * Configuring `CustomWebApplicationFactory` to redirect HTTP clients.
     * Establishing patterns for defining and managing WireMock stubs.
     * Documenting its usage thoroughly in `../../../Docs/Standards/IntegrationTestCaseDevelopment.md`.
+* **Factory Coverage Expansion**: Recently completed addition of 5 new mock factories (AudioClient, AuthService, SessionManager, Swagger, UserManager) significantly improves integration testing coverage for authentication, audio processing, and session management workflows.
+### Interface Wrapper Pattern
+
+#### Overview & Rationale
+
+The **Interface Wrapper Pattern** was introduced in PR #179 to replace reflection-based mocking with testable interface abstractions for OpenAI SDK interactions. This pattern provides:
+
+* **Type Safety**: Eliminates runtime reflection errors and provides compile-time type checking
+* **Performance**: Avoids reflection overhead during test execution
+* **Maintainability**: Clear interface contracts that are easier to understand and modify
+* **Testability**: Simplified mock creation and verification patterns
+
+**Context**: Previously, tests used reflection to create mock `ChatCompletion` objects, which was brittle and difficult to maintain. The wrapper pattern abstracts OpenAI SDK types behind testable interfaces.
+
+#### Implementation Details
+
+**Interface Definitions** (`/Code/Zarichney.Server/AI/Interfaces/`):
+
+* **`IChatCompletionWrapper`**: Abstracts `ChatCompletion` responses with properties:
+  - `Content`: Gets the chat completion response content
+  - `Role`: Gets the role (e.g., "assistant", "user")
+  - `CreatedAt`: Gets the completion creation timestamp
+
+* **`IChatClientWrapper`**: Abstracts chat client operations with methods:
+  - `CompleteChatAsync()`: Completes chat conversations with model, messages, options, and cancellation token
+
+**Test Implementation** (`TestChatCompletionWrapper.cs`):
+
+* **`TestChatCompletionWrapper`**: Concrete test implementation of `IChatCompletionWrapper`
+  - Simple constructor accepting content and role parameters
+  - Automatic `CreatedAt` timestamp generation
+  - Settable properties for test customization
+
+#### Factory Integration
+
+The `AiServiceMockFactory` provides standardized creation methods:
+
+```csharp
+// Create wrapper instances for testing
+var completion = AiServiceMockFactory.CreateChatCompletionWrapper("Test response", "assistant");
+
+// Create mock client wrapper with default behavior
+var clientMock = AiServiceMockFactory.CreateChatClientWrapper("Custom response");
+
+// Migration method for existing reflection-based tests
+var migrated = AiServiceMockFactory.CreateMockCompletion("Legacy test content");
+```
+
+#### Usage in Tests
+
+**Basic Wrapper Usage**:
+```csharp
+// Create test completion wrapper
+var completion = new TestChatCompletionWrapper("AI response", "assistant");
+Assert.Equal("AI response", completion.Content);
+Assert.Equal("assistant", completion.Role);
+
+// Use factory method for standard cases
+var factoryCompletion = AiServiceMockFactory.CreateChatCompletionWrapper("Factory response");
+```
+
+**Mock Client Wrapper Setup**:
+```csharp
+// Create mock client with custom behavior
+var mockClient = AiServiceMockFactory.CreateChatClientWrapper("Expected response", mock => {
+    mock.Setup(x => x.CompleteChatAsync(
+            "gpt-4",
+            It.IsAny<IEnumerable<object>>(),
+            It.IsAny<ChatCompletionOptions>(),
+            It.IsAny<CancellationToken>()))
+        .ReturnsAsync(new TestChatCompletionWrapper("Custom response", "assistant"));
+});
+
+// Verify interactions
+mockClient.Verify(x => x.CompleteChatAsync(
+    It.IsAny<string>(),
+    It.IsAny<IEnumerable<object>>(),
+    It.IsAny<ChatCompletionOptions>(),
+    It.IsAny<CancellationToken>()), Times.Once);
+```
+
+**Integration with Existing Infrastructure**:
+```csharp
+// Works seamlessly with existing mock factory patterns
+var llmService = AiServiceMockFactory.CreateLlmService();
+var chatClient = AiServiceMockFactory.CreateChatClientWrapper();
+
+// Combine with other factory methods
+var (repository, gitHubMock, statusMock, loggerMock) = AiServiceMockFactory.CreateLlmRepository();
+```
+
+#### Migration from Reflection-Based Approach
+
+**Before (Reflection-Based)**:
+```csharp
+// Problematic reflection approach
+var completion = CreateMockChatCompletion("Test content"); // Used reflection internally
+```
+
+**After (Interface Wrapper)**:
+```csharp
+// Clean interface-based approach
+var completion = AiServiceMockFactory.CreateChatCompletionWrapper("Test content");
+// OR
+var completion = new TestChatCompletionWrapper("Test content", "assistant");
+```
+
+The factory provides `CreateMockCompletion()` as a migration helper that internally uses the new wrapper pattern while maintaining the same external interface.
+
+#### Cross-References
+
+* **Related Standards**: [`../../../Docs/Standards/TestingStandards.md`](../../../Docs/Standards/TestingStandards.md) - Testing patterns and mock strategies
+* **Interface Contracts**: [`../../../Code/Zarichney.Server/AI/Interfaces/IChatCompletionWrapper.cs`](../../../Code/Zarichney.Server/AI/Interfaces/IChatCompletionWrapper.cs) - Complete interface definitions
+* **Historical Context**: PR #179 - Introduction of interface wrapper pattern replacing reflection-based mocking
+* **Factory Documentation**: See factory usage examples in Section 5 above
+
+#### Benefits for Test Development
+
+* **Simplified Test Setup**: Clear constructor parameters and factory methods
+* **Enhanced Debugging**: No reflection means stack traces point to actual test code
+* **Improved IDE Support**: IntelliSense and refactoring tools work properly with interfaces
+* **Consistent Patterns**: Aligns with standard dependency injection and mocking practices
+* **Future Extensibility**: Easy to add new wrapper methods as OpenAI SDK evolves
+
 * **Dynamic Mock Configuration:** The current mock factories provide basic `Mock<T>` instances. More complex shared default behaviors for mocks, if needed, might require enhancements to the factories or a different strategy.
 * **Contract Testing (PactNet - TDD FRMK-005):** Once WireMock.Net is in place, contract testing should be evaluated to ensure WireMock stubs stay synchronized with actual external API contracts.
 * Refer to the "Framework Augmentation Roadmap (TODOs)" in `../../TechnicalDesignDocument.md` for broader framework enhancements.

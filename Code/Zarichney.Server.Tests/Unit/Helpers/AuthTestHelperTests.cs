@@ -1,9 +1,9 @@
 using System.Security.Claims;
 using FluentAssertions;
 using Xunit;
-using Zarichney.Tests.Framework.Helpers;
+using Zarichney.Server.Tests.Framework.Helpers;
 
-namespace Zarichney.Tests.Unit.Helpers;
+namespace Zarichney.Server.Tests.Unit.Helpers;
 
 [Trait("Category", "Unit")]
 [Trait("Component", "Helper")]

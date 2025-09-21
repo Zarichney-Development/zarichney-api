@@ -7,12 +7,12 @@ using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Config;
 using Zarichney.Services.Status;
-using Zarichney.Tests.Framework.Attributes;
-using Zarichney.Tests.Framework.Fixtures;
-using Zarichney.Tests.Framework.Helpers;
-using static Zarichney.Tests.Framework.Helpers.TestFactories;
+using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Server.Tests.Framework.Fixtures;
+using Zarichney.Server.Tests.Framework.Helpers;
+using static Zarichney.Server.Tests.Framework.Helpers.TestFactories;
 
-namespace Zarichney.Tests.Integration.Services.Status;
+namespace Zarichney.Server.Tests.Integration.Services.Status;
 
 /// <summary>
 /// Integration tests for the ServiceAvailabilityOperationFilter in Swagger/OpenAPI.
@@ -41,7 +41,7 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
                          Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
                          Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
-    
+
     Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
 
     // Arrange
@@ -120,7 +120,7 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
                          Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
                          Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
-    
+
     Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
     // Arrange
     // Create a mock configuration status service that reports LLM and Transcription features as unavailable
@@ -235,7 +235,7 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
                          Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
                          Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
-    
+
     Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
     // Arrange
     // Create a mock configuration status service that reports Stripe feature as unavailable
@@ -319,7 +319,7 @@ public class SwaggerFeatureAvailabilityTests(ApiClientFixture apiClientFixture, 
     var skipInfraTests = Environment.GetEnvironmentVariable("SKIP_INFRASTRUCTURE_TESTS") == "true" ||
                          Environment.GetEnvironmentVariable("GITHUB_HEAD_REF")?.StartsWith("test/") == true ||
                          Environment.GetEnvironmentVariable("CI_ENVIRONMENT") == "true";
-    
+
     Skip.If(skipInfraTests, "Infrastructure tests skipped for test/validation branches or CI environment");
     // Arrange
     // Create a mock configuration status service that reports multiple features as unavailable

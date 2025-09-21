@@ -5,7 +5,7 @@ using Moq;
 using Xunit;
 using Zarichney.Services.ProcessExecution;
 
-namespace Zarichney.Tests.Unit.Services.ProcessExecution;
+namespace Zarichney.Server.Tests.Unit.Services.ProcessExecution;
 
 /// <summary>
 /// Unit tests for ProcessExecutor service - tests system command execution with proper async handling
@@ -97,7 +97,7 @@ public class ProcessExecutorTests
     var command = "sleep";
     var arguments = "5"; // Sleep for 5 seconds
     using var cts = new CancellationTokenSource();
-    
+
     // Act & Assert
     var task = _sut.RunCommandAsync(command, arguments, 5000, cts.Token);
     cts.Cancel();

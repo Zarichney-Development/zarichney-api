@@ -12,11 +12,13 @@ using Serilog.Sinks.XUnit.Injectable;
 using Serilog.Sinks.XUnit.Injectable.Extensions;
 using Zarichney.Services.AI;
 using Zarichney.Services.Auth;
+using Zarichney.Services.Email;
 using Zarichney.Services.Status;
-using Zarichney.Tests.Framework.Helpers;
-using Zarichney.Tests.Framework.Mocks.Factories;
+using Zarichney.Server.Tests.Framework.Helpers;
+using Zarichney.Server.Tests.Framework.Mocks;
+using Zarichney.Server.Tests.Framework.Mocks.Factories;
 
-namespace Zarichney.Tests.Framework.Fixtures;
+namespace Zarichney.Server.Tests.Framework.Fixtures;
 
 /// <summary>
 /// Factory for bootstrapping an application in memory for functional end to end tests.
@@ -244,6 +246,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     services.AddSingleton(sp => sp.GetRequiredService<Mock<ILlmService>>().Object);
     services.AddSingleton(sp => sp.GetRequiredService<Mock<IGitHubService>>().Object);
     services.AddSingleton(sp => sp.GetRequiredService<Mock<IEmailService>>().Object);
+
+    // Register test framework helper services
+    services.AddSingleton<MockHelper>();
+    services.AddSingleton<EmailServiceMockFactory>();
   }
 
   /// <summary>

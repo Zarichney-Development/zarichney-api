@@ -1,7 +1,7 @@
 # README: /TestData Directory
 
 **Version:** 1.1
-**Last Updated:** 2025-05-22
+**Last Updated:** 2025-09-20
 **Parent:** `../README.md`
 
 ## 1. Purpose & Responsibility
@@ -9,25 +9,29 @@
 This directory, `/TestData/`, is responsible for storing and managing various test data artifacts used across both unit and integration tests within the `Zarichney.Server.Tests` project. Its primary purpose is to support the creation of consistent, reusable, and maintainable test data, facilitating clearer and more robust test scenarios.
 
 This includes:
-* **Test Data Builders (`./Builders/`):** Fluent builder classes for constructing complex domain objects or DTOs with specific states required for particular test cases.
+* **Test Data Builders (`./Builders/`):** Fluent builder classes for constructing complex domain objects or DTOs with specific states required for particular test cases. **Enhanced in PR #179** with advanced service builders like `LlmServiceBuilder` for complex dependency scenarios.
 * **Sample Static Data Files (e.g., `./Recipes/Burger.json`):** Fixed data files (typically JSON) used when tests require a predefined, static dataset that is not easily or clearly generated dynamically.
+* **AutoFixture Customizations (`./AutoFixtureCustomizations/`):** **Reorganized in PR #179** - Advanced AutoFixture customizations with proper namespace alignment following framework standards.
 
-This directory complements the dynamic data generation capabilities provided by AutoFixture (often accessed via `GetRandom.cs`) and the planned advanced AutoFixture customizations in `../Framework/TestData/AutoFixtureCustomizations/`. While AutoFixture excels at providing anonymous, structurally valid data, the components in *this* `/TestData/` directory offer more explicit control or provide fixed baseline data.
+This directory complements the dynamic data generation capabilities provided by AutoFixture (often accessed via `GetRandom.cs`) and the enhanced AutoFixture customizations now properly organized in both `./AutoFixtureCustomizations/` and `../Framework/TestData/AutoFixtureCustomizations/`. While AutoFixture excels at providing anonymous, structurally valid data, the components in *this* `/TestData/` directory offer more explicit control or provide fixed baseline data.
 
 Adherence to the principles outlined here and in the main testing standards (`../../Docs/Standards/TestingStandards.md`, `../../Docs/Standards/UnitTestCaseDevelopment.md`, `../../Docs/Standards/IntegrationTestCaseDevelopment.md`) is expected.
 
 ### Child Modules / Key Subdirectories:
 
-* **`./Builders/README.md`**: Contains specific guidance and an overview of available Test Data Builders.
+* **`./Builders/README.md`**: Contains specific guidance and an overview of available Test Data Builders. **Enhanced in PR #179** with service builders for complex scenarios.
+* **`./AutoFixtureCustomizations/`**: **Reorganized in PR #179** - AutoFixture customizations with proper namespace organization following `Zarichney.Server.Tests.TestData.AutoFixtureCustomizations` pattern.
 * **`./Recipes/`**: Example subdirectory for organizing static sample recipe data. Similar subdirectories may exist for other domains.
 
 ## 2. Architecture & Key Concepts
 
 * **Test Data Builders (`./Builders/`):**
     * These classes (e.g., `RecipeBuilder.cs`, `ConfigurationItemStatusBuilder.cs`) implement the Builder pattern to provide a fluent API for constructing test objects.
+    * **Enhanced in PR #179:** Added advanced service builders like `LlmServiceBuilder` enabling complex dependency injection scenarios with both valid and invalid state testing.
     * They allow tests to define objects in a readable way, setting only the properties relevant to the test scenario while relying on sensible defaults for others.
     * Builders often use AutoFixture internally (e.g., via `GetRandom`) to populate properties not explicitly set by the test, promoting the principle of anonymous data where appropriate.
     * A `BaseBuilder.cs` might provide common functionality for all builders.
+    * **Service Builder Pattern:** New pattern for complex services requiring dependency configuration (e.g., `WithNullClient()`, `WithInvalidConfig()`, `BuildInvalid()`).
 * **Sample Static Data Files:**
     * These are typically JSON files (e.g., `Burger.json`) representing specific instances of DTOs or entities.
     * Used for:
@@ -38,7 +42,7 @@ Adherence to the principles outlined here and in the main testing standards (`..
     * **AutoFixture (via `GetRandom` or direct usage):** Preferred for generating anonymous, general-purpose test data where specific values are not critical to the test's logic.
     * **Test Data Builders:** Used when more control is needed to create objects in specific valid states, or when object creation is complex but needs to be readable and reusable. They often *leverage* AutoFixture.
     * **Static Data Files:** Used for explicit, unchanging datasets that are fundamental to a test case.
-    * **Advanced AutoFixture Customizations (`../Framework/TestData/AutoFixtureCustomizations/`):** For creating reusable `ISpecimenBuilder` or `ICustomization` instances that modify AutoFixture's core behavior for generating specific types (especially complex domain/EF entities).
+    * **AutoFixture Customizations (`./AutoFixtureCustomizations/` and `../Framework/TestData/AutoFixtureCustomizations/`):** **Reorganized in PR #179** - For creating reusable `ISpecimenBuilder` or `ICustomization` instances that modify AutoFixture's core behavior for generating specific types (especially complex domain/EF entities). Proper namespace organization ensures framework compatibility.
 
 ## 3. Interface Contract & Assumptions
 
@@ -103,8 +107,9 @@ Adherence to the principles outlined here and in the main testing standards (`..
 * **New Builder:**
     1.  Create a new class in `./Builders/` (e.g., `UserBuilder.cs`).
     2.  Implement the fluent builder pattern, potentially using `GetRandom` for default/random values.
-    3.  Add XML documentation.
-    4.  Update `./Builders/README.md`.
+    3.  **Service Builders:** For complex services, follow `LlmServiceBuilder` pattern with `WithValidDefaults()`, specific invalid state methods, and both `Build()` and `BuildInvalid()` methods.
+    4.  Add XML documentation.
+    5.  Update `./Builders/README.md`.
 * **New Static Data File:**
     1.  Create the data file (e.g., a JSON file) with the required content.
     2.  Place it in an appropriate subdirectory (e.g., `./Users/SampleAdminUser.json`).
@@ -135,9 +140,13 @@ This layered approach allows tests to use the most appropriate data generation m
 
 ## 8. Known Issues & TODOs
 
+* **PR #179 Enhancements Completed:**
+    * ✅ **Service Builder Pattern:** `LlmServiceBuilder` implemented with invalid state testing capabilities
+    * ✅ **Namespace Organization:** `WebScraperCustomization` relocated to proper `TestData.AutoFixtureCustomizations` namespace
+    * ✅ **Builder Pattern Standards:** Established patterns for complex service configuration scenarios
 * **Builder Coverage:** Continue developing Test Data Builders for all key domain entities and complex DTOs to simplify test setup across the suite. (Tracked via tasks referencing the `../../Docs/Templates/GHTestCoverageTask.md` template where applicable for new features).
 * **Static File Maintenance:** Ensure a process is in place (e.g., as part of code review or specific audit tasks) to check that static data files are kept synchronized with their corresponding C# models to prevent deserialization issues.
-* **Integration with Advanced AutoFixture Customizations:** As `../Framework/TestData/AutoFixtureCustomizations/` is populated, Test Data Builders may be refactored to leverage these advanced customizations for even more powerful and consistent data generation.
+* **Integration with Advanced AutoFixture Customizations:** As AutoFixture customizations are enhanced, Test Data Builders may be refactored to leverage these advanced customizations for even more powerful and consistent data generation.
 * Refer to the "Framework Augmentation Roadmap (TODOs)" in `../TechnicalDesignDocument.md` for broader framework enhancements related to test data.
 
 ---

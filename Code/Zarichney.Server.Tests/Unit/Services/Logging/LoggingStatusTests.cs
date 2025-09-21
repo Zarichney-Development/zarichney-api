@@ -9,7 +9,7 @@ using Zarichney.Services.Logging;
 using Zarichney.Services.Logging.Models;
 using Zarichney.Services.ProcessExecution;
 
-namespace Zarichney.Tests.Unit.Services.Logging;
+namespace Zarichney.Server.Tests.Unit.Services.Logging;
 
 /// <summary>
 /// Unit tests for LoggingStatus service - tests logging system status and configuration management
@@ -164,7 +164,7 @@ public class LoggingStatusTests
 
     // Assert
     result.Should().NotBeNull();
-    
+
     result.NativeSeq.Should().NotBeNull();
     result.NativeSeq.Available.Should().BeTrue("native Seq is running");
     result.NativeSeq.ServiceName.Should().Be("seq");

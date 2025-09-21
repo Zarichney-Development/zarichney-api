@@ -1,6 +1,6 @@
 # Module/Directory: /Unit/Controllers/PublicController
 
-**Last Updated:** 2025-04-18
+**Last Updated:** 2025-01-20
 
 > **Parent:** [`Controllers`](../README.md)
 > **Related:**

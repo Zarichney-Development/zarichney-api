@@ -1,9 +1,10 @@
-namespace Zarichney.Tests.TestData;
+namespace Zarichney.Server.Tests.TestData;
 
 /// <summary>
 /// Represents a recipe entity for testing purposes.
 /// </summary>
-public class Recipe
+[Obsolete("Use Zarichney.Cookbook.Recipes.Recipe instead with RecipeBuilder")]
+public class LegacyTestRecipe
 {
   /// <summary>
   /// Gets or sets the recipe ID.

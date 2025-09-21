@@ -13,5 +13,36 @@
         "GITHUB_TOKEN": "${env:GITHUB_TOKEN}"
       }
     }
+  },
+  
+  // Editor settings to align with .editorconfig
+  "editor.detectIndentation": false,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.trimAutoWhitespace": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  
+  // C# specific settings
+  "[csharp]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  
+  // JSON specific settings
+  "[json]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  
+  // TypeScript/JavaScript settings
+  "[typescript]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  "[javascript]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
   }
 }

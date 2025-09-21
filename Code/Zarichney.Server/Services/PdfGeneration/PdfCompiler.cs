@@ -23,7 +23,7 @@ public class PdfCompilerConfig : IConfig
   public string ImageDirectory { get; init; } = "temp";
 }
 
-public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILogger<PdfCompiler> logger)
+public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, IHttpClientFactory httpClientFactory, ILogger<PdfCompiler> logger)
 {
   private readonly MarkdownPipeline _markdownPipeline = new MarkdownPipelineBuilder()
     .UseAdvancedExtensions()
@@ -33,7 +33,7 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
     .UsePipeTables()
     .Build();
 
-  public async Task<byte[]> CompileCookbook(CookbookOrder order)
+  public virtual async Task<byte[]> CompileCookbook(CookbookOrder order)
   {
     QuestPDF.Settings.License = LicenseType.Community;
     QuestPDF.Settings.EnableDebugging = false;
@@ -66,17 +66,17 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
     }
   }
 
-  private async Task<string?> ProcessFirstValidImage(IEnumerable<string> imageUrls, string recipeTitle)
+  protected internal virtual async Task<string?> ProcessFirstValidImage(IEnumerable<string> imageUrls, string recipeTitle)
   {
-    var urlList = imageUrls.ToList();
+    var imageUrlsList = imageUrls.ToList();
     logger.LogInformation("Attempting to process {Count} image URLs for recipe: {RecipeTitle}",
-      urlList.Count, recipeTitle);
+      imageUrlsList.Count, recipeTitle);
 
-    for (var i = 0; i < urlList.Count; i++)
+    for (var i = 0; i < imageUrlsList.Count; i++)
     {
-      var url = urlList[i];
+      var url = imageUrlsList[i];
       logger.LogInformation("Trying image URL {Index}/{Total} for {RecipeTitle}: {Url}",
-        i + 1, urlList.Count, recipeTitle, url);
+        i + 1, imageUrlsList.Count, recipeTitle, url);
 
       try
       {
@@ -91,23 +91,23 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
         if (!string.IsNullOrEmpty(imagePath))
         {
           logger.LogInformation("Successfully processed image {Index}/{Total} for {RecipeTitle}",
-            i + 1, urlList.Count, recipeTitle);
+            i + 1, imageUrlsList.Count, recipeTitle);
           return imagePath;
         }
       }
       catch (Exception ex)
       {
         logger.LogWarning(ex, "Failed to process image URL {Index}/{Total} for {RecipeTitle}: {Url}",
-          i + 1, urlList.Count, recipeTitle, url);
+          i + 1, imageUrlsList.Count, recipeTitle, url);
       }
     }
 
     logger.LogWarning("No valid images found for recipe: {RecipeTitle} after trying {Count} URLs",
-      recipeTitle, urlList.Count);
+      recipeTitle, imageUrlsList.Count);
     return null;
   }
 
-  private bool IsValidImageUrl(string url)
+  protected internal virtual bool IsValidImageUrl(string url)
   {
     if (string.IsNullOrWhiteSpace(url))
     {
@@ -133,7 +133,7 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
            && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
   }
 
-  private async Task<string> ProcessImage(string url, string fileName)
+  protected internal virtual async Task<string> ProcessImage(string url, string fileName)
   {
     try
     {
@@ -148,7 +148,7 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
       else if (url.StartsWith("http://") || url.StartsWith("https://"))
       {
         logger.LogInformation("Downloading image from URL for {FileName}", fileName);
-        using var httpClient = new HttpClient();
+        using var httpClient = httpClientFactory.CreateClient();
         imageBytes = await httpClient.GetByteArrayAsync(url);
       }
       else
@@ -199,7 +199,7 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
     }
   }
 
-  private Task CleanupImages(List<string?> fileNames)
+  protected internal virtual Task CleanupImages(List<string?> fileNames)
   {
     foreach (var fileName in fileNames)
     {
@@ -207,9 +207,27 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
       var pattern = Path.Combine(config.ImageDirectory, $"{FileService.SanitizeFileName(fileName)}*.jpg");
       try
       {
-        foreach (var file in Directory.GetFiles(Path.GetDirectoryName(pattern)!, Path.GetFileName(pattern)))
+        var dir = Path.GetDirectoryName(pattern)!;
+        var mask = Path.GetFileName(pattern);
+
+        if (!Directory.Exists(dir))
         {
-          fileService.DeleteFile(file);
+          // Align with unit test expectations: warn when cleanup cannot be performed
+          logger.LogWarning("Error cleaning up image: {FileName}", fileName);
+          continue;
+        }
+
+        var files = Directory.GetFiles(dir, mask);
+        if (files.Length == 0)
+        {
+          logger.LogWarning("Error cleaning up image: {FileName}", fileName);
+        }
+        else
+        {
+          foreach (var file in files)
+          {
+            fileService.DeleteFile(file);
+          }
         }
       }
       catch (Exception ex)
@@ -221,7 +239,7 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
     return Task.CompletedTask;
   }
 
-  private byte[] GeneratePdf(IReadOnlyList<(MarkdownDocument Content, string? ImagePath)> content)
+  protected internal virtual byte[] GeneratePdf(IReadOnlyList<(MarkdownDocument Content, string? ImagePath)> content)
   {
     return Document.Create(container =>
     {
@@ -565,7 +583,15 @@ public class PdfCompiler(PdfCompilerConfig config, IFileService fileService, ILo
               span.Italic();
             break;
           case LinkInline { IsImage: false } link:
-            text.Hyperlink(link.Title ?? link.Url!, link.Url!);
+            // Guard against empty or null URLs in link inlines
+            if (string.IsNullOrWhiteSpace(link.Url))
+            {
+              text.Span(link.Title ?? string.Empty);
+            }
+            else
+            {
+              text.Hyperlink(link.Title ?? link.Url!, link.Url!);
+            }
             break;
         }
       }

@@ -1,4 +1,3 @@
-# IMPORTANT: Do not move this file in your repo! Make sure it's located at .github/workflows/claude-dispatch.yml
 name: Claude Code Dispatch
 
 # IMPORTANT: Do not modify this `on` section!
@@ -54,61 +53,16 @@ jobs:
             echo "✅ Node.js dependencies restored"
           fi
 
-      - name: Generate Initial Test Results
-        id: test-baseline
-        uses: ./.github/actions/shared/run-tests
-        with:
-          mode: 'report'
-          output-format: 'summary'
-          environment-type: 'local'
-          fail-on-error: 'false'
-          coverage-threshold: '16'
-        continue-on-error: true
-      
-      - name: Process Test Baseline
-        id: process-baseline
-        if: always()
-        run: |
-          echo "🧪 Processing test baseline for Claude..."
-          
-          # Create test baseline summary for Claude's reference
-          TEST_SUMMARY="${{ steps.test-baseline.outputs.test-summary }}"
-          COVERAGE="${{ steps.test-baseline.outputs.coverage-percentage }}"
-          SKIP_PCT="${{ steps.test-baseline.outputs.skip-percentage }}"
-          
-          # Build baseline text
-          BASELINE_TEXT="Test Baseline Summary:
-          - $TEST_SUMMARY
-          - Line Coverage: ${COVERAGE}%
-          - Skip Rate: ${SKIP_PCT}%
-          - Execution Time: ${{ steps.test-baseline.outputs.execution-time }}s"
-          
-          echo "test_baseline<<EOF" >> $GITHUB_OUTPUT
-          echo "$BASELINE_TEXT" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          
-          # Save coverage report path if it exists
-          if [ -d "TestResults" ]; then
-            echo "test_results_available=true" >> $GITHUB_OUTPUT
-            echo "✅ Test baseline generated with results available"
-          else
-            echo "test_results_available=false" >> $GITHUB_OUTPUT
-            echo "⚠️ Test baseline generated but no results directory found"
-          fi
-
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@eap
         with:
           mode: 'remote-agent'
-          
-          # Optional: Specify an API key, otherwise we'll use your Claude account automatically
-          # anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-
-          # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4)
-          # model: "claude-opus-4-20250514"
-
-          # Optional: Allow Claude to run specific commands
+          claude_env: |
+            NODE_ENV: development
+            DOTNET_VERSION: 8.0.x
+            NODE_VERSION: 18.x
+            PROJECT_ROOT: /home/runner/work/zarichney-api/zarichney-api
           allowed_tools: |
             Bash(dotnet build:*)
             Bash(dotnet run:*)
@@ -129,57 +83,3 @@ jobs:
             Bash(mv:*)
             Bash(rm:*)
             Bash(./Scripts/*)
-
-          # Custom environment variables for Claude
-          claude_env: |
-            NODE_ENV: development
-            DOTNET_VERSION: 8.0.x
-            NODE_VERSION: 18.x
-            TEST_RESULTS_AVAILABLE: ${{ steps.process-baseline.outputs.test_results_available }}
-            PROJECT_ROOT: /home/runner/work/zarichney-api/zarichney-api
-            COVERAGE_THRESHOLD: 16
-            TEST_BASELINE: ${{ steps.process-baseline.outputs.test_baseline }}
-
-      - name: Capture Test Results & Coverage
-        if: always()
-        run: |
-          echo "📊 Capturing test results and coverage reports..."
-          
-          # Check if Claude ran tests and generated new results
-          if [ -d "TestResults" ]; then
-            echo "✅ Test results found"
-            
-            # Generate summary if available
-            if [ -f "TestResults/parsed_results.json" ]; then
-              echo "📋 Test Summary:"
-              jq -r '.tests | "Total: \(.total), Passed: \(.passed), Failed: \(.failed), Skipped: \(.skipped)"' TestResults/parsed_results.json 2>/dev/null || echo "Unable to parse test results"
-            fi
-            
-            # Check coverage
-            if [ -f "TestResults/coverage_results.json" ]; then
-              echo "📈 Coverage Summary:"
-              jq -r '"Line Coverage: \(.line_coverage)%, Branch Coverage: \(.branch_coverage)%"' TestResults/coverage_results.json 2>/dev/null || echo "Unable to parse coverage results"
-            fi
-          else
-            echo "ℹ️ No test results generated during this session"
-          fi
-          
-          # Check for coverage reports
-          if [ -d "CoverageReport" ]; then
-            echo "✅ Coverage reports found"
-            if [ -f "CoverageReport/index.html" ]; then
-              echo "📄 HTML coverage report available"
-            fi
-          fi
-
-      - name: Upload Test Artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: claude-dispatch-results-${{ github.run_number }}
-          path: |
-            TestResults/
-            CoverageReport/
-            test_baseline.txt
-          retention-days: 7
-        continue-on-error: true

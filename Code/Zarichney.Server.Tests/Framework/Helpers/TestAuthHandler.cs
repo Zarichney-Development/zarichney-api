@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Zarichney.Tests.Framework.Helpers;
+namespace Zarichney.Server.Tests.Framework.Helpers;
 
 /// <summary>
 /// Authentication handler for testing purposes.
