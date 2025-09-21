@@ -195,6 +195,9 @@ jobs:
           export EC2_SSH_KEY="${{ secrets.EC2_SSH_KEY }}"
           export SECRET_ID="${{ secrets.SECRET_ID }}"
           export SECRET_DB_PASSWORD_KEY="${{ secrets.SECRET_DB_PASSWORD_KEY }}"
+          export DB_HOST="${{ secrets.DB_HOST }}"
+          export DB_USER="${{ secrets.DB_USER }}"
+          export DB_NAME="${{ secrets.DB_NAME }}"
           
           # Execute deployment
           .github/scripts/deploy-backend.sh "${{ needs.deployment-decision.outputs.environment }}"
@@ -202,45 +205,80 @@ jobs:
       - name: Run health checks
         run: |
           echo "🏥 Running post-deployment health checks..."
-          
-          # Health check URL based on environment
+
+          # Determine base URLs based on environment
           case "${{ needs.deployment-decision.outputs.environment }}" in
             "production")
-              HEALTH_URL="https://zarichney.com/api/health"
+              BASE_URL="https://zarichney.com"
               ;;
             "staging")
-              HEALTH_URL="https://staging-zarichney.com/api/health"
+              BASE_URL="https://staging-zarichney.com"
               ;;
             *)
-              HEALTH_URL="http://${{ secrets.EC2_HOST_BACKEND }}:5000/health"
+              BASE_URL="http://${{ secrets.EC2_HOST_BACKEND }}:5000"
               ;;
           esac
-          
-          echo "Health check URL: $HEALTH_URL"
-          
+
+          HEALTH_URL="$BASE_URL/api/health"
+          STATUS_URL="$BASE_URL/api/status"
+
+          echo "Health check URLs:"
+          echo "  - Basic health: $HEALTH_URL"
+          echo "  - Status check: $STATUS_URL"
+
           # Wait for application to be ready
           sleep 15
-          
+
           # Health check with retry
-          for attempt in {1..5}; do
-            echo "Health check attempt $attempt/5..."
-            if curl -f -s --max-time 30 "$HEALTH_URL"; then
-              echo "✅ Backend health check passed"
-              exit 0
+          for attempt in {1..6}; do
+            echo ""
+            echo "🔍 Health check attempt $attempt/6..."
+
+            # Test basic health endpoint
+            echo "Testing basic health endpoint..."
+            if curl -f -s --max-time 30 "$HEALTH_URL" >/dev/null; then
+              echo "✅ Basic health check passed"
+
+              # Test comprehensive status endpoint
+              echo "Testing comprehensive status endpoint..."
+              if curl -f -s --max-time 30 "$STATUS_URL" >/dev/null; then
+                echo "✅ Status check passed"
+
+                # Get and display health/status details
+                echo ""
+                echo "📊 Health Details:"
+                curl -s --max-time 10 "$HEALTH_URL" 2>/dev/null || echo "Health details unavailable"
+
+                echo ""
+                echo "📊 Status Details:"
+                curl -s --max-time 10 "$STATUS_URL" 2>/dev/null || echo "Status details unavailable"
+
+                echo ""
+                echo "🎉 All backend health checks passed successfully"
+                exit 0
+              else
+                echo "❌ Status check failed"
+              fi
             else
-              echo "❌ Health check failed, retrying in 20 seconds..."
+              echo "❌ Basic health check failed"
+            fi
+
+            if [[ $attempt -lt 6 ]]; then
+              echo "⏳ Retrying in 20 seconds..."
               sleep 20
             fi
           done
-          
-          echo "💥 Backend health checks failed after 5 attempts"
+
+          echo ""
+          echo "💥 Backend health checks failed after 6 attempts"
+          echo "Both /api/health and /api/status endpoints must respond with HTTP 200"
           exit 1
 
   frontend-deploy:
     name: "Frontend Deployment"
     runs-on: ubuntu-latest
-    needs: deployment-decision
-    if: needs.deployment-decision.outputs.deploy-frontend == 'true'
+    needs: [deployment-decision, backend-deploy]
+    if: needs.deployment-decision.outputs.deploy-frontend == 'true' && (needs.deployment-decision.outputs.deploy-backend == 'false' || needs.backend-deploy.result == 'success')
     timeout-minutes: 25
     environment: ${{ needs.deployment-decision.outputs.environment }}
     

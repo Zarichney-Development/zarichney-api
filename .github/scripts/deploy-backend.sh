@@ -150,9 +150,9 @@ validate_deployment_prereqs() {
     
     # Check required environment variables
     local required_vars=("AWS_REGION" "EC2_HOST_BACKEND" "EC2_SSH_KEY" "DOTNET_VERSION")
-    
+
     if [[ "$SKIP_MIGRATIONS" != "true" ]]; then
-        required_vars+=("SECRET_ID" "SECRET_DB_PASSWORD_KEY")
+        required_vars+=("SECRET_ID" "SECRET_DB_PASSWORD_KEY" "DB_HOST" "DB_USER" "DB_NAME")
     fi
     
     check_required_env "${required_vars[@]}"
@@ -358,17 +358,39 @@ fi
 export PGPASSWORD="$DB_PASSWORD"
 
 echo "📊 Applying database migrations..."
-cd /opt/cookbook-api/Server/Auth/Migrations
+cd /opt/cookbook-api
 
-if [ -f "ApplyAllMigrations.sql" ]; then
+# Check for migrations file in the correct location
+if [ -f "migrations/ApplyAllMigrations.sql" ]; then
     echo "🔄 Running migrations script..."
-    psql -h cookbook-db.cluster-cgixo0hf5zva.us-east-2.rds.amazonaws.com \
-         -U cookbook_user \
-         -d cookbook_db \
-         -f ApplyAllMigrations.sql
-    echo "✅ Migrations applied successfully"
+    echo "🔍 Testing database connectivity..."
+
+    # Test database connectivity with retry
+    for i in {1..3}; do
+        echo "🔌 Database connection attempt $i/3 to $DB_HOST..."
+        if nslookup "$DB_HOST" >/dev/null 2>&1; then
+            echo "✅ DNS resolution successful for $DB_HOST"
+            break
+        else
+            echo "❌ DNS resolution failed for $DB_HOST, retrying in 5 seconds..."
+            sleep 5
+            if [ $i -eq 3 ]; then
+                echo "💥 ERROR: Cannot resolve database hostname $DB_HOST after 3 attempts"
+                exit 1
+            fi
+        fi
+    done
+
+    # Apply migrations with proper error handling
+    if psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -f migrations/ApplyAllMigrations.sql; then
+        echo "✅ Migrations applied successfully"
+    else
+        echo "❌ ERROR: Failed to apply migrations to database"
+        echo "Database details: Host=$DB_HOST, User=$DB_USER, Database=$DB_NAME"
+        exit 1
+    fi
 else
-    echo "⚠️ No migrations script found, skipping..."
+    echo "⚠️ No migrations script found at migrations/ApplyAllMigrations.sql, skipping..."
 fi
 
 echo "🔄 Restarting cookbook-api service..."
@@ -392,7 +414,7 @@ EOF
     
     # Execute deployment script on EC2
     ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 -i private_key "${EC2_USERNAME}@${EC2_HOST_BACKEND}" \
-        "SECRET_ID='$SECRET_ID' AWS_REGION='$AWS_REGION' SECRET_DB_PASSWORD_KEY='$SECRET_DB_PASSWORD_KEY' bash -s" <<< "$deployment_script"
+        "SECRET_ID='$SECRET_ID' AWS_REGION='$AWS_REGION' SECRET_DB_PASSWORD_KEY='$SECRET_DB_PASSWORD_KEY' DB_HOST='$DB_HOST' DB_USER='$DB_USER' DB_NAME='$DB_NAME' bash -s" <<< "$deployment_script"
     
     log_success "Application deployment completed"
 }
@@ -404,53 +426,72 @@ cleanup_ssh_key() {
 
 run_health_checks() {
     log_section "Running Health Checks"
-    
-    # Determine health check URL based on environment
-    local health_url
+
+    # Determine base URL and health endpoints based on environment
+    local base_url health_url status_url
     case "$TARGET_ENV" in
         "production")
-            health_url="https://zarichney.com/api/health"
+            base_url="https://zarichney.com"
             ;;
         "staging")
-            health_url="https://staging-zarichney.com/api/health"
+            base_url="https://staging-zarichney.com"
             ;;
         "dev")
-            health_url="http://${EC2_HOST_BACKEND}:5000/health"
+            base_url="http://${EC2_HOST_BACKEND}:5000"
             ;;
         *)
             log_warning "Unknown environment: $TARGET_ENV, skipping health checks"
             return 0
             ;;
     esac
-    
-    log_info "Running health check against: $health_url"
-    
+
+    health_url="$base_url/api/health"
+    status_url="$base_url/api/status"
+
+    log_info "Running health checks against:"
+    log_info "  - Basic health: $health_url"
+    log_info "  - Status check: $status_url"
+
     # Wait for application to be ready
     sleep 15
-    
+
     # Health check with retry
-    for attempt in {1..5}; do
-        log_info "Health check attempt $attempt/5"
-        
+    for attempt in {1..6}; do
+        log_info "Health check attempt $attempt/6"
+
+        # Test basic health endpoint
         if curl -f -s -o /dev/null --max-time 30 "$health_url"; then
-            log_success "Health check passed"
-            
-            # Get detailed health info
-            local health_info
-            health_info=$(curl -s --max-time 10 "$health_url" 2>/dev/null || echo "Health details unavailable")
-            log_info "Health status: $health_info"
-            
-            return 0
-        else
-            log_warning "Health check attempt $attempt failed"
-            if [[ $attempt -lt 5 ]]; then
-                log_info "Retrying in 20 seconds..."
-                sleep 20
+            log_success "Basic health check passed"
+
+            # Test comprehensive status endpoint
+            if curl -f -s -o /dev/null --max-time 30 "$status_url"; then
+                log_success "Status check passed"
+
+                # Get detailed health/status info
+                local health_info status_info
+                health_info=$(curl -s --max-time 10 "$health_url" 2>/dev/null || echo "Health details unavailable")
+                status_info=$(curl -s --max-time 10 "$status_url" 2>/dev/null || echo "Status details unavailable")
+
+                log_info "Health details: $health_info"
+                log_info "Status details: $status_info"
+                log_success "All health checks passed successfully"
+
+                return 0
+            else
+                log_warning "Status check failed"
             fi
+        else
+            log_warning "Basic health check failed"
+        fi
+
+        if [[ $attempt -lt 6 ]]; then
+            log_info "Retrying in 20 seconds..."
+            sleep 20
         fi
     done
-    
-    log_error "Health checks failed after 5 attempts"
+
+    log_error "Health checks failed after 6 attempts"
+    log_error "Both /api/health and /api/status endpoints must respond with HTTP 200"
     return 1
 }
 
