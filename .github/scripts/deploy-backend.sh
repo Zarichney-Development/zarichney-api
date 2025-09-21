@@ -250,6 +250,12 @@ publish_application() {
     else
         die "Application publishing failed"
     fi
+
+    # After successful publish, copy necessary scripts
+    log_info "Copying startup and maintenance scripts..."
+    cp Scripts/start-server.sh ./publish/
+    cp Scripts/cleanup-playwright.sh ./publish/
+    log_success "Scripts copied to publish directory"
     
     # Verify publish output
     if [[ ! -d "./publish" ]]; then
@@ -359,6 +365,11 @@ export PGPASSWORD="$DB_PASSWORD"
 
 echo "📊 Applying database migrations..."
 cd /opt/cookbook-api
+
+# Ensure scripts have execute permissions
+echo "🔧 Setting script permissions..."
+chmod +x /opt/cookbook-api/start-server.sh 2>/dev/null || true
+chmod +x /opt/cookbook-api/cleanup-playwright.sh 2>/dev/null || true
 
 # Check for migrations file in the correct location
 if [ -f "migrations/ApplyAllMigrations.sql" ]; then
