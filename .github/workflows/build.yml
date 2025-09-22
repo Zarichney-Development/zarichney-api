@@ -66,6 +66,7 @@ jobs:
       frontend-changed: ${{ steps.map-outputs.outputs.frontend-changed }}
       docs-only: ${{ steps.map-outputs.outputs.docs-only }}
       changed-files: ${{ steps.map-outputs.outputs.changed-files }}
+      tests-changed: ${{ steps.map-outputs.outputs.tests-changed }}
 
     steps:
       - name: Checkout code
@@ -88,32 +89,55 @@ jobs:
           # Map foundation component outputs to existing build.yml interface
           echo "backend-changed=${{ steps.foundation-path-analysis.outputs.has_backend_changes }}" >> $GITHUB_OUTPUT
           echo "frontend-changed=${{ steps.foundation-path-analysis.outputs.has_frontend_changes }}" >> $GITHUB_OUTPUT
-          echo "docs-only=${{ steps.foundation-path-analysis.outputs.has_docs_changes }}" >> $GITHUB_OUTPUT
 
-          # Preserve existing changed-files interface using foundation's change_summary
+          # Extract change data from foundation's change_summary JSON for proper behavioral parity
           CHANGE_SUMMARY='${{ steps.foundation-path-analysis.outputs.change_summary }}'
-          # Extract simplified format for backward compatibility
+
+          # Extract tests-changed from change_summary JSON (missing output fix)
+          TESTS_CHANGED=$(echo "$CHANGE_SUMMARY" | jq -r '.categories.tests.changed // false')
+          echo "tests-changed=$TESTS_CHANGED" >> $GITHUB_OUTPUT
+
+          # Calculate docs-only correctly (docs changed AND nothing else changed) - exclusive semantics fix
+          DOCS=$(echo "$CHANGE_SUMMARY" | jq -r '.categories.documentation.changed // false')
+          BACKEND="${{ steps.foundation-path-analysis.outputs.has_backend_changes }}"
+          FRONTEND="${{ steps.foundation-path-analysis.outputs.has_frontend_changes }}"
+          CONFIG="${{ steps.foundation-path-analysis.outputs.has_config_changes }}"
+
+          # docs-only is true when ONLY docs changed (exclusive semantics)
+          if [[ "$DOCS" == "true" && "$BACKEND" == "false" && "$FRONTEND" == "false" && "$TESTS_CHANGED" == "false" && "$CONFIG" == "false" ]]; then
+            DOCS_ONLY="true"
+          else
+            DOCS_ONLY="false"
+          fi
+          echo "docs-only=$DOCS_ONLY" >> $GITHUB_OUTPUT
+
+          # Preserve existing changed-files interface using foundation's outputs
+          COMPONENTS=""
           if [[ "${{ steps.foundation-path-analysis.outputs.has_backend_changes }}" == "true" ]]; then
             COMPONENTS="backend"
-          else
-            COMPONENTS=""
           fi
           if [[ "${{ steps.foundation-path-analysis.outputs.has_frontend_changes }}" == "true" ]]; then
             COMPONENTS="$COMPONENTS frontend"
           fi
-          if [[ "${{ steps.foundation-path-analysis.outputs.has_docs_changes }}" == "true" ]]; then
+          if [[ "$DOCS" == "true" ]]; then
             COMPONENTS="$COMPONENTS docs"
+          fi
+          if [[ "$TESTS_CHANGED" == "true" ]]; then
+            COMPONENTS="$COMPONENTS tests"
           fi
           if [[ "${{ steps.foundation-path-analysis.outputs.has_config_changes }}" == "true" ]]; then
             COMPONENTS="$COMPONENTS config"
           fi
-          echo "changed-files=${COMPONENTS// /,}" >> $GITHUB_OUTPUT
+          # Clean up and format as comma-separated list
+          COMPONENTS=$(echo "$COMPONENTS" | sed 's/^ *//' | sed 's/ /,/g')
+          echo "changed-files=$COMPONENTS" >> $GITHUB_OUTPUT
 
       - name: Display path analysis
         run: |
           echo "🔍 Path Analysis Results (Foundation Component):"
           echo "  - Backend changed: ${{ steps.map-outputs.outputs.backend-changed }}"
           echo "  - Frontend changed: ${{ steps.map-outputs.outputs.frontend-changed }}"
+          echo "  - Tests changed: ${{ steps.map-outputs.outputs.tests-changed }}"
           echo "  - Documentation only: ${{ steps.map-outputs.outputs.docs-only }}"
           echo "  - Changed components: ${{ steps.map-outputs.outputs.changed-files }}"
           echo "  - Foundation summary: ${{ steps.foundation-path-analysis.outputs.total_changes }} total changes"
