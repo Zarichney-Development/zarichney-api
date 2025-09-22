@@ -133,14 +133,14 @@ runs:
 
         # Generate detailed JSON change summary
         TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-        CHANGE_SUMMARY="{\"categories\":{\"backend\":{\"changed\":$HAS_BACKEND_CHANGES,\"description\":\"Backend code files (.cs, .sln, .csproj)\"},\"frontend\":{\"changed\":$HAS_FRONTEND_CHANGES,\"description\":\"Frontend code files (Angular, TypeScript)\"},\"documentation\":{\"changed\":$HAS_DOCS_CHANGES,\"description\":\"Documentation files (.md, .txt)\"},\"configuration\":{\"changed\":$HAS_CONFIG_CHANGES,\"description\":\"Configuration and pipeline files\"},\"tests\":{\"changed\":$TESTS_CHANGED,\"description\":\"Test files and test configuration\"}},\"summary\":{\"total_categories_changed\":$TOTAL_CHANGES,\"change_threshold\":$THRESHOLD,\"raw_summary\":\"$CHANGED_FILES_SUMMARY\"},\"metadata\":{\"base_ref\":\"${{ env.base-ref }}\",\"analysis_timestamp\":\"$TIMESTAMP\"}}"
+        CHANGE_SUMMARY="{\"categories\":{\"backend\":{\"changed\":$HAS_BACKEND_CHANGES,\"description\":\"Backend code files (.cs, .sln, .csproj)\"},\"frontend\":{\"changed\":$HAS_FRONTEND_CHANGES,\"description\":\"Frontend code files (Angular, TypeScript)\"},\"documentation\":{\"changed\":$HAS_DOCS_CHANGES,\"description\":\"Documentation files (.md, .txt)\"},\"configuration\":{\"changed\":$HAS_CONFIG_CHANGES,\"description\":\"Configuration and pipeline files\"},\"tests\":{\"changed\":$TESTS_CHANGED,\"description\":\"Test files and test configuration\"}},\"summary\":{\"total_categories_changed\":$CATEGORIES_CHANGED,\"change_threshold\":$THRESHOLD,\"raw_summary\":\"$CHANGED_FILES_SUMMARY\"},\"metadata\":{\"base_ref\":\"${{ env.base-ref }}\",\"analysis_timestamp\":\"$TIMESTAMP\"}}"
 
         # Set outputs
         echo "has_backend_changes=$HAS_BACKEND_CHANGES" >> $GITHUB_OUTPUT
         echo "has_frontend_changes=$HAS_FRONTEND_CHANGES" >> $GITHUB_OUTPUT
         echo "has_docs_changes=$HAS_DOCS_CHANGES" >> $GITHUB_OUTPUT
         echo "has_config_changes=$HAS_CONFIG_CHANGES" >> $GITHUB_OUTPUT
-        echo "total_changes=$TOTAL_CHANGES" >> $GITHUB_OUTPUT
+        echo "total_changes=$CATEGORIES_CHANGED" >> $GITHUB_OUTPUT
 
         # Format JSON for output (remove newlines for GitHub Actions compatibility)
         CHANGE_SUMMARY_COMPACT=$(echo "$CHANGE_SUMMARY" | jq -c .)
@@ -152,7 +152,7 @@ runs:
         echo "  - Frontend changes: $HAS_FRONTEND_CHANGES"
         echo "  - Documentation changes: $HAS_DOCS_CHANGES"
         echo "  - Configuration changes: $HAS_CONFIG_CHANGES"
-        echo "  - Total changes: $TOTAL_CHANGES"
+        echo "  - Total changes: $CATEGORIES_CHANGED"
         echo "  - Base reference: ${{ env.base-ref }}"
         echo ""
         echo "📊 Change Summary JSON:"
