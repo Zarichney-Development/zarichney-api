@@ -95,7 +95,7 @@ runs:
         TESTS_CHANGED="${{ steps.check-paths.outputs.tests-changed }}"
         PIPELINE_CHANGED="${{ steps.check-paths.outputs.pipeline-changed }}"
 
-        # Get changed files list and count total changes
+        # Get changed components summary (categories) from check-paths
         CHANGED_FILES_SUMMARY="${{ steps.check-paths.outputs.changed-files }}"
 
         # Count changed categories by splitting the summary string
@@ -131,16 +131,44 @@ runs:
           HAS_CONFIG_CHANGES="true"
         fi
 
+        # Compute total files changed using resolved base ref semantics
+        BASE_REF_ENV="${{ env.base-ref }}"
+        RESOLVED_BASE_REF="$BASE_REF_ENV"
+        if [[ "$BASE_REF_ENV" == "HEAD~1" ]]; then
+          if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+            RESOLVED_BASE_REF="HEAD~1"
+          else
+            # Empty tree object (shows all files as changed)
+            RESOLVED_BASE_REF="4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+          fi
+        elif [[ "$BASE_REF_ENV" == origin/* ]]; then
+          LOCAL_BASE_REF="${BASE_REF_ENV#origin/}"
+          git fetch origin "$LOCAL_BASE_REF" >/dev/null 2>&1 || true
+          RESOLVED_BASE_REF="$BASE_REF_ENV"
+        else
+          if git show-ref --verify --quiet "refs/heads/$BASE_REF_ENV" 2>/dev/null; then
+            RESOLVED_BASE_REF="$BASE_REF_ENV"
+          else
+            RESOLVED_BASE_REF="HEAD~1"
+          fi
+        fi
+
+        if [[ "$RESOLVED_BASE_REF" == "4b825dc642cb6eb9a060e54bf8d69288fbee4904" ]]; then
+          TOTAL_FILES_CHANGED=$(git ls-tree -r --name-only HEAD | sed '/^$/d' | wc -l)
+        else
+          TOTAL_FILES_CHANGED=$(git diff --name-only "$RESOLVED_BASE_REF" HEAD 2>/dev/null | sed '/^$/d' | wc -l)
+        fi
+
         # Generate detailed JSON change summary
         TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-        CHANGE_SUMMARY="{\"categories\":{\"backend\":{\"changed\":$HAS_BACKEND_CHANGES,\"description\":\"Backend code files (.cs, .sln, .csproj)\"},\"frontend\":{\"changed\":$HAS_FRONTEND_CHANGES,\"description\":\"Frontend code files (Angular, TypeScript)\"},\"documentation\":{\"changed\":$HAS_DOCS_CHANGES,\"description\":\"Documentation files (.md, .txt)\"},\"configuration\":{\"changed\":$HAS_CONFIG_CHANGES,\"description\":\"Configuration and pipeline files\"},\"tests\":{\"changed\":$TESTS_CHANGED,\"description\":\"Test files and test configuration\"}},\"summary\":{\"total_categories_changed\":$TOTAL_CHANGES,\"change_threshold\":$THRESHOLD,\"raw_summary\":\"$CHANGED_FILES_SUMMARY\"},\"metadata\":{\"base_ref\":\"${{ env.base-ref }}\",\"analysis_timestamp\":\"$TIMESTAMP\"}}"
+        CHANGE_SUMMARY="{\"categories\":{\"backend\":{\"changed\":$HAS_BACKEND_CHANGES,\"description\":\"Backend code files (.cs, .sln, .csproj)\"},\"frontend\":{\"changed\":$HAS_FRONTEND_CHANGES,\"description\":\"Frontend code files (Angular, TypeScript)\"},\"documentation\":{\"changed\":$HAS_DOCS_CHANGES,\"description\":\"Documentation files (.md, .txt)\"},\"configuration\":{\"changed\":$HAS_CONFIG_CHANGES,\"description\":\"Configuration and pipeline files\"},\"tests\":{\"changed\":$TESTS_CHANGED,\"description\":\"Test files and test configuration\"}},\"summary\":{\"total_categories_changed\":$CATEGORIES_CHANGED,\"total_files_changed\":$TOTAL_FILES_CHANGED,\"change_threshold\":$THRESHOLD,\"raw_summary\":\"$CHANGED_FILES_SUMMARY\"},\"metadata\":{\"base_ref\":\"${{ env.base-ref }}\",\"analysis_timestamp\":\"$TIMESTAMP\"}}"
 
         # Set outputs
         echo "has_backend_changes=$HAS_BACKEND_CHANGES" >> $GITHUB_OUTPUT
         echo "has_frontend_changes=$HAS_FRONTEND_CHANGES" >> $GITHUB_OUTPUT
         echo "has_docs_changes=$HAS_DOCS_CHANGES" >> $GITHUB_OUTPUT
         echo "has_config_changes=$HAS_CONFIG_CHANGES" >> $GITHUB_OUTPUT
-        echo "total_changes=$TOTAL_CHANGES" >> $GITHUB_OUTPUT
+        echo "total_changes=$TOTAL_FILES_CHANGED" >> $GITHUB_OUTPUT
 
         # Format JSON for output (remove newlines for GitHub Actions compatibility)
         CHANGE_SUMMARY_COMPACT=$(echo "$CHANGE_SUMMARY" | jq -c .)
@@ -152,7 +180,7 @@ runs:
         echo "  - Frontend changes: $HAS_FRONTEND_CHANGES"
         echo "  - Documentation changes: $HAS_DOCS_CHANGES"
         echo "  - Configuration changes: $HAS_CONFIG_CHANGES"
-        echo "  - Total changes: $TOTAL_CHANGES"
+        echo "  - Total files changed: $TOTAL_FILES_CHANGED"
         echo "  - Base reference: ${{ env.base-ref }}"
         echo ""
         echo "📊 Change Summary JSON:"
