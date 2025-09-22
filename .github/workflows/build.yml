@@ -185,6 +185,7 @@ jobs:
       # Legacy Interface Mapping: Foundation outputs -> existing build.yml expectations
       # Ensures downstream jobs (annotations, AI analysis) continue working unchanged
       - name: Map foundation outputs to legacy interface
+        if: always()
         id: backend-execution
         run: |
           # Map foundation component outputs to existing interface for downstream compatibility
@@ -221,7 +222,7 @@ jobs:
       # Preserved Annotation Logic: Exact behavioral parity with existing build.yml
       # All downstream steps remain unchanged to ensure zero behavioral drift
       - name: Annotate backend build failures
-        if: failure() && steps.backend-execution.outcome == 'failure'
+        if: failure() && steps.foundation-backend-build.outcome == 'failure'
         run: |
           echo "📊 Analyzing backend build failure for warning-related issues..."
 
