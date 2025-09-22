@@ -121,8 +121,8 @@ runs:
           HAS_FRONTEND_CHANGES="true"
         fi
 
-        # For docs, we check if docs changed OR if only docs changed
-        if [[ "$DOCS_CHANGED" == "true" || "$CHANGED_FILES_SUMMARY" == *"docs"* ]]; then
+        # For docs, we check if docs changed
+        if [[ "$DOCS_CHANGED" == "true" ]]; then
           HAS_DOCS_CHANGES="true"
         fi
 
