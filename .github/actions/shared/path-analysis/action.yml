@@ -98,27 +98,26 @@ runs:
         # Get changed files list and count total changes
         CHANGED_FILES_SUMMARY="${{ steps.check-paths.outputs.changed-files }}"
 
-        # Count total changes by splitting the summary string
-        TOTAL_CHANGES=0
+        # Count changed categories by splitting the summary string
+        CATEGORIES_CHANGED=0
         if [[ -n "$CHANGED_FILES_SUMMARY" ]]; then
           # Count words in the summary (each represents a changed category)
           CATEGORY_COUNT=$(echo "$CHANGED_FILES_SUMMARY" | wc -w)
-          # For total changes, we'll use a simplified approach since we don't have exact file count
-          # This is a reasonable approximation based on category changes
-          TOTAL_CHANGES=$CATEGORY_COUNT
+          # For category changes, we'll use the number of changed categories
+          CATEGORIES_CHANGED=$CATEGORY_COUNT
         fi
 
-        # Apply change threshold
+        # Apply change threshold (based on number of changed categories)
         HAS_BACKEND_CHANGES="false"
         HAS_FRONTEND_CHANGES="false"
         HAS_DOCS_CHANGES="false"
         HAS_CONFIG_CHANGES="false"
 
-        if [[ "$BACKEND_CHANGED" == "true" && "$TOTAL_CHANGES" -ge "$THRESHOLD" ]]; then
+        if [[ "$BACKEND_CHANGED" == "true" && "$CATEGORIES_CHANGED" -ge "$THRESHOLD" ]]; then
           HAS_BACKEND_CHANGES="true"
         fi
 
-        if [[ "$FRONTEND_CHANGED" == "true" && "$TOTAL_CHANGES" -ge "$THRESHOLD" ]]; then
+        if [[ "$FRONTEND_CHANGED" == "true" && "$CATEGORIES_CHANGED" -ge "$THRESHOLD" ]]; then
           HAS_FRONTEND_CHANGES="true"
         fi
 
