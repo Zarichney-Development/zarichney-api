@@ -86,7 +86,7 @@ runs:
 
         # Determine coverage flexibility based on branch/PR context
         COVERAGE_FLAGS=""
-        if [[ "${{ github.head_ref }}" == test/* ]] || [[ "${{ github.ref_name }}" == test/* ]]; then
+        if [[ "${{ github.head_ref }}" =~ ^test/ ]] || [[ "${{ github.ref_name }}" =~ ^test/ ]]; then
           echo "🧪 Test branch detected - enabling coverage flexibility"
           COVERAGE_FLAGS="--allow-low-coverage"
           export COVERAGE_FLEXIBLE=true
