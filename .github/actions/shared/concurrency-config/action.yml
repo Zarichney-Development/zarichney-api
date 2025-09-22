@@ -1,0 +1,166 @@
+name: 'Concurrency Configuration'
+description: 'Standardized concurrency management and resource optimization for Epic #181 workflows'
+author: 'Zarichney Development'
+
+inputs:
+  workflow_type:
+    description: 'Type of workflow (main, coverage, ai-analysis, epic-coordination)'
+    required: true
+  branch_type:
+    description: 'Branch classification (feature, epic, develop, main)'
+    required: true
+  execution_context:
+    description: 'Execution context for specialized handling (pr, push, schedule)'
+    required: false
+    default: 'push'
+  resource_profile:
+    description: 'Resource allocation profile (standard, intensive, minimal)'
+    required: false
+    default: 'standard'
+
+outputs:
+  concurrency_group:
+    description: 'Unique concurrency group identifier for workflow isolation'
+    value: ${{ steps.config.outputs.concurrency_group }}
+  cancel_in_progress:
+    description: 'Whether to cancel previous runs in the same group'
+    value: ${{ steps.config.outputs.cancel_in_progress }}
+  max_parallel:
+    description: 'Maximum parallel execution limit for resource optimization'
+    value: ${{ steps.config.outputs.max_parallel }}
+  resource_allocation:
+    description: 'JSON configuration for runner resource requirements'
+    value: ${{ steps.config.outputs.resource_allocation }}
+  timeout_minutes:
+    description: 'Workflow timeout for resource management and cost control'
+    value: ${{ steps.config.outputs.timeout_minutes }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Configure concurrency settings
+      id: config
+      shell: bash
+      run: |
+        echo "🔧 Configuring concurrency for workflow type: ${{ inputs.workflow_type }}"
+        echo "📋 Branch type: ${{ inputs.branch_type }}, Context: ${{ inputs.execution_context }}"
+        echo "⚡ Resource profile: ${{ inputs.resource_profile }}"
+
+        # Initialize default values
+        CONCURRENCY_GROUP=""
+        CANCEL_IN_PROGRESS="true"
+        MAX_PARALLEL="3"
+        TIMEOUT_MINUTES="30"
+        RESOURCE_ALLOCATION="{\"cores\":2,\"memory\":\"7GB\",\"disk\":\"14GB\"}"
+
+        # Configure concurrency group based on workflow type and branch
+        case "${{ inputs.workflow_type }}" in
+          "main")
+            # Standard main build pattern - uses existing build.yml pattern
+            CONCURRENCY_GROUP="${{ github.workflow }}-${{ github.ref }}"
+            CANCEL_IN_PROGRESS="true"
+            MAX_PARALLEL="3"
+            TIMEOUT_MINUTES="30"
+            ;;
+          "coverage")
+            # Coverage workflows with branch-aware grouping
+            if [ "${{ inputs.branch_type }}" = "feature" ]; then
+              CONCURRENCY_GROUP="coverage-${{ github.ref }}"
+              CANCEL_IN_PROGRESS="true"
+              MAX_PARALLEL="2"
+            elif [ "${{ inputs.branch_type }}" = "epic" ]; then
+              CONCURRENCY_GROUP="coverage-epic-${{ github.ref }}"
+              CANCEL_IN_PROGRESS="false"  # Preserve epic coordination
+              MAX_PARALLEL="4"
+            else
+              CONCURRENCY_GROUP="coverage-${{ inputs.branch_type }}-${{ github.ref }}"
+              CANCEL_IN_PROGRESS="true"
+              MAX_PARALLEL="3"
+            fi
+            TIMEOUT_MINUTES="45"
+            ;;
+          "ai-analysis")
+            # AI analysis with specialized grouping for AI framework workflows
+            CONCURRENCY_GROUP="ai-analysis-${{ github.ref }}"
+            CANCEL_IN_PROGRESS="true"
+            MAX_PARALLEL="2"  # Limit for AI resource management
+            TIMEOUT_MINUTES="20"
+            RESOURCE_ALLOCATION="{\"cores\":1,\"memory\":\"3.5GB\",\"disk\":\"14GB\"}"
+            ;;
+          "epic-coordination")
+            # Epic coordination with multi-workflow support
+            CONCURRENCY_GROUP="epic-coord-${{ inputs.branch_type }}"
+            CANCEL_IN_PROGRESS="false"  # Never cancel epic coordination
+            MAX_PARALLEL="5"
+            TIMEOUT_MINUTES="60"
+            RESOURCE_ALLOCATION="{\"cores\":4,\"memory\":\"14GB\",\"disk\":\"14GB\"}"
+            ;;
+          *)
+            # Fallback to safe defaults
+            echo "⚠️ Unknown workflow type, using safe defaults"
+            CONCURRENCY_GROUP="${{ github.workflow }}-${{ github.ref }}"
+            CANCEL_IN_PROGRESS="true"
+            MAX_PARALLEL="2"
+            TIMEOUT_MINUTES="30"
+            ;;
+        esac
+
+        # Apply execution context adjustments
+        case "${{ inputs.execution_context }}" in
+          "pr")
+            # Pull request context - more aggressive cancellation
+            CANCEL_IN_PROGRESS="true"
+            MAX_PARALLEL=$((MAX_PARALLEL - 1))  # Reduce parallel for PR efficiency
+            if [ "$MAX_PARALLEL" -lt 1 ]; then MAX_PARALLEL="1"; fi
+            ;;
+          "schedule")
+            # Scheduled context - preserve resources, avoid cancellation
+            CANCEL_IN_PROGRESS="false"
+            TIMEOUT_MINUTES=$((TIMEOUT_MINUTES + 15))  # Extra time for scheduled runs
+            ;;
+          "push")
+            # Push context - standard behavior (no changes)
+            ;;
+        esac
+
+        # Apply resource profile adjustments
+        case "${{ inputs.resource_profile }}" in
+          "minimal")
+            RESOURCE_ALLOCATION="{\"cores\":1,\"memory\":\"3.5GB\",\"disk\":\"14GB\"}"
+            MAX_PARALLEL="1"
+            TIMEOUT_MINUTES="20"
+            ;;
+          "intensive")
+            RESOURCE_ALLOCATION="{\"cores\":4,\"memory\":\"14GB\",\"disk\":\"14GB\"}"
+            MAX_PARALLEL=$((MAX_PARALLEL + 1))
+            TIMEOUT_MINUTES=$((TIMEOUT_MINUTES + 20))
+            ;;
+          "standard")
+            # Keep defaults
+            ;;
+        esac
+
+        # Validate and sanitize outputs
+        if [ -z "$CONCURRENCY_GROUP" ]; then
+          echo "❌ Error: Failed to generate concurrency group"
+          CONCURRENCY_GROUP="fallback-${{ github.run_id }}"
+        fi
+
+        # Ensure numeric values are valid
+        if ! [[ "$MAX_PARALLEL" =~ ^[0-9]+$ ]]; then MAX_PARALLEL="2"; fi
+        if ! [[ "$TIMEOUT_MINUTES" =~ ^[0-9]+$ ]]; then TIMEOUT_MINUTES="30"; fi
+
+        # Set outputs
+        echo "concurrency_group=$CONCURRENCY_GROUP" >> $GITHUB_OUTPUT
+        echo "cancel_in_progress=$CANCEL_IN_PROGRESS" >> $GITHUB_OUTPUT
+        echo "max_parallel=$MAX_PARALLEL" >> $GITHUB_OUTPUT
+        echo "resource_allocation=$RESOURCE_ALLOCATION" >> $GITHUB_OUTPUT
+        echo "timeout_minutes=$TIMEOUT_MINUTES" >> $GITHUB_OUTPUT
+
+        # Log final configuration for debugging
+        echo "✅ Concurrency configuration applied:"
+        echo "  🏷️ Group: $CONCURRENCY_GROUP"
+        echo "  🔄 Cancel in progress: $CANCEL_IN_PROGRESS"
+        echo "  ⚡ Max parallel: $MAX_PARALLEL"
+        echo "  🕒 Timeout: ${TIMEOUT_MINUTES} minutes"
+        echo "  🖥️ Resources: $RESOURCE_ALLOCATION"
