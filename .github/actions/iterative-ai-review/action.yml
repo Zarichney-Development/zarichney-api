@@ -1,0 +1,223 @@
+name: 'Iterative AI Code Review'
+description: 'Iterative AI code review action with historical context preservation, to-do list management, and autonomous development cycle integration'
+
+inputs:
+  github_token:
+    description: 'GitHub token for repository access and comment management'
+    required: true
+  openai_api_key:
+    description: 'OpenAI API key for AI analysis service'
+    required: true
+  pr_number:
+    description: 'Pull request number for analysis'
+    required: true
+  iteration_trigger:
+    description: 'Iteration trigger mode: auto (auto-increment) or manual (user-specified)'
+    required: false
+    default: 'auto'
+  max_iterations:
+    description: 'Maximum iteration limit for safety'
+    required: false
+    default: '5'
+  quality_threshold:
+    description: 'Quality gate threshold configuration'
+    required: false
+    default: 'standard'
+  epic_context:
+    description: 'Epic progression context for alignment'
+    required: false
+    default: 'Epic #181 autonomous development'
+  debug_mode:
+    description: 'Enable detailed debug logging'
+    required: false
+    default: 'false'
+  force_new_iteration:
+    description: 'Force creation of new iteration (skip existing comment detection)'
+    required: false
+    default: 'false'
+
+outputs:
+  iteration_count:
+    description: 'Current iteration number after processing'
+    value: ${{ steps.orchestrate.outputs.iteration_count }}
+  pr_status:
+    description: 'Updated PR status recommendation (draft/ready/approved)'
+    value: ${{ steps.orchestrate.outputs.pr_status }}
+  todo_summary:
+    description: 'Current to-do list summary in JSON format'
+    value: ${{ steps.orchestrate.outputs.todo_summary }}
+  quality_gates:
+    description: 'Quality gate status assessment'
+    value: ${{ steps.orchestrate.outputs.quality_gates }}
+  next_actions:
+    description: 'Recommended next actions for PR progression'
+    value: ${{ steps.orchestrate.outputs.next_actions }}
+  epic_progress:
+    description: 'Epic progression update and alignment status'
+    value: ${{ steps.orchestrate.outputs.epic_progress }}
+  comment_updated:
+    description: 'Whether existing comment was updated (true/false)'
+    value: ${{ steps.orchestrate.outputs.comment_updated }}
+  blocking_issues:
+    description: 'Critical blocking issues preventing merge'
+    value: ${{ steps.orchestrate.outputs.blocking_issues }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Validate Iterative Review Configuration
+      id: validate
+      shell: bash
+      env:
+        PR_NUMBER: ${{ inputs.pr_number }}
+        MAX_ITERATIONS: ${{ inputs.max_iterations }}
+        ITERATION_TRIGGER: ${{ inputs.iteration_trigger }}
+        DEBUG_MODE: ${{ inputs.debug_mode }}
+      run: |
+        set -euo pipefail
+
+        echo "🔍 Validating iterative review configuration..."
+
+        # Validate PR number
+        if [[ ! "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+          echo "❌ Invalid PR number: $PR_NUMBER"
+          echo "error_details=Invalid PR number format" >> "$GITHUB_OUTPUT"
+          exit 1
+        fi
+
+        # Validate max iterations
+        if [[ ! "$MAX_ITERATIONS" =~ ^[0-9]+$ ]] || [[ "$MAX_ITERATIONS" -lt 1 ]] || [[ "$MAX_ITERATIONS" -gt 10 ]]; then
+          echo "❌ Invalid max iterations: $MAX_ITERATIONS (must be 1-10)"
+          echo "error_details=Invalid max iterations range" >> "$GITHUB_OUTPUT"
+          exit 1
+        fi
+
+        # Validate iteration trigger
+        if [[ "$ITERATION_TRIGGER" != "auto" && "$ITERATION_TRIGGER" != "manual" ]]; then
+          echo "❌ Invalid iteration trigger: $ITERATION_TRIGGER (must be auto or manual)"
+          echo "error_details=Invalid iteration trigger mode" >> "$GITHUB_OUTPUT"
+          exit 1
+        fi
+
+        echo "✅ Configuration validation successful"
+        echo "validated=true" >> "$GITHUB_OUTPUT"
+
+    - name: Load Historical Context
+      id: load-context
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        PR_NUMBER: ${{ inputs.pr_number }}
+        DEBUG_MODE: ${{ inputs.debug_mode }}
+      run: |
+        set -euo pipefail
+
+        echo "📚 Loading historical context for PR #$PR_NUMBER..."
+
+        # Source the iteration tracker functions
+        source ${{ github.action_path }}/src/iteration-tracker.js
+
+        # Initialize workspace
+        if ! initialize_iteration_workspace; then
+          echo "❌ Failed to initialize iteration workspace"
+          exit 1
+        fi
+
+        # Load existing iteration state
+        if ! load_iteration_context "$PR_NUMBER"; then
+          echo "⚠️ No existing context found, starting fresh iteration"
+          echo "iteration_count=1" >> "$GITHUB_OUTPUT"
+          echo "historical_context={}" >> "$GITHUB_OUTPUT"
+          echo "current_todo_list=[]" >> "$GITHUB_OUTPUT"
+          echo "previous_iterations=[]" >> "$GITHUB_OUTPUT"
+        fi
+
+        echo "✅ Historical context loaded successfully"
+
+    - name: Extract Enhanced PR Context
+      id: pr-context
+      uses: ./.github/actions/shared/extract-pr-context
+      with:
+        github-token: ${{ inputs.github_token }}
+
+    - name: Check for Existing Iterative Review Comment
+      id: comment-check
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        PR_NUMBER: ${{ inputs.pr_number }}
+        FORCE_NEW_ITERATION: ${{ inputs.force_new_iteration }}
+      run: |
+        set -euo pipefail
+
+        echo "🔍 Checking for existing iterative review comment..."
+
+        # Source comment manager functions
+        source ${{ github.action_path }}/src/comment-manager.js
+
+        # Check for existing iterative review comment
+        if detect_existing_iterative_comment "$PR_NUMBER"; then
+          if [[ "$FORCE_NEW_ITERATION" == "true" ]]; then
+            echo "🔄 Forcing new iteration despite existing comment"
+            echo "existing_comment=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "📝 Found existing iterative review comment"
+            echo "existing_comment=true" >> "$GITHUB_OUTPUT"
+          fi
+        else
+          echo "🆕 No existing iterative review comment found"
+          echo "existing_comment=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Orchestrate Iterative AI Review
+      id: orchestrate
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        OPENAI_API_KEY: ${{ inputs.openai_api_key }}
+        PR_NUMBER: ${{ inputs.pr_number }}
+        ITERATION_TRIGGER: ${{ inputs.iteration_trigger }}
+        MAX_ITERATIONS: ${{ inputs.max_iterations }}
+        QUALITY_THRESHOLD: ${{ inputs.quality_threshold }}
+        EPIC_CONTEXT: ${{ inputs.epic_context }}
+        DEBUG_MODE: ${{ inputs.debug_mode }}
+        # Context from previous steps
+        ITERATION_COUNT: ${{ steps.load-context.outputs.iteration_count }}
+        HISTORICAL_CONTEXT: ${{ steps.load-context.outputs.historical_context }}
+        CURRENT_TODO_LIST: ${{ steps.load-context.outputs.current_todo_list }}
+        PREVIOUS_ITERATIONS: ${{ steps.load-context.outputs.previous_iterations }}
+        EXISTING_COMMENT: ${{ steps.comment-check.outputs.existing_comment }}
+        # PR context from extract-pr-context
+        PR_AUTHOR: ${{ steps.pr-context.outputs.pr_author }}
+        SOURCE_BRANCH: ${{ steps.pr-context.outputs.source_branch }}
+        TARGET_BRANCH: ${{ steps.pr-context.outputs.target_branch }}
+        ISSUE_REF: ${{ steps.pr-context.outputs.issue_ref }}
+        CHANGED_FILES_COUNT: ${{ steps.pr-context.outputs.changed_files_count }}
+        LINES_CHANGED: ${{ steps.pr-context.outputs.lines_changed }}
+      run: |
+        set -euo pipefail
+
+        echo "🎯 Orchestrating iterative AI review..."
+
+        # Source the main orchestration logic
+        source ${{ github.action_path }}/src/main.js
+
+        # Execute complete iterative review workflow
+        if ! execute_iterative_review_workflow; then
+          echo "❌ Iterative review workflow failed"
+          echo "error_details=Iterative review workflow execution failed" >> "$GITHUB_OUTPUT"
+          exit 1
+        fi
+
+        echo "✅ Iterative AI review completed successfully"
+
+    - name: Handle Iterative Review Failure
+      if: failure() && steps.validate.outputs.validated == 'true'
+      uses: ./.github/actions/handle-ai-analysis-failure
+      with:
+        github-token: ${{ inputs.github_token }}
+        analysis-type: 'Iterative AI Review'
+        analysis-emoji: '🔄'
+        analysis-name: 'Iterative AI Code Review'
+        run-number: ${{ github.run_number }}
+        run-id: ${{ github.run_id }}
