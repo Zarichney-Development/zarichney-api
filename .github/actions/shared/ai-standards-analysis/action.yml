@@ -1,0 +1,265 @@
+name: 'AI Standards Analysis'
+description: 'Component-specific AI standards compliance analysis with epic-aware prioritization, architectural validation, and improvement roadmaps'
+
+inputs:
+  # Standards-Specific Analysis Inputs
+  component_type:
+    description: 'Type of component being analyzed (workflow, action, documentation, backend, frontend, test)'
+    required: true
+  standards_context:
+    description: 'Relevant standards documentation paths (comma-separated)'
+    required: true
+  change_scope:
+    description: 'Scope of changes for targeted analysis (file paths or change description)'
+    required: true
+  epic_context:
+    description: 'Epic progression context for prioritization alignment'
+    required: false
+    default: 'epic-181'
+  analysis_depth:
+    description: 'Analysis depth level (surface, detailed, comprehensive)'
+    required: false
+    default: 'detailed'
+  architecture_mode:
+    description: 'Architectural validation mode (component, integration, system)'
+    required: false
+    default: 'component'
+
+  # Core Analysis Configuration
+  github_token:
+    description: 'GitHub token for repository access and PR comments'
+    required: true
+  openai_api_key:
+    description: 'OpenAI API key for AI service authentication'
+    required: true
+
+  # Optional Analysis Control
+  skip_duplicate:
+    description: 'Enable duplicate analysis prevention'
+    required: false
+    default: 'true'
+  compliance_threshold:
+    description: 'Minimum compliance score for passing analysis (0-100)'
+    required: false
+    default: '75'
+  priority_focus:
+    description: 'Focus area for prioritized analysis (security, maintainability, performance, all)'
+    required: false
+    default: 'all'
+  debug_mode:
+    description: 'Enable detailed debug logging for troubleshooting'
+    required: false
+    default: 'false'
+
+outputs:
+  # Standards Intelligence Outputs
+  standards_analysis:
+    description: 'Structured compliance analysis with component-specific insights'
+    value: ${{ steps.ai-standards-analysis.outputs.standards_analysis }}
+  compliance_score:
+    description: 'Standards compliance assessment with improvement areas (0-100)'
+    value: ${{ steps.ai-standards-analysis.outputs.compliance_score }}
+  priority_violations:
+    description: 'JSON array of high-priority standards violations with remediation steps'
+    value: ${{ steps.ai-standards-analysis.outputs.priority_violations }}
+  improvement_roadmap:
+    description: 'Actionable roadmap for standards compliance improvement'
+    value: ${{ steps.ai-standards-analysis.outputs.improvement_roadmap }}
+  epic_alignment:
+    description: 'Assessment of alignment with epic modernization goals'
+    value: ${{ steps.ai-standards-analysis.outputs.epic_alignment }}
+  architectural_recommendations:
+    description: 'Component-specific architectural guidance and patterns'
+    value: ${{ steps.ai-standards-analysis.outputs.architectural_recommendations }}
+
+  # Standard AI Analysis Outputs
+  analysis_result:
+    description: 'Complete standards analysis output in structured JSON format'
+    value: ${{ steps.ai-standards-analysis.outputs.analysis_result }}
+  analysis_summary:
+    description: 'Human-readable standards analysis summary for PR comments'
+    value: ${{ steps.ai-standards-analysis.outputs.analysis_summary }}
+  recommendations:
+    description: 'Standard analysis recommendations for standards improvements'
+    value: ${{ steps.ai-standards-analysis.outputs.recommendations }}
+  analysis_metadata:
+    description: 'Execution metadata including timing, compliance metrics, and version info'
+    value: ${{ steps.ai-standards-analysis.outputs.analysis_metadata }}
+
+  # Status and Error Handling
+  skip_reason:
+    description: 'Reason for skipping analysis (if applicable)'
+    value: ${{ steps.ai-standards-analysis.outputs.skip_reason }}
+  error_details:
+    description: 'Detailed error information for failed analyses'
+    value: ${{ steps.ai-standards-analysis.outputs.error_details }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Prepare Standards Context
+      id: standards-context
+      shell: bash
+      env:
+        COMPONENT_TYPE: ${{ inputs.component_type }}
+        STANDARDS_CONTEXT: ${{ inputs.standards_context }}
+        CHANGE_SCOPE: ${{ inputs.change_scope }}
+        EPIC_CONTEXT: ${{ inputs.epic_context }}
+        ANALYSIS_DEPTH: ${{ inputs.analysis_depth }}
+        ARCHITECTURE_MODE: ${{ inputs.architecture_mode }}
+        COMPLIANCE_THRESHOLD: ${{ inputs.compliance_threshold }}
+        PRIORITY_FOCUS: ${{ inputs.priority_focus }}
+        DEBUG_MODE: ${{ inputs.debug_mode }}
+      run: |
+        set -euo pipefail
+
+        # Import standards analysis functions
+        source ${{ github.action_path }}/src/standards-context-processor.sh
+
+        echo "🛡️ Preparing standards compliance context..."
+
+        # Validate and structure standards inputs
+        if ! validate_standards_inputs; then
+          echo "error_details=Invalid standards inputs - check component_type, standards_context, and change_scope format" >> "$GITHUB_OUTPUT"
+          echo "❌ Standards input validation failed"
+          exit 1
+        fi
+
+        # Process standards context for AI analysis
+        if ! process_standards_context; then
+          echo "error_details=Standards context processing failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Standards context processing failed"
+          exit 1
+        fi
+
+        # Generate component-specific context
+        if ! generate_component_context; then
+          echo "error_details=Component context generation failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Component context generation failed"
+          exit 1
+        fi
+
+        # Generate epic-aware prioritization context
+        if ! generate_epic_prioritization_context; then
+          echo "error_details=Epic prioritization context generation failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Epic prioritization context generation failed"
+          exit 1
+        fi
+
+        echo "standards_context_ready=true" >> "$GITHUB_OUTPUT"
+        echo "✅ Standards context preparation successful"
+
+    - name: Execute AI Standards Analysis
+      id: ai-standards-analysis
+      uses: ./.github/actions/shared/ai-sentinel-base
+      with:
+        analysis_type: 'standards'
+        template_path: '.github/prompts/standards-compliance.md'
+        context_data: ${{ steps.standards-context.outputs.enhanced_context }}
+        github_token: ${{ inputs.github_token }}
+        openai_api_key: ${{ inputs.openai_api_key }}
+        skip_duplicate: ${{ inputs.skip_duplicate }}
+        max_retries: '3'
+        timeout_seconds: '300'
+        debug_mode: ${{ inputs.debug_mode }}
+
+    - name: Process Standards Intelligence
+      id: standards-intelligence
+      shell: bash
+      env:
+        AI_ANALYSIS_RESULT: ${{ steps.ai-standards-analysis.outputs.analysis_result }}
+        COMPONENT_TYPE: ${{ inputs.component_type }}
+        STANDARDS_CONTEXT: ${{ inputs.standards_context }}
+        EPIC_CONTEXT: ${{ inputs.epic_context }}
+        COMPLIANCE_THRESHOLD: ${{ inputs.compliance_threshold }}
+        ARCHITECTURE_MODE: ${{ inputs.architecture_mode }}
+        DEBUG_MODE: ${{ inputs.debug_mode }}
+      run: |
+        set -euo pipefail
+
+        # Import standards intelligence functions
+        source ${{ github.action_path }}/src/standards-intelligence-processor.sh
+
+        if [[ "${{ steps.ai-standards-analysis.outputs.skip_reason }}" != "" ]]; then
+          echo "skip_reason=${{ steps.ai-standards-analysis.outputs.skip_reason }}" >> "$GITHUB_OUTPUT"
+          echo "⚠️ Skipping standards intelligence processing - analysis was skipped"
+          exit 0
+        fi
+
+        echo "🧠 Processing standards intelligence..."
+
+        # Extract standards-specific insights from AI analysis
+        if ! extract_standards_insights; then
+          echo "error_details=Standards intelligence extraction failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Standards intelligence processing failed"
+          exit 1
+        fi
+
+        # Calculate compliance score
+        if ! calculate_compliance_score; then
+          echo "error_details=Compliance score calculation failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Compliance score calculation failed"
+          exit 1
+        fi
+
+        # Identify priority violations
+        if ! identify_priority_violations; then
+          echo "error_details=Priority violation identification failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Priority violation identification failed"
+          exit 1
+        fi
+
+        # Generate improvement roadmap
+        if ! generate_improvement_roadmap; then
+          echo "error_details=Improvement roadmap generation failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Improvement roadmap generation failed"
+          exit 1
+        fi
+
+        echo "✅ Standards intelligence processing successful"
+
+    - name: Generate Epic Alignment Analysis
+      id: epic-alignment
+      shell: bash
+      env:
+        COMPONENT_TYPE: ${{ inputs.component_type }}
+        EPIC_CONTEXT: ${{ inputs.epic_context }}
+        ANALYSIS_DEPTH: ${{ inputs.analysis_depth }}
+        ARCHITECTURE_MODE: ${{ inputs.architecture_mode }}
+        AI_ANALYSIS_RESULT: ${{ steps.ai-standards-analysis.outputs.analysis_result }}
+        DEBUG_MODE: ${{ inputs.debug_mode }}
+      run: |
+        set -euo pipefail
+
+        # Import epic alignment functions
+        source ${{ github.action_path }}/src/epic-alignment-analyzer.sh
+
+        if [[ "${{ steps.ai-standards-analysis.outputs.skip_reason }}" != "" ]]; then
+          echo "⚠️ Skipping epic alignment analysis - main analysis was skipped"
+          exit 0
+        fi
+
+        echo "🎯 Generating epic alignment analysis..."
+
+        # Analyze alignment with epic modernization goals
+        if ! analyze_epic_alignment; then
+          echo "error_details=Epic alignment analysis failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Epic alignment analysis failed"
+          exit 1
+        fi
+
+        # Generate architectural recommendations
+        if ! generate_architectural_recommendations; then
+          echo "error_details=Architectural recommendations generation failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Architectural recommendations generation failed"
+          exit 1
+        fi
+
+        # Calculate modernization impact
+        if ! calculate_modernization_impact; then
+          echo "error_details=Modernization impact calculation failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Modernization impact calculation failed"
+          exit 1
+        fi
+
+        echo "✅ Epic alignment analysis successful"
