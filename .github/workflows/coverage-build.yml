@@ -1,0 +1,544 @@
+name: Coverage Build
+
+on:
+  pull_request:
+    branches: [epic/testing-coverage-to-90]
+    paths:
+      - 'Code/**'
+      - '.github/scripts/**'
+      - '*.sln'
+      - '.github/workflows/**'
+      - '.github/actions/**'
+  workflow_dispatch:
+    inputs:
+      test_filter:
+        description: 'Test filter pattern (e.g., Category=Unit|Category=Integration)'
+        required: false
+        default: ''
+      coverage_baseline:
+        description: 'Expected baseline coverage percentage for comparison'
+        required: false
+        default: '16'
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: coverage-build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  COVERAGE_THRESHOLD: 16
+  CI_ENVIRONMENT: true
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  coverage-analysis:
+    name: Coverage Analysis & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      coverage-percentage: ${{ steps.backend-execution.outputs.coverage_percentage }}
+      coverage-baseline: ${{ steps.baseline-analysis.outputs.baseline_coverage }}
+      coverage-delta: ${{ steps.coverage-comparison.outputs.coverage_delta }}
+      test-success: ${{ steps.backend-execution.outputs.test_success }}
+      build-success: ${{ steps.backend-execution.outputs.build_success }}
+      ai-framework-ready: ${{ steps.ai-readiness-check.outputs.framework_ready }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Foundation Component Integration - Path Analysis
+      - name: Execute path analysis for coverage workflow
+        id: foundation-path-analysis
+        uses: ./.github/actions/shared/path-analysis
+        with:
+          base_ref: ${{ github.event.pull_request.base.sha || 'develop' }}
+          change_threshold: 1
+
+      # Legacy Interface Mapping - Path Analysis
+      - name: Map foundation outputs to coverage interface
+        id: path-analysis
+        run: |
+          echo "backend-changed=${{ steps.foundation-path-analysis.outputs.has_backend_changes }}" >> $GITHUB_OUTPUT
+          echo "frontend-changed=${{ steps.foundation-path-analysis.outputs.has_frontend_changes }}" >> $GITHUB_OUTPUT
+          echo "docs-only=${{ steps.foundation-path-analysis.outputs.has_docs_changes }}" >> $GITHUB_OUTPUT
+          echo "total-changes=${{ steps.foundation-path-analysis.outputs.total_changes }}" >> $GITHUB_OUTPUT
+        outputs:
+          backend-changed: ${{ steps.foundation-path-analysis.outputs.has_backend_changes }}
+          frontend-changed: ${{ steps.foundation-path-analysis.outputs.has_frontend_changes }}
+          docs-only: ${{ steps.foundation-path-analysis.outputs.has_docs_changes }}
+          total-changes: ${{ steps.foundation-path-analysis.outputs.total_changes }}
+
+      # Skip coverage analysis if only docs changed
+      - name: Check if coverage analysis needed
+        id: coverage-gate
+        run: |
+          if [[ "${{ steps.path-analysis.outputs.backend-changed }}" == "true" ]]; then
+            echo "coverage-needed=true" >> $GITHUB_OUTPUT
+            echo "📊 Backend changes detected - coverage analysis required"
+          else
+            echo "coverage-needed=false" >> $GITHUB_OUTPUT
+            echo "📝 Only documentation/frontend changes - skipping coverage analysis"
+          fi
+        outputs:
+          coverage-needed: ${{ steps.coverage-gate.outputs.coverage-needed }}
+
+      # Baseline Coverage Analysis
+      - name: Analyze baseline coverage
+        id: baseline-analysis
+        if: steps.coverage-gate.outputs.coverage-needed == 'true'
+        run: |
+          echo "🔍 Analyzing baseline coverage from base branch..."
+
+          # Checkout base branch for baseline comparison
+          BASE_BRANCH="${{ github.event.pull_request.base.ref || 'develop' }}"
+          BASE_SHA="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
+
+          echo "Base branch: $BASE_BRANCH"
+          echo "Base SHA: $BASE_SHA"
+
+          # Create baseline coverage analysis (placeholder for future enhancement)
+          BASELINE_COVERAGE="${{ inputs.coverage_baseline || env.COVERAGE_THRESHOLD }}"
+          echo "baseline_coverage=$BASELINE_COVERAGE" >> $GITHUB_OUTPUT
+          echo "baseline_branch=$BASE_BRANCH" >> $GITHUB_OUTPUT
+          echo "baseline_sha=$BASE_SHA" >> $GITHUB_OUTPUT
+
+          echo "📈 Baseline coverage: $BASELINE_COVERAGE%"
+        outputs:
+          baseline_coverage: ${{ steps.baseline-analysis.outputs.baseline_coverage }}
+          baseline_branch: ${{ steps.baseline-analysis.outputs.baseline_branch }}
+          baseline_sha: ${{ steps.baseline-analysis.outputs.baseline_sha }}
+
+      # Foundation Component Integration - Backend Build with Coverage
+      - name: Execute backend build with coverage optimization
+        id: foundation-backend-build
+        if: steps.coverage-gate.outputs.coverage-needed == 'true'
+        uses: ./.github/actions/shared/backend-build
+        with:
+          solution_path: 'zarichney-api.sln'
+          coverage_enabled: true
+          warning_as_error: true
+          test_filter: ${{ inputs.test_filter || '' }}
+          configuration: 'Release'
+
+      # Legacy Interface Mapping - Backend Build (preserves existing step ID)
+      - name: Map foundation outputs to legacy interface
+        id: backend-execution
+        if: steps.coverage-gate.outputs.coverage-needed == 'true'
+        run: |
+          echo "build_success=${{ steps.foundation-backend-build.outputs.build_success }}" >> $GITHUB_OUTPUT
+          echo "warning_count=${{ steps.foundation-backend-build.outputs.warning_count }}" >> $GITHUB_OUTPUT
+          echo "test_success=${{ steps.foundation-backend-build.outputs.test_success }}" >> $GITHUB_OUTPUT
+          echo "coverage_percentage=${{ steps.foundation-backend-build.outputs.coverage_percentage }}" >> $GITHUB_OUTPUT
+          echo "coverage_results=${{ steps.foundation-backend-build.outputs.coverage_results }}" >> $GITHUB_OUTPUT
+        outputs:
+          build_success: ${{ steps.foundation-backend-build.outputs.build_success }}
+          warning_count: ${{ steps.foundation-backend-build.outputs.warning_count }}
+          test_success: ${{ steps.foundation-backend-build.outputs.test_success }}
+          coverage_percentage: ${{ steps.foundation-backend-build.outputs.coverage_percentage }}
+          coverage_results: ${{ steps.foundation-backend-build.outputs.coverage_results }}
+
+      # Coverage Comparison Analysis
+      - name: Perform coverage comparison analysis
+        id: coverage-comparison
+        if: steps.coverage-gate.outputs.coverage-needed == 'true' && steps.backend-execution.outputs.test_success == 'true'
+        run: |
+          echo "📊 Analyzing coverage improvements..."
+
+          CURRENT_COVERAGE="${{ steps.backend-execution.outputs.coverage_percentage }}"
+          BASELINE_COVERAGE="${{ steps.baseline-analysis.outputs.baseline_coverage }}"
+
+          # Calculate coverage delta
+          if [[ -n "$CURRENT_COVERAGE" && -n "$BASELINE_COVERAGE" ]]; then
+            COVERAGE_DELTA=$(echo "$CURRENT_COVERAGE - $BASELINE_COVERAGE" | bc -l 2>/dev/null || echo "0")
+            COVERAGE_DELTA_ROUNDED=$(printf "%.2f" "$COVERAGE_DELTA" 2>/dev/null || echo "0.00")
+          else
+            COVERAGE_DELTA_ROUNDED="0.00"
+          fi
+
+          echo "coverage_delta=$COVERAGE_DELTA_ROUNDED" >> $GITHUB_OUTPUT
+          echo "current_coverage=$CURRENT_COVERAGE" >> $GITHUB_OUTPUT
+          echo "baseline_coverage=$BASELINE_COVERAGE" >> $GITHUB_OUTPUT
+
+          # Coverage improvement analysis
+          if (( $(echo "$COVERAGE_DELTA_ROUNDED > 0" | bc -l 2>/dev/null || echo "0") )); then
+            echo "coverage_trend=improved" >> $GITHUB_OUTPUT
+            echo "✅ Coverage improved by +$COVERAGE_DELTA_ROUNDED%"
+          elif (( $(echo "$COVERAGE_DELTA_ROUNDED < 0" | bc -l 2>/dev/null || echo "0") )); then
+            echo "coverage_trend=decreased" >> $GITHUB_OUTPUT
+            echo "⚠️ Coverage decreased by $COVERAGE_DELTA_ROUNDED%"
+          else
+            echo "coverage_trend=stable" >> $GITHUB_OUTPUT
+            echo "📊 Coverage stable (no change)"
+          fi
+
+          # Epic progression context
+          echo "epic_phase=coverage-to-90" >> $GITHUB_OUTPUT
+          echo "epic_target=90" >> $GITHUB_OUTPUT
+
+          PROGRESS_TO_90=$(echo "($CURRENT_COVERAGE / 90) * 100" | bc -l 2>/dev/null || echo "0")
+          PROGRESS_ROUNDED=$(printf "%.1f" "$PROGRESS_TO_90" 2>/dev/null || echo "0.0")
+          echo "epic_progress=$PROGRESS_ROUNDED" >> $GITHUB_OUTPUT
+
+          echo "🎯 Epic Progress: $PROGRESS_ROUNDED% toward 90% coverage goal"
+        outputs:
+          coverage_delta: ${{ steps.coverage-comparison.outputs.coverage_delta }}
+          coverage_trend: ${{ steps.coverage-comparison.outputs.coverage_trend }}
+          current_coverage: ${{ steps.coverage-comparison.outputs.current_coverage }}
+          baseline_coverage: ${{ steps.coverage-comparison.outputs.baseline_coverage }}
+          epic_phase: ${{ steps.coverage-comparison.outputs.epic_phase }}
+          epic_target: ${{ steps.coverage-comparison.outputs.epic_target }}
+          epic_progress: ${{ steps.coverage-comparison.outputs.epic_progress }}
+
+      # AI Framework Readiness Check
+      - name: Check AI framework integration readiness
+        id: ai-readiness-check
+        if: always()
+        run: |
+          echo "🤖 Checking AI framework integration readiness..."
+
+          # Check for AI framework components (Issue #184 - Phase 2 Integration)
+          AI_SENTINEL_BASE_EXISTS="false"
+          AI_TESTING_ANALYSIS_EXISTS="false"
+          AI_STANDARDS_ANALYSIS_EXISTS="false"
+
+          if [[ -d ".github/actions/shared/ai-sentinel-base" ]]; then
+            AI_SENTINEL_BASE_EXISTS="true"
+          fi
+
+          if [[ -d ".github/actions/shared/ai-testing-analysis" ]]; then
+            AI_TESTING_ANALYSIS_EXISTS="true"
+          fi
+
+          if [[ -d ".github/actions/shared/ai-standards-analysis" ]]; then
+            AI_STANDARDS_ANALYSIS_EXISTS="true"
+          fi
+
+          # Overall framework readiness
+          if [[ "$AI_SENTINEL_BASE_EXISTS" == "true" && "$AI_TESTING_ANALYSIS_EXISTS" == "true" && "$AI_STANDARDS_ANALYSIS_EXISTS" == "true" ]]; then
+            echo "framework_ready=true" >> $GITHUB_OUTPUT
+            echo "✅ Complete AI framework available for integration"
+          else
+            echo "framework_ready=false" >> $GITHUB_OUTPUT
+            echo "⏳ AI framework components not yet complete (Phase 2 pending)"
+          fi
+
+          echo "ai_sentinel_base_exists=$AI_SENTINEL_BASE_EXISTS" >> $GITHUB_OUTPUT
+          echo "ai_testing_analysis_exists=$AI_TESTING_ANALYSIS_EXISTS" >> $GITHUB_OUTPUT
+          echo "ai_standards_analysis_exists=$AI_STANDARDS_ANALYSIS_EXISTS" >> $GITHUB_OUTPUT
+        outputs:
+          framework_ready: ${{ steps.ai-readiness-check.outputs.framework_ready }}
+          ai_sentinel_base_exists: ${{ steps.ai-readiness-check.outputs.ai_sentinel_base_exists }}
+          ai_testing_analysis_exists: ${{ steps.ai-readiness-check.outputs.ai_testing_analysis_exists }}
+          ai_standards_analysis_exists: ${{ steps.ai-readiness-check.outputs.ai_standards_analysis_exists }}
+
+      # Coverage Results Summary
+      - name: Generate coverage analysis summary
+        id: coverage-summary
+        if: always()
+        run: |
+          echo "📋 Generating comprehensive coverage analysis summary..."
+
+          # Create summary based on workflow results
+          if [[ "${{ steps.coverage-gate.outputs.coverage-needed }}" == "false" ]]; then
+            SUMMARY="📝 **Coverage Analysis Skipped** - Only documentation/frontend changes detected"
+          elif [[ "${{ steps.backend-execution.outputs.build_success }}" != "true" ]]; then
+            SUMMARY="❌ **Build Failed** - Coverage analysis unavailable due to build failures"
+          elif [[ "${{ steps.backend-execution.outputs.test_success }}" != "true" ]]; then
+            SUMMARY="⚠️ **Test Failures** - Coverage results may be incomplete due to test failures"
+          else
+            CURRENT="${{ steps.coverage-comparison.outputs.current_coverage }}"
+            BASELINE="${{ steps.coverage-comparison.outputs.baseline_coverage }}"
+            DELTA="${{ steps.coverage-comparison.outputs.coverage_delta }}"
+            TREND="${{ steps.coverage-comparison.outputs.coverage_trend }}"
+            PROGRESS="${{ steps.coverage-comparison.outputs.epic_progress }}"
+
+            case "$TREND" in
+              "improved")
+                TREND_EMOJI="📈"
+                TREND_TEXT="Coverage improved by +$DELTA%"
+                ;;
+              "decreased")
+                TREND_EMOJI="📉"
+                TREND_TEXT="Coverage decreased by $DELTA%"
+                ;;
+              *)
+                TREND_EMOJI="📊"
+                TREND_TEXT="Coverage stable (no change)"
+                ;;
+            esac
+
+            AI_STATUS="${{ steps.ai-readiness-check.outputs.framework_ready }}"
+
+            if [[ "$AI_STATUS" == "true" ]]; then
+              AI_FRAMEWORK_STATUS="✅ Complete AI framework integrated"
+              AI_COVERAGE_STATUS="🧠 AI-powered coverage analysis active"
+              AI_STANDARDS_STATUS="🛡️ Standards compliance validation active"
+            else
+              AI_FRAMEWORK_STATUS="⏳ AI components pending"
+              AI_COVERAGE_STATUS="📋 Basic coverage reporting only"
+              AI_STANDARDS_STATUS="📝 Manual standards review required"
+            fi
+
+            SUMMARY="## 📊 Coverage Analysis Results
+
+            **Current Coverage:** ${CURRENT}%
+            **Baseline Coverage:** ${BASELINE}%
+            **Change:** ${TREND_EMOJI} ${TREND_TEXT}
+            **Epic Progress:** ${PROGRESS}% toward 90% coverage goal
+
+            ### 🎯 Epic Context
+            This PR contributes to Epic #94: Backend Testing Coverage to 90% by targeting the epic/testing-coverage-to-90 branch.
+
+            ### 🤖 AI Framework Integration
+            - **Framework Status:** ${AI_FRAMEWORK_STATUS}
+            - **AI Coverage Intelligence:** ${AI_COVERAGE_STATUS}
+            - **AI Standards Analysis:** ${AI_STANDARDS_STATUS}"
+          fi
+
+          # Save summary for potential PR comment
+          cat >> $GITHUB_OUTPUT << 'EOF_SUMMARY'
+          coverage_summary<<EOF
+          $SUMMARY
+          EOF
+          EOF_SUMMARY
+        outputs:
+          coverage_summary: ${{ steps.coverage-summary.outputs.coverage_summary }}
+
+      # Optional PR Comment (only if significant coverage changes)
+      - name: Comment on PR with coverage analysis
+        if: |
+          github.event_name == 'pull_request' &&
+          steps.coverage-gate.outputs.coverage-needed == 'true' &&
+          steps.backend-execution.outputs.test_success == 'true' &&
+          (
+            steps.coverage-comparison.outputs.coverage_trend == 'improved' ||
+            steps.coverage-comparison.outputs.coverage_trend == 'decreased'
+          )
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const summary = `${{ steps.coverage-summary.outputs.coverage_summary }}`;
+
+            // Check if we already commented on this PR
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.login === 'github-actions[bot]' &&
+              comment.body.includes('Coverage Analysis Results')
+            );
+
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: summary
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: summary
+              });
+            }
+
+      # Upload coverage artifacts for AI framework integration
+      - name: Upload coverage artifacts for AI integration
+        if: steps.coverage-gate.outputs.coverage-needed == 'true' && steps.backend-execution.outputs.test_success == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-analysis-${{ github.run_number }}
+          path: |
+            TestResults/coverage_results.json
+            TestResults/parsed_results.json
+            CoverageReport/
+          retention-days: 7
+
+  # AI-Powered Coverage Intelligence
+  ai-coverage-analysis:
+    name: "AI Analysis • Coverage Intelligence"
+    runs-on: ubuntu-latest
+    needs: [coverage-analysis]
+    if: always() && !cancelled() && needs.coverage-analysis.outputs.ai-framework-ready == 'true' && needs.coverage-analysis.outputs.test-success == 'true'
+    timeout-minutes: 10
+
+    outputs:
+      coverage_analysis: ${{ steps.ai-coverage.outputs.coverage_analysis }}
+      improvement_recommendations: ${{ steps.ai-coverage.outputs.improvement_recommendations }}
+      coverage_trends: ${{ steps.ai-coverage.outputs.coverage_trends }}
+      milestone_progress: ${{ steps.ai-coverage.outputs.milestone_progress }}
+      next_steps: ${{ steps.ai-coverage.outputs.next_steps }}
+      analysis_summary: ${{ steps.ai-coverage.outputs.analysis_summary }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Execute AI Coverage Intelligence Analysis
+        id: ai-coverage
+        uses: ./.github/actions/shared/ai-testing-analysis
+        with:
+          coverage_data: ${{ needs.coverage-analysis.outputs.coverage-percentage }}
+          baseline_coverage: ${{ needs.coverage-analysis.outputs.coverage-baseline }}
+          test_results: ${{ needs.coverage-analysis.outputs.test-success }}
+          coverage_phase: 'iterative-improvement'
+          epic_context: 'Backend Testing Coverage Epic - 90% by Jan 2026'
+          improvement_target: '90'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          skip_duplicate: 'true'
+          analysis_depth: 'detailed'
+          phase_aware: 'true'
+          debug_mode: 'false'
+
+      - name: Handle AI coverage analysis failure
+        if: failure()
+        uses: ./.github/actions/handle-ai-analysis-failure
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          analysis-type: 'CoverageIntelligence'
+          analysis-emoji: '📊'
+          analysis-name: 'Coverage Intelligence Analysis'
+          standards-link: 'https://github.com/Zarichney-Development/zarichney-api/blob/main/Docs/Standards/TestingStandards.md'
+          run-number: ${{ github.run_number }}
+          run-id: ${{ github.run_id }}
+
+  # AI-Powered Standards Compliance Analysis
+  ai-standards-analysis:
+    name: "AI Analysis • Standards Compliance"
+    runs-on: ubuntu-latest
+    needs: [coverage-analysis]
+    if: always() && !cancelled() && needs.coverage-analysis.outputs.ai-framework-ready == 'true'
+    timeout-minutes: 10
+
+    outputs:
+      standards_analysis: ${{ steps.ai-standards.outputs.standards_analysis }}
+      compliance_score: ${{ steps.ai-standards.outputs.compliance_score }}
+      priority_violations: ${{ steps.ai-standards.outputs.priority_violations }}
+      improvement_roadmap: ${{ steps.ai-standards.outputs.improvement_roadmap }}
+      epic_alignment: ${{ steps.ai-standards.outputs.epic_alignment }}
+      analysis_summary: ${{ steps.ai-standards.outputs.analysis_summary }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Execute AI Standards Compliance Analysis
+        id: ai-standards
+        uses: ./.github/actions/shared/ai-standards-analysis
+        with:
+          component_type: 'workflow'
+          standards_context: '/Docs/Standards/TaskManagementStandards.md,/Docs/Standards/TestingStandards.md'
+          change_scope: '.github/workflows/coverage-build.yml'
+          epic_context: 'epic-181-build-workflows'
+          analysis_depth: 'detailed'
+          architecture_mode: 'integration'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          skip_duplicate: 'true'
+          compliance_threshold: '80'
+          priority_focus: 'all'
+          debug_mode: 'false'
+
+      - name: Handle AI standards analysis failure
+        if: failure()
+        uses: ./.github/actions/handle-ai-analysis-failure
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          analysis-type: 'StandardsCompliance'
+          analysis-emoji: '🛡️'
+          analysis-name: 'Standards Compliance Analysis'
+          standards-link: 'https://github.com/Zarichney-Development/zarichney-api/blob/main/Docs/Standards/TaskManagementStandards.md'
+          run-number: ${{ github.run_number }}
+          run-id: ${{ github.run_id }}
+
+  # Consolidated AI Analysis Results
+  ai-analysis-summary:
+    name: "AI Analysis • Summary Report"
+    runs-on: ubuntu-latest
+    needs: [coverage-analysis, ai-coverage-analysis, ai-standards-analysis]
+    if: always() && !cancelled() && needs.coverage-analysis.outputs.ai-framework-ready == 'true'
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate Consolidated AI Analysis Summary
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Gather AI analysis results
+            const coverageAnalysis = ${{ needs.ai-coverage-analysis.outputs && needs.ai-coverage-analysis.outputs.analysis_summary && toJSON(needs.ai-coverage-analysis.outputs.analysis_summary) || 'Not available' }};
+            const standardsAnalysis = ${{ needs.ai-standards-analysis.outputs && needs.ai-standards-analysis.outputs.analysis_summary && toJSON(needs.ai-standards-analysis.outputs.analysis_summary) || 'Not available' }};
+            const coverageScore = ${{ needs.coverage-analysis.outputs && needs.coverage-analysis.outputs['coverage-percentage'] && toJSON(needs.coverage-analysis.outputs['coverage-percentage']) || 'N/A' }};
+            const complianceScore = ${{ needs.ai-standards-analysis.outputs && needs.ai-standards-analysis.outputs.compliance_score && toJSON(needs.ai-standards-analysis.outputs.compliance_score) || 'N/A' }};
+            const milestoneProgress = ${{ needs.ai-coverage-analysis.outputs && needs.ai-coverage-analysis.outputs.milestone_progress && toJSON(needs.ai-coverage-analysis.outputs.milestone_progress) || 'N/A' }};
+
+            // Build consolidated summary
+            const summary = `## 🤖 AI Analysis Summary - Coverage Build
+
+            **Coverage Results:** ${coverageScore}% (Target: 90%)
+            **Standards Compliance:** ${complianceScore}/100
+            **Epic Progress:** ${milestoneProgress}% toward 90% milestone
+
+            ### 📊 Coverage Intelligence
+            ${coverageAnalysis}
+
+            ### 🛡️ Standards Compliance
+            ${standardsAnalysis}
+
+            ### 🎯 Next Steps
+            ${needs.ai-coverage-analysis.outputs.next_steps ?
+              JSON.parse(needs.ai-coverage-analysis.outputs.next_steps).map(step => `- ${step}`).join('\n') :
+              'Follow standard coverage improvement practices'}
+
+            ---
+            *🚀 AI-powered analysis via Epic #181 framework • [Workflow Run](${context.payload.repository.html_url}/actions/runs/${context.runId})*`;
+
+            // Check for existing AI summary comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const aiComment = comments.find(comment =>
+              comment.user.login === 'github-actions[bot]' &&
+              comment.body.includes('AI Analysis Summary - Coverage Build')
+            );
+
+            if (aiComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: aiComment.id,
+                body: summary
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: summary
+              });
+            }
