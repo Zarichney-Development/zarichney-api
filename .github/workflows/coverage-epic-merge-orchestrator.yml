@@ -455,7 +455,7 @@ jobs:
         uses: anthropics/claude-code-action@eap
         continue-on-error: true
         with:
-          mode: 'remote-agent'
+          mode: 'agent'
           direct_prompt: |
             # Coverage Epic Merge Orchestrator - AI Conflict Resolution
 
@@ -504,9 +504,7 @@ jobs:
             - Build environment is stable with all dependencies restored
 
             Please proceed with environment restoration followed by conflict resolution for the failed PRs.
-          claude_access_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
-          claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           allowed_tools: |
             Bash(git status)
