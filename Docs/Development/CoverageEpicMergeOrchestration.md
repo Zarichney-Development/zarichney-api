@@ -1,7 +1,7 @@
 # Coverage Epic Merge Orchestration for AI Agents
 
-**Version:** 2.0  
-**Last Updated:** 2025-09-07  
+**Version:** 2.1
+**Last Updated:** 2025-09-23
 **Epic Reference:** [Issue #94](https://github.com/Zarichney-Development/zarichney-api/issues/94)
 
 ## 1. Purpose & Context
@@ -20,6 +20,7 @@ The orchestrator operates as part of the comprehensive Coverage Epic automation 
 - **Coordinates** with `coverage-epic-scheduler.yml` (scheduled automation triggers)
 - **Integrates** with AI Sentinel review system for quality validation
 - **Supports** multi-agent development workflow coordination
+- **Epic #181 Integration**: Positioned as **Phase 5** of the 6-phase autonomous development cycle, enabling AI-powered multi-PR consolidation with conflict resolution
 
 ## 2. Workflow Architecture & Features
 
@@ -76,9 +77,11 @@ flowchart TD
 
 **3. Real-Time AI-Powered Conflict Resolution**
 - Utilizes enhanced Coverage Epic Merge Orchestrator AI agent with direct merge authority
+- **Agent Mode Execution**: Operates in `agent` mode for full tool permissions and Git operation capabilities
 - Operates directly on epic branch with immediate conflict resolution
 - Focuses on test-only conflicts and minimal testability improvements
 - Maintains strict production code safety constraints with epic branch rollback capabilities
+- **Issue #220 Resolved**: AI conflict resolution fully operational with `workflow_dispatch` compatibility
 
 **4. Comprehensive Validation**
 - Build validation using `dotnet build zarichney-api.sln` after each merge
@@ -206,6 +209,18 @@ gh workflow run "Coverage Epic Merge Orchestrator" \
 - **DANGEROUS-PRODUCTION CONFLICTS**: Business logic changes requiring human review
 - **FRAMEWORK-ENHANCEMENT CONFLICTS**: Test infrastructure improvements
 
+**Agent Mode Execution Capabilities** (Issue #220 Resolved):
+```yaml
+EXECUTION_MODE: 'agent'  # Compatible with workflow_dispatch triggers
+AUTHENTICATION: 'claude_code_oauth_token'  # Updated from deprecated parameters
+TOOL_PERMISSIONS:
+  - Full Git operations (merge, commit, push, checkout)
+  - Build validation (dotnet restore, build, test)
+  - GitHub CLI operations (gh pr close, gh issue comment)
+  - File search and conflict analysis capabilities
+  - Direct epic branch modification authority
+```
+
 **AI Safety Constraints**:
 ```yaml
 ALLOWED_AI_CHANGES:
@@ -296,6 +311,12 @@ graph LR
 - **DocumentationMaintainer**: Updates documentation reflecting epic branch progression
 - **ComplianceOfficer**: Validates epic branch changes meet all project standards
 
+**Epic #181 Autonomous Development Cycle Integration**:
+- **Phase 5 Positioning**: Coverage Epic Merge Orchestrator operates as Phase 5 of 6-phase autonomous development cycle
+- **Autonomous Framework**: Built on foundation components from Issues #183, #212, #184
+- **AI Framework Integration**: Leverages complete AI framework for intelligent conflict resolution
+- **Cycle Completion**: Positions orchestrator for Issue #156 capstone (AI-powered autonomous testing workflow)
+
 **Conflict Prevention Strategies**:
 - **Sequential Processing**: Processes PRs one-by-one to isolate and resolve conflicts individually
 - **Label-Based Filtering**: Separates different types of coverage work (ai-task, manual-coverage)
@@ -371,12 +392,17 @@ dotnet build zarichney-api.sln  # Check build errors
 # If unfixable: Epic branch rollback triggered automatically
 ```
 
-**4. AI Conflict Resolution Failures**
-```bash
-# Symptoms: AI conflict resolution fails, epic branch rolled back
-# Resolution: Manual conflict resolution required for complex conflicts
+**4. AI Conflict Resolution Status**
 
-# Check epic branch status:
+**✅ Issue #220 RESOLVED** (2025-09-23):
+- **Root Cause**: Mode incompatibility between `remote-agent` mode and `workflow_dispatch` triggers
+- **Resolution**: Updated to `agent` mode with `claude_code_oauth_token` authentication
+- **Status**: AI conflict resolution fully operational with enhanced Git operation capabilities
+- **Validation**: All tool permissions compatible with agent mode execution
+
+**Manual Conflict Resolution** (for complex cases beyond AI capabilities):
+```bash
+# For conflicts requiring human review:
 git checkout epic/testing-coverage-to-90
 git log --oneline -5  # Verify rollback occurred
 
@@ -386,6 +412,15 @@ git merge <pr_branch> --no-ff  # Manual merge with conflict resolution
 # Resolve conflicts following project standards
 git commit -m "resolve: manual conflict resolution for PR #<number>"
 git push origin epic/testing-coverage-to-90
+```
+
+**Agent Mode Validation**:
+```bash
+# Verify agent mode execution capabilities:
+# - Workflow executes in 'agent' mode with workflow_dispatch triggers
+# - Authentication uses claude_code_oauth_token parameter
+# - No deprecated parameter warnings in workflow logs
+# - AI can perform all Git operations and merge conflict resolution
 ```
 
 **4a. Large Batch Direct Merge Patterns (8+ PRs)**

@@ -210,7 +210,47 @@ Mandatory_AI_Security_Controls_IMPLEMENTED:
 
 **Integration Patterns**: Leverage existing extract-pr-context, check-existing-comment, handle-ai-analysis-failure shared actions for seamless integration.
 
-### 3.4 Issues #185-#186: Advanced Analysis Framework
+### 3.4 Issue #220: Coverage Epic Merge Orchestrator AI Compatibility 🚧 **BLOCKING**
+
+**Objective**: Restore the Coverage Epic Merge Orchestrator's AI conflict resolution capability after `anthropics/claude-code-action@eap` removed support for `mode: 'remote-agent'` during workflow_dispatch runs on `main` (Run #24 failure).
+
+**Key Tasks**:
+1. Update `.github/workflows/coverage-epic-merge-orchestrator.yml` to use a supported action mode (`agent` or repository_dispatch triggered) and modern authentication inputs.
+2. Align `.github/prompts/coverage-epic-merge-orchestrator.md` with the revised execution flow and tool permissions.
+3. Refresh `Docs/Development/CoverageEpicMergeOrchestration.md` and Epic #181 specifications with the new conflict resolution procedure.
+4. Execute a non-dry-run orchestrator workflow on `main` that encounters at least one merge conflict and confirm the AI step completes with zero remaining PRs.
+
+**Dependencies**:
+- Blocks Issues #185-#187 until sequential merging completes successfully with the updated configuration.
+- Coordinates with Epic #94 automation to maintain deterministic merge ordering and rollback safeguards.
+
+**Validation Requirements**:
+- Workflow run artifacts demonstrating the successful AI conflict resolution step.
+- Removal of deprecated secrets (`claude_access_token`, `claude_refresh_token`, `claude_expires_at`) from workflow inputs.
+- Documentation updates committed alongside the workflow change.
+
+### 3.5 Issue #156: Autonomous Cycle Completion - Epic Capstone ⭐ **CAPSTONE**
+
+**Objective**: Complete the autonomous development cycle by implementing auto-trigger integration between Coverage Epic Automation and Coverage Epic Merge Orchestrator, eliminating the final manual intervention point.
+
+**Epic Capstone Status**: This issue completes Epic #181's vision of fully autonomous development workflows by closing the automation loop - when AI code review approves a PR for merging, the system automatically triggers the next development cycle without manual intervention.
+
+**Key Tasks**:
+1. Implement `workflow_run` trigger in `coverage-epic-merge-orchestrator.yml` to auto-trigger after Coverage Epic Automation completion
+2. Add validation logic to prevent unnecessary orchestrator runs when no PRs exist for consolidation
+3. Standardize naming conventions across all Coverage Epic workflows ("Automated Workflow - Auto-Testing Coverage - [Component]")
+4. Implement git configuration standardization with `bot@zarichney.com` email and descriptive usernames
+
+**Dependencies**:
+- Requires Issue #220 resolution for AI conflict resolution capability
+- Completes the autonomous cycle enabling Issues #185-#187 to operate within fully autonomous framework
+
+**Validation Requirements**:
+- End-to-end autonomous cycle demonstration from scheduler trigger to automatic restart
+- Zero manual intervention required throughout development cycle
+- Successful auto-trigger integration with proper conditional logic
+
+### 3.6 Issues #185-#186: Advanced Analysis Framework
 
 **Objective**: Complete AI framework and security integration with comprehensive analysis capabilities
 
@@ -243,7 +283,7 @@ Security_Infrastructure:
 - **SecuritySentinel**: Security-aware coverage assessment with vulnerability correlation
 - **MergeOrchestrator**: Holistic coverage improvement decisions with epic coordination
 
-### 3.5 Issue #187: Epic Workflow Coordination
+### 3.7 Issue #187: Epic Workflow Coordination
 
 **Objective**: Complete epic workflow integration with advanced automation capabilities
 
@@ -789,6 +829,12 @@ Issue_184_Readiness:
   Integration_Patterns: ✅ "Template system and context injection security architecture"
   Testing_Strategy: ✅ "AI framework testing and validation requirements defined"
 
+Issue_220_Readiness:
+  Action_Compatibility: 🚧 "claude-code-action mode update required for workflow_dispatch runs"
+  Failure_Context: 🚧 "Run #24 blocked when AI conflict resolution step rejected remote-agent mode"
+  Safety_Dependencies: 🚧 "Must validate rollback safeguards and zero open PR confirmations"
+  Documentation_Update: 🚧 "Roadmap and orchestrator docs require sequencing adjustments"
+
 Issues_185_186_Readiness:
   Security_Infrastructure: ✅ "security-framework component with comprehensive controls"
   Advanced_AI_Integration: ✅ "Complete AI Sentinel suite with specialized capabilities"
@@ -830,10 +876,11 @@ Coordination_Framework_Ready:
 ### 11.1 Immediate Implementation Priorities
 
 **Foundation Phase Activation (Next 1-2 Days)**:
-1. **CodeChanger**: Begin path-analysis component extraction with WorkflowEngineer coordination
-2. **WorkflowEngineer**: Implement concurrency-config component with resource optimization
-3. **SecurityAuditor**: Validate security control implementation for foundation components
-4. **TestEngineer**: Establish component testing framework and validation procedures
+1. **WorkflowEngineer**: Execute Issue #220 to restore Coverage Epic Merge Orchestrator AI conflict resolution and provide successful run evidence
+2. **CodeChanger**: Begin path-analysis component extraction with WorkflowEngineer coordination
+3. **WorkflowEngineer**: Implement concurrency-config component with resource optimization
+4. **SecurityAuditor**: Validate security control implementation for foundation components
+5. **TestEngineer**: Establish component testing framework and validation procedures
 
 ### 11.2 Epic Coordination Activation
 
