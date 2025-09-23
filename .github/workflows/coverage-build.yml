@@ -486,11 +486,11 @@ jobs:
         with:
           script: |
             // Gather AI analysis results
-            const coverageAnalysis = ${{ toJSON(needs.ai-coverage-analysis.outputs.analysis_summary) }} || 'Not available';
-            const standardsAnalysis = ${{ toJSON(needs.ai-standards-analysis.outputs.analysis_summary) }} || 'Not available';
-            const coverageScore = ${{ toJSON(needs.coverage-analysis.outputs.coverage-percentage) }} || 'N/A';
-            const complianceScore = ${{ toJSON(needs.ai-standards-analysis.outputs.compliance_score) }} || 'N/A';
-            const milestoneProgress = ${{ toJSON(needs.ai-coverage-analysis.outputs.milestone_progress) }} || 'N/A';
+            const coverageAnalysis = ${{ needs.ai-coverage-analysis.outputs && needs.ai-coverage-analysis.outputs.analysis_summary && toJSON(needs.ai-coverage-analysis.outputs.analysis_summary) || 'Not available' }};
+            const standardsAnalysis = ${{ needs.ai-standards-analysis.outputs && needs.ai-standards-analysis.outputs.analysis_summary && toJSON(needs.ai-standards-analysis.outputs.analysis_summary) || 'Not available' }};
+            const coverageScore = ${{ needs.coverage-analysis.outputs && needs.coverage-analysis.outputs['coverage-percentage'] && toJSON(needs.coverage-analysis.outputs['coverage-percentage']) || 'N/A' }};
+            const complianceScore = ${{ needs.ai-standards-analysis.outputs && needs.ai-standards-analysis.outputs.compliance_score && toJSON(needs.ai-standards-analysis.outputs.compliance_score) || 'N/A' }};
+            const milestoneProgress = ${{ needs.ai-coverage-analysis.outputs && needs.ai-coverage-analysis.outputs.milestone_progress && toJSON(needs.ai-coverage-analysis.outputs.milestone_progress) || 'N/A' }};
 
             // Build consolidated summary
             const summary = `## 🤖 AI Analysis Summary - Coverage Build
