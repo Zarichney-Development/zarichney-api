@@ -19,6 +19,22 @@ on:
         description: 'Expected baseline coverage percentage for comparison'
         required: false
         default: '16'
+      enable_iterative_review:
+        description: 'Enable iterative AI review for manual testing'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      force_new_iteration:
+        description: 'Force new iteration (skip existing comment detection)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
 
 permissions:
   contents: read
@@ -468,11 +484,66 @@ jobs:
           run-number: ${{ github.run_number }}
           run-id: ${{ github.run_id }}
 
+  # Iterative AI Code Review (Epic #181 Phase 4)
+  iterative-ai-review:
+    name: "AI Review • Iterative Code Analysis"
+    runs-on: ubuntu-latest
+    needs: [coverage-analysis]
+    if: |
+      always() && !cancelled() &&
+      needs.coverage-analysis.outputs.ai-framework-ready == 'true' &&
+      needs.coverage-analysis.outputs.test-success == 'true' &&
+      (
+        github.event_name == 'pull_request' ||
+        (github.event_name == 'workflow_dispatch' && inputs.enable_iterative_review == 'true')
+      )
+    timeout-minutes: 15
+
+    outputs:
+      iteration_count: ${{ steps.iterative-review.outputs.iteration_count }}
+      pr_status: ${{ steps.iterative-review.outputs.pr_status }}
+      todo_summary: ${{ steps.iterative-review.outputs.todo_summary }}
+      quality_gates: ${{ steps.iterative-review.outputs.quality_gates }}
+      next_actions: ${{ steps.iterative-review.outputs.next_actions }}
+      epic_progress: ${{ steps.iterative-review.outputs.epic_progress }}
+      comment_updated: ${{ steps.iterative-review.outputs.comment_updated }}
+      blocking_issues: ${{ steps.iterative-review.outputs.blocking_issues }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Execute Iterative AI Code Review
+        id: iterative-review
+        uses: ./.github/actions/iterative-ai-review
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          pr_number: ${{ github.event.pull_request.number || github.event.inputs.pr_number || '0' }}
+          iteration_trigger: 'auto'
+          max_iterations: '5'
+          quality_threshold: 'standard'
+          epic_context: 'Epic #181 autonomous development - Coverage to 90%'
+          debug_mode: 'false'
+          force_new_iteration: ${{ inputs.force_new_iteration || 'false' }}
+
+      - name: Handle Iterative Review Failure
+        if: failure()
+        uses: ./.github/actions/handle-ai-analysis-failure
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          analysis-type: 'IterativeAIReview'
+          analysis-emoji: '🔄'
+          analysis-name: 'Iterative AI Code Review'
+          standards-link: 'https://github.com/Zarichney-Development/zarichney-api/blob/main/Docs/Standards/TestingStandards.md'
+          run-number: ${{ github.run_number }}
+          run-id: ${{ github.run_id }}
+
   # Consolidated AI Analysis Results
   ai-analysis-summary:
     name: "AI Analysis • Summary Report"
     runs-on: ubuntu-latest
-    needs: [coverage-analysis, ai-coverage-analysis, ai-standards-analysis]
+    needs: [coverage-analysis, ai-coverage-analysis, ai-standards-analysis, iterative-ai-review]
     if: always() && !cancelled() && needs.coverage-analysis.outputs.ai-framework-ready == 'true'
     timeout-minutes: 5
 
@@ -492,12 +563,69 @@ jobs:
             const complianceScore = ${{ needs.ai-standards-analysis.outputs && needs.ai-standards-analysis.outputs.compliance_score && toJSON(needs.ai-standards-analysis.outputs.compliance_score) || 'N/A' }};
             const milestoneProgress = ${{ needs.ai-coverage-analysis.outputs && needs.ai-coverage-analysis.outputs.milestone_progress && toJSON(needs.ai-coverage-analysis.outputs.milestone_progress) || 'N/A' }};
 
+            // Iterative review results
+            const iterationCount = ${{ needs.iterative-ai-review.outputs && needs.iterative-ai-review.outputs.iteration_count && toJSON(needs.iterative-ai-review.outputs.iteration_count) || 'N/A' }};
+            const prStatus = ${{ needs.iterative-ai-review.outputs && needs.iterative-ai-review.outputs.pr_status && toJSON(needs.iterative-ai-review.outputs.pr_status) || 'Not assessed' }};
+            const todoSummary = ${{ needs.iterative-ai-review.outputs && needs.iterative-ai-review.outputs.todo_summary && toJSON(needs.iterative-ai-review.outputs.todo_summary) || '{}' }};
+            const qualityGates = ${{ needs.iterative-ai-review.outputs && needs.iterative-ai-review.outputs.quality_gates && toJSON(needs.iterative-ai-review.outputs.quality_gates) || '{}' }};
+            const nextActions = ${{ needs.iterative-ai-review.outputs && needs.iterative-ai-review.outputs.next_actions && toJSON(needs.iterative-ai-review.outputs.next_actions) || '[]' }};
+            const epicProgress = ${{ needs.iterative-ai-review.outputs && needs.iterative-ai-review.outputs.epic_progress && toJSON(needs.iterative-ai-review.outputs.epic_progress) || 'N/A' }};
+            const blockingIssues = ${{ needs.iterative-ai-review.outputs && needs.iterative-ai-review.outputs.blocking_issues && toJSON(needs.iterative-ai-review.outputs.blocking_issues) || '[]' }};
+
+            // Parse todo summary for display
+            let todoDisplay = 'No active to-do items';
+            try {
+              const todoData = JSON.parse(todoSummary);
+              if (todoData.active_count && todoData.active_count > 0) {
+                todoDisplay = `${todoData.active_count} active items (${todoData.critical_count || 0} critical, ${todoData.high_count || 0} high priority)`;
+              }
+            } catch (e) {
+              // Keep default display
+            }
+
+            // Parse quality gates for display
+            let qualityDisplay = 'Assessment pending';
+            try {
+              const gateData = JSON.parse(qualityGates);
+              const passing = Object.values(gateData).filter(v => v === true).length;
+              const total = Object.keys(gateData).length;
+              if (total > 0) {
+                qualityDisplay = `${passing}/${total} quality gates passing`;
+              }
+            } catch (e) {
+              // Keep default display
+            }
+
+            // Parse blocking issues for display
+            let blockingDisplay = 'None identified';
+            try {
+              const blockingData = JSON.parse(blockingIssues);
+              if (Array.isArray(blockingData) && blockingData.length > 0) {
+                blockingDisplay = `${blockingData.length} blocking issues require attention`;
+              }
+            } catch (e) {
+              // Keep default display
+            }
+
+            // Status indicator based on PR status
+            let statusEmoji = '📋';
+            if (prStatus === 'ready') statusEmoji = '✅';
+            else if (prStatus === 'draft') statusEmoji = '🔄';
+            else if (prStatus === 'approved') statusEmoji = '🚀';
+
             // Build consolidated summary
             const summary = `## 🤖 AI Analysis Summary - Coverage Build
 
             **Coverage Results:** ${coverageScore}% (Target: 90%)
             **Standards Compliance:** ${complianceScore}/100
             **Epic Progress:** ${milestoneProgress}% toward 90% milestone
+
+            ### 🔄 Iterative Review Status (Epic #181 Phase 4)
+            - **Status:** ${statusEmoji} ${prStatus}
+            - **Iteration:** #${iterationCount}
+            - **To-Do Items:** ${todoDisplay}
+            - **Quality Gates:** ${qualityDisplay}
+            - **Blocking Issues:** ${blockingDisplay}
 
             ### 📊 Coverage Intelligence
             ${coverageAnalysis}
@@ -511,7 +639,7 @@ jobs:
               'Follow standard coverage improvement practices'}
 
             ---
-            *🚀 AI-powered analysis via Epic #181 framework • [Workflow Run](${context.payload.repository.html_url}/actions/runs/${context.runId})*`;
+            *🚀 AI-powered analysis via Epic #181 framework with iterative review • [Workflow Run](${context.payload.repository.html_url}/actions/runs/${context.runId})*`;
 
             // Check for existing AI summary comment
             const { data: comments } = await github.rest.issues.listComments({

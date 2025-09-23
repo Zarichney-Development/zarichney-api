@@ -17,11 +17,12 @@
 
 ## 2. Architecture & Key Concepts
 
-### **The Four AI Sentinels**
+### **The Five AI Sentinels**
 * **🔍 DebtSentinel** (`tech-debt-analysis.md`, ~270 lines): Technical debt analysis with GitHub label strategic context and epic-aware prioritization
 * **🛡️ StandardsGuardian** (`standards-compliance.md`, ~350 lines): Standards compliance with component-specific analysis and epic alignment
 * **🧪 TestMaster** (`testing-analysis.md`, ~370 lines): Test quality assessment with coverage phase intelligence and progressive testing strategy
 * **🔒 SecuritySentinel** (`security-analysis.md`, ~370 lines): Security vulnerability assessment with automation context awareness and component-specific threat modeling
+* **🔄 IterativeReviewer** (`iterative-code-review.md`, ~450 lines): **NEW** - Iterative AI code review with historical context preservation, to-do list management, and Epic #181 autonomous development alignment
 
 ### **Advanced Prompt Engineering Features**
 Based on academic research in AI-driven technical debt analysis:
@@ -43,11 +44,28 @@ All four AI agents now leverage GitHub issue labels for enhanced contextual anal
 ### **Technical Implementation**
 * **Template System**: Markdown prompts with `{{PLACEHOLDER}}` dynamic context injection
 * **Workflow Integration**: GitHub Actions jobs load templates and perform string replacement
-* **Branch-Aware Activation**: 
+* **Branch-Aware Activation**:
   - Feature branches: Build + Test only
   - Develop PRs: Testing + Standards + Tech Debt analysis
   - Main PRs: Full analysis including Security assessment
 * **Quality Gates**: Critical findings can block deployment with specific remediation guidance
+* **Iterative Review System**: NEW - Multi-iteration context preservation with to-do list management and Epic #181 alignment
+
+### **Epic #181 Iterative AI Review Enhancement**
+**NEW CAPABILITY** - Advanced iterative review system supporting Epic #181 autonomous development objectives:
+
+* **🔄 IterativeReviewer** (`iterative-code-review.md`):
+  - **Historical Context Preservation**: Maintains development journey across multiple PR iterations
+  - **Running To-Do List Management**: Structured tracking of action items with priority and completion status
+  - **Epic #181 Alignment**: Direct integration with autonomous development cycle objectives
+  - **Progressive Quality Assessment**: Incremental improvement tracking and milestone progression
+  - **Multi-Agent Coordination**: Enhanced team workflow integration through structured context management
+
+**Iterative Review Features:**
+* **Context Variables**: {{ITERATION_COUNT}}, {{PREVIOUS_ITERATIONS}}, {{CURRENT_TODO_LIST}}, {{HISTORICAL_CONTEXT}}
+* **To-Do Item Structure**: JSON-formatted action items with priority, dependencies, and Epic alignment
+* **Quality Gate Integration**: PR status management (draft/ready/approved) with merge blocking logic
+* **Pattern Recognition**: Historical development pattern analysis and learning reinforcement
 
 ```mermaid
 graph TD
@@ -106,6 +124,7 @@ graph TD
 * **Project Documentation**: Access to `CLAUDE.md`, `/Docs/Standards/`, module `README.md` files
 * **Build Artifacts**: Test results, coverage reports, security scan results (when available)
 * **Branch Context**: Target branch determines analysis depth and security requirements
+* **Iterative Context** (for iterative-code-review.md): Previous iteration results, running to-do lists, historical context preservation
 
 ### **AI Analysis Output Guarantees**
 * **Unified Header**: `## Code Review Report - <Agent Name> Analysis`
