@@ -2,43 +2,59 @@
 
 **Last Updated:** 2025-09-23
 **Version:** 1.0
-**Epic Context:** Build Workflows Enhancement & Autonomous Development Cycle
-**Status:** Phase 4 Complete - Iterative AI Review Implemented
+**Epic Context:** AI-Powered CI/CD Orchestration Framework & Multi-Epic Autonomous Development
+**Status:** Phase 4 Complete - Multi-Epic Foundation Ready
 
 > **Parent:** [`Epic #181 Build Workflows`](./README.md)
 
 ## 1. Purpose & Responsibility
 
-* **What it is:** Comprehensive specification for Epic #181's autonomous development cycle - a fully automated workflow ecosystem that handles the complete development lifecycle from test creation through deployment without manual intervention.
+* **What it is:** Universal autonomous development cycle specification supporting unlimited epic workstreams through intelligent AI orchestration, branch-aware behavior selection, and pluggable work discovery - a completely automated workflow ecosystem handling diverse development scenarios from test creation through deployment.
 * **Key Objectives:**
-  - **Primary: Complete Automation Loop** - Establish 6-phase autonomous cycle handling test development, code review, conflict resolution, and deployment
-  - **Intelligent AI Integration** - Deploy sophisticated AI-powered analysis, iteration management, and quality enforcement
-  - **Scalable Foundation** - Create patterns applicable to tech debt remediation, performance optimization, and security hardening workstreams
-  - **Zero-Touch Operations** - Enable development progression through scheduled automation with human oversight only for strategic decisions
+  - **Primary: Universal Multi-Epic Support** - Enable unlimited autonomous workstreams (coverage, tech debt, performance, security) through configurable patterns
+  - **Intelligent AI Orchestration** - Branch-aware AI behavior selection with automatic configuration and cost optimization
+  - **Pluggable Work Discovery** - Adaptive work source integration (coverage reports, GitHub issues, metrics, scans) based on epic type
+  - **Zero-Configuration Operations** - Autonomous cycles activate automatically based on branch patterns without manual setup
+  - **Cost-Controlled Intelligence** - Resource optimization with appropriate AI integration levels per development context
 * **Success Criteria:**
-  - **Fully Autonomous Test Development Cycle** - Complete 6-hour scheduled cycles creating, reviewing, and merging test coverage improvements
-  - **AI-Powered Quality Enforcement** - Iterative code review with automated improvement cycles until quality standards achieved
-  - **Intelligent Conflict Resolution** - Automated conflict detection and resolution across multiple concurrent PRs
-  - **Epic Progression Automation** - Seamless progression toward 90% backend coverage goal through coordinated automation
-* **Why it exists:** To establish the foundational pattern for autonomous development that eliminates manual coordination overhead while maintaining quality standards, enabling the organization to scale development capabilities through intelligent automation rather than additional human resources.
+  - **Universal Epic Support** - Autonomous cycles for coverage, tech debt, performance, security, and custom workstreams
+  - **Zero-Configuration Activation** - Epic branches automatically receive appropriate AI integration based on patterns
+  - **Intelligent Resource Optimization** - AI operations deployed cost-effectively with automatic usage controls
+  - **Multi-Source Work Discovery** - Pluggable adapters for coverage reports, GitHub issues, performance metrics, security scans
+  - **Adaptive Quality Enforcement** - Branch-appropriate quality standards with automatic escalation and enforcement
+  - **Cross-Epic Coordination** - Multiple autonomous workstreams operating simultaneously without conflicts
+* **Why it exists:** To create a universal autonomous development framework that supports unlimited specialized workstreams through intelligent pattern recognition and adaptive AI integration, enabling organizational scaling through configuration rather than custom development.
 
-> **Implementation Foundation:** Built upon comprehensive AI framework from Issue #184 (ai-sentinel-base, ai-testing-analysis, ai-standards-analysis) and foundation components from Issues #183 and #212.
+> **Framework Integration:** Enhanced with AI Configuration Registry (Issue #XXX) and Universal Build Pipeline (Issue #XXX) built upon comprehensive AI framework from Issue #184 and foundation components from Issues #183 and #212.
 
-### Autonomous Development Vision
+### Universal Autonomous Development Vision
 
-Epic #181's autonomous development cycle represents a paradigm shift from manual coordination to intelligent automation:
+Epic #181's autonomous development cycle enables unlimited specialized workstreams through intelligent orchestration:
 
 ```yaml
 Vision_Statement:
-  From: "Manual test development, review coordination, and merge management"
-  To: "Fully autonomous 6-hour cycles with AI-powered quality enforcement"
+  From: "Manual coordination across diverse development workstreams"
+  To: "Universal AI orchestration supporting unlimited autonomous epic patterns"
+
+Multi_Epic_Support:
+  Coverage_Workstreams: "Autonomous test development with coverage report analysis"
+  Tech_Debt_Workstreams: "Automated issue resolution with GitHub label discovery"
+  Performance_Workstreams: "Intelligent optimization with metrics analysis"
+  Security_Workstreams: "Automated hardening with vulnerability scan integration"
+  Custom_Workstreams: "Configurable patterns for specialized organizational needs"
 
 Strategic_Value:
-  Development_Velocity: "Continuous progression without manual intervention"
-  Quality_Assurance: "AI-powered iterative improvement until standards met"
-  Resource_Optimization: "Human focus on strategic decisions while automation handles execution"
-  Scalability: "Foundation patterns applicable to all development workstreams"
+  Universal_Scaling: "Unlimited autonomous workstreams through configuration patterns"
+  Intelligence_Optimization: "Branch-aware AI selection with cost controls"
+  Zero_Configuration: "Automatic activation based on branch patterns"
+  Resource_Efficiency: "Appropriate AI integration for every development scenario"
 ```
+
+### Mission vs. Review Execution Rules
+
+* **Scheduled mission workflows (AI builders/fixers):** Always bootstrap the full environment, run dependency installation, build, and tests, but treat those steps as advisory. Failures are captured as context for the agent rather than failing the workflow so the bot can diagnose the broken state. Missions target draft pull requests that match the branch pattern defined in configuration and will resume the most recent draft when a run begins.
+* **PR review workflows:** Triggered by a ready-for-review pull request. The same environment setup and validation steps execute, but failures are blocking; if build or tests fail, the workflow flips the PR back to draft, records the failure signal for the next mission run, and skips AI review.
+* **Quality gatekeeper:** Once validation passes, the review AI produces a checklist. The PR cannot exit draft or merge until the checklist is cleared by subsequent mission runs and the review AI emits a passing status.
 
 ## 2. Architecture & Key Concepts
 
@@ -160,10 +176,11 @@ graph TB
 
 ### Phase Interaction and State Management
 
-* **State Persistence:** Each phase maintains state in working directory artifacts with comprehensive context for next phase
-* **Error Recovery:** Built-in retry mechanisms and failure escalation paths preserve cycle integrity
-* **Progress Tracking:** Continuous assessment of epic progression (90% backend coverage goal) guides cycle prioritization
-* **Quality Enforcement:** AI-powered iterative improvement ensures all deliverables meet standards before progression
+* **Scheduler Orchestration:** A default-branch controller workflow owns the cron trigger, locates the matching epic branch, and decides whether to create a fresh mission branch or resume the most recent draft pull request.
+* **State Persistence:** Each run stores hand-off artifacts (coverage diffs, failing test logs, review checklists) so the next phase can resume contextually.
+* **Error Recovery:** Built-in retry mechanisms and failure escalation paths preserve cycle integrity without abandoning partially complete work.
+* **Progress Tracking:** Continuous assessment of epic progression (90% backend coverage goal) guides cycle prioritization.
+* **Quality Enforcement:** AI-powered iterative improvement ensures all deliverables meet standards before progression.
 
 ## 3. Interface Contract & Assumptions
 
