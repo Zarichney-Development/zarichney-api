@@ -3,6 +3,7 @@ using Serilog;
 using Zarichney.Config;
 using Zarichney.Cookbook.Recipes;
 using Zarichney.Services.Auth;
+using Zarichney.Services.Email;
 using Zarichney.Services.Status;
 using Zarichney.Services.Logging;
 
@@ -85,6 +86,26 @@ public static class ApplicationStartup
         : new List<string> { $"ConnectionStrings:{UserDbContext.UserDatabaseConnectionName}" };
 
       await statusService.SetServiceAvailabilityAsync(ExternalServices.PostgresIdentityDb, ValidateStartup.IsIdentityDbAvailable, missingConfigurations);
+
+      // Add Microsoft Graph availability check
+      var emailConfig = application.Services.GetRequiredService<EmailConfig>();
+      var msGraphAvailable = !string.IsNullOrWhiteSpace(emailConfig.AzureTenantId) &&
+                             !string.IsNullOrWhiteSpace(emailConfig.AzureAppId) &&
+                             !string.IsNullOrWhiteSpace(emailConfig.AzureAppSecret) &&
+                             emailConfig.AzureAppSecret != StatusService.PlaceholderMessage;
+
+      var msGraphMissing = msGraphAvailable ? null : new List<string> {
+          "EmailConfig:AzureTenantId",
+          "EmailConfig:AzureAppId",
+          "EmailConfig:AzureAppSecret"
+      };
+
+      await statusService.SetServiceAvailabilityAsync(ExternalServices.MsGraph, msGraphAvailable, msGraphMissing);
+
+      if (msGraphAvailable)
+      {
+        Log.Information("Microsoft Graph service initialized and available");
+      }
     }
   }
 
