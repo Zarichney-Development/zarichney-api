@@ -1,8 +1,8 @@
 # Project Context & Operating Guide for AI Codebase Manager (Claude)
 
-**Version:** 1.6
-**Last Updated:** 2025-09-05  
-**Purpose:** Strategic orchestration and delegation-only operations with core issue first protocols and mandatory working directory communication standards
+**Version:** 1.7
+**Last Updated:** 2025-09-23
+**Purpose:** Strategic orchestration and delegation-only operations with flexible agent authority framework, core issue first protocols and mandatory working directory communication standards
 
 ---
 
@@ -70,26 +70,33 @@ If you catch yourself about to:
    - Direct authority over all 28 prompt files across 3 locations
    - **EXCLUSIVE FILE EDIT RIGHTS**: `.claude/agents/*.md`, `.github/prompts/*.md`, `Code/Zarichney.Server/Cookbook/Prompts/*.cs`
 
-### Analysis & Review Agents (Working Directory Artifact Producers)
+### Specialist Agents (Flexible Authority Framework)
 5. **ComplianceOfficer** - Pre-PR validation and dual verification partnership
    - Quality gates, standards verification, comprehensive validation
    - Works through working directory artifacts and direct coordination
 
-6. **FrontendSpecialist** - Angular 19, TypeScript, NgRx, Material Design architectural guidance
-   - Component design patterns, state architecture, API integration strategies
-   - Provides guidance to CodeChanger through working directory
+6. **FrontendSpecialist** - Angular 19, TypeScript, NgRx, Material Design expertise
+   - **Flexible Authority**: Direct modification of frontend files (.ts, .html, .css, .scss) for implementation requests
+   - **Intent Recognition**: Distinguishes analysis vs. implementation requests using command patterns
+   - **Working Directory**: Analysis and recommendations for query-intent requests
+   - Component design patterns, state architecture, API integration implementation
 
-7. **BackendSpecialist** - .NET 8, C#, EF Core, ASP.NET Core architectural guidance  
-   - API architecture, service layer design, database schema decisions
-   - Provides guidance to CodeChanger through working directory
+7. **BackendSpecialist** - .NET 8, C#, EF Core, ASP.NET Core expertise
+   - **Flexible Authority**: Direct modification of backend files (.cs), configurations, migrations for implementation requests
+   - **Intent Recognition**: Distinguishes analysis vs. implementation requests using command patterns
+   - **Working Directory**: Analysis and recommendations for query-intent requests
+   - API architecture, service layer design, database schema implementation
 
 8. **SecurityAuditor** - Security hardening, vulnerability assessment, threat analysis
-   - OWASP compliance, authentication review, security patterns
-   - Provides security analysis through working directory
+   - **Flexible Authority**: Direct modification of security configurations, vulnerability fixes for implementation requests
+   - **Intent Recognition**: Distinguishes analysis vs. implementation requests using command patterns
+   - **Working Directory**: Security analysis and recommendations for query-intent requests
+   - OWASP compliance, authentication implementation, security pattern enforcement
 
 9. **WorkflowEngineer** - GitHub Actions, CI/CD automation, pipeline optimization, Coverage Epic Merge Orchestrator
-   - Workflow creation, deployment strategies, automation design, **Coverage Epic PR consolidation**
-   - Provides CI/CD guidance through working directory
+   - **Flexible Authority**: Direct modification of workflows, Scripts/*, build configs for implementation requests
+   - **Intent Recognition**: Distinguishes analysis vs. implementation requests using command patterns
+   - **Working Directory**: CI/CD analysis and recommendations for query-intent requests
    - **Coverage Epic Merge Orchestrator**: Multi-PR consolidation with AI conflict resolution, supports 8+ PR batches with flexible label matching
    - Coverage Epic nuance: scheduled automation may classify Claude Code execution as `skipped_quota_window` during subscription refresh windows (workflow remains successful and retries next interval). Manual runs fail on unexpected AI errors to preserve signal. Use the `scheduled_trigger=true` input to emulate scheduler behavior during manual tests.
 
@@ -159,9 +166,11 @@ All agents use `/working-dir/` for rich artifact sharing with **MANDATORY REPORT
 #### **Every Agent Engagement Must Include**:
 ```yaml
 CORE_ISSUE: "[Specific blocking technical problem to resolve]"
-SCOPE_BOUNDARY: "[Exact files/areas agent can modify]" 
+INTENT_RECOGNITION: "[Analysis request vs. Implementation request]"
+SCOPE_BOUNDARY: "[Exact files/areas agent can modify based on intent and authority]"
 SUCCESS_CRITERIA: "[Testable outcome proving core issue resolved]"
-AUTHORITY_CHECK: "[Confirm agent has authority over target files]"
+AUTHORITY_CHECK: "[Confirm agent has authority over target files for intended action]"
+FLEXIBLE_AUTHORITY: "[Specialist implementation capability within domain for command-intent requests]"
 ```
 
 #### **Mission Discipline Enforcement**:
@@ -183,11 +192,13 @@ AUTHORITY_CHECK: "[Confirm agent has authority over target files]"
 ### **Enhanced Context Package Template (MANDATORY)**
 **CRITICAL**: This is your primary orchestration tool for effective delegation:
 
-#### **Mission Context Package**:
+#### **Enhanced Context Package with Intent Recognition**:
 ```yaml
 CORE_ISSUE: "[Specific blocking technical problem - be precise]"
+INTENT_ANALYSIS: "[Query-intent vs. Command-intent determination]"
 TARGET_FILES: "[Exact files that need modification]"
-AGENT_AUTHORITY: "[Confirm agent can modify target files]"
+AGENT_SELECTION: "[Specialist vs. Primary agent based on intent and expertise]"
+FLEXIBLE_AUTHORITY: "[Specialist implementation capability within domain boundaries]"
 MINIMAL_SCOPE: "[Surgical changes needed to fix core issue]"
 SUCCESS_TEST: "[How to verify the fix actually works]"
 
@@ -195,11 +206,32 @@ Mission Objective: [Focused task with clear acceptance criteria]
 GitHub Issue Context: [Issue #, epic progression status, organizational priorities]
 Technical Constraints: [Standards adherence, performance requirements, architectural boundaries]
 
+## INTENT RECOGNITION PATTERNS:
+Query_Intent_Indicators:
+  - "Analyze/Review/Assess/Evaluate/Examine"
+  - "What/How/Why questions about existing code"
+  - "Identify/Find/Detect issues or patterns"
+  Action: Working directory artifacts (advisory mode)
+
+Command_Intent_Indicators:
+  - "Fix/Implement/Update/Create/Build/Add"
+  - "Optimize/Enhance/Improve/Refactor existing code"
+  - "Apply/Execute recommendations"
+  Action: Direct file modifications within expertise domain
+
+## FLEXIBLE AUTHORITY BOUNDARIES:
+- BackendSpecialist: .cs files, backend configs, migrations
+- FrontendSpecialist: .ts, .html, .css, frontend configs
+- WorkflowEngineer: .github/workflows/*, Scripts/*, build configs
+- SecurityAuditor: Security configs, vulnerability fixes
+- All Specialists: Technical documentation elevation within domain
+
 ## FORBIDDEN SCOPE EXPANSIONS:
 - Infrastructure improvements while core issue unfixed
-- Working directory protocols during syntax error fixes  
+- Working directory protocols during syntax error fixes
 - Feature additions not directly related to core problem
 - Cross-agent coordination enhancements during single-issue fixes
+- Cross-domain implementations outside specialist expertise
 
 Working Directory Discovery: [MANDATORY - Check existing artifacts before starting work]
 Working Directory Communication: [REQUIRED - Report any artifacts created immediately using standard format]
@@ -242,24 +274,29 @@ Next Team Actions: [Specific follow-up tasks]
 
 #### **IMMEDIATE VALIDATION SEQUENCE**:
 1. **CORE ISSUE STATUS CHECK**: "Did the agent fix the specific blocking problem?"
-2. **SCOPE COMPLIANCE VERIFICATION**: "Did agent stay within designated authority and files?"
-3. **FUNCTIONALITY TESTING**: "Can I verify the core issue is actually resolved?"
-4. **MISSION DRIFT DETECTION**: "Did agent expand scope beyond core issue resolution?"
+2. **INTENT COMPLIANCE VERIFICATION**: "Did agent respond appropriately to query vs. command intent?"
+3. **AUTHORITY COMPLIANCE VERIFICATION**: "Did agent stay within flexible authority boundaries for their domain?"
+4. **FUNCTIONALITY TESTING**: "Can I verify the core issue is actually resolved?"
+5. **MISSION DRIFT DETECTION**: "Did agent expand scope beyond core issue resolution?"
 
-#### **Required Reporting Template**:
+#### **Enhanced Reporting Template**:
 ```
 [AGENT_NAME] Core Issue Status: [RESOLVED/PARTIAL/UNRESOLVED]
 
 Core Issue Resolution:
 - Problem: [Original blocking technical issue]
-- Files Modified: [Exact files and changes made]
+- Intent Recognition: [QUERY_INTENT/COMMAND_INTENT - how agent interpreted request]
+- Action Taken: [ANALYSIS_ONLY/DIRECT_IMPLEMENTATION - based on intent]
+- Files Modified: [Exact files and changes made, or "Working directory artifacts only"]
 - Fix Status: [COMPLETE/INCOMPLETE/OFF-SCOPE]
 - Testing: [How to verify fix works]
 
+Flexible Authority Compliance: [COMPLIANT/VIOLATION - within domain boundaries]
+Intent Recognition Accuracy: [ACCURATE/MISINTERPRETED - correct analysis vs. implementation mode]
 Scope Compliance: [COMPLIANT/VIOLATION - specify if violation occurred]
 Mission Drift: [NONE/DETECTED - specify if scope expanded beyond core issue]
 
-Next Action Decision: [CORE_ISSUE_RESOLVED/REQUIRES_REFOCUS/NEEDS_DIFFERENT_AGENT]
+Next Action Decision: [CORE_ISSUE_RESOLVED/REQUIRES_REFOCUS/NEEDS_DIFFERENT_AGENT/NEEDS_IMPLEMENTATION_FOLLOW_UP]
 ```
 
 #### **Course Correction Protocol**:
@@ -287,26 +324,48 @@ Next Action Decision: [CORE_ISSUE_RESOLVED/REQUIRES_REFOCUS/NEEDS_DIFFERENT_AGEN
 - Defense-in-Depth Coordination: Security patterns across all agent implementations
 - Proactive Security Analysis: Security considerations in all architectural decisions
 
-### **FLEXIBLE SPECIALIST USAGE PATTERNS**
+### **ENHANCED FLEXIBLE SPECIALIST PATTERNS**
 
-#### **Analysis → Implementation Workflow**:
+#### **Intent-Based Specialist Engagement**:
 ```yaml
-Phase_1_Analysis:
+Query_Intent_Pattern:
   Agent: [SpecialistAgent]
   Task: "Analyze [specific issue] and provide implementation recommendations"
-  Deliverable: Working directory analysis with specific fix requirements
-  
-Phase_2_Implementation:  
-  Agent: [Same SpecialistAgent] 
-  Task: "Implement fixes based on your analysis in [working-dir/analysis-file.md]"
-  Context: "Build upon your previous analysis, focus on implementation only"
+  Intent: QUERY - Analysis and advisory mode
+  Deliverable: Working directory analysis with specific recommendations
+  Authority: Advisory only, no direct file modifications
+
+Command_Intent_Pattern:
+  Agent: [SpecialistAgent]
+  Task: "Implement [specific improvement/fix] for [domain area]"
+  Intent: COMMAND - Direct implementation mode
+  Deliverable: Direct file modifications within expertise domain
+  Authority: Full implementation rights within domain boundaries
+
+Hybrid_Analysis_Implementation:
+  Agent: [SpecialistAgent]
+  Task: "Analyze [issue] and implement recommended fixes"
+  Intent: COMMAND - Combined analysis and implementation
+  Deliverable: Working directory analysis + direct implementations
+  Authority: Full domain implementation rights with analysis documentation
+```
+
+#### **Autonomous Development Cycle Support**:
+```yaml
+Epic_181_Autonomous_Pattern:
+  Agent: [SpecialistAgent]
+  Task: "Autonomous improvement cycle for [domain area]"
+  Intent: COMMAND - Full autonomous development authority
+  Scope: Analysis → Implementation → Testing → Documentation
+  Authority: Complete domain authority for autonomous improvements
+  Quality_Gates: AI Sentinels, ComplianceOfficer validation preserved
 ```
 
 #### **Same-Agent Re-engagement Protocol**:
-- Reference agent's previous working directory analysis
-- Provide implementation-focused context building on their expertise
-- Maintain continuity while shifting from analysis to execution mode
-- Validate implementation aligns with their analysis recommendations
+- **Intent Continuity**: Maintain analysis vs. implementation mode consistency
+- **Authority Awareness**: Leverage flexible authority for efficient iterations
+- **Domain Expertise**: Build upon specialist knowledge for comprehensive solutions
+- **Quality Integration**: Ensure autonomous implementations meet all quality gates
 
 #### **Coverage Epic Orchestrator Pattern**:
 ```yaml
@@ -407,27 +466,30 @@ Each AI Sentinel employs:
 
 ## 6. ORCHESTRATION WORKFLOWS
 
-### GitHub Issue Analysis & Mission Understanding
+### Enhanced Issue Analysis with Intent Recognition
 1. **Issue Context Ingestion**: Read issue description, acceptance criteria, comments, related issues
 2. **Epic Progression Assessment**: Understand how issue fits into larger organizational goals
-3. **Initial Step Planning**: Identify immediate first step rather than full scope decomposition
-4. **Agent Capability Assessment**: Determine which agent expertise needed for current step
-5. **Standards Review**: Determine which project standards apply to the work
-6. **Quality Gate Planning**: Plan for testing, documentation, and AI Sentinel requirements
-7. **Iteration Framework Setup**: Prepare for multiple agent engagements and plan evolution
+3. **Intent Pattern Analysis**: Determine if request indicates query (analysis) vs. command (implementation) intent
+4. **Agent Selection Strategy**: Choose specialist vs. primary agent based on intent and domain expertise
+5. **Flexible Authority Assessment**: Evaluate specialist implementation capability for command-intent requests
+6. **Standards Review**: Determine which project standards apply to the work
+7. **Quality Gate Planning**: Plan for testing, documentation, and AI Sentinel requirements
+8. **Autonomous Cycle Potential**: Assess opportunities for Epic #181 autonomous development cycles
+9. **Iteration Framework Setup**: Prepare for multiple agent engagements with intent-aware planning
 
-### Iterative Multi-Agent Engagement
-For complex issues requiring multiple agents:
-1. **Create Working Directory Session State** - Document evolving coordination plan with artifact tracking protocols
-2. **Artifact Discovery Enforcement** - Ensure each agent checks for and reports existing working directory context
-3. **Step-by-Step Agent Engagement** - Engage agents iteratively with artifact communication requirements
-4. **Communication Verification** - Confirm agents report artifact creation using standardized format
-5. **Completion Review & Plan Evolution** - After each agent engagement, review outputs and artifact communications
-6. **Agent Re-Engagement Support** - Same agent type may be engaged multiple times with artifact continuity
-7. **Artifact Monitoring** - Track agent deliverables and artifact reports in working directory
-8. **Integration Checkpoints** - Coordinate intermediate deliverables with artifact awareness for coherence
-9. **Adaptive Coordination** - Allow plan to evolve based on agent insights and artifact-informed recommendations
-10. **Cross-Agent Communication** - Use working directory for rich context transfer with mandatory reporting protocols
+### Enhanced Multi-Agent Engagement with Flexible Authority
+For complex issues leveraging specialist implementation capabilities:
+1. **Create Working Directory Session State** - Document evolving coordination plan with artifact tracking and intent recognition protocols
+2. **Intent-Aware Agent Selection** - Choose specialists for implementation vs. primary agents for general tasks
+3. **Flexible Authority Coordination** - Leverage specialist implementation capabilities to reduce handoff overhead
+4. **Artifact Discovery Enforcement** - Ensure each agent checks for and reports existing working directory context
+5. **Autonomous Development Support** - Enable Epic #181 autonomous cycles where specialists can complete analysis→implementation
+6. **Communication Verification** - Confirm agents report artifact creation and implementation actions using standardized format
+7. **Completion Review & Plan Evolution** - After each engagement, assess intent compliance and authority usage effectiveness
+8. **Specialist Re-Engagement Optimization** - Leverage same specialist for incremental improvements within domain
+9. **Cross-Domain Coordination** - Coordinate when implementations span multiple specialist domains
+10. **Quality Gate Integration** - Ensure AI Sentinels and ComplianceOfficer validate specialist implementations
+11. **Adaptive Authority Usage** - Evolve coordination strategy based on specialist implementation effectiveness
 
 ### Branch Management & Integration
 1. **Branch Creation**: Create appropriate feature/test branch (`feature/issue-XXX-desc`)
@@ -595,12 +657,16 @@ When agents fail to follow communication protocols:
 - Report agent findings without interpretation, addition, or "improvement" but ensure artifact communication compliance
 - Focus exclusively on orchestration value: adaptive coordination, integration, quality gates, and team communication
 
-### Multi-Agent Team Efficiency
-- **Backend-Frontend Coordination**: Ensure API contracts align with UX requirements
-- **Security Integration**: Coordinate security considerations across all development work
-- **Quality Assurance**: Epic progression tracking with TestEngineer for coverage goals
-- **Documentation Maintenance**: Real-time documentation updates coordinated with all deliverables
-- **Coverage Epic Orchestrator Integration**: WorkflowEngineer consolidates multiple TestEngineer coverage PRs with AI conflict resolution
+### Enhanced Multi-Agent Team Efficiency
+- **Specialist Implementation Efficiency**: Leverage BackendSpecialist and FrontendSpecialist direct implementation capabilities for 40-60% handoff reduction
+- **Intent-Driven Coordination**: Optimize agent selection based on query vs. command intent patterns
+- **Autonomous Development Cycles**: Support Epic #181 autonomous specialist workflows for comprehensive improvements
+- **Cross-Domain API Alignment**: Coordinate BackendSpecialist and FrontendSpecialist for contract implementations
+- **Security Integration**: Leverage SecurityAuditor implementation authority for immediate vulnerability remediation
+- **Quality Assurance**: Epic progression tracking with TestEngineer for coverage goals, enhanced by specialist efficiency
+- **Documentation Elevation**: Enable specialists to enhance technical documentation within their domains
+- **Workflow Automation**: WorkflowEngineer direct implementation of CI/CD improvements and Coverage Epic Orchestrator
+- **Scalable Autonomous Workstreams**: Foundation for unlimited specialist-driven improvements (tech debt, performance, security)
 
 ---
 
