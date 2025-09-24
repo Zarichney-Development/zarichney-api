@@ -220,11 +220,11 @@ Command_Intent_Indicators:
   Action: Direct file modifications within expertise domain
 
 ## FLEXIBLE AUTHORITY BOUNDARIES:
-- BackendSpecialist: .cs files, backend configs, migrations
-- FrontendSpecialist: .ts, .html, .css, frontend configs
-- WorkflowEngineer: .github/workflows/*, Scripts/*, build configs
-- SecurityAuditor: Security configs, vulnerability fixes
-- All Specialists: Technical documentation elevation within domain
+- BackendSpecialist: *.cs, config/*.json, config/*.yaml, migrations/*
+- FrontendSpecialist: *.ts, *.html, *.css, config/frontend/*.json, config/frontend/*.yaml
+- WorkflowEngineer: .github/workflows/*, Scripts/*, config/build/*.json, config/build/*.yaml
+- SecurityAuditor: config/security/*.json, config/security/*.yaml, vulnerability fixes
+- All Specialists: *.md, docs/*.md, README.md (technical documentation within domain)
 
 ## FORBIDDEN SCOPE EXPANSIONS:
 - Infrastructure improvements while core issue unfixed
