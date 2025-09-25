@@ -89,16 +89,7 @@ public static class ApplicationStartup
 
       // Add Microsoft Graph availability check
       var emailConfig = application.Services.GetRequiredService<EmailConfig>();
-      var msGraphAvailable = !string.IsNullOrWhiteSpace(emailConfig.AzureTenantId) &&
-                             !string.IsNullOrWhiteSpace(emailConfig.AzureAppId) &&
-                             !string.IsNullOrWhiteSpace(emailConfig.AzureAppSecret) &&
-                             emailConfig.AzureAppSecret != StatusService.PlaceholderMessage;
-
-      var msGraphMissing = msGraphAvailable ? null : new List<string> {
-          "EmailConfig:AzureTenantId",
-          "EmailConfig:AzureAppId",
-          "EmailConfig:AzureAppSecret"
-      };
+      var (msGraphAvailable, msGraphMissing) = MicrosoftGraphAvailabilityValidator.ValidateConfiguration(emailConfig);
 
       await statusService.SetServiceAvailabilityAsync(ExternalServices.MsGraph, msGraphAvailable, msGraphMissing);
 
