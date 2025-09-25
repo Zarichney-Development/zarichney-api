@@ -10,7 +10,7 @@ Welcome! This repository hosts the **Zarichney Platform**, a full-stack applicat
 
 Think of this repo in two ways:
 
-1.  **A Functional Web Platform:** It powers the **Cookbook Factory AI** application, which uses Large Language Models (LLMs) to scrape, analyze, clean, and synthesize recipes into custom cookbooks (PDF generation included!). Users interact through a modern Angular web interface with features like secure authentication, payment integration (Stripe), real-time order tracking, and administrative dashboards.
+1.  **A Functional Web Platform:** It powers the **Cookbook Factory AI** application, which uses Large Language Models (LLMs) to scrape, analyze, clean, and synthesize recipes into custom cookbooks (PDF generation included). Users interact through a modern Angular web interface with features like secure authentication, payment integration (Stripe), real-time order tracking, and administrative dashboards (coming soon!).
 2.  **An Experiment in Development:** It's actively developed using a **structured, AI-assisted workflow**. Specialized AI agents, guided by detailed prompts and rigorous standards documentation (all included in this repo!), handle significant portions of the coding, testing, and documentation tasks across both frontend and backend. This allows for rapid iteration while maintaining high quality.
 
 Whether you're interested in the platform's features or the cutting-edge development methodology, explore the code and documentation to see it in action!
