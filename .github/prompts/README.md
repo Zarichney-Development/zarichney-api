@@ -22,8 +22,7 @@
 * **🛡️ StandardsGuardian** (`standards-compliance.md`, ~350 lines): Standards compliance with component-specific analysis and epic alignment
 * **🧪 TestMaster** (`testing-analysis.md`, ~370 lines): Test quality assessment with coverage phase intelligence and progressive testing strategy
 * **🔒 SecuritySentinel** (`security-analysis.md`, ~370 lines): Security vulnerability assessment with automation context awareness and component-specific threat modeling
-* **🔄 IterativeReviewer** (`iterative-code-review.md`, ~450 lines): Iterative AI code review with historical context preservation, to-do list management, and Epic #181 autonomous development alignment
-* **🎯 CoverageAuditor** (`iterative-coverage-auditor.md`, ~580 lines): **NEW** - Strict technical gatekeeper for iterative coverage improvements with zero-tolerance quality enforcement and Epic #181 AI orchestration framework integration
+* **🔄 IterativeReviewer** (`iterative-coverage-auditor.md`, ~580 lines): Strict technical gatekeeper for iterative coverage improvements with zero-tolerance quality enforcement and Epic #181 AI orchestration framework integration
 
 ### **Advanced Prompt Engineering Features**
 Based on academic research in AI-driven technical debt analysis:
@@ -71,7 +70,7 @@ All four AI agents now leverage GitHub issue labels for enhanced contextual anal
 * **Coverage Analysis Variables** (Issue #187): {{COVERAGE_DATA}}, {{COVERAGE_TRENDS}}, {{COVERAGE_DELTA}}
 * **Auditor-Specific Variables**: {{AUDIT_PHASE}}, {{COVERAGE_EPIC_CONTEXT}}, {{BLOCKING_ITEMS}}, {{AUDIT_HISTORY}}
 
-#### **🔄 Iterative Reviewer** (`iterative-code-review.md`, ~450 lines)
+#### **🔄 Iterative Reviewer** (`iterative-coverage-auditor.md`, ~580 lines)
 **Issue #185 - Advanced iterative review system**:
 * **Historical Context Preservation**: Development journey tracking across multiple PR iterations
 * **Running To-Do List Management**: Structured action item tracking with priority and completion status
@@ -142,7 +141,7 @@ graph TD
 * **Project Documentation**: Access to `CLAUDE.md`, `/Docs/Standards/`, module `README.md` files
 * **Build Artifacts**: Test results, coverage reports, security scan results (when available)
 * **Branch Context**: Target branch determines analysis depth and security requirements
-* **Iterative Context** (for iterative-code-review.md): Previous iteration results, running to-do lists, historical context preservation
+* **Iterative Context** (for iterative-coverage-auditor.md): Previous iteration results, running to-do lists, historical context preservation
 
 ### **AI Analysis Output Guarantees**
 * **Unified Header**: `## Code Review Report - <Agent Name> Analysis`

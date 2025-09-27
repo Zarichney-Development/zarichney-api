@@ -222,7 +222,7 @@ load_and_merge_context() {
 process_iterative_template() {
     log_info "🔧 Processing iterative AI analysis template..."
 
-    local template_path=".github/prompts/iterative-code-review.md"
+    local template_path=".github/prompts/iterative-coverage-auditor.md"
     PROCESSED_TEMPLATE_PATH="/tmp/processed-iterative-template.md"
 
     # Verify template exists
