@@ -1,4 +1,4 @@
-name: "Coverage Epic Scheduler"
+name: "Automated Workflow - Auto-Testing Coverage - Scheduler"
 
 # Scheduler Workflow for Coverage Epic Automation
 # Triggers the main coverage epic workflow every 6 hours via workflow_dispatch
@@ -134,7 +134,7 @@ jobs:
           fi
           
           # Trigger the main workflow
-          gh workflow run coverage-epic-automation.yml \
+          gh workflow run coverage-epic-execution.yml \
             --field scheduled_trigger=true \
             --field trigger_source="$TRIGGER_SOURCE" \
             --field trigger_reason="$TRIGGER_REASON"

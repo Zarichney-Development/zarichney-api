@@ -1,4 +1,4 @@
-name: "Coverage Epic Automation"
+name: "Automated Workflow - Auto-Testing Coverage - Execution"
 
 # Coverage Epic Automation Workflow
 # Executes via workflow_dispatch to generate test coverage improvements
@@ -87,7 +87,7 @@ jobs:
 
       - name: "Configure Git for Automation"
         run: |
-          git config --global user.name "Coverage Epic Automated Workflow"
+          git config --global user.name "Auto-Testing Execution Workflow"
           git config --global user.email "bot@zarichney.com"
           git config --global init.defaultBranch main
 
