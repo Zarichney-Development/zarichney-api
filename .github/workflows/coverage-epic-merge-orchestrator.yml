@@ -1,11 +1,15 @@
-name: "Coverage Epic Merge Orchestrator"
+name: "Automated Workflow - Auto-Testing Coverage - Merging"
 
 # Coverage Epic Merge Orchestrator Workflow
 # Autonomously discovers, validates, and processes Coverage Epic PRs with sequential direct merging
 # Uses AI conflict resolution for complex merge scenarios operating directly on epic branch
-# Execution via workflow_dispatch only - triggered manually or by orchestration
+# Execution via workflow_dispatch and auto-trigger - manual triggers or automated from Coverage Epic Automation completion
 
 on:
+  workflow_run:
+    workflows: ["Automated Workflow - Auto-Testing Coverage - Execution"]
+    types: [completed]
+    branches: [main, develop, epic/testing-coverage-to-90]
   workflow_dispatch:
     inputs:
       dry_run:
@@ -59,8 +63,8 @@ jobs:
     name: "Coverage Epic Merge Orchestrator"
     runs-on: ubuntu-latest
 
-    # Only run on main repository (not forks)
-    if: github.repository == 'Zarichney-Development/zarichney-api'
+    # Only run on main repository (not forks) and validate trigger conditions
+    if: github.repository == 'Zarichney-Development/zarichney-api' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'))
 
     steps:
       # ========================================
@@ -82,31 +86,79 @@ jobs:
 
       - name: "Configure Git for Merge Operations"
         run: |
-          git config --global user.name "Coverage Epic Merge Bot"
-          git config --global user.email "noreply@zarichney.dev"
+          git config --global user.name "Auto-Testing Merging Workflow"
+          git config --global user.email "bot@zarichney.com"
           git config --global init.defaultBranch main
+
+      - name: "Validate Auto-Trigger Conditions"
+        id: validate-auto-trigger
+        if: github.event_name == 'workflow_run'
+        run: |
+          echo "🔍 Validating auto-trigger conditions"
+
+          # Check if automation workflow completed successfully
+          if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+            echo "❌ Automation workflow did not complete successfully: ${{ github.event.workflow_run.conclusion }}"
+            exit 1
+          fi
+
+          # Quick check if any PRs exist for consolidation
+          EPIC_PRS=$(gh pr list --base "$EPIC_BRANCH" --state open --json number --jq length)
+
+          if [ "$EPIC_PRS" -eq 0 ]; then
+            echo "ℹ️ No open PRs targeting epic branch - no consolidation needed"
+            echo "auto_trigger_skip=true" >> $GITHUB_OUTPUT
+            echo "skip_reason=No PRs available for consolidation" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Found $EPIC_PRS PRs targeting epic branch - consolidation needed"
+            echo "auto_trigger_skip=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Exit Early for Auto-Trigger with No Work"
+        if: github.event_name == 'workflow_run' && steps.validate-auto-trigger.outputs.auto_trigger_skip == 'true'
+        run: |
+          echo "✅ Auto-trigger validation complete - no consolidation work available"
+          echo "🔄 Exiting gracefully to conserve resources"
+          echo "📋 Reason: ${{ steps.validate-auto-trigger.outputs.skip_reason }}"
+          exit 0
 
       - name: "Validate Input Parameters"
         id: validate-inputs
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && steps.validate-auto-trigger.outputs.auto_trigger_skip != 'true')
         run: |
           echo "🔍 Validating orchestrator input parameters"
 
+          # Set defaults for auto-trigger scenarios
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            MAX_PRS="8"
+            MERGE_STRATEGY="merge"
+            LABEL_FILTER="type: coverage,coverage,testing,ai-task"
+            SYNC_EPIC="true"
+            DRY_RUN="false"
+            echo "🤖 Auto-trigger: Using default parameters"
+          else
+            MAX_PRS="${{ github.event.inputs.max_prs }}"
+            MERGE_STRATEGY="${{ github.event.inputs.merge_strategy }}"
+            LABEL_FILTER="${{ github.event.inputs.pr_label_filter }}"
+            SYNC_EPIC="${{ github.event.inputs.sync_epic_from_develop }}"
+            DRY_RUN="${{ github.event.inputs.dry_run }}"
+          fi
+
           # Validate max_prs is a positive integer
-          MAX_PRS="${{ github.event.inputs.max_prs }}"
           if ! [[ "$MAX_PRS" =~ ^[1-9][0-9]*$ ]] || [ "$MAX_PRS" -gt 50 ]; then
             echo "❌ Invalid max_prs: $MAX_PRS (must be 1-50)"
             exit 1
           fi
 
           # Validate merge strategy
-          MERGE_STRATEGY="${{ github.event.inputs.merge_strategy }}"
           if [[ ! "$MERGE_STRATEGY" =~ ^(merge|squash)$ ]]; then
             echo "❌ Invalid merge_strategy: $MERGE_STRATEGY"
             exit 1
           fi
 
           # Parse and validate label filters
-          LABEL_FILTER="${{ github.event.inputs.pr_label_filter }}"
           IFS=',' read -ra LABELS <<< "$LABEL_FILTER"
           VALID_LABELS=()
           for label in "${LABELS[@]}"; do
@@ -126,7 +178,8 @@ jobs:
           echo "merge_strategy=$MERGE_STRATEGY" >> $GITHUB_OUTPUT
           printf -v JOINED_LABELS '%s,' "${VALID_LABELS[@]}"
           echo "label_filters=${JOINED_LABELS%,}" >> $GITHUB_OUTPUT
-          echo "dry_run=${{ github.event.inputs.dry_run }}" >> $GITHUB_OUTPUT
+          echo "dry_run=$DRY_RUN" >> $GITHUB_OUTPUT
+          echo "sync_epic_from_develop=$SYNC_EPIC" >> $GITHUB_OUTPUT
 
       # ========================================
       # Epic Branch Preparation
@@ -155,7 +208,7 @@ jobs:
           fi
 
           # Sync epic branch from develop if requested
-          if [ "${{ github.event.inputs.sync_epic_from_develop }}" = "true" ]; then
+          if [ "${{ steps.validate-inputs.outputs.sync_epic_from_develop }}" = "true" ]; then
             echo "🔄 Syncing epic branch with develop"
             git fetch origin develop
             
