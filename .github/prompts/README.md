@@ -22,7 +22,7 @@
 * **🛡️ StandardsGuardian** (`standards-compliance.md`, ~350 lines): Standards compliance with component-specific analysis and epic alignment
 * **🧪 TestMaster** (`testing-analysis.md`, ~370 lines): Test quality assessment with coverage phase intelligence and progressive testing strategy
 * **🔒 SecuritySentinel** (`security-analysis.md`, ~370 lines): Security vulnerability assessment with automation context awareness and component-specific threat modeling
-* **🔄 IterativeReviewer** (`iterative-coverage-auditor.md`, ~580 lines): Strict technical gatekeeper for iterative coverage improvements with zero-tolerance quality enforcement and Epic #181 AI orchestration framework integration
+* **🔄 CoverageAuditor** (formerly IterativeReviewer, `iterative-coverage-auditor.md`, ~580 lines): Strict technical gatekeeper for iterative coverage improvements, now using the coverage auditor template for zero-tolerance quality enforcement and Epic #181 AI orchestration framework integration
 
 ### **Advanced Prompt Engineering Features**
 Based on academic research in AI-driven technical debt analysis:
