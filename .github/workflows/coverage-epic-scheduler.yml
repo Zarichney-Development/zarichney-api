@@ -134,7 +134,7 @@ jobs:
           fi
           
           # Trigger the main workflow
-          gh workflow run "Automated Workflow - Auto-Testing Coverage - Execution" \
+          gh workflow run coverage-epic-execution.yml \
             --field scheduled_trigger=true \
             --field trigger_source="$TRIGGER_SOURCE" \
             --field trigger_reason="$TRIGGER_REASON"
