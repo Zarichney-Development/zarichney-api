@@ -224,8 +224,8 @@ public class EntityCustomization : ICustomization
     public void Customize(IFixture fixture)
     {
         fixture.Customize<Entity>(c => c
-            .With(x => x.Id, Guid.NewGuid)
-            .With(x => x.CreatedAt, DateTime.UtcNow)
+            .With(x => x.Id, () => Guid.NewGuid())
+            .With(x => x.CreatedAt, () => DateTime.UtcNow)
             .Without(x => x.InternalTracking));
     }
 }
