@@ -64,9 +64,32 @@ jobs:
     runs-on: ubuntu-latest
 
     # Only run on main repository (not forks) and validate trigger conditions
-    if: github.repository == 'Zarichney-Development/zarichney-api' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'))
 
     steps:
+      - name: "Validate Job Trigger Conditions"
+        id: validate-job-trigger
+        run: |
+          echo "🔍 Validating job trigger conditions"
+          SHOULD_RUN=false
+          if [ "${{ github.repository }}" = "Zarichney-Development/zarichney-api" ]; then
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              SHOULD_RUN=true
+            elif [ "${{ github.event_name }}" = "workflow_run" ] && [ "${{ github.event.workflow_run.conclusion }}" = "success" ]; then
+              SHOULD_RUN=true
+            fi
+          fi
+          echo "should_run=$SHOULD_RUN" >> $GITHUB_OUTPUT
+          if [ "$SHOULD_RUN" = "true" ]; then
+            echo "✅ Job trigger conditions met"
+          else
+            echo "❌ Job trigger conditions NOT met"
+          fi
+
+      - name: "Exit Early if Job Trigger Conditions Not Met"
+        if: steps.validate-job-trigger.outputs.should_run != 'true'
+        run: |
+          echo "🚫 Exiting early: Job trigger conditions not met."
+          exit 0
       # ========================================
       # Environment Setup & Validation
       # ========================================
