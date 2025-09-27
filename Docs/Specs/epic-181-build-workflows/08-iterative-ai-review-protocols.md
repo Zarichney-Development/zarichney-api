@@ -154,7 +154,7 @@ graph TB
 
   - **AI Analysis Interface:**
     * **Purpose:** Execute AI-powered code review with template-driven analysis and context injection
-    * **Dependencies:** ai-sentinel-base framework, iterative-code-review.md prompt template, historical context
+    * **Dependencies:** ai-sentinel-base framework, iterative-coverage-auditor.md prompt template, historical context
     * **Outputs:** Quality assessment, to-do items, improvement recommendations, blocking issue identification
     * **Quality Gates:** Analysis completion validation, template processing verification, context preservation
 
@@ -173,7 +173,7 @@ graph TB
 * **Critical Assumptions:**
   - **AI Framework Reliability:** ai-sentinel-base provides consistent AI analysis execution with security controls
   - **GitHub API Stability:** Comment and PR management APIs maintain compatibility across iterations
-  - **Template Processing:** iterative-code-review.md template supports dynamic placeholder replacement
+  - **Template Processing:** iterative-coverage-auditor.md template supports dynamic placeholder replacement
   - **State Management:** GitHub cache provides reliable storage for iteration context persistence
 
 ## 4. Local Conventions & Constraints (Beyond Global Standards)
