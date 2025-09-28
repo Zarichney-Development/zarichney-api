@@ -65,6 +65,7 @@ Phase 1 establishes a robust, autonomous testing workflow specifically for the c
 - [ ] Machine-readable coverage_delta.json artifact generation
 - [ ] AI framework integration with structured coverage data
 - [ ] Coverage progression tracking for autonomous decisions
+  - Schema: `Docs/Templates/schemas/coverage_delta.schema.json` (v1.0)
 
 #### Issue #156: Coverage Epic Auto-Trigger Integration (CAPSTONE)
 **Status**: ✅ **COMPLETE**

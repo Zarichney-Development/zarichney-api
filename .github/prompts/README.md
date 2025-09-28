@@ -70,6 +70,11 @@ All four AI agents now leverage GitHub issue labels for enhanced contextual anal
 * **Coverage Analysis Variables** (Issue #187): {{COVERAGE_DATA}}, {{COVERAGE_TRENDS}}, {{COVERAGE_DELTA}}
 * **Auditor-Specific Variables**: {{AUDIT_PHASE}}, {{COVERAGE_EXCELLENCE_CONTEXT}}, {{BLOCKING_ITEMS}}, {{AUDIT_HISTORY}}
 
+Implementation note (Issue #187): these coverage variables are populated from structured artifacts
+(`coverage_results.json`, `coverage_delta.json`, and `health_trends.json`). See
+Docs/Specs/epic-181-build-workflows/issue-187-coverage-delta.md and
+Docs/Templates/schemas/coverage_delta.schema.json for details.
+
 #### **🔄 Iterative Reviewer** (`iterative-coverage-auditor.md`, ~580 lines)
 **Issue #185 - Advanced iterative review system**:
 * **Historical Context Preservation**: Development journey tracking across multiple PR iterations

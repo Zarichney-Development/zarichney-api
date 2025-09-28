@@ -105,6 +105,9 @@ jobs:
         id: baseline_analysis
         if: steps.coverage_gate.outputs.coverage_needed == 'true'
         run: |
+          # TODO(187): Replace placeholder baseline logic with base-branch baseline sourcing.
+          #  - Prefer reading a baseline file/artifact from the base branch
+          #  - Set 'baseline_unavailable=true' in coverage_delta.json if fallback used
           echo "🔍 Analyzing baseline coverage from base branch..."
 
           # Checkout base branch for baseline comparison
@@ -190,6 +193,12 @@ jobs:
           echo "coverage_excellence=$EXCELLENCE_ROUNDED" >> $GITHUB_OUTPUT
 
           echo "🎯 Coverage Excellence: $EXCELLENCE_ROUNDED% comprehensive coverage achievement"
+
+          # TODO(187): Persist a machine-readable delta artifact for downstream consumers.
+          #   Write TestResults/coverage_delta.json including:
+          #   - current_coverage, baseline_coverage, coverage_delta, coverage_trend
+          #   - timestamp, run_number, base_ref/base_sha, baseline_source/baseline_unavailable
+          #   Conform to Docs/Templates/schemas/coverage_delta.schema.json
 
       # AI Framework Readiness Check
       - name: Check AI framework integration readiness
@@ -353,6 +362,7 @@ jobs:
           path: |
             TestResults/coverage_results.json
             TestResults/parsed_results.json
+            # TODO(187): Include TestResults/coverage_delta.json once generated
             CoverageReport/
           retention-days: 7
 
