@@ -48,8 +48,8 @@ public class FileServiceIntegrationTests : IntegrationTestBase, IDisposable
     var fileService = GetService<IFileService>();
 
     // Assert
-    fileService.Should().NotBeNull(because: "the file service must resolve through dependency injection");
-    fileService.Should().BeOfType<FileService>(because: "tests rely on the concrete file service implementation");
+    fileService.Should().NotBeNull("FileService should be registered in DI container");
+    fileService.Should().BeOfType<FileService>("Should resolve to concrete FileService implementation");
   }
 
   /// <summary>
@@ -66,7 +66,7 @@ public class FileServiceIntegrationTests : IntegrationTestBase, IDisposable
 
     // Act & Assert - Verify service can perform operations (logging happens internally)
     var fileExistsBefore = fileService.FileExists(testFilePath);
-    fileExistsBefore.Should().BeFalse(because: "no file should exist before the logger test writes");
+    fileExistsBefore.Should().BeFalse("Test file should not exist before creation");
 
     // The logging verification is implicit - if operations succeed, logging is working
     // Direct log assertion would require more complex test setup
@@ -106,14 +106,14 @@ public class FileServiceIntegrationTests : IntegrationTestBase, IDisposable
     var fileContent = await fileService.GetFileAsync(testFilePath);
 
     // Assert
-    fileExists.Should().BeTrue(because: "creating JSON data must produce the expected file");
-    fileContent.Should().NotBeNullOrEmpty(because: "reading the test JSON should return stored content");
+    fileExists.Should().BeTrue("JSON file should exist after creation");
+    fileContent.Should().NotBeNullOrEmpty("File content should not be empty");
 
     // Validate JSON structure
     var deserializedData = JsonSerializer.Deserialize<JsonElement>(fileContent);
-    deserializedData.GetProperty("Id").GetInt32().Should().Be(12345, because: "the ID should match what was serialized for verification");
-    deserializedData.GetProperty("Name").GetString().Should().Be("Integration Test Object", because: "the serialized object name should round-trip unchanged");
-    deserializedData.GetProperty("Properties").GetArrayLength().Should().Be(3, because: "all serialized properties should remain present in the file");
+    deserializedData.GetProperty("Id").GetInt32().Should().Be(12345);
+    deserializedData.GetProperty("Name").GetString().Should().Be("Integration Test Object");
+    deserializedData.GetProperty("Properties").GetArrayLength().Should().Be(3);
   }
 
   /// <summary>
@@ -146,12 +146,12 @@ public class FileServiceIntegrationTests : IntegrationTestBase, IDisposable
     var result = await fileService.ReadFromFile<TestDataModel>(testDirectory, "test-object");
 
     // Assert
-    result.Should().NotBeNull(because: "deserialization should produce a populated model instance");
-    result.Id.Should().Be("test-123", because: "the stored model id should match the original data");
-    result.Value.Should().Be(42.5, because: "the stored numeric value must remain precise");
-    result.IsActive.Should().BeTrue(because: "active flag should persist through serialization boundaries");
-    result.Tags.Should().HaveCount(3, because: "the test dataset defines exactly three tag values");
-    result.Tags.Should().Contain("integration", because: "the integration tag confirms we read the correct file");
+    result.Should().NotBeNull("Deserialized object should not be null");
+    result.Id.Should().Be("test-123");
+    result.Value.Should().Be(42.5);
+    result.IsActive.Should().BeTrue();
+    result.Tags.Should().HaveCount(3);
+    result.Tags.Should().Contain("integration");
   }
 
   #endregion
@@ -182,13 +182,13 @@ public class FileServiceIntegrationTests : IntegrationTestBase, IDisposable
     var files = fileService.GetFiles(testDirectory);
 
     // Assert
-    files.Should().NotBeNull(because: "directory listing should return a collection instance");
-    files.Should().HaveCount(3, because: "all seeded files must appear in the directory listing");
+    files.Should().NotBeNull("File list should not be null");
+    files.Should().HaveCount(3, "Should find all created test files");
 
     foreach (var testFile in testFiles)
     {
       files.Should().Contain(path => Path.GetFileName(path) == testFile,
-          because: "the directory listing should surface every created file");
+          $"Should contain {testFile}");
     }
   }
 
@@ -213,8 +213,8 @@ public class FileServiceIntegrationTests : IntegrationTestBase, IDisposable
     var existsAfterDelete = fileService.FileExists(testFilePath);
 
     // Assert
-    existsAfterCreate.Should().BeTrue(because: "a freshly created file should be detectable");
-    existsAfterDelete.Should().BeFalse(because: "deleting the file should remove it from disk");
+    existsAfterCreate.Should().BeTrue("File should exist after creation");
+    existsAfterDelete.Should().BeFalse("File should not exist after deletion");
   }
 
   #endregion
@@ -236,15 +236,15 @@ public class FileServiceIntegrationTests : IntegrationTestBase, IDisposable
 
     // Act & Assert - File existence check
     var fileExists = fileService.FileExists(nonExistentFilePath);
-    fileExists.Should().BeFalse(because: "FileExists should respect missing paths in the test directory");
+    fileExists.Should().BeFalse("Non-existent file should return false");
 
     // Act & Assert - Reading non-existent file
     var result = await fileService.ReadFromFile<object>(nonExistentDirectory, "non-existent");
-    result.Should().BeNull(because: "missing data should deserialize to null instead of throwing");
+    result.Should().BeNull("Reading non-existent file should return null/default");
 
     // Act & Assert - Deleting non-existent file (should be idempotent)
     Action deleteAction = () => fileService.DeleteFile(nonExistentFilePath);
-    deleteAction.Should().NotThrow(because: "deleting a missing file should remain a safe no-op");
+    deleteAction.Should().NotThrow("Deleting non-existent file should not throw exception");
   }
 
   /// <summary>
@@ -274,14 +274,13 @@ public class FileServiceIntegrationTests : IntegrationTestBase, IDisposable
 
       // If creation succeeds, verify the file was created with sanitized name
       var files = fileService.GetFiles(testDirectory);
-      files.Should().HaveCountGreaterThan(0, because: "sanitization should still yield at least one stored file");
+      files.Should().HaveCountGreaterThan(0, "Should create a file with sanitized name");
     }
     catch (Exception ex)
     {
       // File creation may fail due to invalid characters, which is acceptable
-      ex.Should().BeAssignableTo<Exception>(because: "invalid filename handling should only raise filesystem-related exceptions")
-          .And.Match(e => e is ArgumentException || e is IOException || e is UnauthorizedAccessException || e is DirectoryNotFoundException,
-            because: "only expected filesystem exception types should propagate");
+      ex.Should().BeAssignableTo<Exception>()
+          .And.Match(e => e is ArgumentException || e is IOException || e is UnauthorizedAccessException || e is DirectoryNotFoundException);
     }
   }
 
@@ -318,10 +317,10 @@ public class FileServiceIntegrationTests : IntegrationTestBase, IDisposable
 
     // Assert
     var fileExists = fileService.FileExists(testImagePath);
-    fileExists.Should().BeTrue(because: "writing the image should persist bytes to disk");
+    fileExists.Should().BeTrue("JPEG image file should be created");
 
     var fileInfo = new FileInfo(testImagePath);
-    fileInfo.Length.Should().BeGreaterThan(0, because: "generated images should include non-zero data");
+    fileInfo.Length.Should().BeGreaterThan(0, "Image file should have content");
   }
 
   #endregion

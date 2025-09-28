@@ -58,12 +58,6 @@ public class ApiKeyBuilder : BaseBuilder<ApiKeyBuilder, ApiKey>
     return Self();
   }
 
-  public ApiKeyBuilder WithId(int id)
-  {
-    Entity.Id = id;
-    return Self();
-  }
-
   public ApiKeyBuilder WithIsActive(bool isActive)
   {
     Entity.IsActive = isActive;

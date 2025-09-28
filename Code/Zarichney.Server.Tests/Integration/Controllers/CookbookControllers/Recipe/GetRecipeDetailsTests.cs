@@ -31,6 +31,8 @@ public class GetRecipeDetailsTests(ApiClientFixture apiClientFixture, ITestOutpu
   public async Task GetRecipes_Authenticated_ReturnsOkWithRecipes()
   {
     // Arrange
+    await ResetDatabaseAsync(); // Start with a clean database
+
     // Seed the database with test recipes through the repository
     // This would typically use a database context in a real test
     // var testRecipes = await SeedTestRecipesAsync();
@@ -50,6 +52,8 @@ public class GetRecipeDetailsTests(ApiClientFixture apiClientFixture, ITestOutpu
   public async Task GetRecipeById_ExistingId_ReturnsRecipe()
   {
     // Arrange
+    await ResetDatabaseAsync(); // Start with a clean database
+
     // Seed a test recipe and get its ID
     var recipeId = "sample-recipe-id"; // In a real test, this would be the ID of a seeded recipe
 
@@ -69,6 +73,8 @@ public class GetRecipeDetailsTests(ApiClientFixture apiClientFixture, ITestOutpu
   public async Task GetRecipeById_NonExistentId_ReturnsNotFound()
   {
     // Arrange
+    await ResetDatabaseAsync(); // Start with a clean database
+
     var nonExistentId = "non-existent-id";
 
     // Create an authenticated client

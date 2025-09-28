@@ -16,7 +16,7 @@ namespace Zarichney.Tests.Integration.Services.Auth;
 /// Integration tests for the RoleInitializer admin user seeding functionality.
 /// These tests use Testcontainers to provide a real PostgreSQL database.
 /// </summary>
-[Collection("Integration")]
+[Collection("IntegrationAuth")]
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Feature, TestCategories.Auth)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
@@ -27,6 +27,8 @@ public class RoleInitializerTests(ApiClientFixture apiClientFixture, ITestOutput
   public async Task SeedAdminUser_CreatesUser_WhenNotExists_And_AssignsAdminRole()
   {
     // Arrange
+    await ResetDatabaseAsync();
+
     var testConfig = new Dictionary<string, string?>
     {
       { "DefaultAdminUser:Email", "test-admin@example.com" },
@@ -68,25 +70,27 @@ public class RoleInitializerTests(ApiClientFixture apiClientFixture, ITestOutput
 
     // Assert
     var createdUser = await userManager.FindByEmailAsync("test-admin@example.com");
-    createdUser.Should().NotBeNull(because: "initialization must provision the configured admin account");
-    createdUser.UserName.Should().Be("testadmin", because: "the configured admin username should persist across seeding");
-    createdUser.Email.Should().Be("test-admin@example.com", because: "the configured admin email identifies the management account");
-    createdUser.EmailConfirmed.Should().BeTrue(because: "dev seeding should auto-confirm the admin email");
+    createdUser.Should().NotBeNull("the admin user should be created");
+    createdUser.UserName.Should().Be("testadmin");
+    createdUser.Email.Should().Be("test-admin@example.com");
+    createdUser.EmailConfirmed.Should().BeTrue("email should be auto-confirmed in dev environment");
 
     // Verify user is in admin role
     var isInAdminRole = await userManager.IsInRoleAsync(createdUser, "admin");
-    isInAdminRole.Should().BeTrue(because: "the admin account must start with admin privileges");
+    isInAdminRole.Should().BeTrue("the admin user should be assigned to the admin role");
 
     // Verify user can authenticate with the configured password
     var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<ApplicationUser>>();
     var signInResult = await signInManager.CheckPasswordSignInAsync(createdUser, "TestPassword123!", false);
-    signInResult.Succeeded.Should().BeTrue(because: "the admin must sign in with the configured password");
+    signInResult.Succeeded.Should().BeTrue("the admin user should be able to authenticate with the configured password");
   }
 
   [DependencyFact(InfrastructureDependency.Database)]
   public async Task SeedAdminUser_IsIdempotent_WhenUserExists()
   {
     // Arrange
+    await ResetDatabaseAsync();
+
     var testConfig = new Dictionary<string, string?>
     {
       { "DefaultAdminUser:Email", "existing-admin@example.com" },
@@ -123,7 +127,7 @@ public class RoleInitializerTests(ApiClientFixture apiClientFixture, ITestOutput
       EmailConfirmed = true
     };
     var createResult = await userManager.CreateAsync(existingUser, "ExistingPassword123!");
-    createResult.Should().Be(IdentityResult.Success, because: "seeding the existing admin must succeed before idempotency checks");
+    createResult.Should().Be(IdentityResult.Success);
 
     var roleInitializer = new RoleInitializer(
       scope.ServiceProvider,
@@ -138,20 +142,22 @@ public class RoleInitializerTests(ApiClientFixture apiClientFixture, ITestOutput
     // Assert
     // Verify only one user exists with this email
     var users = userManager.Users.Where(u => u.Email == "existing-admin@example.com").ToList();
-    users.Should().HaveCount(1, because: "seeding should not create duplicate admin entries");
+    users.Should().HaveCount(1, "no duplicate users should be created");
 
     var user = users.First();
-    user.UserName.Should().Be("existingadmin", because: "the preexisting admin username should remain unchanged after seeding");
+    user.UserName.Should().Be("existingadmin");
 
     // Verify user is in admin role
     var isInAdminRole = await userManager.IsInRoleAsync(user, "admin");
-    isInAdminRole.Should().BeTrue(because: "the existing admin must retain admin privileges");
+    isInAdminRole.Should().BeTrue("the existing user should be assigned to the admin role");
   }
 
   [DependencyFact(InfrastructureDependency.Database)]
   public async Task SeedAdminUser_DoesNotRun_InProductionEnvironment()
   {
     // Arrange
+    await ResetDatabaseAsync();
+
     var testConfig = new Dictionary<string, string?>
     {
       { "DefaultAdminUser:Email", "prod-admin@example.com" },
@@ -192,13 +198,15 @@ public class RoleInitializerTests(ApiClientFixture apiClientFixture, ITestOutput
 
     // Assert
     var adminUser = await userManager.FindByEmailAsync("prod-admin@example.com");
-    adminUser.Should().BeNull(because: "production seeding must never create a default admin");
+    adminUser.Should().BeNull("admin user should not be created in Production environment");
   }
 
   [DependencyFact(InfrastructureDependency.Database)]
   public async Task SeedAdminUser_UsesFallback_WhenEmailConfigFromEmailProvided()
   {
     // Arrange
+    await ResetDatabaseAsync();
+
     var testConfig = new Dictionary<string, string?>
     {
       // Missing DefaultAdminUser configuration but EmailConfig.FromEmail provided
@@ -237,25 +245,27 @@ public class RoleInitializerTests(ApiClientFixture apiClientFixture, ITestOutput
 
     // Assert
     var createdUser = await userManager.FindByEmailAsync("fallback@example.com");
-    createdUser.Should().NotBeNull(because: "fallback email config should still produce an admin account");
-    createdUser.UserName.Should().Be("fallback@example.com", because: "the fallback email should drive the admin username");
-    createdUser.Email.Should().Be("fallback@example.com", because: "the fallback email should populate the admin account address");
-    createdUser.EmailConfirmed.Should().BeTrue(because: "dev seeding should auto-confirm the admin email");
+    createdUser.Should().NotBeNull("admin user should be created using EmailConfig.FromEmail fallback");
+    createdUser.UserName.Should().Be("fallback@example.com", "username should use email as fallback");
+    createdUser.Email.Should().Be("fallback@example.com");
+    createdUser.EmailConfirmed.Should().BeTrue("email should be auto-confirmed in dev environment");
 
     // Verify user is in admin role
     var isInAdminRole = await userManager.IsInRoleAsync(createdUser, "admin");
-    isInAdminRole.Should().BeTrue(because: "the fallback admin still requires admin privileges");
+    isInAdminRole.Should().BeTrue("the fallback admin user should be assigned to the admin role");
 
     // Verify user can authenticate with fallback password
     var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<ApplicationUser>>();
     var signInResult = await signInManager.CheckPasswordSignInAsync(createdUser, "nimda", false);
-    signInResult.Succeeded.Should().BeTrue(because: "fallback credentials should allow first-time admin access");
+    signInResult.Succeeded.Should().BeTrue("the fallback admin user should authenticate with 'nimda' password");
   }
 
   [DependencyFact(InfrastructureDependency.Database)]
   public async Task SeedAdminUser_UsesDefaultFallback_WhenAllConfigMissing()
   {
     // Arrange
+    await ResetDatabaseAsync();
+
     var testConfig = new Dictionary<string, string?>
     {
       // Missing both DefaultAdminUser and EmailConfig configuration
@@ -293,25 +303,27 @@ public class RoleInitializerTests(ApiClientFixture apiClientFixture, ITestOutput
 
     // Assert
     var createdUser = await userManager.FindByEmailAsync("test@gmail.com");
-    createdUser.Should().NotBeNull(because: "default fallback email should still seed an admin account");
-    createdUser.UserName.Should().Be("test@gmail.com", because: "the default fallback email should set the username");
-    createdUser.Email.Should().Be("test@gmail.com", because: "the default fallback email becomes the admin account address");
-    createdUser.EmailConfirmed.Should().BeTrue(because: "dev seeding should auto-confirm the admin email");
+    createdUser.Should().NotBeNull("admin user should be created using default fallback email");
+    createdUser.UserName.Should().Be("test@gmail.com", "username should use default fallback email");
+    createdUser.Email.Should().Be("test@gmail.com");
+    createdUser.EmailConfirmed.Should().BeTrue("email should be auto-confirmed in dev environment");
 
     // Verify user is in admin role
     var isInAdminRole = await userManager.IsInRoleAsync(createdUser, "admin");
-    isInAdminRole.Should().BeTrue(because: "the default fallback admin still requires admin privileges");
+    isInAdminRole.Should().BeTrue("the default fallback admin user should be assigned to the admin role");
 
     // Verify user can authenticate with fallback password
     var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<ApplicationUser>>();
     var signInResult = await signInManager.CheckPasswordSignInAsync(createdUser, "nimda", false);
-    signInResult.Succeeded.Should().BeTrue(because: "fallback credentials should allow first-time admin access");
+    signInResult.Succeeded.Should().BeTrue("the default fallback admin user should authenticate with 'nimda' password");
   }
 
   [DependencyFact(InfrastructureDependency.Database)]
   public async Task SeedAdminUser_PrefersDefaultAdminUserConfig_OverFallback()
   {
     // Arrange
+    await ResetDatabaseAsync();
+
     var testConfig = new Dictionary<string, string?>
     {
       // Both DefaultAdminUser and EmailConfig provided - should prefer DefaultAdminUser
@@ -353,21 +365,21 @@ public class RoleInitializerTests(ApiClientFixture apiClientFixture, ITestOutput
 
     // Assert
     var createdUser = await userManager.FindByEmailAsync("primary@example.com");
-    createdUser.Should().NotBeNull(because: "complete DefaultAdminUser config should produce the primary admin");
-    createdUser.UserName.Should().Be("primaryadmin", because: "the configured primary admin username should be honored");
-    createdUser.Email.Should().Be("primary@example.com", because: "the primary admin configuration should supply the account email");
+    createdUser.Should().NotBeNull("admin user should be created using DefaultAdminUser config");
+    createdUser.UserName.Should().Be("primaryadmin", "username should use DefaultAdminUser config");
+    createdUser.Email.Should().Be("primary@example.com");
 
     // Verify fallback user was NOT created
     var fallbackUser = await userManager.FindByEmailAsync("fallback@example.com");
-    fallbackUser.Should().BeNull(because: "no fallback account is needed when primary admin is configured");
+    fallbackUser.Should().BeNull("fallback user should not be created when DefaultAdminUser config is complete");
 
     // Verify user can authenticate with primary password (not fallback)
     var signInManager = scope.ServiceProvider.GetRequiredService<SignInManager<ApplicationUser>>();
     var signInResult = await signInManager.CheckPasswordSignInAsync(createdUser, "PrimaryPassword123!", false);
-    signInResult.Succeeded.Should().BeTrue(because: "the primary admin password must match the configured secret");
+    signInResult.Succeeded.Should().BeTrue("should authenticate with DefaultAdminUser password");
 
     var fallbackSignInResult = await signInManager.CheckPasswordSignInAsync(createdUser, "nimda", false);
-    fallbackSignInResult.Succeeded.Should().BeFalse(because: "fallback credentials must not override the primary password");
+    fallbackSignInResult.Succeeded.Should().BeFalse("should not authenticate with fallback password");
   }
 
   /// <summary>

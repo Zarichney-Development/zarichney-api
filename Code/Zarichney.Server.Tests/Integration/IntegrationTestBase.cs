@@ -448,7 +448,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   /// Sets SkipReason if any required configuration is missing.
   /// </summary>
   /// <returns>A task representing the asynchronous operation.</returns>
-  public virtual async Task InitializeAsync()
+  public async Task InitializeAsync()
   {
     // Call CheckDependenciesAsync to ensure SkipReason is set correctly
     await CheckDependenciesAsync();
@@ -458,7 +458,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
   /// Disposes of resources used by the test.
   /// </summary>
   /// <returns>A completed task.</returns>
-  public virtual Task DisposeAsync()
+  public Task DisposeAsync()
   {
     _testClassContext?.Dispose();
     return Task.CompletedTask;

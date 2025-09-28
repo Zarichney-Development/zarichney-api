@@ -23,7 +23,7 @@
 * **Fixtures:** Relies on the shared fixtures (`CustomWebApplicationFactory`, `DatabaseFixture`, `ApiClientFixture`) provided by the single `[Collection("Integration")]` definition via `ICollectionFixture<>`.
 * **Base Classes:** Tests typically inherit from `IntegrationTestBase` or `DatabaseIntegrationTestBase` (if database interaction is required via the controller's actions). These base classes provide access to the shared fixtures.
 * **API Interaction:** Tests **must** interact with the controllers *only* through API calls made using the shared, generated Refit clients provided by `ApiClientFixture` (accessed via specific interface properties like `_apiClientFixture.UnauthenticatedPublicApi`). Direct instantiation or invocation of controller classes or their service dependencies is generally forbidden in these integration tests.
-* **Database State:** For tests involving controllers that modify or depend on database state, use `DatabaseIntegrationTestBase`; it automatically resets the database before each test to ensure isolation.
+* **Database State:** For tests involving controllers that modify or depend on database state, `DatabaseIntegrationTestBase` should be used, and `ResetDatabaseAsync()` must be called to ensure test isolation.
 
 ## 3. Interface Contract & Assumptions
 
@@ -43,7 +43,7 @@
 * **Collection:** All tests **MUST** belong to `[Collection("Integration")]`.
 * **Base Class:** Inherit `IntegrationTestBase` or `DatabaseIntegrationTestBase`.
 * **API Client Usage:** **MUST** use `ApiClient` or `AuthenticatedApiClient` from the base class.
-* **Database Reset:** The base class performs a reset before every test. Only call `ResetDatabaseAsync()` manually if a scenario requires an additional reset during execution.
+* **Database Reset:** Call `await ResetDatabaseAsync()` at the start of tests involving data mutation or specific state requirements.
 * **Traits:** Apply `Category=Integration`, relevant `Feature`, `Dependency`, and `Mutability` traits. Use `[DependencyFact]` for tests relying on configurations checked by `IntegrationTestBase`.
 
 ## 5. How to Work With This Code

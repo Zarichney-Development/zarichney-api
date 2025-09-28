@@ -19,7 +19,6 @@
 * **AiController:** [./AiController/README.md](./AiController/README.md) - AI service integration endpoints testing
 * **ApiController:** [./ApiController/README.md](./ApiController/README.md) - Core API functionality testing
 * **AuthController:** [./AuthController/README.md](./AuthController/README.md) - Authentication and authorization endpoints
-* **CookbookController:** [./CookbookController/README.md](./CookbookController/README.md) - Cookbook order and recipe management endpoint testing
 * **CookbookControllers:** [./CookbookControllers/README.md](./CookbookControllers/README.md) - Recipe management endpoint testing
 * **PaymentController:** [./PaymentController/README.md](./PaymentController/README.md) - Payment processing endpoint testing
 * **PublicController:** [./PublicController/README.md](./PublicController/README.md) - Public API endpoints testing

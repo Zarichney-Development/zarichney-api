@@ -21,12 +21,6 @@ using Zarichney.Tests.TestData.Builders;
 
 namespace Zarichney.Tests.Unit.Cookbook.Orders;
 
-/// <summary>
-/// Unit tests for the OrderService class in the cookbook domain.
-/// Tests order processing workflows including recipe generation, customer management,
-/// PDF compilation, email delivery, and background task coordination. Validates
-/// business logic with mocked dependencies to ensure proper order lifecycle management.
-/// </summary>
 public class OrderServiceTests
 {
   private readonly OrderService _sut;
@@ -174,7 +168,7 @@ public class OrderServiceTests
         .WithEmail("customer@test.com")
         .Build();
 
-    List<string> recipeList = ["Recipe 1", "Recipe 2", "Recipe 3"];
+    var recipeList = new List<string> { "Recipe 1", "Recipe 2", "Recipe 3" };
     var conversationId = "conv-123";
 
     _mockCustomerService
@@ -264,15 +258,15 @@ public class OrderServiceTests
     var order = new CookbookOrderBuilder()
         .WithOrderId(orderId)
         .WithCustomer(customer)
-        .WithRecipeList("Recipe 1", "Recipe 2")
+        .WithRecipeList(new List<string> { "Recipe 1", "Recipe 2" })
         .Build();
 
     var session = new SessionBuilder()
         .WithOrder(order)
         .Build();
 
-    List<Recipe> sourceRecipes =
-        [
+    var sourceRecipes = new List<Recipe>
+        {
             new Recipe
             {
                 Title = "Test",
@@ -281,14 +275,14 @@ public class OrderServiceTests
                 PrepTime = "1",
                 CookTime = "1",
                 TotalTime = "1",
-                Ingredients = ["a"],
-                Directions = ["b"],
+                Ingredients = new List<string>{"a"},
+                Directions = new List<string>{"b"},
                 Notes = string.Empty,
-                Aliases = [],
+                Aliases = new List<string>(),
                 IndexTitle = null,
                 Relevancy = new Dictionary<string, RelevancyResult>()
             }
-        ];
+        };
 
     var synthesizedRecipe = new SynthesizedRecipeBuilder()
         .WithTitle("Recipe 1")
@@ -428,7 +422,7 @@ public class OrderServiceTests
   {
     // Arrange
     var order = new CookbookOrderBuilder()
-        .WithSynthesizedRecipes(Array.Empty<SynthesizedRecipe>())
+        .WithSynthesizedRecipes(new List<SynthesizedRecipe>())
         .Build();
 
     // Act
@@ -589,15 +583,15 @@ public class OrderServiceTests
     var order = new CookbookOrderBuilder()
         .WithOrderId(orderId)
         .WithCustomer(customer)
-        .WithRecipeList("Recipe 1", "Recipe 2", "Recipe 3", "Recipe 4") // 4 recipes requested
+        .WithRecipeList(new List<string> { "Recipe 1", "Recipe 2", "Recipe 3", "Recipe 4" }) // 4 recipes requested
         .Build();
 
     var session = new SessionBuilder()
         .WithOrder(order)
         .Build();
 
-    List<Recipe> sourceRecipes =
-        [
+    var sourceRecipes = new List<Recipe>
+        {
             new Recipe
             {
                 Title = "Test",
@@ -606,14 +600,14 @@ public class OrderServiceTests
                 PrepTime = "1",
                 CookTime = "1",
                 TotalTime = "1",
-                Ingredients = ["a"],
-                Directions = ["b"],
+                Ingredients = new List<string>{"a"},
+                Directions = new List<string>{"b"},
                 Notes = string.Empty,
-                Aliases = [],
+                Aliases = new List<string>(),
                 IndexTitle = null,
                 Relevancy = new Dictionary<string, RelevancyResult>()
             }
-        ];
+        };
     var synthesizedRecipe = new SynthesizedRecipeBuilder().Build();
 
     SetupSessionManagerForOrder(orderId, session);
@@ -738,816 +732,9 @@ public class OrderServiceTests
         {
           Data = new RecipeProposalResult
           {
-            Recipes = ["Recipe 1", "Recipe 2", "Recipe 3"]
+            Recipes = new List<string> { "Recipe 1", "Recipe 2", "Recipe 3" }
           },
           ConversationId = "conv-123"
         });
-  }
-
-  [Fact]
-  [Trait("Category", "Unit")]
-  public async Task ProcessSubmission_LlmServiceThrows_PropagatesException()
-  {
-    // Arrange
-    var submission = new CookbookOrderSubmissionBuilder()
-        .WithEmail("customer@test.com")
-        .Build();
-
-    var customer = new CustomerBuilder()
-        .WithEmail("customer@test.com")
-        .Build();
-
-    _mockCustomerService
-        .Setup(x => x.GetOrCreateCustomer(submission.Email))
-        .ReturnsAsync(customer);
-
-    _mockLlmService
-        .Setup(x => x.CallFunction<RecipeProposalResult>(
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<FunctionDefinition>(),
-            It.IsAny<string?>(),
-            It.IsAny<int?>()))
-        .ThrowsAsync(new Exception("LLM service error"));
-
-    // Act
-    var act = async () => await _sut.ProcessSubmission(submission);
-
-    // Assert
-    await act.Should().ThrowAsync<Exception>()
-        .WithMessage("LLM service error");
-
-    _mockLogger.Verify(
-        x => x.Log(
-            LogLevel.Error,
-            It.IsAny<EventId>(),
-            It.IsAny<It.IsAnyType>(),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-        Times.Once);
-  }
-
-  [Fact]
-  [Trait("Category", "Unit")]
-  public async Task ProcessOrder_GetRecipesThrowsNoRecipeException_SendsNotificationEmail()
-  {
-    // Arrange
-    var orderId = "test-order-123";
-    var customer = new CustomerBuilder()
-        .WithAvailableRecipes(5)
-        .Build();
-
-    var order = new CookbookOrderBuilder()
-        .WithOrderId(orderId)
-        .WithCustomer(customer)
-        .WithRecipeList("Recipe 1")
-        .Build();
-
-    var session = new SessionBuilder()
-        .WithOrder(order)
-        .Build();
-
-    SetupSessionManagerForOrder(orderId, session);
-
-    var noRecipeException = new NoRecipeException(["Attempt 1", "Attempt 2", "Attempt 3"]);
-    _mockRecipeService
-        .Setup(x => x.GetRecipes("Recipe 1", It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-        .ThrowsAsync(noRecipeException);
-
-    // Act
-    await _sut.ProcessOrder(orderId);
-
-    // Assert
-    order.Status.Should().Be(OrderStatus.Failed);
-
-    _mockEmailService.Verify(x => x.SendEmail(
-        _emailConfig.FromEmail,
-        It.Is<string>(s => s.Contains("No Recipe Found")),
-        "no-recipe",
-        It.Is<Dictionary<string, object>>(d =>
-            d.ContainsKey("recipeName") &&
-            d["recipeName"].ToString() == "Recipe 1"),
-        (FileAttachment?)null), Times.Once);
-  }
-
-  [Fact]
-  [Trait("Category", "Unit")]
-  public async Task ProcessOrder_GetRecipesThrowsGeneralException_SendsErrorEmail()
-  {
-    // Arrange
-    var orderId = "test-order-123";
-    var customer = new CustomerBuilder()
-        .WithAvailableRecipes(5)
-        .Build();
-
-    var order = new CookbookOrderBuilder()
-        .WithOrderId(orderId)
-        .WithCustomer(customer)
-        .WithRecipeList("Recipe 1")
-        .Build();
-
-    var session = new SessionBuilder()
-        .WithOrder(order)
-        .Build();
-
-    SetupSessionManagerForOrder(orderId, session);
-
-    _mockRecipeService
-        .Setup(x => x.GetRecipes("Recipe 1", It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-        .ThrowsAsync(new InvalidOperationException("Recipe service unavailable"));
-
-    // Act
-    await _sut.ProcessOrder(orderId);
-
-    // Assert
-    order.Status.Should().Be(OrderStatus.Failed);
-
-    _mockEmailService.Verify(x => x.SendEmail(
-        _emailConfig.FromEmail,
-        It.Is<string>(s => s.Contains("Recipe Error")),
-        "error-log",
-        It.IsAny<Dictionary<string, object>>(),
-        (FileAttachment?)null), Times.Once);
-  }
-
-  [Fact]
-  [Trait("Category", "Unit")]
-  public async Task ProcessOrder_NoRecipesToProcess_LogsInformationAndReturns()
-  {
-    // Arrange
-    var orderId = "test-order-123";
-    var customer = new CustomerBuilder()
-        .WithAvailableRecipes(5)
-        .Build();
-
-    List<SynthesizedRecipe> synthesizedRecipes =
-    [
-        new SynthesizedRecipeBuilder().WithTitle("Recipe 1").Build(),
-        new SynthesizedRecipeBuilder().WithTitle("Recipe 2").Build()
-    ];
-
-    var order = new CookbookOrderBuilder()
-        .WithOrderId(orderId)
-        .WithCustomer(customer)
-        .WithRecipeList("Recipe 1", "Recipe 2")
-        .WithSynthesizedRecipes(synthesizedRecipes)
-        .Build();
-
-    var session = new SessionBuilder()
-        .WithOrder(order)
-        .Build();
-
-    SetupSessionManagerForOrder(orderId, session);
-    SetupPdfGenerationMocks();
-    SetupEmailMocks();
-
-    // Act
-    await _sut.ProcessOrder(orderId);
-
-    // Assert
-    order.Status.Should().Be(OrderStatus.Completed);
-
-    _mockLogger.Verify(
-        x => x.Log(
-            LogLevel.Information,
-            It.IsAny<EventId>(),
-            It.IsAny<It.IsAnyType>(),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-        Times.AtLeastOnce);
-
-    _mockRecipeService.Verify(
-        x => x.GetRecipes(It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
-        Times.Never);
-  }
-
-  [Fact]
-  [Trait("Category", "Unit")]
-  public async Task ProcessOrder_CustomerHasZeroCreditsWithUnprocessedRecipes_SetRequiresPayment()
-  {
-    // Arrange
-    var orderId = "test-order-123";
-    var customer = new CustomerBuilder()
-        .WithAvailableRecipes(0) // Zero credits from the start
-        .Build();
-
-    var order = new CookbookOrderBuilder()
-        .WithOrderId(orderId)
-        .WithCustomer(customer)
-        .WithRecipeList("Recipe 1", "Recipe 2", "Recipe 3")
-        .WithSynthesizedRecipes(new SynthesizedRecipeBuilder().WithTitle("Recipe 1").Build())
-        .Build();
-
-    var session = new SessionBuilder()
-        .WithOrder(order)
-        .Build();
-
-    SetupSessionManagerForOrder(orderId, session);
-    SetupPdfGenerationMocks();
-    SetupEmailMocks();
-
-    // Act
-    await _sut.ProcessOrder(orderId);
-
-    // Assert
-    // With 1 of 3 recipes already done and no credits, it should complete with partial recipes
-    order.Status.Should().Be(OrderStatus.AwaitingPayment);
-    // RequiresPayment remains false because no new recipes were processed (customer had 0 credits)
-    // The service only sets RequiresPayment after processing some but not all pending recipes
-    order.RequiresPayment.Should().BeFalse();
-
-    _mockLogger.Verify(
-        x => x.Log(
-            LogLevel.Information,
-            It.IsAny<EventId>(),
-            It.IsAny<It.IsAnyType>(),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-        Times.AtLeastOnce);
-  }
-
-  [Fact]
-  [Trait("Category", "Unit")]
-  public async Task CompilePdf_WaitForWriteFalse_UsesAsyncWrite()
-  {
-    // Arrange
-    var order = new CookbookOrderBuilder()
-        .AsCompleted()
-        .Build();
-
-    var pdfBytes = _fixture.Create<byte[]>();
-
-    _mockPdfCompiler
-        .Setup(x => x.CompileCookbook(order))
-        .ReturnsAsync(pdfBytes);
-
-    _mockOrderRepository
-        .Setup(x => x.SaveCookbookAsync(order.OrderId, pdfBytes))
-        .Verifiable();
-
-    // Act
-    await _sut.CompilePdf(order, waitForWrite: false);
-
-    // Assert
-    _mockPdfCompiler.Verify(x => x.CompileCookbook(order), Times.Once);
-    _mockOrderRepository.Verify(x => x.SaveCookbookAsync(order.OrderId, pdfBytes), Times.Once);
-    _mockOrderRepository.Verify(x => x.SaveCookbook(order.OrderId, pdfBytes), Times.Never);
-  }
-
-  [Fact]
-  [Trait("Category", "Unit")]
-  public async Task EmailCookbook_PdfNotFoundOnFirstAttempt_RetriesSuccessfully()
-  {
-    // Arrange
-    var orderId = "test-order-123";
-    var order = new CookbookOrderBuilder()
-        .WithOrderId(orderId)
-        .AsCompleted()
-        .Build();
-
-    var session = new SessionBuilder()
-        .WithOrder(order)
-        .Build();
-
-    var pdfBytes = _fixture.Create<byte[]>();
-    var callCount = 0;
-
-    SetupSessionManagerForOrder(orderId, session);
-
-    _mockOrderRepository
-        .Setup(x => x.GetCookbook(orderId))
-        .ReturnsAsync(() =>
-        {
-          callCount++;
-          if (callCount == 1)
-            throw new Exception("PDF not ready yet");
-          return pdfBytes;
-        });
-
-    _mockEmailService
-        .Setup(x => x.SendEmail(
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<Dictionary<string, object>>(),
-            It.IsAny<FileAttachment>()))
-        .Returns(Task.CompletedTask);
-
-    // Act
-    await _sut.EmailCookbook(orderId);
-
-    // Assert
-    _mockOrderRepository.Verify(x => x.GetCookbook(orderId), Times.Exactly(2));
-    _mockEmailService.Verify(x => x.SendEmail(
-        order.Email,
-        "Your Cookbook is Ready!",
-        "cookbook-ready",
-        It.IsAny<Dictionary<string, object>>(),
-        It.Is<FileAttachment>(a => a.ContentBytes == pdfBytes)),
-        Times.Once);
-  }
-
-  [Fact]
-  [Trait("Category", "Unit")]
-  public async Task EmailCookbook_AllRetriesFail_ThrowsException()
-  {
-    // Arrange
-    var orderId = "test-order-123";
-    var order = new CookbookOrderBuilder()
-        .WithOrderId(orderId)
-        .AsCompleted()
-        .Build();
-
-    var session = new SessionBuilder()
-        .WithOrder(order)
-        .Build();
-
-    SetupSessionManagerForOrder(orderId, session);
-
-    _mockOrderRepository
-        .Setup(x => x.GetCookbook(orderId))
-        .ReturnsAsync((byte[]?)null);
-
-    // Act
-    var act = async () => await _sut.EmailCookbook(orderId);
-
-    // Assert
-    await act.Should().ThrowAsync<Exception>()
-        .WithMessage($"Cookbook PDF not found for order {orderId}");
-
-    _mockOrderRepository.Verify(x => x.GetCookbook(orderId), Times.Exactly(_llmConfig.RetryAttempts + 1));
-  }
-
-  [Fact]
-  [Trait("Category", "Unit")]
-  public async Task ProcessOrder_WithPartiallyProcessedRecipes_RequiresPaymentSetCorrectly()
-  {
-    // Arrange
-    var orderId = "test-order-123";
-    var customer = new CustomerBuilder()
-        .WithAvailableRecipes(2)
-        .Build();
-
-    var order = new CookbookOrderBuilder()
-        .WithOrderId(orderId)
-        .WithCustomer(customer)
-        .WithRecipeList("Recipe 1", "Recipe 2", "Recipe 3", "Recipe 4", "Recipe 5")
-        .Build();
-
-    var session = new SessionBuilder()
-        .WithOrder(order)
-        .Build();
-
-    List<Recipe> sourceRecipes =
-    [
-        new Recipe
-        {
-            Title = "Test",
-            Description = "Desc",
-            Servings = "1",
-            PrepTime = "1",
-            CookTime = "1",
-            TotalTime = "1",
-            Ingredients = ["a"],
-            Directions = ["b"],
-            Notes = string.Empty,
-            Aliases = [],
-            IndexTitle = null,
-            Relevancy = new Dictionary<string, RelevancyResult>()
-        }
-    ];
-
-    var synthesizedRecipe = new SynthesizedRecipeBuilder().Build();
-
-    SetupSessionManagerForOrder(orderId, session);
-    SetupRecipeProcessingMocks(sourceRecipes, synthesizedRecipe);
-    SetupPdfGenerationMocks();
-    SetupEmailMocks();
-
-    // Act
-    await _sut.ProcessOrder(orderId);
-
-    // Assert
-    order.Status.Should().Be(OrderStatus.AwaitingPayment);
-    order.RequiresPayment.Should().BeTrue();
-    order.SynthesizedRecipes.Should().HaveCount(2); // Only processed 2 with available credits
-
-    _mockEmailService.Verify(x => x.SendEmail(
-        order.Email,
-        "Your Cookbook is Ready!",
-        "cookbook-ready",
-        It.Is<Dictionary<string, object>>(d =>
-            (bool)d["isPartial"] == true &&
-            (int)d["processedRecipes"] == 2 &&
-            (int)d["totalRecipes"] == 5),
-        It.IsAny<FileAttachment>()), Times.Once);
-  }
-
-  [Fact]
-  [Trait("Category", "Unit")]
-  public async Task ProcessSubmission_CustomerServiceThrows_PropagatesException()
-  {
-    // Arrange
-    var submission = new CookbookOrderSubmissionBuilder()
-        .WithEmail("customer@test.com")
-        .Build();
-
-    _mockCustomerService
-        .Setup(x => x.GetOrCreateCustomer(submission.Email))
-        .ThrowsAsync(new Exception("Customer service error"));
-
-    // Act
-    var act = async () => await _sut.ProcessSubmission(submission);
-
-    // Assert
-    await act.Should().ThrowAsync<Exception>()
-        .WithMessage("Customer service error");
-  }
-
-  [Fact]
-  [Trait("Category", "Unit")]
-  public async Task GetOrder_SessionManagerThrows_PropagatesException()
-  {
-    // Arrange
-    var orderId = "test-order-123";
-
-    _mockSessionManager
-        .Setup(x => x.GetSessionByOrder(orderId, It.IsAny<Guid>()))
-        .ThrowsAsync(new Exception("Session manager error"));
-
-    // Act
-    var act = async () => await _sut.GetOrder(orderId);
-
-    // Assert
-    await act.Should().ThrowAsync<Exception>()
-        .WithMessage("Session manager error");
-  }
-
-  [Fact]
-  [Trait("Category", "Unit")]
-  public async Task ProcessOrder_PdfCompilationFails_SetsStatusToFailed()
-  {
-    // Arrange
-    var orderId = "test-order-123";
-    var customer = new CustomerBuilder()
-        .WithAvailableRecipes(5)
-        .Build();
-
-    var order = new CookbookOrderBuilder()
-        .WithOrderId(orderId)
-        .WithCustomer(customer)
-        .WithRecipeList("Recipe 1")
-        .Build();
-
-    var session = new SessionBuilder()
-        .WithOrder(order)
-        .Build();
-
-    List<Recipe> sourceRecipes =
-    [
-        new Recipe
-        {
-            Title = "Test",
-            Description = "Desc",
-            Servings = "1",
-            PrepTime = "1",
-            CookTime = "1",
-            TotalTime = "1",
-            Ingredients = ["a"],
-            Directions = ["b"],
-            Notes = string.Empty,
-            Aliases = [],
-            IndexTitle = null,
-            Relevancy = new Dictionary<string, RelevancyResult>()
-        }
-    ];
-
-    var synthesizedRecipe = new SynthesizedRecipeBuilder().Build();
-
-    SetupSessionManagerForOrder(orderId, session);
-    SetupRecipeProcessingMocks(sourceRecipes, synthesizedRecipe);
-
-    _mockPdfCompiler
-        .Setup(x => x.CompileCookbook(It.IsAny<CookbookOrder>()))
-        .ThrowsAsync(new Exception("PDF compilation error"));
-
-    // Act
-    await _sut.ProcessOrder(orderId);
-
-    // Assert
-    order.Status.Should().Be(OrderStatus.Failed);
-  }
-
-  [Fact]
-  [Trait("Category", "Unit")]
-  public async Task ProcessOrder_EmailSendFails_SetsStatusToFailed()
-  {
-    // Arrange
-    var orderId = "test-order-123";
-    var customer = new CustomerBuilder()
-        .WithAvailableRecipes(5)
-        .Build();
-
-    var order = new CookbookOrderBuilder()
-        .WithOrderId(orderId)
-        .WithCustomer(customer)
-        .WithRecipeList("Recipe 1")
-        .Build();
-
-    var session = new SessionBuilder()
-        .WithOrder(order)
-        .Build();
-
-    List<Recipe> sourceRecipes =
-    [
-        new Recipe
-        {
-            Title = "Test",
-            Description = "Desc",
-            Servings = "1",
-            PrepTime = "1",
-            CookTime = "1",
-            TotalTime = "1",
-            Ingredients = ["a"],
-            Directions = ["b"],
-            Notes = string.Empty,
-            Aliases = [],
-            IndexTitle = null,
-            Relevancy = new Dictionary<string, RelevancyResult>()
-        }
-    ];
-
-    var synthesizedRecipe = new SynthesizedRecipeBuilder().Build();
-
-    SetupSessionManagerForOrder(orderId, session);
-    SetupRecipeProcessingMocks(sourceRecipes, synthesizedRecipe);
-    SetupPdfGenerationMocks();
-
-    _mockEmailService
-        .Setup(x => x.SendEmail(
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<string>(),
-            It.IsAny<Dictionary<string, object>>(),
-            It.IsAny<FileAttachment>()))
-        .ThrowsAsync(new Exception("Email service error"));
-
-    // Act
-    await _sut.ProcessOrder(orderId);
-
-    // Assert
-    order.Status.Should().Be(OrderStatus.Failed);
-  }
-
-  [Fact]
-  [Trait("Category", "Unit")]
-  public async Task CompilePdf_PdfCompilerThrows_PropagatesException()
-  {
-    // Arrange
-    var order = new CookbookOrderBuilder()
-        .AsCompleted()
-        .Build();
-
-    _mockPdfCompiler
-        .Setup(x => x.CompileCookbook(order))
-        .ThrowsAsync(new Exception("PDF compiler error"));
-
-    // Act
-    var act = async () => await _sut.CompilePdf(order, waitForWrite: true);
-
-    // Assert
-    await act.Should().ThrowAsync<Exception>()
-        .WithMessage("PDF compiler error");
-  }
-
-  [Fact]
-  [Trait("Category", "Unit")]
-  public async Task ProcessOrder_WithImageUrls_SetsImageUrlsCorrectly()
-  {
-    // Arrange
-    var orderId = "test-order-123";
-    var customer = new CustomerBuilder()
-        .WithAvailableRecipes(5)
-        .Build();
-
-    var order = new CookbookOrderBuilder()
-        .WithOrderId(orderId)
-        .WithCustomer(customer)
-        .WithRecipeList("Recipe 1")
-        .Build();
-
-    var session = new SessionBuilder()
-        .WithOrder(order)
-        .Build();
-
-    List<Recipe> sourceRecipes =
-    [
-        new Recipe
-        {
-            Title = "Test",
-            Description = "Desc",
-            Servings = "1",
-            PrepTime = "1",
-            CookTime = "1",
-            TotalTime = "1",
-            Ingredients = ["a"],
-            Directions = ["b"],
-            Notes = string.Empty,
-            Aliases = [],
-            IndexTitle = null,
-            Relevancy = new Dictionary<string, RelevancyResult>(),
-            ImageUrl = "https://example.com/image1.jpg",
-            RecipeUrl = "https://example.com/recipe1"
-        },
-        new Recipe
-        {
-            Title = "Test 2",
-            Description = "Desc 2",
-            Servings = "2",
-            PrepTime = "2",
-            CookTime = "2",
-            TotalTime = "2",
-            Ingredients = ["b"],
-            Directions = ["c"],
-            Notes = string.Empty,
-            Aliases = [],
-            IndexTitle = null,
-            Relevancy = new Dictionary<string, RelevancyResult>(),
-            ImageUrl = "https://example.com/image2.jpg",
-            RecipeUrl = "https://example.com/recipe2"
-        }
-    ];
-
-    var synthesizedRecipe = new SynthesizedRecipeBuilder()
-        .WithTitle("Recipe 1")
-        .Build();
-    synthesizedRecipe.InspiredBy = ["https://example.com/recipe1"];
-
-    SetupSessionManagerForOrder(orderId, session);
-    SetupRecipeProcessingMocks(sourceRecipes, synthesizedRecipe);
-    SetupPdfGenerationMocks();
-    SetupEmailMocks();
-
-    // Act
-    await _sut.ProcessOrder(orderId);
-
-    // Assert
-    order.SynthesizedRecipes.Should().HaveCount(1);
-    order.SynthesizedRecipes[0].ImageUrls.Should().Contain("https://example.com/image1.jpg");
-    order.SynthesizedRecipes[0].SourceRecipes.Should().HaveCount(1);
-  }
-
-  [Fact]
-  [Trait("Category", "Unit")]
-  public async Task ProcessOrder_CancellationTokenCanceled_StopsProcessing()
-  {
-    // Arrange
-    var orderId = "test-order-123";
-    var customer = new CustomerBuilder()
-        .WithAvailableRecipes(5)
-        .Build();
-
-    var order = new CookbookOrderBuilder()
-        .WithOrderId(orderId)
-        .WithCustomer(customer)
-        .WithRecipeList("Recipe 1", "Recipe 2", "Recipe 3")
-        .Build();
-
-    var session = new SessionBuilder()
-        .WithOrder(order)
-        .Build();
-
-    SetupSessionManagerForOrder(orderId, session);
-
-    // Simulate cancellation during parallel processing
-    _mockSessionManager
-        .Setup(x => x.ParallelForEachAsync<string>(
-            It.IsAny<IScopeContainer>(),
-            It.IsAny<IEnumerable<string>>(),
-            It.IsAny<Func<IScopeContainer, string, CancellationToken, Task>>(),
-            It.IsAny<int>(),
-            It.IsAny<CancellationToken>()))
-        .ThrowsAsync(new OperationCanceledException());
-
-    SetupPdfGenerationMocks();
-    SetupEmailMocks();
-
-    // Act
-    await _sut.ProcessOrder(orderId);
-
-    // Assert
-    // Should handle cancellation gracefully - the service sets status to Failed on exceptions
-    order.Status.Should().Be(OrderStatus.Failed);
-  }
-
-  [Fact]
-  [Trait("Category", "Unit")]
-  public async Task ProcessOrder_OrderNotFoundInSession_ThrowsKeyNotFoundException()
-  {
-    // Arrange
-    var orderId = "test-order-123";
-    var session = new SessionBuilder()
-        .WithOrder(null)
-        .Build();
-
-    _mockSessionManager
-        .Setup(x => x.GetSessionByOrder(orderId, It.IsAny<Guid>()))
-        .ReturnsAsync(session);
-
-    // Act
-    var act = async () => await _sut.ProcessOrder(orderId);
-
-    // Assert
-    await act.Should().ThrowAsync<KeyNotFoundException>()
-        .WithMessage($"No order found using ID: {orderId}");
-  }
-
-  [Fact]
-  [Trait("Category", "Unit")]
-  public async Task GetPdf_EmptyPdfReturned_ThrowsException()
-  {
-    // Arrange
-    var orderId = "test-order-123";
-
-    _mockOrderRepository
-        .Setup(x => x.GetCookbook(orderId))
-        .ReturnsAsync(Array.Empty<byte>());
-
-    // Act
-    var act = async () => await _sut.GetPdf(orderId);
-
-    // Assert
-    await act.Should().ThrowAsync<Exception>()
-        .WithMessage($"Cookbook PDF not found for order {orderId}");
-  }
-
-  [Fact]
-  [Trait("Category", "Unit")]
-  public async Task ProcessOrder_WithForceParameter_ReprocessesAlreadySynthesized()
-  {
-    // Arrange
-    var orderId = "test-order-123";
-    var customer = new CustomerBuilder()
-        .WithAvailableRecipes(5)
-        .Build();
-
-    List<SynthesizedRecipe> synthesizedRecipes =
-    [
-        new SynthesizedRecipeBuilder().WithTitle("Recipe 1").Build()
-    ];
-
-    var order = new CookbookOrderBuilder()
-        .WithOrderId(orderId)
-        .WithCustomer(customer)
-        .WithRecipeList("Recipe 1", "Recipe 2")
-        .WithSynthesizedRecipes(synthesizedRecipes)
-        .Build();
-
-    var session = new SessionBuilder()
-        .WithOrder(order)
-        .Build();
-
-    List<Recipe> sourceRecipes =
-    [
-        new Recipe
-        {
-            Title = "Test",
-            Description = "Desc",
-            Servings = "1",
-            PrepTime = "1",
-            CookTime = "1",
-            TotalTime = "1",
-            Ingredients = ["a"],
-            Directions = ["b"],
-            Notes = string.Empty,
-            Aliases = [],
-            IndexTitle = null,
-            Relevancy = new Dictionary<string, RelevancyResult>()
-        }
-    ];
-
-    var newSynthesizedRecipe = new SynthesizedRecipeBuilder().Build();
-
-    SetupSessionManagerForOrder(orderId, session);
-    SetupRecipeProcessingMocks(sourceRecipes, newSynthesizedRecipe);
-    SetupPdfGenerationMocks();
-    SetupEmailMocks();
-
-    // Act
-    await _sut.ProcessOrder(orderId);
-
-    // Assert
-    order.Status.Should().Be(OrderStatus.Completed);
-    // Should have processed only Recipe 2 as Recipe 1 was already synthesized
-    _mockRecipeService.Verify(x => x.GetRecipes(
-        "Recipe 2",
-        It.IsAny<int?>(),
-        It.IsAny<string>(),
-        It.IsAny<CancellationToken>()), Times.Once);
-    _mockRecipeService.Verify(x => x.GetRecipes(
-        "Recipe 1",
-        It.IsAny<int?>(),
-        It.IsAny<string>(),
-        It.IsAny<CancellationToken>()), Times.Never);
   }
 }
