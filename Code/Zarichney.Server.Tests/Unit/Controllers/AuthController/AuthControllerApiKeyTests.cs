@@ -6,13 +6,13 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using Zarichney.Controllers;
-using Zarichney.Server.Tests.Framework.Mocks;
+using Zarichney.Tests.Framework.Mocks;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Commands;
 using Zarichney.Services.Auth.Models;
 using ControllersAuthController = Zarichney.Controllers.AuthController;
 
-namespace Zarichney.Server.Tests.Unit.Controllers.AuthControllerTests;
+namespace Zarichney.Tests.Unit.Controllers.AuthControllerTests;
 
 public class AuthControllerApiKeyTests
 {

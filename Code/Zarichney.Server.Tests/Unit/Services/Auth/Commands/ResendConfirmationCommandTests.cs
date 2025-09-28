@@ -9,11 +9,11 @@ using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Commands;
 using Zarichney.Services.Auth.Models;
 using Zarichney.Services.Email;
-using Zarichney.Server.Tests.Framework.Mocks.Factories;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.Framework.Mocks.Factories;
+using Zarichney.Tests.TestData.Builders;
 using Microsoft.Graph.Models;
 
-namespace Zarichney.Server.Tests.Unit.Services.Auth.Commands;
+namespace Zarichney.Tests.Unit.Services.Auth.Commands;
 
 public class ResendConfirmationCommandTests
 {

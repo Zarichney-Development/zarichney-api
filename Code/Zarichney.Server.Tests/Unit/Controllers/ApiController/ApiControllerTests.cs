@@ -8,7 +8,7 @@ using Xunit;
 using Zarichney.Controllers;
 using Zarichney.Services.Email;
 
-namespace Zarichney.Server.Tests.Unit.Controllers.ApiControllerTests;
+namespace Zarichney.Tests.Unit.Controllers.ApiControllerTests;
 
 /// <summary>
 /// Unit test coverage for <see cref="Zarichney.Controllers.ApiController"/>,

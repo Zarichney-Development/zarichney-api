@@ -6,7 +6,7 @@ using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Commands;
 using Zarichney.Services.Auth.Models;
 
-namespace Zarichney.Server.Tests.Unit.Services.Auth.Commands;
+namespace Zarichney.Tests.Unit.Services.Auth.Commands;
 
 public class RevokeTokenCommandTests
 {

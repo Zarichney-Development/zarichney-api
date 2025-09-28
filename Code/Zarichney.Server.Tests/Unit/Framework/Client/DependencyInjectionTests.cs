@@ -8,7 +8,7 @@ using Refit;
 using Xunit;
 using Zarichney.Client;
 
-namespace Zarichney.Server.Tests.Unit.Framework.Client;
+namespace Zarichney.Tests.Unit.Framework.Client;
 
 /// <summary>
 /// Unit tests for the IServiceCollectionExtensions.ConfigureRefitClients method.

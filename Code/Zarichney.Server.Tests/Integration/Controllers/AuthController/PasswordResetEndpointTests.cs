@@ -6,11 +6,11 @@ using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Client.Contracts;
 using Zarichney.Services.Auth;
-using Zarichney.Server.Tests.Framework.Attributes;
-using Zarichney.Server.Tests.Framework.Fixtures;
+using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Fixtures;
 using Microsoft.AspNetCore.Identity;
 
-namespace Zarichney.Server.Tests.Integration.Controllers.AuthController;
+namespace Zarichney.Tests.Integration.Controllers.AuthController;
 
 /// <summary>
 /// Integration tests for password reset endpoints in the AuthController.

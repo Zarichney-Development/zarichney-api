@@ -7,10 +7,10 @@ using Moq;
 using Refit;
 using Xunit;
 using Zarichney.Client;
-using Zarichney.Server.Tests.Framework.Mocks;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.Framework.Mocks;
+using Zarichney.Tests.TestData.Builders;
 
-namespace Zarichney.Server.Tests.Unit.Framework.Client;
+namespace Zarichney.Tests.Unit.Framework.Client;
 
 /// <summary>
 /// Unit tests for Refit client configuration behaviors and edge cases.

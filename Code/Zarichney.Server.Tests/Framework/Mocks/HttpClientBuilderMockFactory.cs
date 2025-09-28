@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http;
 using Moq;
 
-namespace Zarichney.Server.Tests.Framework.Mocks;
+namespace Zarichney.Tests.Framework.Mocks;
 
 /// <summary>
 /// Factory for creating mock IHttpClientBuilder instances for testing.

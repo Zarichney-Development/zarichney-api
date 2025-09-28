@@ -5,7 +5,7 @@ using Zarichney.Config;
 using Zarichney.Services.Email;
 using Zarichney.Services.Status;
 
-namespace Zarichney.Server.Tests.Unit.Services.Email;
+namespace Zarichney.Tests.Unit.Services.Email;
 
 /// <summary>
 /// Unit tests for EmailModels including EmailConfig, InvalidEmailReason, EmailValidationResponse, and InvalidEmailException.

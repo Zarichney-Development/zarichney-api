@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Logging;
 using Moq;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 using Zarichney.Services.BackgroundTasks;
 using Zarichney.Services.Sessions;
 
-namespace Zarichney.Server.Tests.Framework.Mocks;
+namespace Zarichney.Tests.Framework.Mocks;
 
 /// <summary>
 /// Factory for creating pre-configured mocks for background task services.

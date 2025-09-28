@@ -1,9 +1,9 @@
 using FluentAssertions;
 using Xunit;
 using Zarichney.Controllers.Responses;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 
-namespace Zarichney.Server.Tests.Unit.Controllers.Responses;
+namespace Zarichney.Tests.Unit.Controllers.Responses;
 
 public class ErrorDetailsTests
 {

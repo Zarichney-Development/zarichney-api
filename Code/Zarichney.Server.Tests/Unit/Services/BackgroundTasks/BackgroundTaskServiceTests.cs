@@ -4,7 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using Zarichney.Server.Tests.Framework.Mocks;
+using Zarichney.Tests.Framework.Mocks;
 using Zarichney.Tests.TestData.Builders;
 using Zarichney.Services.BackgroundTasks;
 using Zarichney.Services.Sessions;

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Moq;
 using Zarichney.Services.Auth;
 
-namespace Zarichney.Server.Tests.Framework.Mocks;
+namespace Zarichney.Tests.Framework.Mocks;
 
 /// <summary>
 /// Factory for creating mock instances of ICookieAuthManager with various configurations for testing

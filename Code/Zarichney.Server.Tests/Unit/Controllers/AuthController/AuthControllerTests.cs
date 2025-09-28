@@ -8,15 +8,15 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using Zarichney.Controllers;
-using Zarichney.Server.Tests.Framework.Mocks;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.Framework.Mocks;
+using Zarichney.Tests.TestData.Builders;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Commands;
 using Zarichney.Services.Auth.Models;
 using ControllersAuthController = Zarichney.Controllers.AuthController;
 using static Zarichney.Controllers.AuthController;
 
-namespace Zarichney.Server.Tests.Unit.Controllers.AuthController;
+namespace Zarichney.Tests.Unit.Controllers.AuthController;
 
 public class AuthControllerTests : IDisposable
 {

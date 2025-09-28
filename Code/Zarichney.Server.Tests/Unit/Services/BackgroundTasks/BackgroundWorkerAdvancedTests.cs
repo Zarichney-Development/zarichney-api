@@ -1,12 +1,12 @@
 using AutoFixture;
 using FluentAssertions;
 using Xunit;
-using Zarichney.Server.Tests.Framework.Mocks;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.Framework.Mocks;
+using Zarichney.Tests.TestData.Builders;
 using Zarichney.Services.BackgroundTasks;
 using Zarichney.Services.Sessions;
 
-namespace Zarichney.Server.Tests.Unit.Services.BackgroundTasks;
+namespace Zarichney.Tests.Unit.Services.BackgroundTasks;
 
 /// <summary>
 /// Advanced unit tests for BackgroundWorker covering edge cases, concurrency scenarios,

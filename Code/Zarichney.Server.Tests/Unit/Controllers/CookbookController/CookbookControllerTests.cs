@@ -10,13 +10,13 @@ using Xunit;
 using Zarichney.Controllers;
 using Zarichney.Cookbook.Orders;
 using Zarichney.Cookbook.Recipes;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 using Zarichney.Services.BackgroundTasks;
 using Zarichney.Services.Email;
 using Zarichney.Services.Sessions;
 using AutoFixture;
 
-namespace Zarichney.Server.Tests.Unit.Controllers.CookbookController;
+namespace Zarichney.Tests.Unit.Controllers.CookbookController;
 
 /// <summary>
 /// Unit tests for the CookbookController class.
