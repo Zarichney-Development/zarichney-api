@@ -12,6 +12,7 @@ public abstract class DatabaseIntegrationTestBase : IntegrationTestBase
 {
   private DatabaseFixture? DatabaseFixture => _apiClientFixture.DatabaseFixture;
   protected readonly new ApiClientFixture _apiClientFixture;
+  protected virtual bool ShouldResetDatabaseBeforeEachTest => true;
 
   /// <summary>
   /// Initializes a new instance of the <see cref="DatabaseIntegrationTestBase"/> class.
@@ -26,6 +27,16 @@ public abstract class DatabaseIntegrationTestBase : IntegrationTestBase
     {
       // Skip all database-backed tests if container is unavailable
       SetSkipReason("Database unavailable, skipping database-backed integration tests.");
+    }
+  }
+
+  public override async Task InitializeAsync()
+  {
+    await base.InitializeAsync();
+
+    if (ShouldResetDatabaseBeforeEachTest)
+    {
+      await ResetDatabaseAsync();
     }
   }
 

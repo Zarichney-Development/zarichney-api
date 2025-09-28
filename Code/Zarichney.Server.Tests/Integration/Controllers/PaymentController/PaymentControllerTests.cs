@@ -32,7 +32,6 @@ public class PaymentControllerTests(ApiClientFixture apiClientFixture, ITestOutp
   public async Task CreatePaymentIntent_ValidOrder_ReturnsPaymentIntent()
   {
     // Arrange
-    await ResetDatabaseAsync();
     var apiClient = _apiClientFixture.AuthenticatedPaymentApi;
     var requestDto = new PaymentIntentRequest(1000, "usd", "Test order");
 
@@ -71,7 +70,6 @@ public class PaymentControllerTests(ApiClientFixture apiClientFixture, ITestOutp
   public async Task GetPaymentStatus_ValidPaymentId_ReturnsStatus()
   {
     // Arrange
-    await ResetDatabaseAsync();
     var apiClient = _apiClientFixture.AuthenticatedPaymentApi;
     var paymentId = "pi_test_" + GetRandom.String();
 
@@ -152,9 +150,11 @@ public class PaymentControllerServiceAvailabilityTests : IntegrationTestBase
     var response = await client.CreateCheckoutSession(orderId);
 
     // Assert
-    response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable,
+        because: "Stripe outages should surface as service unavailable responses");
     var errorContent = response.Error?.Content;
-    errorContent.Should().NotBeNullOrEmpty();
+    errorContent.Should().NotBeNullOrEmpty(
+        because: "outage responses should include actionable error details");
     errorContent.Should().Contain(ExternalServices.Stripe.ToString(),
         because: "the error message should indicate that Stripe is the unavailable service");
   }
@@ -200,9 +200,11 @@ public class PaymentControllerServiceAvailabilityTests : IntegrationTestBase
     var response = await client.CreateIntent(request);
 
     // Assert
-    response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable,
+        because: "Stripe outages should surface as service unavailable responses");
     var errorContent = response.Error?.Content;
-    errorContent.Should().NotBeNullOrEmpty();
+    errorContent.Should().NotBeNullOrEmpty(
+        because: "outage responses should include actionable error details");
     errorContent.Should().Contain(ExternalServices.Stripe.ToString(),
         because: "the error message should indicate that Stripe is the unavailable service");
   }
@@ -260,9 +262,11 @@ public class PaymentControllerServiceAvailabilityTests : IntegrationTestBase
     var response = await client.Status("pi_test_123");
 
     // Assert
-    response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable,
+        because: "Stripe outages should surface as service unavailable responses");
     var errorContent = response.Error?.Content;
-    errorContent.Should().NotBeNullOrEmpty();
+    errorContent.Should().NotBeNullOrEmpty(
+        because: "outage responses should include actionable error details");
     errorContent.Should().Contain(ExternalServices.Stripe.ToString(),
         because: "the error message should indicate that Stripe is the unavailable service");
   }
