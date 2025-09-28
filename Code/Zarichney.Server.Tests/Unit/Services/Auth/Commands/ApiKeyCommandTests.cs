@@ -314,11 +314,10 @@ public class ApiKeyCommandTests
         var userId = "test-user-123";
         var query = new GetApiKeysQuery();
 
-        var apiKeys = new List<ApiKey>
-        {
+        List<ApiKey> apiKeys = [
             new() { Id = 1, UserId = userId, KeyValue = "key1", Name = "Key 1", IsActive = true, CreatedAt = DateTime.UtcNow },
             new() { Id = 2, UserId = userId, KeyValue = "key2", Name = "Key 2", IsActive = false, CreatedAt = DateTime.UtcNow.AddDays(-1) }
-        };
+        ];
 
         var httpContext = new DefaultHttpContext();
         httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(new[]
@@ -364,7 +363,7 @@ public class ApiKeyCommandTests
 
         _mockHttpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
         _mockUserManager.Setup(x => x.GetUserId(It.IsAny<ClaimsPrincipal>())).Returns(userId);
-        _mockApiKeyService.Setup(x => x.GetApiKeysByUserId(userId)).ReturnsAsync(new List<ApiKey>());
+        _mockApiKeyService.Setup(x => x.GetApiKeysByUserId(userId)).ReturnsAsync([]);
 
         var handler = new GetApiKeysQueryHandler(_mockApiKeyService.Object, _mockUserManager.Object, _mockHttpContextAccessor.Object);
 

@@ -18,6 +18,12 @@ namespace Zarichney.Server.Tests.Integration.Controllers.AuthController;
 [Trait(TestCategories.Dependency, TestCategories.Database)]
 public class RefreshTokenEndpointTests : DatabaseIntegrationTestBase
 {
+    /// <summary>
+    /// Delay between authentication attempts to prevent rate limiting in integration tests.
+    /// Can be configured based on test environment performance requirements.
+    /// </summary>
+    private static readonly TimeSpan RateLimitDelay = TimeSpan.FromMilliseconds(100);
+
     public RefreshTokenEndpointTests(ApiClientFixture apiClientFixture, ITestOutputHelper testOutputHelper)
         : base(apiClientFixture, testOutputHelper)
     {
@@ -174,8 +180,8 @@ public class RefreshTokenEndpointTests : DatabaseIntegrationTestBase
                 authResult.Should().NotBeNull();
                 authResult.Success.Should().BeTrue();
 
-                // Small delay to avoid rate limiting
-                await Task.Delay(100);
+                // Configurable delay to avoid rate limiting in integration tests
+                await Task.Delay(RateLimitDelay);
             }
         }
         finally
