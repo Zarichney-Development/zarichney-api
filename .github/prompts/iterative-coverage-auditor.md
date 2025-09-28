@@ -8,7 +8,8 @@
 - Analysis Timestamp: {{TIMESTAMP}}
 - Iteration Count: {{ITERATION_COUNT}}
 - Audit Phase: {{AUDIT_PHASE}}
-- Coverage Excellence Context: {{COVERAGE_EXCELLENCE_CONTEXT}}
+ - Coverage Excellence Context: {{COVERAGE_EXCELLENCE_CONTEXT}}
+ - Epic Coverage Context: {{COVERAGE_EPIC_CONTEXT}}
 </context>
 
 <iteration_context>
