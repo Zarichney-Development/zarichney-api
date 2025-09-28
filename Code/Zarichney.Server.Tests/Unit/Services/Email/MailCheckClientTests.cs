@@ -37,7 +37,7 @@ public class MailCheckClientTests
   {
     return new EmailConfig
     {
-      MailCheckApiKey = mailCheckApiKey ?? "valid-api-key",
+      MailCheckApiKey = mailCheckApiKey,
       AzureTenantId = "test-tenant-id",
       AzureAppId = "test-app-id",
       AzureAppSecret = "test-app-secret",
