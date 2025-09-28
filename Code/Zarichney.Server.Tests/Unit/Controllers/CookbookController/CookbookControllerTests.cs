@@ -214,9 +214,9 @@ public class CookbookControllerTests
       .WithOrderId(orderId)
       .WithEmail("test@example.com")
       .Build();
-    
+
     var mockSession = new SessionBuilder().Build();
-    
+
     _mockSessionManager.Setup(x => x.GetSessionByOrder(orderId, It.IsAny<Guid>()))
       .ReturnsAsync(mockSession);
     _mockOrderService.Setup(x => x.GetOrder(orderId))

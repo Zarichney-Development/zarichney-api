@@ -736,10 +736,10 @@ public class OrderServiceTests
             It.IsAny<int?>()))
         .ReturnsAsync(new LlmResult<RecipeProposalResult>
         {
-                    Data = new RecipeProposalResult
-                    {
-                        Recipes = ["Recipe 1", "Recipe 2", "Recipe 3"]
-                    },
+          Data = new RecipeProposalResult
+          {
+            Recipes = ["Recipe 1", "Recipe 2", "Recipe 3"]
+          },
           ConversationId = "conv-123"
         });
   }
@@ -1018,10 +1018,10 @@ public class OrderServiceTests
         .Setup(x => x.GetCookbook(orderId))
         .ReturnsAsync(() =>
         {
-            callCount++;
-            if (callCount == 1)
-                throw new Exception("PDF not ready yet");
-            return pdfBytes;
+          callCount++;
+          if (callCount == 1)
+            throw new Exception("PDF not ready yet");
+          return pdfBytes;
         });
 
     _mockEmailService
