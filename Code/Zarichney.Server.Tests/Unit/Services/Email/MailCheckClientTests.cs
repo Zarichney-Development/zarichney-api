@@ -37,7 +37,7 @@ public class MailCheckClientTests
   {
     return new EmailConfig
     {
-      MailCheckApiKey = mailCheckApiKey ?? "valid-api-key",
+      MailCheckApiKey = mailCheckApiKey,
       AzureTenantId = "test-tenant-id",
       AzureAppId = "test-app-id",
       AzureAppSecret = "test-app-secret",
@@ -471,5 +471,408 @@ public class MailCheckClientTests
     var result1 = await _sut.GetValidationData(domain1);
     result1.Valid.Should().BeTrue();
     result1.Block.Should().BeFalse();
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task GetValidationData_WithMissingApiKey_ThrowsConfigurationMissingException()
+  {
+    // Arrange
+    var configWithoutApiKey = CreateValidEmailConfig(mailCheckApiKey: null);
+    var client = new MailCheckClient(configWithoutApiKey, _mockCache.Object, _mockLogger.Object);
+    const string domain = "test.com";
+
+    object cacheValue = null;
+    _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue!)).Returns(false);
+
+    // Act
+    Func<Task> act = async () => await client.GetValidationData(domain);
+
+    // Assert
+    await act.Should().ThrowAsync<ConfigurationMissingException>()
+      .WithMessage("*MailCheckApiKey*",
+        "because the API key is missing from configuration");
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task GetValidationData_WithEmptyApiKey_ThrowsConfigurationMissingException()
+  {
+    // Arrange
+    var configWithEmptyApiKey = CreateValidEmailConfig(mailCheckApiKey: "");
+    var client = new MailCheckClient(configWithEmptyApiKey, _mockCache.Object, _mockLogger.Object);
+    const string domain = "test.com";
+
+    object cacheValue = null;
+    _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue!)).Returns(false);
+
+    // Act
+    Func<Task> act = async () => await client.GetValidationData(domain);
+
+    // Assert
+    await act.Should().ThrowAsync<ConfigurationMissingException>()
+      .WithMessage("*MailCheckApiKey*",
+        "because an empty API key is invalid");
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task GetValidationData_WithPlaceholderApiKey_ThrowsConfigurationMissingException()
+  {
+    // Arrange
+    var configWithPlaceholder = CreateValidEmailConfig(mailCheckApiKey: StatusService.PlaceholderMessage);
+    var client = new MailCheckClient(configWithPlaceholder, _mockCache.Object, _mockLogger.Object);
+    const string domain = "test.com";
+
+    object cacheValue = null;
+    _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue!)).Returns(false);
+
+    // Act
+    Func<Task> act = async () => await client.GetValidationData(domain);
+
+    // Assert
+    await act.Should().ThrowAsync<ConfigurationMissingException>()
+      .WithMessage("*MailCheckApiKey*",
+        "because placeholder values indicate missing configuration");
+  }
+
+  [Theory]
+  [Trait("Category", "Unit")]
+  [InlineData(null)]
+  [InlineData("")]
+  [InlineData("   ")]
+  public async Task GetValidationData_WithInvalidDomain_HandlesGracefully(string? invalidDomain)
+  {
+    // Arrange
+    const string normalizedDomain = "";
+    var cachedResponse = new EmailValidationResponseBuilder()
+      .WithInvalidEmail()
+      .WithDomain(normalizedDomain)
+      .WithReason("invalid domain")
+      .Build();
+
+    object cacheValue = cachedResponse;
+    _mockCache.Setup(x => x.TryGetValue(It.IsAny<string>(), out cacheValue))
+      .Returns(true);
+
+    // Act
+    var result = await _sut.GetValidationData(invalidDomain ?? "");
+
+    // Assert
+    result.Should().NotBeNull();
+    result.Valid.Should().BeFalse("because empty/null domains are invalid");
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task GetValidationData_WithLongDomain_ReturnsCachedResult()
+  {
+    // Arrange
+    var longDomain = string.Join(".", Enumerable.Repeat("subdomain", 10)) + ".com";
+    var response = new EmailValidationResponseBuilder()
+      .WithValidDefaults()
+      .WithDomain(longDomain)
+      .Build();
+
+    object cacheValue = response;
+    _mockCache.Setup(x => x.TryGetValue(longDomain, out cacheValue))
+      .Returns(true);
+
+    // Act
+    var result = await _sut.GetValidationData(longDomain);
+
+    // Assert
+    result.Should().NotBeNull();
+    result.Domain.Should().Be(longDomain);
+    result.Valid.Should().BeTrue();
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task GetValidationData_WithInternationalDomain_ReturnsCachedResult()
+  {
+    // Arrange
+    const string internationalDomain = "münchen.de";
+    var response = new EmailValidationResponseBuilder()
+      .WithValidDefaults()
+      .WithDomain(internationalDomain)
+      .Build();
+
+    object cacheValue = response;
+    _mockCache.Setup(x => x.TryGetValue(internationalDomain, out cacheValue))
+      .Returns(true);
+
+    // Act
+    var result = await _sut.GetValidationData(internationalDomain);
+
+    // Assert
+    result.Should().NotBeNull();
+    result.Domain.Should().Be(internationalDomain);
+    result.Valid.Should().BeTrue("because international domains can be valid");
+  }
+
+  [Theory]
+  [Trait("Category", "Unit")]
+  [InlineData("gmail.com", false, false, 5, "Popular email provider")]
+  [InlineData("outlook.com", false, false, 5, "Microsoft email service")]
+  [InlineData("yahoo.com", false, false, 10, "Yahoo email service")]
+  [InlineData("protonmail.com", false, false, 5, "Secure email provider")]
+  public async Task GetValidationData_WithPopularProviders_ReturnsAppropriateResults(
+    string domain, bool isDisposable, bool isBlocked, int expectedRisk, string expectedReason)
+  {
+    // Arrange
+    var response = new EmailValidationResponseBuilder()
+      .WithValidDefaults()
+      .WithDomain(domain)
+      .WithRisk(expectedRisk)
+      .WithReason(expectedReason)
+      .Build();
+    response.Disposable = isDisposable;
+    response.Block = isBlocked;
+
+    object cacheValue = response;
+    _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
+      .Returns(true);
+
+    // Act
+    var result = await _sut.GetValidationData(domain);
+
+    // Assert
+    result.Should().NotBeNull();
+    result.Domain.Should().Be(domain);
+    result.Disposable.Should().Be(isDisposable);
+    result.Block.Should().Be(isBlocked);
+    result.Risk.Should().Be(expectedRisk);
+    result.Reason.Should().Be(expectedReason);
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task GetValidationData_WithSubdomainEmail_ReturnsCachedResult()
+  {
+    // Arrange
+    const string subdomainEmail = "mail.company.example.com";
+    var response = new EmailValidationResponseBuilder()
+      .WithValidDefaults()
+      .WithDomain(subdomainEmail)
+      .WithMxHost("mx." + subdomainEmail)
+      .Build();
+
+    object cacheValue = response;
+    _mockCache.Setup(x => x.TryGetValue(subdomainEmail, out cacheValue))
+      .Returns(true);
+
+    // Act
+    var result = await _sut.GetValidationData(subdomainEmail);
+
+    // Assert
+    result.Should().NotBeNull();
+    result.Domain.Should().Be(subdomainEmail);
+    result.MxHost.Should().Contain(subdomainEmail);
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task GetValidationData_WithCatchAllDomain_ReturnsCachedResult()
+  {
+    // Arrange
+    const string domain = "catchall.com";
+    var response = new EmailValidationResponseBuilder()
+      .WithValidDefaults()
+      .WithDomain(domain)
+      .Build();
+    response.Text = "Catch-all domain detected";
+    response.Reason = "catch-all";
+    response.Risk = 30;
+
+    object cacheValue = response;
+    _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
+      .Returns(true);
+
+    // Act
+    var result = await _sut.GetValidationData(domain);
+
+    // Assert
+    result.Should().NotBeNull();
+    result.Text.Should().Contain("Catch-all");
+    result.Reason.Should().Be("catch-all");
+    result.Risk.Should().Be(30, "because catch-all domains have moderate risk");
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task GetValidationData_WithRoleBasedEmail_ReturnsCachedResult()
+  {
+    // Arrange
+    const string domain = "company.com";
+    var response = new EmailValidationResponseBuilder()
+      .WithValidDefaults()
+      .WithDomain(domain)
+      .Build();
+    response.Text = "Role-based email address";
+    response.Reason = "role-based";
+    response.Risk = 25;
+
+    object cacheValue = response;
+    _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
+      .Returns(true);
+
+    // Act
+    var result = await _sut.GetValidationData(domain);
+
+    // Assert
+    result.Should().NotBeNull();
+    result.Text.Should().Contain("Role-based");
+    result.Reason.Should().Be("role-based");
+    result.Risk.Should().Be(25, "because role-based emails have slightly elevated risk");
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task GetValidationData_WithFreeEmailProvider_ReturnsCachedResult()
+  {
+    // Arrange
+    const string domain = "freemail.net";
+    var response = new EmailValidationResponseBuilder()
+      .WithValidDefaults()
+      .WithDomain(domain)
+      .Build();
+    response.Text = "Free email provider";
+    response.Reason = "free provider";
+    response.Risk = 20;
+
+    object cacheValue = response;
+    _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
+      .Returns(true);
+
+    // Act
+    var result = await _sut.GetValidationData(domain);
+
+    // Assert
+    result.Should().NotBeNull();
+    result.Text.Should().Contain("Free email");
+    result.Reason.Should().Be("free provider");
+    result.Risk.Should().Be(20, "because free email providers have slightly elevated risk");
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task GetValidationData_WithEducationalDomain_ReturnsCachedResult()
+  {
+    // Arrange
+    const string domain = "university.edu";
+    var response = new EmailValidationResponseBuilder()
+      .WithValidDefaults()
+      .WithDomain(domain)
+      .WithMxHost("mail.university.edu")
+      .Build();
+    response.Text = "Educational institution email";
+    response.Reason = "educational";
+    response.Risk = 5;
+
+    object cacheValue = response;
+    _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
+      .Returns(true);
+
+    // Act
+    var result = await _sut.GetValidationData(domain);
+
+    // Assert
+    result.Should().NotBeNull();
+    result.Domain.Should().Be(domain);
+    result.Text.Should().Contain("Educational");
+    result.Risk.Should().Be(5, "because educational domains are typically low risk");
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task GetValidationData_WithGovernmentDomain_ReturnsCachedResult()
+  {
+    // Arrange
+    const string domain = "agency.gov";
+    var response = new EmailValidationResponseBuilder()
+      .WithValidDefaults()
+      .WithDomain(domain)
+      .WithMxHost("mx.agency.gov")
+      .Build();
+    response.Text = "Government email address";
+    response.Reason = "government";
+    response.Risk = 1;
+
+    object cacheValue = response;
+    _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
+      .Returns(true);
+
+    // Act
+    var result = await _sut.GetValidationData(domain);
+
+    // Assert
+    result.Should().NotBeNull();
+    result.Domain.Should().Be(domain);
+    result.Text.Should().Contain("Government");
+    result.Risk.Should().Be(1, "because government domains are very low risk");
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task GetValidationData_WithSpamTrapDomain_ReturnsCachedResult()
+  {
+    // Arrange
+    const string domain = "spamtrap.org";
+    var response = new EmailValidationResponseBuilder()
+      .WithBlockedEmail()
+      .WithDomain(domain)
+      .Build();
+    response.Text = "Known spam trap";
+    response.Reason = "spam trap";
+    response.Risk = 100;
+
+    object cacheValue = response;
+    _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
+      .Returns(true);
+
+    // Act
+    var result = await _sut.GetValidationData(domain);
+
+    // Assert
+    result.Should().NotBeNull();
+    result.Block.Should().BeTrue("because spam traps should be blocked");
+    result.Text.Should().Contain("spam trap");
+    result.Risk.Should().Be(100, "because spam traps are maximum risk");
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task GetValidationData_ConcurrentCalls_HandlesCacheCorrectly()
+  {
+    // Arrange
+    const string domain = "concurrent.com";
+    var response = new EmailValidationResponseBuilder()
+      .WithValidDefaults()
+      .WithDomain(domain)
+      .Build();
+
+    object cacheValue = response;
+    var callCount = 0;
+    _mockCache.Setup(x => x.TryGetValue(domain, out cacheValue))
+      .Returns(() =>
+      {
+        callCount++;
+        return true;
+      });
+
+    // Act
+    var tasks = Enumerable.Range(0, 10)
+      .Select(_ => _sut.GetValidationData(domain))
+      .ToArray();
+    var results = await Task.WhenAll(tasks);
+
+    // Assert
+    results.Should().AllSatisfy(r =>
+    {
+      r.Should().NotBeNull();
+      r.Domain.Should().Be(domain);
+    });
+    callCount.Should().Be(10, "because each call should check the cache");
   }
 }

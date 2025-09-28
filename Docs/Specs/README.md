@@ -17,6 +17,7 @@
 
 ### Epic Specifications
 * **Epic #181:** [`Build Workflows Enhancement`](./epic-181-build-workflows/README.md) - CI/CD workflow improvements and automation enhancements
+* **Epic #246:** [`LanguageModelService v2 Multi-Provider AI Architecture`](./epic-246-language-model-service/README.md) - Vendor-agnostic Language Model Service transformation with multi-provider support
 
 ## 2. Architecture & Key Concepts
 

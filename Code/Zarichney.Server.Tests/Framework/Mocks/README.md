@@ -142,6 +142,10 @@ The overall goal is to enable robust and reliable integration tests by providing
     * Establishing patterns for defining and managing WireMock stubs.
     * Documenting its usage thoroughly in `../../../Docs/Standards/IntegrationTestCaseDevelopment.md`.
 * **Factory Coverage Expansion**: Recently completed addition of 5 new mock factories (AudioClient, AuthService, SessionManager, Swagger, UserManager) significantly improves integration testing coverage for authentication, audio processing, and session management workflows.
+
+### HttpClientBuilder Generic Workaround Pattern
+
+`HttpClientBuilderMockFactory` includes helper methods (`CreateWithHandlerChain`, `CreateWithFullCapture`) that simulate the effects of `AddHttpMessageHandler<THandler>()`. Because Moq cannot satisfy the `where THandler : DelegatingHandler` generic constraint using `It.IsAnyType`, the factory records each handler type in an internal list and exposes the chain through a synthesized `IServiceCollection`. Tests verify handler registration by inspecting that collection rather than relying on a direct `Setup` for `AddHttpMessageHandler<T>()`. When creating new mocks around `IHttpClientBuilder`, follow this pattern to avoid generic constraint runtime exceptions and keep handler verification deterministic.
 ### Interface Wrapper Pattern
 
 #### Overview & Rationale

@@ -26,7 +26,7 @@ Our integration testing strategy is built upon a robust framework designed for r
 * **Type-Safe API Clients:** All API interactions are performed using **Refit clients** (multiple granular interfaces), auto-generated from the `Zarichney.Server`'s OpenAPI specification.
 * **Simulated Authentication:** The `TestAuthHandler` and `AuthTestHelper` enable simulation of various authenticated users, roles, and claims.
 * **External Service Virtualization (Planned):** External HTTP dependencies will be virtualized using **WireMock.Net** (TDD FRMK-004) to ensure deterministic test outcomes. Until fully implemented, interfaces for these services are mocked via DI using factories from `../Framework/Mocks/Factories/`.
-* **Shared Fixtures:** Expensive resources like `CustomWebApplicationFactory`, `DatabaseFixture`, and `ApiClientFixture` are shared across test classes using xUnit's `ICollectionFixture` mechanism. **Phase 3 Update:** Tests are now organized into multiple collections (`"IntegrationAuth"`, `"IntegrationCore"`, `"IntegrationExternal"`, `"IntegrationInfra"`, `"IntegrationQA"`) enabling parallel execution for optimal performance.
+* **Shared Fixtures:** Expensive resources like `CustomWebApplicationFactory`, `DatabaseFixture`, and `ApiClientFixture` are shared across test classes using xUnit's `ICollectionFixture` mechanism. **Phase 3 Update:** The standard `[Collection("Integration")]` provides these fixtures; legacy collection names (e.g., `IntegrationCore`, `IntegrationExternal`) are being consolidated and should not be used for new tests.
 * **Base Test Classes:** `IntegrationTestBase` and `DatabaseIntegrationTestBase` provide common setup and access to shared fixtures.
 * **Conditional Test Execution:** The `[DependencyFact]` attribute is used to skip tests if their required configurations or infrastructure (like Docker) are unavailable.
 * **Core Tooling:** xUnit, FluentAssertions, AutoFixture (especially for DTOs and complex test data setup).
@@ -69,16 +69,11 @@ Supporting standards include:
 
 1.  **Identify Scenario:** Determine the specific interaction, API endpoint, or workflow to be tested.
 2.  **Create Test File:** Following the directory structure and naming conventions, create or locate the appropriate test file in `/Integration/`.
-3.  **Inherit Base Class:** Inherit from `IntegrationTestBase` or `DatabaseIntegrationTestBase` (if database interaction is involved). Ensure the class is part of the appropriate collection based on the feature area:
-    * `[Collection("IntegrationAuth")]` - Authentication/authorization tests
-    * `[Collection("IntegrationCore")]` - Core API functionality tests  
-    * `[Collection("IntegrationExternal")]` - External service integration tests
-    * `[Collection("IntegrationInfra")]` - Infrastructure/status tests
-    * `[Collection("IntegrationQA")]` - Quality assurance/smoke tests
+3.  **Inherit Base Class:** Inherit from `IntegrationTestBase` or `DatabaseIntegrationTestBase` (if database interaction is involved). All integration tests should use the shared `[Collection("Integration")]` to access fixtures; rely on `[Trait]` attributes (e.g., `Feature`, `Dependency`) for additional filtering needs.
 4.  **Follow `IntegrationTestCaseDevelopment.md`:**
     * Apply the AAA pattern.
     * Use the `ApiClient` (or an authenticated version via `AuthHelper`) for all API calls.
-    * If using `DatabaseIntegrationTestBase`, call `await DbFixture.ResetDatabaseAsync();` at the start of tests that require a clean DB state.
+    * `DatabaseIntegrationTestBase` automatically resets the database before each test. Invoke `ResetDatabaseAsync()` manually only if a scenario requires an additional reset mid-test.
     * Set up any necessary data using API calls, `DbFixture.GetContext()`, or Test Data Builders/AutoFixture.
     * Configure mock service behavior (via `Factory.Services.GetRequiredService<Mock<IYourService>>()`) or WireMock.Net stubs (once implemented) for external dependencies.
     * Write clear assertions using FluentAssertions on API responses, database state, or interactions with virtualized services.
@@ -108,7 +103,7 @@ Supporting standards include:
   dotnet test --filter "Category=Integration"
   
   # Run specific integration test collection
-  dotnet test --filter "Category=Integration&Collection=IntegrationAuth"
+  dotnet test --filter "Category=Integration&Collection=Integration"
   ```
 
 * **Parallel Execution:** With Phase 3 implementation, integration tests now run in parallel across collections by default, significantly reducing execution time.
