@@ -1,4 +1,4 @@
-namespace Zarichney.Server.Tests.TestData.Builders;
+namespace Zarichney.Tests.TestData.Builders;
 
 /// <summary>
 /// Base class for test data builders.

@@ -3,10 +3,10 @@ using FluentAssertions;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Config;
-using Zarichney.Server.Tests.Framework.Attributes;
-using Zarichney.Server.Tests.Framework.Fixtures;
+using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Fixtures;
 
-namespace Zarichney.Server.Tests.Integration.Services.Status;
+namespace Zarichney.Tests.Integration.Services.Status;
 
 /// <summary>
 /// Tests that verify the real-world scenario of fetching the service status and

@@ -17,9 +17,9 @@ using Zarichney.Services.Sessions;
 using OpenAI.Assistants;
 using Microsoft.Graph.Models;
 using Zarichney.Services.FileSystem;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 
-namespace Zarichney.Server.Tests.Unit.Cookbook.Orders;
+namespace Zarichney.Tests.Unit.Cookbook.Orders;
 
 /// <summary>
 /// Unit tests for the OrderService class in the cookbook domain.

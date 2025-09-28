@@ -1,6 +1,6 @@
 using AutoFixture;
 
-namespace Zarichney.Server.Tests.Framework.Helpers;
+namespace Zarichney.Tests.Framework.Helpers;
 
 public static class GetRandom
 {

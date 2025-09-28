@@ -1,0 +1,347 @@
+name: 'Iterative AI Code Review'
+description: 'Iterative AI code review action with historical context preservation, to-do list management, and autonomous development cycle integration'
+
+inputs:
+  github_token:
+    description: 'GitHub token for repository access and comment management'
+    required: true
+  openai_api_key:
+    description: 'OpenAI API key for AI analysis service'
+    required: true
+  pr_number:
+    description: 'Pull request number for analysis'
+    required: true
+  iteration_trigger:
+    description: 'Iteration trigger mode: auto (auto-increment) or manual (user-specified)'
+    required: false
+    default: 'auto'
+  max_iterations:
+    description: 'Maximum iteration limit for safety'
+    required: false
+    default: '5'
+  quality_threshold:
+    description: 'Quality gate threshold configuration'
+    required: false
+    default: 'standard'
+  epic_context:
+    description: 'Epic progression context for alignment'
+    required: false
+    default: 'Epic #181 autonomous development'
+  debug_mode:
+    description: 'Enable detailed debug logging'
+    required: false
+    default: 'false'
+  force_new_iteration:
+    description: 'Force creation of new iteration (skip existing comment detection)'
+    required: false
+    default: 'false'
+  coverage_data_file:
+    description: 'Path to coverage results JSON file for AI analysis'
+    required: false
+    default: 'TestResults/coverage_results.json'
+  coverage_delta_file:
+    description: 'Path to coverage delta JSON file for baseline comparison'
+    required: false
+    default: 'TestResults/coverage_delta.json'
+  coverage_trends_file:
+    description: 'Path to coverage trends JSON file for historical analysis'
+    required: false
+    default: 'TestResults/health_trends.json'
+
+outputs:
+  iteration_count:
+    description: 'Current iteration number after processing'
+    value: ${{ steps.orchestrate.outputs.iteration_count }}
+  pr_status:
+    description: 'Updated PR status recommendation (draft/ready/approved)'
+    value: ${{ steps.orchestrate.outputs.pr_status }}
+  todo_summary:
+    description: 'Current to-do list summary in JSON format'
+    value: ${{ steps.orchestrate.outputs.todo_summary }}
+  quality_gates:
+    description: 'Quality gate status assessment'
+    value: ${{ steps.orchestrate.outputs.quality_gates }}
+  next_actions:
+    description: 'Recommended next actions for PR progression'
+    value: ${{ steps.orchestrate.outputs.next_actions }}
+  epic_progress:
+    description: 'Epic progression update and alignment status'
+    value: ${{ steps.orchestrate.outputs.epic_progress }}
+  comment_updated:
+    description: 'Whether existing comment was updated (true/false)'
+    value: ${{ steps.orchestrate.outputs.comment_updated }}
+  blocking_issues:
+    description: 'Critical blocking issues preventing merge'
+    value: ${{ steps.orchestrate.outputs.blocking_issues }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Validate Iterative Review Configuration
+      id: validate
+      shell: bash
+      env:
+        PR_NUMBER: ${{ inputs.pr_number }}
+        MAX_ITERATIONS: ${{ inputs.max_iterations }}
+        ITERATION_TRIGGER: ${{ inputs.iteration_trigger }}
+        DEBUG_MODE: ${{ inputs.debug_mode }}
+      run: |
+        set -euo pipefail
+
+        echo "🔍 Validating iterative review configuration..."
+
+        # Validate PR number
+        if [[ ! "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+          echo "❌ Invalid PR number: $PR_NUMBER"
+          echo "error_details=Invalid PR number format" >> "$GITHUB_OUTPUT"
+          exit 1
+        fi
+
+        # Validate max iterations
+        if [[ ! "$MAX_ITERATIONS" =~ ^[0-9]+$ ]] || [[ "$MAX_ITERATIONS" -lt 1 ]] || [[ "$MAX_ITERATIONS" -gt 10 ]]; then
+          echo "❌ Invalid max iterations: $MAX_ITERATIONS (must be 1-10)"
+          echo "error_details=Invalid max iterations range" >> "$GITHUB_OUTPUT"
+          exit 1
+        fi
+
+        # Validate iteration trigger
+        if [[ "$ITERATION_TRIGGER" != "auto" && "$ITERATION_TRIGGER" != "manual" ]]; then
+          echo "❌ Invalid iteration trigger: $ITERATION_TRIGGER (must be auto or manual)"
+          echo "error_details=Invalid iteration trigger mode" >> "$GITHUB_OUTPUT"
+          exit 1
+        fi
+
+        echo "✅ Configuration validation successful"
+        echo "validated=true" >> "$GITHUB_OUTPUT"
+
+    - name: Validate Coverage File Availability
+      id: validate-coverage
+      shell: bash
+      env:
+        COVERAGE_DATA_FILE: ${{ inputs.coverage_data_file }}
+        COVERAGE_DELTA_FILE: ${{ inputs.coverage_delta_file }}
+        COVERAGE_TRENDS_FILE: ${{ inputs.coverage_trends_file }}
+        DEBUG_MODE: ${{ inputs.debug_mode }}
+      run: |
+        set -euo pipefail
+
+        echo "📊 Validating coverage file availability..."
+
+        # Check for coverage data file
+        if [[ -f "$COVERAGE_DATA_FILE" ]]; then
+          echo "✅ Coverage data file found: $COVERAGE_DATA_FILE"
+          echo "coverage_data_available=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "⚠️ Coverage data file not found: $COVERAGE_DATA_FILE"
+          echo "coverage_data_available=false" >> "$GITHUB_OUTPUT"
+        fi
+
+        # Check for coverage delta file
+        if [[ -f "$COVERAGE_DELTA_FILE" ]]; then
+          echo "✅ Coverage delta file found: $COVERAGE_DELTA_FILE"
+          echo "coverage_delta_available=true" >> "$GITHUB_OUTPUT"
+
+          # Validate JSON structure of delta file
+          if command -v jq >/dev/null 2>&1; then
+            if jq empty "$COVERAGE_DELTA_FILE" 2>/dev/null; then
+              echo "✅ Coverage delta JSON structure valid"
+              echo "delta_json_valid=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "⚠️ Coverage delta JSON structure invalid"
+              echo "delta_json_valid=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "delta_json_valid=unknown" >> "$GITHUB_OUTPUT"
+          fi
+        else
+          echo "⚠️ Coverage delta file not found: $COVERAGE_DELTA_FILE"
+          echo "coverage_delta_available=false" >> "$GITHUB_OUTPUT"
+          echo "delta_json_valid=false" >> "$GITHUB_OUTPUT"
+        fi
+
+        # Check for coverage trends file (optional)
+        if [[ -f "$COVERAGE_TRENDS_FILE" ]]; then
+          echo "✅ Coverage trends file found: $COVERAGE_TRENDS_FILE"
+          echo "coverage_trends_available=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "📝 Coverage trends file not found: $COVERAGE_TRENDS_FILE (optional)"
+          echo "coverage_trends_available=false" >> "$GITHUB_OUTPUT"
+        fi
+
+        # Overall coverage integration status
+        if [[ "${{ steps.validate-coverage.outputs.coverage_data_available }}" == "true" && "${{ steps.validate-coverage.outputs.coverage_delta_available }}" == "true" ]]; then
+          echo "coverage_integration_ready=true" >> "$GITHUB_OUTPUT"
+          echo "✅ Coverage integration ready for AI analysis"
+        else
+          echo "coverage_integration_ready=false" >> "$GITHUB_OUTPUT"
+          echo "⚠️ Coverage integration incomplete - some files missing"
+
+          # Generate minimal fallback coverage files for edge case handling
+          echo "🔧 Generating fallback coverage files for edge case resilience..."
+
+          # Create minimal coverage_delta.json if missing
+          if [[ ! -f "$COVERAGE_DELTA_FILE" ]]; then
+            mkdir -p "$(dirname "$COVERAGE_DELTA_FILE")"
+            cat > "$COVERAGE_DELTA_FILE" << EOF
+{
+  "current_coverage": 0,
+  "baseline_coverage": 0,
+  "coverage_delta": 0.00,
+  "coverage_trend": "unavailable",
+  "base_ref": "develop",
+  "base_sha": "unknown",
+  "run_number": 0,
+  "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "baseline_source": "fallback",
+  "baseline_unavailable": true,
+  "notes": "Fallback coverage delta generated by iterative-ai-review action for edge case handling"
+}
+EOF
+            echo "✅ Fallback coverage delta file created"
+          fi
+
+          # Create minimal coverage_data.json if missing
+          if [[ ! -f "$COVERAGE_DATA_FILE" ]]; then
+            mkdir -p "$(dirname "$COVERAGE_DATA_FILE")"
+            cat > "$COVERAGE_DATA_FILE" << EOF
+{
+  "summary": {
+    "line_coverage": 0,
+    "branch_coverage": 0,
+    "method_coverage": 0
+  },
+  "modules": [],
+  "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "notes": "Fallback coverage data generated by iterative-ai-review action for edge case handling"
+}
+EOF
+            echo "✅ Fallback coverage data file created"
+          fi
+
+          echo "coverage_integration_ready=fallback" >> "$GITHUB_OUTPUT"
+          echo "🔧 Coverage integration using fallback data for resilience"
+        fi
+
+    - name: Load Historical Context
+      id: load-context
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        PR_NUMBER: ${{ inputs.pr_number }}
+        DEBUG_MODE: ${{ inputs.debug_mode }}
+      run: |
+        set -euo pipefail
+
+        echo "📚 Loading historical context for PR #$PR_NUMBER..."
+
+        # Source the iteration tracker functions
+        source ${{ github.action_path }}/src/iteration-tracker.js
+
+        # Initialize workspace
+        if ! initialize_iteration_workspace; then
+          echo "❌ Failed to initialize iteration workspace"
+          exit 1
+        fi
+
+        # Load existing iteration state
+        if ! load_iteration_context "$PR_NUMBER"; then
+          echo "⚠️ No existing context found, starting fresh iteration"
+          echo "iteration_count=1" >> "$GITHUB_OUTPUT"
+          echo "historical_context={}" >> "$GITHUB_OUTPUT"
+          echo "current_todo_list=[]" >> "$GITHUB_OUTPUT"
+          echo "previous_iterations=[]" >> "$GITHUB_OUTPUT"
+        fi
+
+        echo "✅ Historical context loaded successfully"
+
+    - name: Extract Enhanced PR Context
+      id: pr-context
+      uses: ./.github/actions/shared/extract-pr-context
+      with:
+        github-token: ${{ inputs.github_token }}
+
+    - name: Check for Existing Iterative Review Comment
+      id: comment-check
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        PR_NUMBER: ${{ inputs.pr_number }}
+        FORCE_NEW_ITERATION: ${{ inputs.force_new_iteration }}
+      run: |
+        set -euo pipefail
+
+        echo "🔍 Checking for existing iterative review comment..."
+
+        # Source comment manager functions
+        source ${{ github.action_path }}/src/comment-manager.js
+
+        # Check for existing iterative review comment
+        if detect_existing_iterative_comment "$PR_NUMBER"; then
+          if [[ "$FORCE_NEW_ITERATION" == "true" ]]; then
+            echo "🔄 Forcing new iteration despite existing comment"
+            echo "existing_comment=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "📝 Found existing iterative review comment"
+            echo "existing_comment=true" >> "$GITHUB_OUTPUT"
+          fi
+        else
+          echo "🆕 No existing iterative review comment found"
+          echo "existing_comment=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Orchestrate Iterative AI Review
+      id: orchestrate
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        OPENAI_API_KEY: ${{ inputs.openai_api_key }}
+        PR_NUMBER: ${{ inputs.pr_number }}
+        ITERATION_TRIGGER: ${{ inputs.iteration_trigger }}
+        MAX_ITERATIONS: ${{ inputs.max_iterations }}
+        QUALITY_THRESHOLD: ${{ inputs.quality_threshold }}
+        EPIC_CONTEXT: ${{ inputs.epic_context }}
+        DEBUG_MODE: ${{ inputs.debug_mode }}
+        # Context from previous steps
+        ITERATION_COUNT: ${{ steps.load-context.outputs.iteration_count }}
+        HISTORICAL_CONTEXT: ${{ steps.load-context.outputs.historical_context }}
+        CURRENT_TODO_LIST: ${{ steps.load-context.outputs.current_todo_list }}
+        PREVIOUS_ITERATIONS: ${{ steps.load-context.outputs.previous_iterations }}
+        EXISTING_COMMENT: ${{ steps.comment-check.outputs.existing_comment }}
+        # PR context from extract-pr-context
+        PR_AUTHOR: ${{ steps.pr-context.outputs.pr_author }}
+        SOURCE_BRANCH: ${{ steps.pr-context.outputs.source_branch }}
+        TARGET_BRANCH: ${{ steps.pr-context.outputs.target_branch }}
+        ISSUE_REF: ${{ steps.pr-context.outputs.issue_ref }}
+        CHANGED_FILES_COUNT: ${{ steps.pr-context.outputs.changed_files_count }}
+        LINES_CHANGED: ${{ steps.pr-context.outputs.lines_changed }}
+        # Coverage context files for template injection
+        COVERAGE_DATA_FILE: ${{ inputs.coverage_data_file }}
+        COVERAGE_DELTA_FILE: ${{ inputs.coverage_delta_file }}
+        COVERAGE_TRENDS_FILE: ${{ inputs.coverage_trends_file }}
+      run: |
+        set -euo pipefail
+
+        echo "🎯 Orchestrating iterative AI review..."
+
+        # Source the main orchestration logic
+        source ${{ github.action_path }}/src/main.js
+
+        # Execute complete iterative review workflow
+        if ! execute_iterative_review_workflow; then
+          echo "❌ Iterative review workflow failed"
+          echo "error_details=Iterative review workflow execution failed" >> "$GITHUB_OUTPUT"
+          exit 1
+        fi
+
+        echo "✅ Iterative AI review completed successfully"
+
+    - name: Handle Iterative Review Failure
+      if: failure() && steps.validate.outputs.validated == 'true'
+      uses: ./.github/actions/handle-ai-analysis-failure
+      with:
+        github-token: ${{ inputs.github_token }}
+        analysis-type: 'Iterative AI Review'
+        analysis-emoji: '🔄'
+        analysis-name: 'Iterative AI Code Review'
+        run-number: ${{ github.run_number }}
+        run-id: ${{ github.run_id }}

@@ -4,10 +4,10 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using Zarichney.Cookbook.Orders;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 using Zarichney.Services.Sessions;
 
-namespace Zarichney.Server.Tests.Unit.Services.Sessions;
+namespace Zarichney.Tests.Unit.Services.Sessions;
 
 /// <summary>
 /// Comprehensive unit tests for SessionCleanupService covering background service functionality,

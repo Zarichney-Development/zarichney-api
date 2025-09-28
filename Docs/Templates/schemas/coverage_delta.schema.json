@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://zarichney.dev/schemas/coverage_delta.schema.json",
+  "title": "CoverageDelta",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "current_coverage": { "type": "number", "minimum": 0, "maximum": 100 },
+    "baseline_coverage": { "type": "number", "minimum": 0, "maximum": 100 },
+    "coverage_delta": { "type": "number", "minimum": -100, "maximum": 100 },
+    "coverage_trend": { "type": "string", "enum": ["improved", "decreased", "stable"] },
+    "base_ref": { "type": "string" },
+    "base_sha": { "type": "string" },
+    "run_number": { "type": "integer", "minimum": 0 },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "baseline_source": {
+      "type": "string",
+      "enum": [
+        "threshold",
+        "explicit_input",
+        "baseline_file",
+        "base_branch_measurement",
+        "unknown"
+      ]
+    },
+    "baseline_unavailable": { "type": "boolean" },
+    "notes": { "type": "string" }
+  },
+  "required": [
+    "current_coverage",
+    "baseline_coverage",
+    "coverage_delta",
+    "coverage_trend",
+    "timestamp"
+  ]
+}
+

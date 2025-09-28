@@ -1,0 +1,187 @@
+name: 'Path Analysis'
+description: 'Intelligent path-based change detection and categorization for workflow optimization'
+author: 'Zarichney Development'
+
+inputs:
+  base_ref:
+    description: 'Base branch reference for comparison (defaults to branch-aware logic)'
+    required: false
+    default: ''
+  change_threshold:
+    description: 'Minimum file changes to trigger category'
+    required: false
+    default: '1'
+  category_rules:
+    description: 'JSON configuration for path categorization patterns'
+    required: false
+    default: ''
+
+outputs:
+  has_backend_changes:
+    description: 'True if backend code files modified'
+    value: ${{ steps.generate-summary.outputs.has_backend_changes }}
+  has_frontend_changes:
+    description: 'True if frontend code files modified'
+    value: ${{ steps.generate-summary.outputs.has_frontend_changes }}
+  has_docs_changes:
+    description: 'True if documentation files modified'
+    value: ${{ steps.generate-summary.outputs.has_docs_changes }}
+  has_config_changes:
+    description: 'True if configuration files modified'
+    value: ${{ steps.generate-summary.outputs.has_config_changes }}
+  change_summary:
+    description: 'Detailed JSON summary of all changes by category'
+    value: ${{ steps.generate-summary.outputs.change_summary }}
+  total_changes:
+    description: 'Total number of files changed'
+    value: ${{ steps.generate-summary.outputs.total_changes }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Determine base reference
+      id: determine-base-ref
+      shell: bash
+      run: |
+        # Extract base reference determination logic from build.yml lines 57-68
+        # Supports feature→epic→develop→main progression patterns
+
+        BASE_REF="${{ inputs.base_ref }}"
+
+        if [[ -n "$BASE_REF" ]]; then
+          echo "Using provided base reference: $BASE_REF"
+          echo "base-ref=$BASE_REF" >> $GITHUB_ENV
+        elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          BASE_REF="origin/${{ github.event.pull_request.base.ref }}"
+          echo "Pull request detected - using base: $BASE_REF"
+          echo "base-ref=$BASE_REF" >> $GITHUB_ENV
+        elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref_name }}" == "main" ]]; then
+          BASE_REF="HEAD~1"
+          echo "Push to main detected - using: $BASE_REF"
+          echo "base-ref=$BASE_REF" >> $GITHUB_ENV
+        elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref_name }}" == "develop" ]]; then
+          BASE_REF="origin/main"
+          echo "Push to develop detected - using: $BASE_REF"
+          echo "base-ref=$BASE_REF" >> $GITHUB_ENV
+        else
+          BASE_REF="origin/main"
+          echo "Default case - using: $BASE_REF"
+          echo "base-ref=$BASE_REF" >> $GITHUB_ENV
+        fi
+
+        echo "Resolved base reference: $BASE_REF"
+
+    - name: Execute path change detection
+      id: check-paths
+      uses: ./.github/actions/shared/check-paths
+      with:
+        base-ref: ${{ env.base-ref }}
+
+    - name: Generate enhanced summary
+      id: generate-summary
+      shell: bash
+      run: |
+        # Validate input parameters
+        THRESHOLD="${{ inputs.change_threshold }}"
+        if ! [[ "$THRESHOLD" =~ ^[0-9]+$ ]] || [[ "$THRESHOLD" -lt 1 ]]; then
+          echo "Invalid change_threshold, using default: 1"
+          THRESHOLD=1
+        fi
+
+        # Get outputs from check-paths action
+        BACKEND_CHANGED="${{ steps.check-paths.outputs.backend-changed }}"
+        FRONTEND_CHANGED="${{ steps.check-paths.outputs.frontend-changed }}"
+        DOCS_CHANGED="${{ steps.check-paths.outputs.docs-only }}"
+        TESTS_CHANGED="${{ steps.check-paths.outputs.tests-changed }}"
+        PIPELINE_CHANGED="${{ steps.check-paths.outputs.pipeline-changed }}"
+
+        # Get changed components summary (categories) from check-paths
+        CHANGED_FILES_SUMMARY="${{ steps.check-paths.outputs.changed-files }}"
+
+        # Count changed categories by splitting the summary string
+        CATEGORIES_CHANGED=0
+        if [[ -n "$CHANGED_FILES_SUMMARY" ]]; then
+          # Count words in the summary (each represents a changed category)
+          CATEGORY_COUNT=$(echo "$CHANGED_FILES_SUMMARY" | wc -w)
+          # For category changes, we'll use the number of changed categories
+          CATEGORIES_CHANGED=$CATEGORY_COUNT
+        fi
+
+        # Apply change threshold (based on number of changed categories)
+        HAS_BACKEND_CHANGES="false"
+        HAS_FRONTEND_CHANGES="false"
+        HAS_DOCS_CHANGES="false"
+        HAS_CONFIG_CHANGES="false"
+
+        if [[ "$BACKEND_CHANGED" == "true" && "$CATEGORIES_CHANGED" -ge "$THRESHOLD" ]]; then
+          HAS_BACKEND_CHANGES="true"
+        fi
+
+        if [[ "$FRONTEND_CHANGED" == "true" && "$CATEGORIES_CHANGED" -ge "$THRESHOLD" ]]; then
+          HAS_FRONTEND_CHANGES="true"
+        fi
+
+        # For docs, we check if docs changed
+        if [[ "$DOCS_CHANGED" == "true" ]]; then
+          HAS_DOCS_CHANGES="true"
+        fi
+
+        # Config changes include pipeline changes and config files
+        if [[ "$PIPELINE_CHANGED" == "true" || "$CHANGED_FILES_SUMMARY" == *"config"* ]]; then
+          HAS_CONFIG_CHANGES="true"
+        fi
+
+        # Compute total files changed using resolved base ref semantics
+        BASE_REF_ENV="${{ env.base-ref }}"
+        RESOLVED_BASE_REF="$BASE_REF_ENV"
+        if [[ "$BASE_REF_ENV" == "HEAD~1" ]]; then
+          if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+            RESOLVED_BASE_REF="HEAD~1"
+          else
+            # Empty tree object (shows all files as changed)
+            RESOLVED_BASE_REF="4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+          fi
+        elif [[ "$BASE_REF_ENV" == origin/* ]]; then
+          LOCAL_BASE_REF="${BASE_REF_ENV#origin/}"
+          git fetch origin "$LOCAL_BASE_REF" >/dev/null 2>&1 || true
+          RESOLVED_BASE_REF="$BASE_REF_ENV"
+        else
+          if git show-ref --verify --quiet "refs/heads/$BASE_REF_ENV" 2>/dev/null; then
+            RESOLVED_BASE_REF="$BASE_REF_ENV"
+          else
+            RESOLVED_BASE_REF="HEAD~1"
+          fi
+        fi
+
+        if [[ "$RESOLVED_BASE_REF" == "4b825dc642cb6eb9a060e54bf8d69288fbee4904" ]]; then
+          TOTAL_FILES_CHANGED=$(git ls-tree -r --name-only HEAD | sed '/^$/d' | wc -l)
+        else
+          TOTAL_FILES_CHANGED=$(git diff --name-only "$RESOLVED_BASE_REF" HEAD 2>/dev/null | sed '/^$/d' | wc -l)
+        fi
+
+        # Generate detailed JSON change summary
+        TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+        CHANGE_SUMMARY="{\"categories\":{\"backend\":{\"changed\":$HAS_BACKEND_CHANGES,\"description\":\"Backend code files (.cs, .sln, .csproj)\"},\"frontend\":{\"changed\":$HAS_FRONTEND_CHANGES,\"description\":\"Frontend code files (Angular, TypeScript)\"},\"documentation\":{\"changed\":$HAS_DOCS_CHANGES,\"description\":\"Documentation files (.md, .txt)\"},\"configuration\":{\"changed\":$HAS_CONFIG_CHANGES,\"description\":\"Configuration and pipeline files\"},\"tests\":{\"changed\":$TESTS_CHANGED,\"description\":\"Test files and test configuration\"}},\"summary\":{\"total_categories_changed\":$CATEGORIES_CHANGED,\"total_files_changed\":$TOTAL_FILES_CHANGED,\"change_threshold\":$THRESHOLD,\"raw_summary\":\"$CHANGED_FILES_SUMMARY\"},\"metadata\":{\"base_ref\":\"${{ env.base-ref }}\",\"analysis_timestamp\":\"$TIMESTAMP\"}}"
+
+        # Set outputs
+        echo "has_backend_changes=$HAS_BACKEND_CHANGES" >> $GITHUB_OUTPUT
+        echo "has_frontend_changes=$HAS_FRONTEND_CHANGES" >> $GITHUB_OUTPUT
+        echo "has_docs_changes=$HAS_DOCS_CHANGES" >> $GITHUB_OUTPUT
+        echo "has_config_changes=$HAS_CONFIG_CHANGES" >> $GITHUB_OUTPUT
+        echo "total_changes=$TOTAL_FILES_CHANGED" >> $GITHUB_OUTPUT
+
+        # Format JSON for output (remove newlines for GitHub Actions compatibility)
+        CHANGE_SUMMARY_COMPACT=$(echo "$CHANGE_SUMMARY" | jq -c .)
+        echo "change_summary=$CHANGE_SUMMARY_COMPACT" >> $GITHUB_OUTPUT
+
+        # Display results for debugging
+        echo "🔍 Path Analysis Results:"
+        echo "  - Backend changes: $HAS_BACKEND_CHANGES"
+        echo "  - Frontend changes: $HAS_FRONTEND_CHANGES"
+        echo "  - Documentation changes: $HAS_DOCS_CHANGES"
+        echo "  - Configuration changes: $HAS_CONFIG_CHANGES"
+        echo "  - Total files changed: $TOTAL_FILES_CHANGED"
+        echo "  - Base reference: ${{ env.base-ref }}"
+        echo ""
+        echo "📊 Change Summary JSON:"
+        echo "$CHANGE_SUMMARY" | jq .

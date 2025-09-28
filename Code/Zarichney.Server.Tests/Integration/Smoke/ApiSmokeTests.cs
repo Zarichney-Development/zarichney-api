@@ -3,11 +3,11 @@ using Refit;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Client.Contracts;
-using Zarichney.Server.Tests.Framework.Attributes;
-using Zarichney.Server.Tests.Framework.Fixtures;
+using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Fixtures;
 using Zarichney.Services.Status;
 
-namespace Zarichney.Server.Tests.Integration.Smoke;
+namespace Zarichney.Tests.Integration.Smoke;
 
 /// <summary>
 /// Smoke tests for verifying that the most critical parts of the API are working.

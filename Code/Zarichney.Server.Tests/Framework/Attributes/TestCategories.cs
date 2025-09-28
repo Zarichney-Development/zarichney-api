@@ -1,15 +1,15 @@
-namespace Zarichney.Server.Tests.Framework.Attributes;
+namespace Zarichney.Tests.Framework.Attributes;
 
 /// <summary>
 /// Constants for test categories and traits.
 /// These are used to categorize tests and declare dependencies.
-/// 
+///
 /// Usage:
 /// - Use [Trait(TestCategories.Category, TestCategories.Unit)] to mark a test as a unit test
 /// - Use [Trait(TestCategories.Feature, TestCategories.Auth)] to associate with a feature area
 /// - Use [Trait(TestCategories.Dependency, TestCategories.Database)] to declare dependencies
 /// - Use [Trait(TestCategories.Mutability, TestCategories.ReadOnly)] to indicate if a test changes state
-/// 
+///
 /// For dependency-aware tests, use:
 /// - [DependencyFact] instead of [Fact] - this will properly skip when dependencies are missing
 /// </summary>

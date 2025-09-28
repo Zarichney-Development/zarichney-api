@@ -61,7 +61,6 @@ Before analyzing any security implications, you MUST perform comprehensive secur
    - Read GitHub issue labels associated with {{ISSUE_REF}} to understand security and automation context:
      - **Automation Labels** (`automation:ci-environment`, `automation:github-actions`): Understand CI/CD execution context and apply appropriate security analysis for automated environments
      - **Component Labels** (`component:security`, `component:backend-api`, `component:database`): Target security analysis to specific architectural areas with component-specific threat models
-     - **Epic Labels** (`epic:security-hardening`, `epic:performance-optimization`): Align security assessment with long-term strategic objectives and security initiatives
      - **Priority Labels** (`priority:critical`, `priority:high`): Adjust security analysis rigor and deployment decision thresholds based on strategic importance
      - **Quality Labels** (`quality:security`, `quality:vulnerability-management`): Focus security analysis on established security improvement objectives
 </context_ingestion>

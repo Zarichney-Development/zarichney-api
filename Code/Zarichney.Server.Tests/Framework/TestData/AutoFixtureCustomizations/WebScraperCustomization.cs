@@ -1,9 +1,9 @@
 using AutoFixture;
 using AutoFixture.Kernel;
 using Zarichney.Cookbook.Recipes;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 
-namespace Zarichney.Server.Tests.Framework.TestData.AutoFixtureCustomizations;
+namespace Zarichney.Tests.Framework.TestData.AutoFixtureCustomizations;
 
 /// <summary>
 /// AutoFixture customization for WebScraperService and related models.

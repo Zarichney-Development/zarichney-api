@@ -1,7 +1,7 @@
 using AutoFixture;
 using Microsoft.Graph;
 
-namespace Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
+namespace Zarichney.Tests.TestData.AutoFixtureCustomizations;
 
 /// <summary>
 /// AutoFixture customization for Microsoft Graph SDK objects.

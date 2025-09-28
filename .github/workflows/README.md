@@ -7,7 +7,7 @@
 ## 1. Purpose & Responsibility
 
 * **What it is:** Consolidated CI/CD pipeline architecture with intelligent branch-aware automation for build, test, analysis, deployment, and maintenance operations, designed to support the **12-agent orchestrated development workflow**.
-* **Key Responsibilities:** 
+* **Key Responsibilities:**
     * Unified build and test execution with integrated AI-powered analysis
     * Branch-aware conditional logic for appropriate analysis depth
     * Automated deployment with security gates and health checks
@@ -22,28 +22,28 @@
     * **deploy.yml** - Conditional deployment based on build results
     * **maintenance.yml** - Scheduled system maintenance and monitoring
     * **claude-dispatch.yml** - Remote agent execution with enhanced environment preparation supporting **strategic codebase manager coordination**
-    * **coverage-epic-automation.yml** - Automated test coverage improvement via **TestEngineer agent** (workflow_dispatch only) 
-    * **coverage-epic-scheduler.yml** - Intelligent scheduler that triggers coverage automation every 6 hours with **agent activity detection**
-    * **coverage-epic-merge-orchestrator.yml** - AI-powered consolidation of multiple coverage PRs with intelligent conflict resolution (manual dispatch)
+    * **testing-coverage-execution.yml** - Automated test coverage improvement via **TestEngineer agent** (workflow_dispatch only)
+    * **testing-coverage-scheduler.yml** - Intelligent scheduler that triggers coverage automation every 6 hours with **agent activity detection**
+    * **testing-coverage-merger.yml** - AI-powered consolidation of multiple coverage PRs with intelligent conflict resolution (manual dispatch)
 * **Branch-Aware Execution Logic:**
     * **Feature → Epic PRs**: Build + Test only (no AI analysis)
     * **Epic → Develop PRs**: Build + Test + Quality Analysis (Testing, Standards, Tech Debt)
     * **Any → Main PRs**: Build + Test + Quality + Security Analysis (Full AI suite)
-* **Core Workflow Dependencies:** 
+* **Core Workflow Dependencies:**
     ```
     build.yml (All PRs and pushes)
         ↓
     deploy.yml (Main branch only, after successful build)
-    
+
     maintenance.yml (Scheduled, independent)
-    
+
     claude-dispatch.yml (Repository dispatch, independent)
-    
-    coverage-epic-scheduler.yml (Scheduled, 4x daily)
+
+    testing-coverage-scheduler.yml (Scheduled, 4x daily)
         ↓
-    coverage-epic-automation.yml (Workflow dispatch only)
+    testing-coverage-execution.yml (Workflow dispatch only)
         ↓ (creates multiple coverage PRs)
-    coverage-epic-merge-orchestrator.yml (Manual dispatch, consolidates PRs)
+    testing-coverage-merger.yml (Manual dispatch, consolidates PRs)
     ```
 * **Concurrency Control:**
     * Automatic cancellation of previous runs when new commits are pushed
@@ -57,32 +57,32 @@
 ```mermaid
 graph TD
     A[Code Push/PR] --> B{Branch Target?}
-    
+
     B -->|Feature→Epic| C[Build + Test Only]
     B -->|Epic→Develop| D[Build + Test + Quality AI]
     B -->|Any→Main| E[Build + Test + Quality + Security AI]
-    
+
     C --> F[PR Feedback]
     D --> F
     E --> G{Main Push?}
-    
+
     G -->|Yes| H[deploy.yml]
     G -->|No| F
-    
+
     H --> I[Production]
-    
+
     J[Schedule] --> K[maintenance.yml]
     K --> L[Health Checks & Cleanup]
-    
-    M[Schedule 4x Daily] --> N[coverage-epic-scheduler.yml]
-    N --> O[coverage-epic-automation.yml]
+
+    M[Schedule 4x Daily] --> N[testing-coverage-scheduler.yml]
+    N --> O[testing-coverage-execution.yml]
     O --> P[Individual Coverage PRs]
-    
-    Q[Manual Dispatch] --> R[coverage-epic-merge-orchestrator.yml]
+
+    Q[Manual Dispatch] --> R[testing-coverage-merger.yml]
     P --> R
     R --> S[Consolidated Coverage PR]
     S --> D
-    
+
     style C fill:#90EE90
     style D fill:#87CEEB
     style E fill:#FFB6C1
@@ -117,19 +117,19 @@ graph TD
         * **Triggers:** Repository dispatch event (claude-dispatch)
         * **Critical Preconditions:** Valid dispatch event, GitHub token permissions
         * **Critical Postconditions:** Environment prepared with dependencies and tools, test baseline generated, results captured
-    * **coverage-epic-automation.yml**:
+    * **testing-coverage-execution.yml**:
         * **Purpose:** Automated test coverage improvement through AI-driven test generation
         * **Triggers:** Workflow dispatch only (triggered by scheduler or manually)
         * **Critical Preconditions:** Epic branch exists, test environment valid, Claude OAuth tokens configured
         * **Critical Postconditions:** Coverage improvements implemented, PR created for review
         * **Input Parameters:** scheduled_trigger, trigger_source, trigger_reason for tracking automation source
-    * **coverage-epic-scheduler.yml**:
+    * **testing-coverage-scheduler.yml**:
         * **Purpose:** Intelligent scheduler that checks repository activity and triggers coverage automation
         * **Triggers:** Scheduled 4x daily (every 6 hours) or manual dispatch with force option
         * **Critical Preconditions:** Repository access, workflow dispatch permissions
         * **Critical Postconditions:** Coverage automation triggered if activity detected (or forced)
         * **Intelligence:** Only triggers if commits within 72 hours, reducing unnecessary runs
-    * **coverage-epic-merge-orchestrator.yml**:
+    * **testing-coverage-merger.yml**:
         * **Purpose:** AI-powered consolidation of multiple coverage PRs with intelligent conflict resolution
         * **Triggers:** Manual dispatch only (workflow_dispatch with input parameters)
         * **Critical Preconditions:** Epic branch exists, multiple mergeable PRs available, Claude OAuth tokens configured
@@ -162,7 +162,7 @@ graph TD
     * OAuth authentication for Claude Max plan
     * Separate jobs for each analysis type with template-based prompts
     * Consistent prompt loading pattern: `cat .github/prompts/{type}.md` → placeholder replacement → Claude AI
-* **Coverage Epic Orchestration:**
+* **Testing Coverage Orchestration:**
     * **Three-tier architecture**: Scheduler → Automation → Merge Orchestration
     * **Conflict Resolution**: AI-powered merge conflict resolution using CoverageConflictResolver prompt
     * **Safety Constraints**: Production code changes limited to testability improvements only
@@ -189,35 +189,35 @@ graph TD
     ```bash
     # Trigger specific workflow manually
     gh workflow run "Build & Test"
-    
+
     # Monitor workflow status
     gh run list --workflow="build.yml" --limit 5
-    
+
     # View workflow run details
     gh run view <run-id> --log
-    
+
     # Check deployment status
     gh workflow view deploy.yml
-    
+
     # Test path filtering locally
     ./.github/scripts/test-path-filtering.sh
-    
-    # Coverage Epic Merge Orchestration
+
+    # Testing Coverage Merge Orchestration
     # Test with current 8-PR scenario (PRs 138-146)
-    gh workflow run "Coverage Epic Merge Orchestrator" \
+    gh workflow run "Testing Coverage Merge Orchestrator" \
       --field dry_run=true --field max_prs=8 \
       --field pr_label_filter="type: coverage,coverage,testing"
-    
+
     # Production consolidation of coverage PRs
-    gh workflow run "Coverage Epic Merge Orchestrator" \
+    gh workflow run "Testing Coverage Merge Orchestrator" \
       --field dry_run=false --field max_prs=8 \
       --field pr_label_filter="type: coverage,coverage,testing"
-    
+
     # Monitor large batch consolidation
     gh run view --log
-    
+
     # Verify PR discovery with flexible label matching
-    gh pr list --base epic/testing-coverage-to-90 --json number,labels \
+    gh pr list --base epic/testing-coverage --json number,labels \
       --jq '.[] | select(.labels[]?.name | test("type: coverage|coverage|testing")) | {number, labels: [.labels[].name]}'
     ```
 * **Common Pitfalls / Gotchas:**
@@ -244,7 +244,7 @@ graph TD
         * `validate-test-suite` - Test baseline validation
         * `check-paths` - Intelligent path filtering
     * [`.github/prompts/`](../prompts/README.md) - AI analysis prompt templates with placeholder system
-    * [`Docs/Development/CoverageEpicMergeOrchestration.md`](../../Docs/Development/CoverageEpicMergeOrchestration.md) - Comprehensive Coverage Epic Merge Orchestrator usage guide
+    * [`Docs/Development/TestingCoverageMergeOrchestration.md`](../../Docs/Development/TestingCoverageMergeOrchestration.md) - Comprehensive Testing Coverage Merge Orchestrator usage guide
     * [`Code/Zarichney.Server/`](../../Code/Zarichney.Server/README.md) - Backend application
     * [`Code/Zarichney.Website/`](../../Code/Zarichney.Website/README.md) - Frontend application
 * **External Service Dependencies:**
@@ -272,8 +272,8 @@ graph TD
 * **Logic Extraction:** Moving complex logic to `.github/scripts/` enables local testing and easier debugging
 * **Environment Preparation:** Enhanced claude-dispatch with full dependency restoration and test baseline generation for better AI context
 * **Tool Management:** Centralized .NET tool restoration in setup-environment action to prevent tool-related failures across all workflows
-* **Coverage Epic Architecture:** Split scheduled coverage automation into two workflows to resolve Claude Code action incompatibility with schedule events
-* **Coverage Epic Merge Orchestration:** Added AI-powered consolidation workflow to manage multiple simultaneous coverage PRs with intelligent conflict resolution
+* **Testing Coverage Architecture:** Split scheduled coverage automation into two workflows to resolve Claude Code action incompatibility with schedule events
+* **Testing Coverage Merge Orchestration:** Added AI-powered consolidation workflow to manage multiple simultaneous coverage PRs with intelligent conflict resolution
 * **12-Agent Development Integration:** Workflows designed to support the strategic codebase manager orchestration model with specialized agent coordination
 * **Agent-Triggered Automation:** Coverage epic automation specifically designed for TestEngineer agent execution with comprehensive environment preparation
 * **AI Conflict Resolution:** Implemented specialized CoverageConflictResolver prompt for safe test-focused merge conflict resolution
@@ -287,7 +287,7 @@ graph TD
 * **Deployment Rollback:** Automated rollback mechanism could enhance reliability
 * **Metrics Collection:** Workflow performance metrics would aid optimization
 * **Coverage Scheduler Enhancement:** Could add more sophisticated activity detection and PR conflict avoidance
-* **Orchestrator Automation:** Future integration of coverage-epic-scheduler with merge orchestrator for fully automated consolidation
+* **Orchestrator Automation:** Future integration of testing-coverage-scheduler with merge orchestrator for fully automated consolidation
 * **Advanced Conflict Resolution:** Enhanced AI prompts for more complex architectural conflicts requiring minimal human intervention
 
 ---

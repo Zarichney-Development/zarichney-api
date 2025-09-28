@@ -2,7 +2,7 @@ using Zarichney.Services.Status;
 using FluentAssertions;
 using Xunit;
 
-namespace Zarichney.Server.Tests.Unit.Services.Status;
+namespace Zarichney.Tests.Unit.Services.Status;
 
 public class ServiceStatusInfoTests
 {

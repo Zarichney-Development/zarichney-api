@@ -21,7 +21,7 @@ This guide provides step-by-step instructions for migrating from the current ad-
 
 #### **GitHub Defaults (Keep with Updates):**
 - `bug` → Update description and color per standards
-- `documentation` → Rename to align with `type: docs` 
+- `documentation` → Rename to align with `type: docs`
 - `enhancement` → Keep as `type: enhancement`
 - Cleanup: `duplicate`, `invalid`, `question`, `wontfix`, `help wanted`
 
@@ -29,7 +29,7 @@ This guide provides step-by-step instructions for migrating from the current ad-
 - `ai-task` → Remove (redundant with automation labels)
 - `type:refactoring` → Consolidate with `refactor` as `type: refactor`
 - `module:config`, `module:startup` → Replace with `component:` labels
-- `epic` → Replace with specific `epic:` labels 
+- `epic` → Replace with specific `epic:` labels
 - Priority: `high-priority`, `medium-priority` → Standardize as `priority:`
 - Technical: `testing`, `ci-cd`, `architecture` → Align with new taxonomy
 
@@ -43,7 +43,7 @@ Create all 52 new labels without removing existing ones. This allows gradual tra
 
 #### **Priority Order:**
 1. **Core Workflow Labels** (Type, Priority, Effort, Status - 27 labels)
-2. **Component Labels** (6 labels)  
+2. **Component Labels** (6 labels)
 3. **Epic Coordination Labels** (Epic + Coverage Phase - 9 labels)
 4. **Automation Labels** (6 labels)
 5. **Supporting Labels** (Quality + Technology - 8 labels)
@@ -54,19 +54,19 @@ Apply new label system to the 15 GitHub issues from outstanding_issues.md analys
 #### **Security Issues (Critical Priority):**
 ```bash
 # Issue #1: Script Security Hardening
-type: security, priority: critical, effort: medium, component: scripts, epic: security-hardening
+type: security, priority: critical, effort: medium, component: scripts
 
-# Issue #2: Process Execution Security  
-type: security, priority: critical, effort: large, component: api, epic: security-hardening
+# Issue #2: Process Execution Security
+type: security, priority: critical, effort: large, component: api
 
 # Issue #3: Network Security & SSRF Prevention
-type: security, priority: critical, effort: medium, component: api, epic: security-hardening
+type: security, priority: critical, effort: medium, component: api
 ```
 
 #### **Architecture Issues (High Priority):**
 ```bash
 # Issue #4: Logging Architecture Modernization
-type: refactor, priority: high, effort: xl, component: api, architecture, epic: architecture-modernization
+type: refactor, priority: high, effort: xl, component: api, architecture
 
 # Issue #5: Test Framework Configuration Externalization
 type: refactor, priority: medium, effort: large, component: testing, architecture
@@ -83,7 +83,7 @@ type: enhancement, priority: medium, effort: medium, component: scripts, technic
 # Issue #8: Configuration & Security Audit
 type: security, priority: medium, effort: medium, component: api, technical-debt
 
-# Issue #9: Testing Standards & Documentation  
+# Issue #9: Testing Standards & Documentation
 type: docs, priority: medium, effort: medium, component: docs, component: testing
 
 # Issue #10: Script Quality & JSON Security
@@ -100,15 +100,15 @@ type: enhancement, priority: low, effort: [varies], component: [varies], epic: f
 Gradually migrate existing open issues to new labeling system.
 
 #### **Migration Priority:**
-1. **Epic Issues First:** Backend Coverage Epic (#94) and related tasks
+1. **Epic Issues First:** Backend Coverage Excellence and related tasks
 2. **Active Issues:** Currently in progress or review
 3. **Backlog Issues:** Planned work and future considerations
 4. **Closed Issues:** Migrate only if frequently referenced
 
-#### **Epic #94 Example Migration:**
+#### **Backend Coverage Excellence Example Migration:**
 ```bash
 # Current: Various testing-related labels
-# New: epic: coverage-90, effort: epic, status: epic-active, priority: high, 
+# New: epic: coverage-excellence, effort: epic, status: epic-active, priority: high,
 #      component: testing, automation: ci-ready
 ```
 
@@ -179,12 +179,10 @@ gh label create "coverage: phase-1" --color e6f3ff --description "Foundation (14
 gh label create "coverage: phase-2" --color b3d9ff --description "Growth (20% → 35%) - Integration depth"
 gh label create "coverage: phase-3" --color 80bfff --description "Maturity (35% → 50%) - Edge cases"
 gh label create "coverage: phase-4" --color 4da6ff --description "Excellence (50% → 75%) - Complex scenarios"
-gh label create "coverage: phase-5" --color 0366d6 --description "Mastery (75% → 90%) - Comprehensive coverage"
+gh label create "coverage: phase-5" --color 0366d6 --description "Mastery (Advanced → Comprehensive) - Comprehensive coverage excellence"
 
 # Epic Labels
-gh label create "epic: coverage-90" --color 8b5cf6 --description "Backend Test Coverage to 90% (Issue #94)"
-gh label create "epic: security-hardening" --color 7c3aed --description "Security vulnerability remediation"
-gh label create "epic: architecture-modernization" --color 6d28d9 --description "Architectural improvements and refactoring"
+gh label create "epic: coverage-excellence" --color 8b5cf6 --description "Backend Test Coverage Excellence Initiative"
 gh label create "epic: future-initiative" --color 5b21b6 --description "Placeholder for future long-term work"
 
 # Automation Labels
@@ -213,10 +211,10 @@ gh label create "tech: github-actions" --color 2088ff --description "CI/CD workf
 Example command for applying multiple labels:
 ```bash
 # Issue #1: Script Security Hardening
-gh issue edit 1 --add-label "type: security" --add-label "priority: critical" --add-label "effort: medium" --add-label "component: scripts" --add-label "epic: security-hardening"
+gh issue edit 1 --add-label "type: security" --add-label "priority: critical" --add-label "effort: medium" --add-label "component: scripts"
 
 # Issue #94: Backend Coverage Epic (if exists)
-gh issue edit 94 --add-label "effort: epic" --add-label "status: epic-active" --add-label "epic: coverage-90" --add-label "priority: high" --add-label "component: testing"
+gh issue edit 94 --add-label "effort: epic" --add-label "status: epic-active" --add-label "epic: testing-coverage" --add-label "priority: high" --add-label "component: testing"
 ```
 
 ### **Phase 3: Bulk Migration Script**
@@ -233,7 +231,7 @@ apply_core_labels() {
     local priority_label=$3
     local effort_label=$4
     local component_label=$5
-    
+
     gh issue edit $issue_id \
         --add-label "type: $type_label" \
         --add-label "priority: $priority_label" \
@@ -251,7 +249,7 @@ apply_core_labels 2 "feature" "high" "large" "api"
 ```bash
 # Remove redundant labels after migration
 gh label delete "ai-task"
-gh label delete "type:refactoring"  
+gh label delete "type:refactoring"
 gh label delete "module:config"
 gh label delete "module:startup"
 gh label delete "high-priority"
@@ -267,7 +265,7 @@ gh label edit "enhancement" --color a2eeef --description "Improvement to existin
 ### **Migration Checklist:**
 - [ ] All 52 new labels created with correct colors
 - [ ] Outstanding technical debt issues (15) properly labeled
-- [ ] Epic #94 and sub-tasks labeled for coordination
+- [ ] Coverage Excellence initiative and sub-tasks labeled for coordination
 - [ ] Existing open issues migrated to new system
 - [ ] Legacy labels removed or updated
 - [ ] Label descriptions are clear and actionable

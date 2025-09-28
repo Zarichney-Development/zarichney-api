@@ -8,7 +8,7 @@ using Moq;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Reflection;
 
-namespace Zarichney.Server.Tests.Framework.Mocks.Factories;
+namespace Zarichney.Tests.Framework.Mocks.Factories;
 
 /// <summary>
 /// Factory for creating Swagger/OpenAPI mock objects for testing operation filters.

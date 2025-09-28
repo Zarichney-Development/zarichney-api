@@ -2,7 +2,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 
-namespace Zarichney.Server.Tests.Framework.Helpers;
+namespace Zarichney.Tests.Framework.Helpers;
 
 /// <summary>
 /// Helper class for authentication-related test functionality.

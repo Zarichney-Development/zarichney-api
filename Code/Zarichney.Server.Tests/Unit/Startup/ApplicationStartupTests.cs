@@ -6,7 +6,7 @@ using Zarichney.Services.Email;
 using Zarichney.Services.Status;
 using Zarichney.Startup;
 
-namespace Zarichney.Server.Tests.Unit.Startup;
+namespace Zarichney.Tests.Unit.Startup;
 
 /// <summary>
 /// Unit tests for ApplicationStartup covering core application configuration and pipeline setup.

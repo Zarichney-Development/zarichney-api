@@ -3,7 +3,7 @@ using Xunit;
 using Zarichney.Services.Email;
 using Zarichney.Services.Status;
 
-namespace Zarichney.Server.Tests.Unit.Services.Email;
+namespace Zarichney.Tests.Unit.Services.Email;
 
 /// <summary>
 /// Unit tests for MicrosoftGraphAvailabilityValidator covering configuration validation logic

@@ -2,7 +2,7 @@ using AutoFixture;
 using Stripe;
 using Stripe.Checkout;
 
-namespace Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
+namespace Zarichney.Tests.TestData.AutoFixtureCustomizations;
 
 /// <summary>
 /// AutoFixture customization for Stripe SDK objects.

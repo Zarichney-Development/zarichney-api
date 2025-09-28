@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Zarichney.Services.Payment;
 
-namespace Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
+namespace Zarichney.Tests.TestData.AutoFixtureCustomizations;
 
 /// <summary>
 /// AutoFixture customization for ILogger dependencies.

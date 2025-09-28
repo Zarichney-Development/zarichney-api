@@ -1,0 +1,209 @@
+name: 'AI Sentinel Base Framework'
+description: 'Foundational AI analysis infrastructure with comprehensive security controls, template management, and error handling for all AI Sentinel implementations'
+
+inputs:
+  analysis_type:
+    description: 'Type of AI analysis (testing, standards, security, debt, merge)'
+    required: true
+  template_path:
+    description: 'Path to prompt template file within repository'
+    required: true
+  context_data:
+    description: 'JSON-formatted analysis context and metadata'
+    required: true
+  github_token:
+    description: 'GitHub token for repository access and PR comments'
+    required: true
+  openai_api_key:
+    description: 'OpenAI API key for AI service authentication'
+    required: true
+  skip_duplicate:
+    description: 'Enable duplicate analysis prevention'
+    required: false
+    default: 'true'
+  max_retries:
+    description: 'Maximum retry attempts for transient failures'
+    required: false
+    default: '3'
+  timeout_seconds:
+    description: 'Analysis timeout in seconds'
+    required: false
+    default: '300'
+  debug_mode:
+    description: 'Enable detailed debug logging'
+    required: false
+    default: 'false'
+
+outputs:
+  analysis_result:
+    description: 'Structured AI analysis output in JSON format'
+    value: ${{ steps.ai-analysis.outputs.analysis_result }}
+  analysis_summary:
+    description: 'Human-readable analysis summary for PR comments'
+    value: ${{ steps.ai-analysis.outputs.analysis_summary }}
+  recommendations:
+    description: 'JSON array of actionable improvement recommendations'
+    value: ${{ steps.ai-analysis.outputs.recommendations }}
+  analysis_metadata:
+    description: 'Execution metadata including timing, token usage, version info'
+    value: ${{ steps.ai-analysis.outputs.analysis_metadata }}
+  skip_reason:
+    description: 'Reason for skipping analysis (if applicable)'
+    value: ${{ steps.ai-analysis.outputs.skip_reason }}
+  error_details:
+    description: 'Detailed error information for failed analyses'
+    value: ${{ steps.ai-analysis.outputs.error_details }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Validate Analysis Configuration
+      id: validate
+      shell: bash
+      env:
+        ANALYSIS_TYPE: ${{ inputs.analysis_type }}
+        TEMPLATE_PATH: ${{ inputs.template_path }}
+        CONTEXT_DATA: ${{ inputs.context_data }}
+        DEBUG_MODE: ${{ inputs.debug_mode }}
+      run: |
+        set -euo pipefail
+
+        # Import security validation functions
+        source ${{ github.action_path }}/src/security-validation.sh
+
+        echo "🔍 Validating AI Sentinel configuration..."
+
+        # Validate analysis type against whitelist
+        if ! validate_analysis_type "$ANALYSIS_TYPE"; then
+          echo "error_details=Invalid analysis type: $ANALYSIS_TYPE" >> "$GITHUB_OUTPUT"
+          echo "❌ Invalid analysis type: $ANALYSIS_TYPE"
+          exit 1
+        fi
+
+        # Validate template path exists and is secure
+        if ! validate_template_path "$TEMPLATE_PATH"; then
+          echo "error_details=Invalid or missing template path: $TEMPLATE_PATH" >> "$GITHUB_OUTPUT"
+          echo "❌ Invalid template path: $TEMPLATE_PATH"
+          exit 1
+        fi
+
+        # Validate context data format
+        if ! validate_context_format "$CONTEXT_DATA"; then
+          echo "error_details=Invalid context data format - must be valid JSON" >> "$GITHUB_OUTPUT"
+          echo "❌ Invalid context data format"
+          exit 1
+        fi
+
+        echo "✅ Configuration validation successful"
+        echo "validated=true" >> "$GITHUB_OUTPUT"
+
+    - name: Extract PR Context
+      id: pr-context
+      uses: ./.github/actions/shared/extract-pr-context
+
+    - name: Check for Existing Analysis
+      id: duplicate-check
+      if: inputs.skip_duplicate == 'true'
+      uses: ./.github/actions/shared/check-existing-comment
+      with:
+        github-token: ${{ inputs.github_token }}
+        header: ${{ inputs.analysis_type }} Analysis
+
+    - name: Process AI Analysis Template
+      id: template-processor
+      shell: bash
+      env:
+        ANALYSIS_TYPE: ${{ inputs.analysis_type }}
+        TEMPLATE_PATH: ${{ inputs.template_path }}
+        CONTEXT_DATA: ${{ inputs.context_data }}
+        PR_NUMBER: ${{ steps.pr-context.outputs.pr_number }}
+        PR_AUTHOR: ${{ steps.pr-context.outputs.pr_author }}
+        SOURCE_BRANCH: ${{ steps.pr-context.outputs.source_branch }}
+        TARGET_BRANCH: ${{ steps.pr-context.outputs.target_branch }}
+        ISSUE_REF: ${{ steps.pr-context.outputs.issue_ref }}
+        CHANGED_FILES_COUNT: ${{ steps.pr-context.outputs.changed_files_count }}
+        LINES_CHANGED: ${{ steps.pr-context.outputs.lines_changed }}
+        DEBUG_MODE: ${{ inputs.debug_mode }}
+      run: |
+        set -euo pipefail
+
+        # Import template processing functions
+        source ${{ github.action_path }}/src/template-processor.sh
+
+        if [[ "${{ steps.duplicate-check.outputs.skip_analysis }}" == "true" ]]; then
+          echo "skip_reason=Duplicate analysis detected - existing analysis found" >> "$GITHUB_OUTPUT"
+          echo "⚠️ Skipping analysis - duplicate detected"
+          exit 0
+        fi
+
+        echo "🔧 Processing AI analysis template..."
+
+        # Execute complete template processing workflow
+        if ! process_template_workflow "$TEMPLATE_PATH"; then
+          echo "error_details=Template processing workflow failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Template processing failed"
+          exit 1
+        fi
+
+        # Generate timestamp and metadata
+        TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+        # Output processed template path
+        echo "processed_template_path=/tmp/processed-template.md" >> "$GITHUB_OUTPUT"
+        echo "timestamp=$TIMESTAMP" >> "$GITHUB_OUTPUT"
+        echo "✅ Template processing successful"
+
+    - name: Execute AI Analysis
+      id: ai-analysis
+      if: steps.duplicate-check.outputs.skip_analysis != 'true'
+      shell: bash
+      env:
+        OPENAI_API_KEY: ${{ inputs.openai_api_key }}
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        ANALYSIS_TYPE: ${{ inputs.analysis_type }}
+        PROCESSED_TEMPLATE: ${{ steps.template-processor.outputs.processed_template_path }}
+        MAX_RETRIES: ${{ inputs.max_retries }}
+        TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
+        DEBUG_MODE: ${{ inputs.debug_mode }}
+      run: |
+        set -euo pipefail
+
+        # Import AI service functions
+        source ${{ github.action_path }}/src/ai-service-client.sh
+
+        echo "🤖 Executing AI analysis..."
+
+        # Initialize analysis metadata
+        start_time=$(date +%s)
+
+        # Execute AI analysis with retry logic
+        if ! execute_ai_analysis_with_retry; then
+          end_time=$(date +%s)
+          duration=$((end_time - start_time))
+
+          # Generate error metadata
+          error_metadata=$(generate_error_metadata "$duration")
+          echo "analysis_metadata=$error_metadata" >> "$GITHUB_OUTPUT"
+          echo "error_details=AI analysis execution failed after $MAX_RETRIES retries" >> "$GITHUB_OUTPUT"
+          echo "❌ AI analysis failed"
+          exit 1
+        fi
+
+        end_time=$(date +%s)
+        duration=$((end_time - start_time))
+
+        # Generate success metadata
+        success_metadata=$(generate_success_metadata "$duration")
+        echo "analysis_metadata=$success_metadata" >> "$GITHUB_OUTPUT"
+        echo "✅ AI analysis completed successfully (${duration}s)"
+
+    - name: Handle Analysis Failure
+      if: failure() && steps.validate.outputs.validated == 'true'
+      uses: ./.github/actions/handle-ai-analysis-failure
+      with:
+        github-token: ${{ inputs.github_token }}
+        analysis-type: ${{ inputs.analysis_type }}
+        analysis-emoji: ${{ steps.ai-analysis.outputs.analysis_emoji || '🤖' }}
+        analysis-name: ${{ inputs.analysis_type }} Analysis
+        run-number: ${{ github.run_number }}
+        run-id: ${{ github.run_id }}

@@ -1,0 +1,276 @@
+name: 'AI Testing Analysis'
+description: 'Coverage-intelligent AI testing analysis with baseline comparison, epic progression tracking, and iterative improvement recommendations'
+
+inputs:
+  # Coverage-Specific Analysis Inputs
+  coverage_data:
+    description: 'Coverage results from backend-build component (percentage and detailed metrics)'
+    required: true
+  baseline_coverage:
+    description: 'Previous coverage percentage for comparison and trend analysis'
+    required: true
+  test_results:
+    description: 'Test execution results and success metrics (pass/fail/skip counts)'
+    required: true
+  coverage_phase:
+    description: 'Analysis phase for targeted intelligence (initial, iterative-improvement, milestone)'
+    required: false
+    default: 'iterative-improvement'
+  epic_context:
+    description: 'Epic progression context for comprehensive coverage excellence and continuous improvement tracking'
+    required: false
+    default: ''
+  improvement_target:
+    description: 'Target coverage percentage for focused improvement guidance'
+    required: false
+    default: '90'
+
+  # Enhanced Coverage Intelligence Files
+  coverage_data_file:
+    description: 'Path to detailed coverage results JSON file (coverage_results.json)'
+    required: false
+    default: 'TestResults/coverage_results.json'
+  coverage_delta_file:
+    description: 'Path to coverage delta analysis JSON file (coverage_delta.json)'
+    required: false
+    default: 'TestResults/coverage_delta.json'
+  coverage_trends_file:
+    description: 'Path to coverage health trends JSON file (health_trends.json)'
+    required: false
+    default: 'TestResults/health_trends.json'
+
+  # Core Analysis Configuration
+  github_token:
+    description: 'GitHub token for repository access and PR comments'
+    required: true
+  openai_api_key:
+    description: 'OpenAI API key for AI service authentication'
+    required: true
+
+  # Optional Analysis Control
+  skip_duplicate:
+    description: 'Enable duplicate analysis prevention'
+    required: false
+    default: 'true'
+  analysis_depth:
+    description: 'Analysis depth for coverage intelligence (basic, detailed, comprehensive)'
+    required: false
+    default: 'detailed'
+  phase_aware:
+    description: 'Enable coverage phase-aware analysis and recommendations'
+    required: false
+    default: 'true'
+  debug_mode:
+    description: 'Enable detailed debug logging for troubleshooting'
+    required: false
+    default: 'false'
+
+outputs:
+  # Coverage Intelligence Outputs
+  coverage_analysis:
+    description: 'Structured analysis of coverage improvements and trend assessment'
+    value: ${{ steps.ai-testing-analysis.outputs.coverage_analysis }}
+  improvement_recommendations:
+    description: 'JSON array of actionable coverage improvement steps with priorities'
+    value: ${{ steps.ai-testing-analysis.outputs.improvement_recommendations }}
+  coverage_trends:
+    description: 'Analysis of coverage progression toward comprehensive coverage excellence and continuous improvement alignment'
+    value: ${{ steps.ai-testing-analysis.outputs.coverage_trends }}
+  priority_areas:
+    description: 'JSON array of high-impact areas for coverage improvement with effort estimates'
+    value: ${{ steps.ai-testing-analysis.outputs.priority_areas }}
+  excellence_progress:
+    description: 'Progress toward comprehensive coverage excellence with continuous improvement tracking'
+    value: ${{ steps.ai-testing-analysis.outputs.excellence_progress }}
+  next_steps:
+    description: 'Immediate actions for coverage improvement with specific file targets'
+    value: ${{ steps.ai-testing-analysis.outputs.next_steps }}
+
+  # Standard AI Analysis Outputs
+  analysis_result:
+    description: 'Complete testing analysis output in structured JSON format'
+    value: ${{ steps.ai-testing-analysis.outputs.analysis_result }}
+  analysis_summary:
+    description: 'Human-readable testing analysis summary for PR comments'
+    value: ${{ steps.ai-testing-analysis.outputs.analysis_summary }}
+  recommendations:
+    description: 'Standard analysis recommendations for testing improvements'
+    value: ${{ steps.ai-testing-analysis.outputs.recommendations }}
+  analysis_metadata:
+    description: 'Execution metadata including timing, coverage metrics, and version info'
+    value: ${{ steps.ai-testing-analysis.outputs.analysis_metadata }}
+
+  # Status and Error Handling
+  skip_reason:
+    description: 'Reason for skipping analysis (if applicable)'
+    value: ${{ steps.ai-testing-analysis.outputs.skip_reason }}
+  error_details:
+    description: 'Detailed error information for failed analyses'
+    value: ${{ steps.ai-testing-analysis.outputs.error_details }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Prepare Coverage Context
+      id: coverage-context
+      shell: bash
+      env:
+        COVERAGE_DATA: ${{ inputs.coverage_data }}
+        BASELINE_COVERAGE: ${{ inputs.baseline_coverage }}
+        TEST_RESULTS: ${{ inputs.test_results }}
+        COVERAGE_PHASE: ${{ inputs.coverage_phase }}
+        EPIC_CONTEXT: ${{ inputs.epic_context }}
+        IMPROVEMENT_TARGET: ${{ inputs.improvement_target }}
+        COVERAGE_DATA_FILE: ${{ inputs.coverage_data_file }}
+        COVERAGE_DELTA_FILE: ${{ inputs.coverage_delta_file }}
+        COVERAGE_TRENDS_FILE: ${{ inputs.coverage_trends_file }}
+        ANALYSIS_DEPTH: ${{ inputs.analysis_depth }}
+        PHASE_AWARE: ${{ inputs.phase_aware }}
+        DEBUG_MODE: ${{ inputs.debug_mode }}
+      run: |
+        set -euo pipefail
+
+        # Import coverage analysis functions
+        source ${{ github.action_path }}/src/coverage-context-processor.sh
+
+        echo "📊 Preparing coverage intelligence context..."
+
+        # Validate and structure coverage data
+        if ! validate_coverage_inputs; then
+          echo "error_details=Invalid coverage data inputs - check coverage_data, baseline_coverage, and test_results format" >> "$GITHUB_OUTPUT"
+          echo "❌ Coverage input validation failed"
+          exit 1
+        fi
+
+        # Process coverage context for AI analysis
+        if ! process_coverage_context; then
+          echo "error_details=Coverage context processing failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Coverage context processing failed"
+          exit 1
+        fi
+
+        # Generate phase-aware context
+        if [[ "$PHASE_AWARE" == "true" ]]; then
+          if ! generate_phase_context; then
+            echo "error_details=Phase context generation failed" >> "$GITHUB_OUTPUT"
+            echo "❌ Phase context generation failed"
+            exit 1
+          fi
+        fi
+
+        echo "coverage_context_ready=true" >> "$GITHUB_OUTPUT"
+        echo "✅ Coverage context preparation successful"
+
+    - name: Execute AI Testing Analysis
+      id: ai-testing-analysis
+      uses: ./.github/actions/shared/ai-sentinel-base
+      with:
+        analysis_type: 'testing'
+        template_path: '.github/prompts/testing-analysis.md'
+        context_data: ${{ steps.coverage-context.outputs.enhanced_context }}
+        github_token: ${{ inputs.github_token }}
+        openai_api_key: ${{ inputs.openai_api_key }}
+        skip_duplicate: ${{ inputs.skip_duplicate }}
+        max_retries: '3'
+        timeout_seconds: '300'
+        debug_mode: ${{ inputs.debug_mode }}
+
+    - name: Process Coverage Intelligence
+      id: coverage-intelligence
+      shell: bash
+      env:
+        AI_ANALYSIS_RESULT: ${{ steps.ai-testing-analysis.outputs.analysis_result }}
+        COVERAGE_DATA: ${{ inputs.coverage_data }}
+        BASELINE_COVERAGE: ${{ inputs.baseline_coverage }}
+        IMPROVEMENT_TARGET: ${{ inputs.improvement_target }}
+        COVERAGE_PHASE: ${{ inputs.coverage_phase }}
+        DEBUG_MODE: ${{ inputs.debug_mode }}
+      run: |
+        set -euo pipefail
+
+        # Import coverage intelligence functions
+        source ${{ github.action_path }}/src/coverage-intelligence-processor.sh
+
+        if [[ "${{ steps.ai-testing-analysis.outputs.skip_reason }}" != "" ]]; then
+          echo "skip_reason=${{ steps.ai-testing-analysis.outputs.skip_reason }}" >> "$GITHUB_OUTPUT"
+          echo "⚠️ Skipping coverage intelligence processing - analysis was skipped"
+          exit 0
+        fi
+
+        echo "🧠 Processing coverage intelligence..."
+
+        # Extract coverage-specific insights from AI analysis
+        if ! extract_coverage_insights; then
+          echo "error_details=Coverage intelligence extraction failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Coverage intelligence processing failed"
+          exit 1
+        fi
+
+        # Generate improvement recommendations
+        if ! generate_improvement_recommendations; then
+          echo "error_details=Improvement recommendation generation failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Improvement recommendation generation failed"
+          exit 1
+        fi
+
+        # Calculate excellence progress
+        if ! calculate_excellence_progress; then
+          echo "error_details=Excellence progress calculation failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Excellence progress calculation failed"
+          exit 1
+        fi
+
+        # Identify priority areas
+        if ! identify_priority_areas; then
+          echo "error_details=Priority area identification failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Priority area identification failed"
+          exit 1
+        fi
+
+        echo "✅ Coverage intelligence processing successful"
+
+    - name: Generate Coverage Trends Analysis
+      id: trends-analysis
+      shell: bash
+      env:
+        COVERAGE_DATA: ${{ inputs.coverage_data }}
+        BASELINE_COVERAGE: ${{ inputs.baseline_coverage }}
+        EPIC_CONTEXT: ${{ inputs.epic_context }}
+        IMPROVEMENT_TARGET: ${{ inputs.improvement_target }}
+        COVERAGE_PHASE: ${{ inputs.coverage_phase }}
+        DEBUG_MODE: ${{ inputs.debug_mode }}
+      run: |
+        set -euo pipefail
+
+        # Import trends analysis functions
+        source ${{ github.action_path }}/src/coverage-trends-analyzer.sh
+
+        if [[ "${{ steps.ai-testing-analysis.outputs.skip_reason }}" != "" ]]; then
+          echo "⚠️ Skipping trends analysis - main analysis was skipped"
+          exit 0
+        fi
+
+        echo "📈 Generating coverage trends analysis..."
+
+        # Calculate coverage velocity and trends
+        if ! analyze_coverage_velocity; then
+          echo "error_details=Coverage velocity analysis failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Coverage velocity analysis failed"
+          exit 1
+        fi
+
+        # Generate epic progression analysis
+        if ! analyze_epic_progression; then
+          echo "error_details=Epic progression analysis failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Epic progression analysis failed"
+          exit 1
+        fi
+
+        # Calculate timeline alignment
+        if ! calculate_timeline_alignment; then
+          echo "error_details=Timeline alignment calculation failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Timeline alignment calculation failed"
+          exit 1
+        fi
+
+        echo "✅ Coverage trends analysis successful"

@@ -10,7 +10,7 @@ Welcome! This repository hosts the **Zarichney Platform**, a full-stack applicat
 
 Think of this repo in two ways:
 
-1.  **A Functional Web Platform:** It powers the **Cookbook Factory AI** application, which uses Large Language Models (LLMs) to scrape, analyze, clean, and synthesize recipes into custom cookbooks (PDF generation included!). Users interact through a modern Angular web interface with features like secure authentication, payment integration (Stripe), real-time order tracking, and administrative dashboards.
+1.  **A Functional Web Platform:** It powers the **Cookbook Factory AI** application, which uses Large Language Models (LLMs) to scrape, analyze, clean, and synthesize recipes into custom cookbooks (PDF generation included). Users interact through a modern Angular web interface with features like secure authentication, payment integration (Stripe), real-time order tracking, and administrative dashboards (coming soon!).
 2.  **An Experiment in Development:** It's actively developed using a **structured, AI-assisted workflow**. Specialized AI agents, guided by detailed prompts and rigorous standards documentation (all included in this repo!), handle significant portions of the coding, testing, and documentation tasks across both frontend and backend. This allows for rapid iteration while maintaining high quality.
 
 Whether you're interested in the platform's features or the cutting-edge development methodology, explore the code and documentation to see it in action!
@@ -43,7 +43,7 @@ Whether you're interested in the platform's features or the cutting-edge develop
 * **AI:** OpenAI API integration
 * **Database:** PostgreSQL (primarily for Identity; application data currently file-based)
 * **Authentication:** ASP.NET Core Identity, JWT, Refresh Tokens (Cookies), API Keys
-* **Testing:** xUnit, Moq, FluentAssertions, Testcontainers (for isolated DB testing), Refit (for API client generation), **AI-Powered Test Analysis** (unified test suite with parallel execution) - *Aiming for >90% coverage.*
+* **Testing:** xUnit, Moq, FluentAssertions, Testcontainers (for isolated DB testing), Refit (for API client generation), **AI-Powered Test Analysis** (unified test suite with parallel execution) - *Aiming for comprehensive test coverage.*
 * **API Documentation:** Swagger / OpenAPI
 * **Key Libraries:** 
     * **Backend:** Serilog, Polly, MediatR, AutoMapper, RestSharp, Stripe.net, Octokit, QuestPDF, PlaywrightSharp, AngleSharp

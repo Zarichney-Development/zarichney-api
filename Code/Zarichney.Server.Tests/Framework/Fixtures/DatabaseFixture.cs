@@ -8,7 +8,7 @@ using Testcontainers.PostgreSql;
 using Xunit;
 using Zarichney.Services.Auth;
 
-namespace Zarichney.Server.Tests.Framework.Fixtures;
+namespace Zarichney.Tests.Framework.Fixtures;
 
 /// <summary>
 /// Fixture for managing a PostgreSQL test database using Testcontainers.

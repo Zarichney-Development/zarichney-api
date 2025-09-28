@@ -5,11 +5,11 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using Zarichney.Server.Tests.Framework.Mocks;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 using Zarichney.Services.BackgroundTasks;
 using Zarichney.Services.Sessions;
 
-namespace Zarichney.Server.Tests.Unit.Services.BackgroundTasks;
+namespace Zarichney.Tests.Unit.Services.BackgroundTasks;
 
 /// <summary>
 /// Unit tests for BackgroundTaskService - tests the hosted service that processes queued background work items

@@ -5,7 +5,7 @@ using Moq;
 using Xunit;
 using Zarichney.Services.ProcessExecution;
 
-namespace Zarichney.Server.Tests.Unit.Services.ProcessExecution;
+namespace Zarichney.Tests.Unit.Services.ProcessExecution;
 
 /// <summary>
 /// Unit tests for ProcessExecutor service - tests system command execution with proper async handling

@@ -286,7 +286,7 @@ This is the most fundamental quality gate. The jobs responsible for running the 
 
 #### **Enforcing a Code Coverage Threshold**
 
-Code coverage is a metric that can help ensure new code is adequately tested, preventing the gradual erosion of test quality. This quality gate fails a pull request if the overall test coverage drops below a predefined threshold (e.g., 90%).
+Code coverage is a metric that can help ensure new code is adequately tested, preventing the gradual erosion of test quality. This quality gate fails a pull request if the overall test coverage drops below comprehensive coverage standards.
 
 1. **Mechanism**: This check should be performed in the merge-reports job, after the individual coverage reports from the parallel Jest shards have been unified into a single, accurate report.  
 2. **Tooling**: While dedicated services like Codecov provide sophisticated coverage analysis and PR commenting , a powerful in-workflow solution can be achieved with the irongut/CodeCoverageSummary action. This action can parse a Cobertura-formatted coverage file and fail the workflow if the coverage is below a specified minimum.  
@@ -298,7 +298,7 @@ Code coverage is a metric that can help ensure new code is adequately tested, pr
   `with:`  
     `filename: 'merged-coverage.cobertura.xml'`  
     `fail_below_min: true # Fails the job if coverage is below the lower threshold`  
-    `thresholds: '90 95' # Fails below 90% (lower threshold), shows warning below 95% (upper)`
+    `thresholds: 'comprehensive excellent' # Fails below comprehensive coverage, shows warning below excellent coverage`
 
 `- name: Post Coverage Comment to PR`  
   `uses: ArtiomTr/jest-coverage-report-action@v2`  
@@ -480,7 +480,7 @@ To merge a pull request into the main branch, the following automated checks mus
   * .NET code must adhere to dotnet format standards.  
 * **Unit Tests**: All Jest unit tests for both the frontend and backend must pass.  
 * **E2E Tests**: The full suite of Playwright End-to-End tests must pass.  
-* **Code Coverage**: The total line coverage, as measured by Jest unit tests, must be at or above **90%**. A pull request that causes the total coverage to drop below this threshold will be blocked.
+* **Code Coverage**: The total line coverage, as measured by Jest unit tests, must meet comprehensive coverage standards. A pull request that causes the total coverage to drop below this threshold will be blocked.
 
 ## **4\. Best Practices**
 

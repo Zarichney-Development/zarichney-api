@@ -1,7 +1,7 @@
 using Xunit.Abstractions;
-using Zarichney.Server.Tests.Framework.Fixtures;
+using Zarichney.Tests.Framework.Fixtures;
 
-namespace Zarichney.Server.Tests.Integration;
+namespace Zarichney.Tests.Integration;
 
 /// <summary>
 /// Base class for integration tests that require database access.

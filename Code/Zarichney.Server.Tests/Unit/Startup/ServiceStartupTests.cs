@@ -11,7 +11,7 @@ using Zarichney.Services.AI;
 using Zarichney.Services.Email;
 using Zarichney.Startup;
 
-namespace Zarichney.Server.Tests.Unit.Startup;
+namespace Zarichney.Tests.Unit.Startup;
 
 // We don't directly reference the proxy classes, but check their type names
 public class ServiceStartupTests

@@ -2,10 +2,10 @@ using FluentAssertions;
 using Refit;
 using Xunit;
 using Xunit.Abstractions;
-using Zarichney.Server.Tests.Framework.Attributes;
-using Zarichney.Server.Tests.Framework.Fixtures;
+using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Fixtures;
 
-namespace Zarichney.Server.Tests.Integration.Controllers.PublicController;
+namespace Zarichney.Tests.Integration.Controllers.PublicController;
 
 /// <summary>
 /// Integration tests for the PublicController.

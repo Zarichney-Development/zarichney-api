@@ -6,10 +6,10 @@ using System.Text.Json;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Services.FileSystem;
-using Zarichney.Server.Tests.Framework.Fixtures;
-using Zarichney.Server.Tests.Integration;
+using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.Tests.Integration;
 
-namespace Zarichney.Server.Tests.Integration.Services.FileSystem;
+namespace Zarichney.Tests.Integration.Services.FileSystem;
 
 /// <summary>
 /// Integration tests for FileService that validate service integration patterns and file operations.

@@ -1,7 +1,7 @@
 using Xunit;
-using Zarichney.Server.Tests.Framework.Fixtures;
+using Zarichney.Tests.Framework.Fixtures;
 
-namespace Zarichney.Server.Tests.Integration;
+namespace Zarichney.Tests.Integration;
 
 /// <summary>
 /// Collection definition for all integration tests.

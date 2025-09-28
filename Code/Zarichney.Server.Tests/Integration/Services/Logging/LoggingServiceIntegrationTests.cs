@@ -4,12 +4,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Zarichney.Services.Logging;
 using Zarichney.Services.ProcessExecution;
-using Zarichney.Server.Tests.Framework.Attributes;
-using Zarichney.Server.Tests.Framework.Fixtures;
+using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Fixtures;
 using Xunit.Abstractions;
-using Zarichney.Server.Tests.Integration;
+using Zarichney.Tests.Integration;
 
-namespace Zarichney.Server.Tests.Integration.Services.Logging;
+namespace Zarichney.Tests.Integration.Services.Logging;
 
 /// <summary>
 /// Integration tests for LoggingService that require external dependencies.

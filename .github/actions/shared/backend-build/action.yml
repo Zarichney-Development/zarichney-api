@@ -1,0 +1,246 @@
+name: 'Backend Build'
+description: 'Comprehensive .NET backend build execution with coverage flexibility, zero-warning enforcement, and specialized testing integration'
+author: 'Zarichney Development'
+
+inputs:
+  solution_path:
+    description: 'Path to .NET solution file'
+    required: false
+    default: 'zarichney-api.sln'
+
+  coverage_enabled:
+    description: 'Enable test coverage collection'
+    required: false
+    default: 'false'
+
+  warning_as_error:
+    description: 'Enforce zero-warning policy'
+    required: false
+    default: 'true'
+
+  test_filter:
+    description: 'Test filtering for coverage scenarios'
+    required: false
+    default: ''
+
+  configuration:
+    description: 'Build configuration'
+    required: false
+    default: 'Release'
+
+  verbosity:
+    description: 'MSBuild verbosity level'
+    required: false
+    default: 'normal'
+
+outputs:
+  build_success:
+    description: 'True if build completed successfully without errors'
+    value: ${{ steps.backend-execution.outputs.build_success }}
+
+  warning_count:
+    description: 'Total number of build warnings detected'
+    value: ${{ steps.backend-execution.outputs.warning_count }}
+
+  test_success:
+    description: 'True if all tests passed successfully'
+    value: ${{ steps.backend-execution.outputs.test_success }}
+
+  coverage_percentage:
+    description: 'Test coverage percentage (if coverage enabled)'
+    value: ${{ steps.backend-execution.outputs.coverage_percentage }}
+
+  coverage_results:
+    description: 'JSON-formatted coverage data and analysis'
+    value: ${{ steps.backend-execution.outputs.coverage_results }}
+
+  build_artifacts:
+    description: 'JSON array of build output artifact paths'
+    value: ${{ steps.backend-execution.outputs.build_artifacts }}
+
+  error_details:
+    description: 'Detailed error information for failed builds'
+    value: ${{ steps.backend-execution.outputs.error_details }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup development environment
+      uses: ./.github/actions/shared/setup-environment
+      with:
+        setup-dotnet: 'true'
+        setup-node: 'false'
+        dotnet-version: '8.0.x'
+
+    - name: Execute backend build and test
+      id: backend-execution
+      shell: bash
+      run: |
+        echo "🚀 Running backend build and test pipeline..."
+        echo "⚠️  Warning Enforcement: MSBuild TreatWarningsAsErrors=${{ inputs.warning_as_error }} (zero-tolerance policy)"
+
+        # Set CI environment variables
+        export CI_ENVIRONMENT=true
+        export QUALITY_GATE_ENABLED=true
+        export COVERAGE_THRESHOLD=16
+
+        # Determine coverage flexibility based on branch/PR context
+        COVERAGE_FLAGS=""
+        if [[ "${{ github.head_ref }}" =~ ^test/ ]] || [[ "${{ github.ref_name }}" =~ ^test/ ]]; then
+          echo "🧪 Test branch detected - enabling coverage flexibility"
+          COVERAGE_FLAGS="--allow-low-coverage"
+          export COVERAGE_FLEXIBLE=true
+        elif [[ "${{ github.ref_name }}" == "develop" ]] || [[ "${{ github.base_ref }}" == "develop" ]]; then
+          echo "🔧 Infrastructure validation on develop branch - enabling coverage flexibility"
+          COVERAGE_FLAGS="--allow-low-coverage"
+          export COVERAGE_FLEXIBLE=true
+        elif [[ "${{ github.event_name }}" == "pull_request" ]] && [[ "${{ contains(github.event.pull_request.labels.*.name, 'low-coverage-allowed') }}" == "true" ]]; then
+          echo "🏷️ low-coverage-allowed label detected - enabling coverage flexibility"
+          COVERAGE_FLAGS="--allow-low-coverage"
+          export COVERAGE_FLEXIBLE=true
+        fi
+
+        # Build command flags based on existing script options
+        BUILD_FLAGS=""
+        if [[ "${{ inputs.configuration }}" != "Release" ]]; then
+          BUILD_FLAGS="$BUILD_FLAGS --config ${{ inputs.configuration }}"
+        fi
+
+        # Note: Coverage is always collected by the test suite, coverage_enabled input controls reporting
+        # Note: Test filtering will be handled by environment variables in future enhancement
+
+        # Set additional environment variables for coverage and filtering
+        if [[ "${{ inputs.coverage_enabled }}" == "true" ]]; then
+          export ENABLE_COVERAGE_COLLECTION=true
+        fi
+
+        if [[ -n "${{ inputs.test_filter }}" ]]; then
+          export TEST_FILTER="${{ inputs.test_filter }}"
+        fi
+
+        # Execute the pipeline script with error capture
+        BUILD_EXIT_CODE=0
+        BUILD_OUTPUT=""
+
+        echo "Executing: ./.github/scripts/build-backend.sh --threshold 16 $COVERAGE_FLAGS $BUILD_FLAGS"
+
+        if BUILD_OUTPUT=$(./.github/scripts/build-backend.sh --threshold 16 $COVERAGE_FLAGS $BUILD_FLAGS 2>&1); then
+          BUILD_EXIT_CODE=0
+          echo "✅ Backend build and test completed successfully"
+          echo "build_success=true" >> $GITHUB_OUTPUT
+          echo "warning_count=0" >> $GITHUB_OUTPUT
+          echo "error_details=" >> $GITHUB_OUTPUT
+        else
+          BUILD_EXIT_CODE=$?
+          echo "❌ Backend build and test failed with exit code: $BUILD_EXIT_CODE"
+          echo "build_success=false" >> $GITHUB_OUTPUT
+
+          # Set error details for failed builds
+          echo "error_details<<EOF" >> $GITHUB_OUTPUT
+          echo "$BUILD_OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # Analyze failure type for better error reporting
+          if echo "$BUILD_OUTPUT" | grep -qi "warning.*treated as error"; then
+            echo "build_failure_type=warnings" >> $GITHUB_OUTPUT
+            echo "warning_enforcement_active=true" >> $GITHUB_OUTPUT
+
+            # Count warnings
+            WARNING_COUNT=$(echo "$BUILD_OUTPUT" | grep -ci "warning" || echo "0")
+            echo "warning_count=$WARNING_COUNT" >> $GITHUB_OUTPUT
+          elif echo "$BUILD_OUTPUT" | grep -qi "error"; then
+            echo "build_failure_type=compilation" >> $GITHUB_OUTPUT
+            echo "warning_enforcement_active=true" >> $GITHUB_OUTPUT
+            echo "warning_count=0" >> $GITHUB_OUTPUT
+          else
+            echo "build_failure_type=unknown" >> $GITHUB_OUTPUT
+            echo "warning_enforcement_active=true" >> $GITHUB_OUTPUT
+            echo "warning_count=0" >> $GITHUB_OUTPUT
+          fi
+        fi
+
+        # Extract test results if available
+        if [[ -f "TestResults/parsed_results.json" ]]; then
+          TOTAL_TESTS=$(jq -r '.tests.total // 0' TestResults/parsed_results.json 2>/dev/null || echo "0")
+          FAILED_TESTS=$(jq -r '.tests.failed // 0' TestResults/parsed_results.json 2>/dev/null || echo "0")
+          TEST_SUCCESS=$([[ $FAILED_TESTS -eq 0 ]] && echo "true" || echo "false")
+          echo "test_success=$TEST_SUCCESS" >> $GITHUB_OUTPUT
+        else
+          echo "test_success=true" >> $GITHUB_OUTPUT
+        fi
+
+        # Extract coverage results if available
+        if [[ -f "TestResults/coverage_results.json" ]]; then
+          COVERAGE_PERCENTAGE=$(jq -r '.line_coverage // 0' TestResults/coverage_results.json 2>/dev/null || echo "0")
+          echo "coverage_percentage=$COVERAGE_PERCENTAGE" >> $GITHUB_OUTPUT
+
+          COVERAGE_RESULTS=$(cat TestResults/coverage_results.json 2>/dev/null || echo "{}")
+          echo "coverage_results<<EOF" >> $GITHUB_OUTPUT
+          echo "$COVERAGE_RESULTS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        else
+          echo "coverage_percentage=0" >> $GITHUB_OUTPUT
+          echo "coverage_results={}" >> $GITHUB_OUTPUT
+        fi
+
+        # Generate build artifacts list
+        if [[ -d "artifacts/backend" ]]; then
+          BUILD_ARTIFACTS=$(find artifacts/backend -type f -name "*.json" -o -name "*.xml" -o -name "*.dll" -o -name "*.exe" | jq -R . | jq -s . 2>/dev/null || echo "[]")
+          echo "build_artifacts<<EOF" >> $GITHUB_OUTPUT
+          echo "$BUILD_ARTIFACTS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        else
+          echo "build_artifacts=[]" >> $GITHUB_OUTPUT
+        fi
+
+        # Note: warning_count and error_details are set above in success/failure handling
+
+    - name: Annotate backend build failures
+      if: failure() && steps.backend-execution.outcome == 'failure'
+      shell: bash
+      run: |
+        echo "📊 Analyzing backend build failure for warning-related issues..."
+
+        # Check if build failure was due to warnings
+        if [[ "${{ steps.backend-execution.outputs.build_failure_type }}" == "warnings" ]]; then
+          echo "::error title=Backend Build Failed - Warnings Detected::Zero-warning policy enforced: MSBuild TreatWarningsAsErrors=true caused build failure. Fix all compiler warnings before proceeding."
+          echo "::notice title=Warning Enforcement Active::This build uses zero-tolerance warning policy. All compiler warnings must be resolved."
+        elif [[ "${{ steps.backend-execution.outputs.build_failure_type }}" == "compilation" ]]; then
+          echo "::error title=Backend Build Failed - Compilation Errors::Fix compilation errors in .NET codebase before proceeding."
+        else
+          echo "::error title=Backend Build Failed::Unknown build failure - check build logs for details."
+        fi
+
+        # Summary annotation
+        echo "::notice title=Zero-Warning Build Policy::This project enforces zero compiler warnings. Warning-as-error enforcement: ${{ steps.backend-execution.outputs.warning_enforcement_active }}"
+
+    - name: Upload backend artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-build-${{ github.run_number }}
+        path: artifacts/backend/
+        retention-days: 7
+
+    - name: Validate test suite baselines
+      if: always()
+      id: validate-baselines
+      uses: ./.github/actions/shared/validate-test-suite
+      with:
+        test-results-path: './TestResults'
+        fail-on-violations: 'false'  # Warning mode - don't fail build on baseline issues
+        upload-artifacts: 'false'     # We'll handle artifacts separately
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ github.run_number }}
+        path: |
+          TestResults/
+          CoverageReport/
+        retention-days: 7
+
+branding:
+  icon: 'package'
+  color: 'blue'

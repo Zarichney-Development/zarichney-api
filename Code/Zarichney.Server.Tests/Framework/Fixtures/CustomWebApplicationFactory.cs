@@ -14,11 +14,11 @@ using Zarichney.Services.AI;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Email;
 using Zarichney.Services.Status;
-using Zarichney.Server.Tests.Framework.Helpers;
-using Zarichney.Server.Tests.Framework.Mocks;
-using Zarichney.Server.Tests.Framework.Mocks.Factories;
+using Zarichney.Tests.Framework.Helpers;
+using Zarichney.Tests.Framework.Mocks;
+using Zarichney.Tests.Framework.Mocks.Factories;
 
-namespace Zarichney.Server.Tests.Framework.Fixtures;
+namespace Zarichney.Tests.Framework.Fixtures;
 
 /// <summary>
 /// Factory for bootstrapping an application in memory for functional end to end tests.

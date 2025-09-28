@@ -7,7 +7,7 @@ using FluentAssertions;
 using Xunit;
 using System.Threading;
 
-namespace Zarichney.Server.Tests.Unit.Services.GitHub;
+namespace Zarichney.Tests.Unit.Services.GitHub;
 
 /// <summary>
 /// Unit tests for GitHubService covering repository operations, webhook processing, and API integrations.

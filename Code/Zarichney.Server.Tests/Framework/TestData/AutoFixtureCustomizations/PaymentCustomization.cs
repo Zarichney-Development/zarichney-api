@@ -3,7 +3,7 @@ using Stripe;
 using Stripe.Checkout;
 using Zarichney.Services.Payment;
 
-namespace Zarichney.Server.Tests.Framework.TestData.AutoFixtureCustomizations;
+namespace Zarichney.Tests.Framework.TestData.AutoFixtureCustomizations;
 
 /// <summary>
 /// AutoFixture customization for Payment-related types to ensure consistent test data generation.

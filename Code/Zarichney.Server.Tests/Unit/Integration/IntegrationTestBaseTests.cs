@@ -4,11 +4,11 @@ using Moq;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Services.Status;
-using Zarichney.Server.Tests.Framework.Attributes;
-using Zarichney.Server.Tests.Framework.Fixtures;
-using Zarichney.Server.Tests.Integration;
+using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.Tests.Integration;
 
-namespace Zarichney.Server.Tests.Unit.Integration;
+namespace Zarichney.Tests.Unit.Integration;
 
 [Trait(TestCategories.Category, TestCategories.Unit)]
 public class IntegrationTestBaseTests

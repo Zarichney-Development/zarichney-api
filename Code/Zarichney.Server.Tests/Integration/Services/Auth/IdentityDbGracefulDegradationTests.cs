@@ -9,10 +9,10 @@ using Xunit.Abstractions;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Status;
 using Zarichney.Startup;
-using Zarichney.Server.Tests.Framework.Attributes;
-using Zarichney.Server.Tests.Framework.Fixtures;
+using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Fixtures;
 
-namespace Zarichney.Server.Tests.Integration.Services.Auth
+namespace Zarichney.Tests.Integration.Services.Auth
 {
   /// <summary>
   /// Tests the graceful degradation functionality when the Identity Database is not configured
