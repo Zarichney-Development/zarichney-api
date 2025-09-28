@@ -12,7 +12,7 @@ using Serilog;
 using Xunit;
 using Zarichney.Config;
 using Zarichney.Startup;
-using Zarichney.Server.Tests.Framework.Helpers;
+using Zarichney.Tests.Framework.Helpers;
 using Zarichney.Services.Email;
 using Zarichney.Services.Payment;
 

@@ -6,8 +6,8 @@ using Moq;
 using System.Security.Claims;
 using Xunit;
 using Zarichney.Services.Sessions;
-using Zarichney.Server.Tests.Framework.Mocks.Factories;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.Framework.Mocks.Factories;
+using Zarichney.Tests.TestData.Builders;
 
 namespace Zarichney.Tests.Unit.Services.Sessions;
 

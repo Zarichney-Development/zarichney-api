@@ -1,6 +1,6 @@
 using AutoFixture;
 using Zarichney.Config;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 using Zarichney.Services.Email;
 
 namespace Zarichney.Tests.TestData.AutoFixtureCustomizations;

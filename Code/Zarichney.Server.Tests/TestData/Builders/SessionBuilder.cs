@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using Zarichney.Cookbook.Orders;
 using Zarichney.Services.Sessions;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 
 namespace Zarichney.Tests.TestData.Builders;
 

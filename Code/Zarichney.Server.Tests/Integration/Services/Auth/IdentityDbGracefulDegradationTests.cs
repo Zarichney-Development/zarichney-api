@@ -9,8 +9,8 @@ using Xunit.Abstractions;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Status;
 using Zarichney.Startup;
-using Zarichney.Server.Tests.Framework.Attributes;
-using Zarichney.Server.Tests.Framework.Fixtures;
+using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Fixtures;
 
 namespace Zarichney.Tests.Integration.Services.Auth
 {

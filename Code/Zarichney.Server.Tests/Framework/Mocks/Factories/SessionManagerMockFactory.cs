@@ -1,6 +1,6 @@
 using Moq;
 using Zarichney.Services.Sessions;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 
 namespace Zarichney.Tests.Framework.Mocks.Factories;
 

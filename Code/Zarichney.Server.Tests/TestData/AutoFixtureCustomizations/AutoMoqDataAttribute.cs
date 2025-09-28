@@ -2,7 +2,7 @@ using AutoFixture;
 using AutoFixture.AutoMoq;
 using AutoFixture.Xunit2;
 using AutoFixture.Kernel;
-using Zarichney.Server.Tests.Framework.TestData.AutoFixtureCustomizations;
+using Zarichney.Tests.Framework.TestData.AutoFixtureCustomizations;
 
 namespace Zarichney.Tests.TestData.AutoFixtureCustomizations;
 

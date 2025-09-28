@@ -10,8 +10,8 @@ using Zarichney.Services.BackgroundTasks;
 using Zarichney.Services.FileSystem;
 using Zarichney.Services.Sessions;
 using Zarichney.Services.Status;
-using Zarichney.Server.Tests.Framework.Attributes;
-using Zarichney.Server.Tests.Framework.Mocks.Factories;
+using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Mocks.Factories;
 
 namespace Zarichney.Tests.Unit.Cookbook.Recipes;
 

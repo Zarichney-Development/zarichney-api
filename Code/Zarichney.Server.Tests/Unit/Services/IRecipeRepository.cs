@@ -1,5 +1,5 @@
 using Zarichney.Cookbook.Recipes;
-using Zarichney.Server.Tests.TestData;
+using Zarichney.Tests.TestData;
 
 namespace Zarichney.Tests.Unit.Services;
 

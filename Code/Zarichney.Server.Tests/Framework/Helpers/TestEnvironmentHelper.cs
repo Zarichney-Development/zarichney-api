@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Zarichney.Services.Status;
-using Zarichney.Server.Tests.Framework.Attributes;
-using Zarichney.Server.Tests.Framework.Fixtures;
+using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Fixtures;
 
 namespace Zarichney.Tests.Framework.Helpers;
 

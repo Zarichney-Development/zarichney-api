@@ -5,7 +5,7 @@ using Zarichney.Services.AI;
 using Zarichney.Services.AI.Interfaces;
 using Zarichney.Services.GitHub;
 using Zarichney.Services.Status;
-using Zarichney.Server.Tests.Framework.Mocks;
+using Zarichney.Tests.Framework.Mocks;
 
 namespace Zarichney.Tests.Framework.Mocks;
 

@@ -7,10 +7,10 @@ using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Config;
 using Zarichney.Services.Status;
-using Zarichney.Server.Tests.Framework.Attributes;
-using Zarichney.Server.Tests.Framework.Fixtures;
-using Zarichney.Server.Tests.Framework.Helpers;
-using static Zarichney.Server.Tests.Framework.Helpers.TestFactories;
+using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.Tests.Framework.Helpers;
+using static Zarichney.Tests.Framework.Helpers.TestFactories;
 
 namespace Zarichney.Tests.Integration.Services.Status;
 

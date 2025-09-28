@@ -1,8 +1,8 @@
 using OpenAI.Chat;
 using Zarichney.Services.AI;
 using Zarichney.Services.AI.Interfaces;
-using Zarichney.Server.Tests.TestData.Builders;
-using Zarichney.Server.Tests.Framework.Mocks;
+using Zarichney.Tests.TestData.Builders;
+using Zarichney.Tests.Framework.Mocks;
 
 namespace Zarichney.Tests.TestData.Builders;
 

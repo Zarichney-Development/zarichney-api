@@ -2,9 +2,9 @@ using FluentAssertions;
 using System.Text.Json;
 using Xunit;
 using Xunit.Abstractions;
-using Zarichney.Server.Tests.Framework.Fixtures;
-using Zarichney.Server.Tests.Framework.Attributes;
-using Zarichney.Server.Tests.Framework.Helpers;
+using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Helpers;
 
 namespace Zarichney.Tests.Integration.AiFramework;
 

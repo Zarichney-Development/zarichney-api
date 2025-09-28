@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
-using Zarichney.Server.Tests.Framework.Attributes;
-using Zarichney.Server.Tests.Framework.Fixtures;
-using static Zarichney.Server.Tests.Framework.Helpers.TestEnvironmentHelper;
+using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Fixtures;
+using static Zarichney.Tests.Framework.Helpers.TestEnvironmentHelper;
 
 namespace Zarichney.Tests.Framework.Helpers;
 

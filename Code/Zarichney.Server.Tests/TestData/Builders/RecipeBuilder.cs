@@ -1,6 +1,6 @@
 using Zarichney.Cookbook.Prompts;
 using Zarichney.Cookbook.Recipes;
-using Zarichney.Server.Tests.Framework.Helpers;
+using Zarichney.Tests.Framework.Helpers;
 
 namespace Zarichney.Tests.TestData.Builders;
 

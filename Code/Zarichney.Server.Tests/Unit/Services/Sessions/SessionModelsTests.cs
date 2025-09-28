@@ -6,7 +6,7 @@ using Xunit;
 using Zarichney.Cookbook.Orders;
 using Zarichney.Services.AI;
 using Zarichney.Services.Sessions;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 
 namespace Zarichney.Tests.Unit.Services.Sessions;
 

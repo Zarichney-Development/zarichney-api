@@ -7,10 +7,10 @@ using Xunit;
 using Zarichney.Config;
 using Zarichney.Cookbook.Customers;
 using Zarichney.Cookbook.Orders;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 using Zarichney.Services.AI;
 using Zarichney.Services.Sessions;
-using Zarichney.Server.Tests.Framework.Mocks;
+using Zarichney.Tests.Framework.Mocks;
 using System;
 
 namespace Zarichney.Tests.Unit.Services.Sessions;

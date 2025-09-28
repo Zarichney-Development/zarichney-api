@@ -6,7 +6,7 @@ using Xunit;
 using Zarichney.Config;
 using Zarichney.Services.Email;
 using Zarichney.Services.Status;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 
 #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
 #pragma warning disable CS8601 // Possible null reference assignment.

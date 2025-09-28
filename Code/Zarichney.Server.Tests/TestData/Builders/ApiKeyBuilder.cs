@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.Identity;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Models;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 
 namespace Zarichney.Tests.TestData.Builders;
 

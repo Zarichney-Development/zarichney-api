@@ -4,8 +4,8 @@ using Moq;
 using FluentAssertions;
 using Xunit;
 using Zarichney.Services.Email;
-using Zarichney.Server.Tests.TestData.Builders;
-using Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
+using Zarichney.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.AutoFixtureCustomizations;
 using AutoFixture.Xunit2;
 
 namespace Zarichney.Tests.Unit.Services.Email;

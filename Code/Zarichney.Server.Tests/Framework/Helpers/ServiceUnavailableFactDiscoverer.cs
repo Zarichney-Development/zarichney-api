@@ -1,7 +1,7 @@
 using Xunit.Abstractions;
 using Xunit.Sdk;
 using Zarichney.Services.Status;
-using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Attributes;
 
 namespace Zarichney.Tests.Framework.Helpers;
 

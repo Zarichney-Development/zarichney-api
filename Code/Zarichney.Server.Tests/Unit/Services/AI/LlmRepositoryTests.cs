@@ -9,8 +9,8 @@ using Zarichney.Services.AI;
 using Zarichney.Services.GitHub;
 using Zarichney.Services.Status;
 using Zarichney.Services.Sessions;
-using Zarichney.Server.Tests.TestData.Builders;
-using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Tests.TestData.Builders;
+using Zarichney.Tests.Framework.Attributes;
 
 namespace Zarichney.Tests.Unit.Services.AI;
 

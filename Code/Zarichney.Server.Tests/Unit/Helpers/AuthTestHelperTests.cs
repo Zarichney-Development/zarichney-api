@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using FluentAssertions;
 using Xunit;
-using Zarichney.Server.Tests.Framework.Helpers;
+using Zarichney.Tests.Framework.Helpers;
 
 namespace Zarichney.Tests.Unit.Helpers;
 

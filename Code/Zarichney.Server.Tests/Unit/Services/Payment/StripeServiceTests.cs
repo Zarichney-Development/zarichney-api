@@ -5,11 +5,11 @@ using Moq;
 using Stripe;
 using Stripe.Checkout;
 using Xunit;
-using Zarichney.Server.Tests.TestData.Builders;
-using Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
+using Zarichney.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.AutoFixtureCustomizations;
 using Zarichney.Services.Payment;
 using Zarichney.Services.Status;
-using Zarichney.Server.Tests.Framework.Helpers;
+using Zarichney.Tests.Framework.Helpers;
 
 namespace Zarichney.Tests.Unit.Services.Payment;
 

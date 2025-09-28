@@ -8,8 +8,8 @@ using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Client;
 using Zarichney.Services.Status;
-using Zarichney.Server.Tests.Framework.Attributes;
-using Zarichney.Server.Tests.Framework.Fixtures;
+using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Fixtures;
 using ExternalServices = Zarichney.Services.Status.ExternalServices;
 
 // Import the ServiceStatusInfo from Status namespace with alias

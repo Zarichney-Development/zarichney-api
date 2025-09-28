@@ -6,8 +6,8 @@ using Xunit;
 using OpenAI.Audio;
 using Zarichney.Services.AI;
 using Zarichney.Services.Email;
-using Zarichney.Server.Tests.TestData.Builders;
-using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Tests.TestData.Builders;
+using Zarichney.Tests.Framework.Attributes;
 
 namespace Zarichney.Tests.Unit.Services.AI;
 

@@ -23,8 +23,9 @@ readonly TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 # File paths
 readonly WORKFLOW_FILE="$ROOT_DIR/.github/workflows/testing-coverage-execution.yml"
+readonly SCHEDULER_WORKFLOW_FILE="$ROOT_DIR/.github/workflows/testing-coverage-scheduler.yml"
 readonly PROMPT_FILE="$ROOT_DIR/.github/prompts/testing-coverage-agent.md"
-readonly EPIC_WORKFLOW_DOC="$ROOT_DIR/Docs/Development/AutomatedCoverageEpicWorkflow.md"
+readonly EPIC_WORKFLOW_DOC="$ROOT_DIR/Docs/Development/AutomatedTestingCoverageWorkflow.md"
 readonly TEST_SUITE_SCRIPT="$ROOT_DIR/Scripts/run-test-suite.sh"
 
 # Testing excellence configuration
@@ -100,13 +101,6 @@ validate_core_files() {
     if [ -f "$WORKFLOW_FILE" ]; then
         print_success "GitHub Actions workflow exists: testing-coverage-execution.yml"
 
-        # Validate workflow content
-        if grep -q "schedule:" "$WORKFLOW_FILE" && grep -q "0 \*/6 \* \* \*" "$WORKFLOW_FILE"; then
-            print_success "Cron schedule configured (every 6 hours)"
-        else
-            print_error "Cron schedule missing or incorrect in workflow file"
-        fi
-
         if grep -q "EPIC_BRANCH" "$WORKFLOW_FILE" && grep -q "epic/testing-coverage" "$WORKFLOW_FILE"; then
             print_success "Epic branch configuration found"
         else
@@ -121,6 +115,18 @@ validate_core_files() {
 
     else
         print_error "GitHub Actions workflow missing: $WORKFLOW_FILE"
+    fi
+
+    # Scheduler workflow
+    if [ -f "$SCHEDULER_WORKFLOW_FILE" ]; then
+        print_success "GitHub Actions scheduler exists: testing-coverage-scheduler.yml"
+        if grep -q "schedule:" "$SCHEDULER_WORKFLOW_FILE" && grep -q "0 \*/6 \* \* \*" "$SCHEDULER_WORKFLOW_FILE"; then
+            print_success "Cron schedule configured (every 6 hours)"
+        else
+            print_error "Cron schedule missing or incorrect in scheduler file"
+        fi
+    else
+        print_error "GitHub Actions scheduler missing: $SCHEDULER_WORKFLOW_FILE"
     fi
 
     # AI Agent prompt file
@@ -496,7 +502,7 @@ validate_integration() {
     # Test coverage area selection logic
     declare -a COVERAGE_AREAS=("Services" "Controllers" "Repositories" "Utilities")
     HOUR=$(date +%H)
-    SELECTED_AREA=${COVERAGE_AREAS[$((HOUR % 4))]}
+    SELECTED_AREA=${COVERAGE_AREAS[$((10#$HOUR % 4))]}
 
     if [[ " ${COVERAGE_AREAS[@]} " =~ " $SELECTED_AREA " ]]; then
         print_success "Coverage area selection logic works: $SELECTED_AREA"

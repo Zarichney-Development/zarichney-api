@@ -1,7 +1,7 @@
 using AutoFixture;
 using AutoFixture.Kernel;
 using Zarichney.Cookbook.Recipes;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 
 namespace Zarichney.Tests.Framework.TestData.AutoFixtureCustomizations;
 

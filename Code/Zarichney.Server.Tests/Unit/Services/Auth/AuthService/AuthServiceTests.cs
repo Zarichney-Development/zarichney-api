@@ -10,7 +10,7 @@ using Moq;
 using Xunit;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Models;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 
 namespace Zarichney.Tests.Unit.Services.Auth.AuthService;
 

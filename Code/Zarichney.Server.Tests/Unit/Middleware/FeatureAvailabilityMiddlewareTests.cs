@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using Zarichney.Services.Status;
-using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Attributes;
 using StatusInfo = Zarichney.Services.Status.ServiceStatusInfo;
 
 namespace Zarichney.Tests.Unit.Middleware;
