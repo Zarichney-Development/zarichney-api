@@ -4,6 +4,18 @@ using Zarichney.Config;
 
 namespace Zarichney.Services.Email;
 
+/// <summary>
+/// Configuration key constants for email service settings
+/// </summary>
+public static class EmailConfigConstants
+{
+  public const string SectionName = "EmailConfig";
+  public const string AzureTenantIdKey = $"{SectionName}:AzureTenantId";
+  public const string AzureAppIdKey = $"{SectionName}:AzureAppId";
+  public const string AzureAppSecretKey = $"{SectionName}:AzureAppSecret";
+  public const string FromEmailKey = $"{SectionName}:FromEmail";
+}
+
 public class EmailConfig : IConfig
 {
   [RequiresConfiguration(ExternalServices.MsGraph)]
