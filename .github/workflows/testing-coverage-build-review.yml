@@ -1,4 +1,4 @@
-name: Coverage Build
+name: Automated Workflow - Auto-Testing Coverage - Build & Review
 
 on:
   pull_request:
