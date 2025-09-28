@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+using Zarichney.Tests.Framework.Mocks;
 using Zarichney.Tests.TestData.Builders;
 using Zarichney.Services.BackgroundTasks;
 using Zarichney.Services.Sessions;
@@ -28,17 +29,10 @@ public class BackgroundTaskServiceTests : IDisposable
   public BackgroundTaskServiceTests()
   {
     _fixture = new Fixture();
-    _mockWorker = new Mock<IBackgroundWorker>();
-    _mockLogger = new Mock<ILogger<BackgroundTaskService>>();
-    _mockScopeFactory = new Mock<IScopeFactory>();
-    _mockSessionManager = new Mock<ISessionManager>();
     _cancellationTokenSource = new CancellationTokenSource();
 
-    _sut = new BackgroundTaskService(
-        _mockWorker.Object,
-        _mockLogger.Object,
-        _mockScopeFactory.Object,
-        _mockSessionManager.Object);
+    (_sut, _mockWorker, _mockLogger, _mockScopeFactory, _mockSessionManager) =
+        BackgroundTaskMockFactory.CreateTestServiceInstance();
   }
 
   #region Constructor Tests
@@ -128,7 +122,7 @@ public class BackgroundTaskServiceTests : IDisposable
     // Arrange
     var scopeId = Guid.NewGuid();
     var sessionId = Guid.NewGuid();
-    var mockScope = CreateMockScope(scopeId);
+    var mockScope = BackgroundTaskMockFactory.CreateMockScope(scopeId);
     var session = new SessionBuilder().WithId(sessionId).Build();
 
     var workItemExecuted = false;
@@ -175,7 +169,7 @@ public class BackgroundTaskServiceTests : IDisposable
     // Arrange
     var scopeId = Guid.NewGuid();
     var parentSession = new SessionBuilder().Build();
-    var mockScope = CreateMockScope(scopeId);
+    var mockScope = BackgroundTaskMockFactory.CreateMockScope(scopeId);
 
     Func<IScopeContainer, CancellationToken, Task> workItem = async (scope, ct) =>
     {
@@ -224,7 +218,7 @@ public class BackgroundTaskServiceTests : IDisposable
   {
     // Arrange
     var scopeId = Guid.NewGuid();
-    var mockScope = CreateMockScope(scopeId);
+    var mockScope = BackgroundTaskMockFactory.CreateMockScope(scopeId);
     var session = new SessionBuilder().Build();
     var expectedException = new InvalidOperationException("Test exception");
 
@@ -277,7 +271,7 @@ public class BackgroundTaskServiceTests : IDisposable
   {
     // Arrange
     var scopeId = Guid.NewGuid();
-    var mockScope = CreateMockScope(scopeId);
+    var mockScope = BackgroundTaskMockFactory.CreateMockScope(scopeId);
     var session = new SessionBuilder().Build();
     var sessionException = new InvalidOperationException("Session error");
 
@@ -398,7 +392,7 @@ public class BackgroundTaskServiceTests : IDisposable
     }
 
     var scopeId = Guid.NewGuid();
-    var mockScope = CreateMockScope(scopeId);
+    var mockScope = BackgroundTaskMockFactory.CreateMockScope(scopeId);
     var session = new SessionBuilder().Build();
 
     var setupSequence = _mockWorker.SetupSequence(x => x.DequeueAsync(It.IsAny<CancellationToken>()));
@@ -435,14 +429,6 @@ public class BackgroundTaskServiceTests : IDisposable
   #endregion
 
   #region Helper Methods
-
-  private Mock<IScopeContainer> CreateMockScope(Guid scopeId)
-  {
-    var mockScope = new Mock<IScopeContainer>();
-    mockScope.SetupProperty(x => x.SessionId);
-    mockScope.SetupGet(x => x.Id).Returns(scopeId);
-    return mockScope;
-  }
 
   #endregion
 
