@@ -273,7 +273,7 @@ public class BackgroundTaskServiceAdvancedTests : IDisposable
         var errorCount = 0;
         var lockObj = new object();
 
-        var workItems = new List<BackgroundWorkItem>();
+    List<BackgroundWorkItem> workItems = [];
 
         // Mix of successful and failing work items
         for (int i = 0; i < 10; i++)

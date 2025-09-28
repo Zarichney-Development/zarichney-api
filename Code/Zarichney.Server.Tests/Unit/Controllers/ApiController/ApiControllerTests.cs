@@ -10,6 +10,10 @@ using Zarichney.Services.Email;
 
 namespace Zarichney.Server.Tests.Unit.Controllers.ApiControllerTests;
 
+/// <summary>
+/// Unit test coverage for <see cref="Zarichney.Controllers.ApiController"/>,
+/// validating email verification endpoints and controller health checks.
+/// </summary>
 public class ApiControllerTests
 {
     private readonly Mock<IEmailService> _mockEmailService;
@@ -161,10 +165,10 @@ public class ApiControllerTests
     {
         // Arrange
         var userEmail = "user@example.com";
-        var claims = new List<Claim>
-        {
+        List<Claim> claims =
+        [
             new Claim(ClaimTypes.Email, userEmail)
-        };
+        ];
         var identity = new ClaimsIdentity(claims, "Test");
         var principal = new ClaimsPrincipal(identity);
         _controllerContext.HttpContext.User = principal;
@@ -194,7 +198,7 @@ public class ApiControllerTests
     public void HealthCheck_NoEmailClaim_ReturnsOkWithUnknownUser()
     {
         // Arrange
-        var claims = new List<Claim>();
+        List<Claim> claims = [];
         var identity = new ClaimsIdentity(claims, "Test");
         var principal = new ClaimsPrincipal(identity);
         _controllerContext.HttpContext.User = principal;
@@ -226,13 +230,13 @@ public class ApiControllerTests
         // Arrange
         var userId = "user-123";
         var userEmail = "admin@example.com";
-        var claims = new List<Claim>
-        {
+        List<Claim> claims =
+        [
             new Claim(ClaimTypes.NameIdentifier, userId),
             new Claim(ClaimTypes.Email, userEmail),
             new Claim(ClaimTypes.Role, "admin"),
             new Claim(ClaimTypes.Role, "user")
-        };
+        ];
         var identity = new ClaimsIdentity(claims, "Bearer");
         var principal = new ClaimsPrincipal(identity);
         _controllerContext.HttpContext.User = principal;
@@ -267,10 +271,10 @@ public class ApiControllerTests
         // Arrange
         var userId = "api-user";
         var apiKeyId = "key-123";
-        var claims = new List<Claim>
-        {
+        List<Claim> claims =
+        [
             new Claim(ClaimTypes.NameIdentifier, userId)
-        };
+        ];
         var identity = new ClaimsIdentity(claims, "ApiKey");
         var principal = new ClaimsPrincipal(identity);
         _controllerContext.HttpContext.User = principal;
@@ -286,13 +290,14 @@ public class ApiControllerTests
         okResult!.Value.Should().NotBeNull();
 
         var response = okResult.Value;
+        List<string> expectedRoles = [];
         response.Should().BeEquivalentTo(new
         {
             userId = userId,
             authType = "ApiKey",
             isAuthenticated = true,
             isAdmin = false,
-            roles = new List<string>(),
+            roles = expectedRoles,
             isApiKeyAuth = true,
             apiKeyInfo = new { keyId = apiKeyId },
             message = "Authentication successful!"
@@ -317,13 +322,14 @@ public class ApiControllerTests
         okResult!.Value.Should().NotBeNull();
 
         var response = okResult.Value;
+        List<string> expectedRoles = [];
         response.Should().BeEquivalentTo(new
         {
             userId = "Unknown",
             authType = "None",
             isAuthenticated = false,
             isAdmin = false,
-            roles = new List<string>(),
+            roles = expectedRoles,
             isApiKeyAuth = false,
             apiKeyInfo = (object?)null,
             message = "Authentication successful!"
@@ -336,12 +342,12 @@ public class ApiControllerTests
     {
         // Arrange
         var userId = "user-456";
-        var claims = new List<Claim>
-        {
+        List<Claim> claims =
+        [
             new Claim(ClaimTypes.NameIdentifier, userId),
             new Claim(ClaimTypes.Role, "user"),
             new Claim(ClaimTypes.Role, "moderator")
-        };
+        ];
         var identity = new ClaimsIdentity(claims, "Bearer");
         var principal = new ClaimsPrincipal(identity);
         _controllerContext.HttpContext.User = principal;

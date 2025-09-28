@@ -12,6 +12,7 @@ using Zarichney.Server.Tests.TestData.Builders;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Commands;
 using Zarichney.Services.Auth.Models;
+using ControllersAuthController = Zarichney.Controllers.AuthController;
 using static Zarichney.Controllers.AuthController;
 
 namespace Zarichney.Server.Tests.Unit.Controllers.AuthControllerTests;
@@ -19,17 +20,17 @@ namespace Zarichney.Server.Tests.Unit.Controllers.AuthControllerTests;
 public class AuthControllerRoleTests
 {
     private readonly Mock<IMediator> _mockMediator;
-    private readonly Mock<ILogger<AuthController>> _mockLogger;
+    private readonly Mock<ILogger<ControllersAuthController>> _mockLogger;
     private readonly Mock<ICookieAuthManager> _mockCookieManager;
-    private readonly AuthController _sut;
+    private readonly ControllersAuthController _sut;
 
     public AuthControllerRoleTests()
     {
-        _mockMediator = new Mock<IMediator>();
-        _mockLogger = new Mock<ILogger<AuthController>>();
+    _mockMediator = new Mock<IMediator>();
+    _mockLogger = new Mock<ILogger<ControllersAuthController>>();
         _mockCookieManager = CookieAuthManagerMockFactory.CreateDefault();
 
-        _sut = new AuthController(_mockMediator.Object, _mockLogger.Object, _mockCookieManager.Object)
+    _sut = new ControllersAuthController(_mockMediator.Object, _mockLogger.Object, _mockCookieManager.Object)
         {
             ControllerContext = new ControllerContext
             {
@@ -469,7 +470,7 @@ public class AuthControllerRoleTests
         // Assert
         result.Should().BeOfType<OkObjectResult>();
         var okResult = result as OkObjectResult;
-        var response = okResult!.Value as AuthController.AuthResponse;
+    var response = okResult!.Value as ControllersAuthController.AuthResponse;
 
         response.Should().NotBeNull();
         response!.Success.Should().BeTrue();
@@ -503,7 +504,7 @@ public class AuthControllerRoleTests
         // Assert
         result.Should().BeOfType<BadRequestObjectResult>();
         var badRequest = result as BadRequestObjectResult;
-        var response = badRequest!.Value as AuthController.AuthResponse;
+    var response = badRequest!.Value as ControllersAuthController.AuthResponse;
 
         response.Should().NotBeNull();
         response!.Success.Should().BeFalse();
@@ -542,7 +543,7 @@ public class AuthControllerRoleTests
         // Assert
         result.Should().BeOfType<BadRequestObjectResult>();
         var badRequest = result as BadRequestObjectResult;
-        var response = badRequest!.Value as AuthController.AuthResponse;
+    var response = badRequest!.Value as ControllersAuthController.AuthResponse;
 
         response.Should().NotBeNull();
         response!.Success.Should().BeFalse();

@@ -10,23 +10,24 @@ using Zarichney.Server.Tests.Framework.Mocks;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Commands;
 using Zarichney.Services.Auth.Models;
+using ControllersAuthController = Zarichney.Controllers.AuthController;
 
 namespace Zarichney.Server.Tests.Unit.Controllers.AuthControllerTests;
 
 public class AuthControllerApiKeyTests
 {
     private readonly Mock<IMediator> _mockMediator;
-    private readonly Mock<ILogger<AuthController>> _mockLogger;
+    private readonly Mock<ILogger<ControllersAuthController>> _mockLogger;
     private readonly Mock<ICookieAuthManager> _mockCookieManager;
-    private readonly AuthController _sut;
+    private readonly ControllersAuthController _sut;
 
     public AuthControllerApiKeyTests()
     {
-        _mockMediator = new Mock<IMediator>();
-        _mockLogger = new Mock<ILogger<AuthController>>();
+    _mockMediator = new Mock<IMediator>();
+    _mockLogger = new Mock<ILogger<ControllersAuthController>>();
         _mockCookieManager = CookieAuthManagerMockFactory.CreateDefault();
 
-        _sut = new AuthController(_mockMediator.Object, _mockLogger.Object, _mockCookieManager.Object)
+    _sut = new ControllersAuthController(_mockMediator.Object, _mockLogger.Object, _mockCookieManager.Object)
         {
             ControllerContext = new ControllerContext
             {

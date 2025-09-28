@@ -168,7 +168,7 @@ public class OrderServiceTests
         .WithEmail("customer@test.com")
         .Build();
 
-    var recipeList = new List<string> { "Recipe 1", "Recipe 2", "Recipe 3" };
+    List<string> recipeList = ["Recipe 1", "Recipe 2", "Recipe 3"];
     var conversationId = "conv-123";
 
     _mockCustomerService
@@ -258,15 +258,15 @@ public class OrderServiceTests
     var order = new CookbookOrderBuilder()
         .WithOrderId(orderId)
         .WithCustomer(customer)
-        .WithRecipeList(new List<string> { "Recipe 1", "Recipe 2" })
+        .WithRecipeList("Recipe 1", "Recipe 2")
         .Build();
 
     var session = new SessionBuilder()
         .WithOrder(order)
         .Build();
 
-    var sourceRecipes = new List<Recipe>
-        {
+    List<Recipe> sourceRecipes =
+        [
             new Recipe
             {
                 Title = "Test",
@@ -275,14 +275,14 @@ public class OrderServiceTests
                 PrepTime = "1",
                 CookTime = "1",
                 TotalTime = "1",
-                Ingredients = new List<string>{"a"},
-                Directions = new List<string>{"b"},
+                Ingredients = ["a"],
+                Directions = ["b"],
                 Notes = string.Empty,
-                Aliases = new List<string>(),
+                Aliases = [],
                 IndexTitle = null,
                 Relevancy = new Dictionary<string, RelevancyResult>()
             }
-        };
+        ];
 
     var synthesizedRecipe = new SynthesizedRecipeBuilder()
         .WithTitle("Recipe 1")
@@ -422,7 +422,7 @@ public class OrderServiceTests
   {
     // Arrange
     var order = new CookbookOrderBuilder()
-        .WithSynthesizedRecipes(new List<SynthesizedRecipe>())
+        .WithSynthesizedRecipes(Array.Empty<SynthesizedRecipe>())
         .Build();
 
     // Act
@@ -583,15 +583,15 @@ public class OrderServiceTests
     var order = new CookbookOrderBuilder()
         .WithOrderId(orderId)
         .WithCustomer(customer)
-        .WithRecipeList(new List<string> { "Recipe 1", "Recipe 2", "Recipe 3", "Recipe 4" }) // 4 recipes requested
+        .WithRecipeList("Recipe 1", "Recipe 2", "Recipe 3", "Recipe 4") // 4 recipes requested
         .Build();
 
     var session = new SessionBuilder()
         .WithOrder(order)
         .Build();
 
-    var sourceRecipes = new List<Recipe>
-        {
+    List<Recipe> sourceRecipes =
+        [
             new Recipe
             {
                 Title = "Test",
@@ -600,14 +600,14 @@ public class OrderServiceTests
                 PrepTime = "1",
                 CookTime = "1",
                 TotalTime = "1",
-                Ingredients = new List<string>{"a"},
-                Directions = new List<string>{"b"},
+                Ingredients = ["a"],
+                Directions = ["b"],
                 Notes = string.Empty,
-                Aliases = new List<string>(),
+                Aliases = [],
                 IndexTitle = null,
                 Relevancy = new Dictionary<string, RelevancyResult>()
             }
-        };
+        ];
     var synthesizedRecipe = new SynthesizedRecipeBuilder().Build();
 
     SetupSessionManagerForOrder(orderId, session);
@@ -730,10 +730,10 @@ public class OrderServiceTests
             It.IsAny<int?>()))
         .ReturnsAsync(new LlmResult<RecipeProposalResult>
         {
-          Data = new RecipeProposalResult
-          {
-            Recipes = new List<string> { "Recipe 1", "Recipe 2", "Recipe 3" }
-          },
+                    Data = new RecipeProposalResult
+                    {
+                        Recipes = ["Recipe 1", "Recipe 2", "Recipe 3"]
+                    },
           ConversationId = "conv-123"
         });
   }
@@ -794,7 +794,7 @@ public class OrderServiceTests
     var order = new CookbookOrderBuilder()
         .WithOrderId(orderId)
         .WithCustomer(customer)
-        .WithRecipeList(new List<string> { "Recipe 1" })
+        .WithRecipeList("Recipe 1")
         .Build();
 
     var session = new SessionBuilder()
@@ -803,7 +803,7 @@ public class OrderServiceTests
 
     SetupSessionManagerForOrder(orderId, session);
 
-    var noRecipeException = new NoRecipeException(new List<string> { "Attempt 1", "Attempt 2", "Attempt 3" });
+    var noRecipeException = new NoRecipeException(["Attempt 1", "Attempt 2", "Attempt 3"]);
     _mockRecipeService
         .Setup(x => x.GetRecipes("Recipe 1", It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
         .ThrowsAsync(noRecipeException);
@@ -837,7 +837,7 @@ public class OrderServiceTests
     var order = new CookbookOrderBuilder()
         .WithOrderId(orderId)
         .WithCustomer(customer)
-        .WithRecipeList(new List<string> { "Recipe 1" })
+        .WithRecipeList("Recipe 1")
         .Build();
 
     var session = new SessionBuilder()
@@ -874,16 +874,16 @@ public class OrderServiceTests
         .WithAvailableRecipes(5)
         .Build();
 
-    var synthesizedRecipes = new List<SynthesizedRecipe>
-    {
+    List<SynthesizedRecipe> synthesizedRecipes =
+    [
         new SynthesizedRecipeBuilder().WithTitle("Recipe 1").Build(),
         new SynthesizedRecipeBuilder().WithTitle("Recipe 2").Build()
-    };
+    ];
 
     var order = new CookbookOrderBuilder()
         .WithOrderId(orderId)
         .WithCustomer(customer)
-        .WithRecipeList(new List<string> { "Recipe 1", "Recipe 2" })
+        .WithRecipeList("Recipe 1", "Recipe 2")
         .WithSynthesizedRecipes(synthesizedRecipes)
         .Build();
 
@@ -928,11 +928,8 @@ public class OrderServiceTests
     var order = new CookbookOrderBuilder()
         .WithOrderId(orderId)
         .WithCustomer(customer)
-        .WithRecipeList(new List<string> { "Recipe 1", "Recipe 2", "Recipe 3" })
-        .WithSynthesizedRecipes(new List<SynthesizedRecipe>
-        {
-            new SynthesizedRecipeBuilder().WithTitle("Recipe 1").Build()
-        })
+        .WithRecipeList("Recipe 1", "Recipe 2", "Recipe 3")
+        .WithSynthesizedRecipes(new SynthesizedRecipeBuilder().WithTitle("Recipe 1").Build())
         .Build();
 
     var session = new SessionBuilder()
@@ -1088,15 +1085,15 @@ public class OrderServiceTests
     var order = new CookbookOrderBuilder()
         .WithOrderId(orderId)
         .WithCustomer(customer)
-        .WithRecipeList(new List<string> { "Recipe 1", "Recipe 2", "Recipe 3", "Recipe 4", "Recipe 5" })
+        .WithRecipeList("Recipe 1", "Recipe 2", "Recipe 3", "Recipe 4", "Recipe 5")
         .Build();
 
     var session = new SessionBuilder()
         .WithOrder(order)
         .Build();
 
-    var sourceRecipes = new List<Recipe>
-    {
+    List<Recipe> sourceRecipes =
+    [
         new Recipe
         {
             Title = "Test",
@@ -1105,14 +1102,14 @@ public class OrderServiceTests
             PrepTime = "1",
             CookTime = "1",
             TotalTime = "1",
-            Ingredients = new List<string>{"a"},
-            Directions = new List<string>{"b"},
+            Ingredients = ["a"],
+            Directions = ["b"],
             Notes = string.Empty,
-            Aliases = new List<string>(),
+            Aliases = [],
             IndexTitle = null,
             Relevancy = new Dictionary<string, RelevancyResult>()
         }
-    };
+    ];
 
     var synthesizedRecipe = new SynthesizedRecipeBuilder().Build();
 
@@ -1193,15 +1190,15 @@ public class OrderServiceTests
     var order = new CookbookOrderBuilder()
         .WithOrderId(orderId)
         .WithCustomer(customer)
-        .WithRecipeList(new List<string> { "Recipe 1" })
+        .WithRecipeList("Recipe 1")
         .Build();
 
     var session = new SessionBuilder()
         .WithOrder(order)
         .Build();
 
-    var sourceRecipes = new List<Recipe>
-    {
+    List<Recipe> sourceRecipes =
+    [
         new Recipe
         {
             Title = "Test",
@@ -1210,14 +1207,14 @@ public class OrderServiceTests
             PrepTime = "1",
             CookTime = "1",
             TotalTime = "1",
-            Ingredients = new List<string>{"a"},
-            Directions = new List<string>{"b"},
+            Ingredients = ["a"],
+            Directions = ["b"],
             Notes = string.Empty,
-            Aliases = new List<string>(),
+            Aliases = [],
             IndexTitle = null,
             Relevancy = new Dictionary<string, RelevancyResult>()
         }
-    };
+    ];
 
     var synthesizedRecipe = new SynthesizedRecipeBuilder().Build();
 
@@ -1248,15 +1245,15 @@ public class OrderServiceTests
     var order = new CookbookOrderBuilder()
         .WithOrderId(orderId)
         .WithCustomer(customer)
-        .WithRecipeList(new List<string> { "Recipe 1" })
+        .WithRecipeList("Recipe 1")
         .Build();
 
     var session = new SessionBuilder()
         .WithOrder(order)
         .Build();
 
-    var sourceRecipes = new List<Recipe>
-    {
+    List<Recipe> sourceRecipes =
+    [
         new Recipe
         {
             Title = "Test",
@@ -1265,14 +1262,14 @@ public class OrderServiceTests
             PrepTime = "1",
             CookTime = "1",
             TotalTime = "1",
-            Ingredients = new List<string>{"a"},
-            Directions = new List<string>{"b"},
+            Ingredients = ["a"],
+            Directions = ["b"],
             Notes = string.Empty,
-            Aliases = new List<string>(),
+            Aliases = [],
             IndexTitle = null,
             Relevancy = new Dictionary<string, RelevancyResult>()
         }
-    };
+    ];
 
     var synthesizedRecipe = new SynthesizedRecipeBuilder().Build();
 
@@ -1330,15 +1327,15 @@ public class OrderServiceTests
     var order = new CookbookOrderBuilder()
         .WithOrderId(orderId)
         .WithCustomer(customer)
-        .WithRecipeList(new List<string> { "Recipe 1" })
+        .WithRecipeList("Recipe 1")
         .Build();
 
     var session = new SessionBuilder()
         .WithOrder(order)
         .Build();
 
-    var sourceRecipes = new List<Recipe>
-    {
+    List<Recipe> sourceRecipes =
+    [
         new Recipe
         {
             Title = "Test",
@@ -1347,10 +1344,10 @@ public class OrderServiceTests
             PrepTime = "1",
             CookTime = "1",
             TotalTime = "1",
-            Ingredients = new List<string>{"a"},
-            Directions = new List<string>{"b"},
+            Ingredients = ["a"],
+            Directions = ["b"],
             Notes = string.Empty,
-            Aliases = new List<string>(),
+            Aliases = [],
             IndexTitle = null,
             Relevancy = new Dictionary<string, RelevancyResult>(),
             ImageUrl = "https://example.com/image1.jpg",
@@ -1364,21 +1361,21 @@ public class OrderServiceTests
             PrepTime = "2",
             CookTime = "2",
             TotalTime = "2",
-            Ingredients = new List<string>{"b"},
-            Directions = new List<string>{"c"},
+            Ingredients = ["b"],
+            Directions = ["c"],
             Notes = string.Empty,
-            Aliases = new List<string>(),
+            Aliases = [],
             IndexTitle = null,
             Relevancy = new Dictionary<string, RelevancyResult>(),
             ImageUrl = "https://example.com/image2.jpg",
             RecipeUrl = "https://example.com/recipe2"
         }
-    };
+    ];
 
     var synthesizedRecipe = new SynthesizedRecipeBuilder()
         .WithTitle("Recipe 1")
         .Build();
-    synthesizedRecipe.InspiredBy = new List<string> { "https://example.com/recipe1" };
+    synthesizedRecipe.InspiredBy = ["https://example.com/recipe1"];
 
     SetupSessionManagerForOrder(orderId, session);
     SetupRecipeProcessingMocks(sourceRecipes, synthesizedRecipe);
@@ -1407,7 +1404,7 @@ public class OrderServiceTests
     var order = new CookbookOrderBuilder()
         .WithOrderId(orderId)
         .WithCustomer(customer)
-        .WithRecipeList(new List<string> { "Recipe 1", "Recipe 2", "Recipe 3" })
+        .WithRecipeList("Recipe 1", "Recipe 2", "Recipe 3")
         .Build();
 
     var session = new SessionBuilder()
@@ -1488,15 +1485,15 @@ public class OrderServiceTests
         .WithAvailableRecipes(5)
         .Build();
 
-    var synthesizedRecipes = new List<SynthesizedRecipe>
-    {
+    List<SynthesizedRecipe> synthesizedRecipes =
+    [
         new SynthesizedRecipeBuilder().WithTitle("Recipe 1").Build()
-    };
+    ];
 
     var order = new CookbookOrderBuilder()
         .WithOrderId(orderId)
         .WithCustomer(customer)
-        .WithRecipeList(new List<string> { "Recipe 1", "Recipe 2" })
+        .WithRecipeList("Recipe 1", "Recipe 2")
         .WithSynthesizedRecipes(synthesizedRecipes)
         .Build();
 
@@ -1504,8 +1501,8 @@ public class OrderServiceTests
         .WithOrder(order)
         .Build();
 
-    var sourceRecipes = new List<Recipe>
-    {
+    List<Recipe> sourceRecipes =
+    [
         new Recipe
         {
             Title = "Test",
@@ -1514,14 +1511,14 @@ public class OrderServiceTests
             PrepTime = "1",
             CookTime = "1",
             TotalTime = "1",
-            Ingredients = new List<string>{"a"},
-            Directions = new List<string>{"b"},
+            Ingredients = ["a"],
+            Directions = ["b"],
             Notes = string.Empty,
-            Aliases = new List<string>(),
+            Aliases = [],
             IndexTitle = null,
             Relevancy = new Dictionary<string, RelevancyResult>()
         }
-    };
+    ];
 
     var newSynthesizedRecipe = new SynthesizedRecipeBuilder().Build();
 
