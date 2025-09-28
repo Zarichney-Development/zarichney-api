@@ -3,9 +3,9 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using Zarichney.Cookbook.Customers;
-using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Attributes;
 
-namespace Zarichney.Server.Tests.Unit.Cookbook.Customers;
+namespace Zarichney.Tests.Unit.Cookbook.Customers;
 
 /// <summary>
 /// Unit tests for the CustomerService class.

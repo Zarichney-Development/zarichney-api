@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Zarichney.Services.Auth;
 
-namespace Zarichney.Server.Tests.TestData.Builders;
+namespace Zarichney.Tests.TestData.Builders;
 
 public class ApplicationUserBuilder : BaseBuilder<ApplicationUserBuilder, ApplicationUser>
 {

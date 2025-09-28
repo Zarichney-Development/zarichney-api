@@ -6,7 +6,7 @@ using Xunit;
 using Zarichney.Services.Auth;
 using Zarichney.Startup;
 
-namespace Zarichney.Server.Tests.Unit.Startup;
+namespace Zarichney.Tests.Unit.Startup;
 
 [Trait("Category", "Unit")]
 public class ValidateStartupTests

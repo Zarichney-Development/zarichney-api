@@ -10,9 +10,9 @@ using Zarichney.Services.AI;
 using Zarichney.Services.Sessions;
 using Zarichney.Services.Status;
 using AutoMapper;
-using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Attributes;
 
-namespace Zarichney.Server.Tests.Unit.Services.AI;
+namespace Zarichney.Tests.Unit.Services.AI;
 
 /// <summary>
 /// Unit tests for LlmService method behaviors

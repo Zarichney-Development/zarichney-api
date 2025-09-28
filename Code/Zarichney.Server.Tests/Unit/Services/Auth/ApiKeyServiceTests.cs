@@ -9,7 +9,7 @@ using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Models;
 using ILogger = Serilog.ILogger;
 
-namespace Zarichney.Server.Tests.Unit.Services.Auth;
+namespace Zarichney.Tests.Unit.Services.Auth;
 
 /// <summary>
 /// Comprehensive unit tests for ApiKeyService covering API key management and authentication functionality.

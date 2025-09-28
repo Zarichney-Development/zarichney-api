@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Xunit;
 
-namespace Zarichney.Server.Tests.Framework.Attributes
+namespace Zarichney.Tests.Framework.Attributes
 {
   /// <summary>
   /// A Fact attribute that skips the test when Docker is not available or misconfigured.

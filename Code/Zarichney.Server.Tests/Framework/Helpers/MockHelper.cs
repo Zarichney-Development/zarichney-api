@@ -8,7 +8,7 @@ using Moq;
 using System.Security.Claims;
 using Stripe;
 
-namespace Zarichney.Server.Tests.Framework.Helpers;
+namespace Zarichney.Tests.Framework.Helpers;
 
 /// <summary>
 /// Shared test helpers for common Moq setup patterns.

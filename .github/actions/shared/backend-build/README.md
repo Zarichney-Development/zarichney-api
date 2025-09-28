@@ -106,7 +106,7 @@
     * **Build Configuration:** Release configuration default with configurable override support
     * **Artifact Retention:** 7-day retention for build and test artifacts with structured naming
 * **Epic #181 Integration Patterns:**
-    * **Coverage Build Support:** Enables coverage-build.yml specialized workflow execution
+    * **Coverage Build Support:** Enables testing-coverage-build-review.yml specialized workflow execution
     * **Path-Aware Execution:** Designed for integration with path-analysis component outputs
     * **Concurrency Coordination:** Compatible with concurrency-config resource management
 * **Performance Characteristics:**
@@ -177,7 +177,7 @@
     * `jq` - JSON processing for test result parsing and artifact generation
     * `GitHub Actions environment` - Runner infrastructure and artifact management
 * **Dependents (Impact of Changes):**
-    * **Epic #181 Coverage Workflows** - coverage-build.yml and specialized testing workflows
+    * **Epic #181 Coverage Workflows** - testing-coverage-build-review.yml and specialized testing workflows
     * **Issue #212 build.yml Refactor** - Main build workflow modernization using this component
     * **Issue #183 Foundation Implementation** - Coverage workflow creation and validation
     * **Future Epic Workflows** - AI analysis workflows and specialized build patterns

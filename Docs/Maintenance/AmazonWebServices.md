@@ -180,7 +180,7 @@ ssh zarichney-frontend "echo 'Frontend SSH connection successful!'"
 
 #### Backend Infrastructure (ASP.NET 8 API)
 * **Region:** us-east-2
-* **EC2 Instance:** 
+* **EC2 Instance:**
   * Instance Type: `t3.small` (2 vCPU, 2GB RAM)
   * Tag: `Name=cookbook-api`
   * IAM Role: Configured for AWS services access
@@ -339,14 +339,14 @@ aws cloudfront get-distribution-config --id $cfDistId
 $distributionConfig = aws cloudfront get-distribution-config --id $cfDistId | ConvertFrom-Json
 $etag = $distributionConfig.ETag
 
-$distributionConfig.DistributionConfig.Origins.Items | 
-    Where-Object { $_.Id -eq "cookbook-api" } | 
+$distributionConfig.DistributionConfig.Origins.Items |
+    Where-Object { $_.Id -eq "cookbook-api" } |
     ForEach-Object {
         $_.DomainName = $ec2Host
     }
 
-$distributionConfig.DistributionConfig | 
-    ConvertTo-Json -Depth 10 | 
+$distributionConfig.DistributionConfig |
+    ConvertTo-Json -Depth 10 |
     Set-Content -Path .\cloudfront-config.json
 
 aws cloudfront update-distribution --id $cfDistId --distribution-config file://cloudfront-config.json --if-match $etag
@@ -496,7 +496,7 @@ If OIDC authentication fails:
    ```bash
    # Check if OIDC provider exists
    aws iam get-open-id-connect-provider --open-id-connect-provider-arn arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/token.actions.githubusercontent.com
-   
+
    # Check if role exists
    aws iam get-role --role-name GitHubActionsDeploymentRole
    ```
@@ -510,7 +510,7 @@ If OIDC authentication fails:
    ```bash
    # Delete existing provider
    aws iam delete-open-id-connect-provider --open-id-connect-provider-arn arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/token.actions.githubusercontent.com
-   
+
    # Recreate provider
    aws iam create-open-id-connect-provider \
      --url https://token.actions.githubusercontent.com \
@@ -740,7 +740,7 @@ ssh Zarichney.Server "sudo -i -u postgres psql -d zarichney_identity"
 
 # View token statistics
 \x on
-SELECT 
+SELECT
   COUNT(*) as total_tokens,
   COUNT(*) FILTER (WHERE "ExpiresAt" < NOW()) as expired_tokens,
   COUNT(*) FILTER (WHERE "IsUsed" = true) as used_tokens,
@@ -900,7 +900,7 @@ If SSH to frontend fails, add your public key via AWS Console:
    ```bash
    # Get your public key first (run locally)
    ssh-keygen -y -f ~/.ssh/your-private-key.pem
-   
+
    # Then on the EC2 instance:
    mkdir -p ~/.ssh && chmod 700 ~/.ssh
    echo "your-public-key-here" >> ~/.ssh/authorized_keys
@@ -977,8 +977,8 @@ sudo systemctl restart cookbook-api
 ```powershell
 # Verify EC2 DNS matches CloudFront origin
 $distributionConfig = aws cloudfront get-distribution-config --id $cfDistId | ConvertFrom-Json
-$currentOrigin = $distributionConfig.DistributionConfig.Origins.Items | 
-    Where-Object { $_.Id -eq "cookbook-api" } | 
+$currentOrigin = $distributionConfig.DistributionConfig.Origins.Items |
+    Where-Object { $_.Id -eq "cookbook-api" } |
     Select-Object -ExpandProperty DomainName
 
 Write-Host "Current Origin: $currentOrigin"

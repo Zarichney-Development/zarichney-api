@@ -11,12 +11,12 @@
 
 - **Purpose:** Refactor the monolithic `.github/workflows/build.yml` to consume extracted reusable composite actions from Issue #183, establishing the canonical pattern for future workflow files.
 - **Why:** Eliminate duplicated inline logic, improve maintainability, and create a standard reference implementation for future build-customized workflows (e.g., coverage pipelines in #184).
-- **Note:** This issue does NOT create `coverage-build.yml`; that will be implemented in Issue #184 using this refactored pattern.
+- **Note:** This issue does NOT create `testing-coverage-build-review.yml`; that will be implemented in Issue #184 using this refactored pattern.
 
 ## 2. Dependencies
 
 - **Depends on:** Issue #183 (extraction of reusable components: `path-analysis`, `backend-build`, `frontend-build`, and shared actions)
-- **Blocks:** Issue #184 (create `coverage-build.yml` using the refactored pattern)
+- **Blocks:** Issue #184 (create `testing-coverage-build-review.yml` using the refactored pattern)
 
 ## 3. Deliverables
 
@@ -45,7 +45,7 @@
 
 ## 5. Non-Goals
 
-- **Coverage Workflow Creation:** `coverage-build.yml` creation is explicitly out of scope (deferred to Issue #184)
+- **Coverage Workflow Creation:** `testing-coverage-build-review.yml` creation is explicitly out of scope (deferred to Issue #184)
 - **Concurrency Extraction:** Workflow-level `concurrency` block remains defined in each workflow (cannot be extracted into composite action)
 - **AI Sentinel Changes:** Detailed AI composite extractions occur in Issue #184; this issue keeps existing AI jobs functional
 
@@ -100,7 +100,7 @@
 - ✅ **Performance Optimization**: ~56 lines of code reduced while maintaining exact functionality
 
 ### 10.3 Canonical Pattern Documentation
-**Comprehensive Reference**: [06 - Canonical Pattern Implementation](./06-canonical-pattern-implementation.md) provides detailed guidance for Issue #184 coverage-build.yml creation using the established patterns.
+**Comprehensive Reference**: [06 - Canonical Pattern Implementation](./06-canonical-pattern-implementation.md) provides detailed guidance for Issue #184 testing-coverage-build-review.yml creation using the established patterns.
 
 ### 10.4 Issue #184 Readiness Confirmation
 - ✅ **Foundation Components Available**: path-analysis and backend-build validated for coverage workflow
@@ -109,7 +109,7 @@
 - ✅ **AI Sentinel Compatibility**: Preserved for seamless coverage workflow integration
 
 ### 10.5 Next Actions for Epic Progression
-1. **Issue #184**: Create coverage-build.yml using canonical pattern established in Issue #212
+1. **Issue #184**: Create testing-coverage-build-review.yml using canonical pattern established in Issue #212
 2. **Quality Validation**: Apply same behavioral parity testing standards
 3. **AI Framework Integration**: Add coverage intelligence components following established patterns
 4. **Epic Coordination**: Continue Epic #181 progression toward Issues #185-#187

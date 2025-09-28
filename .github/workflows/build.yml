@@ -577,7 +577,7 @@ jobs:
     name: "Security • Comprehensive Scanning"
     runs-on: ubuntu-latest
     needs: [path-analysis, backend-build, frontend-build, build-summary]
-    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "epic/testing-coverage-to-90"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
+    if: always() && !cancelled() && github.event_name == 'pull_request' && contains(fromJSON('["main", "epic/testing-coverage"]'), github.event.pull_request.base.ref) && (needs.build-summary.result == 'success' || needs.path-analysis.outputs.docs-only == 'true')
     timeout-minutes: 45
 
     strategy:

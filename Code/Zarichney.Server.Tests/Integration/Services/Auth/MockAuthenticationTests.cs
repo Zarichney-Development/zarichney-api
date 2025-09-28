@@ -7,7 +7,7 @@ using Xunit;
 using Zarichney.Services.Auth;
 using Zarichney.Startup;
 
-namespace Zarichney.Server.Tests.Integration.Services.Auth;
+namespace Zarichney.Tests.Integration.Services.Auth;
 
 /// <summary>
 /// Integration tests for mock authentication functionality in non-Production environments

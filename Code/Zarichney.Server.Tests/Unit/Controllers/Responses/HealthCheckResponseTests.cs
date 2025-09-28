@@ -3,7 +3,7 @@ using System.Text.Json;
 using Xunit;
 using Zarichney.Controllers.Responses;
 
-namespace Zarichney.Server.Tests.Unit.Controllers.Responses;
+namespace Zarichney.Tests.Unit.Controllers.Responses;
 
 /// <summary>
 /// Unit tests for HealthCheckResponse record - tests record behavior, equality, and serialization

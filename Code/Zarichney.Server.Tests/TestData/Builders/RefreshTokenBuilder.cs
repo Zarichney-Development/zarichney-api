@@ -1,7 +1,7 @@
 using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Models;
 
-namespace Zarichney.Server.Tests.TestData.Builders;
+namespace Zarichney.Tests.TestData.Builders;
 
 public class RefreshTokenBuilder : BaseBuilder<RefreshTokenBuilder, RefreshToken>
 {

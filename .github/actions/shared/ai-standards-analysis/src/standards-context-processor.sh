@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # AI Standards Analysis - Standards Context Processor
-# Epic #181 Component: Standards data validation and context preparation
+# Build Workflow Component: Standards data validation and context preparation
 
 set -euo pipefail
 
@@ -423,10 +423,10 @@ generate_epic_prioritization_context() {
     local epic_requirements="{}"
 
     case "$EPIC_CONTEXT" in
-        *"epic-181"* | *"build-workflows"*)
+        *"build-workflow-improvements"* | *"build-workflows"*)
             epic_requirements=$(cat <<EOF
 {
-    "epic": "epic-181-build-workflows",
+    "epic": "build-workflow-improvements",
     "focus": "workflow_modernization",
     "priorities": ["component_extraction", "security_controls", "performance_optimization", "maintainability"],
     "quality_emphasis": ["modular_design", "reusable_components", "comprehensive_testing"],

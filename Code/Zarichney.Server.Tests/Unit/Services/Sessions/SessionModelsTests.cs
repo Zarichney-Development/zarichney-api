@@ -6,9 +6,9 @@ using Xunit;
 using Zarichney.Cookbook.Orders;
 using Zarichney.Services.AI;
 using Zarichney.Services.Sessions;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 
-namespace Zarichney.Server.Tests.Unit.Services.Sessions;
+namespace Zarichney.Tests.Unit.Services.Sessions;
 
 /// <summary>
 /// Unit tests for Session model classes including Session, SessionConfig,

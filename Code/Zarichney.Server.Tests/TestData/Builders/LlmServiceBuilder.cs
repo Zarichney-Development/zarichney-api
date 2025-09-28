@@ -7,7 +7,7 @@ using Zarichney.Services.AI;
 using Zarichney.Services.Sessions;
 using Zarichney.Services.Status;
 
-namespace Zarichney.Server.Tests.TestData.Builders;
+namespace Zarichney.Tests.TestData.Builders;
 
 /// <summary>
 /// Builder for creating LlmService instances for testing.

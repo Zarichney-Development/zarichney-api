@@ -102,7 +102,7 @@
     * **JSON Structure:** Follows standardized format with categories, summary, and metadata sections
 * **Epic #181 Integration Patterns:**
     * **Branch-Aware Logic:** Special handling for test/* branches and develop branch detection
-    * **Coverage Workflow Support:** Boolean outputs enable coverage-build.yml conditional execution
+    * **Coverage Workflow Support:** Boolean outputs enable testing-coverage-build-review.yml conditional execution
     * **Component Reusability:** Designed for use across all Epic #181 specialized workflows
 * **Performance Characteristics:**
     * **Execution Time:** <5 seconds target for path analysis operations
@@ -164,8 +164,8 @@
     * `jq` - JSON processing for structured output generation and format validation
     * GitHub Actions environment - Context variables and runner infrastructure
 * **Dependents (Impact of Changes):**
-    * **Epic #181 Workflows** - All specialized workflows (coverage-build.yml, future AI analysis workflows)
-    * **Issue #183 Coverage Implementation** - coverage-build.yml workflow requires path-analysis outputs
+    * **Epic #181 Workflows** - All specialized workflows (testing-coverage-build-review.yml, future AI analysis workflows)
+    * **Issue #183 Coverage Implementation** - testing-coverage-build-review.yml workflow requires path-analysis outputs
     * **Issue #212 build.yml Refactor** - Main build workflow modernization using this component
     * **Future Specialized Workflows** - AI framework workflows and epic coordination patterns
 

@@ -1,7 +1,7 @@
 using AutoFixture;
 using System.Net.Http.Headers;
 
-namespace Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
+namespace Zarichney.Tests.TestData.AutoFixtureCustomizations;
 
 /// <summary>
 /// AutoFixture customization for HTTP-related objects that cannot be directly instantiated.

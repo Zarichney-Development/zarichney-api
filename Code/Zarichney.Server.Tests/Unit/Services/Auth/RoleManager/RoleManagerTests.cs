@@ -5,7 +5,7 @@ using Moq;
 using Xunit;
 using Zarichney.Services.Auth;
 
-namespace Zarichney.Server.Tests.Unit.Services.Auth.RoleManager;
+namespace Zarichney.Tests.Unit.Services.Auth.RoleManager;
 
 /// <summary>
 /// Comprehensive unit tests for RoleManager covering role and user role management functionality.

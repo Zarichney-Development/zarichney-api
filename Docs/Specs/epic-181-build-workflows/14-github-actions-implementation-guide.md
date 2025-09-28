@@ -376,7 +376,7 @@ gh pr list --base "$branch" --state open --draft --limit 1 --json number,headRef
 **Mission Matrix Generation:**
 ```json
 [
-  {"branch": "epic/testing-coverage-to-90", "mode": "resume", "pr_number": 123},
+  {"branch": "epic/testing-coverage", "mode": "resume", "pr_number": 123},
   {"branch": "epic/tech-debt-automation", "mode": "create", "pr_number": null}
 ]
 ```
@@ -414,7 +414,7 @@ on:
       target_branch:
         description: 'Epic branch to target for coverage work'
         required: true
-        default: 'epic/testing-coverage-to-90'
+        default: 'epic/testing-coverage'
       mission_mode:
         description: 'Mission execution mode'
         required: true
@@ -605,7 +605,7 @@ continue-on-error: ${{ env.CONTINUE_ON_ERROR == 'true' }}
 ```json
 {
   "mission_type": "coverage_builder",
-  "target_branch": "epic/testing-coverage-to-90",
+  "target_branch": "epic/testing-coverage",
   "foundation_status": {
     "build_success": "false",
     "test_success": "false",
@@ -2498,7 +2498,7 @@ class TestAIConfigurationLoader:
         loader = AIConfigurationLoader("test_config.yml")
 
         # Test epic coverage pattern
-        config = loader.resolve_branch_pattern("epic/testing-coverage-to-90")
+        config = loader.resolve_branch_pattern("epic/testing-coverage")
         assert config['ai_behavior'] == 'iterative-autonomous'
         assert config['work_discovery']['enabled'] == True
 

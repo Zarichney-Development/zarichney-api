@@ -26,7 +26,7 @@ analyze_coverage_velocity() {
         velocity_trend="improving"
     fi
 
-    # Target velocity for 90% by January 2026 (approximately 2.8%/month)
+    # Target velocity for comprehensive coverage (approximately 2.8%/month)
     local target_velocity=2.8
     local velocity_status="on-track"
 
@@ -59,7 +59,7 @@ EOF
     return 0
 }
 
-# Analyze epic progression toward 90% coverage goal
+# Analyze epic progression toward comprehensive coverage excellence
 analyze_epic_progression() {
     echo "🎯 Analyzing epic progression..."
 
@@ -140,8 +140,8 @@ calculate_timeline_alignment() {
     local current_coverage="$COVERAGE_DATA"
     local target_coverage="$IMPROVEMENT_TARGET"
 
-    # Target date for 90% coverage: January 31, 2026
-    local target_date="2026-01-31"
+    # Target date for comprehensive coverage: ongoing continuous improvement
+    local target_date="ongoing"
     local current_date=$(date +"%Y-%m-%d")
 
     # Calculate months remaining to target date

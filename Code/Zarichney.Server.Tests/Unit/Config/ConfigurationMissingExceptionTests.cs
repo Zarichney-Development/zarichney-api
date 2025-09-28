@@ -2,7 +2,7 @@ using FluentAssertions;
 using Xunit;
 using Zarichney.Config;
 
-namespace Zarichney.Server.Tests.Unit.Config;
+namespace Zarichney.Tests.Unit.Config;
 
 public class ConfigurationMissingExceptionTests
 {

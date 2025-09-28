@@ -11,7 +11,7 @@ using Zarichney.Services.Status;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 
-namespace Zarichney.Server.Tests.Unit.Controllers.AiController;
+namespace Zarichney.Tests.Unit.Controllers.AiController;
 
 /// <summary>
 /// Unit tests for AiController covering completion and transcription endpoints.

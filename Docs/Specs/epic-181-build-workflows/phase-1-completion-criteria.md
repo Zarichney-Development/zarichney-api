@@ -51,7 +51,7 @@ Phase 1 establishes a robust, autonomous testing workflow specifically for the c
 **Status**: PENDING
 **Priority**: CRITICAL
 **Requirements**:
-- [ ] Baseline coverage comparison job in coverage-build.yml
+- [ ] Baseline coverage comparison job in testing-coverage-build-review.yml
 - [ ] Automated baseline ratcheting on improvements
 - [ ] Regression prevention enforcement
 - [ ] State persistence and automatic updates

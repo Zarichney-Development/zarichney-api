@@ -7,7 +7,7 @@
 ## 1. Purpose & Responsibility
 
 * **What it is:** Collection of reusable composite GitHub Actions that provide common infrastructure utilities used across multiple workflows in the CI/CD pipeline.
-* **Key Responsibilities:** 
+* **Key Responsibilities:**
     * Unified development environment setup for .NET and Node.js
     * Intelligent path-based change detection for workflow optimization
     * Test suite baseline validation with environment-aware thresholds
@@ -47,17 +47,17 @@
 graph TD
     A[Workflow Start] --> B[setup-environment]
     B --> C[check-paths]
-    
+
     C --> D{Changes Found?}
     D -->|Yes| E[Build Process]
     D -->|No| F[Skip Build]
-    
+
     E --> G[Analysis Process]
     G --> H[post-results]
-    
+
     H --> I[PR Comment]
     F --> J[Early Exit]
-    
+
     style B fill:#E6F3FF
     style C fill:#FFF2E6
     style H fill:#E6FFE6
@@ -128,7 +128,7 @@ graph TD
         * **`path-analysis`** ([README](./path-analysis/README.md)):
             * **Purpose:** Intelligent path-based change detection with Epic #181 workflow optimization
             * **Outputs:** Boolean change indicators (backend, frontend, docs, config), JSON change summary, total changes
-            * **Epic Integration:** Enables coverage-build.yml and specialized workflow conditional execution
+            * **Epic Integration:** Enables testing-coverage-build-review.yml and specialized workflow conditional execution
         * **`backend-build`** ([README](./backend-build/README.md)):
             * **Purpose:** Comprehensive .NET backend build with coverage flexibility and zero-warning enforcement
             * **Outputs:** Build status, warning count, test success, coverage data, build artifacts, error details
@@ -188,12 +188,12 @@ graph TD
         setup-node: 'true'
         node-version: '18.x'
     # Note: Automatically restores tools from .config/dotnet-tools.json if present
-    
+
     # Path analysis
     - name: Analyze changed paths
       id: paths
       uses: ./.github/actions/shared/check-paths
-    
+
     # Test execution with structured outputs
     - name: Run test suite
       id: test-execution
@@ -204,7 +204,7 @@ graph TD
         environment-type: 'ci'
         fail-on-error: 'true'
         coverage-threshold: '16'
-    
+
     # Test suite baseline validation (Phase 2)
     - name: Validate test suite baselines
       id: baseline-validation
@@ -213,7 +213,7 @@ graph TD
         test-results-path: './TestResults'
         fail-on-violations: 'false'  # Warning mode
         environment-override: 'unconfigured'
-    
+
     # Result posting
     - name: Post analysis results
       uses: ./.github/actions/shared/post-results
@@ -247,9 +247,9 @@ graph TD
 * **Dependents (Impact of Changes):**
     * [`.github/workflows/build.yml`](../../workflows/README.md) - Uses setup-environment and check-paths
     * [`.github/workflows/claude-dispatch.yml`](../../workflows/README.md) - Uses setup-environment and run-tests for environment preparation
-    * [`.github/workflows/coverage-epic-automation.yml`](../../workflows/README.md) - Uses setup-environment and run-tests for test validation
+    * [`.github/workflows/testing-coverage-execution.yml`](../../workflows/README.md) - Uses setup-environment and run-tests for test validation
     * **Epic #181 Specialized Workflows:**
-        * **Issue #183 coverage-build.yml** - Uses path-analysis, backend-build, and concurrency-config for coverage workflow specialization
+        * **Issue #183 testing-coverage-build-review.yml** - Uses path-analysis, backend-build, and concurrency-config for coverage workflow specialization
         * **Issue #212 build.yml refactor** - Modernization using all Epic #181 foundation components
         * **Future AI Analysis Workflows** - Will use concurrency-config and path-analysis for resource optimization
 

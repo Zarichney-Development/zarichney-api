@@ -1,6 +1,6 @@
 using Zarichney.Services.AI.Interfaces;
 
-namespace Zarichney.Server.Tests.Framework.Mocks;
+namespace Zarichney.Tests.Framework.Mocks;
 
 /// <summary>
 /// Test implementation of IChatCompletionWrapper for unit testing.

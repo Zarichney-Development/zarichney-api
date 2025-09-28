@@ -3,7 +3,7 @@ using System.Text.Json;
 using Xunit;
 using Zarichney.Services;
 
-namespace Zarichney.Server.Tests.Unit.Services;
+namespace Zarichney.Tests.Unit.Services;
 
 [Trait("Category", "Unit")]
 public class UtilsTests
@@ -207,7 +207,7 @@ public class UtilsTests
     // Act
     var result = Utils.ToMarkdownProperty(null, "Value");
 
-    // Assert  
+    // Assert
     result.Should().Be("**:** Value\n", "because null name should be handled gracefully");
   }
 

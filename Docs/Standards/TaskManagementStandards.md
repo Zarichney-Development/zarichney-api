@@ -2,7 +2,7 @@
 
 
 **Version:** 1.2
-**Last Updated:** 2025-09-10
+**Last Updated:** 2025-09-28
 
 ## 1. Purpose and Scope
 
@@ -127,7 +127,7 @@ These standards **MUST** be consulted and followed by AI Coders during task exec
 ### 7.1 Epic Branch Purpose
 For long-term initiatives spanning multiple tasks and extending over months, an **epic branch strategy** provides coordination and isolation:
 
-* **Epic Branches:** Long-running branches for major initiatives (e.g., `epic/testing-coverage-to-90`)
+* **Epic Branches:** Long-running branches for major initiatives (e.g., `epic/testing-coverage`)
 * **Base Branch:** Epic branches are created from and periodically updated with `develop`
 * **Task Branches:** Individual tasks create branches off the epic branch, not `develop`
 * **Integration:** Epic branches are merged to `develop` in chunks by the product owner
@@ -135,7 +135,7 @@ For long-term initiatives spanning multiple tasks and extending over months, an 
 ### 7.2 Epic Branch Naming Convention
 * **Format:** `epic/[initiative-name]`
 * **Examples:**
-  * `epic/testing-coverage-to-90` - Backend coverage improvement initiative
+  * `epic/testing-coverage` - Backend coverage improvement initiative
   * `epic/api-v2-migration` - Major API version migration
   * `epic/performance-optimization` - System-wide performance improvements
 
@@ -212,12 +212,12 @@ Orchestrator consolidates multiple task PRs into single PRs targeting epic branc
 # Orchestrator creates consolidation PR automatically
 # Title pattern: "epic: consolidate coverage improvements [batch-N] (#EPIC_ID)"
 # Labels: coverage, epic-subtask, automation: orchestrator, priority: medium
-# Base: epic/testing-coverage-to-90
+# Base: epic/testing-coverage
 # Head: epic/merge-staging-[timestamp]
 ```
 
 **Consolidation PR Structure:**
-- **Title:** `epic: consolidate coverage improvements batch-[N] (#94)`
+- **Title:** `epic: consolidate coverage improvements batch-[N] (#TESTING_EXCELLENCE_INITIATIVE_ID)`
 - **Body:** Comprehensive summary including:
   - Individual PRs consolidated (numbers, titles, authors)
   - Conflict resolution summary and AI decisions
@@ -295,13 +295,13 @@ gh pr create --base epic/[initiative-name] --title "[type]: [Description] (#EPIC
 Epic branches require coordinated labeling per **[`./GitHubLabelStandards.md`](./GitHubLabelStandards.md)**:
 
 #### **Epic Parent Issues**
-Epic parent issues (e.g., Backend Coverage Epic #94) **MUST** include:
+Epic parent issues (e.g., Backend Coverage Excellence Initiative) **MUST** include:
 - `effort: epic` - Indicates multi-month initiative
 - `status: epic-planning` or `status: epic-active` - Epic lifecycle status
-- Relevant `epic:` category label (e.g., `epic: coverage-90`)
+- Relevant `epic:` category label (e.g., `epic: testing-excellence`)
 - `priority: high` or `priority: medium` based on business impact
 
-#### **Epic Sub-Task Issues**  
+#### **Epic Sub-Task Issues**
 All tasks within an epic **MUST** include:
 - `type: epic-task` - Identifies as epic sub-component
 - Parent epic's `epic:` label for coordination
@@ -311,11 +311,11 @@ All tasks within an epic **MUST** include:
 
 #### **Example Epic Labeling**
 ```
-Epic Parent (#94): Backend Test Coverage to 90%
-Labels: effort: epic, status: epic-active, epic: coverage-90, priority: high
+Coverage Excellence Parent: Backend Test Coverage Excellence
+Labels: effort: epic, status: epic-active, epic: testing-excellence, priority: high
 
-Epic Task (#123): Increase CookbookService unit test coverage  
-Labels: type: epic-task, epic: coverage-90, coverage: phase-2, 
+Epic Task (#123): Increase CookbookService unit test coverage
+Labels: type: epic-task, epic: testing-excellence, coverage: phase-2,
         component: testing, component: api, automation: ci-ready,
         effort: medium, priority: medium
 ```
@@ -346,7 +346,7 @@ All tasks and pull requests **MUST** meet these quality requirements:
 #### **Consolidation Integrity Requirements**
 * **Value Preservation:** All individual PR contributions must be preserved in consolidated result
 * **Behavior Preservation:** Consolidated changes must maintain identical functional behavior
-* **Test Coverage Progression:** Consolidated PR must advance coverage toward 90% epic target
+* **Test Coverage Progression:** Consolidated PR must advance coverage toward comprehensive coverage goals
 * **Framework Coherence:** Test framework improvements must be logically cohesive and maintainable
 * **Documentation Consistency:** All consolidated changes must maintain project documentation standards
 
@@ -370,7 +370,7 @@ All tasks and pull requests **MUST** meet these quality requirements:
 * **Framework Enhancements:** Test infrastructure improvements must follow established patterns
 * **Service Coverage Balance:** Coverage improvements distributed across multiple service areas
 * **Integration Testing:** Consolidated changes must not break existing integration test suites
-* **Epic Progression:** Each consolidation advances overall 90% coverage goal with quantifiable progress
+* **Coverage Progression:** Each consolidation advances overall coverage excellence with quantifiable progress
 
 #### **Multi-Agent Coordination Quality**
 * **Context Preservation:** Individual agent contributions clearly identifiable in consolidated result

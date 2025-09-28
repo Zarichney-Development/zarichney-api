@@ -3,11 +3,11 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 using Zarichney.Services.BackgroundTasks;
 using Zarichney.Services.Sessions;
 
-namespace Zarichney.Server.Tests.Unit.Services.BackgroundTasks;
+namespace Zarichney.Tests.Unit.Services.BackgroundTasks;
 
 /// <summary>
 /// Unit tests for BackgroundWorker service - tests work item queuing and dequeuing with channel-based implementation

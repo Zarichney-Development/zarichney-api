@@ -9,12 +9,12 @@ using Zarichney.Config;
 using Zarichney.Cookbook.Customers;
 using Zarichney.Cookbook.Orders;
 using Zarichney.Cookbook.Recipes;
-using Zarichney.Server.Tests.TestData.Builders;
-using Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
+using Zarichney.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.AutoFixtureCustomizations;
 using Zarichney.Services.Payment;
 using Customer = Zarichney.Cookbook.Customers.Customer;
 
-namespace Zarichney.Server.Tests.Unit.Services.Payment;
+namespace Zarichney.Tests.Unit.Services.Payment;
 
 /// <summary>
 /// Comprehensive unit tests for PaymentService covering all business logic scenarios.

@@ -22,7 +22,7 @@
   - **Epic Integration Excellence** - Direct support for Epic #181's autonomous development cycle objectives
 * **Why it exists:** To provide the AI Code Review phase of Epic #181's autonomous development cycle, eliminating manual code review coordination while maintaining quality standards through iterative AI-powered improvement cycles.
 
-> **Implementation Success:** Issue #185 successfully delivered complete iterative AI review action with coverage-build.yml integration, enabling Phase 4 autonomous development capabilities.
+> **Implementation Success:** Issue #185 successfully delivered complete iterative AI review action with testing-coverage-build-review.yml integration, enabling Phase 4 autonomous development capabilities.
 
 ### Integration with Autonomous Development Cycle
 
@@ -34,12 +34,12 @@ Phase_4_Integration:
   Inputs: "PR from Phase 3 (Build/Test Validation) with initial quality assessment"
   Process: "Iterative improvement cycles with historical context and to-do management"
   Outputs: "Quality-approved PR ready for Phase 5 (Merge Orchestrator)"
-  Epic_Alignment: "Direct contribution to 90% backend coverage through intelligent review"
+  Epic_Alignment: "Direct contribution to comprehensive backend coverage excellence through intelligent review"
 ```
 
 ## 2. Architecture & Key Concepts
 
-* **High-Level Design:** Composite GitHub Action providing iterative AI code review with sophisticated state management, historical context preservation, and intelligent quality gate enforcement integrated into the coverage-build.yml workflow.
+* **High-Level Design:** Composite GitHub Action providing iterative AI code review with sophisticated state management, historical context preservation, and intelligent quality gate enforcement integrated into the testing-coverage-build-review.yml workflow.
 
 ### Iterative Review Architecture
 
@@ -186,7 +186,7 @@ graph TB
 * **Technology Constraints:**
   - GitHub Actions composite action framework with multi-step execution and error handling
   - AI framework security boundaries with input validation and rate limiting
-  - Coverage-build.yml integration with conditional execution and parallel job coordination
+  - testing-coverage-build-review.yml integration with conditional execution and parallel job coordination
 * **Performance Constraints:**
   - 15-minute timeout for comprehensive iterative analysis with graceful degradation
   - Maximum 5 iterations per PR with safety limits and escalation paths
@@ -205,7 +205,7 @@ graph TB
   - **Performance Validation:** Timeout management and resource utilization optimization for sustainable operation
 * **Common Usage Patterns:**
   - **Development Workflow:** PR creation triggers automatic iterative review until quality standards achieved
-  - **Coverage Epic Integration:** Seamless integration with epic/testing-coverage-to-90 branch workflow
+  - **Coverage Epic Integration:** Seamless integration with epic/testing-coverage branch workflow
   - **Quality Improvement:** AI-guided iterative enhancement recommendations with completion tracking
   - **Team Coordination:** Clear PR status progression supporting multi-agent collaboration
 
@@ -213,7 +213,7 @@ graph TB
 
 #### Automatic PR Review (Primary Usage)
 ```yaml
-# Triggered automatically on PR events to epic/testing-coverage-to-90
+# Triggered automatically on PR events to epic/testing-coverage
 - PR created → coverage-analysis → iterative-ai-review → quality assessment
 - Iterations continue until standards met → ready for merge orchestrator
 ```
@@ -242,7 +242,7 @@ graph TB
   - [`Issue #212`](./05-issue-212-build-refactor.md) - Canonical workflow patterns with foundation component integration - **COMPLETE**
 
 * **Integration Dependencies:**
-  - **coverage-build.yml Workflow:** Provides foundation for iterative review integration with conditional execution
+  - **testing-coverage-build-review.yml Workflow:** Provides foundation for iterative review integration with conditional execution
   - **GitHub Actions Infrastructure:** Supports composite action execution with multi-step workflows and error handling
   - **OpenAI API Access:** Enables AI-powered analysis with prompt template processing and security controls
 

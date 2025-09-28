@@ -9,7 +9,7 @@ using Zarichney.Services.Logging;
 using Zarichney.Services.Logging.Models;
 using Zarichney.Services.ProcessExecution;
 
-namespace Zarichney.Server.Tests.Unit.Services.Logging;
+namespace Zarichney.Tests.Unit.Services.Logging;
 
 /// <summary>
 /// Unit tests for LoggingStatus service - tests logging system status and configuration management

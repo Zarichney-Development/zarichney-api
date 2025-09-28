@@ -9,7 +9,7 @@ using Xunit;
 using Zarichney.Services.Logging;
 using Zarichney.Services.Sessions;
 
-namespace Zarichney.Server.Tests.Unit.Services.Logging;
+namespace Zarichney.Tests.Unit.Services.Logging;
 
 public class LoggingMiddlewareTests
 {

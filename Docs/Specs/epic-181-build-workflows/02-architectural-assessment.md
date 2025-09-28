@@ -202,7 +202,7 @@ Architectural_Benefits:
 Refactor_Goals:
   Parity: "Preserve triggers, permissions, concurrency, and branch logic"
   Composability: "Consume extracted components with no duplication"
-  Canonical_Pattern: "Establish standard for Issue #184 coverage-build.yml"
+  Canonical_Pattern: "Establish standard for Issue #184 testing-coverage-build-review.yml"
 
 Architectural_Benefits:
   Consistency: "Single source of truth for build behavior"

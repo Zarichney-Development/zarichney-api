@@ -5,11 +5,11 @@ using System.Text.Json;
 using Xunit;
 using Xunit.Abstractions;
 using Zarichney.Services.Status;
-using Zarichney.Server.Tests.Framework.Attributes;
-using Zarichney.Server.Tests.Framework.Fixtures;
-using Zarichney.Server.Tests.Integration;
+using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Fixtures;
+using Zarichney.Tests.Integration;
 
-namespace Zarichney.Server.Tests.Integration.Services.Payment;
+namespace Zarichney.Tests.Integration.Services.Payment;
 
 /// <summary>
 /// Integration tests for StripeService that validate API contracts and payment flow scenarios.

@@ -7,7 +7,7 @@ using Zarichney.Client;
 using Zarichney.Services.Auth;
 using Zarichney.Services.Status;
 
-namespace Zarichney.Server.Tests.Framework.Fixtures;
+namespace Zarichney.Tests.Framework.Fixtures;
 
 /// <summary>
 /// xUnit fixture for shared API client instances (unauthenticated and authenticated).

@@ -1,9 +1,9 @@
 using Xunit.Abstractions;
 using Xunit.Sdk;
 using Zarichney.Services.Status;
-using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Attributes;
 
-namespace Zarichney.Server.Tests.Framework.Helpers;
+namespace Zarichney.Tests.Framework.Helpers;
 
 /// <summary>
 /// Custom test case discoverer for ServiceUnavailableFact tests.

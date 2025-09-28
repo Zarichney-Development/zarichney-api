@@ -181,7 +181,7 @@
     * `GitHub Actions environment` - Context variables and runner infrastructure for concurrency group generation
     * `bash shell` - Shell scripting for configuration logic and parameter processing
 * **Dependents (Impact of Changes):**
-    * **Issue #183 Coverage Implementation** - coverage-build.yml workflow concurrency management
+    * **Issue #183 Coverage Implementation** - testing-coverage-build-review.yml workflow concurrency management
     * **Issue #212 build.yml Refactor** - Main build workflow concurrency standardization
     * **Future Epic Workflows** - AI analysis workflows and specialized Epic #181 implementations
     * **Multi-Workflow Coordination** - Epic coordination and Coverage Epic Merge Orchestrator integration
