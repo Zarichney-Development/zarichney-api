@@ -12,7 +12,7 @@ using Xunit;
 using Zarichney.Controllers;
 using Zarichney.Server.Tests.TestData.Builders;
 
-namespace Zarichney.Server.Tests.Unit.Controllers;
+namespace Zarichney.Tests.Unit.Controllers;
 
 /// <summary>
 /// Unit tests for ApiErrorResult using the builder pattern - demonstrates builder usage and additional scenarios

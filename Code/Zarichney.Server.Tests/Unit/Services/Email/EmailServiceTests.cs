@@ -8,7 +8,7 @@ using Zarichney.Server.Tests.TestData.Builders;
 using Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
 using AutoFixture.Xunit2;
 
-namespace Zarichney.Server.Tests.Unit.Services.Email;
+namespace Zarichney.Tests.Unit.Services.Email;
 
 /// <summary>
 /// Unit tests for EmailService covering email validation and error notification functionality.
@@ -86,7 +86,7 @@ public class EmailServiceTests
     // Assert
     await act.Should().ThrowAsync<InvalidOperationException>();
 
-    // Verify error logging occurred  
+    // Verify error logging occurred
     VerifyLoggerCalled(mockLogger, LogLevel.Error, "Error applying email template");
   }
 

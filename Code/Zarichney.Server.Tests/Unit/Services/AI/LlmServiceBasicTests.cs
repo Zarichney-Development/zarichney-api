@@ -12,7 +12,7 @@ using AutoMapper;
 using System.ClientModel;
 using Zarichney.Server.Tests.Framework.Attributes;
 
-namespace Zarichney.Server.Tests.Unit.Services.AI;
+namespace Zarichney.Tests.Unit.Services.AI;
 
 [Trait(TestCategories.Feature, TestCategories.AI)]
 public class LlmServiceBasicTests

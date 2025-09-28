@@ -16,7 +16,7 @@ using Zarichney.Server.Tests.Framework.Helpers;
 using Zarichney.Services.Email;
 using Zarichney.Services.Payment;
 
-namespace Zarichney.Server.Tests.Unit.Startup;
+namespace Zarichney.Tests.Unit.Startup;
 
 public class ConfigurationStartupTests : IDisposable
 {

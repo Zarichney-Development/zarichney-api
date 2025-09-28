@@ -18,7 +18,7 @@ This manual workflow has been consolidated into the comprehensive 12-agent orche
 
 **Agent Mapping:** This coverage enhancement workflow is now handled by **TestEngineer** (systematic gap analysis and targeted test development) + **ComplianceOfficer** (validation and epic progression tracking) coordination, with integration to the [Automated Coverage Epic](AutomatedCoverageEpicWorkflow.md) for systematic improvement.
 
-**Reference:** The consolidated [Coverage Enhancement Process](../../CONTRIBUTING.md#coverage-enhancement-process) in CONTRIBUTING.md preserves the analytics-driven approach and coverage measurement tools while integrating them into the modern AI orchestration framework with epic progression toward 90% backend coverage by January 2026.
+**Reference:** The consolidated [Coverage Enhancement Process](../../CONTRIBUTING.md#coverage-enhancement-process) in CONTRIBUTING.md preserves the analytics-driven approach and coverage measurement tools while integrating them into the modern AI orchestration framework with continuous testing excellence.
 
 ---
 
@@ -37,7 +37,7 @@ The content below is preserved for reference and understanding of workflow evolu
 
 * **Purpose:** This document defines the systematic workflow for increasing and maintaining automated test coverage for the `Code/Zarichney.Server` project. It is particularly tailored for AI Coding Assistants assigned tasks related to test coverage enhancement but is applicable to all developers.
 * **Project Goal:** To achieve and maintain:
-    * **>=90% unit test coverage** for all non-trivial business logic, services, and utility classes.
+    * **Comprehensive unit test coverage** for all non-trivial business logic, services, and utility classes.
     * **Comprehensive integration test coverage** for all public API endpoints, critical workflows, and component interactions.
 * **Focus:** This workflow emphasizes not just adding tests, but adding *high-quality, maintainable tests* that adhere to all established project standards.
 

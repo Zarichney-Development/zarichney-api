@@ -12,7 +12,7 @@ using Moq;
 using Xunit;
 using Zarichney.Controllers;
 
-namespace Zarichney.Server.Tests.Unit.Controllers;
+namespace Zarichney.Tests.Unit.Controllers;
 
 /// <summary>
 /// Unit tests for ApiErrorResult - tests error response formatting and HTTP status code handling

@@ -1,6 +1,6 @@
 using Zarichney.Services.Email;
 
-namespace Zarichney.Server.Tests.TestData.Builders;
+namespace Zarichney.Tests.TestData.Builders;
 
 /// <summary>
 /// Builder for creating EmailValidationResponse test data.

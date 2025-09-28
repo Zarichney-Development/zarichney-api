@@ -110,8 +110,8 @@ EOF
     return 0
 }
 
-# Calculate milestone progress toward 90% coverage
-calculate_milestone_progress() {
+# Calculate excellence progress toward comprehensive coverage
+calculate_excellence_progress() {
     echo "🎯 Calculating milestone progress..."
 
     local current_coverage="$COVERAGE_DATA"
@@ -141,9 +141,9 @@ calculate_milestone_progress() {
         status="ahead-of-schedule"
     fi
 
-    # Generate milestone progress JSON
-    local milestone_progress
-    milestone_progress=$(cat <<EOF
+    # Generate excellence progress JSON
+    local excellence_progress
+    excellence_progress=$(cat <<EOF
 {
   "current": $current_coverage,
   "target": $target_coverage,
@@ -153,17 +153,17 @@ calculate_milestone_progress() {
   "monthlyVelocityTarget": $monthly_velocity,
   "estimatedMonthsRemaining": $months_remaining,
   "status": "$status",
-  "milestoneDate": "2026-01-31",
+  "targetApproach": "continuous",
   "phase": "$COVERAGE_PHASE"
 }
 EOF
     )
 
-    echo "milestone_progress<<EOF" >> "$GITHUB_OUTPUT"
-    echo "$milestone_progress" >> "$GITHUB_OUTPUT"
+    echo "excellence_progress<<EOF" >> "$GITHUB_OUTPUT"
+    echo "$excellence_progress" >> "$GITHUB_OUTPUT"
     echo "EOF" >> "$GITHUB_OUTPUT"
 
-    debug_log "Milestone progress calculated: $status"
+    debug_log "Excellence progress calculated: $status"
     return 0
 }
 
@@ -324,7 +324,7 @@ debug_log() {
 # Export functions for use in action
 export -f extract_coverage_insights
 export -f generate_improvement_recommendations
-export -f calculate_milestone_progress
+export -f calculate_excellence_progress
 export -f identify_priority_areas
 export -f generate_basic_coverage_analysis
 export -f debug_log

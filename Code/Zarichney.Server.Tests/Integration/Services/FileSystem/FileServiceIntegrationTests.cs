@@ -9,7 +9,7 @@ using Zarichney.Services.FileSystem;
 using Zarichney.Server.Tests.Framework.Fixtures;
 using Zarichney.Server.Tests.Integration;
 
-namespace Zarichney.Server.Tests.Integration.Services.FileSystem;
+namespace Zarichney.Tests.Integration.Services.FileSystem;
 
 /// <summary>
 /// Integration tests for FileService that validate service integration patterns and file operations.

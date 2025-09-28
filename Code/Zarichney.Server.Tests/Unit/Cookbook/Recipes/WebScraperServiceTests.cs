@@ -13,7 +13,7 @@ using Zarichney.Services.AI;
 using Zarichney.Services.FileSystem;
 using Zarichney.Services.Web;
 
-namespace Zarichney.Server.Tests.Unit.Cookbook.Recipes;
+namespace Zarichney.Tests.Unit.Cookbook.Recipes;
 
 /// <summary>
 /// Comprehensive unit tests for WebScraperService covering recipe scraping business logic.

@@ -12,7 +12,7 @@ using Xunit.Abstractions;
 using Zarichney.Client.Contracts;
 using ExternalServices = Zarichney.Services.Status.ExternalServices;
 
-namespace Zarichney.Server.Tests.Integration.Controllers.PaymentController;
+namespace Zarichney.Tests.Integration.Controllers.PaymentController;
 
 /// <summary>
 /// Integration tests for the PaymentController.

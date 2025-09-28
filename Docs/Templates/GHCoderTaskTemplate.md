@@ -20,7 +20,7 @@ assignees: '' # Assign to the human orchestrator
 - **Technical Areas:** `component: api`, `component: frontend`, `component: testing`, `component: ci-cd`, `component: scripts`, `component: docs`
 
 ### **Epic Coordination (If Applicable):**
-- **Epic Tasks:** Add relevant `epic:` label (`epic: coverage-90`, `epic: security-hardening`, `epic: architecture-modernization`)
+- **Epic Tasks:** Add relevant `epic:` label (`epic: testing-coverage`)
 - **Coverage Work:** Add appropriate `coverage: phase-X` label (phase-1 through phase-5)
 
 ### **Automation Context (Select If Applicable):**
@@ -28,9 +28,9 @@ assignees: '' # Assign to the human orchestrator
 
 ### **Example Label Combinations:**
 ```
-Security Fix: type: security, priority: critical, effort: medium, component: scripts, epic: security-hardening
-Coverage Task: type: coverage, priority: medium, effort: small, component: testing, epic: coverage-90, coverage: phase-2, automation: ci-ready  
-Architecture Refactor: type: refactor, priority: high, effort: large, component: api, architecture, epic: architecture-modernization
+Security Fix: type: security, priority: critical, effort: medium, component: scripts
+Coverage Task: type: coverage, priority: medium, effort: small, component: testing, epic: testing-coverage, coverage: phase-2, automation: ci-ready
+Architecture Refactor: type: refactor, priority: high, effort: large, component: api, architecture
 ```
 
 ---

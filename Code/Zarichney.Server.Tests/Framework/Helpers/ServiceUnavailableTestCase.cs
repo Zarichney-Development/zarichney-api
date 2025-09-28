@@ -5,7 +5,7 @@ using Xunit.Sdk;
 using Zarichney.Services.Status;
 using Zarichney.Server.Tests.Framework.Fixtures;
 
-namespace Zarichney.Server.Tests.Framework.Helpers;
+namespace Zarichney.Tests.Framework.Helpers;
 
 /// <summary>
 /// A test case that skips tests when the specified external service is AVAILABLE.

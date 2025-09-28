@@ -4,7 +4,7 @@ using Zarichney.Services.AI.Interfaces;
 using Zarichney.Server.Tests.TestData.Builders;
 using Zarichney.Server.Tests.Framework.Mocks;
 
-namespace Zarichney.Server.Tests.TestData.Builders;
+namespace Zarichney.Tests.TestData.Builders;
 
 /// <summary>
 /// Test data builder for LlmConversation entities following established patterns.

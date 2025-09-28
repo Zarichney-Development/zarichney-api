@@ -1,7 +1,7 @@
 # Testing CI/CD and Maintenance
 
 **Version:** 1.2
-**Last Updated:** 2025-08-11
+**Last Updated:** 2025-09-28
 
 > **Parent:** [`README.md`](./README.md)
 
@@ -213,7 +213,7 @@ Common issues and solutions:
 
 The following tasks should be performed periodically:
 
-- Validate test coverage against the TDD goal (>=90%)
+- Validate test coverage progression toward comprehensive coverage through continuous testing excellence
 - Update Swashbuckle and Refitter versions when upgrading .NET
 - Refresh test data to match changes in external services
 - Review and update mock responses to match current external API behaviors

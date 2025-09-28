@@ -9,7 +9,7 @@ using Zarichney.Server.Tests.Framework.Fixtures;
 using Xunit.Abstractions;
 using Zarichney.Server.Tests.Integration;
 
-namespace Zarichney.Server.Tests.Integration.Services.Logging;
+namespace Zarichney.Tests.Integration.Services.Logging;
 
 /// <summary>
 /// Integration tests for LoggingService that require external dependencies.

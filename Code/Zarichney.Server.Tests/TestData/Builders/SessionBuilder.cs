@@ -3,7 +3,7 @@ using Zarichney.Cookbook.Orders;
 using Zarichney.Services.Sessions;
 using Zarichney.Server.Tests.TestData.Builders;
 
-namespace Zarichney.Server.Tests.TestData.Builders;
+namespace Zarichney.Tests.TestData.Builders;
 
 /// <summary>
 /// Test data builder for Session entities following established patterns.

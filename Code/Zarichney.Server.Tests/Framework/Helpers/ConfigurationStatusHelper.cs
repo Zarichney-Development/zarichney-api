@@ -4,7 +4,7 @@ using System.Text.Json;
 using Zarichney.Server.Tests.Framework.Attributes;
 using Zarichney.Server.Tests.Framework.Fixtures;
 
-namespace Zarichney.Server.Tests.Framework.Helpers;
+namespace Zarichney.Tests.Framework.Helpers;
 
 /// <summary>
 /// Helper for checking the status of configuration items and feature dependencies in the application.

@@ -11,7 +11,7 @@ using Zarichney.Services.Payment;
 using Zarichney.Services.Status;
 using Zarichney.Server.Tests.Framework.Helpers;
 
-namespace Zarichney.Server.Tests.Unit.Services.Payment;
+namespace Zarichney.Tests.Unit.Services.Payment;
 
 /// <summary>
 /// Comprehensive unit tests for StripeService covering all Stripe API interactions.

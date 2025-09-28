@@ -8,7 +8,7 @@ using Zarichney.Server.Tests.Framework.Attributes;
 using Zarichney.Server.Tests.Framework.Fixtures;
 using Zarichney.Server.Tests.Integration;
 
-namespace Zarichney.Server.Tests.Unit.Integration;
+namespace Zarichney.Tests.Unit.Integration;
 
 [Trait(TestCategories.Category, TestCategories.Unit)]
 public class IntegrationTestBaseTests

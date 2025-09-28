@@ -11,7 +11,7 @@ using Zarichney.Server.Tests.Framework.Mocks.Factories;
 using System.Text;
 using Zarichney.Server.Tests.Framework.Attributes;
 
-namespace Zarichney.Server.Tests.Unit.Services.AI;
+namespace Zarichney.Tests.Unit.Services.AI;
 
 [Trait(TestCategories.Category, TestCategories.Unit)]
 [Trait(TestCategories.Feature, TestCategories.AI)]

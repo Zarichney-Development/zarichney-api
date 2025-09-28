@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # AI Standards Analysis - Standards Intelligence Processor
-# Epic #181 Component: AI insight extraction and compliance scoring
+# Build Workflow Component: AI insight extraction and compliance scoring
 
 set -euo pipefail
 
@@ -477,8 +477,8 @@ EOF
 # Generate modernization contribution assessment
 generate_modernization_contribution() {
     case "$EPIC_CONTEXT" in
-        *"epic-181"* | *"build-workflows"*)
-            echo '"high - directly supports Epic #181 workflow modernization goals"'
+        *"build-workflow-improvements"* | *"build-workflows"*)
+            echo '"high - directly supports build workflow modernization goals"'
             ;;
         *"testing-coverage"*)
             echo '"medium - supports testing standards and coverage quality"'

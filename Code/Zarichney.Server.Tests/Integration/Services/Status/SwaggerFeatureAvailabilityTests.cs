@@ -12,7 +12,7 @@ using Zarichney.Server.Tests.Framework.Fixtures;
 using Zarichney.Server.Tests.Framework.Helpers;
 using static Zarichney.Server.Tests.Framework.Helpers.TestFactories;
 
-namespace Zarichney.Server.Tests.Integration.Services.Status;
+namespace Zarichney.Tests.Integration.Services.Status;
 
 /// <summary>
 /// Integration tests for the ServiceAvailabilityOperationFilter in Swagger/OpenAPI.

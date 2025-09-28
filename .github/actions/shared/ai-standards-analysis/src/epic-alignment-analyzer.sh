@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # AI Standards Analysis - Epic Alignment Analyzer
-# Epic #181 Component: Epic alignment and architectural analysis
+# Build Workflow Component: Epic alignment and architectural analysis
 
 set -euo pipefail
 
@@ -38,7 +38,7 @@ analyze_epic_alignment() {
     # Epic-specific alignment analysis based on context
     local epic_analysis
     case "$EPIC_CONTEXT" in
-        *"epic-181"* | *"build-workflows"*)
+        *"build-workflow-improvements"* | *"build-workflows"*)
             epic_analysis=$(analyze_epic_181_alignment "$ai_result")
             ;;
         *"testing-coverage"* | *"coverage"*)
@@ -85,13 +85,13 @@ EOF
     return 0
 }
 
-# Analyze Epic #181 (Build Workflows Enhancement) alignment
+# Analyze Build Workflows Enhancement alignment
 analyze_epic_181_alignment() {
     local ai_result="$1"
 
     cat <<EOF
 {
-    "epic_id": "epic-181",
+    "epic_id": "build-workflow-improvements",
     "epic_title": "Build Workflows Enhancement",
     "alignment_areas": {
         "component_extraction": $(assess_component_extraction_alignment "$ai_result"),
@@ -201,7 +201,7 @@ analyze_general_epic_alignment() {
 EOF
 }
 
-# Assessment helper functions for Epic #181
+# Assessment helper functions for Build Workflows
 assess_component_extraction_alignment() {
     local ai_result="$1"
     case "$COMPONENT_TYPE" in
@@ -673,7 +673,7 @@ generate_workflow_recommendations() {
     "integration_recommendations": [
         "Use ai-sentinel-base for AI analysis integration",
         "Implement shared actions for common functionality",
-        "Follow canonical patterns established in Epic #181"
+        "Follow canonical patterns established in build workflow improvements"
     ],
     "quality_improvements": [
         "Add comprehensive error handling",

@@ -13,7 +13,7 @@ using Zarichney.Services.Sessions;
 using Zarichney.Server.Tests.Framework.Mocks;
 using System;
 
-namespace Zarichney.Server.Tests.Unit.Services.Sessions;
+namespace Zarichney.Tests.Unit.Services.Sessions;
 
 /// <summary>
 /// Comprehensive unit tests for SessionManager covering core session management functionality.
@@ -901,7 +901,7 @@ public class SessionManagerTests
       new SystemChatMessage("Test system message")
     };
 
-    // Create function tool with null function name to test edge case  
+    // Create function tool with null function name to test edge case
     // Note: Using null to test edge case handling in conversation ID generation
     ChatTool? functionTool = null;
 

@@ -1,7 +1,7 @@
 # Effective Unit Test Case Development
 
 **Version:** 1.0
-**Last Updated:** 2025-05-22
+**Last Updated:** 2025-09-28
 
 ## 1. Introduction
 
@@ -11,7 +11,7 @@
     * `Docs/Standards/TestingStandards.md` (the overarching testing philosophy and tooling).
     * `Docs/Standards/CodingStandards.md` (for principles on writing testable production code).
     * The `Code/Zarichney.Server.Tests/TechnicalDesignDocument.md` for understanding the test framework's architecture.
-* **Goal:** To enable the creation of a comprehensive suite of unit tests that are fast, reliable, provide precise feedback, and contribute to achieving >=90% code coverage for non-trivial business logic.
+* **Goal:** To enable the creation of a comprehensive suite of unit tests that are fast, reliable, provide precise feedback, and contribute to achieving comprehensive code coverage for non-trivial business logic through continuous testing excellence.
 
 ## 2. Core Principles of Unit Testing (Recap & Elaboration)
 

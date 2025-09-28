@@ -6,7 +6,7 @@ using Zarichney.Services.Email;
 using Zarichney.Services.FileSystem;
 using Zarichney.Server.Tests.Framework.Attributes;
 
-namespace Zarichney.Server.Tests.Unit.Cookbook.Customers;
+namespace Zarichney.Tests.Unit.Cookbook.Customers;
 
 /// <summary>
 /// Unit tests for the CustomerFileRepository class.

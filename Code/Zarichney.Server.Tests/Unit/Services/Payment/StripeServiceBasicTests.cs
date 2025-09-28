@@ -9,7 +9,7 @@ using Zarichney.Server.Tests.TestData.Builders;
 using Zarichney.Services.Payment;
 using Zarichney.Server.Tests.Framework.Helpers;
 
-namespace Zarichney.Server.Tests.Unit.Services.Payment;
+namespace Zarichney.Tests.Unit.Services.Payment;
 
 /// <summary>
 /// Basic unit tests for StripeService focusing on core functionality and validation.

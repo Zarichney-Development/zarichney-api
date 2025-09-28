@@ -4,7 +4,7 @@ using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Models;
 using Zarichney.Server.Tests.TestData.Builders;
 
-namespace Zarichney.Server.Tests.TestData.Builders;
+namespace Zarichney.Tests.TestData.Builders;
 
 /// <summary>
 /// Builder for creating ApiKey test instances with fluent configuration.

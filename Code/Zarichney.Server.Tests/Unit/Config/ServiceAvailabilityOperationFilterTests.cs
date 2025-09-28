@@ -8,7 +8,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using Xunit;
 using Zarichney.Server.Tests.Framework.Attributes;
 
-namespace Zarichney.Server.Tests.Unit.Config;
+namespace Zarichney.Tests.Unit.Config;
 
 [Trait(TestCategories.Category, TestCategories.Unit)]
 public class ServiceAvailabilityOperationFilterTests

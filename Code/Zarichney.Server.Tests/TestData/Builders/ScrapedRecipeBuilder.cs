@@ -1,6 +1,6 @@
 using Zarichney.Cookbook.Recipes;
 
-namespace Zarichney.Server.Tests.TestData.Builders;
+namespace Zarichney.Tests.TestData.Builders;
 
 /// <summary>
 /// Builder for creating ScrapedRecipe instances for testing.

@@ -19,11 +19,11 @@
 
 * **Implementation Success Criteria:**
   - Path categorization produces deterministic, accurate results matching current build.yml logic
-  - Integration with coverage-build.yml enables intelligent filtering for coverage-focused workflows
+  - Integration with testing-coverage-build-review.yml enables intelligent filtering for coverage-focused workflows
   - Performance improvement through selective execution based on change categories
   - Zero false negatives for change detection affecting build requirements
 
-* **Why it exists:** Enables coverage-build.yml to execute selectively based on actual code changes, supporting Epic #181's goal of specialized workflows while maintaining the intelligent filtering currently embedded in the monolithic build.yml.
+* **Why it exists:** Enables testing-coverage-build-review.yml to execute selectively based on actual code changes, supporting Epic #181's goal of specialized workflows while maintaining the intelligent filtering currently embedded in the monolithic build.yml.
 
 ## 2. Architecture & Key Concepts
 
@@ -143,7 +143,7 @@
   - No external APIs or services required for component operation
 
 * **Component Dependencies:**
-  - Required by: coverage-build.yml, specialized workflows requiring change-based execution
+  - Required by: testing-coverage-build-review.yml, specialized workflows requiring change-based execution
   - Provides input to: backend-build, frontend-build, security-framework components
   - Integrates with: workflow-infrastructure for enhanced reporting and coordination
 

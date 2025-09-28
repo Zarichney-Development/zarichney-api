@@ -1494,7 +1494,7 @@ jobs:
       "mission_types": [
         {
           "name": "coverage-improvement",
-          "target_branches": ["epic/testing-coverage-to-90"],
+          "target_branches": ["epic/testing-coverage"],
           "ai_behavior": "iterative-autonomous",
           "schedule": "0 */6 * * *",
           "priority": "high"
@@ -1656,7 +1656,7 @@ auto_merge_integration:
 
       // Load auto-merge configuration
       const autoMergeConfig = {
-        'epic/testing-coverage-to-90': {
+        'epic/testing-coverage': {
           enabled: true,
           required_checks: ['foundation-execution', 'conditional-ai-integration'],
           merge_method: 'squash'

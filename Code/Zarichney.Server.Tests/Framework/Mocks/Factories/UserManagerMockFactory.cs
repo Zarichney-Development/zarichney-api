@@ -5,7 +5,7 @@ using Moq;
 using Zarichney.Services.Auth;
 using Zarichney.Server.Tests.TestData.Builders;
 
-namespace Zarichney.Server.Tests.Framework.Mocks.Factories;
+namespace Zarichney.Tests.Framework.Mocks.Factories;
 
 public static class UserManagerMockFactory
 {

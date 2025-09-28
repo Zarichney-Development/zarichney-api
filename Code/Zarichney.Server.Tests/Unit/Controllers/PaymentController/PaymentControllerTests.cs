@@ -13,7 +13,7 @@ using Stripe.Checkout;
 using System.IO;
 using System.Text;
 
-namespace Zarichney.Server.Tests.Unit.Controllers.PaymentController;
+namespace Zarichney.Tests.Unit.Controllers.PaymentController;
 
 /// <summary>
 /// Unit tests for the PaymentController class.

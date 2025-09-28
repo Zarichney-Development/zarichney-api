@@ -9,7 +9,7 @@ using Zarichney.Services.Auth;
 using Zarichney.Server.Tests.Framework.Attributes;
 using Zarichney.Server.Tests.Framework.Fixtures;
 
-namespace Zarichney.Server.Tests.Integration.Controllers.AuthController;
+namespace Zarichney.Tests.Integration.Controllers.AuthController;
 
 [Collection("IntegrationAuth")]
 [Trait(TestCategories.Category, TestCategories.Integration)]

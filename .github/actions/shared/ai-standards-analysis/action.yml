@@ -15,7 +15,7 @@ inputs:
   epic_context:
     description: 'Epic progression context for prioritization alignment'
     required: false
-    default: 'epic-181'
+    default: 'build-workflow-improvements'
   analysis_depth:
     description: 'Analysis depth level (surface, detailed, comprehensive)'
     required: false

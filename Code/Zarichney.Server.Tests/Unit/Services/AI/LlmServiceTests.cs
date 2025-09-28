@@ -11,7 +11,7 @@ using AutoMapper;
 using Zarichney.Server.Tests.TestData.Builders;
 using Zarichney.Server.Tests.Framework.Attributes;
 
-namespace Zarichney.Server.Tests.Unit.Services.AI;
+namespace Zarichney.Tests.Unit.Services.AI;
 
 /// <summary>
 /// Simplified unit tests for LlmService focusing on essential behaviors

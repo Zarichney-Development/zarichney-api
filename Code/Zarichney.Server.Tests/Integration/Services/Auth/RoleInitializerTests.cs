@@ -10,7 +10,7 @@ using Zarichney.Services.Auth;
 using Zarichney.Server.Tests.Framework.Attributes;
 using Zarichney.Server.Tests.Framework.Fixtures;
 
-namespace Zarichney.Server.Tests.Integration.Services.Auth;
+namespace Zarichney.Tests.Integration.Services.Auth;
 
 /// <summary>
 /// Integration tests for the RoleInitializer admin user seeding functionality.

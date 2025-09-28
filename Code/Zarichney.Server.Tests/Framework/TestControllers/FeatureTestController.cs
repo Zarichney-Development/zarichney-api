@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Zarichney.Services.Status;
 
-namespace Zarichney.Server.Tests.Framework.TestControllers;
+namespace Zarichney.Tests.Framework.TestControllers;
 
 /// <summary>
 /// Controller for testing feature availability middleware.

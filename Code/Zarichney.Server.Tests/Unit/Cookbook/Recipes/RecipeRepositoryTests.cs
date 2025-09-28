@@ -13,7 +13,7 @@ using Zarichney.Services.Status;
 using Zarichney.Server.Tests.Framework.Attributes;
 using Zarichney.Server.Tests.Framework.Mocks.Factories;
 
-namespace Zarichney.Server.Tests.Unit.Cookbook.Recipes;
+namespace Zarichney.Tests.Unit.Cookbook.Recipes;
 
 /// <summary>
 /// Unit tests for the RecipeFileRepository class.

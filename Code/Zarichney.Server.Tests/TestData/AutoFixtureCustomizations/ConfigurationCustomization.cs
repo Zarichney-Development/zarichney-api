@@ -3,7 +3,7 @@ using Zarichney.Config;
 using Zarichney.Server.Tests.TestData.Builders;
 using Zarichney.Services.Email;
 
-namespace Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
+namespace Zarichney.Tests.TestData.AutoFixtureCustomizations;
 
 /// <summary>
 /// AutoFixture customization for configuration objects used throughout the application.

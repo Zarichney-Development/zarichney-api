@@ -3,7 +3,7 @@ using FluentAssertions;
 using Xunit;
 using Zarichney.Server.Tests.Framework.Helpers;
 
-namespace Zarichney.Server.Tests.Unit.Helpers;
+namespace Zarichney.Tests.Unit.Helpers;
 
 [Trait("Category", "Unit")]
 [Trait("Component", "Helper")]

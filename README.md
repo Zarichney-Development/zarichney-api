@@ -43,7 +43,7 @@ Whether you're interested in the platform's features or the cutting-edge develop
 * **AI:** OpenAI API integration
 * **Database:** PostgreSQL (primarily for Identity; application data currently file-based)
 * **Authentication:** ASP.NET Core Identity, JWT, Refresh Tokens (Cookies), API Keys
-* **Testing:** xUnit, Moq, FluentAssertions, Testcontainers (for isolated DB testing), Refit (for API client generation), **AI-Powered Test Analysis** (unified test suite with parallel execution) - *Aiming for >90% coverage.*
+* **Testing:** xUnit, Moq, FluentAssertions, Testcontainers (for isolated DB testing), Refit (for API client generation), **AI-Powered Test Analysis** (unified test suite with parallel execution) - *Aiming for comprehensive test coverage.*
 * **API Documentation:** Swagger / OpenAPI
 * **Key Libraries:** 
     * **Backend:** Serilog, Polly, MediatR, AutoMapper, RestSharp, Stripe.net, Octokit, QuestPDF, PlaywrightSharp, AngleSharp

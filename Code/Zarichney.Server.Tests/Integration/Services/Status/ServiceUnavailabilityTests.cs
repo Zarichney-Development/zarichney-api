@@ -15,7 +15,7 @@ using ExternalServices = Zarichney.Services.Status.ExternalServices;
 // Import the ServiceStatusInfo from Status namespace with alias
 using StatusInfo = Zarichney.Services.Status.ServiceStatusInfo;
 
-namespace Zarichney.Server.Tests.Integration.Services.Status;
+namespace Zarichney.Tests.Integration.Services.Status;
 
 /// <summary>
 /// Integration tests that verify the behavior of the API when services are unavailable

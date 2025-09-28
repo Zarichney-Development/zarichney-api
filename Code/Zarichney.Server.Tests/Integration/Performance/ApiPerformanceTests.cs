@@ -4,7 +4,7 @@ using Xunit.Abstractions;
 using Zarichney.Server.Tests.Framework.Attributes;
 using Zarichney.Server.Tests.Framework.Fixtures;
 
-namespace Zarichney.Server.Tests.Integration.Performance;
+namespace Zarichney.Tests.Integration.Performance;
 
 /// <summary>
 /// Performance tests for the API.

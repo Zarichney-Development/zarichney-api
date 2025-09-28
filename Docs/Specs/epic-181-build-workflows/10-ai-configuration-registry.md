@@ -1360,7 +1360,7 @@ class BehaviorSelectionEngine:
     test_branches = [
         'main', 'develop',
         'feature/new-feature', 'feature/bug-fix',
-        'epic/testing-coverage-to-90', 'epic/tech-debt-cleanup',
+        'epic/testing-coverage', 'epic/tech-debt-cleanup',
         'hotfix/security-fix', 'hotfix/critical-bug',
         'docs/update-readme', 'docs/api-documentation',
         'release/v1.2.0'
@@ -1931,7 +1931,7 @@ class ConfigurationDebugger:
         test_scenarios = [
             {'branch': 'main', 'expected_behavior': '5-sentinel-suite'},
             {'branch': 'develop', 'expected_behavior': '4-sentinel-suite'},
-            {'branch': 'epic/testing-coverage-to-90', 'expected_behavior': 'iterative-autonomous'},
+            {'branch': 'epic/testing-coverage', 'expected_behavior': 'iterative-autonomous'},
             {'branch': 'feature/new-api-endpoint', 'expected_behavior': 'single-review'},
             {'branch': 'hotfix/security-vulnerability', 'expected_behavior': 'security-focused'},
             {'branch': 'docs/update-readme', 'expected_behavior': 'documentation-review'},
@@ -2303,7 +2303,7 @@ jobs:
           test_branches = [
               'main', 'develop',
               'feature/new-endpoint', 'feature/bug-fix',
-              'epic/testing-coverage-to-90', 'epic/tech-debt-cleanup',
+              'epic/testing-coverage', 'epic/tech-debt-cleanup',
               'hotfix/security-fix', 'docs/update-readme'
           ]
 
@@ -2329,8 +2329,7 @@ jobs:
           test_branches = [
               'main', 'develop',
               'feature/api-enhancement', 'feature/ui-improvement',
-              'epic/testing-coverage-to-90', 'epic/tech-debt-reduction',
-              'epic/performance-optimization', 'epic/security-hardening',
+              'epic/testing-coverage', 'epic/tech-debt-reduction',
               'hotfix/critical-security-patch', 'hotfix/data-corruption-fix',
               'docs/architecture-update', 'docs/api-documentation',
               'release/v1.0.0', 'release/v2.1.0',

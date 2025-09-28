@@ -7,7 +7,7 @@ using Zarichney.Server.Tests.Framework.Attributes;
 using Zarichney.Server.Tests.Framework.Fixtures;
 using Zarichney.Server.Tests.Framework.Helpers;
 
-namespace Zarichney.Server.Tests.Integration;
+namespace Zarichney.Tests.Integration;
 
 /// <summary>
 /// Base class for integration tests that provides common setup and accessors.

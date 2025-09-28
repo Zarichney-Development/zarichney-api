@@ -17,7 +17,7 @@ inputs:
     required: false
     default: 'iterative-improvement'
   epic_context:
-    description: 'Epic progression context for 90% goal awareness and timeline tracking'
+    description: 'Epic progression context for comprehensive coverage excellence and continuous improvement tracking'
     required: false
     default: ''
   improvement_target:
@@ -60,14 +60,14 @@ outputs:
     description: 'JSON array of actionable coverage improvement steps with priorities'
     value: ${{ steps.ai-testing-analysis.outputs.improvement_recommendations }}
   coverage_trends:
-    description: 'Analysis of coverage progression toward epic goals and timeline alignment'
+    description: 'Analysis of coverage progression toward comprehensive coverage excellence and continuous improvement alignment'
     value: ${{ steps.ai-testing-analysis.outputs.coverage_trends }}
   priority_areas:
     description: 'JSON array of high-impact areas for coverage improvement with effort estimates'
     value: ${{ steps.ai-testing-analysis.outputs.priority_areas }}
-  milestone_progress:
-    description: 'Progress toward 90% coverage milestone with velocity tracking'
-    value: ${{ steps.ai-testing-analysis.outputs.milestone_progress }}
+  excellence_progress:
+    description: 'Progress toward comprehensive coverage excellence with continuous improvement tracking'
+    value: ${{ steps.ai-testing-analysis.outputs.excellence_progress }}
   next_steps:
     description: 'Immediate actions for coverage improvement with specific file targets'
     value: ${{ steps.ai-testing-analysis.outputs.next_steps }}
@@ -196,10 +196,10 @@ runs:
           exit 1
         fi
 
-        # Calculate milestone progress
-        if ! calculate_milestone_progress; then
-          echo "error_details=Milestone progress calculation failed" >> "$GITHUB_OUTPUT"
-          echo "❌ Milestone progress calculation failed"
+        # Calculate excellence progress
+        if ! calculate_excellence_progress; then
+          echo "error_details=Excellence progress calculation failed" >> "$GITHUB_OUTPUT"
+          echo "❌ Excellence progress calculation failed"
           exit 1
         fi
 

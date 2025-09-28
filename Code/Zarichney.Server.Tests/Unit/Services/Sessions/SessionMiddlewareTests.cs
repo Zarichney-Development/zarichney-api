@@ -9,7 +9,7 @@ using Zarichney.Services.Sessions;
 using Zarichney.Server.Tests.Framework.Mocks.Factories;
 using Zarichney.Server.Tests.TestData.Builders;
 
-namespace Zarichney.Server.Tests.Unit.Services.Sessions;
+namespace Zarichney.Tests.Unit.Services.Sessions;
 
 /// <summary>
 /// Unit tests for SessionMiddleware covering authentication scenarios,

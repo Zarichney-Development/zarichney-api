@@ -2,16 +2,16 @@ using Xunit;
 using Xunit.Sdk;
 using Zarichney.Services.Status;
 
-namespace Zarichney.Server.Tests.Framework.Attributes;
+namespace Zarichney.Tests.Framework.Attributes;
 
 /// <summary>
 /// Custom Fact attribute that runs tests ONLY when the specified external service is UNAVAILABLE.
 /// This attribute is used for integration tests that verify HTTP 503 responses from dependency-aware
 /// API endpoints when their specific external dependencies are unavailable.
-/// 
+///
 /// If the specified service is available, the test will be skipped.
 /// If the specified service is unavailable, the test will run normally.
-/// 
+///
 /// Usage example:
 /// [ServiceUnavailableFact(ExternalServices.OpenAiApi)]
 /// public async Task GetAiResponse_WhenOpenAiUnavailable_Returns503()

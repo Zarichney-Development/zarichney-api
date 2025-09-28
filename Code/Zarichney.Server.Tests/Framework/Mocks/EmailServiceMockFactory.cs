@@ -5,7 +5,7 @@ using Zarichney.Config;
 using Zarichney.Services.Email;
 using Zarichney.Server.Tests.TestData.Builders;
 
-namespace Zarichney.Server.Tests.Framework.Mocks;
+namespace Zarichney.Tests.Framework.Mocks;
 
 /// <summary>
 /// Factory for creating mock dependencies for EmailService testing.

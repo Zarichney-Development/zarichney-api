@@ -7,7 +7,7 @@ using Zarichney.Services.GitHub;
 using Zarichney.Services.Status;
 using Zarichney.Server.Tests.Framework.Mocks;
 
-namespace Zarichney.Server.Tests.Framework.Mocks;
+namespace Zarichney.Tests.Framework.Mocks;
 
 /// <summary>
 /// Factory for creating standardized AI service mocks.

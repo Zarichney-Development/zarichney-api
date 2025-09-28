@@ -8,7 +8,7 @@ using Zarichney.Services.Auth.Models;
 using Zarichney.Server.Tests.Framework.Mocks.Factories;
 using Zarichney.Server.Tests.TestData.Builders;
 
-namespace Zarichney.Server.Tests.Unit.Services.Auth.Commands;
+namespace Zarichney.Tests.Unit.Services.Auth.Commands;
 
 public class RefreshTokenCommandTests
 {

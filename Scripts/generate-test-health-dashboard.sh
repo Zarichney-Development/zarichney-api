@@ -342,7 +342,7 @@ generate_dashboard() {
         
         <!-- Progressive Coverage Section -->
         <div class="progressive-section">
-            <h2>🎯 Progressive Coverage Journey to 90%</h2>
+            <h2>🎯 Progressive Coverage Journey to Continuous Testing Excellence</h2>
             <div class="phase-info">
                 <div class="phase-card">
                     <h3>Current Phase</h3>

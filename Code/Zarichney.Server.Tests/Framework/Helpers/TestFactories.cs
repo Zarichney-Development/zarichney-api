@@ -1,6 +1,6 @@
 using Zarichney.Services.Status;
 
-namespace Zarichney.Server.Tests.Framework.Helpers;
+namespace Zarichney.Tests.Framework.Helpers;
 
 /// <summary>
 /// Factory methods for creating test objects with appropriate defaults

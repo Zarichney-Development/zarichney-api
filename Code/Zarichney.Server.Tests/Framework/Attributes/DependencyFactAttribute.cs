@@ -2,7 +2,7 @@ using Xunit;
 using Xunit.Sdk;
 using Zarichney.Services.Status;
 
-namespace Zarichney.Server.Tests.Framework.Attributes;
+namespace Zarichney.Tests.Framework.Attributes;
 
 /// <summary>
 /// Custom Fact attribute that skips tests when dependencies are missing.

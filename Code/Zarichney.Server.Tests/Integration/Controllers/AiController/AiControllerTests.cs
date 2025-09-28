@@ -7,7 +7,7 @@ using Refit;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Zarichney.Server.Tests.Integration.Controllers.AiController;
+namespace Zarichney.Tests.Integration.Controllers.AiController;
 
 /// <summary>
 /// Integration tests for the AiController endpoints (/api/completion and /api/transcribe).

@@ -145,7 +145,7 @@
   - No external APIs or services required for concurrency configuration operation
 
 * **Component Dependencies:**
-  - Used by: All Epic #181 workflows (coverage-build.yml, ai-analysis workflows, epic coordination)
+  - Used by: All Epic #181 workflows (testing-coverage-build-review.yml, ai-analysis workflows, epic coordination)
   - Integrates with: workflow-infrastructure for enhanced monitoring and resource optimization
   - Enables: Efficient resource utilization across all component implementations and specialized workflows
 

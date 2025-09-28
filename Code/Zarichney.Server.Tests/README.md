@@ -71,7 +71,7 @@ All test development **must** adhere to the following standards documents:
     * `../../Docs/Standards/CodingStandards.md` - Standards for writing C# code (applies to test code too).
     * `../../Docs/Standards/DocumentationStandards.md` - Standards for writing per-directory README files within this project.
 
-A commitment to high test coverage (>=90% for unit tests) and rigorous adherence to these standards is expected to ensure a reliable and maintainable API.
+A commitment to high test coverage (comprehensive coverage for unit tests) and rigorous adherence to these standards is expected to ensure a reliable and maintainable API.
 
 ## 5. How to Work With This Code
 
@@ -238,7 +238,7 @@ The current focus is on implementing the framework augmentations detailed in the
 ## 8. Known Issues & TODOs
 
 * **Framework Augmentation:** This test framework is actively being enhanced. Refer to the **"Framework Augmentation Roadmap (TODOs)" (Section 16)** in `TechnicalDesignDocument.md` for a list of planned improvements (e.g., WireMock.Net integration, advanced AutoFixture customizations).
-* **Test Coverage:** While the goal is >=90% unit test coverage and comprehensive integration test coverage, this is an ongoing effort. The unified test suite now provides AI-powered coverage analysis and recommendations through the `/test-report` command.
+* **Test Coverage:** While the goal is comprehensive unit test coverage and comprehensive integration test coverage, this is an ongoing effort. The unified test suite now provides AI-powered coverage analysis and recommendations through the `/test-report` command.
 * **Phase 3 Complete:** Parallel test execution, dynamic quality gates, and AI-powered analysis have been implemented as part of issue #45.
 
 ---

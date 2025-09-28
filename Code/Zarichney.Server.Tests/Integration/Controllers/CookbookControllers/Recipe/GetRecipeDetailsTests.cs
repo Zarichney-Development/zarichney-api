@@ -4,7 +4,7 @@ using Xunit.Abstractions;
 using Zarichney.Server.Tests.Framework.Attributes;
 using Zarichney.Server.Tests.Framework.Fixtures;
 
-namespace Zarichney.Server.Tests.Integration.Controllers.CookbookControllers.Recipe;
+namespace Zarichney.Tests.Integration.Controllers.CookbookControllers.Recipe;
 
 /// <summary>
 /// Integration tests for the CookbookController.

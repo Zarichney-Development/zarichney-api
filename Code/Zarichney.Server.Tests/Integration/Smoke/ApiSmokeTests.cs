@@ -7,7 +7,7 @@ using Zarichney.Server.Tests.Framework.Attributes;
 using Zarichney.Server.Tests.Framework.Fixtures;
 using Zarichney.Services.Status;
 
-namespace Zarichney.Server.Tests.Integration.Smoke;
+namespace Zarichney.Tests.Integration.Smoke;
 
 /// <summary>
 /// Smoke tests for verifying that the most critical parts of the API are working.

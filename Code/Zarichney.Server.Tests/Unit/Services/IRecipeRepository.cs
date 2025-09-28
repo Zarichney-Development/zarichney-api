@@ -1,7 +1,7 @@
 using Zarichney.Cookbook.Recipes;
 using Zarichney.Server.Tests.TestData;
 
-namespace Zarichney.Server.Tests.Unit.Services;
+namespace Zarichney.Tests.Unit.Services;
 
 /// <summary>
 /// Interface for recipe repository operations.

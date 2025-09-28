@@ -2,7 +2,7 @@
 
 **Version:** 1.0
 **Last Updated:** 2025-09-21
-**Epic Context:** Standardize build workflows and implement iterative AI code review for code coverage
+**Epic Context:** Standardize build workflows and implement iterative AI code review for testing excellence
 **Issue #182:** Foundation analysis enabling issues #183-#187 progression
 **Migrated from:** Working directory analysis on 2025-09-21
 
@@ -30,14 +30,14 @@ This specification provides comprehensive component analysis of the current `.gi
 #### Path Analysis Components
 | Component | Lines | Complexity | Extraction Priority | Epic Integration |
 |-----------|-------|------------|-------------------|------------------|
-| `path-analysis` job | 42 | Low | **Immediate** | Enables #183 coverage-build.yml |
+| `path-analysis` job | 42 | Low | **Immediate** | Enables #183 testing-coverage-build-review.yml |
 | Base reference determination | 15 | Low | **Immediate** | Critical for branch-aware builds |
 | Path categorization display | 8 | Low | **Immediate** | Supports specialized workflows |
 
 **Extraction Target**: `/.github/actions/shared/path-analysis/`
 - **Reusability**: Used by ALL workflow types (build, coverage, security)
 - **Dependencies**: Leverages existing `check-paths` shared action
-- **Epic Value**: Essential for coverage-build.yml intelligent filtering
+- **Epic Value**: Essential for testing-coverage-build-review.yml intelligent filtering
 
 #### Backend Build Components
 | Component | Lines | Complexity | Extraction Priority | Epic Integration |
@@ -48,7 +48,7 @@ This specification provides comprehensive component analysis of the current `.gi
 | Artifact management | 12 | Low | **Medium** | Build output coordination |
 
 **Extraction Target**: `/.github/actions/shared/backend-build/`
-- **Reusability**: Required for coverage-build.yml, testing workflows
+- **Reusability**: Required for testing-coverage-build-review.yml, testing workflows
 - **Dependencies**: Uses `setup-environment`, `validate-test-suite` shared actions
 - **Epic Value**: Enables specialized coverage workflows with consistent build patterns
 
@@ -202,7 +202,7 @@ This specification provides comprehensive component analysis of the current `.gi
    - Integrate `/.github/actions/shared/frontend-build` if applicable
    - Preserve triggers, permissions, concurrency, and branch-aware conditions
 
-2. **Create coverage-build.yml** (Day 6)
+2. **Create testing-coverage-build-review.yml** (Day 6)
    - Build entirely from extracted composites (path-analysis, backend-build, validate-test-suite)
    - Implement path-aware execution for coverage-focused runs
    - Upload coverage/test artifacts with consistent naming
@@ -252,13 +252,13 @@ This specification provides comprehensive component analysis of the current `.gi
 
 2. **Epic Workflow Integration Testing** (Days 26-28)
    - Validate all extracted components work together
-   - Test coverage-build.yml with full AI analysis framework
+   - Test testing-coverage-build-review.yml with full AI analysis framework
    - Verify epic branch automation compatibility
 
 ## 6. Architecture Foundation for Epic Progression
 
 ### 6.1 Coverage Workflow Enablement (Issue #184)
-**Component Dependencies for coverage-build.yml**:
+**Component Dependencies for testing-coverage-build-review.yml**:
 ```yaml
 Required_Extractions:
   - path-analysis        # Intelligent filtering for coverage-focused builds
@@ -372,7 +372,7 @@ AI_Epic_Integration:
 - [ ] **Architecture Foundation** enabling epic progression validated
 
 #### Epic Integration Readiness
-- [ ] **coverage-build.yml Requirements** clearly defined (Issue #184)
+- [ ] **testing-coverage-build-review.yml Requirements** clearly defined (Issue #184)
 - [ ] **AI Framework Dependencies** mapped for iterative review (Issue #184)
 - [ ] **Security Integration Points** identified for advanced analysis (Issues #185-#186)
 - [ ] **Epic Coordination Framework** designed for workflow integration (Issue #187)
@@ -391,7 +391,7 @@ For_Each_Extracted_Component:
 
 #### Epic Workflow Integration Testing
 ```yaml
-coverage-build.yml_Validation:
+testing-coverage-build-review.yml_Validation:
   - Path-aware build execution with coverage focus
   - Integration with unified test suite (Scripts/run-test-suite.sh)
   - AI Sentinel compatibility for coverage analysis

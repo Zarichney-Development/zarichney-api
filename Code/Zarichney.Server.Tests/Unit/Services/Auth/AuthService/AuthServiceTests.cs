@@ -12,7 +12,7 @@ using Zarichney.Services.Auth;
 using Zarichney.Services.Auth.Models;
 using Zarichney.Server.Tests.TestData.Builders;
 
-namespace Zarichney.Server.Tests.Unit.Services.Auth.AuthService;
+namespace Zarichney.Tests.Unit.Services.Auth.AuthService;
 
 public class AuthServiceTests : IDisposable
 {

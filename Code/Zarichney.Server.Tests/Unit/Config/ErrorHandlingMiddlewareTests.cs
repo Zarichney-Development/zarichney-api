@@ -8,7 +8,7 @@ using Moq;
 using Xunit;
 using Zarichney.Config;
 
-namespace Zarichney.Server.Tests.Unit.Config;
+namespace Zarichney.Tests.Unit.Config;
 
 [Trait("Category", "Unit")]
 public class ErrorHandlingMiddlewareTests

@@ -50,7 +50,7 @@
 * **Test Data Builders (`TestData/Builders/`):**
     * **Goal:** Implement builders for remaining core entities/DTOs (`Customer`, `Order`, etc.) to improve test setup consistency.
 * **Code Coverage:**
-    * **Goal:** Systematically increase unit test coverage towards the >=90% target defined in `TestingStandards.md`.
+    * **Goal:** Systematically increase unit test coverage towards comprehensive coverage excellence defined in `TestingStandards.md`.
 * **Documentation Audit:**
     * **Goal:** Establish a regular cadence for using the AI Documentation Auditor workflow (`Docs/Maintenance/DocAuditorAssistant.md`) to maintain high-quality, up-to-date documentation across the project.
 

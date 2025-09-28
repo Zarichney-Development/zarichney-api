@@ -11,7 +11,7 @@ using Zarichney.Server.Tests.TestData.Builders;
 #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
 #pragma warning disable CS8601 // Possible null reference assignment.
 
-namespace Zarichney.Server.Tests.Unit.Services.Email;
+namespace Zarichney.Tests.Unit.Services.Email;
 
 /// <summary>
 /// Unit tests for MailCheckClient.

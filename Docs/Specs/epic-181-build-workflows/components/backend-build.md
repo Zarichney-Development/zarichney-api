@@ -15,7 +15,7 @@
   - Execute .NET solution build with configurable coverage collection and warning enforcement
   - Integrate with Testcontainers for database test execution with security isolation
   - Provide flexible build artifact management and comprehensive error handling
-  - Support coverage-build.yml specialization while maintaining zero-warning policy compliance
+  - Support testing-coverage-build-review.yml specialization while maintaining zero-warning policy compliance
 
 * **Implementation Success Criteria:**
   - Build execution produces identical results to current build.yml backend build logic
@@ -23,7 +23,7 @@
   - Zero-warning policy enforcement maintains existing quality gates with environment-aware flexibility
   - Performance optimization through selective execution and resource management
 
-* **Why it exists:** Enables both main build pipeline and specialized coverage-build.yml workflows to leverage consistent .NET build patterns while supporting Epic #181's modular architecture and coverage goal progression.
+* **Why it exists:** Enables both main build pipeline and specialized testing-coverage-build-review.yml workflows to leverage consistent .NET build patterns while supporting Epic #181's modular architecture and coverage goal progression.
 
 ## 2. Architecture & Key Concepts
 
@@ -153,7 +153,7 @@
   - No external APIs required for core build functionality
 
 * **Component Dependencies:**
-  - Used by: coverage-build.yml for specialized coverage workflows, main build pipeline for standard builds
+  - Used by: testing-coverage-build-review.yml for specialized coverage workflows, main build pipeline for standard builds
   - Integrates with: path-analysis for selective execution, ai-testing-analysis for coverage feedback
   - Provides input to: security-framework for vulnerability scanning, workflow-infrastructure for reporting
 

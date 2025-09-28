@@ -6,7 +6,7 @@ using Zarichney.Server.Tests.Framework.Fixtures;
 using Zarichney.Server.Tests.Framework.Attributes;
 using Zarichney.Server.Tests.Framework.Helpers;
 
-namespace Zarichney.Server.Tests.Integration.AiFramework;
+namespace Zarichney.Tests.Integration.AiFramework;
 
 /// <summary>
 /// Focused integration tests validating the iterative-coverage-auditor.md prompt

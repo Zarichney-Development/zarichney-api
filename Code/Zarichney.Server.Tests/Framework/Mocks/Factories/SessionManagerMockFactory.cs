@@ -2,7 +2,7 @@ using Moq;
 using Zarichney.Services.Sessions;
 using Zarichney.Server.Tests.TestData.Builders;
 
-namespace Zarichney.Server.Tests.Framework.Mocks.Factories;
+namespace Zarichney.Tests.Framework.Mocks.Factories;
 
 /// <summary>
 /// Factory for creating mock ISessionManager instances with common setups.
