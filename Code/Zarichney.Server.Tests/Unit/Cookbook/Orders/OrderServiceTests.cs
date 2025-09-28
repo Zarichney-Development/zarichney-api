@@ -21,6 +21,12 @@ using Zarichney.Server.Tests.TestData.Builders;
 
 namespace Zarichney.Server.Tests.Unit.Cookbook.Orders;
 
+/// <summary>
+/// Unit tests for the OrderService class in the cookbook domain.
+/// Tests order processing workflows including recipe generation, customer management,
+/// PDF compilation, email delivery, and background task coordination. Validates
+/// business logic with mocked dependencies to ensure proper order lifecycle management.
+/// </summary>
 public class OrderServiceTests
 {
   private readonly OrderService _sut;

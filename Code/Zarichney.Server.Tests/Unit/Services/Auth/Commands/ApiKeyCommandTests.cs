@@ -10,6 +10,12 @@ using Zarichney.Services.Auth.Models;
 
 namespace Zarichney.Server.Tests.Unit.Services.Auth.Commands;
 
+/// <summary>
+/// Unit tests for API key command and query handlers in the authentication system.
+/// Tests CreateApiKeyCommandHandler, RevokeApiKeyCommandHandler, GetApiKeysQueryHandler, 
+/// GetApiKeyByIdQueryHandler, and ApiKeyResponse functionality to ensure proper API key 
+/// management operations with authentication validation and user authorization.
+/// </summary>
 public class ApiKeyCommandTests
 {
     private readonly Mock<IApiKeyService> _mockApiKeyService;

@@ -12,6 +12,12 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Zarichney.Server.Tests.Integration.Controllers.AuthController;
 
+/// <summary>
+/// Integration tests for password reset endpoints in the AuthController.
+/// Tests the complete password reset workflow including token generation, validation,
+/// and password update operations against a real database to verify end-to-end
+/// functionality and proper error handling scenarios.
+/// </summary>
 [Collection("Integration")]
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Feature, TestCategories.Auth)]
