@@ -63,9 +63,74 @@ validate_coverage_inputs() {
     fi
 }
 
+# Read and process enhanced coverage data files
+read_enhanced_coverage_data() {
+    debug_log "Reading enhanced coverage data files..."
+
+    # Initialize enhanced data variables
+    enhanced_coverage_data=""
+    enhanced_delta_data=""
+    enhanced_trends_data=""
+
+    # Read coverage_data_file (coverage_results.json) if available
+    local coverage_data_file="${COVERAGE_DATA_FILE:-TestResults/coverage_results.json}"
+    if [[ -f "$coverage_data_file" ]]; then
+        debug_log "Reading coverage data file: $coverage_data_file"
+        if enhanced_coverage_data=$(cat "$coverage_data_file" 2>/dev/null) && echo "$enhanced_coverage_data" | jq . >/dev/null 2>&1; then
+            debug_log "✅ Successfully loaded coverage data file"
+        else
+            debug_log "⚠️ Coverage data file exists but is not valid JSON"
+            enhanced_coverage_data=""
+        fi
+    else
+        debug_log "ℹ️ Coverage data file not found: $coverage_data_file"
+    fi
+
+    # Read coverage_delta_file (coverage_delta.json) if available
+    local coverage_delta_file="${COVERAGE_DELTA_FILE:-TestResults/coverage_delta.json}"
+    if [[ -f "$coverage_delta_file" ]]; then
+        debug_log "Reading coverage delta file: $coverage_delta_file"
+        if enhanced_delta_data=$(cat "$coverage_delta_file" 2>/dev/null) && echo "$enhanced_delta_data" | jq . >/dev/null 2>&1; then
+            debug_log "✅ Successfully loaded coverage delta file"
+        else
+            debug_log "⚠️ Coverage delta file exists but is not valid JSON"
+            enhanced_delta_data=""
+        fi
+    else
+        debug_log "ℹ️ Coverage delta file not found: $coverage_delta_file"
+    fi
+
+    # Read coverage_trends_file (health_trends.json) if available
+    local coverage_trends_file="${COVERAGE_TRENDS_FILE:-TestResults/health_trends.json}"
+    if [[ -f "$coverage_trends_file" ]]; then
+        debug_log "Reading coverage trends file: $coverage_trends_file"
+        if enhanced_trends_data=$(cat "$coverage_trends_file" 2>/dev/null) && echo "$enhanced_trends_data" | jq . >/dev/null 2>&1; then
+            debug_log "✅ Successfully loaded coverage trends file"
+        else
+            debug_log "⚠️ Coverage trends file exists but is not valid JSON"
+            enhanced_trends_data=""
+        fi
+    else
+        debug_log "ℹ️ Coverage trends file not found: $coverage_trends_file"
+    fi
+
+    # Export for use in other functions
+    export enhanced_coverage_data
+    export enhanced_delta_data
+    export enhanced_trends_data
+
+    echo "📊 Enhanced coverage data loading complete"
+    return 0
+}
+
 # Process coverage context for AI analysis
 process_coverage_context() {
     echo "🔧 Processing coverage context..."
+
+    # Read enhanced coverage data files
+    if ! read_enhanced_coverage_data; then
+        echo "⚠️ Enhanced coverage data reading failed, continuing with basic context"
+    fi
 
     # Calculate coverage change
     local coverage_change
@@ -83,9 +148,9 @@ process_coverage_context() {
     local target_progress
     target_progress=$(awk "BEGIN {printf \"%.2f\", ($COVERAGE_DATA / $IMPROVEMENT_TARGET) * 100}")
 
-    # Generate coverage context JSON
-    local coverage_context
-    coverage_context=$(cat <<EOF
+    # Build base coverage context
+    local base_coverage_context
+    base_coverage_context=$(cat <<EOF
 {
   "coverage": {
     "current": $COVERAGE_DATA,
@@ -103,17 +168,82 @@ process_coverage_context() {
 EOF
     )
 
-    # Validate JSON format
+    # Enhance with delta data if available
+    local coverage_context="$base_coverage_context"
+    if [[ -n "$enhanced_delta_data" ]]; then
+        debug_log "Enhancing context with coverage delta data"
+        coverage_context=$(echo "$coverage_context" | jq --argjson delta "$enhanced_delta_data" '. + {"coverageDelta": $delta}')
+
+        # Override calculated values with delta file values if they exist
+        local delta_current=$(echo "$enhanced_delta_data" | jq -r '.current_coverage // empty' 2>/dev/null)
+        local delta_baseline=$(echo "$enhanced_delta_data" | jq -r '.baseline_coverage // empty' 2>/dev/null)
+        local delta_change=$(echo "$enhanced_delta_data" | jq -r '.coverage_delta // empty' 2>/dev/null)
+        local delta_trend=$(echo "$enhanced_delta_data" | jq -r '.coverage_trend // empty' 2>/dev/null)
+
+        if [[ -n "$delta_current" && "$delta_current" != "null" ]]; then
+            coverage_context=$(echo "$coverage_context" | jq --arg val "$delta_current" '.coverage.current = ($val | tonumber)')
+        fi
+        if [[ -n "$delta_baseline" && "$delta_baseline" != "null" ]]; then
+            coverage_context=$(echo "$coverage_context" | jq --arg val "$delta_baseline" '.coverage.baseline = ($val | tonumber)')
+        fi
+        if [[ -n "$delta_change" && "$delta_change" != "null" ]]; then
+            coverage_context=$(echo "$coverage_context" | jq --arg val "$delta_change" '.coverage.change = ($val | tonumber)')
+        fi
+        if [[ -n "$delta_trend" && "$delta_trend" != "null" ]]; then
+            coverage_context=$(echo "$coverage_context" | jq --arg val "$delta_trend" '.coverage.trend = $val')
+        fi
+
+        debug_log "✅ Coverage context enhanced with delta data"
+    else
+        debug_log "ℹ️ No coverage delta data available for enhancement"
+    fi
+
+    # Enhance with trends data if available
+    if [[ -n "$enhanced_trends_data" ]]; then
+        debug_log "Enhancing context with coverage trends data"
+        coverage_context=$(echo "$coverage_context" | jq --argjson trends "$enhanced_trends_data" '. + {"coverageTrends": $trends}')
+        debug_log "✅ Coverage context enhanced with trends data"
+    else
+        debug_log "ℹ️ No coverage trends data available for enhancement"
+    fi
+
+    # Enhance with detailed coverage data if available
+    if [[ -n "$enhanced_coverage_data" ]]; then
+        debug_log "Enhancing context with detailed coverage data"
+        coverage_context=$(echo "$coverage_context" | jq --argjson details "$enhanced_coverage_data" '. + {"coverageDetails": $details}')
+        debug_log "✅ Coverage context enhanced with detailed coverage data"
+    else
+        debug_log "ℹ️ No detailed coverage data available for enhancement"
+    fi
+
+    # Validate final JSON format
     if ! echo "$coverage_context" | jq . >/dev/null 2>&1; then
         echo "❌ Generated coverage context is not valid JSON"
+        debug_log "Invalid JSON context: $coverage_context"
         return 1
     fi
+
+    # Set global variable for access in other functions
+    export coverage_context
 
     echo "coverage_context<<EOF" >> "$GITHUB_OUTPUT"
     echo "$coverage_context" >> "$GITHUB_OUTPUT"
     echo "EOF" >> "$GITHUB_OUTPUT"
 
-    echo "✅ Coverage context processing complete"
+    # Log enhancement status
+    local enhancement_status="basic"
+    if [[ -n "$enhanced_delta_data" ]]; then
+        enhancement_status="delta-enhanced"
+    fi
+    if [[ -n "$enhanced_trends_data" ]]; then
+        enhancement_status="trends-enhanced"
+    fi
+    if [[ -n "$enhanced_coverage_data" ]]; then
+        enhancement_status="fully-enhanced"
+    fi
+
+    debug_log "Coverage context enhancement status: $enhancement_status"
+    echo "✅ Coverage context processing complete (status: $enhancement_status)"
     return 0
 }
 
@@ -158,9 +288,16 @@ generate_phase_context() {
             ;;
     esac
 
+    # Extract coverage context from GITHUB_OUTPUT
+    local coverage_context_content
+    if ! coverage_context_content=$(grep -A 1000 "coverage_context<<EOF" "$GITHUB_OUTPUT" | grep -B 1000 "^EOF$" | head -n -1 | tail -n +2); then
+        echo "❌ Failed to extract coverage context from GITHUB_OUTPUT"
+        return 1
+    fi
+
     # Add phase configuration to context
     local enhanced_context
-    enhanced_context=$(echo "$coverage_context" | jq --argjson phase "$phase_config" '. + {"phaseConfiguration": $phase}')
+    enhanced_context=$(echo "$coverage_context_content" | jq --argjson phase "$phase_config" '. + {"phaseConfiguration": $phase}')
 
     echo "enhanced_context<<EOF" >> "$GITHUB_OUTPUT"
     echo "$enhanced_context" >> "$GITHUB_OUTPUT"
@@ -210,6 +347,7 @@ estimate_time_to_target() {
 
 # Export functions for use in action
 export -f validate_coverage_inputs
+export -f read_enhanced_coverage_data
 export -f process_coverage_context
 export -f generate_phase_context
 export -f debug_log

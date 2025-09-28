@@ -560,6 +560,57 @@ jobs:
               });
             }
 
+      # Add PR labels based on coverage trends
+      - name: Label PR with coverage trend
+        if: |
+          github.event_name == 'pull_request' &&
+          steps.coverage_gate.outputs.coverage_needed == 'true' &&
+          steps.backend_execution.outputs.test_success == 'true'
+        run: |
+          # Check if coverage_delta.json exists and read coverage trend
+          if [ -f "TestResults/coverage_delta.json" ]; then
+            echo "Reading coverage trend from coverage_delta.json"
+
+            # Extract coverage_trend from JSON file
+            coverage_trend=$(cat TestResults/coverage_delta.json | jq -r '.coverage_trend // empty')
+
+            if [ -n "$coverage_trend" ]; then
+              echo "Coverage trend detected: $coverage_trend"
+
+              # Remove any existing coverage labels first
+              echo "Removing existing coverage trend labels..."
+              gh pr edit "${{ github.event.pull_request.number }}" \
+                --remove-label "coverage: improved" \
+                --remove-label "coverage: regression" \
+                --remove-label "coverage: stable" 2>/dev/null || true
+
+              # Apply appropriate label based on trend
+              case "$coverage_trend" in
+                "improved")
+                  echo "Applying 'coverage: improved' label"
+                  gh pr edit "${{ github.event.pull_request.number }}" --add-label "coverage: improved"
+                  ;;
+                "decreased")
+                  echo "Applying 'coverage: regression' label"
+                  gh pr edit "${{ github.event.pull_request.number }}" --add-label "coverage: regression"
+                  ;;
+                "stable")
+                  echo "Applying 'coverage: stable' label"
+                  gh pr edit "${{ github.event.pull_request.number }}" --add-label "coverage: stable"
+                  ;;
+                *)
+                  echo "Unknown coverage trend: $coverage_trend - no label applied"
+                  ;;
+              esac
+            else
+              echo "Coverage trend not found in coverage_delta.json"
+            fi
+          else
+            echo "coverage_delta.json not found - skipping label application"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       # Upload coverage artifacts for AI framework integration
       - name: Upload coverage artifacts for AI integration
         if: steps.coverage_gate.outputs.coverage_needed == 'true' && steps.backend_execution.outputs.test_success == 'true'

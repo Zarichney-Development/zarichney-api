@@ -271,7 +271,10 @@ process_iterative_template() {
     local pr_status=$(determine_current_pr_status)
     sed -i "s/{{PR_STATUS}}/$pr_status/g" "$PROCESSED_TEMPLATE_PATH"
 
-    log_debug "Template processed with iteration $CURRENT_ITERATION context"
+    # Coverage context injection from input files
+    inject_coverage_context_variables
+
+    log_debug "Template processed with iteration $CURRENT_ITERATION context and coverage intelligence"
 
     return 0
 }
@@ -564,6 +567,80 @@ log_debug() {
     if [[ "${DEBUG_MODE:-false}" == "true" ]]; then
         echo "🔍 DEBUG: $1"
     fi
+}
+
+#####################################
+# Inject coverage context variables into processed template
+# Reads coverage files and injects as template variables
+# Returns:
+#   0 on success, 1 on failure
+#####################################
+inject_coverage_context_variables() {
+    log_debug "Injecting coverage context variables into template..."
+
+    # Get coverage file paths from environment (set by action inputs)
+    local coverage_data_file="${COVERAGE_DATA_FILE:-TestResults/coverage_results.json}"
+    local coverage_delta_file="${COVERAGE_DELTA_FILE:-TestResults/coverage_delta.json}"
+    local coverage_trends_file="${COVERAGE_TRENDS_FILE:-TestResults/health_trends.json}"
+
+    # Initialize coverage variables with defaults
+    local coverage_data="Coverage data unavailable"
+    local coverage_delta="Coverage delta unavailable"
+    local coverage_trends="Coverage trends unavailable"
+
+    # Inject COVERAGE_DATA variable
+    if [[ -f "$coverage_data_file" ]]; then
+        log_debug "Loading coverage data from: $coverage_data_file"
+        if coverage_data=$(cat "$coverage_data_file" 2>/dev/null); then
+            # Escape JSON content for sed replacement (handle quotes, newlines, and special chars)
+            coverage_data=$(echo "$coverage_data" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | tr '\n' ' ' | sed 's/\t/ /g')
+            log_debug "Coverage data loaded successfully (${#coverage_data} characters)"
+        else
+            log_warning "Failed to read coverage data file: $coverage_data_file"
+            coverage_data="Coverage data file found but unreadable"
+        fi
+    else
+        log_debug "Coverage data file not found: $coverage_data_file"
+    fi
+
+    # Inject COVERAGE_DELTA variable
+    if [[ -f "$coverage_delta_file" ]]; then
+        log_debug "Loading coverage delta from: $coverage_delta_file"
+        if coverage_delta=$(cat "$coverage_delta_file" 2>/dev/null); then
+            # Escape JSON content for sed replacement
+            coverage_delta=$(echo "$coverage_delta" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | tr '\n' ' ' | sed 's/\t/ /g')
+            log_debug "Coverage delta loaded successfully (${#coverage_delta} characters)"
+        else
+            log_warning "Failed to read coverage delta file: $coverage_delta_file"
+            coverage_delta="Coverage delta file found but unreadable"
+        fi
+    else
+        log_debug "Coverage delta file not found: $coverage_delta_file"
+    fi
+
+    # Inject COVERAGE_TRENDS variable
+    if [[ -f "$coverage_trends_file" ]]; then
+        log_debug "Loading coverage trends from: $coverage_trends_file"
+        if coverage_trends=$(cat "$coverage_trends_file" 2>/dev/null); then
+            # Escape JSON content for sed replacement
+            coverage_trends=$(echo "$coverage_trends" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | tr '\n' ' ' | sed 's/\t/ /g')
+            log_debug "Coverage trends loaded successfully (${#coverage_trends} characters)"
+        else
+            log_warning "Failed to read coverage trends file: $coverage_trends_file"
+            coverage_trends="Coverage trends file found but unreadable"
+        fi
+    else
+        log_debug "Coverage trends file not found: $coverage_trends_file (optional)"
+    fi
+
+    # Apply coverage variable replacements to processed template
+    sed -i "s/{{COVERAGE_DATA}}/$coverage_data/g" "$PROCESSED_TEMPLATE_PATH"
+    sed -i "s/{{COVERAGE_DELTA}}/$coverage_delta/g" "$PROCESSED_TEMPLATE_PATH"
+    sed -i "s/{{COVERAGE_TRENDS}}/$coverage_trends/g" "$PROCESSED_TEMPLATE_PATH"
+
+    log_debug "Coverage context variables injected successfully"
+
+    return 0
 }
 
 # Export main function for external calling

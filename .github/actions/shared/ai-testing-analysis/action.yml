@@ -25,6 +25,20 @@ inputs:
     required: false
     default: '90'
 
+  # Enhanced Coverage Intelligence Files
+  coverage_data_file:
+    description: 'Path to detailed coverage results JSON file (coverage_results.json)'
+    required: false
+    default: 'TestResults/coverage_results.json'
+  coverage_delta_file:
+    description: 'Path to coverage delta analysis JSON file (coverage_delta.json)'
+    required: false
+    default: 'TestResults/coverage_delta.json'
+  coverage_trends_file:
+    description: 'Path to coverage health trends JSON file (health_trends.json)'
+    required: false
+    default: 'TestResults/health_trends.json'
+
   # Core Analysis Configuration
   github_token:
     description: 'GitHub token for repository access and PR comments'
@@ -107,6 +121,9 @@ runs:
         COVERAGE_PHASE: ${{ inputs.coverage_phase }}
         EPIC_CONTEXT: ${{ inputs.epic_context }}
         IMPROVEMENT_TARGET: ${{ inputs.improvement_target }}
+        COVERAGE_DATA_FILE: ${{ inputs.coverage_data_file }}
+        COVERAGE_DELTA_FILE: ${{ inputs.coverage_delta_file }}
+        COVERAGE_TRENDS_FILE: ${{ inputs.coverage_trends_file }}
         ANALYSIS_DEPTH: ${{ inputs.analysis_depth }}
         PHASE_AWARE: ${{ inputs.phase_aware }}
         DEBUG_MODE: ${{ inputs.debug_mode }}

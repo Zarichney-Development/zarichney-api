@@ -314,6 +314,10 @@ EOF
         ISSUE_REF: ${{ steps.pr-context.outputs.issue_ref }}
         CHANGED_FILES_COUNT: ${{ steps.pr-context.outputs.changed_files_count }}
         LINES_CHANGED: ${{ steps.pr-context.outputs.lines_changed }}
+        # Coverage context files for template injection
+        COVERAGE_DATA_FILE: ${{ inputs.coverage_data_file }}
+        COVERAGE_DELTA_FILE: ${{ inputs.coverage_delta_file }}
+        COVERAGE_TRENDS_FILE: ${{ inputs.coverage_trends_file }}
       run: |
         set -euo pipefail
 
