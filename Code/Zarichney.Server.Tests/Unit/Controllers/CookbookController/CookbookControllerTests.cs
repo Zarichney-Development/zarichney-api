@@ -306,7 +306,7 @@ public class CookbookControllerTests
     var result = await _controller.GetCookbookPdf(orderId, rebuild: true, email: false);
 
     // Assert
-    result.Should().BeOfType<FileContentResult>("the controller should return file content");
+    result.Should().BeOfType<FileContentResult>("because PDF rebuild requests must return downloadable file content to enable customers to receive their updated cookbook");
     var fileResult = result as FileContentResult;
     fileResult!.FileContents.Should().BeEquivalentTo(pdfContent,
       "the file contents should match the rebuilt PDF");

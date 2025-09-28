@@ -47,9 +47,9 @@ public class ApiControllerTests
         var result = await _sut.ValidateEmail(email);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
+        result.Should().BeOfType<OkObjectResult>("because valid email addresses should return HTTP 200 to indicate successful validation");
         var okResult = result as OkObjectResult;
-        okResult!.Value.Should().Be("Valid");
+        okResult!.Value.Should().Be("Valid", "because the API must return a clear success message for valid email addresses");
 
         _mockEmailService.Verify(x => x.ValidateEmail(email), Times.Once);
     }
@@ -65,9 +65,9 @@ public class ApiControllerTests
         var result = await _sut.ValidateEmail(email);
 
         // Assert
-        result.Should().BeOfType<BadRequestObjectResult>();
+        result.Should().BeOfType<BadRequestObjectResult>("because empty email parameters should return HTTP 400 to indicate client error");
         var badRequest = result as BadRequestObjectResult;
-        badRequest!.Value.Should().Be("Email parameter is required");
+        badRequest!.Value.Should().Be("Email parameter is required", "because the API must provide clear error messages for missing required parameters");
 
         _mockEmailService.Verify(x => x.ValidateEmail(It.IsAny<string>()), Times.Never);
     }

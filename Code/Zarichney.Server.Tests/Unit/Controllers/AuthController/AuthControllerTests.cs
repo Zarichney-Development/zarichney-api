@@ -75,14 +75,14 @@ public class AuthControllerTests : IDisposable
         var result = await _sut.Register(request);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>();
+        result.Should().BeOfType<OkObjectResult>("because successful registration should return HTTP 200 with authentication data");
         var okResult = result as OkObjectResult;
         var response = okResult!.Value as AuthResponse;
 
-        response.Should().NotBeNull();
-        response!.Success.Should().BeTrue();
-        response.Message.Should().Be(expectedResult.Message);
-        response.Email.Should().Be(request.Email);
+        response.Should().NotBeNull("because the controller must return a valid AuthResponse object for successful registration");
+        response!.Success.Should().BeTrue("because valid registration requests must indicate success to enable proper client-side authentication flow");
+        response.Message.Should().Be(expectedResult.Message, "because the response message must match the service result to provide consistent user feedback");
+        response.Email.Should().Be(request.Email, "because the response must confirm the registered email address for client verification and audit trails");
 
         _mockMediator.Verify(x => x.Send(
             It.Is<RegisterCommand>(cmd => cmd.Email == request.Email && cmd.Password == request.Password),
