@@ -1,5 +1,4 @@
 using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
 using Refit;
 using System.Net;
 using Xunit;
@@ -8,11 +7,10 @@ using Zarichney.Client.Contracts;
 using Zarichney.Services.Auth;
 using Zarichney.Server.Tests.Framework.Attributes;
 using Zarichney.Server.Tests.Framework.Fixtures;
-using Microsoft.AspNetCore.Identity;
 
 namespace Zarichney.Server.Tests.Integration.Controllers.AuthController;
 
-[Collection("IntegrationAuth")]
+[Collection("Integration")]
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Feature, TestCategories.Auth)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
@@ -23,65 +21,40 @@ public class RegisterEndpointTests : DatabaseIntegrationTestBase
     {
     }
 
-    private async Task<bool> UserExistsAsync(string email)
-    {
-        using var scope = Factory.Services.CreateScope();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var user = await userManager.FindByEmailAsync(email);
-        return user != null;
-    }
-
-    private async Task CleanupTestUserAsync(string email)
-    {
-        using var scope = Factory.Services.CreateScope();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var user = await userManager.FindByEmailAsync(email);
-        if (user != null)
-        {
-            await userManager.DeleteAsync(user);
-        }
-    }
-
     [DependencyFact(InfrastructureDependency.Database)]
     public async Task Register_WithValidInput_ShouldCreateUser()
     {
         // Arrange
-        await ResetDatabaseAsync();
         var client = _apiClientFixture.UnauthenticatedAuthApi;
         var testEmail = $"test_{Guid.NewGuid()}@example.com";
         var request = new RegisterRequest(testEmail, "ValidPassword123!");
 
-        try
-        {
-            // Act
-            var registerResponse = await client.Register(request);
+        // Act
+        var registerResponse = await client.Register(request);
 
-            // Assert - Follow testing standards for API response handling
-            registerResponse.IsSuccessStatusCode.Should().BeTrue(
-                because: "valid registration should succeed");
+        // Assert - Follow testing standards for API response handling
+        registerResponse.IsSuccessStatusCode.Should().BeTrue(
+            because: "valid registration should succeed");
 
-            var authResult = registerResponse.Content;
-            authResult.Should().NotBeNull(because: "successful registration should return auth result");
-            authResult.Success.Should().BeTrue(because: "registration should indicate success");
-            authResult.Email.Should().Be(testEmail, because: "result should contain the registered email");
-            authResult.Message.Should().NotBeNullOrEmpty(because: "result should contain a message");
+        var authResult = registerResponse.Content;
+        authResult.Should().NotBeNull(because: "successful registration should return auth result");
+        authResult.Success.Should().BeTrue(because: "registration should indicate success");
+        authResult.Email.Should().Be(testEmail, because: "result should contain the registered email");
+        authResult.Message.Should().NotBeNullOrEmpty(because: "result should contain a message");
 
-            // Verify user was created in database
-            var userExists = await UserExistsAsync(testEmail);
-            userExists.Should().BeTrue(because: "user should be created in the database");
-        }
-        finally
-        {
-            // Cleanup
-            await CleanupTestUserAsync(testEmail);
-        }
+        // Verify user can authenticate via API
+        var loginRequest = new LoginRequest(testEmail, "ValidPassword123!");
+        var loginResponse = await client.Login(loginRequest);
+        loginResponse.IsSuccessStatusCode.Should().BeTrue(
+            because: "newly registered user should be able to login");
+        loginResponse.Content.Should().NotBeNull();
+        loginResponse.Content!.Success.Should().BeTrue();
     }
 
     [DependencyFact(InfrastructureDependency.Database)]
     public async Task Register_WithExistingEmail_ShouldReturnConflict()
     {
         // Arrange
-        await ResetDatabaseAsync();
         var client = _apiClientFixture.UnauthenticatedAuthApi;
         var testEmail = $"existing_{Guid.NewGuid()}@example.com";
 
@@ -89,23 +62,15 @@ public class RegisterEndpointTests : DatabaseIntegrationTestBase
         var firstRequest = new RegisterRequest(testEmail, "ValidPassword123!");
         await client.Register(firstRequest);
 
-        try
-        {
-            // Act - Try to register with same email
-            var secondRequest = new RegisterRequest(testEmail, "DifferentPassword123!");
+        // Act - Try to register with same email
+        var secondRequest = new RegisterRequest(testEmail, "DifferentPassword123!");
 
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<ApiException>(
-                () => client.Register(secondRequest));
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ApiException>(
+            () => client.Register(secondRequest));
 
-            exception.StatusCode.Should().Be(HttpStatusCode.BadRequest,
-                because: "duplicate email registration should return bad request");
-        }
-        finally
-        {
-            // Cleanup
-            await CleanupTestUserAsync(testEmail);
-        }
+        exception.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+            because: "duplicate email registration should return bad request");
     }
 
     [DependencyFact(InfrastructureDependency.Database)]

@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Zarichney.Server.Tests.Integration.Controllers.AuthController;
 
-[Collection("IntegrationAuth")]
+[Collection("Integration")]
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Feature, TestCategories.Auth)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
@@ -53,42 +53,25 @@ public class PasswordResetEndpointTests : DatabaseIntegrationTestBase
         return await userManager.GeneratePasswordResetTokenAsync(user);
     }
 
-    private async Task CleanupTestUserAsync(ApplicationUser user)
-    {
-        if (user == null) return;
-
-        using var scope = Factory.Services.CreateScope();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        await userManager.DeleteAsync(user);
-    }
-
     [DependencyFact(InfrastructureDependency.Database)]
     public async Task EmailForgotPassword_WithValidEmail_ShouldReturnSuccess()
     {
         // Arrange
-        await ResetDatabaseAsync();
         var testUser = await CreateTestUserAsync();
         var client = _apiClientFixture.UnauthenticatedAuthApi;
 
-        try
-        {
-            // Act
-            var request = new ForgotPasswordRequest(testUser.Email!);
-            var response = await client.EmailForgotPassword(request);
+        // Act
+        var request = new ForgotPasswordRequest(testUser.Email!);
+        var response = await client.EmailForgotPassword(request);
 
-            // Assert
-            response.IsSuccessStatusCode.Should().BeTrue(
-                because: "forgot password with valid email should succeed");
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue(
+            because: "forgot password with valid email should succeed");
 
-            var authResult = response.Content;
-            authResult.Should().NotBeNull(because: "successful request should return auth result");
-            authResult.Success.Should().BeTrue(because: "forgot password should indicate success");
-            authResult.Message.Should().NotBeNullOrEmpty(because: "result should contain a message");
-        }
-        finally
-        {
-            await CleanupTestUserAsync(testUser);
-        }
+        var authResult = response.Content;
+        authResult.Should().NotBeNull(because: "successful request should return auth result");
+        authResult.Success.Should().BeTrue(because: "forgot password should indicate success");
+        authResult.Message.Should().NotBeNullOrEmpty(because: "result should contain a message");
     }
 
     [DependencyFact(InfrastructureDependency.Database)]
@@ -145,68 +128,52 @@ public class PasswordResetEndpointTests : DatabaseIntegrationTestBase
     public async Task ResetPassword_WithValidToken_ShouldSucceed()
     {
         // Arrange
-        await ResetDatabaseAsync();
         var testUser = await CreateTestUserAsync();
         var resetToken = await GeneratePasswordResetTokenAsync(testUser);
         var client = _apiClientFixture.UnauthenticatedAuthApi;
 
-        try
-        {
-            // Act
-            var request = new ResetPasswordRequest(
-                testUser.Email!,
-                resetToken,
-                "NewPassword123!");
-            var response = await client.ResetPassword(request);
+        // Act
+        var request = new ResetPasswordRequest(
+            testUser.Email!,
+            resetToken,
+            "NewPassword123!");
+        var response = await client.ResetPassword(request);
 
-            // Assert
-            response.IsSuccessStatusCode.Should().BeTrue(
-                because: "reset password with valid token should succeed");
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue(
+            because: "reset password with valid token should succeed");
 
-            var authResult = response.Content;
-            authResult.Should().NotBeNull(because: "successful reset should return auth result");
-            authResult.Success.Should().BeTrue(because: "reset should indicate success");
-            authResult.Message.Should().NotBeNullOrEmpty(because: "result should contain a message");
+        var authResult = response.Content;
+        authResult.Should().NotBeNull(because: "successful reset should return auth result");
+        authResult.Success.Should().BeTrue(because: "reset should indicate success");
+        authResult.Message.Should().NotBeNullOrEmpty(because: "result should contain a message");
 
-            // Verify password was changed by trying to login with new password
-            var loginRequest = new LoginRequest(testUser.Email!, "NewPassword123!");
-            var loginResponse = await client.Login(loginRequest);
-            loginResponse.IsSuccessStatusCode.Should().BeTrue(
-                because: "should be able to login with new password after reset");
-        }
-        finally
-        {
-            await CleanupTestUserAsync(testUser);
-        }
+        // Verify password was changed by trying to login with new password
+        var loginRequest = new LoginRequest(testUser.Email!, "NewPassword123!");
+        var loginResponse = await client.Login(loginRequest);
+        loginResponse.IsSuccessStatusCode.Should().BeTrue(
+            because: "should be able to login with new password after reset");
     }
 
     [DependencyFact(InfrastructureDependency.Database)]
     public async Task ResetPassword_WithInvalidToken_ShouldReturnBadRequest()
     {
         // Arrange
-        await ResetDatabaseAsync();
         var testUser = await CreateTestUserAsync();
         var client = _apiClientFixture.UnauthenticatedAuthApi;
 
-        try
-        {
-            // Act - Use an invalid/fake token
-            var request = new ResetPasswordRequest(
-                testUser.Email!,
-                "invalid-token-12345",
-                "NewPassword123!");
+        // Act - Use an invalid/fake token
+        var request = new ResetPasswordRequest(
+            testUser.Email!,
+            "invalid-token-12345",
+            "NewPassword123!");
 
-            var exception = await Assert.ThrowsAsync<ApiException>(
-                () => client.ResetPassword(request));
+        var exception = await Assert.ThrowsAsync<ApiException>(
+            () => client.ResetPassword(request));
 
-            // Assert
-            exception.StatusCode.Should().Be(HttpStatusCode.BadRequest,
-                because: "reset with invalid token should return bad request");
-        }
-        finally
-        {
-            await CleanupTestUserAsync(testUser);
-        }
+        // Assert
+        exception.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+            because: "reset with invalid token should return bad request");
     }
 
     [DependencyFact(InfrastructureDependency.Database)]
@@ -234,91 +201,67 @@ public class PasswordResetEndpointTests : DatabaseIntegrationTestBase
     public async Task ResetPassword_WithWeakPassword_ShouldReturnBadRequest()
     {
         // Arrange
-        await ResetDatabaseAsync();
         var testUser = await CreateTestUserAsync();
         var resetToken = await GeneratePasswordResetTokenAsync(testUser);
         var client = _apiClientFixture.UnauthenticatedAuthApi;
 
-        try
-        {
-            // Act
-            var request = new ResetPasswordRequest(
-                testUser.Email!,
-                resetToken,
-                "123"); // Weak password
+        // Act
+        var request = new ResetPasswordRequest(
+            testUser.Email!,
+            resetToken,
+            "123"); // Weak password
 
-            var exception = await Assert.ThrowsAsync<ApiException>(
-                () => client.ResetPassword(request));
+        var exception = await Assert.ThrowsAsync<ApiException>(
+            () => client.ResetPassword(request));
 
-            // Assert
-            exception.StatusCode.Should().Be(HttpStatusCode.BadRequest,
-                because: "reset with weak password should return bad request");
-        }
-        finally
-        {
-            await CleanupTestUserAsync(testUser);
-        }
+        // Assert
+        exception.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+            because: "reset with weak password should return bad request");
     }
 
     [DependencyFact(InfrastructureDependency.Database)]
     public async Task ResetPassword_WithEmptyPassword_ShouldReturnBadRequest()
     {
         // Arrange
-        await ResetDatabaseAsync();
         var testUser = await CreateTestUserAsync();
         var resetToken = await GeneratePasswordResetTokenAsync(testUser);
         var client = _apiClientFixture.UnauthenticatedAuthApi;
 
-        try
-        {
-            // Act
-            var request = new ResetPasswordRequest(
-                testUser.Email!,
-                resetToken,
-                "");
+        // Act
+        var request = new ResetPasswordRequest(
+            testUser.Email!,
+            resetToken,
+            "");
 
-            var exception = await Assert.ThrowsAsync<ApiException>(
-                () => client.ResetPassword(request));
+        var exception = await Assert.ThrowsAsync<ApiException>(
+            () => client.ResetPassword(request));
 
-            // Assert
-            exception.StatusCode.Should().Be(HttpStatusCode.BadRequest,
-                because: "reset with empty password should return bad request");
-        }
-        finally
-        {
-            await CleanupTestUserAsync(testUser);
-        }
+        // Assert
+        exception.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+            because: "reset with empty password should return bad request");
     }
 
     [DependencyFact(InfrastructureDependency.Database)]
     public async Task ResetPassword_WithSamePassword_ShouldSucceed()
     {
         // Arrange - Some systems allow resetting to same password
-        await ResetDatabaseAsync();
         var testUser = await CreateTestUserAsync();
         var resetToken = await GeneratePasswordResetTokenAsync(testUser);
         var client = _apiClientFixture.UnauthenticatedAuthApi;
 
-        try
-        {
-            // Act
-            var request = new ResetPasswordRequest(
-                testUser.Email!,
-                resetToken,
-                "OldPassword123!"); // Same as original
+        // Act
+        var request = new ResetPasswordRequest(
+            testUser.Email!,
+            resetToken,
+            "OldPassword123!"); // Same as original
 
-            var response = await client.ResetPassword(request);
+        var response = await client.ResetPassword(request);
 
-            // Assert - This may succeed or fail depending on system policy
-            if (response.IsSuccessStatusCode)
-            {
-                response.Content.Should().NotBeNull();
-                response.Content.Success.Should().BeTrue();
-            }
-        }
-        finally
+        // Assert - This may succeed or fail depending on system policy
+        if (response.IsSuccessStatusCode)
         {
-            await CleanupTestUserAsync(testUser);
+            response.Content.Should().NotBeNull();
+            response.Content.Success.Should().BeTrue();
         }
     }
 
@@ -326,38 +269,30 @@ public class PasswordResetEndpointTests : DatabaseIntegrationTestBase
     public async Task ResetPassword_TokenReuse_ShouldFail()
     {
         // Arrange
-        await ResetDatabaseAsync();
         var testUser = await CreateTestUserAsync();
         var resetToken = await GeneratePasswordResetTokenAsync(testUser);
         var client = _apiClientFixture.UnauthenticatedAuthApi;
 
-        try
-        {
-            // Act - First reset should succeed
-            var firstRequest = new ResetPasswordRequest(
-                testUser.Email!,
-                resetToken,
-                "FirstNewPassword123!");
-            var firstResponse = await client.ResetPassword(firstRequest);
-            firstResponse.IsSuccessStatusCode.Should().BeTrue(
-                because: "first reset with valid token should succeed");
+        // Act - First reset should succeed
+        var firstRequest = new ResetPasswordRequest(
+            testUser.Email!,
+            resetToken,
+            "FirstNewPassword123!");
+        var firstResponse = await client.ResetPassword(firstRequest);
+        firstResponse.IsSuccessStatusCode.Should().BeTrue(
+            because: "first reset with valid token should succeed");
 
-            // Act - Try to reuse the same token
-            var secondRequest = new ResetPasswordRequest(
-                testUser.Email!,
-                resetToken,
-                "SecondNewPassword123!");
+        // Act - Try to reuse the same token
+        var secondRequest = new ResetPasswordRequest(
+            testUser.Email!,
+            resetToken,
+            "SecondNewPassword123!");
 
-            var exception = await Assert.ThrowsAsync<ApiException>(
-                () => client.ResetPassword(secondRequest));
+        var exception = await Assert.ThrowsAsync<ApiException>(
+            () => client.ResetPassword(secondRequest));
 
-            // Assert
-            exception.StatusCode.Should().Be(HttpStatusCode.BadRequest,
-                because: "token should not be reusable after first reset");
-        }
-        finally
-        {
-            await CleanupTestUserAsync(testUser);
-        }
+        // Assert
+        exception.StatusCode.Should().Be(HttpStatusCode.BadRequest,
+            because: "token should not be reusable after first reset");
     }
 }

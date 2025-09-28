@@ -99,30 +99,13 @@ public static class HttpClientBuilderMockFactory
         // Note: AddHttpMessageHandler<T> requires T : DelegatingHandler constraint
         // We cannot use It.IsAnyType here, so we simulate handler addition differently
         mock.Setup(x => x.Services)
-            .Returns(() =>
-            {
-                var services = new ServiceCollection();
-                foreach (var handlerType in handlerChain)
-                {
-                    services.AddTransient(handlerType);
-                }
-                return services;
-            });
+            .Returns(() => BuildHandlerServiceCollection(handlerChain));
 
         mock.Setup(x => x.ConfigurePrimaryHttpMessageHandler(It.IsAny<Func<HttpMessageHandler>>()))
             .Returns(mock.Object);
 
         mock.SetupGet(x => x.Services)
-            .Returns(() =>
-            {
-                var services = new ServiceCollection();
-                // Simulate handler registration
-                foreach (var handlerType in handlerChain)
-                {
-                    services.AddTransient(handlerType);
-                }
-                return services;
-            });
+            .Returns(() => BuildHandlerServiceCollection(handlerChain));
 
         return mock;
     }
@@ -153,6 +136,17 @@ public static class HttpClientBuilderMockFactory
             .Returns(mock.Object);
 
         return mock;
+    }
+
+    private static IServiceCollection BuildHandlerServiceCollection(IEnumerable<Type> handlerChain)
+    {
+        var services = new ServiceCollection();
+        foreach (var handlerType in handlerChain)
+        {
+            services.AddTransient(handlerType);
+        }
+
+        return services;
     }
 
     /// <summary>

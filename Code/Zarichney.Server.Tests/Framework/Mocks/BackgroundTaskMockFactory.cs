@@ -18,21 +18,8 @@ public static class BackgroundTaskMockFactory
     /// </summary>
     public static Mock<IBackgroundWorker> CreateDefaultBackgroundWorker()
     {
-        var mock = new Mock<IBackgroundWorker>();
-        var queue = new Queue<BackgroundWorkItem>();
-
-        mock.Setup(x => x.QueueBackgroundWorkAsync(
-                It.IsAny<Func<IScopeContainer, CancellationToken, Task>>(),
-                It.IsAny<Session?>()))
-            .Callback<Func<IScopeContainer, CancellationToken, Task>, Session?>((workItem, session) =>
-            {
-                queue.Enqueue(new BackgroundWorkItem(workItem, session));
-            });
-
-        mock.Setup(x => x.DequeueAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() => queue.Count > 0 ? queue.Dequeue() : null!);
-
-        return mock;
+        return CreateQueueBackedWorker((workItem, session, queue) =>
+            queue.Enqueue(new BackgroundWorkItem(workItem, session)));
     }
 
     /// <summary>
@@ -40,25 +27,15 @@ public static class BackgroundTaskMockFactory
     /// </summary>
     public static Mock<IBackgroundWorker> CreateCapacityLimitedBackgroundWorker(int capacity)
     {
-        var mock = new Mock<IBackgroundWorker>();
-        var queue = new Queue<BackgroundWorkItem>();
-
-        mock.Setup(x => x.QueueBackgroundWorkAsync(
-                It.IsAny<Func<IScopeContainer, CancellationToken, Task>>(),
-                It.IsAny<Session?>()))
-            .Callback<Func<IScopeContainer, CancellationToken, Task>, Session?>((workItem, session) =>
+        return CreateQueueBackedWorker((workItem, session, queue) =>
+        {
+            if (queue.Count >= capacity)
             {
-                if (queue.Count >= capacity)
-                {
-                    throw new InvalidOperationException($"Queue is at capacity ({capacity})");
-                }
-                queue.Enqueue(new BackgroundWorkItem(workItem, session));
-            });
+                throw new InvalidOperationException($"Queue is at capacity ({capacity})");
+            }
 
-        mock.Setup(x => x.DequeueAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() => queue.Count > 0 ? queue.Dequeue() : null!);
-
-        return mock;
+            queue.Enqueue(new BackgroundWorkItem(workItem, session));
+        });
     }
 
     /// <summary>
@@ -183,6 +160,26 @@ public static class BackgroundTaskMockFactory
         return mock;
     }
 
+    private static Mock<IBackgroundWorker> CreateQueueBackedWorker(
+        Action<Func<IScopeContainer, CancellationToken, Task>, Session?, Queue<BackgroundWorkItem>> enqueueAction)
+    {
+        var mock = new Mock<IBackgroundWorker>();
+        var queue = new Queue<BackgroundWorkItem>();
+
+        mock.Setup(x => x.QueueBackgroundWorkAsync(
+                It.IsAny<Func<IScopeContainer, CancellationToken, Task>>(),
+                It.IsAny<Session?>()))
+            .Callback<Func<IScopeContainer, CancellationToken, Task>, Session?>((workItem, session) =>
+            {
+                enqueueAction(workItem, session, queue);
+            });
+
+        mock.Setup(x => x.DequeueAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => queue.Count > 0 ? queue.Dequeue() : null!);
+
+        return mock;
+    }
+
     /// <summary>
     /// Creates a mock IScopeContainer with configurable properties.
     /// </summary>
@@ -246,11 +243,13 @@ public static class BackgroundTaskMockFactory
     /// <summary>
     /// Creates a work item that respects cancellation.
     /// </summary>
-    public static Func<IScopeContainer, CancellationToken, Task> CreateCancellableWorkItem(int delayMs = 100)
+    /// <param name="delay">Optional delay before completion. Defaults to 100ms when not specified.</param>
+    public static Func<IScopeContainer, CancellationToken, Task> CreateCancellableWorkItem(TimeSpan? delay = null)
     {
+        var delayToUse = delay ?? TimeSpan.FromMilliseconds(100);
         return async (scope, ct) =>
         {
-            await Task.Delay(delayMs, ct);
+            await Task.Delay(delayToUse, ct);
         };
     }
 }

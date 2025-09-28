@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Zarichney.Server.Tests.Integration.Controllers.AuthController;
 
-[Collection("IntegrationAuth")]
+[Collection("Integration")]
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Feature, TestCategories.Auth)]
 [Trait(TestCategories.Dependency, TestCategories.Database)]
@@ -72,7 +72,6 @@ public class RefreshTokenEndpointTests : DatabaseIntegrationTestBase
     public async Task Refresh_WithValidRefreshToken_ShouldReturnNewTokens()
     {
         // Arrange
-        await ResetDatabaseAsync();
         var (testUser, authenticatedClient) = await CreateAndLoginTestUserAsync();
 
         try
@@ -131,7 +130,6 @@ public class RefreshTokenEndpointTests : DatabaseIntegrationTestBase
     public async Task Refresh_AfterRevocation_ShouldReturnUnauthorized()
     {
         // Arrange
-        await ResetDatabaseAsync();
         var (testUser, authenticatedClient) = await CreateAndLoginTestUserAsync();
 
         try
@@ -159,7 +157,6 @@ public class RefreshTokenEndpointTests : DatabaseIntegrationTestBase
     public async Task Refresh_MultipleTimesInQuickSuccession_ShouldSucceed()
     {
         // Arrange
-        await ResetDatabaseAsync();
         var (testUser, authenticatedClient) = await CreateAndLoginTestUserAsync();
 
         try
@@ -191,7 +188,6 @@ public class RefreshTokenEndpointTests : DatabaseIntegrationTestBase
     public async Task Revoke_WithValidToken_ShouldClearCookies()
     {
         // Arrange
-        await ResetDatabaseAsync();
         var (testUser, authenticatedClient) = await CreateAndLoginTestUserAsync();
 
         try
@@ -232,7 +228,6 @@ public class RefreshTokenEndpointTests : DatabaseIntegrationTestBase
     public async Task RefreshClaims_WithValidAuthentication_ShouldUpdateClaims()
     {
         // Arrange
-        await ResetDatabaseAsync();
         var (testUser, authenticatedClient) = await CreateAndLoginTestUserAsync();
 
         try

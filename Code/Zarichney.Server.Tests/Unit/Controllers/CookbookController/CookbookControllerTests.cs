@@ -26,58 +26,26 @@ namespace Zarichney.Server.Tests.Unit.Controllers.CookbookController;
 public class CookbookControllerTests
 {
   private readonly IFixture _fixture;
-  private readonly Mock<IRecipeService> _mockRecipeService;
-  private readonly Mock<IOrderService> _mockOrderService;
-  private readonly Mock<IEmailService> _mockEmailService;
-  private readonly Mock<IBackgroundWorker> _mockBackgroundWorker;
-  private readonly Mock<IRecipeRepository> _mockRecipeRepository;
-  private readonly Mock<IWebScraperService> _mockScraperService;
-  private readonly Mock<IScopeContainer> _mockScopeContainer;
-  private readonly Mock<ISessionManager> _mockSessionManager;
-  private readonly Mock<ILogger<Zarichney.Controllers.CookbookController>> _mockLogger;
-  private readonly Zarichney.Controllers.CookbookController _controller;
+  private readonly TestContext _context;
+
+  private Zarichney.Controllers.CookbookController _controller => _context.Controller;
+  private Mock<IRecipeService> _mockRecipeService => _context.RecipeServiceMock;
+  private Mock<IOrderService> _mockOrderService => _context.OrderServiceMock;
+  private Mock<IEmailService> _mockEmailService => _context.EmailServiceMock;
+  private Mock<IBackgroundWorker> _mockBackgroundWorker => _context.BackgroundWorkerMock;
+  private Mock<IRecipeRepository> _mockRecipeRepository => _context.RecipeRepositoryMock;
+  private Mock<IWebScraperService> _mockScraperService => _context.ScraperServiceMock;
+  private Mock<IScopeContainer> _mockScopeContainer => _context.ScopeContainerMock;
+  private Mock<ISessionManager> _mockSessionManager => _context.SessionManagerMock;
+  private Mock<ILogger<Zarichney.Controllers.CookbookController>> _mockLogger => _context.LoggerMock;
 
   public CookbookControllerTests()
   {
     _fixture = new Fixture();
-    _mockRecipeService = new Mock<IRecipeService>();
-    _mockOrderService = new Mock<IOrderService>();
-    _mockEmailService = new Mock<IEmailService>();
-    _mockBackgroundWorker = new Mock<IBackgroundWorker>();
-    _mockRecipeRepository = new Mock<IRecipeRepository>();
-    _mockScraperService = new Mock<IWebScraperService>();
-    _mockScopeContainer = new Mock<IScopeContainer>();
-    _mockSessionManager = new Mock<ISessionManager>();
-    _mockLogger = new Mock<ILogger<Zarichney.Controllers.CookbookController>>();
-
-    _controller = new Zarichney.Controllers.CookbookController(
-      _mockRecipeService.Object,
-      _mockOrderService.Object,
-      _mockEmailService.Object,
-      _mockBackgroundWorker.Object,
-      _mockRecipeRepository.Object,
-      _mockScraperService.Object,
-      _mockScopeContainer.Object,
-      _mockSessionManager.Object,
-      _mockLogger.Object);
+    _context = new TestContext();
 
     // Setup default HttpContext with authenticated user
-    SetupAuthenticatedUser("test@example.com");
-  }
-
-  private void SetupAuthenticatedUser(string email)
-  {
-    var httpContext = new DefaultHttpContext();
-    var user = new ClaimsPrincipal(new ClaimsIdentity(new[]
-    {
-      new Claim(ClaimTypes.Name, email),
-      new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString())
-    }, "Test"));
-    httpContext.User = user;
-    _controller.ControllerContext = new ControllerContext
-    {
-      HttpContext = httpContext
-    };
+    _context.SetAuthenticatedUser("test@example.com");
   }
 
   #region CreateSampleSubmission Tests
@@ -661,4 +629,49 @@ public class CookbookControllerTests
   }
 
   #endregion
+
+  private sealed class TestContext
+  {
+    public Mock<IRecipeService> RecipeServiceMock { get; } = new();
+    public Mock<IOrderService> OrderServiceMock { get; } = new();
+    public Mock<IEmailService> EmailServiceMock { get; } = new();
+    public Mock<IBackgroundWorker> BackgroundWorkerMock { get; } = new();
+    public Mock<IRecipeRepository> RecipeRepositoryMock { get; } = new();
+    public Mock<IWebScraperService> ScraperServiceMock { get; } = new();
+    public Mock<IScopeContainer> ScopeContainerMock { get; } = new();
+    public Mock<ISessionManager> SessionManagerMock { get; } = new();
+    public Mock<ILogger<Zarichney.Controllers.CookbookController>> LoggerMock { get; } = new();
+
+    public Zarichney.Controllers.CookbookController Controller { get; }
+
+    public TestContext()
+    {
+      Controller = new Zarichney.Controllers.CookbookController(
+        RecipeServiceMock.Object,
+        OrderServiceMock.Object,
+        EmailServiceMock.Object,
+        BackgroundWorkerMock.Object,
+        RecipeRepositoryMock.Object,
+        ScraperServiceMock.Object,
+        ScopeContainerMock.Object,
+        SessionManagerMock.Object,
+        LoggerMock.Object);
+    }
+
+    public void SetAuthenticatedUser(string email)
+    {
+      var httpContext = new DefaultHttpContext();
+      var user = new ClaimsPrincipal(new ClaimsIdentity(new[]
+      {
+        new Claim(ClaimTypes.Name, email),
+        new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString())
+      }, "Test"));
+
+      httpContext.User = user;
+      Controller.ControllerContext = new ControllerContext
+      {
+        HttpContext = httpContext
+      };
+    }
+  }
 }

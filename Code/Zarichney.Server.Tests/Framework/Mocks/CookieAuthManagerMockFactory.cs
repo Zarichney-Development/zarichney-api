@@ -74,9 +74,9 @@ public static class CookieAuthManagerMockFactory
             .Callback(() => clearAuthCallCount++)
             .Verifiable();
 
-        // Expose counts via properties (for test verification)
-        mock.SetupGet(x => x.GetRefreshTokenFromCookie(It.IsAny<HttpContext>()))
-            .Returns($"tracked-token-{setAuthCallCount}");
+        // Expose deterministic token for predictable assertions
+        mock.Setup(x => x.GetRefreshTokenFromCookie(It.IsAny<HttpContext>()))
+            .Returns("tracked-token");
 
         return mock;
     }

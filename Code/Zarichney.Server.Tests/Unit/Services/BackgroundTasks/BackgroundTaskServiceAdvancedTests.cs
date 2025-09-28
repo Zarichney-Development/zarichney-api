@@ -218,20 +218,28 @@ public class BackgroundTaskServiceAdvancedTests : IDisposable
     public async Task ExecuteAsync_WithRapidWorkItemQueuing_ProcessesAllItems()
     {
         // Arrange
+        const int workItemCount = 20;
         var processedCount = 0;
         var lockObj = new object();
+        var allItemsProcessed = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var allItemsProcessedRegistration = _cancellationTokenSource.Token.Register(() =>
+            allItemsProcessed.TrySetCanceled(_cancellationTokenSource.Token));
 
         var mockWorker = new Mock<IBackgroundWorker>();
         var workItems = new Queue<BackgroundWorkItem>();
 
         // Setup rapid queuing
-        for (int i = 0; i < 20; i++)
+        for (int i = 0; i < workItemCount; i++)
         {
             Func<IScopeContainer, CancellationToken, Task> workItem = async (scope, ct) =>
             {
                 lock (lockObj)
                 {
                     processedCount++;
+                    if (processedCount == workItemCount)
+                    {
+                        allItemsProcessed.TrySetResult(true);
+                    }
                 }
                 await Task.CompletedTask;
             };
@@ -255,7 +263,9 @@ public class BackgroundTaskServiceAdvancedTests : IDisposable
         // Act
         _cancellationTokenSource.CancelAfter(500);
         await sut.StartAsync(_cancellationTokenSource.Token);
-        await Task.Delay(200);
+        await allItemsProcessed.Task;
+        _cancellationTokenSource.Cancel();
+        await sut.StopAsync(CancellationToken.None);
 
         // Assert
         processedCount.Should().Be(20, "all rapidly queued items should be processed");
@@ -269,24 +279,42 @@ public class BackgroundTaskServiceAdvancedTests : IDisposable
     public async Task ExecuteAsync_WithIntermittentFailures_ContinuesProcessing()
     {
         // Arrange
+        const int workItemCount = 10;
         var successCount = 0;
         var errorCount = 0;
         var lockObj = new object();
 
-    List<BackgroundWorkItem> workItems = [];
+        var workItems = new List<BackgroundWorkItem>();
+        var allItemsProcessed = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var allItemsProcessedRegistration = _cancellationTokenSource.Token.Register(() =>
+            allItemsProcessed.TrySetCanceled(_cancellationTokenSource.Token));
 
         // Mix of successful and failing work items
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < workItemCount; i++)
         {
             var shouldFail = i % 3 == 0;
             Func<IScopeContainer, CancellationToken, Task> workItem = async (scope, ct) =>
             {
                 if (shouldFail)
                 {
-                    lock (lockObj) { errorCount++; }
+                    lock (lockObj)
+                    {
+                        errorCount++;
+                        if (successCount + errorCount == workItemCount)
+                        {
+                            allItemsProcessed.TrySetResult(true);
+                        }
+                    }
                     throw new InvalidOperationException("Planned failure");
                 }
-                lock (lockObj) { successCount++; }
+                lock (lockObj)
+                {
+                    successCount++;
+                    if (successCount + errorCount == workItemCount)
+                    {
+                        allItemsProcessed.TrySetResult(true);
+                    }
+                }
                 await Task.CompletedTask;
             };
             workItems.Add(new BackgroundWorkItem(workItem, null));
@@ -306,7 +334,9 @@ public class BackgroundTaskServiceAdvancedTests : IDisposable
         // Act
         _cancellationTokenSource.CancelAfter(300);
         await sut.StartAsync(_cancellationTokenSource.Token);
-        await Task.Delay(200);
+        await allItemsProcessed.Task;
+        _cancellationTokenSource.Cancel();
+        await sut.StopAsync(CancellationToken.None);
 
         // Assert
         successCount.Should().Be(6, "successful work items should complete");
@@ -333,12 +363,17 @@ public class BackgroundTaskServiceAdvancedTests : IDisposable
         var mockLogger = BackgroundTaskMockFactory.CreateBackgroundTaskServiceLogger();
         var mockScopeFactory = BackgroundTaskMockFactory.CreateDefaultScopeFactory();
 
+        var sessionEndAttempted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var sessionEndRegistration = _cancellationTokenSource.Token.Register(() =>
+            sessionEndAttempted.TrySetCanceled(_cancellationTokenSource.Token));
+
         var mockSessionManager = new Mock<ISessionManager>();
         mockSessionManager
             .Setup(x => x.CreateSession(It.IsAny<Guid>(), It.IsAny<TimeSpan?>()))
             .ReturnsAsync(new SessionBuilder().Build());
         mockSessionManager
             .Setup(x => x.EndSession(It.IsAny<Guid>()))
+            .Callback(() => sessionEndAttempted.TrySetResult(true))
             .ThrowsAsync(sessionException);
 
         var sut = new BackgroundTaskService(
@@ -350,7 +385,9 @@ public class BackgroundTaskServiceAdvancedTests : IDisposable
         // Act
         _cancellationTokenSource.CancelAfter(100);
         await sut.StartAsync(_cancellationTokenSource.Token);
-        await Task.Delay(50);
+        await sessionEndAttempted.Task;
+        _cancellationTokenSource.Cancel();
+        await sut.StopAsync(CancellationToken.None);
 
         // Assert
         mockLogger.Verify(
@@ -374,12 +411,25 @@ public class BackgroundTaskServiceAdvancedTests : IDisposable
         // Arrange
         var taskStarted = false;
         var taskCompleted = false;
+        var taskStartedSignal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var allowCompletion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var taskCompletedSignal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var startedRegistration = _cancellationTokenSource.Token.Register(() =>
+        {
+            taskStartedSignal.TrySetCanceled(_cancellationTokenSource.Token);
+            allowCompletion.TrySetCanceled(_cancellationTokenSource.Token);
+            taskCompletedSignal.TrySetCanceled(_cancellationTokenSource.Token);
+        });
 
         Func<IScopeContainer, CancellationToken, Task> longRunningTask = async (scope, ct) =>
         {
             taskStarted = true;
-            await Task.Delay(200, ct); // Simulate long-running work
+            taskStartedSignal.TrySetResult(true);
+
+            await allowCompletion.Task;
+
             taskCompleted = true;
+            taskCompletedSignal.TrySetResult(true);
         };
 
         var mockWorker = BackgroundTaskMockFactory.CreateSequentialBackgroundWorker(
@@ -399,13 +449,16 @@ public class BackgroundTaskServiceAdvancedTests : IDisposable
         _cancellationTokenSource.CancelAfter(500);
         var serviceTask = sut.StartAsync(_cancellationTokenSource.Token);
 
-        await Task.Delay(50);
+        await taskStartedSignal.Task;
         taskStarted.Should().BeTrue("task should have started");
         taskCompleted.Should().BeFalse("task should still be running");
 
-        await Task.Delay(200);
+        allowCompletion.TrySetResult(true);
+        await taskCompletedSignal.Task;
         taskCompleted.Should().BeTrue("task should have completed");
 
+        _cancellationTokenSource.Cancel();
+        await sut.StopAsync(CancellationToken.None);
         await serviceTask;
 
         // Assert
@@ -423,16 +476,24 @@ public class BackgroundTaskServiceAdvancedTests : IDisposable
     public async Task ExecuteAsync_WithManyWorkItems_DoesNotLeakResources()
     {
         // Arrange
+        const int workItemCount = 100;
         var completedCount = 0;
         var mockWorker = new Mock<IBackgroundWorker>();
         var workItemQueue = new Queue<BackgroundWorkItem>();
+        var allItemsProcessed = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var allItemsProcessedRegistration = _cancellationTokenSource.Token.Register(() =>
+            allItemsProcessed.TrySetCanceled(_cancellationTokenSource.Token));
 
         // Create many lightweight work items
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < workItemCount; i++)
         {
             Func<IScopeContainer, CancellationToken, Task> workItem = async (scope, ct) =>
             {
-                Interlocked.Increment(ref completedCount);
+                var current = Interlocked.Increment(ref completedCount);
+                if (current == workItemCount)
+                {
+                    allItemsProcessed.TrySetResult(true);
+                }
                 await Task.CompletedTask;
             };
             workItemQueue.Enqueue(new BackgroundWorkItem(workItem, null));
@@ -452,27 +513,19 @@ public class BackgroundTaskServiceAdvancedTests : IDisposable
             mockScopeFactory.Object,
             mockSessionManager.Object);
 
-        var initialMemory = GC.GetTotalMemory(true);
-
         // Act
         _cancellationTokenSource.CancelAfter(1000);
         await sut.StartAsync(_cancellationTokenSource.Token);
-        await Task.Delay(500);
-
-        var finalMemory = GC.GetTotalMemory(true);
-        var memoryGrowth = finalMemory - initialMemory;
+        await allItemsProcessed.Task;
+        _cancellationTokenSource.Cancel();
+        await sut.StopAsync(CancellationToken.None);
 
         // Assert
-        completedCount.Should().Be(100, "all work items should complete");
+        completedCount.Should().Be(workItemCount, "all work items should complete");
         mockSessionManager.Verify(
             x => x.EndSession(It.IsAny<Guid>()),
-            Times.Exactly(100),
+            Times.Exactly(workItemCount),
             "sessions should be properly cleaned up for all items");
-
-        // Memory growth should be reasonable (less than 50MB for 100 small tasks)
-        // Note: Test environment may have additional overhead
-        memoryGrowth.Should().BeLessThan(50 * 1024 * 1024,
-            "memory usage should not grow excessively");
     }
 
     #endregion

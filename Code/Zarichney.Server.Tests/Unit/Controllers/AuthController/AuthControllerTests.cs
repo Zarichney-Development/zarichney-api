@@ -1,3 +1,4 @@
+using System.IO;
 using System.Security.Claims;
 using FluentAssertions;
 using MediatR;
@@ -24,6 +25,9 @@ public class AuthControllerTests : IDisposable
     private readonly Mock<ICookieAuthManager> _mockCookieManager;
     private readonly ControllersAuthController _sut;
     private readonly ControllerContext _controllerContext;
+    private readonly DefaultHttpContext _httpContext;
+    private readonly MemoryStream _requestBodyStream;
+    private readonly MemoryStream _responseBodyStream;
     private bool _disposed;
 
     public AuthControllerTests()
@@ -34,9 +38,15 @@ public class AuthControllerTests : IDisposable
 
     _sut = new ControllersAuthController(_mockMediator.Object, _mockLogger.Object, _mockCookieManager.Object);
 
+        _httpContext = new DefaultHttpContext();
+        _requestBodyStream = new MemoryStream();
+        _responseBodyStream = new MemoryStream();
+        _httpContext.Request.Body = _requestBodyStream;
+        _httpContext.Response.Body = _responseBodyStream;
+
         _controllerContext = new ControllerContext
         {
-            HttpContext = new DefaultHttpContext()
+            HttpContext = _httpContext
         };
         _sut.ControllerContext = _controllerContext;
     }
@@ -351,8 +361,9 @@ public class AuthControllerTests : IDisposable
 
         response.Should().NotBeNull();
         response!.Success.Should().BeFalse();
-        // The message can vary based on the command result - controller adds default if null
-        response.Message.Should().NotBeNullOrEmpty();
+        response.Message.Should().Be(
+            expectedResult.Message ?? "Failed to refresh token. Please login again.",
+            "controller should surface either the command's message or its default failure message");
 
         _mockCookieManager.Verify(x => x.ClearAuthCookies(It.IsAny<HttpContext>()), Times.Once);
     }
@@ -842,7 +853,9 @@ public class AuthControllerTests : IDisposable
     {
         if (!_disposed && disposing)
         {
-            _controllerContext?.HttpContext?.Response?.Body?.Dispose();
+            _sut.ControllerContext = new ControllerContext();
+            _responseBodyStream?.Dispose();
+            _requestBodyStream?.Dispose();
             _disposed = true;
         }
     }

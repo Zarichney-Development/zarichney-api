@@ -11,7 +11,7 @@ using Zarichney.Server.Tests.Framework.Fixtures;
 
 namespace Zarichney.Server.Tests.Integration.Controllers.AuthController;
 
-[Collection("IntegrationAuth")]
+[Collection("Integration")]
 [Trait(TestCategories.Category, TestCategories.Integration)]
 [Trait(TestCategories.Feature, TestCategories.Auth)]
 // Using the infrastructure trait for XUnit test filtering - DependencyFact will check the actual dependency
@@ -70,7 +70,6 @@ public class LoginEndpointsTests : DatabaseIntegrationTestBase
   public async Task Login_WithValidCredentials_ShouldSucceed()
   {
     // Arrange - Reset database and seed test user
-    await ResetDatabaseAsync();
     await SeedTestUserAsync();
 
     var client = _apiClientFixture.UnauthenticatedAuthApi;
