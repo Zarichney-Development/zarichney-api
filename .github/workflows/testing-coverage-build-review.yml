@@ -114,14 +114,54 @@ jobs:
           echo "Base branch: $BASE_BRANCH"
           echo "Base SHA: $BASE_SHA"
 
-          # Create baseline coverage analysis (placeholder for future enhancement)
-          # Prefer workflow_dispatch input; otherwise fall back to env threshold
-          BASELINE_COVERAGE="${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.coverage_baseline) || env.COVERAGE_THRESHOLD }}"
+          # Try to read baseline from base branch first
+          BASELINE_FOUND=false
+          BASELINE_COVERAGE=""
+          BASELINE_SOURCE=""
+
+          # Option 1: Check for coverage_delta.json in base branch
+          if git show "$BASE_SHA:TestResults/coverage_delta.json" >/dev/null 2>&1; then
+            BASELINE_COVERAGE=$(git show "$BASE_SHA:TestResults/coverage_delta.json" | jq -r '.current_coverage // empty' 2>/dev/null)
+            if [[ -n "$BASELINE_COVERAGE" && "$BASELINE_COVERAGE" != "null" && "$BASELINE_COVERAGE" != "empty" ]]; then
+              BASELINE_SOURCE="base_branch_measurement"
+              BASELINE_FOUND=true
+              echo "📊 Found baseline coverage from base branch measurement: $BASELINE_COVERAGE%"
+            fi
+          fi
+
+          # Option 2: Check for coverage_results.json in base branch
+          if [[ "$BASELINE_FOUND" == "false" ]]; then
+            if git show "$BASE_SHA:TestResults/coverage_results.json" >/dev/null 2>&1; then
+              BASELINE_COVERAGE=$(git show "$BASE_SHA:TestResults/coverage_results.json" | jq -r '.line_coverage // empty' 2>/dev/null)
+              if [[ -n "$BASELINE_COVERAGE" && "$BASELINE_COVERAGE" != "null" && "$BASELINE_COVERAGE" != "empty" ]]; then
+                BASELINE_SOURCE="baseline_file"
+                BASELINE_FOUND=true
+                echo "📊 Found baseline coverage from base branch file: $BASELINE_COVERAGE%"
+              fi
+            fi
+          fi
+
+          # Fallback to existing logic if no base branch baseline found
+          if [[ "$BASELINE_FOUND" == "false" ]]; then
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.coverage_baseline }}" ]]; then
+              BASELINE_COVERAGE="${{ github.event.inputs.coverage_baseline }}"
+              BASELINE_SOURCE="explicit_input"
+              echo "📊 Using explicit input baseline coverage: $BASELINE_COVERAGE%"
+            else
+              BASELINE_COVERAGE="${{ env.COVERAGE_THRESHOLD }}"
+              BASELINE_SOURCE="threshold"
+              echo "⚠️ Using fallback baseline coverage: $BASELINE_COVERAGE%"
+            fi
+          fi
+
           echo "baseline_coverage=$BASELINE_COVERAGE" >> $GITHUB_OUTPUT
           echo "baseline_branch=$BASE_BRANCH" >> $GITHUB_OUTPUT
           echo "baseline_sha=$BASE_SHA" >> $GITHUB_OUTPUT
+          echo "baseline_source=$BASELINE_SOURCE" >> $GITHUB_OUTPUT
+          echo "baseline_found=$BASELINE_FOUND" >> $GITHUB_OUTPUT
 
-          echo "📈 Baseline coverage: $BASELINE_COVERAGE%"
+          echo "📈 Final baseline coverage: $BASELINE_COVERAGE%"
+          echo "🎯 Baseline source: $BASELINE_SOURCE"
 
       # Foundation Component Integration - Backend Build with Coverage
       - name: Execute backend build with coverage optimization
@@ -191,6 +231,122 @@ jobs:
 
           echo "🎯 Coverage Excellence: $EXCELLENCE_ROUNDED% comprehensive coverage achievement"
 
+          # Generate machine-readable coverage delta JSON for AI framework integration
+          echo "📄 Generating coverage delta JSON artifact..."
+
+          # Ensure TestResults directory exists
+          mkdir -p TestResults
+
+          # Validate required variables before JSON generation
+          if [[ -z "$CURRENT_COVERAGE" ]]; then
+            echo "⚠️ Warning: CURRENT_COVERAGE is empty, using 0"
+            CURRENT_COVERAGE="0"
+          fi
+
+          if [[ -z "$BASELINE_COVERAGE" ]]; then
+            echo "⚠️ Warning: BASELINE_COVERAGE is empty, using 0"
+            BASELINE_COVERAGE="0"
+          fi
+
+          if [[ -z "$COVERAGE_DELTA_ROUNDED" ]]; then
+            echo "⚠️ Warning: COVERAGE_DELTA_ROUNDED is empty, using 0.00"
+            COVERAGE_DELTA_ROUNDED="0.00"
+          fi
+
+          # Use baseline source information from baseline analysis step
+          BASELINE_SOURCE="${{ steps.baseline_analysis.outputs.baseline_source || 'unknown' }}"
+          BASELINE_FOUND="${{ steps.baseline_analysis.outputs.baseline_found || 'false' }}"
+
+          # Set baseline_unavailable based on whether we found a base branch baseline
+          if [[ "$BASELINE_FOUND" == "true" ]]; then
+            BASELINE_UNAVAILABLE="false"  # Base branch baseline was found
+          else
+            BASELINE_UNAVAILABLE="true"   # Had to fall back to threshold or explicit input
+          fi
+
+          # Generate ISO 8601 timestamp
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Create coverage delta JSON conforming to schema v1.0
+          cat > TestResults/coverage_delta.json << EOF
+          {
+            "current_coverage": ${CURRENT_COVERAGE:-0},
+            "baseline_coverage": ${BASELINE_COVERAGE:-0},
+            "coverage_delta": ${COVERAGE_DELTA_ROUNDED:-0.00},
+            "coverage_trend": "${{ steps.coverage_comparison.outputs.coverage_trend || 'stable' }}",
+            "base_ref": "${{ steps.baseline_analysis.outputs.baseline_branch || 'develop' }}",
+            "base_sha": "${{ steps.baseline_analysis.outputs.baseline_sha || 'unknown' }}",
+            "run_number": ${{ github.run_number }},
+            "timestamp": "${TIMESTAMP}",
+            "baseline_source": "${BASELINE_SOURCE}",
+            "baseline_unavailable": ${BASELINE_UNAVAILABLE},
+            "notes": "Generated by testing-coverage-build-review workflow for AI framework integration (Issue #187)"
+          }
+          EOF
+
+          echo "✅ Coverage delta JSON artifact generated at TestResults/coverage_delta.json"
+
+          # Validate JSON structure with enhanced error handling
+          if command -v jq >/dev/null 2>&1; then
+            if jq empty TestResults/coverage_delta.json 2>/dev/null; then
+              echo "✅ JSON structure validation passed"
+
+              # Verify all required schema fields are present
+              REQUIRED_FIELDS=(
+                "current_coverage"
+                "baseline_coverage"
+                "coverage_delta"
+                "coverage_trend"
+                "base_ref"
+                "base_sha"
+                "run_number"
+                "timestamp"
+                "baseline_source"
+                "baseline_unavailable"
+                "notes"
+              )
+
+              VALIDATION_FAILED=false
+              for field in "${REQUIRED_FIELDS[@]}"; do
+                if ! jq -e "has(\"$field\")" TestResults/coverage_delta.json >/dev/null 2>&1; then
+                  echo "⚠️ Missing required field: $field"
+                  VALIDATION_FAILED=true
+                fi
+              done
+
+              if [[ "$VALIDATION_FAILED" == "false" ]]; then
+                echo "✅ Schema validation passed - all required fields present"
+              else
+                echo "⚠️ Schema validation failed - missing required fields"
+              fi
+            else
+              echo "⚠️ JSON structure validation failed - attempting fallback generation"
+
+              # Create fallback JSON with minimal valid structure
+              TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+              RUN_NUMBER="${{ github.run_number }}"
+              cat > TestResults/coverage_delta.json << EOF
+              {
+                "current_coverage": 0,
+                "baseline_coverage": 0,
+                "coverage_delta": 0.00,
+                "coverage_trend": "unknown",
+                "base_ref": "develop",
+                "base_sha": "unknown",
+                "run_number": \$RUN_NUMBER,
+                "timestamp": "\$TIMESTAMP",
+                "baseline_source": "fallback",
+                "baseline_unavailable": true,
+                "notes": "Fallback JSON generated due to validation failure"
+              }
+              EOF
+
+              echo "✅ Fallback JSON generation completed"
+            fi
+          else
+            echo "⚠️ jq not available - skipping JSON validation"
+          fi
+
       # AI Framework Readiness Check
       - name: Check AI framework integration readiness
         id: ai_readiness_check
@@ -249,18 +405,72 @@ jobs:
             TREND="${{ steps.coverage_comparison.outputs.coverage_trend }}"
             PROGRESS="${{ steps.coverage_comparison.outputs.coverage_excellence }}"
 
+            # Parse coverage delta JSON for enhanced baseline information
+            if [[ -f "TestResults/coverage_delta.json" ]]; then
+              BASELINE_SOURCE=$(jq -r '.baseline_source // "unknown"' TestResults/coverage_delta.json 2>/dev/null || echo "unknown")
+              BASELINE_UNAVAILABLE=$(jq -r '.baseline_unavailable // false' TestResults/coverage_delta.json 2>/dev/null || echo "false")
+              BASE_BRANCH=$(jq -r '.base_ref // "develop"' TestResults/coverage_delta.json 2>/dev/null || echo "develop")
+              BASE_SHA=$(jq -r '.base_sha // "unknown"' TestResults/coverage_delta.json 2>/dev/null || echo "unknown")
+            else
+              BASELINE_SOURCE="unknown"
+              BASELINE_UNAVAILABLE="false"
+              BASE_BRANCH="develop"
+              BASE_SHA="unknown"
+            fi
+
+            # Map baseline source to user-friendly descriptions
+            case "$BASELINE_SOURCE" in
+              "threshold")
+                BASELINE_SOURCE_DESC="Configuration threshold (fallback)"
+                ;;
+              "explicit_input")
+                BASELINE_SOURCE_DESC="Manual workflow input"
+                ;;
+              "baseline_file")
+                BASELINE_SOURCE_DESC="Base branch file"
+                ;;
+              "base_branch_measurement")
+                BASELINE_SOURCE_DESC="Base branch measurement"
+                ;;
+              *)
+                BASELINE_SOURCE_DESC="Unknown source"
+                ;;
+            esac
+
+            # Set baseline availability status
+            if [[ "$BASELINE_UNAVAILABLE" == "true" ]]; then
+              BASELINE_AVAILABILITY="⚠️ Fallback baseline used"
+            else
+              BASELINE_AVAILABILITY="✅ Baseline available"
+            fi
+
+            # Enhanced trend analysis with delta information
             case "$TREND" in
               "improved")
                 TREND_EMOJI="📈"
-                TREND_TEXT="Coverage improved by +$DELTA%"
+                TREND_TEXT="Coverage improved"
+                DELTA_SIGN="+"
+                if [[ -n "$DELTA" && "$DELTA" != "0" ]]; then
+                  RELATIVE_DESC="(positive improvement)"
+                else
+                  RELATIVE_DESC="(minimal improvement)"
+                fi
                 ;;
               "decreased")
                 TREND_EMOJI="📉"
-                TREND_TEXT="Coverage decreased by $DELTA%"
+                TREND_TEXT="Coverage decreased"
+                DELTA_SIGN=""
+                if [[ -n "$DELTA" && "$DELTA" != "0" ]]; then
+                  RELATIVE_DESC="(requires attention)"
+                else
+                  RELATIVE_DESC="(minimal decrease)"
+                fi
                 ;;
               *)
                 TREND_EMOJI="📊"
-                TREND_TEXT="Coverage stable (no change)"
+                TREND_TEXT="Coverage stable"
+                DELTA_SIGN=""
+                RELATIVE_DESC="(no significant change)"
                 ;;
             esac
 
@@ -279,9 +489,15 @@ jobs:
             SUMMARY="## 📊 Coverage Analysis Results
 
             **Current Coverage:** ${CURRENT}%
-            **Baseline Coverage:** ${BASELINE}%
+            **Baseline Coverage:** ${BASELINE}% (Source: ${BASELINE_SOURCE_DESC})
             **Change:** ${TREND_EMOJI} ${TREND_TEXT}
+            **Delta:** ${DELTA_SIGN}${DELTA}% ${RELATIVE_DESC}
             **Coverage Excellence:** ${PROGRESS}% comprehensive coverage advancement
+
+            ### 📋 Baseline Details
+            - **Source:** ${BASELINE_SOURCE_DESC}
+            - **Branch:** ${BASE_BRANCH} (${BASE_SHA:0:8})
+            - **Availability:** ${BASELINE_AVAILABILITY}
 
             ### 🎯 Coverage Context
             This PR contributes to continuous testing excellence by targeting the epic/testing-coverage branch.
@@ -353,8 +569,57 @@ jobs:
           path: |
             TestResults/coverage_results.json
             TestResults/parsed_results.json
+            TestResults/coverage_delta.json
             CoverageReport/
           retention-days: 7
+
+      # Fallback artifact upload for edge cases
+      - name: Upload minimal coverage artifacts for edge cases
+        if: |
+          always() &&
+          steps.coverage_gate.outputs.coverage_needed == 'true' &&
+          (steps.backend_execution.outputs.test_success != 'true' || failure())
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-analysis-${{ github.run_number }}
+          path: |
+            TestResults/coverage_delta.json
+          retention-days: 7
+
+      # Generate fallback coverage delta for edge cases
+      - name: Generate fallback coverage delta for edge cases
+        if: |
+          always() &&
+          steps.coverage_gate.outputs.coverage_needed == 'true' &&
+          (steps.backend_execution.outputs.test_success != 'true' || failure())
+        run: |
+          echo "🔧 Generating fallback coverage delta for edge case handling..."
+
+          # Ensure TestResults directory exists
+          mkdir -p TestResults
+
+          # Generate minimal fallback JSON for edge cases
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          BASE_REF="${{ github.event.pull_request.base.ref || 'develop' }}"
+          BASE_SHA="${{ github.event.pull_request.base.sha || 'unknown' }}"
+          RUN_NUMBER="${{ github.run_number }}"
+          cat > TestResults/coverage_delta.json << EOF
+          {
+            "current_coverage": 0,
+            "baseline_coverage": 0,
+            "coverage_delta": 0.00,
+            "coverage_trend": "error",
+            "base_ref": "$BASE_REF",
+            "base_sha": "$BASE_SHA",
+            "run_number": $RUN_NUMBER,
+            "timestamp": "$TIMESTAMP",
+            "baseline_source": "fallback",
+            "baseline_unavailable": true,
+            "notes": "Fallback JSON for edge case - test failures or build errors occurred"
+          }
+          EOF
+
+          echo "✅ Fallback coverage delta generated for edge case handling"
 
   # AI-Powered Coverage Intelligence
   ai_coverage_analysis:
@@ -376,6 +641,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Download coverage artifacts for AI analysis
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-analysis-${{ github.run_number }}
+          path: .
+
       - name: Execute AI Coverage Intelligence Analysis
         id: ai_coverage
         uses: ./.github/actions/shared/ai-testing-analysis
@@ -386,6 +657,9 @@ jobs:
           coverage_phase: 'iterative-improvement'
           epic_context: 'Backend Testing Coverage Excellence Initiative'
           improvement_target: 'comprehensive'
+          coverage_data_file: 'TestResults/coverage_results.json'
+          coverage_delta_file: 'TestResults/coverage_delta.json'
+          coverage_trends_file: 'TestResults/health_trends.json'
           github_token: ${{ secrets.GITHUB_TOKEN }}
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
           skip_duplicate: 'true'
@@ -483,6 +757,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Download coverage artifacts for AI analysis
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-analysis-${{ github.run_number }}
+          path: .
+
       - name: Execute Iterative AI Code Review
         id: iterative_review
         uses: ./.github/actions/iterative-ai-review
@@ -494,6 +774,9 @@ jobs:
           max_iterations: '5'
           quality_threshold: 'standard'
           epic_context: 'Coverage Excellence Framework - Autonomous development'
+          coverage_data_file: 'TestResults/coverage_results.json'
+          coverage_delta_file: 'TestResults/coverage_delta.json'
+          coverage_trends_file: 'TestResults/health_trends.json'
           debug_mode: 'false'
           force_new_iteration: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.force_new_iteration) || 'false' }}
 
