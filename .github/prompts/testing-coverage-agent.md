@@ -51,7 +51,7 @@ cat Docs/Standards/TestingStandards.md
 cat Docs/Standards/UnitTestCaseDevelopment.md
 cat Docs/Standards/IntegrationTestCaseDevelopment.md
 cat Docs/Standards/TaskManagementStandards.md
-cat Docs/Development/AutomatedCoverageEpicWorkflow.md
+cat Docs/Development/AutomatedTestingCoverageWorkflow.md
 ```
 
 ### **Module Context**
