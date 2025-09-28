@@ -1,9 +1,9 @@
 using FluentAssertions;
 using Xunit;
 using Zarichney.Services.Status;
-using Zarichney.Server.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Attributes;
 
-namespace Zarichney.Server.Tests.Unit.Framework.Attributes;
+namespace Zarichney.Tests.Unit.Framework.Attributes;
 
 [Trait(TestCategories.Category, TestCategories.Unit)]
 public class DependencyFactAttributeTests

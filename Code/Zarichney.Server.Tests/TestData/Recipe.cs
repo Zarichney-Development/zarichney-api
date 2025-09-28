@@ -1,4 +1,4 @@
-namespace Zarichney.Server.Tests.TestData;
+namespace Zarichney.Tests.TestData;
 
 /// <summary>
 /// Represents a recipe entity for testing purposes.

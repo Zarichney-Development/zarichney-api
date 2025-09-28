@@ -2,7 +2,7 @@ using Zarichney.Services.Status;
 using FluentAssertions;
 using Xunit;
 
-namespace Zarichney.Server.Tests.Unit.Config;
+namespace Zarichney.Tests.Unit.Config;
 
 public class RequiresConfigurationAttributeTests
 {

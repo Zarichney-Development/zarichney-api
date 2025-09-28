@@ -1,6 +1,6 @@
 using Zarichney.Services.Auth.Models;
 
-namespace Zarichney.Server.Tests.TestData.Builders;
+namespace Zarichney.Tests.TestData.Builders;
 
 public class AuthResultBuilder
 {

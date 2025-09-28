@@ -3,9 +3,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Zarichney.Services.Auth;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 
-namespace Zarichney.Server.Tests.Framework.Mocks.Factories;
+namespace Zarichney.Tests.Framework.Mocks.Factories;
 
 public static class UserManagerMockFactory
 {

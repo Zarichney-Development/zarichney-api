@@ -1,7 +1,7 @@
 **Technical Design Document: Automation Testing Strategy for Zarichney.Server**
 
 **Version:** 1.9
-**Last Updated:** 2025-06-26
+**Last Updated:** 2025-09-27
 
 **1. Introduction & Goals**
 
@@ -12,7 +12,7 @@
     * Provide fast and reliable feedback via automated testing.
     * Integrate seamlessly into the CI/CD pipeline (GitHub Actions).
     * Establish clear, maintainable, and exceptionally *strict* testing standards, designed for rigorous enforcement by AI-driven development workflows. Adherence to the testing standards documents is mandatory.
-    * Achieve maximum practical unit test coverage (striving for >=90%) on all non-trivial logic, focusing on resilient tests verifying behavior.
+    * Achieve comprehensive unit test coverage on all non-trivial logic through continuous testing excellence, focusing on resilient tests verifying behavior.
     * Validate API endpoint functionality comprehensively via integration tests using a generated typed Refit client.
 
 **2. Scope**
@@ -83,7 +83,7 @@
 * **Assertions:** Use FluentAssertions. Utilize `"Because ...")` for intent and specific assertions for clear diagnostics. Logging content is to emphasize being beneficial for future code maintainers.
 * **Parameterization:** Use `[Fact]` and `[Theory]`.
 * **Data:** Use AutoFixture and Builders. Reference `../Docs/Standards/UnitTestCaseDevelopment.md` for advanced AutoFixture usage patterns.
-* **Directory Structure**: With the expectation to achieve a maximal practice unit test coverage (striving for >=90%), along with proper organization of the test classes, the unit tests should be organized in a way that mirrors the structure of the `Zarichney.Server` project. For complex functions that warrants multiple test cases, the unit directory is to contain a dedicated file for that function's test cases. Only if a function has a single test case, should it be placed in a parent file rather than it's own dedicated file. The future expectation is that when a function warrants additional test cases, it will be migrated to a dedicated file to well organize the multitude of test cases and make it easy to find for code maintainers.
+* **Directory Structure**: With the expectation to achieve comprehensive unit test coverage through continuous testing excellence, along with proper organization of the test classes, the unit tests should be organized in a way that mirrors the structure of the `Zarichney.Server` project. For complex functions that warrants multiple test cases, the unit directory is to contain a dedicated file for that function's test cases. Only if a function has a single test case, should it be placed in a parent file rather than it's own dedicated file. The future expectation is that when a function warrants additional test cases, it will be migrated to a dedicated file to well organize the multitude of test cases and make it easy to find for code maintainers.
 
 **9. Integration Testing Strategy (Requirements)**
 
@@ -289,7 +289,7 @@ This section outlines planned enhancements to the testing framework. These items
         * *Impacts:* `../Docs/Standards/` documents, potentially `Zarichney.Server.Tests/Framework/`.
         * *References:* Research Report Sec 5.
     * **TODO (FRMK-009): Implement Detailed Coverage Analysis and Reporting in CI**
-        * *Goal:* Track progress towards 90%+ coverage goal and maintain high standards.
+        * *Goal:* Track progress towards comprehensive coverage goal and maintain high standards through continuous testing excellence.
         * *Tasks:*
             * Configure Coverlet in the GitHub Actions workflow to output reports in Cobertura format.
             * Integrate coverage reports with GitHub (e.g., as PR comments or checks).

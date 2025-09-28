@@ -493,7 +493,7 @@ validate_test_baselines() {
             # Log progressive coverage status
             log_info "  Current Phase: $current_phase"
             log_info "  Next Target: ${next_target}% (Gap: ${coverage_gap}%)"
-            log_info "  Required Velocity: ${required_velocity}%/month for 90% by Jan 2026"
+            log_info "  Required Velocity: ${required_velocity}%/month for continuous excellence"
             
             if [[ "$is_on_track" == "true" ]]; then
                 log_success "  ✅ Coverage progression on track"

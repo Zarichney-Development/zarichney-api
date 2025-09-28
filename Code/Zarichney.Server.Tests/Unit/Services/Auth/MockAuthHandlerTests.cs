@@ -12,7 +12,7 @@ using FluentAssertions;
 using Zarichney.Config;
 using Zarichney.Services.Auth;
 
-namespace Zarichney.Server.Tests.Unit.Services.Auth;
+namespace Zarichney.Tests.Unit.Services.Auth;
 
 /// <summary>
 /// Unit tests for MockAuthHandler

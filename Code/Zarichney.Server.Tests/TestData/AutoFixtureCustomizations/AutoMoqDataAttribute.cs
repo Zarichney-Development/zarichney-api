@@ -2,9 +2,9 @@ using AutoFixture;
 using AutoFixture.AutoMoq;
 using AutoFixture.Xunit2;
 using AutoFixture.Kernel;
-using Zarichney.Server.Tests.Framework.TestData.AutoFixtureCustomizations;
+using Zarichney.Tests.Framework.TestData.AutoFixtureCustomizations;
 
-namespace Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
+namespace Zarichney.Tests.TestData.AutoFixtureCustomizations;
 
 /// <summary>
 /// Custom AutoData attribute that includes AutoMoq customization and enhanced object creation for service testing.
@@ -14,7 +14,7 @@ namespace Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
 /// <remarks>
 /// Use this attribute instead of [AutoData] when your test methods require automatic mocking of interface dependencies.
 /// This is particularly useful for services with complex dependency injection requirements.
-/// 
+///
 /// Enhanced features:
 /// - Automatic mocking of all interfaces
 /// - PaymentConfig creation with valid test data
@@ -24,12 +24,12 @@ namespace Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
 /// - ITemplateService and IMailCheckClient mocking for EmailService testing
 /// - Stripe SDK object handling with concrete implementations
 /// - HTTP Headers customization to avoid creation issues
-/// 
+///
 /// Example usage:
 /// <code>
 /// [Theory, AutoMoqData]
 /// public async Task MyTest(
-///     [Frozen] Mock{IMyService} mockService, 
+///     [Frozen] Mock{IMyService} mockService,
 ///     PaymentService sut)
 /// {
 ///     // Test implementation with automatically mocked dependencies
@@ -76,4 +76,3 @@ public class AutoMoqDataAttribute : AutoDataAttribute
     return fixture;
   }
 }
-

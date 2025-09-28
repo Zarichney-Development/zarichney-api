@@ -1,6 +1,6 @@
-name: "Coverage Epic Scheduler"
+name: "Automated Workflow - Auto-Testing Coverage - Scheduler"
 
-# Scheduler Workflow for Coverage Epic Automation
+# Scheduler Workflow for Testing Coverage Automation
 # Triggers the main coverage epic workflow every 6 hours via workflow_dispatch
 # This separation allows Claude Code action compatibility while preserving scheduled automation
 
@@ -29,28 +29,28 @@ jobs:
   check-and-trigger:
     name: "Check Activity and Trigger Coverage Workflow"
     runs-on: ubuntu-latest
-    
+
     # Only run on main repository, not forks
     if: github.repository == 'Zarichney-Development/zarichney-api'
-    
+
     steps:
       - name: "Checkout Repository"
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Need full history to check for recent activity
-      
+
       - name: "Check Repository Activity"
-        id: activity-check
+        id: activity_check
         run: |
           echo "🔍 Checking repository activity..."
-          
+
           # Check for commits in the last 72 hours (3 days)
           RECENT_COMMITS=$(git log --since="72 hours ago" --oneline | wc -l)
           echo "📊 Commits in last 72 hours: $RECENT_COMMITS"
-          
+
           # Check if force trigger is requested
           FORCE_TRIGGER="${{ github.event.inputs.force_trigger }}"
-          
+
           if [ "$RECENT_COMMITS" -gt 0 ] || [ "$FORCE_TRIGGER" = "true" ]; then
             if [ "$FORCE_TRIGGER" = "true" ]; then
               echo "⚠️ Force trigger requested - bypassing activity check"
@@ -67,13 +67,13 @@ jobs:
             echo "activity_status=inactive" >> $GITHUB_OUTPUT
             echo "trigger_reason=No activity in last 72 hours" >> $GITHUB_OUTPUT
           fi
-          
+
           # Additional check for epic branch activity
-          EPIC_BRANCH="epic/testing-coverage-to-90"
+          EPIC_BRANCH="epic/testing-coverage"
           if git show-ref --verify --quiet refs/remotes/origin/$EPIC_BRANCH; then
             EPIC_ACTIVITY=$(git log origin/$EPIC_BRANCH --since="24 hours ago" --oneline | wc -l)
             echo "📈 Epic branch commits in last 24 hours: $EPIC_ACTIVITY"
-            
+
             if [ "$EPIC_ACTIVITY" -gt 0 ]; then
               echo "💡 Recent epic branch activity detected"
               echo "epic_activity=true" >> $GITHUB_OUTPUT
@@ -83,23 +83,23 @@ jobs:
           else
             echo "epic_activity=false" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: "Check for Pending Coverage Work"
-        id: pending-check
-        if: steps.activity-check.outputs.should_trigger == 'true'
+        id: pending_check
+        if: steps.activity_check.outputs.should_trigger == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "🔍 Checking for pending coverage PRs..."
-          
+
           # Check for open PRs with coverage-related labels
           OPEN_COVERAGE_PRS=$(gh pr list --state open --label "coverage" --label "testing" --label "ai-task" --json number,title,createdAt --jq 'length')
-          
+
           echo "📊 Open coverage PRs: $OPEN_COVERAGE_PRS"
-          
+
           # Check if there's a very recent PR (within last 2 hours)
           RECENT_PR_COUNT=$(gh pr list --state open --label "coverage" --label "testing" --label "ai-task" --json createdAt --jq '[.[] | select(.createdAt > (now - 7200 | strftime("%Y-%m-%dT%H:%M:%SZ")))] | length')
-          
+
           if [ "$RECENT_PR_COUNT" -gt 0 ]; then
             echo "⚠️ Recent coverage PR detected (within 2 hours) - may want to wait"
             echo "recent_pr_warning=true" >> $GITHUB_OUTPUT
@@ -107,74 +107,74 @@ jobs:
             echo "✅ No very recent coverage PRs - safe to proceed"
             echo "recent_pr_warning=false" >> $GITHUB_OUTPUT
           fi
-          
+
           echo "pending_pr_count=$OPEN_COVERAGE_PRS" >> $GITHUB_OUTPUT
-      
-      - name: "Trigger Coverage Epic Automation"
-        if: steps.activity-check.outputs.should_trigger == 'true'
+
+      - name: "Trigger Testing Coverage Automation"
+        if: steps.activity_check.outputs.should_trigger == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "🚀 Triggering Coverage Epic Automation workflow..."
-          
+          echo "🚀 Triggering Testing Coverage Automation workflow..."
+
           # Determine trigger source
           if [ "${{ github.event_name }}" = "schedule" ]; then
             TRIGGER_SOURCE="scheduled"
           else
             TRIGGER_SOURCE="manual_scheduler"
           fi
-          
+
           # Prepare trigger reason with additional context
-          TRIGGER_REASON="${{ steps.activity-check.outputs.trigger_reason }}"
-          if [ "${{ steps.pending-check.outputs.recent_pr_warning }}" = "true" ]; then
+          TRIGGER_REASON="${{ steps.activity_check.outputs.trigger_reason }}"
+          if [ "${{ steps.pending_check.outputs.recent_pr_warning }}" = "true" ]; then
             TRIGGER_REASON="$TRIGGER_REASON (Warning: Recent PR within 2 hours)"
           fi
-          if [ "${{ steps.pending-check.outputs.pending_pr_count }}" -gt 3 ]; then
-            TRIGGER_REASON="$TRIGGER_REASON (Note: ${{ steps.pending-check.outputs.pending_pr_count }} pending coverage PRs)"
+          if [ "${{ steps.pending_check.outputs.pending_pr_count }}" -gt 3 ]; then
+            TRIGGER_REASON="$TRIGGER_REASON (Note: ${{ steps.pending_check.outputs.pending_pr_count }} pending coverage PRs)"
           fi
-          
+
           # Trigger the main workflow
-          gh workflow run coverage-epic-automation.yml \
+          gh workflow run testing-coverage-execution.yml \
             --field scheduled_trigger=true \
             --field trigger_source="$TRIGGER_SOURCE" \
             --field trigger_reason="$TRIGGER_REASON"
-          
-          echo "✅ Coverage Epic Automation workflow triggered successfully"
+
+          echo "✅ Testing Coverage Automation workflow triggered successfully"
           echo "📋 Trigger details:"
           echo "  - Source: $TRIGGER_SOURCE"
           echo "  - Reason: $TRIGGER_REASON"
-          echo "  - Activity Status: ${{ steps.activity-check.outputs.activity_status }}"
-          echo "  - Epic Activity: ${{ steps.activity-check.outputs.epic_activity }}"
-          echo "  - Pending PRs: ${{ steps.pending-check.outputs.pending_pr_count }}"
-      
+          echo "  - Activity Status: ${{ steps.activity_check.outputs.activity_status }}"
+          echo "  - Epic Activity: ${{ steps.activity_check.outputs.epic_activity }}"
+          echo "  - Pending PRs: ${{ steps.pending_check.outputs.pending_pr_count }}"
+
       - name: "Skip Notification"
-        if: steps.activity-check.outputs.should_trigger == 'false'
+        if: steps.activity_check.outputs.should_trigger == 'false'
         run: |
-          echo "ℹ️ Coverage Epic Automation skipped"
-          echo "📋 Reason: ${{ steps.activity-check.outputs.trigger_reason }}"
+          echo "ℹ️ Testing Coverage Automation skipped"
+          echo "📋 Reason: ${{ steps.activity_check.outputs.trigger_reason }}"
           echo ""
           echo "This is expected behavior to conserve resources when the repository is inactive."
           echo "The workflow will automatically resume when new commits are detected."
           echo ""
           echo "To force execution regardless of activity:"
-          echo "  gh workflow run coverage-epic-scheduler.yml --field force_trigger=true"
-      
+          echo "  gh workflow run testing-coverage-scheduler.yml --field force_trigger=true"
+
       - name: "Execution Summary"
         if: always()
         run: |
           echo "=================================================="
-          echo "📅 Coverage Epic Scheduler Summary"
+          echo "📅 Testing Coverage Scheduler Summary"
           echo "=================================================="
           echo "⏰ Execution Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           echo "🔄 Event Type: ${{ github.event_name }}"
-          echo "📊 Repository Activity: ${{ steps.activity-check.outputs.activity_status || 'unknown' }}"
-          echo "🎯 Workflow Triggered: ${{ steps.activity-check.outputs.should_trigger || 'false' }}"
+          echo "📊 Repository Activity: ${{ steps.activity_check.outputs.activity_status || 'unknown' }}"
+          echo "🎯 Workflow Triggered: ${{ steps.activity_check.outputs.should_trigger || 'false' }}"
           echo ""
-          if [ "${{ steps.activity-check.outputs.should_trigger }}" = "true" ]; then
-            echo "✅ Coverage Epic Automation workflow has been triggered"
-            echo "📝 Trigger Reason: ${{ steps.activity-check.outputs.trigger_reason }}"
-            echo "⚠️ Recent PR Warning: ${{ steps.pending-check.outputs.recent_pr_warning || 'false' }}"
-            echo "📈 Pending Coverage PRs: ${{ steps.pending-check.outputs.pending_pr_count || '0' }}"
+          if [ "${{ steps.activity_check.outputs.should_trigger }}" = "true" ]; then
+            echo "✅ Testing Coverage Automation workflow has been triggered"
+            echo "📝 Trigger Reason: ${{ steps.activity_check.outputs.trigger_reason }}"
+            echo "⚠️ Recent PR Warning: ${{ steps.pending_check.outputs.recent_pr_warning || 'false' }}"
+            echo "📈 Pending Coverage PRs: ${{ steps.pending_check.outputs.pending_pr_count || '0' }}"
           else
             echo "⏸️ No trigger performed - repository inactive"
             echo "💡 Next scheduled check in 6 hours"

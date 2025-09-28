@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc.Testing;
-using Zarichney.Server.Tests.Framework.Fixtures;
+using Zarichney.Tests.Framework.Fixtures;
 
-namespace Zarichney.Server.Tests.Framework.Helpers;
+namespace Zarichney.Tests.Framework.Helpers;
 
 /// <summary>
 /// Extension methods for test helpers.

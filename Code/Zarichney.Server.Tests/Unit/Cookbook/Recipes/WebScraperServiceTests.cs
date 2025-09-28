@@ -6,14 +6,14 @@ using Xunit;
 using Zarichney.Config;
 using Zarichney.Cookbook.Prompts;
 using Zarichney.Cookbook.Recipes;
-using Zarichney.Server.Tests.TestData.Builders;
-using Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
-using Zarichney.Server.Tests.Framework.TestData.AutoFixtureCustomizations;
+using Zarichney.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.AutoFixtureCustomizations;
+using Zarichney.Tests.Framework.TestData.AutoFixtureCustomizations;
 using Zarichney.Services.AI;
 using Zarichney.Services.FileSystem;
 using Zarichney.Services.Web;
 
-namespace Zarichney.Server.Tests.Unit.Cookbook.Recipes;
+namespace Zarichney.Tests.Unit.Cookbook.Recipes;
 
 /// <summary>
 /// Comprehensive unit tests for WebScraperService covering recipe scraping business logic.

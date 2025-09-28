@@ -1,6 +1,6 @@
 # Project Specifications Index
 
-**Last Updated:** 2025-01-25
+**Last Updated:** 2025-09-21
 
 > **Parent:** [`Docs`](../README.md)
 

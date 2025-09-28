@@ -2,7 +2,7 @@ using FluentAssertions;
 using Xunit;
 using Zarichney.Cookbook.Recipes;
 
-namespace Zarichney.Server.Tests.Unit.Cookbook.Recipes;
+namespace Zarichney.Tests.Unit.Cookbook.Recipes;
 
 /// <summary>
 /// Unit tests for WebscraperConfig ensuring proper default values and configuration validation.

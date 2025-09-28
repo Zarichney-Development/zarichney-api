@@ -1,7 +1,7 @@
 ---
-name: AI Test Coverage Task (Automated Epic)
-about: Automated task for AI agents increasing test coverage as part of the 90% Coverage Epic
-title: 'test: Increase Coverage for [Module/Class Name] - Epic #94'
+name: AI Test Coverage Task (Automated Excellence)
+about: Automated task for AI agents increasing test coverage as part of the Coverage Excellence Initiative
+title: 'test: Increase Coverage for [Module/Class Name] - Coverage Excellence'
 labels: 'ai-task, testing, coverage, epic-subtask' # Add relevant module:X labels
 assignees: '' # Automated execution - no human assignee
 
@@ -9,27 +9,27 @@ assignees: '' # Automated execution - no human assignee
 
 ## 1. Epic Context
 
-**Epic Reference:** [Backend Automation Testing Code Coverage to 90%](https://github.com/Zarichney-Development/zarichney-api/issues/94)  
-**Execution Model:** Automated AI agent in GitHub Actions CI environment  
-**Epic Branch:** `epic/testing-coverage-to-90` (off `develop`)  
-**Task Branch Pattern:** `tests/issue-94-[description]-[timestamp]`
+**Coverage Excellence Reference:** Backend Testing Coverage Excellence Initiative
+**Execution Model:** Automated AI agent in GitHub Actions CI environment
+**Coverage Branch:** `epic/testing-coverage` (off `develop`)
+**Task Branch Pattern:** `tests/coverage-excellence-[description]-[timestamp]`
 
-**Orchestrator Integration:** Individual task PRs will be consolidated by the [Coverage Epic Merge Orchestrator](../../Docs/Development/CoverageEpicMergeOrchestration.md) for efficient epic progression. Your task contributes to systematic coverage improvement while the orchestrator handles PR coordination and conflict resolution.
+**Orchestrator Integration:** Individual task PRs will be consolidated by the [Coverage Excellence Merge Orchestrator](../../Docs/Development/CoverageEpicMergeOrchestration.md) for efficient coverage progression. Your task contributes to systematic coverage improvement while the orchestrator handles PR coordination and conflict resolution.
 
 ## 2. Automated Task Objective
 
 **AI Agent Mission:** Systematically increase backend test coverage through self-directed scope selection and autonomous implementation of comprehensive test suites in an unconfigured CI environment.
 
-**Coverage Phase Alignment:** Reference current coverage percentage and align implementation with appropriate phase:
-- **Phase 1 (Current-20%):** Service layer basics, API contracts, core business logic
-- **Phase 2 (20%-35%):** Service depth, integration scenarios, data validation  
-- **Phase 3 (35%-50%):** Edge cases, error handling, boundary conditions
-- **Phase 4 (50%-75%):** Complex business scenarios, integration depth
-- **Phase 5 (75%-90%):** Comprehensive edge cases, performance scenarios
+**Coverage Phase Alignment:** Reference current coverage level and align implementation with appropriate phase:
+- **Phase 1 (Basic Coverage):** Service layer basics, API contracts, core business logic
+- **Phase 2 (Expanded Coverage):** Service depth, integration scenarios, data validation
+- **Phase 3 (Comprehensive Coverage):** Edge cases, error handling, boundary conditions
+- **Phase 4 (Advanced Coverage):** Complex business scenarios, integration depth
+- **Phase 5 (World-Class Coverage):** Comprehensive edge cases, performance scenarios
 
 ## 3. Orchestrator Consolidation Context
 
-**Coverage Epic Pipeline Understanding:**
+**Coverage Excellence Pipeline Understanding:**
 - **Your Task (Phase 1):** Create focused coverage improvements in individual PR
 - **Orchestrator Role (Phase 2):** Automatic direct merging of multiple coverage PRs into epic branch
 - **Epic Integration (Phase 3):** Product owner integration to develop/main
@@ -87,7 +87,7 @@ AI agent identifies specific production code files based on coverage analysis:
 ## 6. Implementation Requirements
 
 ### Mandatory Standards Adherence
-**Review before implementation:** 
+**Review before implementation:**
 - [ ] `/Docs/Standards/TestingStandards.md` - Core testing principles
 - [ ] `/Docs/Standards/UnitTestCaseDevelopment.md` - Unit test implementation
 - [ ] `/Docs/Standards/IntegrationTestCaseDevelopment.md` - Integration test patterns
@@ -138,7 +138,7 @@ If tests reveal production issues:
 # Comprehensive test execution
 /test-report summary
 
-# Build validation  
+# Build validation
 dotnet build zarichney-api.sln
 
 # Format verification
@@ -151,7 +151,7 @@ dotnet format zarichney-api.sln --verify-no-changes
 git commit -m "test: increase coverage for [Area] (#94)"
 
 # Create PR against epic branch
-gh pr create --base epic/testing-coverage-to-90 \
+gh pr create --base epic/testing-coverage \
   --title "test: [Description] (#94)" \
   --body "[Generated PR body with coverage summary]"
 ```
@@ -182,7 +182,7 @@ Each automated task is considered successful when:
 - [ ] Appropriate scope selected (1-3 files, 15-30 test methods)
 - [ ] All new tests implemented following established standards
 - [ ] 100% pass rate maintained on executable tests (23 skipped acceptable)
-- [ ] Measurable coverage improvement achieved  
+- [ ] Measurable coverage improvement achieved
 - [ ] Framework enhancements included where beneficial
 - [ ] Pull request created with comprehensive documentation
 - [ ] Production issues properly handled if discovered
@@ -194,14 +194,14 @@ Each automated task is considered successful when:
 - [ ] Test framework enhancements compatible with multi-agent coordination
 - [ ] Production changes limited to testability improvements (orchestrator-safe)
 
-## 10. Coverage Epic Merge Orchestrator Integration
+## 10. Coverage Excellence Merge Orchestrator Integration
 
-**Orchestrator Documentation:** See [Coverage Epic Merge Orchestration Guide](../../Docs/Development/CoverageEpicMergeOrchestration.md) for complete consolidation workflow understanding.
+**Orchestrator Documentation:** See [Coverage Excellence Merge Orchestration Guide](../../Docs/Development/CoverageEpicMergeOrchestration.md) for complete consolidation workflow understanding.
 
 **Orchestrator Execution:** Product owners execute orchestrator manually or via scheduling:
 ```bash
 # Consolidate multiple coverage PRs
-gh workflow run "Coverage Epic Merge Orchestrator" \
+gh workflow run "Coverage Excellence Merge Orchestrator" \
   --field dry_run=false \
   --field max_prs=8 \
   --field pr_label_filter="coverage,testing,ai-task"
@@ -215,14 +215,14 @@ gh workflow run "Coverage Epic Merge Orchestrator" \
 
 ### Epic Contribution
 Each task contributes to:
-- **Coverage Velocity:** ~2.8% monthly increase toward 90% target
+- **Coverage Velocity:** Sustained monthly increase toward comprehensive coverage goals
 - **Framework Scalability:** Enhanced testing infrastructure
 - **Quality Maintenance:** ≥99% test pass rate throughout progression
-- **January 2026 Goal:** 90% backend code coverage achievement
+- **Excellence Goal:** World-class backend code coverage achievement
 - **Orchestrator Efficiency:** Reduced coordination overhead through systematic consolidation
 
 ---
 
-**Execution Model:** Autonomous AI Agent (GitHub Actions CI)  
-**Epic Timeline:** Now → January 2026  
+**Execution Model:** Autonomous AI Agent (GitHub Actions CI)
+**Coverage Timeline:** Ongoing continuous excellence
 **Success Definition:** Measurable coverage improvement with enhanced framework scalability

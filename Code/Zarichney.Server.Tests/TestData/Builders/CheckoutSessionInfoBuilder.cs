@@ -1,6 +1,6 @@
 using Zarichney.Services.Payment;
 
-namespace Zarichney.Server.Tests.TestData.Builders;
+namespace Zarichney.Tests.TestData.Builders;
 
 /// <summary>
 /// Test data builder for CheckoutSessionInfo objects used in payment service testing.

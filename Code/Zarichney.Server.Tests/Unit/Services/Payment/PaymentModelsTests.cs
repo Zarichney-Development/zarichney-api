@@ -1,10 +1,10 @@
 using AutoFixture.Xunit2;
 using FluentAssertions;
 using Xunit;
-using Zarichney.Server.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.Builders;
 using Zarichney.Services.Payment;
 
-namespace Zarichney.Server.Tests.Unit.Services.Payment;
+namespace Zarichney.Tests.Unit.Services.Payment;
 
 /// <summary>
 /// Unit tests for payment-related model classes and enumerations.

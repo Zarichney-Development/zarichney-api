@@ -10,9 +10,9 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Reflection;
 using Xunit;
 using Zarichney.Config;
-using Zarichney.Server.Tests.Framework.Mocks.Factories;
+using Zarichney.Tests.Framework.Mocks.Factories;
 
-namespace Zarichney.Server.Tests.Unit.Config;
+namespace Zarichney.Tests.Unit.Config;
 
 public class FormFileOperationFilterTests
 {

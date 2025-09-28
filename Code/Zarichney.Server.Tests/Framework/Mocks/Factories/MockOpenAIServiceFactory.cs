@@ -4,7 +4,7 @@ using OpenAI.Assistants;
 using OpenAI.Chat;
 using Zarichney.Cookbook.Prompts;
 
-namespace Zarichney.Server.Tests.Framework.Mocks.Factories;
+namespace Zarichney.Tests.Framework.Mocks.Factories;
 
 public class MockOpenAIServiceFactory : BaseMockFactory<ILlmService>
 {

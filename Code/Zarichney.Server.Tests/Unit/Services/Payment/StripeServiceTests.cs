@@ -5,13 +5,13 @@ using Moq;
 using Stripe;
 using Stripe.Checkout;
 using Xunit;
-using Zarichney.Server.Tests.TestData.Builders;
-using Zarichney.Server.Tests.TestData.AutoFixtureCustomizations;
+using Zarichney.Tests.TestData.Builders;
+using Zarichney.Tests.TestData.AutoFixtureCustomizations;
 using Zarichney.Services.Payment;
 using Zarichney.Services.Status;
-using Zarichney.Server.Tests.Framework.Helpers;
+using Zarichney.Tests.Framework.Helpers;
 
-namespace Zarichney.Server.Tests.Unit.Services.Payment;
+namespace Zarichney.Tests.Unit.Services.Payment;
 
 /// <summary>
 /// Comprehensive unit tests for StripeService covering all Stripe API interactions.

@@ -43,7 +43,7 @@ Before analyzing any code changes, you MUST perform comprehensive context ingest
 
 4. **GitHub Label Context Integration:**
    - Read GitHub issue labels associated with {{ISSUE_REF}} to understand strategic context:
-     - **Epic Labels** (`epic:testing-coverage-to-90`, `epic:performance-optimization`): Long-term strategic initiatives that provide context for debt prioritization
+     - **Epic Labels** (`epic:testing-coverage`, `epic:performance-optimization`): Long-term strategic initiatives that provide context for debt prioritization
      - **Component Labels** (`component:backend-api`, `component:frontend-ui`, `component:database`): Specific architectural areas requiring targeted debt analysis
      - **Coverage Phase Labels** (`coverage:phase-1` through `coverage:phase-6`): Progressive testing maturity context for test-related debt assessment
      - **Quality Labels** (`quality:tech-debt`, `quality:performance`, `quality:maintainability`): Existing quality concerns that inform debt interaction analysis
@@ -169,12 +169,12 @@ For each debt item identified, assign priority and recommendation using Zarichne
 
 **CELEBRATE (🎉 IMPROVEMENT):**
 - Debt reduction achievements
-- Clean workarounds for existing issues  
+- Clean workarounds for existing issues
 - Test coverage improvements
 - Documentation enhancements
 
 **Label-Driven Strategic Prioritization:**
-- **Epic Priority Boost:** Issues affecting epic objectives (`epic:testing-coverage-to-90`, `epic:performance-optimization`) receive higher priority
+- **Epic Priority Boost:** Issues affecting epic objectives (`epic:testing-coverage`, `epic:performance-optimization`) receive higher priority
 - **Component Critical Path:** Debt in components marked with `component:core` or `component:security` requires immediate attention
 - **Coverage Phase Alignment:** Test debt prioritization considers current coverage phase (`coverage:phase-1` = focus on service layers, `coverage:phase-6` = comprehensive edge cases)
 - **Quality Goal Context:** Debt remediation aligns with established quality objectives from quality labels

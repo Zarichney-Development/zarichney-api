@@ -7,12 +7,12 @@ using Microsoft.AspNetCore.Http;
 using Moq;
 using Xunit;
 using AutoFixture;
-using Zarichney.Server.Tests.Framework.Attributes;
-using Zarichney.Server.Tests.Framework.Helpers;
+using Zarichney.Tests.Framework.Attributes;
+using Zarichney.Tests.Framework.Helpers;
 using Zarichney.Controllers.Responses;
 using Zarichney.Controllers;
 
-namespace Zarichney.Server.Tests.Unit.Controllers.PublicController;
+namespace Zarichney.Tests.Unit.Controllers.PublicController;
 
 /// <summary>
 /// Unit tests for the <see cref="Zarichney.Controllers.PublicController"/>.

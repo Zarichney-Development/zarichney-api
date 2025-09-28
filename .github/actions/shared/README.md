@@ -1,13 +1,13 @@
 # Module/Directory: .github/actions/shared
 
-**Last Updated:** 2025-08-14
+**Last Updated:** 2025-09-21
 
 **Parent:** [`.github/actions`](../README.md)
 
 ## 1. Purpose & Responsibility
 
 * **What it is:** Collection of reusable composite GitHub Actions that provide common infrastructure utilities used across multiple workflows in the CI/CD pipeline.
-* **Key Responsibilities:** 
+* **Key Responsibilities:**
     * Unified development environment setup for .NET and Node.js
     * Intelligent path-based change detection for workflow optimization
     * Test suite baseline validation with environment-aware thresholds
@@ -26,12 +26,17 @@
     * **`post-results`** - Standardizes communication of analysis results to pull requests
     * **`extract-pr-context`** - Extracts PR number, author, branches, issue ref, and diff stats
     * **`check-existing-comment`** - Detects existing AI analysis comments by canonical header
+    * **Epic #181 Foundation Components:**
+        * **`path-analysis`** - Intelligent path-based change detection with Epic #181 workflow optimization
+        * **`backend-build`** - Comprehensive .NET backend build execution with coverage flexibility
+        * **`concurrency-config`** - Standardized concurrency management and resource optimization
 * **Core Action Types:**
     * **Composite Actions** - Multi-step actions combining GitHub Actions and shell commands
     * **Environment Actions** - Setup and configuration utilities with automatic tool restoration
     * **Execution Actions** - Test and build execution with intelligent error handling and environment awareness
     * **Validation Actions** - Test suite and quality gate validation utilities (Phase 2)
     * **Communication Actions** - Result formatting and posting utilities
+    * **Epic #181 Foundation Actions** - Specialized components for build workflow modernization and Epic #181 progression
 * **Integration Patterns:**
     * **Input Validation** - Comprehensive input parameter validation with clear error messages
     * **Output Standardization** - Consistent output formats across all shared actions
@@ -42,17 +47,17 @@
 graph TD
     A[Workflow Start] --> B[setup-environment]
     B --> C[check-paths]
-    
+
     C --> D{Changes Found?}
     D -->|Yes| E[Build Process]
     D -->|No| F[Skip Build]
-    
+
     E --> G[Analysis Process]
     G --> H[post-results]
-    
+
     H --> I[PR Comment]
     F --> J[Early Exit]
-    
+
     style B fill:#E6F3FF
     style C fill:#FFF2E6
     style H fill:#E6FFE6
@@ -119,6 +124,19 @@ graph TD
         * **Critical Preconditions:** Valid analysis data, PR context available, GitHub token with comment permissions
         * **Critical Postconditions:** Comment posted or updated on PR, previous comments managed appropriately
         * **Non-Obvious Error Handling:** Prevents duplicate comments; handles API rate limiting; graceful degradation for large comments
+    * **Epic #181 Foundation Components:**
+        * **`path-analysis`** ([README](./path-analysis/README.md)):
+            * **Purpose:** Intelligent path-based change detection with Epic #181 workflow optimization
+            * **Outputs:** Boolean change indicators (backend, frontend, docs, config), JSON change summary, total changes
+            * **Epic Integration:** Enables testing-coverage-build-review.yml and specialized workflow conditional execution
+        * **`backend-build`** ([README](./backend-build/README.md)):
+            * **Purpose:** Comprehensive .NET backend build with coverage flexibility and zero-warning enforcement
+            * **Outputs:** Build status, warning count, test success, coverage data, build artifacts, error details
+            * **Epic Integration:** Foundation for Issue #212 build.yml refactor and coverage workflow specialization
+        * **`concurrency-config`** ([README](./concurrency-config/README.md)):
+            * **Purpose:** Standardized concurrency management and resource optimization for Epic #181 workflows
+            * **Outputs:** Concurrency group, cancellation policy, parallel limits, resource allocation, timeout values
+            * **Epic Integration:** Enables epic coordination and multi-workflow resource optimization
 * **Critical Assumptions:**
     * **GitHub Context:** Valid GitHub Actions context with repository and PR information
     * **Permission Model:** Appropriate GitHub token permissions for required operations
@@ -170,12 +188,12 @@ graph TD
         setup-node: 'true'
         node-version: '18.x'
     # Note: Automatically restores tools from .config/dotnet-tools.json if present
-    
+
     # Path analysis
     - name: Analyze changed paths
       id: paths
       uses: ./.github/actions/shared/check-paths
-    
+
     # Test execution with structured outputs
     - name: Run test suite
       id: test-execution
@@ -186,7 +204,7 @@ graph TD
         environment-type: 'ci'
         fail-on-error: 'true'
         coverage-threshold: '16'
-    
+
     # Test suite baseline validation (Phase 2)
     - name: Validate test suite baselines
       id: baseline-validation
@@ -195,7 +213,7 @@ graph TD
         test-results-path: './TestResults'
         fail-on-violations: 'false'  # Warning mode
         environment-override: 'unconfigured'
-    
+
     # Result posting
     - name: Post analysis results
       uses: ./.github/actions/shared/post-results
@@ -229,7 +247,11 @@ graph TD
 * **Dependents (Impact of Changes):**
     * [`.github/workflows/build.yml`](../../workflows/README.md) - Uses setup-environment and check-paths
     * [`.github/workflows/claude-dispatch.yml`](../../workflows/README.md) - Uses setup-environment and run-tests for environment preparation
-    * [`.github/workflows/coverage-epic-automation.yml`](../../workflows/README.md) - Uses setup-environment and run-tests for test validation
+    * [`.github/workflows/testing-coverage-execution.yml`](../../workflows/README.md) - Uses setup-environment and run-tests for test validation
+    * **Epic #181 Specialized Workflows:**
+        * **Issue #183 testing-coverage-build-review.yml** - Uses path-analysis, backend-build, and concurrency-config for coverage workflow specialization
+        * **Issue #212 build.yml refactor** - Modernization using all Epic #181 foundation components
+        * **Future AI Analysis Workflows** - Will use concurrency-config and path-analysis for resource optimization
 
 ## 7. Rationale & Key Historical Context
 
@@ -240,6 +262,7 @@ graph TD
 * **Error Resilience:** Comprehensive error handling ensures workflows continue gracefully even when optional features fail
 * **Tool Restoration:** Added automatic `dotnet tool restore` to prevent failures from missing local tools (e.g., refitter) across all workflows
 * **Test Execution Standardization:** Created unified run-tests action to eliminate inconsistent test execution patterns and provide reliable structured outputs across all workflows
+* **Epic #181 Foundation Components:** Added path-analysis, backend-build, and concurrency-config components to enable build workflow modernization while preserving exact functional equivalence with existing build.yml patterns and supporting specialized workflow creation
 
 ## 8. Known Issues & TODOs
 

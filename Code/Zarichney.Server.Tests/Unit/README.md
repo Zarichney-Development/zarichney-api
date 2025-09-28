@@ -1,7 +1,7 @@
 # README: /Unit Tests Directory
 
 **Version:** 1.1
-**Last Updated:** 2025-05-22
+**Last Updated:** 2025-09-27
 **Parent:** `../README.md`
 
 ## 1. Purpose & Responsibility
@@ -13,7 +13,7 @@ Unit tests are foundational to our testing strategy, aiming to:
 * Pinpoint defects accurately within specific components.
 * Prevent regressions in business logic and core functionalities.
 * Facilitate safer code refactoring by ensuring individual units still behave as expected after changes.
-* Achieve a high level of code coverage (striving for >=90%) for non-trivial logic.
+* Achieve comprehensive code coverage for non-trivial logic through continuous testing excellence.
 
 All unit tests **must** adhere to the detailed guidelines and standards outlined in **`../../../Docs/Standards/UnitTestCaseDevelopment.md`**.
 
@@ -30,7 +30,7 @@ Our unit testing strategy emphasizes rigor, clarity, and maintainability:
     * **Moq:** Mocking library for creating test doubles of dependencies.
     * **FluentAssertions:** Assertion library for expressive and readable verifications.
     * **AutoFixture:** For generating anonymous test data, especially with attributes like `[AutoData]` and `[Frozen]` for parameters and mock setup.
-* **Coverage Goal:** As stated in the `../TechnicalDesignDocument.md` (Section 8), we aim for >=90% unit test coverage of all non-trivial logic.
+* **Coverage Goal:** As stated in the `../TechnicalDesignDocument.md` (Section 8), we aim for comprehensive unit test coverage of all non-trivial logic through continuous testing excellence.
 
 ## 3. Directory Structure & Organization
 
@@ -123,7 +123,7 @@ The emphasis on strict isolation and mocking ensures that failures in unit tests
 
 ## 8. Known Issues & TODOs
 
-* **Coverage Gaps:** While the goal is >=90% coverage, there may be existing areas in `Zarichney.Server` with lower unit test coverage. These should be identified and addressed progressively, especially for critical business logic. (Tracked via tasks referencing the `../../../Docs/Templates/GHTestCoverageTask.md` template).
+* **Coverage Gaps:** While the goal is comprehensive coverage, there may be existing areas in `Zarichney.Server` with lower unit test coverage. These should be identified and addressed progressively through continuous testing excellence, especially for critical business logic. (Tracked via tasks referencing the `../../../Docs/Templates/GHTestCoverageTask.md` template).
 * **Complex SUTs:** Some older or more complex components in `Zarichney.Server` might still be challenging to unit test effectively. Ongoing refactoring for testability, guided by `../../../Docs/Standards/CodingStandards.md`, is encouraged.
 * **Review AI-Generated Tests:** As AI tools assist in test generation, ensure their output is rigorously reviewed against the `../../../Docs/Standards/UnitTestCaseDevelopment.md` for quality, correctness, and adherence to best practices.
 

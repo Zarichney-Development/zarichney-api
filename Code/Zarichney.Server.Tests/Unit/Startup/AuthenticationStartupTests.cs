@@ -8,7 +8,7 @@ using FluentAssertions;
 using Zarichney.Services.Auth;
 using Zarichney.Startup;
 
-namespace Zarichney.Server.Tests.Unit.Startup;
+namespace Zarichney.Tests.Unit.Startup;
 
 /// <summary>
 /// Unit tests for AuthenticationStartup logic regarding mock authentication

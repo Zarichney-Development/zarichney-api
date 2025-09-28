@@ -1,6 +1,6 @@
 using Zarichney.Cookbook.Customers;
 
-namespace Zarichney.Server.Tests.TestData.Builders;
+namespace Zarichney.Tests.TestData.Builders;
 
 /// <summary>
 /// Test data builder for Customer objects.
