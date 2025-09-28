@@ -98,12 +98,12 @@ public class BackgroundWorkerAdvancedTests
       {
         Func<IScopeContainer, CancellationToken, Task> workItem = async (scope, ct) =>
               {
-            lock (lockObj)
-            {
-              executionOrder.Add(index);
-            }
-            await Task.CompletedTask;
-          };
+                lock (lockObj)
+                {
+                  executionOrder.Add(index);
+                }
+                await Task.CompletedTask;
+              };
         sut.QueueBackgroundWorkAsync(workItem);
       }));
     }
@@ -429,14 +429,14 @@ public class BackgroundWorkerAdvancedTests
           var shouldFail = j % 5 == 0;
           Func<IScopeContainer, CancellationToken, Task> workItem = async (scope, ct) =>
                 {
-                await Task.Delay(1);
-                if (shouldFail)
-                {
-                  lock (lockObj) { errorCount++; }
-                  throw new Exception("Planned failure");
-                }
-                lock (lockObj) { successCount++; }
-              };
+                  await Task.Delay(1);
+                  if (shouldFail)
+                  {
+                    lock (lockObj) { errorCount++; }
+                    throw new Exception("Planned failure");
+                  }
+                  lock (lockObj) { successCount++; }
+                };
           sut.QueueBackgroundWorkAsync(workItem);
         }
       }));

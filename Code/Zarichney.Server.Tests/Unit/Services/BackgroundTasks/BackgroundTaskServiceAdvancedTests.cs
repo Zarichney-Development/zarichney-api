@@ -37,16 +37,8 @@ public class BackgroundTaskServiceAdvancedTests : IDisposable
     var mockWorker = BackgroundTaskMockFactory.CreateDefaultBackgroundWorker();
     var mockLogger = BackgroundTaskMockFactory.CreateBackgroundTaskServiceLogger();
     var mockScopeFactory = BackgroundTaskMockFactory.CreateDefaultScopeFactory();
-    var mockSessionManager = new Mock<ISessionManager>();
-
     var sessionException = new InvalidOperationException("Session creation failed");
-    mockSessionManager
-        .Setup(x => x.CreateSession(It.IsAny<Guid>(), It.IsAny<TimeSpan?>()))
-        .ThrowsAsync(sessionException);
-
-    mockSessionManager
-        .Setup(x => x.EndSession(It.IsAny<Guid>()))
-        .Returns(Task.CompletedTask);
+    var mockSessionManager = BackgroundTaskMockFactory.CreateFailingSessionManager(sessionException);
 
     Func<IScopeContainer, CancellationToken, Task> workItem = async (scope, ct) =>
     {
@@ -367,10 +359,12 @@ public class BackgroundTaskServiceAdvancedTests : IDisposable
     using var sessionEndRegistration = _cancellationTokenSource.Token.Register(() =>
         sessionEndAttempted.TrySetCanceled(_cancellationTokenSource.Token));
 
-    var mockSessionManager = new Mock<ISessionManager>();
+    var mockSessionManager = BackgroundTaskMockFactory.CreateFailingSessionManager(sessionException);
+    // Override CreateSession to succeed for this test scenario
     mockSessionManager
         .Setup(x => x.CreateSession(It.IsAny<Guid>(), It.IsAny<TimeSpan?>()))
         .ReturnsAsync(new SessionBuilder().Build());
+    // Override EndSession to include callback behavior
     mockSessionManager
         .Setup(x => x.EndSession(It.IsAny<Guid>()))
         .Callback(() => sessionEndAttempted.TrySetResult(true))
