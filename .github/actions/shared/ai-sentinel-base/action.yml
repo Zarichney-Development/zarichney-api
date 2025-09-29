@@ -183,7 +183,11 @@ runs:
 
           # Generate error metadata
           error_metadata=$(generate_error_metadata "$duration")
-          echo "analysis_metadata=$error_metadata" >> "$GITHUB_OUTPUT"
+          {
+            echo "analysis_metadata<<EOF"
+            echo "$error_metadata"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
           echo "error_details=AI analysis execution failed after $MAX_RETRIES retries" >> "$GITHUB_OUTPUT"
           echo "❌ AI analysis failed"
           exit 1
@@ -194,7 +198,11 @@ runs:
 
         # Generate success metadata
         success_metadata=$(generate_success_metadata "$duration")
-        echo "analysis_metadata=$success_metadata" >> "$GITHUB_OUTPUT"
+        {
+          echo "analysis_metadata<<EOF"
+          echo "$success_metadata"
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
         echo "✅ AI analysis completed successfully (${duration}s)"
 
     - name: Handle Analysis Failure
