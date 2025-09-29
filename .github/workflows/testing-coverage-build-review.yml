@@ -867,20 +867,20 @@ jobs:
         with:
           script: |
             // Gather AI analysis results
-            const coverageAnalysis = ${{ needs.ai_coverage_analysis.outputs && needs.ai_coverage_analysis.outputs.analysis_summary && toJSON(needs.ai_coverage_analysis.outputs.analysis_summary) || 'Not available' }};
-            const standardsAnalysis = ${{ needs.ai_standards_analysis.outputs && needs.ai_standards_analysis.outputs.analysis_summary && toJSON(needs.ai_standards_analysis.outputs.analysis_summary) || 'Not available' }};
-            const coverageScore = ${{ needs.coverage_analysis.outputs && needs.coverage_analysis.outputs.coverage_percentage && toJSON(needs.coverage_analysis.outputs.coverage_percentage) || 'N/A' }};
-            const complianceScore = ${{ needs.ai_standards_analysis.outputs && needs.ai_standards_analysis.outputs.compliance_score && toJSON(needs.ai_standards_analysis.outputs.compliance_score) || 'N/A' }};
-            const excellenceProgress = ${{ needs.ai_coverage_analysis.outputs && needs.ai_coverage_analysis.outputs.excellence_progress && toJSON(needs.ai_coverage_analysis.outputs.excellence_progress) || 'N/A' }};
+            const coverageAnalysis = ${{ needs.ai_coverage_analysis.outputs && needs.ai_coverage_analysis.outputs.analysis_summary && toJSON(needs.ai_coverage_analysis.outputs.analysis_summary) || '"Not available"' }};
+            const standardsAnalysis = ${{ needs.ai_standards_analysis.outputs && needs.ai_standards_analysis.outputs.analysis_summary && toJSON(needs.ai_standards_analysis.outputs.analysis_summary) || '"Not available"' }};
+            const coverageScore = ${{ needs.coverage_analysis.outputs && needs.coverage_analysis.outputs.coverage_percentage && toJSON(needs.coverage_analysis.outputs.coverage_percentage) || '"N/A"' }};
+            const complianceScore = ${{ needs.ai_standards_analysis.outputs && needs.ai_standards_analysis.outputs.compliance_score && toJSON(needs.ai_standards_analysis.outputs.compliance_score) || '"N/A"' }};
+            const excellenceProgress = ${{ needs.ai_coverage_analysis.outputs && needs.ai_coverage_analysis.outputs.excellence_progress && toJSON(needs.ai_coverage_analysis.outputs.excellence_progress) || '"N/A"' }};
 
             // Iterative review results
-            const iterationCount = ${{ needs.iterative_ai_review.outputs && needs.iterative_ai_review.outputs.iteration_count && toJSON(needs.iterative_ai_review.outputs.iteration_count) || 'N/A' }};
-            const prStatus = ${{ needs.iterative_ai_review.outputs && needs.iterative_ai_review.outputs.pr_status && toJSON(needs.iterative_ai_review.outputs.pr_status) || 'Not assessed' }};
-            const todoSummary = ${{ needs.iterative_ai_review.outputs && needs.iterative_ai_review.outputs.todo_summary && toJSON(needs.iterative_ai_review.outputs.todo_summary) || '{}' }};
-            const qualityGates = ${{ needs.iterative_ai_review.outputs && needs.iterative_ai_review.outputs.quality_gates && toJSON(needs.iterative_ai_review.outputs.quality_gates) || '{}' }};
-            const nextActions = ${{ needs.iterative_ai_review.outputs && needs.iterative_ai_review.outputs.next_actions && toJSON(needs.iterative_ai_review.outputs.next_actions) || '[]' }};
-            const epicProgress = ${{ needs.iterative_ai_review.outputs && needs.iterative_ai_review.outputs.epic_progress && toJSON(needs.iterative_ai_review.outputs.epic_progress) || 'N/A' }};
-            const blockingIssues = ${{ needs.iterative_ai_review.outputs && needs.iterative_ai_review.outputs.blocking_issues && toJSON(needs.iterative_ai_review.outputs.blocking_issues) || '[]' }};
+            const iterationCount = ${{ needs.iterative_ai_review.outputs && needs.iterative_ai_review.outputs.iteration_count && toJSON(needs.iterative_ai_review.outputs.iteration_count) || '"N/A"' }};
+            const prStatus = ${{ needs.iterative_ai_review.outputs && needs.iterative_ai_review.outputs.pr_status && toJSON(needs.iterative_ai_review.outputs.pr_status) || '"Not assessed"' }};
+            const todoSummary = ${{ needs.iterative_ai_review.outputs && needs.iterative_ai_review.outputs.todo_summary && toJSON(needs.iterative_ai_review.outputs.todo_summary) || '"{}"' }};
+            const qualityGates = ${{ needs.iterative_ai_review.outputs && needs.iterative_ai_review.outputs.quality_gates && toJSON(needs.iterative_ai_review.outputs.quality_gates) || '"{}"' }};
+            const nextActions = ${{ needs.iterative_ai_review.outputs && needs.iterative_ai_review.outputs.next_actions && toJSON(needs.iterative_ai_review.outputs.next_actions) || '"[]"' }};
+            const epicProgress = ${{ needs.iterative_ai_review.outputs && needs.iterative_ai_review.outputs.epic_progress && toJSON(needs.iterative_ai_review.outputs.epic_progress) || '"N/A"' }};
+            const blockingIssues = ${{ needs.iterative_ai_review.outputs && needs.iterative_ai_review.outputs.blocking_issues && toJSON(needs.iterative_ai_review.outputs.blocking_issues) || '"[]"' }};
 
             // Parse todo summary for display
             let todoDisplay = 'No active to-do items';
