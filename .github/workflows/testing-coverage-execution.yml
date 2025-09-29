@@ -1612,8 +1612,13 @@ jobs:
             $DRAFT_FLAG; then
 
             PR_URL=$(gh pr view --json url --jq .url)
+            PR_NUMBER=$(gh pr view --json number --jq .number)
+            PR_HEAD_REF=$(gh pr view --json headRefName --jq .headRefName)
+
             echo "pr_created=true" >> $GITHUB_OUTPUT
             echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "pr_head_ref=$PR_HEAD_REF" >> $GITHUB_OUTPUT
 
             echo "✅ Pull request created successfully: $PR_URL"
           else
@@ -1644,6 +1649,18 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Trigger Dependent Workflows for Created PR"
+        id: trigger_workflows
+        if: steps.create_pr.outputs.pr_created == 'true'
+        uses: ./.github/actions/shared/trigger-dependent-workflows
+        with:
+          pr_number: ${{ steps.create_pr.outputs.pr_number }}
+          pr_head_ref: ${{ steps.create_pr.outputs.pr_head_ref }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          target_workflows: "testing-coverage-build-review.yml"
+          coverage_baseline: "16"
+          enable_debug: "false"
 
       # ========================================
       # Execution Summary & Metrics
@@ -1758,10 +1775,20 @@ jobs:
           echo "  PR Exists Check: ${{ steps.check_existing_pr.outputs.pr_exists || 'not_checked' }}"
           echo "  MCP Analysis: ${{ steps.mcp_pr_analysis.outputs.mcp_analysis_result != '' && 'completed' || 'not_available' }}"
           echo "  PR Created: ${{ steps.create_pr.outputs.pr_created || 'false' }}"
+          echo "  Workflows Triggered: ${{ steps.trigger_workflows.outputs.workflows_triggered || '0' }}"
+          echo "  Trigger Status: ${{ steps.trigger_workflows.outputs.trigger_status || 'not_executed' }}"
           echo ""
           if [ "${{ steps.create_pr.outputs.pr_created }}" = "true" ]; then
             echo "🎉 SUCCESS: Pull request created successfully"
             echo "🔗 PR URL: ${{ steps.create_pr.outputs.pr_url }}"
+            if [ "${{ steps.trigger_workflows.outputs.trigger_status }}" = "success" ]; then
+              echo "🚀 WORKFLOWS: All dependent workflows triggered successfully"
+              echo "🤖 AI Analysis: Build and review workflows should activate automatically"
+            elif [ "${{ steps.trigger_workflows.outputs.trigger_status }}" = "partial" ]; then
+              echo "⚠️ WORKFLOWS: Some dependent workflows triggered (${{ steps.trigger_workflows.outputs.workflows_triggered }})"
+            else
+              echo "❌ WORKFLOWS: Failed to trigger dependent workflows - may need manual intervention"
+            fi
             echo "📈 Epic #$EPIC_ISSUE_ID progression continues"
           elif [ "${{ steps.check_existing_pr.outputs.pr_exists }}" = "true" ]; then
             echo "✅ SUCCESS: Changes committed to existing pull request"

@@ -33,6 +33,15 @@ on:
       - '*.sln'
       - '.github/workflows/**'
       - '.github/actions/shared/**'
+  pull_request_target:
+    branches: ['**']  # Support bot PRs that don't trigger regular pull_request
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'Code/**'
+      - '.github/scripts/**'
+      - '*.sln'
+      - '.github/workflows/**'
+      - '.github/actions/shared/**'
   workflow_dispatch:
 
 # Concurrency Configuration: Workflow-level (not foundation component)
@@ -57,9 +66,31 @@ permissions:
   security-events: write
 
 jobs:
+  security-check:
+    name: "Security Check for Bot PRs"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request_target'
+    steps:
+      - name: Check bot PR security
+        run: |
+          echo "🔒 Processing bot-created PR with security restrictions"
+          echo "PR Author: ${{ github.event.pull_request.user.login }}"
+          echo "Event: ${{ github.event_name }}"
+
+          # Only allow GitHub Actions bot
+          if [ "${{ github.event.pull_request.user.login }}" != "github-actions[bot]" ]; then
+            echo "❌ pull_request_target only allowed for github-actions[bot]"
+            echo "::error::Unauthorized pull_request_target from user: ${{ github.event.pull_request.user.login }}"
+            exit 1
+          fi
+
+          echo "✅ Security check passed for GitHub Actions bot PR"
+
   path-analysis:
     name: "Analyze Changed Paths"
     runs-on: ubuntu-latest
+    needs: [security-check]
+    if: always() && (needs.security-check.result == 'success' || github.event_name != 'pull_request_target')
     outputs:
       # Preserved output interface for downstream job compatibility
       backend-changed: ${{ steps.map-outputs.outputs.backend-changed }}
