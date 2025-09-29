@@ -118,18 +118,23 @@ execute_ai_analysis_with_retry() {
 
     local attempt=1
     local max_attempts="${MAX_RETRIES:-3}"
+    echo "[DEBUG] Starting retry loop with max_attempts=$max_attempts" >&2
 
     while [[ $attempt -le $max_attempts ]]; do
+        echo "[DEBUG] AI analysis attempt $attempt of $max_attempts" >&2
         security_log "INFO" "AI analysis attempt $attempt of $max_attempts"
 
         if execute_ai_analysis; then
+            echo "[DEBUG] AI analysis completed successfully on attempt $attempt" >&2
             security_log "INFO" "AI analysis completed successfully on attempt $attempt"
             return 0
         fi
+        echo "[DEBUG] AI analysis failed on attempt $attempt" >&2
 
         if [[ $attempt -lt $max_attempts ]]; then
             local delay_index=$((attempt - 1))
             local delay=${RETRY_DELAYS[$delay_index]:-15}
+            echo "[DEBUG] Retrying in ${delay} seconds..." >&2
             security_log "INFO" "Retrying in ${delay} seconds..."
             sleep "$delay"
         fi
@@ -137,30 +142,38 @@ execute_ai_analysis_with_retry() {
         ((attempt++))
     done
 
+    echo "[DEBUG] AI analysis failed after $max_attempts attempts" >&2
     security_log "ERROR" "AI analysis failed after $max_attempts attempts"
     return 1
 }
 
 # Execute single AI analysis attempt
 execute_ai_analysis() {
+    echo "[DEBUG] Executing AI analysis" >&2
     security_log "INFO" "Executing AI analysis"
 
     local template_content
+    echo "[DEBUG] Reading processed template from $PROCESSED_TEMPLATE" >&2
     template_content=$(cat "$PROCESSED_TEMPLATE")
 
     if [[ -z "$template_content" ]]; then
+        echo "[DEBUG] Template content is empty" >&2
         security_log "ERROR" "Template content is empty"
         return 1
     fi
+    echo "[DEBUG] Template content loaded (${#template_content} bytes)" >&2
 
     # Prepare API request
     local request_payload
+    echo "[DEBUG] Creating API request payload" >&2
     request_payload=$(create_api_request_payload "$template_content")
 
     if [[ -z "$request_payload" ]]; then
+        echo "[DEBUG] Failed to create API request payload" >&2
         security_log "ERROR" "Failed to create API request payload"
         return 1
     fi
+    echo "[DEBUG] API request payload created (${#request_payload} bytes)" >&2
 
     # Execute API request
     local response
@@ -168,6 +181,7 @@ execute_ai_analysis() {
     local start_time
     start_time=$(date +%s)
 
+    echo "[DEBUG] Sending POST request to ${API_BASE_URL}/chat/completions" >&2
     response=$(curl -s -w "\n%{http_code}" \
         -X POST \
         -H "Authorization: Bearer ${OPENAI_API_KEY}" \
@@ -184,31 +198,44 @@ execute_ai_analysis() {
     status_code=$(echo "$response" | tail -n1)
     response=$(echo "$response" | head -n -1)
 
+    echo "[DEBUG] API request completed - Status: $status_code, Duration: ${request_duration}s" >&2
     security_log "INFO" "API request completed - Status: $status_code, Duration: ${request_duration}s"
 
     # Handle response based on status code
+    echo "[DEBUG] Processing response with status code: $status_code" >&2
     case "$status_code" in
         200)
+            echo "[DEBUG] Success response - processing..." >&2
             if process_successful_response "$response" "$request_duration"; then
+                echo "[DEBUG] Response processed successfully" >&2
                 return 0
             else
+                echo "[DEBUG] Failed to process successful response" >&2
                 security_log "ERROR" "Failed to process successful response"
                 return 1
             fi
             ;;
         401)
+            echo "[DEBUG] Authentication failed - invalid API key" >&2
+            echo "[DEBUG] Response: $response" >&2
             security_log "ERROR" "Authentication failed - invalid API key"
             return 1
             ;;
         429)
+            echo "[DEBUG] Rate limit exceeded - will retry" >&2
+            echo "[DEBUG] Response: $response" >&2
             security_log "WARN" "Rate limit exceeded - will retry"
             return 1
             ;;
         500|502|503|504)
+            echo "[DEBUG] Server error (${status_code}) - will retry" >&2
+            echo "[DEBUG] Response: $response" >&2
             security_log "WARN" "Server error (${status_code}) - will retry"
             return 1
             ;;
         *)
+            echo "[DEBUG] Unexpected API response - Status: $status_code" >&2
+            echo "[DEBUG] Response: $response" >&2
             security_log "ERROR" "Unexpected API response - Status: $status_code"
             if [[ "${DEBUG_MODE:-false}" == "true" ]]; then
                 security_log "DEBUG" "Response: $response"
