@@ -305,20 +305,56 @@ format_ai_analysis_outputs() {
         local recommendations
         recommendations=$(echo "$ai_content" | jq -c '.recommendations // []')
 
-        echo "analysis_result=$analysis_result" >> "$GITHUB_OUTPUT"
-        echo "analysis_summary=$analysis_summary" >> "$GITHUB_OUTPUT"
-        echo "recommendations=$recommendations" >> "$GITHUB_OUTPUT"
+        # Output using heredoc format for complex values
+        {
+            echo "analysis_result<<EOF"
+            echo "$analysis_result"
+            echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+
+        {
+            echo "analysis_summary<<EOF"
+            echo "$analysis_summary"
+            echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+
+        {
+            echo "recommendations<<EOF"
+            echo "$recommendations"
+            echo "EOF"
+        } >> "$GITHUB_OUTPUT"
     else
         # Unstructured text response
-        echo "analysis_result={\"content\": $(echo "$ai_content" | jq -R -s '.')}" >> "$GITHUB_OUTPUT"
-        echo "analysis_summary=$ai_content" >> "$GITHUB_OUTPUT"
-        echo "recommendations=[]" >> "$GITHUB_OUTPUT"
+        local analysis_result_json
+        analysis_result_json=$(jq -n --arg content "$ai_content" '{content: $content}' | jq -c '.')
+
+        {
+            echo "analysis_result<<EOF"
+            echo "$analysis_result_json"
+            echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+
+        {
+            echo "analysis_summary<<EOF"
+            echo "$ai_content"
+            echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+
+        {
+            echo "recommendations<<EOF"
+            echo "[]"
+            echo "EOF"
+        } >> "$GITHUB_OUTPUT"
     fi
 
-    # Generate metadata
+    # Generate metadata and output using heredoc format
     local metadata
     metadata=$(generate_success_metadata "$request_duration" "$usage_data")
-    echo "analysis_metadata=$metadata" >> "$GITHUB_OUTPUT"
+    {
+        echo "analysis_metadata<<EOF"
+        echo "$metadata"
+        echo "EOF"
+    } >> "$GITHUB_OUTPUT"
 
     return 0
 }
