@@ -32,7 +32,7 @@ inputs:
   debug_mode:
     description: 'Enable detailed debug logging'
     required: false
-    default: 'false'
+    default: 'true'
 
 outputs:
   analysis_result:
