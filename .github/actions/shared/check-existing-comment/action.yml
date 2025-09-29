@@ -22,6 +22,13 @@ runs:
       with:
         github-token: ${{ inputs.github-token }}
         script: |
+          // Check if we have issue/PR context
+          if (!context.issue || !context.issue.number) {
+            console.log('No PR/issue context available - skipping duplicate analysis check');
+            core.setOutput('skip_analysis', 'false');
+            return;
+          }
+
           // Get all comments on this PR
           const comments = await github.rest.issues.listComments({
             owner: context.repo.owner,

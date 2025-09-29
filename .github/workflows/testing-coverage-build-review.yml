@@ -9,6 +9,12 @@ on:
       - '.github/scripts/**'
       - '.github/workflows/**'
       - '.github/actions/**'
+  workflow_run:
+    workflows: ["Automated Workflow - Auto-Testing Coverage - Execution"]
+    types:
+      - completed
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       test_filter:
@@ -755,7 +761,7 @@ jobs:
         uses: ./.github/actions/shared/ai-standards-analysis
         with:
           component_type: 'workflow'
-          standards_context: '/Docs/Standards/TaskManagementStandards.md,/Docs/Standards/TestingStandards.md'
+          standards_context: 'Docs/Standards/TaskManagementStandards.md,Docs/Standards/TestingStandards.md'
           change_scope: '.github/workflows/testing-coverage-build-review.yml'
           epic_context: 'epic-181-build-workflows'
           analysis_depth: 'detailed'

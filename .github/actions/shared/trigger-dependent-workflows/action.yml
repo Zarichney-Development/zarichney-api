@@ -1,0 +1,181 @@
+name: 'Trigger Dependent Workflows'
+description: 'Trigger dependent workflows for automated PRs with proper context'
+author: 'Zarichney Development - WorkflowEngineer'
+
+inputs:
+  pr_number:
+    description: 'PR number to trigger workflows for'
+    required: true
+  pr_head_ref:
+    description: 'PR head reference'
+    required: true
+  github_token:
+    description: 'GitHub token with workflow permissions'
+    required: true
+  target_workflows:
+    description: 'Comma-separated list of workflow files to trigger'
+    required: false
+    default: 'testing-coverage-build-review.yml,build.yml'
+  coverage_baseline:
+    description: 'Coverage baseline for testing workflows'
+    required: false
+    default: '16'
+  enable_debug:
+    description: 'Enable debug logging'
+    required: false
+    default: 'false'
+
+outputs:
+  workflows_triggered:
+    description: 'Number of workflows successfully triggered'
+    value: ${{ steps.trigger_workflows.outputs.workflows_triggered }}
+  trigger_status:
+    description: 'Overall trigger status (success/partial/failed)'
+    value: ${{ steps.trigger_workflows.outputs.trigger_status }}
+  triggered_workflows:
+    description: 'List of successfully triggered workflows'
+    value: ${{ steps.trigger_workflows.outputs.triggered_workflows }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Trigger dependent workflows
+      id: trigger_workflows
+      shell: bash
+      run: |
+        echo "🚀 Triggering dependent workflows for PR #${{ inputs.pr_number }}"
+        echo "📋 Head Ref: ${{ inputs.pr_head_ref }}"
+        echo "🎯 Target Workflows: ${{ inputs.target_workflows }}"
+
+        # Initialize counters
+        WORKFLOWS_TRIGGERED=0
+        TRIGGERED_LIST=""
+        FAILED_LIST=""
+
+        # Convert comma-separated list to array
+        IFS=',' read -ra WORKFLOWS <<< "${{ inputs.target_workflows }}"
+
+        for workflow in "${WORKFLOWS[@]}"; do
+          workflow=$(echo "$workflow" | xargs)  # Trim whitespace
+          echo ""
+          echo "📋 Triggering workflow: $workflow"
+
+          # Determine workflow-specific parameters
+          case "$workflow" in
+            "testing-coverage-build-review.yml")
+              echo "🧪 Testing coverage workflow - adding coverage parameters"
+              if gh workflow run "$workflow" \
+                --ref "${{ inputs.pr_head_ref }}" \
+                --field test_filter="" \
+                --field coverage_baseline="${{ inputs.coverage_baseline }}" \
+                --field enable_iterative_review="true" \
+                --field force_new_iteration="false"; then
+
+                echo "✅ $workflow triggered successfully"
+                WORKFLOWS_TRIGGERED=$((WORKFLOWS_TRIGGERED + 1))
+                TRIGGERED_LIST="${TRIGGERED_LIST}${workflow},"
+              else
+                echo "❌ Failed to trigger $workflow"
+                FAILED_LIST="${FAILED_LIST}${workflow},"
+              fi
+              ;;
+
+            "build.yml")
+              echo "🔨 Build workflow - standard trigger"
+              if gh workflow run "$workflow" --ref "${{ inputs.pr_head_ref }}"; then
+                echo "✅ $workflow triggered successfully"
+                WORKFLOWS_TRIGGERED=$((WORKFLOWS_TRIGGERED + 1))
+                TRIGGERED_LIST="${TRIGGERED_LIST}${workflow},"
+              else
+                echo "❌ Failed to trigger $workflow"
+                FAILED_LIST="${FAILED_LIST}${workflow},"
+              fi
+              ;;
+
+            *)
+              echo "🔧 Generic workflow - standard trigger"
+              if gh workflow run "$workflow" --ref "${{ inputs.pr_head_ref }}"; then
+                echo "✅ $workflow triggered successfully"
+                WORKFLOWS_TRIGGERED=$((WORKFLOWS_TRIGGERED + 1))
+                TRIGGERED_LIST="${TRIGGERED_LIST}${workflow},"
+              else
+                echo "❌ Failed to trigger $workflow"
+                FAILED_LIST="${FAILED_LIST}${workflow},"
+              fi
+              ;;
+          esac
+
+          # Add delay between triggers to avoid rate limiting
+          if [[ "${{ inputs.enable_debug }}" == "true" ]]; then
+            echo "⏳ Debug mode: Waiting 5 seconds between triggers..."
+            sleep 5
+          else
+            sleep 2
+          fi
+        done
+
+        # Clean up lists (remove trailing commas)
+        TRIGGERED_LIST=$(echo "$TRIGGERED_LIST" | sed 's/,$//')
+        FAILED_LIST=$(echo "$FAILED_LIST" | sed 's/,$//')
+
+        # Determine overall status
+        TOTAL_WORKFLOWS=${#WORKFLOWS[@]}
+        if [ $WORKFLOWS_TRIGGERED -eq $TOTAL_WORKFLOWS ]; then
+          TRIGGER_STATUS="success"
+          echo ""
+          echo "✅ All workflows triggered successfully ($WORKFLOWS_TRIGGERED/$TOTAL_WORKFLOWS)"
+        elif [ $WORKFLOWS_TRIGGERED -gt 0 ]; then
+          TRIGGER_STATUS="partial"
+          echo ""
+          echo "⚠️ Partial success: $WORKFLOWS_TRIGGERED/$TOTAL_WORKFLOWS workflows triggered"
+          echo "❌ Failed workflows: $FAILED_LIST"
+        else
+          TRIGGER_STATUS="failed"
+          echo ""
+          echo "❌ No workflows triggered successfully"
+          echo "❌ All failed: $FAILED_LIST"
+        fi
+
+        # Set outputs
+        echo "workflows_triggered=$WORKFLOWS_TRIGGERED" >> $GITHUB_OUTPUT
+        echo "trigger_status=$TRIGGER_STATUS" >> $GITHUB_OUTPUT
+        echo "triggered_workflows=$TRIGGERED_LIST" >> $GITHUB_OUTPUT
+
+        # Debug information
+        if [[ "${{ inputs.enable_debug }}" == "true" ]]; then
+          echo ""
+          echo "🔍 Debug Information:"
+          echo "  - Total workflows: $TOTAL_WORKFLOWS"
+          echo "  - Successfully triggered: $WORKFLOWS_TRIGGERED"
+          echo "  - Triggered list: $TRIGGERED_LIST"
+          echo "  - Failed list: $FAILED_LIST"
+          echo "  - Overall status: $TRIGGER_STATUS"
+        fi
+
+        # Wait for workflow dispatch to process
+        echo ""
+        echo "⏳ Waiting 10 seconds for GitHub to process workflow dispatches..."
+        sleep 10
+
+        echo "🔗 PR #${{ inputs.pr_number }} dependent workflows should now be running"
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
+
+    - name: Summary annotation
+      shell: bash
+      run: |
+        STATUS="${{ steps.trigger_workflows.outputs.trigger_status }}"
+        TRIGGERED="${{ steps.trigger_workflows.outputs.workflows_triggered }}"
+        WORKFLOWS="${{ steps.trigger_workflows.outputs.triggered_workflows }}"
+
+        case "$STATUS" in
+          "success")
+            echo "::notice title=Workflow Triggers::All $TRIGGERED dependent workflows triggered successfully: $WORKFLOWS"
+            ;;
+          "partial")
+            echo "::warning title=Workflow Triggers::Partial success - $TRIGGERED workflows triggered: $WORKFLOWS"
+            ;;
+          "failed")
+            echo "::error title=Workflow Triggers::Failed to trigger dependent workflows for PR #${{ inputs.pr_number }}"
+            ;;
+        esac
