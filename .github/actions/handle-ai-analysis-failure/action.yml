@@ -34,7 +34,6 @@ runs:
         script: |
           const fs = require('fs');
 
-          // CACHE BUSTER: v2 - Fixed temporal dead zone issue (2025-09-29)
           // Build search patterns for this specific analysis type - MOVED TO TOP
           const analysisType = '${{ inputs.analysis-type }}';
           const analysisName = '${{ inputs.analysis-name }}';
@@ -47,7 +46,7 @@ runs:
               '/home/runner/work/_temp/claude-execution-output.json',
               '/tmp/claude-error.log'
             ];
-            
+
             for (const logFile of logFiles) {
               if (fs.existsSync(logFile)) {
                 const content = fs.readFileSync(logFile, 'utf8');
@@ -60,7 +59,7 @@ runs:
           } catch (error) {
             console.log('Could not read Claude output files:', error.message);
           }
-          
+
           // Determine the target for comments based on event context
           const eventName = context.eventName;
           const isPREvent = eventName === 'pull_request' || eventName === 'pull_request_target';
@@ -76,19 +75,19 @@ runs:
             console.log(`No PR/Issue context - posting to Epic Issue #${targetIssueNumber}`);
           } else {
             console.log('No target issue available for error reporting - skipping comment creation');
-            core.setFailed(isUsageLimitFailure ? 
-              `${analysisType} analysis failed due to Claude AI usage limit` : 
+            core.setFailed(isUsageLimitFailure ?
+              `${analysisType} analysis failed due to Claude AI usage limit` :
               `${analysisType} analysis failed due to technical error`);
             return; // Exit early if no target available
           }
-          
+
           // Find existing Claude comment to update
           const comments = await github.rest.issues.listComments({
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: targetIssueNumber,
           });
-          
+
           // Look for Claude error comment that needs updating
           const claudeComments = comments.data.filter(comment => {
             const body = comment.body || '';
@@ -108,58 +107,58 @@ runs:
               )
             );
           });
-          
+
           // Get the most recent Claude error comment for this analysis type
           const claudeComment = claudeComments.length > 0 ? claudeComments[claudeComments.length - 1] : null;
-          
+
           // Build standards link section if provided
           const standardsLink = '${{ inputs.standards-link }}';
-          const standardsSection = standardsLink ? 
+          const standardsSection = standardsLink ?
             `- Consider manual review against [${analysisName.replace(' Analysis', '')} Standards](${standardsLink})` :
             `- Consider manual ${analysisName.toLowerCase()} review`;
-          
-          const failureCommentBody = isUsageLimitFailure ? 
+
+          const failureCommentBody = isUsageLimitFailure ?
             `## 🚫 ${analysisType} Analysis Failed - Usage Limit Reached
-            
+
             **Analysis Status:** ❌ **FAILED**
-            
+
             The ${analysisName} could not be completed due to Claude AI usage limit being reached. This is a temporary issue that will resolve when the usage limit resets.
-            
+
             **Impact:**
             - This PR cannot receive automated ${analysisName.toLowerCase()} at this time
             ${standardsSection}
             - All other pipeline checks (build, tests, security) continue normally
-            
+
             **Next Steps:**
             - Wait for Claude usage limit to reset (typically resets daily)
             - Re-run the workflow or push a new commit to retry analysis
             - Consider manual review in the meantime
-            
+
             **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.
-            
+
             ---
             *Workflow Run: [#${{ inputs.run-number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ inputs.run-id }})*` :
             `## 🚫 ${analysisType} Analysis Failed - Technical Error
-            
+
             **Analysis Status:** ❌ **FAILED**
-            
+
             The ${analysisName} encountered a technical error and could not be completed.
-            
+
             **Impact:**
             - This PR cannot receive automated ${analysisName.toLowerCase()} at this time
             ${standardsSection}
             - All other pipeline checks (build, tests, security) continue normally
-            
+
             **Next Steps:**
             - Check workflow logs for specific error details
             - Re-run the workflow to retry analysis
             - Consider manual review in the meantime
-            
+
             **Workflow Status:** This failure will block the pipeline to ensure proper quality gates are maintained.
-            
+
             ---
             *Workflow Run: [#${{ inputs.run-number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ inputs.run-id }})*`;
-          
+
           if (claudeComment) {
             // Update existing Claude comment
             console.log(`Updating existing Claude comment ID: ${claudeComment.id}`);
@@ -179,8 +178,8 @@ runs:
               body: failureCommentBody
             });
           }
-          
+
           // Fail the workflow step to make the failure visible
-          core.setFailed(isUsageLimitFailure ? 
-            `${analysisType} analysis failed due to Claude AI usage limit` : 
+          core.setFailed(isUsageLimitFailure ?
+            `${analysisType} analysis failed due to Claude AI usage limit` :
             `${analysisType} analysis failed due to technical error`);
