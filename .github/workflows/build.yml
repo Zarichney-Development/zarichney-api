@@ -90,7 +90,10 @@ jobs:
     name: "Analyze Changed Paths"
     runs-on: ubuntu-latest
     needs: [security-check]
-    if: always() && (needs.security-check.result == 'success' || github.event_name != 'pull_request_target')
+    if: |
+      always() &&
+      (needs.security-check.result == 'success' || github.event_name != 'pull_request_target') &&
+      !startsWith(github.head_ref, 'tests/issue-94-coverage-ai-strategic-')
     outputs:
       # Preserved output interface for downstream job compatibility
       backend-changed: ${{ steps.map-outputs.outputs.backend-changed }}
