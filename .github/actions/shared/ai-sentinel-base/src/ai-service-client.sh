@@ -8,7 +8,7 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/security-validation.sh"
 
 # AI Service Configuration
-readonly DEFAULT_MODEL="gpt-5-nano-2025-08-07"
+readonly DEFAULT_MODEL="gpt-4o"
 readonly DEFAULT_MAX_TOKENS=4000
 readonly DEFAULT_TEMPERATURE=0.1
 readonly REQUEST_TIMEOUT="${TIMEOUT_SECONDS:-300}"
