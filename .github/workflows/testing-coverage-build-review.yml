@@ -881,6 +881,7 @@ jobs:
             const nextActions = ${{ needs.iterative_ai_review.outputs && needs.iterative_ai_review.outputs.next_actions && toJSON(needs.iterative_ai_review.outputs.next_actions) || '"[]"' }};
             const epicProgress = ${{ needs.iterative_ai_review.outputs && needs.iterative_ai_review.outputs.epic_progress && toJSON(needs.iterative_ai_review.outputs.epic_progress) || '"N/A"' }};
             const blockingIssues = ${{ needs.iterative_ai_review.outputs && needs.iterative_ai_review.outputs.blocking_issues && toJSON(needs.iterative_ai_review.outputs.blocking_issues) || '"[]"' }};
+            const nextSteps = ${{ needs.ai_coverage_analysis.outputs && needs.ai_coverage_analysis.outputs.next_steps && toJSON(needs.ai_coverage_analysis.outputs.next_steps) || '"[]"' }};
 
             // Parse todo summary for display
             let todoDisplay = 'No active to-do items';
@@ -944,9 +945,16 @@ jobs:
             ${standardsAnalysis}
 
             ### 🎯 Next Steps
-            ${needs.ai_coverage_analysis.outputs.next_steps ?
-              JSON.parse(needs.ai_coverage_analysis.outputs.next_steps).map(step => `- ${step}`).join('\n') :
-              'Follow standard coverage improvement practices'}
+            ${(() => {
+              try {
+                const steps = JSON.parse(nextSteps);
+                return Array.isArray(steps) && steps.length > 0 ?
+                  steps.map(step => `- ${step}`).join('\n') :
+                  'Follow standard coverage improvement practices';
+              } catch (e) {
+                return 'Follow standard coverage improvement practices';
+              }
+            })()}
 
             ---
             *🚀 AI-powered analysis via Epic #181 framework with iterative review • [Workflow Run](${context.payload.repository.html_url}/actions/runs/${context.runId})*`;
