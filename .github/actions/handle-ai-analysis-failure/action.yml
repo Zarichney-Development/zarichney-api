@@ -33,7 +33,12 @@ runs:
         github-token: ${{ inputs.github-token }}
         script: |
           const fs = require('fs');
-          
+
+          // Build search patterns for this specific analysis type - MOVED TO TOP
+          const analysisType = '${{ inputs.analysis-type }}';
+          const analysisName = '${{ inputs.analysis-name }}';
+          const analysisEmoji = '${{ inputs.analysis-emoji }}';
+
           // Check if this was a Claude usage limit failure
           let isUsageLimitFailure = false;
           try {
@@ -82,11 +87,6 @@ runs:
             repo: context.repo.repo,
             issue_number: targetIssueNumber,
           });
-          
-          // Build search patterns for this specific analysis type
-          const analysisType = '${{ inputs.analysis-type }}';
-          const analysisName = '${{ inputs.analysis-name }}';
-          const analysisEmoji = '${{ inputs.analysis-emoji }}';
           
           // Look for Claude error comment that needs updating
           const claudeComments = comments.data.filter(comment => {
