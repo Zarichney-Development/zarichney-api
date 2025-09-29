@@ -33,7 +33,12 @@ runs:
         github-token: ${{ inputs.github-token }}
         script: |
           const fs = require('fs');
-          
+
+          // Build search patterns for this specific analysis type - MOVED TO TOP
+          const analysisType = '${{ inputs.analysis-type }}';
+          const analysisName = '${{ inputs.analysis-name }}';
+          const analysisEmoji = '${{ inputs.analysis-emoji }}';
+
           // Check if this was a Claude usage limit failure
           let isUsageLimitFailure = false;
           try {
@@ -41,7 +46,7 @@ runs:
               '/home/runner/work/_temp/claude-execution-output.json',
               '/tmp/claude-error.log'
             ];
-            
+
             for (const logFile of logFiles) {
               if (fs.existsSync(logFile)) {
                 const content = fs.readFileSync(logFile, 'utf8');
@@ -54,7 +59,7 @@ runs:
           } catch (error) {
             console.log('Could not read Claude output files:', error.message);
           }
-          
+
           // Determine the target for comments based on event context
           const eventName = context.eventName;
           const isPREvent = eventName === 'pull_request' || eventName === 'pull_request_target';
@@ -70,23 +75,18 @@ runs:
             console.log(`No PR/Issue context - posting to Epic Issue #${targetIssueNumber}`);
           } else {
             console.log('No target issue available for error reporting - skipping comment creation');
-            core.setFailed(isUsageLimitFailure ? 
-              `${analysisType} analysis failed due to Claude AI usage limit` : 
+            core.setFailed(isUsageLimitFailure ?
+              `${analysisType} analysis failed due to Claude AI usage limit` :
               `${analysisType} analysis failed due to technical error`);
             return; // Exit early if no target available
           }
-          
+
           // Find existing Claude comment to update
           const comments = await github.rest.issues.listComments({
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: targetIssueNumber,
           });
-          
-          // Build search patterns for this specific analysis type
-          const analysisType = '${{ inputs.analysis-type }}';
-          const analysisName = '${{ inputs.analysis-name }}';
-          const analysisEmoji = '${{ inputs.analysis-emoji }}';
           
           // Look for Claude error comment that needs updating
           const claudeComments = comments.data.filter(comment => {
