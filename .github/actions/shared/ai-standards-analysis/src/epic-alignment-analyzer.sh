@@ -78,8 +78,12 @@ EOF
         return 1
     fi
 
-    # Output epic alignment
-    echo "epic_alignment=$(cat "$EPIC_ALIGNMENT_FILE" | jq -c .)" >> "$GITHUB_OUTPUT"
+    # Output epic alignment using heredoc format for complex JSON
+    {
+        echo "epic_alignment<<EOF"
+        cat "$EPIC_ALIGNMENT_FILE" | jq -c .
+        echo "EOF"
+    } >> "$GITHUB_OUTPUT"
 
     echo "✅ Epic alignment analysis successful"
     return 0
@@ -630,8 +634,12 @@ generate_architectural_recommendations() {
         return 1
     fi
 
-    # Output architectural recommendations
-    echo "architectural_recommendations=$(cat "$ARCHITECTURAL_RECOMMENDATIONS_FILE" | jq -c .)" >> "$GITHUB_OUTPUT"
+    # Output architectural recommendations using heredoc format for complex JSON
+    {
+        echo "architectural_recommendations<<EOF"
+        cat "$ARCHITECTURAL_RECOMMENDATIONS_FILE" | jq -c .
+        echo "EOF"
+    } >> "$GITHUB_OUTPUT"
 
     echo "✅ Architectural recommendations generation successful"
     return 0

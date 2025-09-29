@@ -127,8 +127,12 @@ EOF
         return 1
     fi
 
-    # Output standards analysis
-    echo "standards_analysis=$(cat "$STANDARDS_ANALYSIS_FILE" | jq -c .)" >> "$GITHUB_OUTPUT"
+    # Output standards analysis using heredoc format for complex JSON
+    {
+        echo "standards_analysis<<EOF"
+        cat "$STANDARDS_ANALYSIS_FILE" | jq -c .
+        echo "EOF"
+    } >> "$GITHUB_OUTPUT"
 
     echo "✅ Standards intelligence extraction successful"
     return 0
@@ -264,8 +268,12 @@ EOF
     # Write compliance score to file
     echo "$compliance_result" > "$COMPLIANCE_SCORE_FILE"
 
-    # Output compliance score
-    echo "compliance_score=$(cat "$COMPLIANCE_SCORE_FILE" | jq -c .)" >> "$GITHUB_OUTPUT"
+    # Output compliance score using heredoc format for complex JSON
+    {
+        echo "compliance_score<<EOF"
+        cat "$COMPLIANCE_SCORE_FILE" | jq -c .
+        echo "EOF"
+    } >> "$GITHUB_OUTPUT"
 
     echo "✅ Compliance score calculation successful: $overall_score/100"
     return 0
@@ -330,8 +338,12 @@ EOF
     # Write priority violations to file
     echo "$priority_violations" > "$PRIORITY_VIOLATIONS_FILE"
 
-    # Output priority violations
-    echo "priority_violations=$(cat "$PRIORITY_VIOLATIONS_FILE" | jq -c .)" >> "$GITHUB_OUTPUT"
+    # Output priority violations using heredoc format for complex JSON
+    {
+        echo "priority_violations<<EOF"
+        cat "$PRIORITY_VIOLATIONS_FILE" | jq -c .
+        echo "EOF"
+    } >> "$GITHUB_OUTPUT"
 
     echo "✅ Priority violation identification successful"
     return 0
@@ -467,8 +479,12 @@ EOF
     # Write improvement roadmap to file
     echo "$improvement_roadmap" > "$IMPROVEMENT_ROADMAP_FILE"
 
-    # Output improvement roadmap
-    echo "improvement_roadmap=$(cat "$IMPROVEMENT_ROADMAP_FILE" | jq -c .)" >> "$GITHUB_OUTPUT"
+    # Output improvement roadmap using heredoc format for complex JSON
+    {
+        echo "improvement_roadmap<<EOF"
+        cat "$IMPROVEMENT_ROADMAP_FILE" | jq -c .
+        echo "EOF"
+    } >> "$GITHUB_OUTPUT"
 
     echo "✅ Improvement roadmap generation successful"
     return 0
