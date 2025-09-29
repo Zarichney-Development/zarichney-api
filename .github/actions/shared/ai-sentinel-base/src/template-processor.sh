@@ -127,8 +127,8 @@ replace_placeholder() {
         security_log "DEBUG" "Replacing {{$placeholder}} with: $sanitized_value"
     fi
 
-    # Perform replacement
-    echo "$content" | sed "s/{{$placeholder}}/$sanitized_value/g"
+    # Perform replacement using | delimiter to avoid conflicts with forward slashes in paths/URLs
+    echo "$content" | sed "s|{{$placeholder}}|$sanitized_value|g"
 }
 
 # Special handling for context data placeholder
@@ -153,7 +153,7 @@ replace_context_placeholder() {
     formatted_context=$(format_context_for_template "$sanitized_context")
 
     # Replace placeholder
-    echo "$content" | sed "s/{{CONTEXT_DATA}}/$formatted_context/g"
+    echo "$content" | sed "s|{{CONTEXT_DATA}}|$formatted_context|g"
 }
 
 # Format context data for safe template insertion
