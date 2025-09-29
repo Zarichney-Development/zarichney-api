@@ -24,24 +24,33 @@ AI_METADATA=""
 
 # Initialize AI service client
 init_ai_client() {
+    echo "[DEBUG] Initializing AI service client" >&2
     security_log "INFO" "Initializing AI service client"
 
     # Validate API key presence
     if [[ -z "${OPENAI_API_KEY:-}" ]]; then
+        echo "[DEBUG] OpenAI API key not provided" >&2
         security_log "ERROR" "OpenAI API key not provided"
         return 1
     fi
+    echo "[DEBUG] OpenAI API key is present" >&2
 
     # Validate API key format (basic check)
     if [[ ! "${OPENAI_API_KEY}" =~ ^sk-[a-zA-Z0-9]{48,}$ ]]; then
+        echo "[DEBUG] API key format may be invalid (not legacy format)" >&2
         security_log "WARN" "API key format may be invalid"
+    else
+        echo "[DEBUG] API key format appears valid (legacy format)" >&2
     fi
 
     # Test API connectivity
+    echo "[DEBUG] Testing API connectivity..." >&2
     if ! test_api_connectivity; then
+        echo "[DEBUG] API connectivity test failed" >&2
         security_log "ERROR" "API connectivity test failed"
         return 1
     fi
+    echo "[DEBUG] API connectivity test passed" >&2
 
     security_log "INFO" "AI service client initialized successfully"
     return 0
@@ -49,12 +58,14 @@ init_ai_client() {
 
 # Test API connectivity
 test_api_connectivity() {
+    echo "[DEBUG] Testing API connectivity" >&2
     security_log "INFO" "Testing API connectivity"
 
     local response
     local status_code
 
     # Make a simple API test call
+    echo "[DEBUG] Making curl request to ${API_BASE_URL}/models" >&2
     response=$(curl -s -w "\n%{http_code}" \
         -H "Authorization: Bearer ${OPENAI_API_KEY}" \
         -H "Content-Type: application/json" \
@@ -64,14 +75,20 @@ test_api_connectivity() {
 
     status_code=$(echo "$response" | tail -n1)
     response=$(echo "$response" | head -n -1)
+    echo "[DEBUG] API response status code: $status_code" >&2
 
     if [[ "$status_code" == "200" ]]; then
+        echo "[DEBUG] API connectivity test passed" >&2
         security_log "INFO" "API connectivity test passed"
         return 0
     elif [[ "$status_code" == "401" ]]; then
+        echo "[DEBUG] API authentication failed - invalid API key" >&2
+        echo "[DEBUG] Response body: $response" >&2
         security_log "ERROR" "API authentication failed - invalid API key"
         return 1
     else
+        echo "[DEBUG] API connectivity test returned status: $status_code" >&2
+        echo "[DEBUG] Response body: $response" >&2
         security_log "WARN" "API connectivity test returned status: $status_code"
         # Don't fail on warnings for other status codes
         return 0
@@ -80,18 +97,24 @@ test_api_connectivity() {
 
 # Execute AI analysis with retry logic
 execute_ai_analysis_with_retry() {
+    echo "[DEBUG] Starting AI analysis execution with retry logic" >&2
     security_log "INFO" "Starting AI analysis execution with retry logic"
 
     if [[ ! -f "${PROCESSED_TEMPLATE:-}" ]]; then
+        echo "[DEBUG] Processed template not found: ${PROCESSED_TEMPLATE:-}" >&2
         security_log "ERROR" "Processed template not found: ${PROCESSED_TEMPLATE:-}"
         return 1
     fi
+    echo "[DEBUG] Processed template found: ${PROCESSED_TEMPLATE}" >&2
 
     # Initialize AI client
+    echo "[DEBUG] Initializing AI client..." >&2
     if ! init_ai_client; then
+        echo "[DEBUG] AI client initialization failed" >&2
         security_log "ERROR" "AI client initialization failed"
         return 1
     fi
+    echo "[DEBUG] AI client initialized successfully" >&2
 
     local attempt=1
     local max_attempts="${MAX_RETRIES:-3}"
