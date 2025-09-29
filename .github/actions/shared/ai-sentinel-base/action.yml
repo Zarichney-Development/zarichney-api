@@ -32,7 +32,7 @@ inputs:
   debug_mode:
     description: 'Enable detailed debug logging'
     required: false
-    default: 'true'
+    default: 'false'
 
 outputs:
   analysis_result:
@@ -172,19 +172,6 @@ runs:
         source ${{ github.action_path }}/src/ai-service-client.sh
 
         echo "🤖 Executing AI analysis..."
-        echo "DEBUG_MODE: $DEBUG_MODE"
-        echo "MAX_RETRIES: $MAX_RETRIES"
-        echo "OPENAI_API_KEY present: $([ -n "$OPENAI_API_KEY" ] && echo "yes" || echo "no")"
-        echo "PROCESSED_TEMPLATE: $PROCESSED_TEMPLATE"
-
-        # Test API key format
-        if [[ "$OPENAI_API_KEY" =~ ^sk-proj- ]]; then
-          echo "✅ Detected project-scoped API key format"
-        elif [[ "$OPENAI_API_KEY" =~ ^sk-[a-zA-Z0-9]{48,}$ ]]; then
-          echo "✅ Detected legacy API key format"
-        else
-          echo "⚠️ API key format may be non-standard"
-        fi
 
         # Initialize analysis metadata
         start_time=$(date +%s)

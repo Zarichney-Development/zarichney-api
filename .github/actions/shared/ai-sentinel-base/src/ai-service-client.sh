@@ -24,33 +24,24 @@ AI_METADATA=""
 
 # Initialize AI service client
 init_ai_client() {
-    echo "[DEBUG] Initializing AI service client" >&2
     security_log "INFO" "Initializing AI service client"
 
     # Validate API key presence
     if [[ -z "${OPENAI_API_KEY:-}" ]]; then
-        echo "[DEBUG] OpenAI API key not provided" >&2
         security_log "ERROR" "OpenAI API key not provided"
         return 1
     fi
-    echo "[DEBUG] OpenAI API key is present" >&2
 
     # Validate API key format (basic check)
     if [[ ! "${OPENAI_API_KEY}" =~ ^sk-[a-zA-Z0-9]{48,}$ ]]; then
-        echo "[DEBUG] API key format may be invalid (not legacy format)" >&2
         security_log "WARN" "API key format may be invalid"
-    else
-        echo "[DEBUG] API key format appears valid (legacy format)" >&2
     fi
 
     # Test API connectivity
-    echo "[DEBUG] Testing API connectivity..." >&2
     if ! test_api_connectivity; then
-        echo "[DEBUG] API connectivity test failed" >&2
         security_log "ERROR" "API connectivity test failed"
         return 1
     fi
-    echo "[DEBUG] API connectivity test passed" >&2
 
     security_log "INFO" "AI service client initialized successfully"
     return 0
@@ -58,14 +49,12 @@ init_ai_client() {
 
 # Test API connectivity
 test_api_connectivity() {
-    echo "[DEBUG] Testing API connectivity" >&2
     security_log "INFO" "Testing API connectivity"
 
     local response
     local status_code
 
     # Make a simple API test call
-    echo "[DEBUG] Making curl request to ${API_BASE_URL}/models" >&2
     response=$(curl -s -w "\n%{http_code}" \
         -H "Authorization: Bearer ${OPENAI_API_KEY}" \
         -H "Content-Type: application/json" \
@@ -75,20 +64,14 @@ test_api_connectivity() {
 
     status_code=$(echo "$response" | tail -n1)
     response=$(echo "$response" | head -n -1)
-    echo "[DEBUG] API response status code: $status_code" >&2
 
     if [[ "$status_code" == "200" ]]; then
-        echo "[DEBUG] API connectivity test passed" >&2
         security_log "INFO" "API connectivity test passed"
         return 0
     elif [[ "$status_code" == "401" ]]; then
-        echo "[DEBUG] API authentication failed - invalid API key" >&2
-        echo "[DEBUG] Response body: $response" >&2
         security_log "ERROR" "API authentication failed - invalid API key"
         return 1
     else
-        echo "[DEBUG] API connectivity test returned status: $status_code" >&2
-        echo "[DEBUG] Response body: $response" >&2
         security_log "WARN" "API connectivity test returned status: $status_code"
         # Don't fail on warnings for other status codes
         return 0
@@ -97,44 +80,33 @@ test_api_connectivity() {
 
 # Execute AI analysis with retry logic
 execute_ai_analysis_with_retry() {
-    echo "[DEBUG] Starting AI analysis execution with retry logic" >&2
     security_log "INFO" "Starting AI analysis execution with retry logic"
 
     if [[ ! -f "${PROCESSED_TEMPLATE:-}" ]]; then
-        echo "[DEBUG] Processed template not found: ${PROCESSED_TEMPLATE:-}" >&2
         security_log "ERROR" "Processed template not found: ${PROCESSED_TEMPLATE:-}"
         return 1
     fi
-    echo "[DEBUG] Processed template found: ${PROCESSED_TEMPLATE}" >&2
 
     # Initialize AI client
-    echo "[DEBUG] Initializing AI client..." >&2
     if ! init_ai_client; then
-        echo "[DEBUG] AI client initialization failed" >&2
         security_log "ERROR" "AI client initialization failed"
         return 1
     fi
-    echo "[DEBUG] AI client initialized successfully" >&2
 
     local attempt=1
     local max_attempts="${MAX_RETRIES:-3}"
-    echo "[DEBUG] Starting retry loop with max_attempts=$max_attempts" >&2
 
     while [[ $attempt -le $max_attempts ]]; do
-        echo "[DEBUG] AI analysis attempt $attempt of $max_attempts" >&2
         security_log "INFO" "AI analysis attempt $attempt of $max_attempts"
 
         if execute_ai_analysis; then
-            echo "[DEBUG] AI analysis completed successfully on attempt $attempt" >&2
             security_log "INFO" "AI analysis completed successfully on attempt $attempt"
             return 0
         fi
-        echo "[DEBUG] AI analysis failed on attempt $attempt" >&2
 
         if [[ $attempt -lt $max_attempts ]]; then
             local delay_index=$((attempt - 1))
             local delay=${RETRY_DELAYS[$delay_index]:-15}
-            echo "[DEBUG] Retrying in ${delay} seconds..." >&2
             security_log "INFO" "Retrying in ${delay} seconds..."
             sleep "$delay"
         fi
@@ -142,38 +114,30 @@ execute_ai_analysis_with_retry() {
         ((attempt++))
     done
 
-    echo "[DEBUG] AI analysis failed after $max_attempts attempts" >&2
     security_log "ERROR" "AI analysis failed after $max_attempts attempts"
     return 1
 }
 
 # Execute single AI analysis attempt
 execute_ai_analysis() {
-    echo "[DEBUG] Executing AI analysis" >&2
     security_log "INFO" "Executing AI analysis"
 
     local template_content
-    echo "[DEBUG] Reading processed template from $PROCESSED_TEMPLATE" >&2
     template_content=$(cat "$PROCESSED_TEMPLATE")
 
     if [[ -z "$template_content" ]]; then
-        echo "[DEBUG] Template content is empty" >&2
         security_log "ERROR" "Template content is empty"
         return 1
     fi
-    echo "[DEBUG] Template content loaded (${#template_content} bytes)" >&2
 
     # Prepare API request
     local request_payload
-    echo "[DEBUG] Creating API request payload" >&2
     request_payload=$(create_api_request_payload "$template_content")
 
     if [[ -z "$request_payload" ]]; then
-        echo "[DEBUG] Failed to create API request payload" >&2
         security_log "ERROR" "Failed to create API request payload"
         return 1
     fi
-    echo "[DEBUG] API request payload created (${#request_payload} bytes)" >&2
 
     # Execute API request
     local response
@@ -181,7 +145,6 @@ execute_ai_analysis() {
     local start_time
     start_time=$(date +%s)
 
-    echo "[DEBUG] Sending POST request to ${API_BASE_URL}/chat/completions" >&2
     response=$(curl -s -w "\n%{http_code}" \
         -X POST \
         -H "Authorization: Bearer ${OPENAI_API_KEY}" \
@@ -198,44 +161,31 @@ execute_ai_analysis() {
     status_code=$(echo "$response" | tail -n1)
     response=$(echo "$response" | head -n -1)
 
-    echo "[DEBUG] API request completed - Status: $status_code, Duration: ${request_duration}s" >&2
     security_log "INFO" "API request completed - Status: $status_code, Duration: ${request_duration}s"
 
     # Handle response based on status code
-    echo "[DEBUG] Processing response with status code: $status_code" >&2
     case "$status_code" in
         200)
-            echo "[DEBUG] Success response - processing..." >&2
             if process_successful_response "$response" "$request_duration"; then
-                echo "[DEBUG] Response processed successfully" >&2
                 return 0
             else
-                echo "[DEBUG] Failed to process successful response" >&2
                 security_log "ERROR" "Failed to process successful response"
                 return 1
             fi
             ;;
         401)
-            echo "[DEBUG] Authentication failed - invalid API key" >&2
-            echo "[DEBUG] Response: $response" >&2
             security_log "ERROR" "Authentication failed - invalid API key"
             return 1
             ;;
         429)
-            echo "[DEBUG] Rate limit exceeded - will retry" >&2
-            echo "[DEBUG] Response: $response" >&2
             security_log "WARN" "Rate limit exceeded - will retry"
             return 1
             ;;
         500|502|503|504)
-            echo "[DEBUG] Server error (${status_code}) - will retry" >&2
-            echo "[DEBUG] Response: $response" >&2
             security_log "WARN" "Server error (${status_code}) - will retry"
             return 1
             ;;
         *)
-            echo "[DEBUG] Unexpected API response - Status: $status_code" >&2
-            echo "[DEBUG] Response: $response" >&2
             security_log "ERROR" "Unexpected API response - Status: $status_code"
             if [[ "${DEBUG_MODE:-false}" == "true" ]]; then
                 security_log "DEBUG" "Response: $response"
