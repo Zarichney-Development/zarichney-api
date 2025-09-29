@@ -9,6 +9,12 @@ on:
       - '.github/scripts/**'
       - '.github/workflows/**'
       - '.github/actions/**'
+  workflow_run:
+    workflows: ["Automated Workflow - Auto-Testing Coverage - Execution"]
+    types:
+      - completed
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       test_filter:
