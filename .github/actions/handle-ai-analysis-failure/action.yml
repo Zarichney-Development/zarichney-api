@@ -34,6 +34,7 @@ runs:
         script: |
           const fs = require('fs');
 
+          // CACHE BUSTER: v2 - Fixed temporal dead zone issue (2025-09-29)
           // Build search patterns for this specific analysis type - MOVED TO TOP
           const analysisType = '${{ inputs.analysis-type }}';
           const analysisName = '${{ inputs.analysis-name }}';
