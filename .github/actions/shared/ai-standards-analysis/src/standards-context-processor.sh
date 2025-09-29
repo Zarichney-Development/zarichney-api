@@ -181,8 +181,12 @@ EOF
         return 1
     fi
 
-    # Output enhanced context for AI analysis
-    echo "enhanced_context=$(cat "$ENHANCED_CONTEXT_FILE" | jq -c .)" >> "$GITHUB_OUTPUT"
+    # Output enhanced context for AI analysis using heredoc format for complex JSON
+    {
+        echo "enhanced_context<<EOF"
+        cat "$ENHANCED_CONTEXT_FILE" | jq -c .
+        echo "EOF"
+    } >> "$GITHUB_OUTPUT"
 
     echo "✅ Standards context processing successful"
     return 0
@@ -410,7 +414,11 @@ EOF
     jq --argjson specs "$component_specs" '.component_specifications = $specs' "$ENHANCED_CONTEXT_FILE" > "${ENHANCED_CONTEXT_FILE}.tmp"
     mv "${ENHANCED_CONTEXT_FILE}.tmp" "$ENHANCED_CONTEXT_FILE"
 
-    echo "component_context=$(cat "$COMPONENT_CONTEXT_FILE" | jq -c .)" >> "$GITHUB_OUTPUT"
+    {
+        echo "component_context<<EOF"
+        cat "$COMPONENT_CONTEXT_FILE" | jq -c .
+        echo "EOF"
+    } >> "$GITHUB_OUTPUT"
     echo "✅ Component-specific context generated"
     return 0
 }
@@ -471,7 +479,11 @@ EOF
     jq --argjson reqs "$epic_requirements" '.epic_alignment_requirements = $reqs' "$ENHANCED_CONTEXT_FILE" > "${ENHANCED_CONTEXT_FILE}.tmp"
     mv "${ENHANCED_CONTEXT_FILE}.tmp" "$ENHANCED_CONTEXT_FILE"
 
-    echo "epic_prioritization_context=$(cat "$EPIC_CONTEXT_FILE" | jq -c .)" >> "$GITHUB_OUTPUT"
+    {
+        echo "epic_prioritization_context<<EOF"
+        cat "$EPIC_CONTEXT_FILE" | jq -c .
+        echo "EOF"
+    } >> "$GITHUB_OUTPUT"
     echo "✅ Epic-aware prioritization context generated"
     return 0
 }
