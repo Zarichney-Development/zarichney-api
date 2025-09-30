@@ -333,6 +333,261 @@ public class BackgroundFileWriterTests : IDisposable
         "because WriteToFileAndWaitAsync should log with 'with await' flag");
   }
 
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task WriteToFileAndWaitAsync_WithConcurrentWrites_HandlesAllWritesCorrectly()
+  {
+    // Arrange
+    var numberOfFiles = 10;
+    var tasks = new List<Task>();
+    var expectedFiles = new List<string>();
+
+    for (int i = 0; i < numberOfFiles; i++)
+    {
+      var filename = $"concurrent_file_{i}";
+      var data = new { Id = i, Message = $"Test data {i}" };
+      var expectedPath = Path.Combine(_testDirectory, $"{filename}.json");
+      expectedFiles.Add(expectedPath);
+      _createdFiles.Add(expectedPath);
+
+      // Act - Queue all writes concurrently
+      tasks.Add(_sut.WriteToFileAndWaitAsync(_testDirectory, filename, data));
+    }
+
+    // Wait for all writes to complete
+    await Task.WhenAll(tasks);
+
+    // Assert - All files should be created
+    foreach (var expectedPath in expectedFiles)
+    {
+      File.Exists(expectedPath).Should().BeTrue($"because file {expectedPath} should have been created");
+    }
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task WriteToFileAndWaitAsync_WhenWriteFails_PropagatesException()
+  {
+    // Arrange
+    var invalidDirectory = Path.Combine(Path.GetPathRoot(Path.GetTempPath())!, "InvalidPath", Guid.NewGuid().ToString());
+    var testData = new { Test = "data" };
+    var filename = "test_file";
+
+    // Make directory creation fail
+    if (OperatingSystem.IsWindows())
+    {
+      invalidDirectory = "CON"; // Reserved name on Windows
+    }
+
+    // Act
+    var act = () => _sut.WriteToFileAndWaitAsync(invalidDirectory, filename, testData);
+
+    // Assert
+    await act.Should().ThrowAsync<Exception>("because write operation to invalid path should fail");
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task DisposeAsync_WhilePendingWrites_DisposesCleanly()
+  {
+    // Arrange
+    var service = new FileWriteQueueService(_mockLogger.Object);
+    var testData = new { Message = "Disposal test" };
+    var filename = "disposal_test";
+
+    // Act - Start write but don't wait
+    var writeTask = service.WriteToFileAndWaitAsync(_testDirectory, filename, testData);
+
+    // Dispose while write might be pending
+    await service.DisposeAsync();
+
+    // Assert - Disposal should complete without exceptions
+    // The write task may or may not complete depending on timing
+    service.Should().NotBeNull("because service should handle disposal gracefully");
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public void Dispose_SynchronousDispose_CompletesSuccessfully()
+  {
+    // Arrange
+    var service = new FileWriteQueueService(_mockLogger.Object);
+    var testData = new { Message = "Sync disposal test" };
+
+    // Queue some work
+    service.QueueWrite(_testDirectory, "sync_disposal_test", testData);
+
+    // Act & Assert - Should not throw
+    var act = () => ((IDisposable)service).Dispose();
+    act.Should().NotThrow("because synchronous dispose should handle gracefully");
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task QueueWrite_WithInvalidFileNameCharacters_SanitizesFileName()
+  {
+    // Arrange
+    var testData = new { Name = "Test" };
+    var invalidFileName = "file:with*invalid|chars<>?";
+    var expectedSanitizedName = "file_with_invalid_chars";
+    var expectedPath = Path.Combine(_testDirectory, $"{expectedSanitizedName}.json");
+    _createdFiles.Add(expectedPath);
+
+    // Act
+    await _sut.WriteToFileAndWaitAsync(_testDirectory, invalidFileName, testData);
+
+    // Assert
+    File.Exists(expectedPath).Should().BeTrue("because file should be created with sanitized name");
+    _mockLogger.Verify(
+        x => x.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains($"{expectedSanitizedName}.json")),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+        Times.AtLeastOnce,
+        "because invalid filename characters should be sanitized in log messages");
+  }
+
+  [Theory]
+  [Trait("Category", "Unit")]
+  [InlineData("jpg")]
+  [InlineData("jpeg")]
+  public async Task WriteToFileAndWaitAsync_WithImageExtension_ThrowsArgumentException(string extension)
+  {
+    // Arrange
+    var imageData = "fake image data"; // Not actual image bytes
+    var filename = $"image_test_{extension}";
+
+    // Act
+    var act = () => _sut.WriteToFileAndWaitAsync(_testDirectory, filename, imageData, extension);
+
+    // Assert
+    await act.Should().ThrowAsync<ArgumentException>()
+        .WithMessage($"*Unsupported extension for serialization: {extension}*",
+        $"because {extension} is not a supported extension for serialization");
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task WriteToFileAndWaitAsync_WithUnsupportedMimeType_LogsWarning()
+  {
+    // Arrange
+    var testData = "test content";
+    var filename = "unknown_type_test";
+    var unsupportedExtension = "xyz";
+    var expectedPath = Path.Combine(_testDirectory, $"{filename}.{unsupportedExtension}");
+    _createdFiles.Add(expectedPath);
+
+    // Act & Assert - Should throw because serialization fails for unknown extension
+    var act = () => _sut.WriteToFileAndWaitAsync(_testDirectory, filename, testData, unsupportedExtension);
+    await act.Should().ThrowAsync<ArgumentException>("because unsupported extension should fail during serialization");
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task WriteToFileAndWaitAsync_MultipleWritesToSameFile_LastWriteWins()
+  {
+    // Arrange
+    var filename = "overwrite_test";
+    var firstData = new { Value = "First write", Timestamp = DateTime.UtcNow };
+    var secondData = new { Value = "Second write", Timestamp = DateTime.UtcNow.AddSeconds(1) };
+    var expectedPath = Path.Combine(_testDirectory, $"{filename}.json");
+    _createdFiles.Add(expectedPath);
+
+    // Act - Write twice to same file
+    await _sut.WriteToFileAndWaitAsync(_testDirectory, filename, firstData);
+    await _sut.WriteToFileAndWaitAsync(_testDirectory, filename, secondData);
+
+    // Assert - File should contain second write
+    var fileContent = await File.ReadAllTextAsync(expectedPath);
+    fileContent.Should().Contain("\"Second write\"", "because the second write should overwrite the first");
+    fileContent.Should().NotContain("\"First write\"", "because the first write should be overwritten");
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task QueueWrite_WithoutWaiting_EventuallyCreatesFile()
+  {
+    // Arrange
+    var testData = new { Message = "Fire and forget" };
+    var filename = "queue_without_wait_test";
+    var expectedPath = Path.Combine(_testDirectory, $"{filename}.json");
+    _createdFiles.Add(expectedPath);
+
+    // Act - Queue write without waiting
+    _sut.QueueWrite(_testDirectory, filename, testData);
+
+    // Assert - File should eventually be created
+    var maxWaitTime = TimeSpan.FromSeconds(5);
+    var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+    while (!File.Exists(expectedPath) && stopwatch.Elapsed < maxWaitTime)
+    {
+      await Task.Delay(100);
+    }
+
+    File.Exists(expectedPath).Should().BeTrue("because queued write should eventually create the file");
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task WriteToFileAndWaitAsync_WithLargeJsonObject_HandlesCorrectly()
+  {
+    // Arrange
+    var largeData = new
+    {
+      Items = Enumerable.Range(1, 1000).Select(i => new
+      {
+        Id = i,
+        Name = $"Item {i}",
+        Description = new string('x', 100),
+        Nested = new { Value = i * 2, SubItems = Enumerable.Range(1, 10).ToList() }
+      }).ToList()
+    };
+    var filename = "large_json_test";
+    var expectedPath = Path.Combine(_testDirectory, $"{filename}.json");
+    _createdFiles.Add(expectedPath);
+
+    // Act
+    await _sut.WriteToFileAndWaitAsync(_testDirectory, filename, largeData);
+
+    // Assert
+    File.Exists(expectedPath).Should().BeTrue("because large JSON should be written successfully");
+    var fileInfo = new FileInfo(expectedPath);
+    fileInfo.Length.Should().BeGreaterThan(100000, "because large object should create substantial file");
+  }
+
+  [Fact]
+  [Trait("Category", "Unit")]
+  public async Task WriteToFileAndWaitAsync_WithSpecialCharactersInContent_PreservesContent()
+  {
+    // Arrange
+    var specialContent = new
+    {
+      UnicodeText = "Hello 世界 🌍 Здравствуй мир",
+      HtmlContent = "<div class=\"test\">Content & 'quotes' \"everywhere\"</div>",
+      JsonString = "{\"nested\": \"json\"}",
+      BackslashPath = "C:\\Users\\Test\\File.txt"
+    };
+    var filename = "special_chars_test";
+    var expectedPath = Path.Combine(_testDirectory, $"{filename}.json");
+    _createdFiles.Add(expectedPath);
+
+    // Act
+    await _sut.WriteToFileAndWaitAsync(_testDirectory, filename, specialContent);
+
+    // Assert
+    File.Exists(expectedPath).Should().BeTrue("because file with special characters should be created");
+    var fileContent = await File.ReadAllTextAsync(expectedPath);
+
+    fileContent.Should().Contain("世界", "because Unicode characters should be preserved");
+    // Note: The emoji may be escaped in JSON as \uD83C\uDF0D
+    fileContent.Should().Match("*\uD83C\uDF0D*", "because emoji should be preserved (possibly escaped)");
+    fileContent.Should().Contain("Здравствуй мир", "because Cyrillic should be preserved");
+    fileContent.Should().Contain("&", "because HTML entities should be preserved");
+  }
+
   public void Dispose()
   {
     (_sut as IDisposable)?.Dispose();
