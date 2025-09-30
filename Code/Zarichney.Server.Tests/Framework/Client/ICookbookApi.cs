@@ -45,8 +45,10 @@ namespace Zarichney.Client
         [Post("/api/cookbook/sample")]
         Task<IApiResponse<CookbookOrderSubmission>> Sample(CancellationToken cancellationToken = default);
 
-        /// <summary>Creates a new cookbook order based on user submission.</summary>
+        /// <summary>⚠️ (Unavailable: MsGraph (Missing: EmailConfig:AzureTenantId, EmailConfig:AzureAppId, EmailConfig:AzureAppSecret)) Creates a new cookbook order based on user submission.</summary>
         /// <remarks>
+        /// **This endpoint is currently unavailable** due to missing configuration for: MsGraph (Missing: EmailConfig:AzureTenantId, EmailConfig:AzureAppId, EmailConfig:AzureAppSecret)
+        /// 
         /// Receives the user's cookbook specifications, validates the email address,
         /// and initiates the order processing.
         /// The actual cookbook generation (finding recipes, compiling PDF) can be processed immediately or deferred
@@ -110,8 +112,10 @@ namespace Zarichney.Client
         [Get("/api/cookbook/order/{orderId}")]
         Task<IApiResponse<CookbookOrder>> OrderGET(string orderId, CancellationToken cancellationToken = default);
 
-        /// <summary>Triggers reprocessing for an existing cookbook order.</summary>
+        /// <summary>⚠️ (Unavailable: MsGraph (Missing: EmailConfig:AzureTenantId, EmailConfig:AzureAppId, EmailConfig:AzureAppSecret)) Triggers reprocessing for an existing cookbook order.</summary>
         /// <remarks>
+        /// **This endpoint is currently unavailable** due to missing configuration for: MsGraph (Missing: EmailConfig:AzureTenantId, EmailConfig:AzureAppId, EmailConfig:AzureAppSecret)
+        /// 
         /// Re-queues the generation or processing steps for a given order ID.
         /// Useful if the initial processing failed or needs to be redone.
         /// The actual processing happens in a background task.
@@ -143,8 +147,10 @@ namespace Zarichney.Client
         [Post("/api/cookbook/order/{orderId}")]
         Task<IApiResponse<CookbookOrder>> OrderPOST(string orderId, CancellationToken cancellationToken = default);
 
-        /// <summary>Retrieves the generated cookbook PDF for a specific order.</summary>
+        /// <summary>⚠️ (Unavailable: MsGraph (Missing: EmailConfig:AzureTenantId, EmailConfig:AzureAppId, EmailConfig:AzureAppSecret)) Retrieves the generated cookbook PDF for a specific order.</summary>
         /// <remarks>
+        /// **This endpoint is currently unavailable** due to missing configuration for: MsGraph (Missing: EmailConfig:AzureTenantId, EmailConfig:AzureAppId, EmailConfig:AzureAppSecret)
+        /// 
         /// Fetches the PDF file associated with the order.
         /// Optionally allows forcing a rebuild of the PDF before retrieval.
         /// Optionally allows emailing the PDF to the order's recipient after retrieval/rebuild.
@@ -181,8 +187,10 @@ namespace Zarichney.Client
         [Get("/api/cookbook/order/{orderId}/pdf")]
         Task<IApiResponse<FileResponse>> Pdf(string orderId, [Query] bool? rebuild = default, [Query] bool? email = default, CancellationToken cancellationToken = default);
 
-        /// <summary>Resends the cookbook PDF via email for a specific order.</summary>
+        /// <summary>⚠️ (Unavailable: MsGraph (Missing: EmailConfig:AzureTenantId, EmailConfig:AzureAppId, EmailConfig:AzureAppSecret)) Resends the cookbook PDF via email for a specific order.</summary>
         /// <remarks>
+        /// **This endpoint is currently unavailable** due to missing configuration for: MsGraph (Missing: EmailConfig:AzureTenantId, EmailConfig:AzureAppId, EmailConfig:AzureAppSecret)
+        /// 
         /// Triggers the email service to send the cookbook PDF associated with the given order ID
         /// to the recipient email address stored in the order details. Assumes the PDF already exists.
         /// </remarks>
