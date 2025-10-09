@@ -142,6 +142,10 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
           It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string?>()))
           .ReturnsAsync([]);
 
+      // Setup default mapper to return empty list
+      _mockMapper.Setup(m => m.Map<List<Recipe>>(It.IsAny<IEnumerable<ScrapedRecipe>>()))
+          .Returns([]);
+
       // Setup config
       var recipeConfig = new RecipeConfig
       {
@@ -295,6 +299,438 @@ namespace Zarichney.Tests.Unit.Cookbook.Recipes
           It.Is<int?>(s => s == _acceptableScore),
           It.Is<int?>(r => r == _requiredCount),
           It.IsAny<string?>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetRecipes_WhenRecipesFoundImmediately_ReturnsRecipesWithoutRetry()
+    {
+      // Arrange
+      var requestedRecipeName = "Chicken Soup";
+      var acceptableScore = 70;
+
+      _mockRepository.Setup(r => r.SearchRecipes(
+          It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
+          .ReturnsAsync(_recipes);
+
+      // Act
+      var result = await _service.GetRecipes(
+          requestedRecipeName,
+          acceptableScore,
+          null,
+          CancellationToken.None);
+
+      // Assert
+      result.Should().NotBeNull("Because the service should return recipes");
+      result.Should().HaveCount(2, "Because two recipes meet the acceptance threshold");
+      result.Should().Contain(r => r.Id == "recipe1");
+      result.Should().Contain(r => r.Id == "recipe3");
+
+      _mockRepository.Verify(r => r.SearchRecipes(
+          It.IsAny<string>(),
+          It.IsAny<int?>(),
+          It.IsAny<int?>(),
+          It.IsAny<CancellationToken>()),
+          Times.Once,
+          "Because recipes were found on the first attempt");
+    }
+
+    [Fact]
+    public async Task GetRecipes_WhenNoRecipesFoundAfterMaxAttempts_ThrowsNoRecipeException()
+    {
+      // Arrange
+      var requestedRecipeName = "Nonexistent Recipe";
+      var maxAttempts = 3;
+
+      _mockRepository.Setup(r => r.SearchRecipes(
+          It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
+          .ReturnsAsync([]);
+
+      _mockWebScraper.Setup(w => w.ScrapeForRecipesAsync(
+          It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string?>()))
+          .ReturnsAsync([]);
+
+      var recipeConfig = new RecipeConfig
+      {
+        AcceptableScoreThreshold = 70,
+        RecipesToReturnPerRetrieval = 3,
+        MaxSearchResults = 8,
+        MaxNewRecipeNameAttempts = maxAttempts
+      };
+
+      var mockLlmService = MockOpenAIServiceFactory.CreateMock();
+      Mock<ISessionManager> mockSessionManager = new();
+      Mock<IScopeContainer> mockScopeContainer = new();
+      Mock<ILogger<RecipeService>> mockLogger = new();
+      var rankRecipePrompt = new RankRecipePrompt();
+      var synthesizeRecipePrompt = new SynthesizeRecipePrompt(_mockMapper.Object);
+      var analyzeRecipePrompt = new AnalyzeRecipePrompt();
+      var getAlternativeQueryPrompt = new GetAlternativeQueryPrompt();
+
+      var service = new RecipeService(
+          _mockRepository.Object,
+          recipeConfig,
+          mockLlmService.Object,
+          _mockWebScraper.Object,
+          _mockMapper.Object,
+          rankRecipePrompt,
+          synthesizeRecipePrompt,
+          analyzeRecipePrompt,
+          getAlternativeQueryPrompt,
+          mockSessionManager.Object,
+          mockLogger.Object,
+          mockScopeContainer.Object);
+
+      // Act
+      Func<Task> act = async () => await service.GetRecipes(
+          requestedRecipeName,
+          70,
+          null,
+          CancellationToken.None);
+
+      // Assert
+      await act.Should().ThrowAsync<NoRecipeException>(
+          "Because no recipes could be found after maximum attempts");
+
+      _mockRepository.Verify(r => r.SearchRecipes(
+          It.IsAny<string>(),
+          It.IsAny<int?>(),
+          It.IsAny<int?>(),
+          It.IsAny<CancellationToken>()),
+          Times.AtLeast(maxAttempts),
+          "Because the service should retry up to the maximum number of attempts");
+    }
+
+    [Fact]
+    public async Task GetRecipes_WhenRepositoryReturnsRecipesBelowThreshold_ReturnsEmptyWithoutScraping()
+    {
+      // Arrange
+      var query = "unrelated query";
+      var acceptableScore = 95;
+
+      // Recipes exist but none meet the high threshold for this query
+      var recipesWithLowScores = new List<Recipe>
+      {
+        new()
+        {
+          Id = "low-score-recipe",
+          Title = "Low Score Recipe",
+          Description = "Test",
+          Ingredients = ["Test"],
+          Directions = ["Test"],
+          Servings = "4",
+          PrepTime = "10 minutes",
+          CookTime = "20 minutes",
+          TotalTime = "30 minutes",
+          Notes = "",
+          Aliases = [],
+          IndexTitle = "low score",
+          Relevancy = new Dictionary<string, RelevancyResult>
+          {
+            {
+              query,
+              new RelevancyResult { Query = query, Score = 50, Reasoning = "Low relevance" }
+            }
+          }
+        }
+      };
+
+      _mockRepository.Setup(r => r.SearchRecipes(
+          It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
+          .ReturnsAsync(recipesWithLowScores);
+
+      // Act
+      var result = await _service.GetRecipes(
+          query,
+          false, // No scraping
+          acceptableScore,
+          null,
+          null,
+          CancellationToken.None);
+
+      // Assert
+      result.Should().BeEmpty("Because no recipes meet the threshold of 95");
+
+      _mockRepository.Verify(r => r.SearchRecipes(
+          It.IsAny<string>(),
+          It.IsAny<int?>(),
+          It.IsAny<int?>(),
+          It.IsAny<CancellationToken>()),
+          Times.Once,
+          "Because repository was queried once");
+    }
+
+    [Fact]
+    public async Task RankUnrankedRecipesAsync_WhenGivenScrapedRecipes_MapsAndRanksRecipes()
+    {
+      // Arrange
+      var query = "test query";
+      var scrapedRecipes = new List<ScrapedRecipe>
+      {
+        new()
+        {
+          Id = "scraped1",
+          Title = "Scraped Recipe",
+          Description = "Test description",
+          Ingredients = ["Ingredient 1"],
+          Directions = ["Direction 1"]
+        }
+      };
+
+      var mappedRecipes = new List<Recipe>
+      {
+        new()
+        {
+          Id = "scraped1",
+          Title = "Scraped Recipe",
+          Description = "Test description",
+          Ingredients = ["Ingredient 1"],
+          Directions = ["Direction 1"],
+          Servings = "4",
+          PrepTime = "10 minutes",
+          CookTime = "20 minutes",
+          TotalTime = "30 minutes",
+          Notes = "",
+          Aliases = [],
+          IndexTitle = "scraped recipe",
+          Relevancy = new Dictionary<string, RelevancyResult>()
+        }
+      };
+
+      _mockMapper.Setup(m => m.Map<List<Recipe>>(It.IsAny<IEnumerable<ScrapedRecipe>>()))
+          .Returns(mappedRecipes);
+
+      // Act
+      var result = await _service.RankUnrankedRecipesAsync(scrapedRecipes, query);
+
+      // Assert
+      result.Should().NotBeNull("Because the service should return ranked recipes");
+      result.Should().HaveCount(1, "Because one recipe was provided");
+
+      _mockMapper.Verify(m => m.Map<List<Recipe>>(It.IsAny<IEnumerable<ScrapedRecipe>>()), Times.Once,
+          "Because scraped recipes should be mapped to Recipe objects");
+    }
+
+    [Fact]
+    public async Task GetRecipes_WhenCachedRecipesMeetRequirement_DoesNotScrape()
+    {
+      // Arrange
+      var query = "chicken soup";
+      var acceptableScore = 70;
+      var requiredCount = 2;
+
+      _mockRepository.Setup(r => r.SearchRecipes(
+          It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
+          .ReturnsAsync(_recipes);
+
+      // Act
+      var result = await _service.GetRecipes(
+          query,
+          true,
+          acceptableScore,
+          requiredCount,
+          null,
+          CancellationToken.None);
+
+      // Assert
+      result.Should().HaveCount(2, "Because two recipes meet the threshold from cache");
+
+      _mockWebScraper.Verify(w => w.ScrapeForRecipesAsync(
+          It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string?>()),
+          Times.Never,
+          "Because cached recipes satisfied the requirement");
+    }
+
+    [Fact]
+    public async Task GetRecipes_WhenScrapingDisabled_OnlyReturnsRepositoryResults()
+    {
+      // Arrange
+      var query = _query; // Use the same query that recipes are ranked for
+      var acceptableScore = 70;
+
+      _mockRepository.Setup(r => r.SearchRecipes(
+          It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
+          .ReturnsAsync(_recipes);
+
+      // Act
+      var result = await _service.GetRecipes(
+          query,
+          false, // Scraping disabled
+          acceptableScore,
+          null,
+          null,
+          CancellationToken.None);
+
+      // Assert
+      result.Should().HaveCount(2, "Because recipe1 (85) and recipe3 (80) meet the threshold of 70");
+      result.Should().NotContain(r => r.Id == "recipe2", "Because recipe2 has a score of 60");
+
+      _mockWebScraper.Verify(w => w.ScrapeForRecipesAsync(
+          It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string?>()),
+          Times.Never,
+          "Because scraping was explicitly disabled");
+    }
+
+    [Fact]
+    public async Task GetRecipes_WhenInsufficientCachedRecipes_PerformsWebScraping()
+    {
+      // Arrange
+      var query = "exotic dish";
+      var acceptableScore = 70;
+      var requiredCount = 3;
+
+      // Only one recipe in repository
+      var singleRecipe = new List<Recipe> { _recipes[0] };
+
+      _mockRepository.Setup(r => r.SearchRecipes(
+          It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
+          .ReturnsAsync(singleRecipe);
+
+      var scrapedRecipes = new List<ScrapedRecipe>
+      {
+        new()
+        {
+          Id = "scraped1",
+          Title = "Scraped Recipe",
+          Description = "Test",
+          Ingredients = ["Ingredient"],
+          Directions = ["Direction"]
+        }
+      };
+
+      _mockWebScraper.Setup(w => w.ScrapeForRecipesAsync(
+          It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string?>()))
+          .ReturnsAsync(scrapedRecipes);
+
+      var mappedRecipe = new Recipe
+      {
+        Id = "scraped1",
+        Title = "Scraped Recipe",
+        Description = "Test",
+        Ingredients = ["Ingredient"],
+        Directions = ["Direction"],
+        Servings = "4",
+        PrepTime = "10 minutes",
+        CookTime = "20 minutes",
+        TotalTime = "30 minutes",
+        Notes = "",
+        Aliases = [],
+        IndexTitle = "scraped recipe",
+        Relevancy = new Dictionary<string, RelevancyResult>
+        {
+          {
+            query,
+            new RelevancyResult { Query = query, Score = 85, Reasoning = "Good match" }
+          }
+        }
+      };
+
+      _mockMapper.Setup(m => m.Map<List<Recipe>>(It.IsAny<IEnumerable<ScrapedRecipe>>()))
+          .Returns([mappedRecipe]);
+
+      _mockRepository.Setup(r => r.ContainsRecipe(It.IsAny<string>()))
+          .Returns(false);
+
+      // Act
+      var result = await _service.GetRecipes(
+          query,
+          true,
+          acceptableScore,
+          requiredCount,
+          null,
+          CancellationToken.None);
+
+      // Assert
+      result.Should().HaveCountGreaterThanOrEqualTo(1,
+          "Because web scraping should supplement insufficient cached recipes");
+
+      _mockWebScraper.Verify(w => w.ScrapeForRecipesAsync(
+          It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string?>()),
+          Times.Once,
+          "Because cached recipes were insufficient");
+
+      _mockRepository.Verify(r => r.AddUpdateRecipesAsync(It.IsAny<List<Recipe>>()), Times.Once,
+          "Because new recipes should be saved to repository");
+    }
+
+    [Fact]
+    public async Task GetRecipes_WhenDuplicateRecipesScraped_FiltersOutExistingRecipes()
+    {
+      // Arrange
+      var query = "test query";
+      var acceptableScore = 70;
+
+      _mockRepository.Setup(r => r.SearchRecipes(
+          It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
+          .ReturnsAsync([]);
+
+      var scrapedRecipes = new List<ScrapedRecipe>
+      {
+        new()
+        {
+          Id = "existing-recipe",
+          Title = "Existing Recipe",
+          Description = "Already in repository",
+          Ingredients = ["Ingredient"],
+          Directions = ["Direction"]
+        },
+        new()
+        {
+          Id = "new-recipe",
+          Title = "New Recipe",
+          Description = "Not in repository",
+          Ingredients = ["Ingredient"],
+          Directions = ["Direction"]
+        }
+      };
+
+      _mockWebScraper.Setup(w => w.ScrapeForRecipesAsync(
+          It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string?>()))
+          .ReturnsAsync(scrapedRecipes);
+
+      _mockRepository.Setup(r => r.ContainsRecipe("existing-recipe"))
+          .Returns(true);
+      _mockRepository.Setup(r => r.ContainsRecipe("new-recipe"))
+          .Returns(false);
+
+      var newMappedRecipe = new Recipe
+      {
+        Id = "new-recipe",
+        Title = "New Recipe",
+        Description = "Not in repository",
+        Ingredients = ["Ingredient"],
+        Directions = ["Direction"],
+        Servings = "4",
+        PrepTime = "10 minutes",
+        CookTime = "20 minutes",
+        TotalTime = "30 minutes",
+        Notes = "",
+        Aliases = [],
+        IndexTitle = "new recipe",
+        Relevancy = new Dictionary<string, RelevancyResult>
+        {
+          {
+            query,
+            new RelevancyResult { Query = query, Score = 80, Reasoning = "Good match" }
+          }
+        }
+      };
+
+      _mockMapper.Setup(m => m.Map<List<Recipe>>(It.Is<IEnumerable<ScrapedRecipe>>(
+          recipes => recipes.Count() == 1 && recipes.First().Id == "new-recipe")))
+          .Returns([newMappedRecipe]);
+
+      // Act
+      var result = await _service.GetRecipes(
+          query,
+          true,
+          acceptableScore,
+          null,
+          null,
+          CancellationToken.None);
+
+      // Assert
+      result.Should().HaveCount(1, "Because only the new recipe should be added");
+      result[0].Id.Should().Be("new-recipe", "Because existing recipes should be filtered out");
     }
   }
 }
