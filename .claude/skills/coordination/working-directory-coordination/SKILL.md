@@ -1,3 +1,8 @@
+---
+name: working-directory-coordination
+description: Standardize working directory usage and team communication protocols across all agents. Use when agents need to discover existing artifacts before starting work, report new deliverables immediately, or integrate work from other team members.
+---
+
 # Working Directory Coordination Skill
 
 **Version:** 1.0.0
