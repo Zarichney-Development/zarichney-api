@@ -55,25 +55,44 @@ Standardize working directory usage and team communication protocols across all 
 
 ---
 
-### Future Coordination Skills (Planned)
+### [core-issue-focus](./core-issue-focus/)
 
-**core-issue-focus** *(Issue #310 - Iteration 1.2)*
-**Purpose:** Mission discipline framework preventing scope creep
-**Agents:** TestEngineer, PromptEngineer, CodeChanger, BackendSpecialist, FrontendSpecialist, WorkflowEngineer
-**Priority:** P1
+**Status:** ✅ Production-ready (Issue #310 complete)
+**Agents:** TestEngineer, PromptEngineer, CodeChanger, BackendSpecialist, FrontendSpecialist, WorkflowEngineer (6 primary agents)
+**Priority:** P1 - Mission discipline foundation
 
-**Capabilities:**
-- Core issue identification workflow
-- Surgical scope definition
-- Mission drift detection
-- Success criteria validation
+**Purpose:**
+Mission discipline framework preventing scope creep during agent implementations through surgical focus on specific blocking technical problems. Provides 4-step workflow for maintaining mission discipline throughout implementation lifecycle.
 
-**Benefits:**
-- Prevents scope expansion during implementation
-- Ensures focus on specific blocking technical problems
-- Validates completion before moving to next task
+**When to Use:**
+- When receiving complex missions from Claude with scope expansion risk
+- During implementations involving multiple files or components
+- When tempted by improvement opportunities not directly related to core issue
+- Before expanding scope beyond original technical problem definition
+
+**Key Features:**
+- 4-step mission discipline workflow (Identify, Define, Detect, Validate)
+- Agent-specific patterns for 6 primary agents
+- 3 ready-to-use templates (core issue analysis, scope boundary definition, success criteria validation)
+- 3 comprehensive examples (API bug fix, feature implementation, targeted refactoring)
+- 2 deep-dive documentation files (mission drift patterns catalog, validation checkpoints guide)
+- Integration with CLAUDE.md CORE ISSUE FIRST PROTOCOL (MANDATORY)
+
+**Context Savings:**
+- Eliminates ~200 lines across 6 agents
+- ~1,600 tokens saved through skill reference
+- Progressive loading: frontmatter (~100 tokens) → SKILL.md (~2,500 tokens) → resources (on-demand)
+
+**Integration Validation:**
+- ✅ YAML frontmatter validated per official specification
+- ✅ SKILL.md under 500 lines (optimized for progressive loading)
+- ✅ 8 resource files created (templates, examples, documentation)
+- ✅ Integration with CLAUDE.md protocols confirmed
+- ✅ Agent-specific patterns for all 6 target agents
 
 ---
+
+### Future Coordination Skills (Planned)
 
 **flexible-authority-management** *(Issue #309 - Iteration 1.3)*
 **Purpose:** Intent recognition framework for specialist agents
@@ -288,9 +307,9 @@ Standardize working directory usage and team communication protocols across all 
 - **Agents:** ALL (mandatory)
 - **Savings:** ~3,600 tokens across 11 agents
 
-**Iteration 1.2 (Issue #310):** core-issue-focus
-- **Status:** Pending
-- **Agents:** 6 primary agents
+**Iteration 1.2 (Issue #310):** ✅ core-issue-focus
+- **Status:** Complete and validated
+- **Agents:** 6 primary agents (TestEngineer, PromptEngineer, CodeChanger, BackendSpecialist, FrontendSpecialist, WorkflowEngineer)
 - **Savings:** ~1,600 tokens
 
 **Iteration 1.3 (Issue #309):** flexible-authority-management
@@ -365,13 +384,14 @@ All 11 agents will reference coordination skills:
 
 ## 11. Quick Reference
 
-**Current Skill Count:** 1 skill (working-directory-coordination)
+**Current Skill Count:** 2 skills (working-directory-coordination, core-issue-focus)
 
-**Planned Skills:** 2 additional (core-issue-focus, flexible-authority-management)
+**Planned Skills:** 1 additional (flexible-authority-management)
 
 **Total Impact:** ~10,000 tokens saved, 3 skills, foundation for all multi-agent coordination
 
 **Mandatory Skills:** 1 (working-directory-coordination for ALL agents)
+**Recommended Skills:** 1 (core-issue-focus for 6 primary agents)
 
 **Epic #291 Status:** Iteration 1 in progress
 
