@@ -135,11 +135,13 @@ Invoke this skill when you need to:
    - `priority: low` - Nice-to-have, future consideration, cosmetic
 
 3. **Effort Label** (exactly one):
-   - `effort: tiny` - <1 hour
-   - `effort: small` - 1-4 hours
-   - `effort: medium` - 1-3 days
-   - `effort: large` - 1-2 weeks
-   - `effort: epic` - Multi-week initiative
+   - `effort: tiny` - Trivial complexity
+   - `effort: small` - Low complexity
+   - `effort: medium` - Moderate complexity
+   - `effort: large` - High complexity
+   - `effort: epic` - Multi-component initiative
+
+   **CRITICAL**: Per **[TaskManagementStandards.md Section 2.1](../../Docs/Standards/TaskManagementStandards.md)**, effort labels represent COMPLEXITY and SCOPE, NOT time commitments. Never use time-based descriptions (hours, days, weeks) in issue templates or examples.
 
 4. **Component Label** (at least one):
    - `component: api` - Backend API and service layer

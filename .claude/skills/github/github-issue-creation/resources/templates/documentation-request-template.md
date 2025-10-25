@@ -226,11 +226,11 @@ Documentation complete and effective when:
 - Open source contributors attempting to contribute but blocked by setup complexity
 - Technical debt item impacting team productivity
 
-**Estimated Effort**:
-- Writing: 8-12 hours (comprehensive guide with examples)
-- Review and testing: 4-6 hours (validate with new developers)
-- Revisions: 2-4 hours (incorporate feedback)
-- **Total**: 2-3 days of focused documentation work
+**Estimated Complexity**:
+- **Scope**: Comprehensive guide covering environment setup, architecture overview, and common tasks
+- **Components**: Multi-section document with code examples, screenshots, and cross-references
+- **Validation**: Requires testing with actual new developers and iteration based on feedback
+- **Effort Label**: `effort: medium` (moderate complexity - comprehensive multi-section documentation)
 
 **Benefits**:
 - **Efficiency**: Saves 4-6 hours per new developer for senior team members
@@ -244,7 +244,7 @@ Documentation complete and effective when:
 **Recommended Labels**:
 - `type: docs`
 - `priority: high` (blocking new developer productivity)
-- `effort: medium` (2-3 days documentation work)
+- `effort: medium` (moderate complexity - comprehensive documentation)
 - `component: docs`
 
 **Milestone**: Q4 2025 Developer Experience Improvements

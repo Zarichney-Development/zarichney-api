@@ -634,7 +634,7 @@ When agents fail to follow communication protocols:
 - **Issue Focus**: Address specific GitHub issue objectives through step-by-step progress
 - **Standards Adherence**: Ensure all agent work complies with project standards through fresh context packages
 - **Documentation Updates**: Coordinate README updates when agent work impacts documented contracts
-- **No Time Estimates**: Focus on priority, complexity, and actionability instead
+- **No Time Estimates**: Focus on priority, complexity, and actionability instead. Formal policy documented in **[TaskManagementStandards.md Section 2.1](./Docs/Standards/TaskManagementStandards.md)** - use incremental iterations without rigid timelines, complexity-based effort labels (not calendar commitments)
 
 ### Quality Gates & AI Sentinel Coordination
 - All tests must pass (100% executable test pass rate)

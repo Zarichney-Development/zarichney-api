@@ -34,6 +34,33 @@ These standards **MUST** be consulted and followed by AI Coders during task exec
     * The AI Coder **MUST** reference the Issue ID in commit messages and Pull Requests (see sections below).
     * The AI Coder **DOES NOT** update the Issue status directly (this is currently handled manually by the orchestrator).
 
+## 2.1 Time Estimates Policy (Mandatory)
+
+* **Core Principle:** This project uses **complexity and effort estimation**, NOT rigid time-based deadlines or hour/week commitments.
+* **Rationale:** Incremental iterations allow adaptation based on implementation learnings, discoveries during development, and changing requirements. Rigid timelines create artificial pressure that conflicts with quality-focused, exploratory development.
+* **Implementation Requirements:**
+    * **Use Effort Labels:** All GitHub Issues **MUST** use effort labels from **[`./GitHubLabelStandards.md`](./GitHubLabelStandards.md)** Section 4.4 (`effort: xs`, `effort: small`, `effort: medium`, `effort: large`, `effort: epic`)
+    * **Effort Represents Complexity:** These labels indicate scope and complexity, NOT calendar time commitments
+    * **Focus on Priority:** Prioritize work based on business impact (`priority:` labels) and technical complexity (`effort:` labels), not arbitrary deadlines
+* **Forbidden Practices:**
+    * ❌ **Week-based phase naming** (e.g., "Phase 1: Week 1-2", "Week 3 deliverables")
+    * ❌ **Hour estimates in issue templates** (e.g., "8-12 hours", "2-4 hours of work")
+    * ❌ **Calendar deadline commitments** in issue descriptions or acceptance criteria
+    * ❌ **Rigid timeline planning** that doesn't account for iterative discoveries
+* **Acceptable Practices:**
+    * ✅ **Phase naming without time commitment** (e.g., "Phase 1: Foundation", "Phase 2: Enhancement")
+    * ✅ **Complexity-based effort estimation** using standardized effort labels
+    * ✅ **Iterative progression tracking** based on completion, not duration
+    * ✅ **Adaptive planning** that responds to implementation learnings
+* **Template Compliance:**
+    * All GitHub Issue templates in `/Docs/Templates/` and `.claude/skills/github/github-issue-creation/resources/templates/` **MUST** follow this policy
+    * Any template modifications proposing time-based phases or hour estimates **MUST** be rejected
+    * Examples demonstrating issue creation **MUST** show phase-based approaches without time commitments
+* **Agent Awareness:**
+    * All AI agents **MUST** be aware of this policy through documentation grounding (see **[`./DocumentationStandards.md`](./DocumentationStandards.md)**)
+    * PromptEngineer agent **MUST** enforce this policy when creating or modifying any templates
+    * Issue creation workflows **MUST** guide users toward effort labels instead of time estimates
+
 ## 3. Task Association (via Prompt)
 
 * **Requirement:** Every AI Coder Prompt **MUST** include a direct link to the associated GitHub Issue ID in the "Associated Task" section. This links the execution context (prompt) to the task definition (issue).

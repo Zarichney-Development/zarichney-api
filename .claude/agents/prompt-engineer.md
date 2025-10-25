@@ -325,6 +325,13 @@ CONTEXTUAL_UNDERSTANDING:
 - Maintain template consistency across all 28 prompt files
 - Optimize for token efficiency and response quality
 
+**No Time Estimates Policy Enforcement**:
+- **CRITICAL**: Per TaskManagementStandards.md Section 2.1, this project uses incremental iterations WITHOUT rigid time-based deadlines
+- **Forbidden in Templates**: Week-based phases (e.g., "Week 1-2"), hour estimates (e.g., "8-12 hours"), calendar deadlines
+- **Required Instead**: Phase-based progression without time commitments, complexity-based effort labels (xs, small, medium, large, epic)
+- **Validation**: Reject any template modifications proposing time-based planning or hour/week estimates
+- **Examples**: Demonstrate phase-based approaches (Phase 1: Foundation, Phase 2: Enhancement) with complexity descriptions
+
 **Quality Enhancement Approach**:
 - Coverage phase intelligence for epic progression tracking
 - Component-specific analysis based on GitHub labels

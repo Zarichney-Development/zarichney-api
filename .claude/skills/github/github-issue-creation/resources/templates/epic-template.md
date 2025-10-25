@@ -59,7 +59,7 @@ High-level outcomes that define epic completion:
 
 **Estimate**: [Effort sizing using established labels]
 
-**Example**: `effort: medium` (2-3 days)
+**Example**: `effort: medium` (moderate complexity - multi-file coordination)
 
 **Assignee**: @BackendSpecialist
 
@@ -83,7 +83,7 @@ High-level outcomes that define epic completion:
 
 **Dependencies**: None - can work in parallel with Issue 1
 
-**Estimate**: `effort: small` (1 day)
+**Estimate**: `effort: small` (low complexity - single-file change)
 
 **Assignee**: @BackendSpecialist
 
@@ -107,7 +107,7 @@ High-level outcomes that define epic completion:
 
 **Dependencies**: Issue 1 (API contracts), Issue 2 (database schema)
 
-**Estimate**: `effort: medium` (2 days)
+**Estimate**: `effort: medium` (moderate complexity - business logic integration)
 
 **Assignee**: @BackendSpecialist
 
@@ -131,7 +131,7 @@ High-level outcomes that define epic completion:
 
 **Dependencies**: Issue 1 (API endpoints)
 
-**Estimate**: `effort: large` (4-5 days)
+**Estimate**: `effort: large` (high complexity - extensive UI components)
 
 **Assignee**: @FrontendSpecialist
 
@@ -155,7 +155,7 @@ High-level outcomes that define epic completion:
 
 **Dependencies**: Issue 1 (API), Issue 2 (database), Issue 4 (frontend components)
 
-**Estimate**: `effort: medium` (3 days)
+**Estimate**: `effort: medium` (moderate complexity - full-stack coordination)
 
 **Assignees**: @BackendSpecialist, @FrontendSpecialist
 
@@ -179,7 +179,7 @@ High-level outcomes that define epic completion:
 
 **Dependencies**: Issues 1, 2, 3 (backend implementation)
 
-**Estimate**: `effort: medium` (2-3 days)
+**Estimate**: `effort: medium` (moderate complexity - comprehensive test suite)
 
 **Assignee**: @TestEngineer
 
@@ -210,7 +210,7 @@ graph TD
 
 ## Milestones & Phasing
 
-### Phase 1: Foundation (Week 1-2)
+### Phase 1: Foundation
 **Goal**: Backend infrastructure and basic CRUD operational
 
 **Issues**:
@@ -225,7 +225,7 @@ graph TD
 
 ---
 
-### Phase 2: User Interface (Week 3)
+### Phase 2: User Interface
 **Goal**: Frontend recipe management operational
 
 **Issues**:
@@ -238,7 +238,7 @@ graph TD
 
 ---
 
-### Phase 3: Enhancement & Quality (Week 4)
+### Phase 3: Enhancement & Quality
 **Goal**: Search, filtering, and comprehensive testing complete
 
 **Issues**:
@@ -288,11 +288,11 @@ Epic completion requires ALL criteria met:
 - **Mitigation**: Clear API contracts enable parallel work, minimize dependencies
 - **Contingency**: CodeChanger can handle basic frontend if needed
 
-**Risk 2: Timeline Optimistic**
+**Risk 2: Scope Complexity Underestimated**
 - **Probability**: Medium
 - **Impact**: Medium
-- **Mitigation**: Built-in buffer, weekly progress reviews, scope adjustment flexibility
-- **Contingency**: Defer Issue 5 (search) to post-MVP if needed
+- **Mitigation**: Iterative progress reviews, scope adjustment flexibility, adaptive planning
+- **Contingency**: Defer Issue 5 (search) to post-MVP if needed based on iteration learnings
 
 ### Integration Risks
 
@@ -340,9 +340,10 @@ Epic completion requires ALL criteria met:
 - Technical debt items identified and tracked
 
 **Team Velocity**:
-- All issues completed within estimated timeframes
+- All issues completed with scope and complexity expectations met
 - Minimal rework required
 - Team morale positive, sustainable pace maintained
+- Iterative adaptations successful based on implementation learnings
 
 ---
 
@@ -361,4 +362,4 @@ Epic completion requires ALL criteria met:
 
 **Epic Branch**: `epic/recipe-management`
 
-**Timeline**: 4 weeks (Weeks 1-4 of Q4 2025)
+**Target Milestone**: Recipe Management MVP (Q4 2025)

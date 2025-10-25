@@ -78,15 +78,25 @@ The labeling system consists of **52 strategically organized labels** across **8
 - `priority: medium` #fbca04 - Normal priority within planned work
 - `priority: low` #0e8a16 - Nice to have, future consideration
 
-### 4.4 Effort Labels (Size Estimation)
+### 4.4 Effort Labels (Complexity & Scope Estimation)
 *Color Scheme: Size progression (green to red) for planning*
 
-- `effort: xs` #c2e0c6 - Less than 2 hours of work
-- `effort: small` #7cfc00 - 2-4 hours of focused work
-- `effort: medium` #fbca04 - 1-2 days of development
-- `effort: large` #d93f0b - 3-5 days of comprehensive work
-- `effort: xl` #b60205 - More than 1 week of extensive work
-- `effort: epic` #5319e7 - Multi-month initiative requiring coordination
+**CRITICAL: These labels represent COMPLEXITY and SCOPE, not time commitments or calendar deadlines.**
+
+Per **[TaskManagementStandards.md Section 2.1](./TaskManagementStandards.md)**, this project uses incremental iterations without rigid timelines. Effort labels indicate the relative complexity and scope of work, enabling flexible iteration based on implementation learnings and discoveries.
+
+- `effort: xs` #c2e0c6 - Trivial complexity (simple config change, typo fix)
+- `effort: small` #7cfc00 - Low complexity (single-file change, straightforward logic)
+- `effort: medium` #fbca04 - Moderate complexity (multi-file coordination, moderate logic)
+- `effort: large` #d93f0b - High complexity (architectural changes, extensive integration)
+- `effort: xl` #b60205 - Very high complexity (major refactoring, system-wide impacts)
+- `effort: epic` #5319e7 - Multi-component initiative requiring extensive coordination
+
+**Usage Guidance:**
+- Focus on **scope and technical complexity**, not predicted duration
+- Consider **integration points, dependencies, and risk factors**
+- Support **adaptive planning** through complexity-based prioritization
+- Enable **flexible iteration** without artificial time pressure
 
 ### 4.5 Component Labels (Technical Areas)
 *Color Scheme: Soft pastels (#e99695 to #f9d0c4) for technical distinction*

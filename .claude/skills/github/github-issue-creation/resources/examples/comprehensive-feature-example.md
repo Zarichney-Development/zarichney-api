@@ -321,7 +321,7 @@ ON recipes USING GIN (dietary_restrictions);
 **Mandatory labels (all 4 required)**:
 - `type: feature` - New functionality ✅
 - `priority: high` - 40% users need this, competitive gap ✅
-- `effort: medium` - 2-3 days (backend + frontend + tests) ✅
+- `effort: medium` - Moderate complexity (backend + frontend + tests coordination) ✅
 - `component: api` - Backend changes required ✅
 
 **Additional component labels**:

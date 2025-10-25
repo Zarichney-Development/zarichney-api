@@ -174,7 +174,7 @@ Explain the consequences of leaving this technical debt unresolved:
 3. Monitor production for issues
 4. Remove legacy implementation after validation
 
-**Phase 4: Testing & Documentation** (Week 4)
+**Phase 4: Testing & Documentation**
 1. Add unit tests with mock implementations (target 100% coverage)
 2. Add integration tests for common scenarios
 3. Update API documentation
@@ -371,7 +371,10 @@ Refactoring complete when ALL criteria met:
 - `/Docs/Development/DependencyInjection.md` - DI patterns
 - `/Docs/Development/AsyncPatterns.md` - Async/await guidelines
 
-**Estimated Effort**: 2-3 weeks (4 phases, ~15 working days)
+**Estimated Complexity**: High complexity initiative requiring multi-phase refactoring
+- **Scope**: Four-phase architectural transformation with security hardening
+- **Components**: Interface extraction, secure implementation, migration, validation
+- **Effort Label**: `effort: large` (high complexity - extensive architectural changes)
 
 **Benefits**:
 - **Security**: Eliminates critical command injection vulnerability
@@ -385,7 +388,7 @@ Refactoring complete when ALL criteria met:
 **Recommended Labels**:
 - `type: debt`
 - `priority: high` (critical security vulnerability)
-- `effort: large` (2-3 weeks)
+- `effort: large` (high complexity - multi-phase refactoring)
 - `component: api`
 - `technical-debt`
 - `architecture`
