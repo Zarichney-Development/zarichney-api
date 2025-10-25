@@ -59,6 +59,7 @@ description: What it does and when to use it
 
 **Current Skills:**
 1. [working-directory-coordination](./coordination/working-directory-coordination/) - Mandatory team communication protocols
+2. [core-issue-focus](./coordination/core-issue-focus/) - Mission-focused surgical scope discipline
 
 **When to Create Coordination Skill:**
 - Pattern used by 3+ agents
@@ -79,6 +80,20 @@ description: What it does and when to use it
 - Context loading and analysis patterns
 - Knowledge organization and navigation
 - Stateless operation support (comprehensive grounding)
+
+---
+
+### [github/](./github/README.md)
+**Purpose:** GitHub workflow automation and issue management
+
+**Current Skills:**
+1. [github-issue-creation](./github/github-issue-creation/) - Streamline GitHub issue creation with automated context collection, template application, and proper labeling
+
+**When to Create GitHub Workflow Skill:**
+- Pattern used by 3+ agents for GitHub operations
+- Workflow can be systematized and automated
+- Significant time savings achievable (>50% reduction)
+- Quality improvement through consistency and validation
 
 ---
 
@@ -366,8 +381,8 @@ Key Workflow: [Step 1 | Step 2 | Step 3]
 
 **Iteration 1 (Current): Foundation**
 - Issue #311: working-directory-coordination (COMPLETE)
-- Issue #310: documentation-grounding (COMPLETE) + core-issue-focus
-- Issue #309: github-issue-creation + flexible-authority-management
+- Issue #310: documentation-grounding (COMPLETE), core-issue-focus (COMPLETE)
+- Issue #309: github-issue-creation (COMPLETE), flexible-authority-management (pending)
 - Issue #308: Validation framework + templates
 
 **Iteration 2: Meta-Skills & Workflow Skills**
@@ -554,21 +569,22 @@ resources/templates/file.md  # CORRECT
 
 ## 13. Quick Reference
 
-**Current Skill Count:** 2 skills
+**Current Skill Count:** 4 skills
 
 **By Category:**
-- Coordination: 1 skill (working-directory-coordination)
+- Coordination: 2 skills (working-directory-coordination, core-issue-focus)
 - Documentation: 1 skill (documentation-grounding)
+- GitHub: 1 skill (github-issue-creation)
 - Technical: 0 skills (future)
 - Meta: 0 skills (Iteration 2)
 - Workflow: 0 skills (Iteration 2-3)
 
 **Epic #291 Status:**
-- Iteration 1: Foundation (current - Issues #311, #310 complete)
+- Iteration 1: Foundation (current - Issues #311, #310, #309 complete)
 - Target: 8 skills total (5 core + 3 meta)
 - Savings: ~9,864 tokens per session
 
-**Category Count:** 2 categories (coordination/, documentation/)
+**Category Count:** 3 categories (coordination/, documentation/, github/)
 
 **Future Categories:** technical/, meta/, workflow/
 
@@ -577,6 +593,6 @@ resources/templates/file.md  # CORRECT
 **Directory Status:** ✅ Active Development (Epic #291 Iteration 1)
 
 **Next Updates:**
-- Issue #310: Add core-issue-focus skill (in progress)
-- Issue #309: Add github-issue-creation, flexible-authority-management skills
+- Issue #309: Add flexible-authority-management skill (pending)
+- Issue #308: Validation framework and templates
 - Iteration 2: Create meta/ category with 3 meta-skills
