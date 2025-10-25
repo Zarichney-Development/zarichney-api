@@ -68,6 +68,20 @@ description: What it does and when to use it
 
 ---
 
+### [documentation/](./documentation/README.md)
+**Purpose:** Documentation and context management skills for stateless AI operation
+
+**Current Skills:**
+1. [documentation-grounding](./documentation/documentation-grounding/) - Systematic framework for loading project standards and module context
+
+**When to Create Documentation Skill:**
+- Documentation creation or maintenance workflows
+- Context loading and analysis patterns
+- Knowledge organization and navigation
+- Stateless operation support (comprehensive grounding)
+
+---
+
 ### Future Categories (Iterations 2-3)
 
 **technical/** *(Planned)*
@@ -352,7 +366,7 @@ Key Workflow: [Step 1 | Step 2 | Step 3]
 
 **Iteration 1 (Current): Foundation**
 - Issue #311: working-directory-coordination (COMPLETE)
-- Issue #310: documentation-grounding + core-issue-focus
+- Issue #310: documentation-grounding (COMPLETE) + core-issue-focus
 - Issue #309: github-issue-creation + flexible-authority-management
 - Issue #308: Validation framework + templates
 
@@ -525,7 +539,8 @@ resources/templates/file.md  # CORRECT
 - [Implementation Iterations](../../Docs/Specs/epic-291-skills-commands/implementation-iterations.md)
 
 **Category Documentation:**
-- [Coordination Skills](./coordination/README.md) - Current category
+- [Coordination Skills](./coordination/README.md) - Team communication protocols
+- [Documentation Skills](./documentation/README.md) - Context loading and documentation management
 
 **Meta-Skills (Future):**
 - [skill-creation](./meta/skill-creation/) - When available (Iteration 2.2)
@@ -539,20 +554,21 @@ resources/templates/file.md  # CORRECT
 
 ## 13. Quick Reference
 
-**Current Skill Count:** 1 skill (working-directory-coordination)
+**Current Skill Count:** 2 skills
 
 **By Category:**
-- Coordination: 1 skill
+- Coordination: 1 skill (working-directory-coordination)
+- Documentation: 1 skill (documentation-grounding)
 - Technical: 0 skills (future)
 - Meta: 0 skills (Iteration 2)
 - Workflow: 0 skills (Iteration 2-3)
 
 **Epic #291 Status:**
-- Iteration 1: Foundation (current - Issue #311 complete)
+- Iteration 1: Foundation (current - Issues #311, #310 complete)
 - Target: 8 skills total (5 core + 3 meta)
 - Savings: ~9,864 tokens per session
 
-**Category Count:** 1 category (coordination/)
+**Category Count:** 2 categories (coordination/, documentation/)
 
 **Future Categories:** technical/, meta/, workflow/
 
@@ -561,6 +577,6 @@ resources/templates/file.md  # CORRECT
 **Directory Status:** ✅ Active Development (Epic #291 Iteration 1)
 
 **Next Updates:**
-- Issue #310: Add documentation-grounding, core-issue-focus skills
+- Issue #310: Add core-issue-focus skill (in progress)
 - Issue #309: Add github-issue-creation, flexible-authority-management skills
 - Iteration 2: Create meta/ category with 3 meta-skills
