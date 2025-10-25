@@ -404,7 +404,115 @@ For rare scenarios requiring special handling: See resources/documentation/edge-
 
 ---
 
-## 11. Epic #291 Application
+## 11. Skill Category Documentation Requirements
+
+### Mandatory README.md for Each Category
+
+**Requirement:** Every skill category directory MUST have a README.md file
+
+**Purpose:**
+- Explain category purpose and scope
+- List all skills in the category
+- Provide maintenance guidance
+- Enable navigation and discoverability
+
+**Required Sections:**
+
+```markdown
+# Category Name Skills Category
+
+## 1. Purpose & Responsibility
+[What this category contains and why it exists]
+
+## 2. Current Skills
+[List of all skills with brief descriptions and links]
+
+## 3. When to Create a Skill in This Category
+[Clear criteria for category membership]
+[What belongs vs. what doesn't]
+
+## 4. Maintenance Notes
+[How to add/update/deprecate skills]
+[Category-specific patterns and standards]
+
+## 5. Related Documentation
+[Links to parent docs, specs, standards]
+```
+
+**Example:** See `.claude/skills/coordination/README.md` for reference implementation
+
+### Directory Structure with Documentation
+
+```
+.claude/skills/
+├── README.md                    # Skills root documentation
+├── coordination/                # Cross-cutting coordination patterns
+│   ├── README.md               # REQUIRED: Category documentation
+│   ├── working-directory-coordination/
+│   │   ├── SKILL.md
+│   │   └── resources/
+│   └── core-issue-focus/
+│       ├── SKILL.md
+│       └── resources/
+└── technical/                   # Domain-specific patterns (future)
+    ├── README.md               # REQUIRED: Category documentation
+    └── <skills>/
+```
+
+### Individual Skills Do NOT Need README.md
+
+**Important:** Individual skill directories use SKILL.md (with YAML frontmatter) as their primary documentation. Do NOT create README.md files within individual skill directories.
+
+**Correct Structure:**
+```
+working-directory-coordination/
+├── SKILL.md                 # ✅ Primary skill documentation
+└── resources/               # ✅ Additional resources
+```
+
+**Incorrect Structure:**
+```
+working-directory-coordination/
+├── README.md                # ❌ NOT NEEDED - use SKILL.md instead
+├── SKILL.md
+└── resources/
+```
+
+**Rationale:** SKILL.md with YAML frontmatter is the official Claude Code structure. Adding README.md creates redundancy and confusion about which file is authoritative.
+
+### .claude/ Root Directory Documentation
+
+**Required Documentation Hierarchy:**
+
+```
+.claude/
+├── README.md                # ✅ REQUIRED: Root directory overview
+├── agents/
+│   ├── README.md           # ✅ REQUIRED: Agents directory overview
+│   └── *.md                # Agent definitions
+├── commands/
+│   ├── README.md           # ✅ REQUIRED: Commands directory overview
+│   └── *.md                # Command definitions
+└── skills/
+    ├── README.md           # ✅ REQUIRED: Skills root overview
+    └── <category>/
+        ├── README.md       # ✅ REQUIRED: Category documentation
+        └── <skill-name>/
+            ├── SKILL.md    # ✅ Skill documentation (NOT README.md)
+            └── resources/
+```
+
+**Purpose:**
+- Self-contained knowledge at each directory level
+- Clear navigation from root to leaves
+- Maintenance guidance at appropriate granularity
+- Consistent with DocumentationStandards.md philosophy
+
+**Reference:** See `.claude/README.md`, `.claude/agents/README.md`, `.claude/commands/README.md`, `.claude/skills/README.md` for implementation examples
+
+---
+
+## 12. Epic #291 Application
 
 ### All Skills Created in This Epic Must:
 1. ✅ Use YAML frontmatter in SKILL.md (NOT separate metadata.json)

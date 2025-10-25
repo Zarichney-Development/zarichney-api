@@ -191,6 +191,13 @@
     ```
     **See:** [Official Skills Structure Specification](./official-skills-structure.md) for complete requirements
 
+  - **Directory Documentation Convention**:
+    - **Skill Categories:** MUST have README.md (e.g., `.claude/skills/coordination/README.md`)
+    - **Individual Skills:** Use SKILL.md only (NO README.md in skill directories)
+    - **.claude/ Directories:** All directories (`/agents/`, `/commands/`, `/skills/`) have README.md
+    - **Purpose:** Self-contained knowledge, navigation, maintenance guidance
+    **See:** [Official Skills Structure Section 11](./official-skills-structure.md#11-skill-category-documentation-requirements)
+
   - **Command Structure Convention (Markdown with Frontmatter):**
     ```markdown
     ---
