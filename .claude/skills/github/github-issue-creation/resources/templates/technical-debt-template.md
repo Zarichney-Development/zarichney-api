@@ -156,19 +156,19 @@ Explain the consequences of leaving this technical debt unresolved:
 
 [High-level refactoring strategy with phases]
 
-**Phase 1: Interface Extraction** (Week 1)
+**Phase 1: Interface Extraction**
 1. Create `IProcessExecutor` interface
 2. Extract current implementation to `LegacyProcessExecutor`
 3. Add interface to dependency injection container
 4. No behavior changes yet - pure refactoring
 
-**Phase 2: Secure Implementation** (Week 2)
+**Phase 2: Secure Implementation**
 1. Create `SecureProcessExecutor` with input validation
 2. Implement command whitelisting
 3. Add comprehensive error handling and logging
 4. Replace synchronous calls with async/await
 
-**Phase 3: Migration** (Week 3)
+**Phase 3: Migration**
 1. Replace `LegacyProcessExecutor` with `SecureProcessExecutor` in DI
 2. Run comprehensive integration tests
 3. Monitor production for issues
