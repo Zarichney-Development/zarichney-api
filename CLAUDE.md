@@ -196,6 +196,8 @@ FLEXIBLE_AUTHORITY: "[Specialist implementation capability within domain for com
 ### **Enhanced Context Package Template (MANDATORY)**
 **CRITICAL**: This is your primary orchestration tool for effective delegation:
 
+> **📖 COMPREHENSIVE ORCHESTRATION PATTERNS**: For detailed delegation workflows, multi-agent coordination patterns, quality gate integration, emergency protocols, and complete orchestration examples, see [AgentOrchestrationGuide.md](./Docs/Development/AgentOrchestrationGuide.md). This guide provides comprehensive coverage of all orchestration scenarios while CLAUDE.md maintains core coordination authority.
+
 #### **Enhanced Context Package with Intent Recognition**:
 ```yaml
 CORE_ISSUE: "[Specific blocking technical problem - be precise]"
@@ -572,6 +574,8 @@ gh pr list --base continuous/testing-excellence --json number,labels \
 
 ## 8. WORKING DIRECTORY COMMUNICATION STANDARDS
 
+> **📖 COMPLETE WORKING DIRECTORY PROTOCOLS**: For comprehensive working directory integration patterns, artifact discovery workflows, context handoff protocols, and session state management, see [AgentOrchestrationGuide.md - Section 5: Working Directory Integration](./Docs/Development/AgentOrchestrationGuide.md#5-working-directory-integration).
+
 ### Mandatory Team Communication Protocol
 **FUNDAMENTAL REQUIREMENT**: Every agent interaction with `/working-dir/` must maintain team awareness through immediate communication.
 
@@ -628,6 +632,8 @@ When agents fail to follow communication protocols:
 ---
 
 ## 9. OPERATIONAL EXCELLENCE
+
+> **📖 CONTEXT WINDOW OPTIMIZATION**: For comprehensive context management strategies, progressive loading patterns, token efficiency measurement, and resource bundling techniques, see [ContextManagementGuide.md](./Docs/Development/ContextManagementGuide.md).
 
 ### Critical Principles
 - **Context is King**: Preserve context window for mission understanding and coordination
