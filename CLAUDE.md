@@ -109,14 +109,18 @@ If you catch yourself about to:
     - Provides architectural guidance through working directory
 
 ### Documentation Grounding Protocols
-**CRITICAL FOR CONTEXT PACKAGING**: All agents systematically load context before work:
+**CRITICAL FOR CONTEXT PACKAGING**: All agents systematically load context before work per [DocumentationGroundingProtocols.md](./Docs/Development/DocumentationGroundingProtocols.md).
 
-1. **Loads Primary Standards** - Reviews relevant documentation from `/Docs/Standards/` for context
-2. **Ingests Module Context** - Reads local `README.md` files for specific area knowledge
-3. **Assesses Architectural Patterns** - Reviews production code documentation for established patterns
-4. **Validates Integration Points** - Understands how their work coordinates with other agents
+**3-Phase Grounding Workflow:**
+1. **Phase 1: Standards Mastery** (MANDATORY) → Load all 5 `/Docs/Standards/` files (CodingStandards.md, TestingStandards.md, DocumentationStandards.md, TaskManagementStandards.md, DiagrammingStandards.md)
+2. **Phase 2: Project Architecture** → Load root README and module hierarchy relevant to task
+3. **Phase 3: Domain-Specific** → Load target module README (all 8 sections), analyze Section 3 (Interface Contracts) thoroughly, review dependency module READMEs
 
-This ensures agents operate with comprehensive project context and maintain consistency with established patterns, reducing oversight while improving work quality.
+**Why This Matters:** Stateless AI agents have NO memory of prior engagements. Systematic grounding transforms context-blind agents into fully-informed contributors who understand standards, interface contracts, and architectural patterns before modifications.
+
+**Skills Integration:** The [documentation-grounding skill](../.claude/skills/documentation/documentation-grounding/SKILL.md) encapsulates this workflow for progressive loading (~100 token frontmatter discovery → ~2,800 token instructions → on-demand resources).
+
+All agents use this systematic approach to ensure comprehensive context before task execution. For complete grounding workflows, agent-specific patterns, optimization strategies, and quality validation, see the [comprehensive guide](./Docs/Development/DocumentationGroundingProtocols.md).
 
 ### Working Directory Communication Protocols
 All agents use `/working-dir/` for rich artifact sharing with **MANDATORY REPORTING REQUIREMENTS**:
