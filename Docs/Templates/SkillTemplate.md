@@ -3,6 +3,8 @@ name: skill-name-here
 description: Brief description of what this skill does and when to use it. MUST include BOTH what the skill does AND when agents should use it. Keep concise but comprehensive. Max 1024 characters.
 ---
 
+**Note:** YAML frontmatter is validated by pre-commit hooks. See [Scripts/validation/README.md](../../Scripts/validation/README.md) for validation details.
+
 # Skill Name Here
 
 [Brief introduction paragraph explaining the skill's purpose and value to agents]
