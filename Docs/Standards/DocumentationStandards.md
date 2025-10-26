@@ -1,7 +1,7 @@
 # Project Documentation Standards (Per-Directory README.md Files)
 
-**Version:** 1.5
-**Last Updated:** 2025-05-22
+**Version:** 1.6
+**Last Updated:** 2025-10-26
 
 ## 1. Purpose and Scope
 
@@ -64,5 +64,38 @@ Create a navigable documentation network for the AI:
 * **Pruning:** When updating, review Section 7 (Rationale) and Section 8 (Known Issues) and **actively remove** any information that is no longer relevant due to the code changes. Keep the README focused on the *current* state.
 * **`Last Updated` Date:** Always update the `Last Updated: [YYYY-MM-DD]` field at the top of the README when making any changes to its text or embedded diagrams.
 * **Annotation Instruction:** **Do NOT** include explanatory annotations like "<-- UPDATED -->" or "`// Updated this line`" within the documentation content itself.
+
+## 6. Skills Documentation Requirements
+
+### Metadata Standards
+- All skills MUST have YAML frontmatter in SKILL.md with required fields (name, description)
+- Name MUST follow constraints: max 64 chars, lowercase/numbers/hyphens only, no reserved words
+- Description MUST be non-empty, max 1024 chars
+- Token estimates SHOULD be tracked for metadata and instructions phases
+- Category and tags MUST enable accurate discovery (coordination/technical/meta/workflow)
+- Agent targeting MUST specify applicable agents
+
+### Resource Organization
+- Templates in resources/templates/ for reusable formats
+- Examples in resources/examples/ for reference implementations
+- Documentation in resources/documentation/ for deep dives
+- File naming: kebab-case, descriptive, no version numbers
+- Skill categories MUST have README.md for navigation
+
+### Discovery Mechanism Documentation
+- README.md in each skill category directory
+- Skill catalog in .claude/skills/README.md
+- Cross-references from agent definitions
+- Integration examples in development documentation
+
+### Progressive Loading Design
+- Metadata optimized for discovery (<150 tokens target)
+- Instructions focused and actionable (2,000-5,000 tokens)
+- Resources loaded on-demand, not preloaded
+- Clear separation: frontmatter → instructions → resources
+
+**See Also:**
+- [SkillsDevelopmentGuide.md](../Development/SkillsDevelopmentGuide.md) - Comprehensive skills creation guide
+- [ContextManagementGuide.md](../Development/ContextManagementGuide.md) - Progressive loading strategies
 
 ---
