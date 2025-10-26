@@ -1,8 +1,8 @@
 # Task Management & Git Standards
 
 
-**Version:** 1.2
-**Last Updated:** 2025-09-28
+**Version:** 1.3
+**Last Updated:** 2025-10-26
 
 ## 1. Purpose and Scope
 
@@ -405,5 +405,38 @@ All tasks and pull requests **MUST** meet these quality requirements:
 * **Decision Transparency:** AI conflict resolution decisions documented for future reference
 * **Team Communication:** Consolidation process communicates effectively with all team members
 * **Knowledge Transfer:** Consolidated changes preserve learning and insights from individual contributions
+
+## 9. Automated Issue Creation Workflows
+
+### GitHub Issue Automation
+- Use /create-issue command for consistent issue creation
+- Automated context collection eliminates manual effort
+- Template selection based on issue type (feature/bug/epic/debt/docs)
+- Label application automated per GitHubLabelStandards.md
+
+### Issue Types and Templates
+- Feature Request: Enhancement with user value proposition
+- Bug Report: Defect with reproduction steps and expected behavior
+- Epic: Milestone with component breakdown and acceptance criteria
+- Technical Debt: Refactoring with rationale and scope
+- Documentation: Knowledge gap with proposed content
+
+### Automation Workflow
+1. Identify issue type and gather context
+2. Invoke /create-issue <type> "<title>"
+3. Skill collects additional context automatically
+4. Template applied with proper structure
+5. Labels, milestone, assignees automated
+6. Issue created via gh CLI
+
+### Quality Standards
+- Titles: Clear, actionable, <80 characters
+- Descriptions: Complete context using template sections
+- Labels: Automated compliance with standards
+- Related issues: Automated discovery and linking
+
+**See Also:**
+- [CommandsDevelopmentGuide.md](../Development/CommandsDevelopmentGuide.md) - GitHub automation
+- [GitHubLabelStandards.md](./GitHubLabelStandards.md) - Label taxonomy
 
 ---

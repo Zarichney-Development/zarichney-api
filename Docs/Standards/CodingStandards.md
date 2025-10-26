@@ -112,6 +112,11 @@
     * **MUST** write clear XML documentation comments (`/// <summary>...`) for all new or significantly modified public types (classes, interfaces, enums) and members (methods, properties). Follow existing examples for detail level.
     * Explain the **purpose (why)** and **usage/contract (how)**, not just *what* the code does literally. Document parameters (`<param>`) and return values (`<returns>`) clearly.
     * Use inline comments (`//`) sparingly, only to clarify particularly complex, non-obvious, or potentially confusing sections of logic.
+* **Skills and Commands Documentation:**
+    * For detailed guidance on creating agent skills and slash commands, see:
+        * [SkillsDevelopmentGuide.md](../Development/SkillsDevelopmentGuide.md)
+        * [CommandsDevelopmentGuide.md](../Development/CommandsDevelopmentGuide.md)
+    * **Note:** Skills are orchestration concerns (managed by PromptEngineer), not coding standards. However, all skill resources MUST follow coding standards when containing code examples.
 * **Testing:**
     * **WHEN Code Changes Occur:** Any task (performed by human or AI) that modifies the code within a directory **MUST** also add or update relevant unit and/or integration tests within the same commit/change. This includes refactoring code for testability.
     * **Time Estimation Policy:** Time estimates are not required for AI coding tasks as AI execution timelines differ significantly from human developer estimates. Focus on complexity and priority rather than duration.
