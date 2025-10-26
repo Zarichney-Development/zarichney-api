@@ -13,12 +13,12 @@
     },
     "argument-hint": {
       "type": "string",
-      "description": "Shows required/optional arguments in command palette. Format: '[required] [optional]'",
-      "pattern": "^\\[.*\\].*$"
+      "description": "Shows required/optional arguments in command palette. Format: '<required> [optional]' or '[all-optional]'",
+      "pattern": "^[<\\[].*$"
     },
     "category": {
       "type": "string",
-      "enum": ["testing", "security", "architecture", "workflow", "documentation"],
+      "enum": ["testing", "security", "architecture", "workflow", "documentation", "coordination", "epic"],
       "description": "Command category for organization and discovery"
     },
     "requires-skills": {

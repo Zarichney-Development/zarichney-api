@@ -5,6 +5,8 @@ category: "coordination|epic|testing|security|architecture|workflow|documentatio
 requires-skills: ["skill-name-1", "skill-name-2"]
 ---
 
+**Note:** YAML frontmatter is validated by pre-commit hooks. See [Scripts/validation/README.md](../../Scripts/validation/README.md) for validation details.
+
 # Command Name
 
 [Brief introduction paragraph explaining the command's purpose and primary use case]
