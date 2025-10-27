@@ -159,6 +159,39 @@ Quality Gates: [Testing requirements, validation approach]
 
 **Intent Recognition:** Query-intent (analysis) vs. Command-intent (implementation). See [core-issue-focus skill](../.claude/skills/coordination/core-issue-focus/SKILL.md) for patterns and authority boundaries.
 
+### Efficient Skill Reference Patterns
+
+**Optimize Multi-Agent Token Efficiency:**
+
+When coordinating multi-agent workflows, structure context packages to minimize repeated skill loading:
+
+1. **Core Skill Awareness:**
+   - `documentation-grounding`: Referenced by ALL 11 agents
+   - `working-directory-coordination`: Referenced by ALL 11 agents
+   - `core-issue-focus`: Referenced by 6 primary implementation agents
+
+2. **Progressive Loading Discipline:**
+   - Agents discover skills through 2-3 line summaries (~80 tokens)
+   - Full skill instructions (~5,000 tokens) loaded only when explicitly needed
+   - Context packages should emphasize skill summaries, not full content
+
+3. **Session-Level Efficiency:**
+   - **First Agent Engagement:** Comprehensive context with skill discovery guidance
+   - **Subsequent Engagements:** Reference previously mentioned skills by name only
+   - **Skill Reuse Pattern:** "Continue using documentation-grounding skill per previous engagement"
+
+4. **Token Optimization Example:**
+   ```yaml
+   # EFFICIENT: First engagement
+   Documentation Context: Use documentation-grounding skill to load comprehensive project context
+
+   # EFFICIENT: Second engagement
+   Documentation Context: Continue documentation-grounding approach from prior engagement
+   # Saves ~5,000 tokens by not re-explaining skill
+   ```
+
+**Expected Benefit:** 10-15% reduction in multi-agent session token overhead through skill reference efficiency.
+
 ### Standardized Agent Reporting Format
 **EXPECT THIS FROM AGENTS**: See [AgentOrchestrationGuide.md](./Docs/Development/AgentOrchestrationGuide.md) for comprehensive reporting patterns.
 
