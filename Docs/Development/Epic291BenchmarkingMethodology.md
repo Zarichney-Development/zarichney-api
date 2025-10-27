@@ -934,10 +934,24 @@ Despite estimation variance, session-level savings far exceed targets (144-328% 
 
 ---
 
-**References:**
-- [Epic #291 Performance Achievements](./Epic291PerformanceAchievements.md)
-- [Token Tracking Methodology Guide](./TokenTrackingMethodology.md)
-- [Performance Monitoring Strategy Guide](./PerformanceMonitoringStrategy.md)
+---
+
+## Related Documentation
+
+**Prerequisites (Read First):**
+- [Token Tracking Methodology](./TokenTrackingMethodology.md) - Standardized token estimation and measurement approach
+- [Performance Monitoring Strategy](./PerformanceMonitoringStrategy.md) - Continuous monitoring foundation for ongoing validation
+
+**Related Performance Guides:**
+- [Epic #291 Performance Achievements](./Epic291PerformanceAchievements.md) - Validated achievements using this methodology
+- [Context Management Guide](./ContextManagementGuide.md) - Context window optimization strategies
+- [Agent Orchestration Guide](./AgentOrchestrationGuide.md) - Multi-agent coordination patterns
+
+**Epic Context:**
+- [Epic #291 Completion Summary](/home/zarichney/workspace/zarichney-api/working-dir/epic-291-completion-summary.md) - Comprehensive epic completion report
+- [CLAUDE.md](../../CLAUDE.md) - Orchestration guide with performance optimization context
+
+**Working Directory Artifacts:**
 - [ArchitecturalAnalyst Performance Validation Report](/home/zarichney/workspace/zarichney-api/working-dir/epic-291-performance-validation-report.md)
 - [PromptEngineer Optimization Implementation Report](/home/zarichney/workspace/zarichney-api/working-dir/epic-291-optimization-implementation-report.md)
 

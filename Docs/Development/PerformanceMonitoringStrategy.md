@@ -656,6 +656,23 @@ Establish continuous performance optimization capability for Epic #291 through s
 
 ---
 
+## Related Documentation
+
+**Prerequisites (Read First):**
+- [Token Tracking Methodology](./TokenTrackingMethodology.md) - Precision measurement approach for monitoring token usage metrics
+- [Epic #291 Performance Achievements](./Epic291PerformanceAchievements.md) - Baseline performance to maintain through monitoring
+
+**Related Performance Guides:**
+- [Epic #291 Benchmarking Methodology](./Epic291BenchmarkingMethodology.md) - Measurement protocols complementing monitoring strategy
+- [Context Management Guide](./ContextManagementGuide.md) - Context window optimization strategies to monitor
+- [Agent Orchestration Guide](./AgentOrchestrationGuide.md) - Multi-agent coordination patterns impacting performance
+
+**Epic Context:**
+- [Epic #291 Completion Summary](/home/zarichney/workspace/zarichney-api/working-dir/epic-291-completion-summary.md) - Comprehensive epic completion report
+- [CLAUDE.md](../../CLAUDE.md) - Orchestration guide with performance optimization context
+
+---
+
 **Status:** ✅ **PHASE 1 COMPLETE - Foundation Established**
 **Next Phase:** Phase 2 Infrastructure Implementation (Post-Epic, if validated need through Phase 1 tracking)
 **Owner:** PromptEngineer (strategy), WorkflowEngineer (infrastructure), FrontendSpecialist (dashboard)

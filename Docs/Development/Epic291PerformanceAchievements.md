@@ -663,13 +663,27 @@ High-frequency commands with complex manual workflows provide exceptional ROI th
 
 ---
 
-**References:**
+---
+
+## Related Documentation
+
+**Prerequisites (Read First):**
+- [Epic #291 Benchmarking Methodology](./Epic291BenchmarkingMethodology.md) - Measurement approach enabling achievement validation
+- [Token Tracking Methodology](./TokenTrackingMethodology.md) - 3-phase token measurement roadmap
+- [Performance Monitoring Strategy](./PerformanceMonitoringStrategy.md) - Continuous monitoring foundation
+
+**Related Performance Guides:**
+- [Context Management Guide](./ContextManagementGuide.md) - Context window optimization strategies
+- [Agent Orchestration Guide](./AgentOrchestrationGuide.md) - Multi-agent coordination patterns
+- [Documentation Grounding Protocols](./DocumentationGroundingProtocols.md) - Systematic context loading
+
+**Epic Context:**
+- [Epic #291 Completion Summary](/home/zarichney/workspace/zarichney-api/working-dir/epic-291-completion-summary.md) - Comprehensive epic completion report
+- [CLAUDE.md](../../CLAUDE.md) - Orchestration guide with skill references and progressive disclosure
+
+**Working Directory Artifacts:**
 - [ArchitecturalAnalyst Performance Validation Report](/home/zarichney/workspace/zarichney-api/working-dir/epic-291-performance-validation-report.md)
 - [PromptEngineer Optimization Implementation Report](/home/zarichney/workspace/zarichney-api/working-dir/epic-291-optimization-implementation-report.md)
-- [Token Tracking Methodology Guide](./TokenTrackingMethodology.md)
-- [Performance Monitoring Strategy Guide](./PerformanceMonitoringStrategy.md)
-- [Context Management Guide](./ContextManagementGuide.md)
-- [Agent Orchestration Guide](./AgentOrchestrationGuide.md)
 
 ---
 

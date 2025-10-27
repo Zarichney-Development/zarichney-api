@@ -337,6 +337,20 @@ See [CommandsDevelopmentGuide.md](./Docs/Development/CommandsDevelopmentGuide.md
 - Intervene when communication gaps detected
 - Maintain comprehensive view of working directory developments
 
+---
+
+## Related Documentation
+
+**Performance Optimization Context:**
+- [Epic #291 Performance Achievements](./Docs/Development/Epic291PerformanceAchievements.md) - 50-51% context reduction, 144-328% session token savings
+- [Token Tracking Methodology](./Docs/Development/TokenTrackingMethodology.md) - Precision measurement approach for optimization validation
+- [Performance Monitoring Strategy](./Docs/Development/PerformanceMonitoringStrategy.md) - Phase 1 foundation for continuous performance excellence
+
+**Comprehensive Orchestration Guides:**
+- [Agent Orchestration Guide](./Docs/Development/AgentOrchestrationGuide.md) - Detailed delegation workflows and coordination patterns
+- [Context Management Guide](./Docs/Development/ContextManagementGuide.md) - Context window optimization strategies
+- [Documentation Grounding Protocols](./Docs/Development/DocumentationGroundingProtocols.md) - 3-phase systematic context loading
+
 **Recovery**: Immediate intervention → Protocol clarification → Compliance verification → Escalation if persistent
 
 ---

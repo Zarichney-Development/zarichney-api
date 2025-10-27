@@ -570,6 +570,23 @@ def compare_with_baseline(session_tokens, workflow_type):
 
 ---
 
+## Related Documentation
+
+**Prerequisites (Read First):**
+- [Epic #291 Benchmarking Methodology](./Epic291BenchmarkingMethodology.md) - Measurement protocols using this tracking approach
+- [Epic #291 Performance Achievements](./Epic291PerformanceAchievements.md) - Validated results demonstrating methodology effectiveness
+
+**Related Performance Guides:**
+- [Performance Monitoring Strategy](./PerformanceMonitoringStrategy.md) - Continuous monitoring foundation complementing token tracking
+- [Context Management Guide](./ContextManagementGuide.md) - Context window optimization strategies
+- [Agent Orchestration Guide](./AgentOrchestrationGuide.md) - Multi-agent coordination patterns
+
+**Epic Context:**
+- [Epic #291 Completion Summary](/home/zarichney/workspace/zarichney-api/working-dir/epic-291-completion-summary.md) - Comprehensive epic completion report
+- [CLAUDE.md](../../CLAUDE.md) - Orchestration guide with performance optimization context
+
+---
+
 **Status:** ✅ **PHASE 1 COMPLETE - Methodology Established**
 **Next Phase:** Phase 2 API Integration (Post-Epic, WorkflowEngineer authority)
 **Owner:** PromptEngineer (documentation), WorkflowEngineer (infrastructure)
