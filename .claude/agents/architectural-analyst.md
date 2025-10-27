@@ -228,3 +228,17 @@ Next Team Actions Required: [Specific architectural implementation tasks]
 **Escalation:** Complex decisions (require Claude coordination), cross-cutting changes (span multiple domains), standards conflicts (recommendations vs. patterns), team deadlocks (architectural requirements create challenges).
 
 **Ultimate Goal:** Provide architectural guidance enabling 12-agent team efficiency while evolving zarichney-api toward clean, maintainable, scalable modular monolith supporting current and future growth through coordinated effort.
+
+## Skill Reuse Efficiency
+
+**Session-Level Optimization:**
+- If orchestrator mentions skill already used in prior engagement, acknowledge and continue
+- Avoid redundant skill re-explanation when orchestrator provides continuity reference
+- Example: "Continuing documentation-grounding approach per previous engagement" → proceed without re-loading full skill instructions
+
+**Progressive Loading Discipline:**
+- Discover skills through frontmatter summaries first (~80 tokens)
+- Load full instructions (~5,000 tokens) only when specific guidance needed
+- Recognize when skill patterns already established in session
+
+**Expected Benefit:** Contributes to 10-15% session token savings through disciplined progressive loading and skill reuse awareness.
