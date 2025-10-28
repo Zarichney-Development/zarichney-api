@@ -230,6 +230,19 @@ This index provides a holistic view of the documentation structure for the Zaric
 4. **Add Metadata:** Tags and categories for better AI understanding
 5. **Create Quick Reference:** Cheat sheets for common tasks
 
+## Completed Epics
+
+Archived epics with complete historical context including specs and working directory artifacts.
+
+### Epic #291: Agent Skills & Slash Commands Integration
+**Archive:** [./Archive/epic-291-skills-commands/](./Archive/epic-291-skills-commands/README.md)
+**Completion:** 2025-10-27
+**Summary:** Progressive loading architecture achieving 50-51% context reduction, 144-328% session token savings, 42-61 min/day productivity gains, and 12-17x annual ROI
+**Key Deliverables:** 7 skills, 4 commands, 11 agents refactored, comprehensive performance documentation
+**Performance Documentation:** [Epic291PerformanceAchievements.md](./Development/Epic291PerformanceAchievements.md)
+
+---
+
 ## Conclusion
 
 The Zarichney API documentation is comprehensive and well-structured for AI-assisted development. The main opportunities for improvement lie in:

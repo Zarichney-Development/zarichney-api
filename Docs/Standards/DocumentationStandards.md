@@ -1,7 +1,7 @@
 # Project Documentation Standards (Per-Directory README.md Files)
 
-**Version:** 1.6
-**Last Updated:** 2025-10-26
+**Version:** 1.7
+**Last Updated:** 2025-10-27
 
 ## 1. Purpose and Scope
 
@@ -97,5 +97,136 @@ Create a navigable documentation network for the AI:
 **See Also:**
 - [SkillsDevelopmentGuide.md](../Development/SkillsDevelopmentGuide.md) - Comprehensive skills creation guide
 - [ContextManagementGuide.md](../Development/ContextManagementGuide.md) - Progressive loading strategies
+
+## 7. Epic Archiving Standards
+
+### Purpose and Scope
+When epics are completed with all issues closed, PRs merged, and final validation complete, epic artifacts must be systematically archived to preserve historical context while maintaining clean active workspace directories.
+
+### Archive Directory Structure
+```
+./Docs/Archive/<epic-number-name>/
+├── README.md                      # Archive overview with epic summary
+├── Specs/                         # Complete spec directory contents
+│   ├── README.md
+│   ├── [all spec files]
+│   └── [subdirectories]
+└── working-dir/                   # All working directory artifacts
+    ├── [execution plans]
+    ├── [completion reports]
+    ├── [validation reports]
+    └── [all coordination artifacts]
+```
+
+### Naming Conventions
+- **Archive Directory:** `epic-{number}-{kebab-case-name}`
+  - Examples: `epic-291-skills-commands`, `epic-246-language-model-service`
+  - Must match original spec directory naming pattern
+- **Subdirectories:** Exactly two - `Specs/` and `working-dir/`
+- **README.md:** Required at archive root level
+
+### Archive README Requirements
+The archive README.md must include:
+
+1. **Epic Header:**
+   ```markdown
+   # Epic #{number}: {Full Name}
+   **Status:** ARCHIVED
+   **Completion Date:** YYYY-MM-DD
+   **Total Iterations:** X iterations
+   **Total Issues:** Y issues
+   ```
+
+2. **Executive Summary:**
+   - 2-3 sentence overview of epic purpose and outcomes
+   - Key performance achievements with quantified metrics
+   - Strategic impact statement
+
+3. **Iterations Overview:**
+   - Bulleted list of all iterations with issue ranges
+   - One-line summary per iteration
+
+4. **Key Deliverables:**
+   - Major outcomes (skills created, commands implemented, modules refactored)
+   - Performance results (context reduction, productivity gains, ROI)
+   - Quality achievements (test coverage, standards compliance)
+
+5. **Documentation Network:**
+   - Links to committed documentation in `./Docs/Development/`
+   - Links to related standards updates
+   - Links to module READMEs affected by epic
+
+6. **Archive Contents:**
+   - Summary of Specs directory contents
+   - Summary of working-dir artifacts (count, categories)
+   - Navigation guidance for archive exploration
+
+### Archiving Procedures
+
+**Pre-Archive Validation:**
+- All epic issues must be closed
+- All section PRs must be merged
+- Final section PR must be ready for review
+- ComplianceOfficer validation must show GO decision
+- Documentation index must be current
+
+**Archive Operations Sequence:**
+1. Create archive directory: `./Docs/Archive/epic-{number}-{name}/`
+2. Create Specs subdirectory: `./Docs/Archive/epic-{number}-{name}/Specs/`
+3. Move spec directory contents: `./Docs/Specs/epic-{number}-{name}/*` → archive Specs/
+4. Create working-dir subdirectory: `./Docs/Archive/epic-{number}-{name}/working-dir/`
+5. Move working directory artifacts: `./working-dir/*` → archive working-dir/
+6. Restore working-dir README: Keep `./working-dir/README.md` in active workspace
+7. Generate archive README.md at archive root with epic summary
+8. Update `./Docs/DOCUMENTATION_INDEX.md` with archive reference
+
+**Move Strategy:**
+- **Specs directory:** Complete move (remove from original location after successful archive)
+- **Working directory:** Complete move of all artifacts except README.md
+- **Rationale:** Clean slate for next epic while preserving complete historical record
+
+**Post-Archive Validation:**
+- Archive directory structure matches standard
+- All expected files present in archive
+- Archive README comprehensive and accurate
+- Original spec directory removed (or empty)
+- Working directory cleaned (only README.md remains)
+- DOCUMENTATION_INDEX.md updated with archive entry
+- No broken links in documentation network
+
+### DOCUMENTATION_INDEX.md Integration
+
+Add or update "Completed Epics" section in DOCUMENTATION_INDEX.md:
+
+```markdown
+## Completed Epics
+
+Archived epics with complete historical context including specs and working directory artifacts.
+
+### Epic #291: Agent Skills & Slash Commands Integration
+**Archive:** [./Archive/epic-291-skills-commands/](./Archive/epic-291-skills-commands/README.md)
+**Completion:** 2025-10-27
+**Summary:** Progressive loading architecture achieving 50-51% context reduction, 144-328% session token savings, 42-61 min/day productivity gains
+**Key Deliverables:** 7 skills, 4 commands, 11 agents refactored, comprehensive performance documentation
+**Performance Documentation:** [Epic291PerformanceAchievements.md](./Development/Epic291PerformanceAchievements.md)
+```
+
+### Maintenance and Updates
+
+**Trigger:** Epic completion with all validation passed
+**Responsibility:** Codebase Manager coordinates archiving (may delegate to `/epic-complete` command)
+**Verification:** ComplianceOfficer validates archiving completeness
+**Frequency:** Once per completed epic (non-recurring per epic)
+
+**Archive Immutability:**
+Once archived, epic directories should remain unchanged except for:
+- Critical link corrections if committed documentation moves
+- README clarifications if historical context misrepresented
+- **Never:** Remove artifacts, restructure directories, or modify working-dir contents
+
+**See Also:**
+- [TaskManagementStandards.md Section 10](./TaskManagementStandards.md#10-epic-completion-workflow) - Epic completion workflow procedures
+- [Epic Completion Skill](../../.claude/skills/coordination/epic-completion/) - Automated archiving skill (when created)
+- [/epic-complete Command](../../.claude/commands/epic-complete.md) - Epic completion command (when created)
 
 ---

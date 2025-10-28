@@ -1,8 +1,8 @@
 # Task Management & Git Standards
 
 
-**Version:** 1.3
-**Last Updated:** 2025-10-26
+**Version:** 1.4
+**Last Updated:** 2025-10-27
 
 ## 1. Purpose and Scope
 
@@ -438,5 +438,164 @@ All tasks and pull requests **MUST** meet these quality requirements:
 **See Also:**
 - [CommandsDevelopmentGuide.md](../Development/CommandsDevelopmentGuide.md) - GitHub automation
 - [GitHubLabelStandards.md](./GitHubLabelStandards.md) - Label taxonomy
+
+## 10. Epic Completion Workflow
+
+### Purpose
+This section defines the systematic workflow for completing epics once all issues are resolved, PRs merged, and final validation complete. Epic completion includes archiving artifacts, updating documentation, and preparing for epic closure.
+
+### Pre-Completion Validation Checklist
+
+Before initiating epic completion procedures, verify all completion criteria:
+
+**Issue Closure:**
+- [ ] All epic issues closed (verify via `gh issue list --label "epic:EPIC_NAME" --state open`)
+- [ ] All issue acceptance criteria met
+- [ ] All issue deliverables committed
+- [ ] No outstanding blockers or dependencies
+
+**PR Integration:**
+- [ ] All section PRs merged to epic branch
+- [ ] Epic branch merged to main (or final section PR ready)
+- [ ] All merge conflicts resolved
+- [ ] No failed CI/CD checks
+
+**Quality Validation:**
+- [ ] Build passes with zero warnings/errors
+- [ ] Test suite passes with >99% executable pass rate
+- [ ] ComplianceOfficer validation complete with GO decision
+- [ ] All AI Sentinels operational and compatible
+- [ ] No breaking changes introduced
+
+**Documentation Currency:**
+- [ ] All affected module READMEs updated
+- [ ] All standards documents current
+- [ ] DOCUMENTATION_INDEX.md reflects all new documentation
+- [ ] No broken links in documentation network
+
+**Performance Validation (if applicable):**
+- [ ] All performance targets met or exceeded
+- [ ] Token efficiency validated
+- [ ] Productivity gains quantified
+- [ ] ROI calculated and documented
+
+### Epic Completion Operations Sequence
+
+Once pre-completion validation passes, execute epic completion in this order:
+
+**Step 1: Final Validation Report**
+1. ComplianceOfficer generates final epic validation report
+2. Report confirms all quality gates passing
+3. Report provides GO decision for archiving
+4. Report saved to working directory before archiving
+
+**Step 2: Archive Directory Preparation**
+1. Create archive directory: `./Docs/Archive/epic-{number}-{name}/`
+2. Create subdirectories: `Specs/` and `working-dir/`
+3. Verify directory structure matches DocumentationStandards.md Section 7
+
+**Step 3: Specs Archiving**
+1. Move complete spec directory: `./Docs/Specs/epic-{number}-{name}/*` → archive `Specs/`
+2. Verify all spec files present in archive
+3. Remove original spec directory (or confirm empty)
+
+**Step 4: Working Directory Archiving**
+1. Move all working directory artifacts: `./working-dir/*` → archive `working-dir/`
+2. Preserve working directory structure in archive
+3. Restore `./working-dir/README.md` to active workspace
+4. Verify working directory cleaned (only README.md remains)
+
+**Step 5: Archive Documentation**
+1. Generate comprehensive archive README.md (per DocumentationStandards.md Section 7)
+2. Include epic summary, iterations, achievements, deliverables
+3. Link to committed documentation in `/Docs/Development/`
+4. Provide navigation guidance for archive exploration
+
+**Step 6: Documentation Index Update**
+1. Update `./Docs/DOCUMENTATION_INDEX.md` with "Completed Epics" section
+2. Add epic entry with archive link, completion date, summary
+3. Link to key performance documentation
+4. Verify all links functional
+
+**Step 7: Branch Cleanup (Optional)**
+1. If epic branch separate from section branches, verify epic branch merged
+2. Optionally delete remote epic branch after successful merge
+3. Keep local branch for reference or delete based on policy
+
+**Step 8: Epic Closure**
+1. Close epic GitHub issue (if using epic tracking issues)
+2. Update project board to move epic to "Completed" column
+3. Communicate epic completion to team/stakeholders
+4. Celebrate achievements and document lessons learned
+
+### Automation Support
+
+**Manual Workflow:**
+Follow the sequence above step-by-step, validating each operation before proceeding to next.
+
+**Automated Workflow (when available):**
+Use `/epic-complete <epic-number>` command to automate Steps 2-6:
+```bash
+# Preview operations
+/epic-complete 291 --dry-run
+
+# Execute archiving
+/epic-complete 291
+
+# Skip validation if already performed
+/epic-complete 291 --skip-validation
+```
+
+Command delegates to `epic-completion` skill for business logic execution.
+
+### Post-Completion Validation
+
+After all epic completion operations, verify:
+
+**Archive Integrity:**
+- [ ] Archive directory structure correct (Specs/ and working-dir/ subdirectories)
+- [ ] All spec files present in archive Specs/
+- [ ] All working directory artifacts present in archive working-dir/
+- [ ] Archive README comprehensive and accurate
+- [ ] No missing files or broken directory structure
+
+**Cleanup Verification:**
+- [ ] Original spec directory removed or empty
+- [ ] Working directory cleaned (only README.md remains)
+- [ ] No orphaned files in unexpected locations
+
+**Documentation Integration:**
+- [ ] DOCUMENTATION_INDEX.md updated with archive reference
+- [ ] Archive README links to committed documentation
+- [ ] No broken links in documentation network
+- [ ] Archive properly integrated into documentation hierarchy
+
+**Quality Gates:**
+- [ ] ComplianceOfficer validation confirms completeness
+- [ ] All completion operations logged in working directory (before archiving)
+- [ ] Epic completion summary preserved in archive
+
+### Error Handling and Recovery
+
+**If archiving fails mid-operation:**
+1. Do NOT proceed with subsequent steps
+2. Document exact failure point
+3. Verify no partial moves corrupted directories
+4. Restore from backup if directory structure compromised
+5. Fix root cause before retrying
+
+**Common Failure Scenarios:**
+- **Missing spec directory:** Verify epic number correct, spec directory exists
+- **Archive already exists:** Decide conflict resolution (backup, rename, abort)
+- **Broken links after move:** Update DOCUMENTATION_INDEX.md and archive README
+- **Validation failures:** Address quality gate issues before archiving
+
+### Related Standards and Documentation
+
+**See Also:**
+- [DocumentationStandards.md Section 7](./DocumentationStandards.md#7-epic-archiving-standards) - Archive structure and README requirements
+- [GitHubLabelStandards.md Section 3](./GitHubLabelStandards.md#3-epic-coordination-labels) - Epic labeling requirements
+- [Epic Completion Skill](../../.claude/skills/coordination/epic-completion/) - Automated archiving skill (when created)
+- [/epic-complete Command](../../.claude/commands/epic-complete.md) - Epic completion command (when created)
 
 ---
