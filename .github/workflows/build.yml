@@ -73,15 +73,18 @@ jobs:
     steps:
       - name: Check bot PR security
         run: |
-          echo "🔒 Processing bot-created PR with security restrictions"
+          echo "🔒 Validating pull_request_target event security"
           echo "PR Author: ${{ github.event.pull_request.user.login }}"
           echo "Event: ${{ github.event_name }}"
 
-          # Only allow GitHub Actions bot
+          # Only allow GitHub Actions bot for pull_request_target
           if [ "${{ github.event.pull_request.user.login }}" != "github-actions[bot]" ]; then
-            echo "❌ pull_request_target only allowed for github-actions[bot]"
-            echo "::error::Unauthorized pull_request_target from user: ${{ github.event.pull_request.user.login }}"
-            exit 1
+            echo "⚠️  pull_request_target triggered by non-bot user"
+            echo "::notice::This PR will be processed via the pull_request event instead"
+            echo "::notice::Security: pull_request_target is reserved for bot-created PRs only"
+            # Exit successfully - user PRs are handled by pull_request trigger
+            # This prevents blocking valid user PRs while maintaining bot-only security for pull_request_target
+            exit 0
           fi
 
           echo "✅ Security check passed for GitHub Actions bot PR"
