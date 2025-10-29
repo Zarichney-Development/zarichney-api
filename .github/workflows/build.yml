@@ -21,27 +21,24 @@ on:
     branches: [main, develop]
     paths:
       - 'Code/**'
-      - '.github/scripts/**'
+      - '.github/**'
+      - '.claude/**'
       - '*.sln'
-      - '.github/workflows/**'
-      - '.github/actions/shared/**'
   pull_request:
     branches: ['**']  # Trigger on ALL branch targets for universal PR support
     paths:
       - 'Code/**'
-      - '.github/scripts/**'
+      - '.github/**'
+      - '.claude/**'
       - '*.sln'
-      - '.github/workflows/**'
-      - '.github/actions/shared/**'
   pull_request_target:
     branches: ['**']  # Support bot PRs that don't trigger regular pull_request
     types: [opened, synchronize, reopened]
     paths:
       - 'Code/**'
-      - '.github/scripts/**'
+      - '.github/**'
+      - '.claude/**'
       - '*.sln'
-      - '.github/workflows/**'
-      - '.github/actions/shared/**'
   workflow_dispatch:
 
 # Concurrency Configuration: Workflow-level (not foundation component)

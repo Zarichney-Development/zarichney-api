@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Agent Skill YAML Frontmatter",
+  "description": "Validation schema for YAML frontmatter in SKILL.md files per official Claude Code skills structure",
+  "type": "object",
+  "required": ["name", "description"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$",
+      "maxLength": 64,
+      "description": "Skill name in kebab-case. Max 64 characters. Lowercase letters, numbers, and hyphens only. Cannot start/end with hyphen."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "description": "Brief description of what this skill does and when to use it. Max 1024 characters."
+    }
+  },
+  "additionalProperties": false
+}

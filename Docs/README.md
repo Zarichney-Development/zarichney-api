@@ -15,7 +15,7 @@ The `/Docs` directory is organized into the following key areas:
 
 * **[`/Docs/Development/`](./Development/README.md): AI-Orchestrated Development & Planning**
     * Defines the structured workflow leveraging a strategic codebase manager orchestrating 11 specialized AI agents.
-    * Contains architectural evolution documentation (`CodebaseManagerEvolution.md`) detailing the transformation from executor to orchestrator model.
+    * Contains architectural evolution documentation (`CodebaseManagerEvolution.md` - archived, historical architectural evolution context) detailing the transformation from executor to orchestrator model.
     * Details the specific step-by-step workflows used by specialized agents with comprehensive documentation grounding protocols.
     * **Features Coverage Epic Merge Orchestrator** (`CoverageEpicMergeOrchestration.md`) for automated multi-PR consolidation with AI conflict resolution.
     * **Enhanced Coverage Epic Automation** (`AutomatedCoverageEpicWorkflow.md`) showing complete 3-phase pipeline from individual agent execution through orchestrator consolidation.
@@ -39,7 +39,7 @@ The `/Docs` directory is organized into the following key areas:
 
 ## 3. How to Navigate
 
-* **To understand the 12-Agent Development Process:** Start with [`/Docs/Development/README.md`](./Development/README.md) and [`/Docs/Development/CodebaseManagerEvolution.md`](./Development/CodebaseManagerEvolution.md).
+* **To understand the 12-Agent Development Process:** Start with [`/Docs/Development/README.md`](./Development/README.md) and [`/Docs/Archive/legacy-workflows/CodebaseManagerEvolution.md`](./Archive/legacy-workflows/CodebaseManagerEvolution.md) (archived - historical architectural evolution context).
 * **To understand Coverage Epic Orchestration:** See [`/Docs/Development/CoverageEpicMergeOrchestration.md`](./Development/CoverageEpicMergeOrchestration.md) for multi-PR consolidation workflows.
 * **To understand Complete Coverage Epic Pipeline:** Review [`/Docs/Development/AutomatedCoverageEpicWorkflow.md`](./Development/AutomatedCoverageEpicWorkflow.md) for 3-phase workflow from individual agents through orchestrator consolidation.
 * **To understand Coding/Testing/Doc Rules:** Start with [`/Docs/Standards/README.md`](./Standards/README.md).

@@ -1,199 +1,150 @@
-# Issue #187 Coverage Delta Validation Suite
+# Frontmatter Validation Framework
 
-This directory contains comprehensive validation tests for the Issue #187 coverage delta implementation.
+Automated validation ensuring skill YAML frontmatter and command frontmatter comply with JSON schemas.
 
-## Purpose
+## Overview
 
-These validation scripts ensure that the coverage delta functionality works correctly for Epic #181 Phase 1 completion, validating:
+- **Purpose:** Enforce frontmatter quality and consistency
+- **Trigger:** Pre-commit hooks block invalid commits automatically
+- **Schemas:** skill-metadata.schema.json, command-definition.schema.json
+- **Tools:** Python3 + jsonschema + PyYAML
 
-- JSON schema compliance
-- Workflow scenario handling
-- AI integration functionality
-- PR comment enhancements
-- End-to-end workflow operation
-- Edge cases and error handling
+## Pre-Commit Hook (Automatic)
 
-## Usage
+When you commit changes to:
+- `.claude/skills/**/SKILL.md` files
+- `.claude/commands/*.md` files
 
-### Master Validation Script
+The pre-commit hook automatically validates frontmatter and blocks commits if validation fails.
 
-Run the complete validation suite:
-
+**Example:**
 ```bash
-./Scripts/validate-issue-187.sh
+$ git commit -m "feat: add new skill"
+Validating frontmatter for staged files...
+❌ ERROR: .claude/skills/my-skill/SKILL.md
+  - Field 'description': String exceeds maximum length of 1024
+❌ Commit blocked: Frontmatter validation failed
+Fix validation errors or use --no-verify to bypass
 ```
 
-View help information:
+## Manual Validation
 
+### Validate All Skills
 ```bash
-./Scripts/validate-issue-187.sh --help
+./Scripts/validation/validate-skills-frontmatter.sh
 ```
 
-### Individual Test Scripts
-
-Each validation component can be run independently:
-
+### Validate All Commands
 ```bash
-# Schema validation
-./Scripts/validation/test-coverage-delta-schema.sh
-
-# Workflow scenarios
-./Scripts/validation/test-coverage-delta-workflow.sh
-
-# AI integration
-./Scripts/validation/test-ai-integration.sh
-
-# PR comment validation
-./Scripts/validation/test-pr-comment-validation.sh
-
-# End-to-end workflow
-./Scripts/validation/test-coverage-delta-e2e.sh
-
-# Edge cases and error handling
-./Scripts/validation/test-edge-cases.sh
+./Scripts/validation/validate-commands-frontmatter.sh
 ```
 
-## Validation Components
-
-### 1. Schema Validation (`test-coverage-delta-schema.sh`)
-
-Validates coverage_delta.json against the v1.0 schema:
-
-- **Required fields**: current_coverage, baseline_coverage, coverage_delta, coverage_trend, timestamp
-- **Data types and ranges**: Numeric ranges (0-100% for coverage), ISO 8601 timestamps
-- **Enum values**: coverage_trend (improved/stable/decreased), baseline_source values
-- **Invalid schema detection**: Tests with missing fields, invalid enums, out-of-range values
-
-### 2. Workflow Scenarios (`test-coverage-delta-workflow.sh`)
-
-Tests different coverage change scenarios:
-
-- **Coverage improved**: delta > 0, trend = "improved"
-- **Coverage decreased**: delta < 0, trend = "decreased"
-- **Coverage stable**: delta = 0, trend = "stable"
-- **Baseline sources**: threshold, explicit_input, baseline_file, base_branch_measurement
-- **JSON generation**: Validates workflow logic produces correct coverage_delta.json
-
-### 3. AI Integration (`test-ai-integration.sh`)
-
-Verifies AI framework integration:
-
-- **Artifact structure**: coverage_results.json, coverage_delta.json, health_trends.json
-- **Variable mapping**: COVERAGE_DATA, COVERAGE_DELTA, COVERAGE_TRENDS
-- **AI action inputs**: coverage_data, baseline_coverage, test_results parameters
-- **Workflow chain**: coverage_analysis → ai_coverage_analysis → iterative_ai_review
-- **File accessibility**: AI actions can access downloaded artifacts
-
-### 4. PR Comment Validation (`test-pr-comment-validation.sh`)
-
-Tests enhanced PR comment features:
-
-- **Baseline source display**: User-friendly descriptions for different baseline sources
-- **Trend visualization**: Emojis (📈📉📊) and descriptions for coverage trends
-- **Baseline availability**: Status indicators for available vs fallback baselines
-- **Branch/SHA display**: Proper truncation and formatting
-- **AI framework status**: Integration status display in comments
-
-### 5. End-to-End Workflow (`test-coverage-delta-e2e.sh`)
-
-Validates complete workflow operation:
-
-- **Workflow simulation**: Mock backend build → baseline analysis → coverage comparison
-- **Artifact generation**: All required artifacts created and valid
-- **Step dependencies**: Proper execution order and conditional logic
-- **AI integration chain**: Complete integration from coverage analysis to AI review
-- **Error scenarios**: Graceful handling of failures and missing data
-
-### 6. Edge Cases (`test-edge-cases.sh`)
-
-Tests error handling and boundary conditions:
-
-- **Missing tools**: Graceful handling when jq/bc unavailable
-- **Invalid data**: Empty, non-numeric, extreme coverage values
-- **JSON errors**: Invalid structure detection and recovery
-- **Baseline unavailable**: Fallback scenarios when baseline cannot be determined
-- **Test failures**: Graceful degradation when tests fail
-- **Boundary values**: Schema min/max values, precision handling
-
-## Prerequisites
-
-The validation suite requires:
-
-- **jq**: JSON processing and validation
-- **bc**: Mathematical calculations (with fallback support)
-- **python3**: Schema validation (optional, with fallback)
-
-### Optional Dependencies
-
-- **jsonschema** (Python): For full schema validation
-  ```bash
-  pip3 install jsonschema
-  ```
-
-## Expected Results
-
-A successful validation run should show:
-
+### Validate Specific Files
+```bash
+./Scripts/validation/validate-skills-frontmatter.sh .claude/skills/my-skill/SKILL.md
 ```
-🎉 ALL VALIDATIONS PASSED - Issue #187 implementation is ready!
-✅ Coverage delta functionality is working correctly
-✅ AI integration is functional
-✅ PR comment enhancements are operational
-✅ Error handling is robust
 
-🚀 Issue #187 is ready for Epic #181 Phase 1 completion
+### Validate Everything
+```bash
+./Scripts/validation/validate-all-frontmatter.sh
+```
+
+## Validation Rules
+
+### Skill Frontmatter (SKILL.md)
+
+**Schema:** `/Docs/Templates/schemas/skill-metadata.schema.json`
+
+**Required:**
+- `name`: Max 64 chars, kebab-case (lowercase, numbers, hyphens only)
+- `description`: Max 1024 chars, must describe what skill does AND when to use it
+
+**Example:**
+```yaml
+---
+name: my-skill-name
+description: Brief description of what this skill does and when agents should use it.
+---
+```
+
+### Command Frontmatter (*.md in .claude/commands/)
+
+**Schema:** `/Docs/Templates/schemas/command-definition.schema.json`
+
+**Required:**
+- `description`: Max 200 chars, brief one-sentence purpose
+
+**Optional:**
+- `argument-hint`: Shows arguments in palette (e.g., `"<required> [optional]"`)
+- `category`: Enum value (testing|security|architecture|workflow|documentation|coordination|epic)
+- `requires-skills`: Array of skill dependencies (e.g., `["skill-name-1", "skill-name-2"]`)
+
+**Example:**
+```yaml
+---
+description: "Brief one-sentence purpose of this command"
+argument-hint: "<required-arg> [optional-arg]"
+category: "workflow"
+requires-skills: ["github-issue-creation"]
+---
 ```
 
 ## Troubleshooting
 
-### Common Issues
+### Common Errors
 
-1. **Missing tools**: Install required dependencies (jq, bc, python3)
-2. **Permission errors**: Ensure scripts are executable (`chmod +x`)
-3. **Schema validation failures**: Check JSON structure and required fields
-4. **Workflow integration failures**: Verify workflow file paths and structure
+**Error: "Additional properties are not allowed"**
+- **Cause:** Frontmatter includes fields not in schema
+- **Fix:** Remove unrecognized fields or update schema if field is legitimate
 
-### Test Failures
+**Error: "String exceeds maximum length of X"**
+- **Cause:** Field value too long
+- **Fix:** Shorten description/name to meet character limits
 
-If tests fail:
+**Error: "Does not match pattern"**
+- **Cause:** Value doesn't match required format (e.g., kebab-case for skill name)
+- **Fix:** Follow format requirements (lowercase, hyphens only, etc.)
 
-1. Check the specific test output for detailed error messages
-2. Verify the Issue #187 implementation is complete
-3. Ensure all workflow files are in expected locations
-4. Run individual test scripts to isolate issues
+**Error: "'field_name' is a required property"**
+- **Cause:** Missing required frontmatter field
+- **Fix:** Add required field to YAML frontmatter
 
-## Integration with CI/CD
+### Bypassing Validation
 
-These validation scripts can be integrated into CI/CD pipelines:
+**When to bypass:**
+- Work-in-progress commits that will be fixed before PR
+- Emergency hotfixes requiring immediate commit
+- Testing validation framework itself
 
+**How to bypass:**
 ```bash
-# In GitHub Actions or similar
-- name: Validate Issue #187 Implementation
-  run: ./Scripts/validate-issue-187.sh
+git commit --no-verify -m "WIP: incomplete skill frontmatter"
 ```
 
-## Files Structure
+**Warning:** Never bypass validation for PRs to develop/main branches.
 
+## Integration
+
+- **Pre-Commit Hook:** `.git/hooks/pre-commit` (automatically installed)
+- **Validation Scripts:** `Scripts/validation/validate-*.sh`
+- **JSON Schemas:** `Docs/Templates/schemas/*.schema.json`
+- **Templates:** SkillTemplate.md and CommandTemplate.md include validation guidance
+
+## Development
+
+**Adding New Validation:**
+1. Update JSON schema in `/Docs/Templates/schemas/`
+2. Validation scripts automatically use updated schema (no code changes needed)
+3. Test with `./Scripts/validation/validate-all-frontmatter.sh`
+
+**Testing Validation:**
+```bash
+# Test with intentionally invalid frontmatter
+./Scripts/validation/validate-skills-frontmatter.sh path/to/invalid-skill/SKILL.md
+
+# Expected: validation error with clear message
 ```
-Scripts/validation/
-├── README.md                           # This documentation
-├── test-coverage-delta-schema.sh       # Schema validation tests
-├── test-coverage-delta-workflow.sh     # Workflow scenario tests
-├── test-ai-integration.sh              # AI integration tests
-├── test-pr-comment-validation.sh       # PR comment tests
-├── test-coverage-delta-e2e.sh          # End-to-end tests
-└── test-edge-cases.sh                  # Edge case and error tests
 
-Scripts/
-└── validate-issue-187.sh               # Master validation script
-```
+---
 
-## Contributing
-
-When adding new validation tests:
-
-1. Follow the existing patterns for logging and result recording
-2. Use the `record_test` function for consistent reporting
-3. Include both positive and negative test cases
-4. Add appropriate cleanup in test environments
-5. Update this README with new test descriptions
+**Validation Framework Version:** 1.0.0 (Epic #291 - Issue #299)

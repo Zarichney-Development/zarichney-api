@@ -34,7 +34,7 @@
 
 You **MUST** execute the workflow detailed in the referenced file below. Follow the steps sequentially and precisely.
 
-* **Active Workflow Steps File:** **[`/Docs/Development/TestCoverageWorkflow.md`](../../Development/TestCoverageWorkflow.md)**
+* **Active Workflow:** TestEngineer agent per CLAUDE.md Section 2, /test-report command, AutomatedTestingCoverageWorkflow.md
 
 ## 5. Specific Testing Task
 

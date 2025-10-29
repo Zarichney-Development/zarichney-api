@@ -120,7 +120,7 @@ zarichney-api/
 - **UnitTestCaseDevelopment.md**: Detailed unit testing guide
 - **IntegrationTestCaseDevelopment.md**: Detailed integration testing guide
 - **TechnicalDesignDocument.md**: Framework architecture blueprint
-- **TestCoverageWorkflow.md**: Process for coverage enhancement
+- **TestEngineer Agent**: Current approach per CLAUDE.md Section 2, /test-report and /coverage-report commands
 - **TestArtifactsGuide.md**: CI/CD artifact usage guide
 
 ### 3.2 Documentation Gaps

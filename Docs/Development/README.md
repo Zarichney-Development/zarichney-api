@@ -14,13 +14,10 @@
     * Documenting the short-term technical roadmap and deferred items.
 * **Why it exists:** To establish a clear and effective **multi-agent development process**, ensuring tasks are well-defined, agents operate with comprehensive context, and standards are consistently applied across the development team.
 * **Core Documents within this Directory:**
-    * **[`CodebaseManagerEvolution.md`](./CodebaseManagerEvolution.md): ARCHITECTURAL FOUNDATION** - Documents the evolution from executor to orchestrator model with 12-agent specialization.
+    * **[`CodebaseManagerEvolution.md`](../Archive/legacy-workflows/CodebaseManagerEvolution.md): ARCHITECTURAL FOUNDATION** (archived - historical architectural evolution context) - Documents the evolution from executor to orchestrator model with 12-agent specialization.
     * **[`CoverageEpicMergeOrchestration.md`](./CoverageEpicMergeOrchestration.md): COVERAGE EPIC ORCHESTRATOR** - Complete guide for automated multi-PR consolidation with AI conflict resolution.
     * **[`AutomatedCoverageEpicWorkflow.md`](./AutomatedCoverageEpicWorkflow.md): ENHANCED COVERAGE EPIC PIPELINE** - 3-phase workflow from individual agents through orchestrator consolidation to epic integration.
-    * [`CodingPlannerAssistant.md`](./CodingPlannerAssistant.md): Legacy workflow documentation (superseded by orchestration model).
-    * [`StandardWorkflow.md`](./StandardWorkflow.md): Legacy workflow documentation (superseded by specialized agent protocols).
-    * [`ComplexTaskWorkflow.md`](./ComplexTaskWorkflow.md): Legacy workflow documentation (superseded by specialized agent protocols).
-    * [`TestCoverageWorkflow.md`](./TestCoverageWorkflow.md): Legacy workflow documentation (superseded by AutomatedCoverageEpicWorkflow.md and CoverageEpicMergeOrchestration.md).
+    * **Legacy Workflows** (archived at `../Archive/legacy-workflows/`): Historical workflow documentation (superseded by orchestration model and specialized agent protocols).
     * [`LoggingGuide.md`](./LoggingGuide.md): Comprehensive guide for the enhanced logging system, including configuration and best practices.
     * [`TestArtifactsGuide.md`](./TestArtifactsGuide.md): Guide for understanding and using CI/CD test artifacts including coverage reports and test results.
     * [`TestSuiteBaselineGuide.md`](./TestSuiteBaselineGuide.md): Practical interpretation guide for test suite baseline validation results, troubleshooting workflows, and actionable guidance for achieving progressive coverage targets.
@@ -178,9 +175,9 @@ flowchart TD
 
 ## 3. How to Use This Directory
 
-* **Understanding the Architecture:** Start with [`CodebaseManagerEvolution.md`](./CodebaseManagerEvolution.md) to understand the strategic orchestration model and 12-agent specialization (11 subagents + codebase manager).
+* **Understanding the Architecture:** Start with [`CodebaseManagerEvolution.md`](../Archive/legacy-workflows/CodebaseManagerEvolution.md) (archived - historical architectural evolution context) to understand the strategic orchestration model and 12-agent specialization (11 subagents + codebase manager).
 * **Agent Coordination:** Review the specialized agent instruction files in [`/.claude/agents/`](../../.claude/agents/) to understand individual agent capabilities and documentation grounding protocols.
-* **Legacy Workflows:** Historical workflow files (`CodingPlannerAssistant.md`, `StandardWorkflow.md`, etc.) are maintained for reference but have been superseded by the agent orchestration model.
+* **Legacy Workflows:** Historical workflow files are archived at [`../Archive/legacy-workflows/`](../Archive/legacy-workflows/) for reference but have been superseded by the agent orchestration model.
 * **Templates:** Refer to files in [`/Docs/Templates/`](../Templates/) for the structure of GitHub Issues and documentation templates.
 * **Future Plans:** Consult [`ShortTermRoadmap.md`](./ShortTermRoadmap.md) for planned features and refactoring efforts.
 * **Standards:** Always ensure development aligns with the rules defined in [`/Docs/Standards/`](../Standards/) - these are systematically loaded by all agents through documentation grounding protocols.

@@ -1,7 +1,7 @@
 # Overarching Automation Testing Standards
 
-**Version:** 1.8
-**Last Updated:** 2025-09-10
+**Version:** 1.9
+**Last Updated:** 2025-10-26
 
 ## 1. Introduction
 
@@ -477,7 +477,38 @@ Tests that exhibit non-deterministic behavior or environmental dependencies:
 * Use `[DependencyFact]` for conditional execution
 * Leverage AutoFixture customizations for controlled data generation
 
-## 13. Document References
+## 13. Skills and Commands Testing
+
+### Skill Testing Requirements
+- All skills MUST include validation examples in resources/
+- Skill workflows MUST be testable with clear success criteria
+- Resource files MUST be validated for accessibility
+- SKILL.md YAML frontmatter MUST pass validation
+- Progressive loading MUST be validated
+
+### Command Testing Requirements
+- All commands MUST have comprehensive usage examples tested
+- Argument parsing MUST be validated with invalid inputs
+- Error messages MUST be tested for clarity and actionability
+- Integration with skills MUST be validated end-to-end
+
+### Validation Approach
+- Pre-commit hooks validate YAML frontmatter
+- CI workflows enforce schema validation
+- Integration tests verify skill loading and command execution
+- Performance tests measure progressive loading efficiency
+
+### Quality Metrics
+- Skill discovery overhead: <150 tokens metadata
+- Skill loading latency: <1 second for instructions
+- Command execution success rate: >95%
+- Error message clarity: User can resolve without documentation
+
+**See Also:**
+- [SkillsDevelopmentGuide.md](../Development/SkillsDevelopmentGuide.md) - Validation workflows
+- [CommandsDevelopmentGuide.md](../Development/CommandsDevelopmentGuide.md) - Testing patterns
+
+## 14. Document References
 
 * **Detailed Unit Testing Guide:** `Docs/Standards/UnitTestCaseDevelopment.md` (To be created)
 * **Detailed Integration Testing Guide:** `Docs/Standards/IntegrationTestCaseDevelopment.md` (To be created)

@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Slash Command YAML Frontmatter",
+  "description": "Validation schema for YAML frontmatter in command markdown files",
+  "type": "object",
+  "required": ["description"],
+  "properties": {
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Brief command purpose displayed in command palette. Max 200 characters."
+    },
+    "argument-hint": {
+      "type": "string",
+      "description": "Shows required/optional arguments in command palette. Format: '<required> [optional]' or '[all-optional]'",
+      "pattern": "^[<\\[].*$"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["testing", "security", "architecture", "workflow", "documentation", "coordination", "epic"],
+      "description": "Command category for organization and discovery"
+    },
+    "requires-skills": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$"
+      },
+      "description": "Optional list of skill dependencies this command delegates to"
+    }
+  },
+  "additionalProperties": false
+}
