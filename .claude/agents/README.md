@@ -1,7 +1,7 @@
 # Agent Definitions Directory
 
 **Purpose:** Multi-agent development team definitions for zarichney-api orchestration
-**Last Updated:** 2025-10-25
+**Last Updated:** 2025-10-28
 **Parent:** [`.claude/`](../README.md)
 
 ---
@@ -262,7 +262,6 @@ All 11 agents will be refactored to achieve 62% average context reduction:
 - `documentation-grounding` - Systematic standards loading
 
 **Domain Skills (Specialist Agents):**
-- `flexible-authority-management` - Intent recognition framework
 - `core-issue-focus` - Mission discipline for primary agents
 - Domain-specific technical skills (future iterations)
 
@@ -357,7 +356,7 @@ Key Workflow: [Step 1 | Step 2 | Step 3]
 
 **Orchestration:**
 - [CLAUDE.md](../../CLAUDE.md) - Codebase manager orchestration guide
-- [Epic #291 Specifications](../../Docs/Specs/epic-291-skills-commands/README.md)
+- [Epic #291 Archive](../../Docs/Archive/epic-291-skills-commands/README.md)
 
 **Skills:**
 - [Skills Directory](../skills/README.md) - Progressive loading capabilities
@@ -386,6 +385,6 @@ Key Workflow: [Step 1 | Step 2 | Step 3]
 
 ---
 
-**Directory Status:** ✅ Active Development (Epic #291)
+**Directory Status:** ✅ Production (Epic #291 Complete - Archived 2025-10-27)
 
-**Next Updates:** Iteration 4 (Agent Refactoring) will add skill references to all 11 agents
+**Maintenance:** Update this README when adding new agents using the agent-creation meta-skill

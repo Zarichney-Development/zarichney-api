@@ -76,7 +76,7 @@ These standards **MUST** be consulted and followed by AI Coders during task exec
     * `{brief-description}`: A short (2-5 words), lowercase, hyphen-separated description (e.g., `add-recipe-service`, `recipeservice-coverage`).
     * **Example (Coding):** `feature/issue-123-add-recipe-service`
     * **Example (Testing):** `test/issue-789-recipeservice-coverage`
-* **Implementation:** Use standard Git commands within the relevant AI Coder Workflow steps file (e.g., `StandardWorkflow.md`):
+* **Implementation:** Use standard Git commands within the relevant agent workflow:
     ```bash
     git checkout [BASE_BRANCH_FROM_PROMPT]
     git pull origin [BASE_BRANCH_FROM_PROMPT] # Ensure base is up-to-date

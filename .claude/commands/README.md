@@ -1,7 +1,7 @@
 # Slash Commands Directory
 
 **Purpose:** Workflow automation commands for zarichney-api development
-**Last Updated:** 2025-10-25
+**Last Updated:** 2025-10-28
 **Parent:** [`.claude/`](../README.md)
 
 ---
@@ -415,9 +415,9 @@ Run `/command-name --help` for detailed usage information.
 - [Skills Directory](../skills/README.md) - Implementation logic for commands
 - [command-creation Meta-Skill](../skills/meta/command-creation/) - When available (Iteration 2.3)
 
-**Epic #291:**
-- [Commands Catalog](../../Docs/Specs/epic-291-skills-commands/commands-catalog.md)
-- [Epic Overview](../../Docs/Specs/epic-291-skills-commands/README.md)
+**Epic #291 Archive:**
+- [Commands Catalog](../../Docs/Archive/epic-291-skills-commands/Specs/commands-catalog.md)
+- [Epic Overview](../../Docs/Archive/epic-291-skills-commands/README.md)
 
 **Standards:**
 - [Documentation Standards](../../Docs/Standards/DocumentationStandards.md)
@@ -427,21 +427,20 @@ Run `/command-name --help` for detailed usage information.
 
 ## 12. Quick Reference
 
-**Current Command Count:** 2-3 commands (test-report, tackle-epic-issue, hello-team*)
+**Current Command Count:** 7 commands (COMPLETE)
 
 **By Category:**
-- Testing: 1 command (test-report)
-- Workflow: 1-2 commands (tackle-epic-issue, hello-team*)
-- Future: 4 commands planned (Iteration 2.4)
+- Testing: 2 commands (test-report, coverage-report)
+- GitHub/Workflow: 3 commands (create-issue, workflow-status, merge-coverage-prs)
+- Epic/Project: 2 commands (tackle-epic-issue, epic-complete)
 
-**Epic #291 Status:**
-- Iteration 1: Foundation (current)
-- Iteration 2.3: command-creation meta-skill
-- Iteration 2.4: Four workflow commands implementation
-- Target: 15-20 minutes saved per day per developer
+**Epic #291 Status:** COMPLETE and ARCHIVED (2025-10-27)
+- All 7 commands delivered successfully
+- Command creation meta-skill operational
+- Productivity gains: 42-61 min/day achieved
 
 ---
 
-**Directory Status:** ✅ Active Development (Epic #291)
+**Directory Status:** ✅ Production (Epic #291 Complete - Archived 2025-10-27)
 
-**Next Updates:** Iteration 2.4 will add 4 workflow automation commands
+**Maintenance:** Update this README when adding new commands using the command-creation meta-skill

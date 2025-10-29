@@ -1,7 +1,7 @@
 # Skills Directory
 
 **Purpose:** Progressive loading skills for context-efficient agent operations
-**Last Updated:** 2025-10-25
+**Last Updated:** 2025-10-28
 **Parent:** [`.claude/`](../README.md)
 
 ---
@@ -97,7 +97,23 @@ description: What it does and when to use it
 
 ---
 
-### Future Categories (Iterations 2-3)
+### [meta/](./meta/README.md)
+**Purpose:** Meta-skills for creating agents, skills, and commands
+
+**Current Skills:**
+1. [agent-creation](./meta/agent-creation/) - Standardized agent creation framework with 50% faster creation and 100% consistency
+2. [skill-creation](./meta/skill-creation/) - Meta-skill for designing new skills with progressive loading architecture
+3. [command-creation](./meta/command-creation/) - Systematic framework for creating slash commands with consistent UX
+
+**When to Create Meta-Skill:**
+- Component creation pattern becomes repetitive (3+ similar creations)
+- Specialized architectural knowledge required
+- Quality assurance needs automation
+- Team scalability enabler
+
+---
+
+### Future Categories
 
 **technical/** *(Planned)*
 **Purpose:** Domain-specific technical patterns and deep expertise
@@ -113,22 +129,6 @@ description: What it does and when to use it
 - Specific technology stack expertise
 - Reusable technical workflows
 - Error-prone operations needing consistency
-
----
-
-**meta/** *(Iteration 2 - Planned)*
-**Purpose:** Skills for creating agents, skills, and commands
-
-**Planned Skills:**
-1. agent-creation - 50% faster agent creation with 100% consistency
-2. skill-creation - Standardized skill structure and quality assurance
-3. command-creation - Consistent UX and clear skill integration
-
-**When to Create Meta-Skill:**
-- Team scalability enabler
-- Framework/template creation
-- Quality assurance automation
-- Consistency enforcement
 
 ---
 
@@ -153,7 +153,7 @@ description: What it does and when to use it
 
 All skills in this directory **MUST** follow the official Claude Code skills structure:
 
-**Authoritative Reference:** [`Docs/Specs/epic-291-skills-commands/official-skills-structure.md`](../../Docs/Specs/epic-291-skills-commands/official-skills-structure.md)
+**Authoritative Reference:** [`Docs/Archive/epic-291-skills-commands/Specs/official-skills-structure.md`](../../Docs/Archive/epic-291-skills-commands/Specs/official-skills-structure.md)
 
 **Required Structure:**
 ```
@@ -549,9 +549,9 @@ resources/templates/file.md  # CORRECT
 ## 12. Related Documentation
 
 **Official Structure:**
-- [Official Skills Structure Spec](../../Docs/Specs/epic-291-skills-commands/official-skills-structure.md) - AUTHORITATIVE
-- [Skills Catalog](../../Docs/Specs/epic-291-skills-commands/skills-catalog.md) - All 8 skills
-- [Implementation Iterations](../../Docs/Specs/epic-291-skills-commands/implementation-iterations.md)
+- [Official Skills Structure Spec](../../Docs/Archive/epic-291-skills-commands/Specs/official-skills-structure.md) - AUTHORITATIVE
+- [Skills Catalog](../../Docs/Archive/epic-291-skills-commands/Specs/skills-catalog.md) - All 8 skills
+- [Implementation Iterations](../../Docs/Archive/epic-291-skills-commands/Specs/implementation-iterations.md)
 
 **Category Documentation:**
 - [Coordination Skills](./coordination/README.md) - Team communication protocols
@@ -569,30 +569,26 @@ resources/templates/file.md  # CORRECT
 
 ## 13. Quick Reference
 
-**Current Skill Count:** 4 skills
+**Current Skill Count:** 8 skills (COMPLETE)
 
 **By Category:**
-- Coordination: 2 skills (working-directory-coordination, core-issue-focus)
+- Coordination: 3 skills (working-directory-coordination, core-issue-focus, epic-completion)
 - Documentation: 1 skill (documentation-grounding)
 - GitHub: 1 skill (github-issue-creation)
+- Meta: 3 skills (agent-creation, skill-creation, command-creation)
 - Technical: 0 skills (future)
-- Meta: 0 skills (Iteration 2)
-- Workflow: 0 skills (Iteration 2-3)
 
-**Epic #291 Status:**
-- Iteration 1: Foundation (current - Issues #311, #310, #309 complete)
-- Target: 8 skills total (5 core + 3 meta)
-- Savings: ~9,864 tokens per session
+**Epic #291 Status:** COMPLETE and ARCHIVED (2025-10-27)
+- All 8 target skills delivered successfully
+- Achieved 50-51% context reduction
+- Session token savings: 144-328% of targets
 
-**Category Count:** 3 categories (coordination/, documentation/, github/)
+**Category Count:** 4 categories (coordination/, documentation/, github/, meta/)
 
-**Future Categories:** technical/, meta/, workflow/
+**Future Categories:** technical/, workflow/
 
 ---
 
-**Directory Status:** ✅ Active Development (Epic #291 Iteration 1)
+**Directory Status:** ✅ Production (Epic #291 Complete - Archived 2025-10-27)
 
-**Next Updates:**
-- Issue #309: Add flexible-authority-management skill (pending)
-- Issue #308: Validation framework and templates
-- Iteration 2: Create meta/ category with 3 meta-skills
+**Maintenance:** Update this README when adding new skills using the skill-creation meta-skill

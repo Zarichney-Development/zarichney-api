@@ -13,9 +13,9 @@
 
 This directory contains the following key templates:
 
-* **AI Coder Prompt Templates:** Used by the AI Planning Assistant to generate specific task instructions for AI Coder agents.
-    * **[`AICoderPromptTemplate.md`](./AICoderPromptTemplate.md):** The standard template for generating prompts related to general coding tasks (features, fixes, refactors). Used in conjunction with `StandardWorkflow.md` or `ComplexTaskWorkflow.md`.
-    * **[`TestCaseDevelopmentTemplate.md`](./TestCaseDevelopmentTemplate.md):** The template for generating prompts related specifically to enhancing automated test coverage. Used in conjunction with `TestCoverageWorkflow.md`.
+* **AI Coder Prompt Templates:** Used by specialized agents in AI-orchestrated workflows per CLAUDE.md.
+    * **[`AICoderPromptTemplate.md`](./AICoderPromptTemplate.md):** The standard template for generating prompts related to general coding tasks (features, fixes, refactors). Used by CodeChanger and specialist agents.
+    * **[`TestCaseDevelopmentTemplate.md`](./TestCaseDevelopmentTemplate.md):** The template for generating prompts related specifically to enhancing automated test coverage. Used by TestEngineer agent.
 
 * **GitHub Issue Templates:** Used by the Human Developer (or potentially the AI Planning Assistant in the future) to create well-defined tasks in GitHub. These files are intended to be copied/used when creating new issues manually for now, but could eventually populate the `.github/ISSUE_TEMPLATE/` directory.
     * **[`GHCoderTaskTemplate.md`](./GHCoderTaskTemplate.md):** The standard template for creating GitHub Issues related to general coding tasks. Aligns with `AICoderPromptTemplate.md`.
@@ -26,7 +26,7 @@ This directory contains the following key templates:
 
 ## 3. How to Use These Templates
 
-* **AI Coder Prompts:** These are automatically populated and used by the AI Planning Assistant (`CodingPlannerAssistant.md`) based on the selected workflow type.
+* **AI Coder Prompts:** These templates are used by specialized agents in the orchestration model per CLAUDE.md.
 * **GitHub Issues:** Manually copy the content from the relevant `.md` file here when creating a new GitHub Issue for an AI task until direct GitHub integration is implemented.
 * **README Files:** Use `ReadmeTemplate.md` as the starting point for creating any new per-directory README file.
 
