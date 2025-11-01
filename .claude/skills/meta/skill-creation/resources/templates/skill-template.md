@@ -433,6 +433,61 @@ When skill usage issues cannot be resolved through troubleshooting:
 
 ---
 
+## BEST PRACTICES CHECKLIST (Official Anthropic Guidance)
+
+### Pre-Development Validation
+- [ ] **Evaluation-First:** Created 3+ test scenarios before writing skill
+- [ ] **Baseline Measured:** Documented Claude's performance without skill
+- [ ] **Gap Identified:** Clear specific performance gap this skill addresses
+- [ ] **Reusability Threshold:** Skill used by 3+ agents (coordination) or 2+ agents (workflow/technical)
+
+### Structure & Format
+- [ ] **YAML Description:** Includes both WHAT skill does and WHEN to use it
+- [ ] **Name Compliance:** Lowercase-hyphens only, <64 chars, not reserved word
+- [ ] **SKILL.md Size:** Under 500 lines total (target: category-appropriate)
+- [ ] **Progressive Disclosure:** Critical content in lines 1-80, details follow
+- [ ] **One-Level References:** All resources link directly from SKILL.md (no nesting)
+
+### Content Quality
+- [ ] **Consistent Terminology:** Same terms throughout (no "user" vs. "customer" mixing)
+- [ ] **No Time-Sensitive Info:** Current vs. legacy marked explicitly if needed
+- [ ] **Unix Paths:** Forward slashes only (`/path/to/file.md`)
+- [ ] **Parameter Justification:** All magic numbers explained with rationale
+- [ ] **Default + Escape Hatches:** Recommended approach with alternatives, not multiple equal options
+
+### Token Efficiency
+- [ ] **Token Budget:** Within category budget (Coord: 2-3.5k, Tech: 3-5k, Meta: 3.5-5k)
+- [ ] **Content Extracted:** Templates/examples/docs in resources/, not embedded in SKILL.md
+- [ ] **Agent References:** ~20 tokens per agent integration (Purpose|Workflow|Integration)
+- [ ] **Savings Calculated:** Token reduction vs. embedded approach measured
+
+### Testing & Validation
+- [ ] **Test Scenarios:** All success criteria met across 3+ scenarios
+- [ ] **Cross-Model:** Tested with Haiku, Sonnet, and Opus
+- [ ] **Two-Claude:** Separate creator/tester sessions validated skill
+- [ ] **Agent Integration:** Tested with at least 2 target agents
+- [ ] **No Regressions:** No new issues introduced vs. baseline
+
+### Resource Organization
+- [ ] **Templates:** 30-60 lines each, copy-paste ready with {{PLACEHOLDERS}}
+- [ ] **Examples:** 100-200 lines each, realistic zarichney-api scenarios
+- [ ] **Documentation:** 250-400 lines each with table of contents if >100 lines
+- [ ] **Clear References:** Resource purpose and usage triggers documented in SKILL.md
+
+### Anti-Pattern Avoidance
+- [ ] **No Skill Bloat:** Not single-agent pattern (validated reusability)
+- [ ] **No Nested References:** Resources link from SKILL.md only (flat structure)
+- [ ] **No Vague Description:** Activation triggers clear and specific
+- [ ] **No Excessive Options:** Default recommendation with escape hatches
+- [ ] **No Embedded Resources:** Templates/examples extracted to resources/
+- [ ] **No Agent Identity Extraction:** Core agent-specific workflows preserved
+
+**Reference:** See `resources/documentation/anti-patterns.md` for detailed anti-pattern guidance
+**Reference:** See `resources/documentation/evaluation-first-workflow.md` for testing methodology
+**Reference:** See `resources/documentation/token-optimization-techniques.md` for budget management
+
+---
+
 ## PLACEHOLDER GUIDANCE FOR PROMPTENGINEER
 
 ### YAML Frontmatter Customization
