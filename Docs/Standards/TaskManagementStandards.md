@@ -1,8 +1,8 @@
 # Task Management & Git Standards
 
 
-**Version:** 1.2
-**Last Updated:** 2025-09-28
+**Version:** 1.4
+**Last Updated:** 2025-10-27
 
 ## 1. Purpose and Scope
 
@@ -34,6 +34,33 @@ These standards **MUST** be consulted and followed by AI Coders during task exec
     * The AI Coder **MUST** reference the Issue ID in commit messages and Pull Requests (see sections below).
     * The AI Coder **DOES NOT** update the Issue status directly (this is currently handled manually by the orchestrator).
 
+## 2.1 Time Estimates Policy (Mandatory)
+
+* **Core Principle:** This project uses **complexity and effort estimation**, NOT rigid time-based deadlines or hour/week commitments.
+* **Rationale:** Incremental iterations allow adaptation based on implementation learnings, discoveries during development, and changing requirements. Rigid timelines create artificial pressure that conflicts with quality-focused, exploratory development.
+* **Implementation Requirements:**
+    * **Use Effort Labels:** All GitHub Issues **MUST** use effort labels from **[`./GitHubLabelStandards.md`](./GitHubLabelStandards.md)** Section 4.4 (`effort: xs`, `effort: small`, `effort: medium`, `effort: large`, `effort: epic`)
+    * **Effort Represents Complexity:** These labels indicate scope and complexity, NOT calendar time commitments
+    * **Focus on Priority:** Prioritize work based on business impact (`priority:` labels) and technical complexity (`effort:` labels), not arbitrary deadlines
+* **Forbidden Practices:**
+    * ❌ **Week-based phase naming** (e.g., "Phase 1: Week 1-2", "Week 3 deliverables")
+    * ❌ **Hour estimates in issue templates** (e.g., "8-12 hours", "2-4 hours of work")
+    * ❌ **Calendar deadline commitments** in issue descriptions or acceptance criteria
+    * ❌ **Rigid timeline planning** that doesn't account for iterative discoveries
+* **Acceptable Practices:**
+    * ✅ **Phase naming without time commitment** (e.g., "Phase 1: Foundation", "Phase 2: Enhancement")
+    * ✅ **Complexity-based effort estimation** using standardized effort labels
+    * ✅ **Iterative progression tracking** based on completion, not duration
+    * ✅ **Adaptive planning** that responds to implementation learnings
+* **Template Compliance:**
+    * All GitHub Issue templates in `/Docs/Templates/` and `.claude/skills/github/github-issue-creation/resources/templates/` **MUST** follow this policy
+    * Any template modifications proposing time-based phases or hour estimates **MUST** be rejected
+    * Examples demonstrating issue creation **MUST** show phase-based approaches without time commitments
+* **Agent Awareness:**
+    * All AI agents **MUST** be aware of this policy through documentation grounding (see **[`./DocumentationStandards.md`](./DocumentationStandards.md)**)
+    * PromptEngineer agent **MUST** enforce this policy when creating or modifying any templates
+    * Issue creation workflows **MUST** guide users toward effort labels instead of time estimates
+
 ## 3. Task Association (via Prompt)
 
 * **Requirement:** Every AI Coder Prompt **MUST** include a direct link to the associated GitHub Issue ID in the "Associated Task" section. This links the execution context (prompt) to the task definition (issue).
@@ -49,7 +76,7 @@ These standards **MUST** be consulted and followed by AI Coders during task exec
     * `{brief-description}`: A short (2-5 words), lowercase, hyphen-separated description (e.g., `add-recipe-service`, `recipeservice-coverage`).
     * **Example (Coding):** `feature/issue-123-add-recipe-service`
     * **Example (Testing):** `test/issue-789-recipeservice-coverage`
-* **Implementation:** Use standard Git commands within the relevant AI Coder Workflow steps file (e.g., `StandardWorkflow.md`):
+* **Implementation:** Use standard Git commands within the relevant agent workflow:
     ```bash
     git checkout [BASE_BRANCH_FROM_PROMPT]
     git pull origin [BASE_BRANCH_FROM_PROMPT] # Ensure base is up-to-date
@@ -378,5 +405,197 @@ All tasks and pull requests **MUST** meet these quality requirements:
 * **Decision Transparency:** AI conflict resolution decisions documented for future reference
 * **Team Communication:** Consolidation process communicates effectively with all team members
 * **Knowledge Transfer:** Consolidated changes preserve learning and insights from individual contributions
+
+## 9. Automated Issue Creation Workflows
+
+### GitHub Issue Automation
+- Use /create-issue command for consistent issue creation
+- Automated context collection eliminates manual effort
+- Template selection based on issue type (feature/bug/epic/debt/docs)
+- Label application automated per GitHubLabelStandards.md
+
+### Issue Types and Templates
+- Feature Request: Enhancement with user value proposition
+- Bug Report: Defect with reproduction steps and expected behavior
+- Epic: Milestone with component breakdown and acceptance criteria
+- Technical Debt: Refactoring with rationale and scope
+- Documentation: Knowledge gap with proposed content
+
+### Automation Workflow
+1. Identify issue type and gather context
+2. Invoke /create-issue <type> "<title>"
+3. Skill collects additional context automatically
+4. Template applied with proper structure
+5. Labels, milestone, assignees automated
+6. Issue created via gh CLI
+
+### Quality Standards
+- Titles: Clear, actionable, <80 characters
+- Descriptions: Complete context using template sections
+- Labels: Automated compliance with standards
+- Related issues: Automated discovery and linking
+
+**See Also:**
+- [CommandsDevelopmentGuide.md](../Development/CommandsDevelopmentGuide.md) - GitHub automation
+- [GitHubLabelStandards.md](./GitHubLabelStandards.md) - Label taxonomy
+
+## 10. Epic Completion Workflow
+
+### Purpose
+This section defines the systematic workflow for completing epics once all issues are resolved, PRs merged, and final validation complete. Epic completion includes archiving artifacts, updating documentation, and preparing for epic closure.
+
+### Pre-Completion Validation Checklist
+
+Before initiating epic completion procedures, verify all completion criteria:
+
+**Issue Closure:**
+- [ ] All epic issues closed (verify via `gh issue list --label "epic:EPIC_NAME" --state open`)
+- [ ] All issue acceptance criteria met
+- [ ] All issue deliverables committed
+- [ ] No outstanding blockers or dependencies
+
+**PR Integration:**
+- [ ] All section PRs merged to epic branch
+- [ ] Epic branch merged to main (or final section PR ready)
+- [ ] All merge conflicts resolved
+- [ ] No failed CI/CD checks
+
+**Quality Validation:**
+- [ ] Build passes with zero warnings/errors
+- [ ] Test suite passes with >99% executable pass rate
+- [ ] ComplianceOfficer validation complete with GO decision
+- [ ] All AI Sentinels operational and compatible
+- [ ] No breaking changes introduced
+
+**Documentation Currency:**
+- [ ] All affected module READMEs updated
+- [ ] All standards documents current
+- [ ] DOCUMENTATION_INDEX.md reflects all new documentation
+- [ ] No broken links in documentation network
+
+**Performance Validation (if applicable):**
+- [ ] All performance targets met or exceeded
+- [ ] Token efficiency validated
+- [ ] Productivity gains quantified
+- [ ] ROI calculated and documented
+
+### Epic Completion Operations Sequence
+
+Once pre-completion validation passes, execute epic completion in this order:
+
+**Step 1: Final Validation Report**
+1. ComplianceOfficer generates final epic validation report
+2. Report confirms all quality gates passing
+3. Report provides GO decision for archiving
+4. Report saved to working directory before archiving
+
+**Step 2: Archive Directory Preparation**
+1. Create archive directory: `./Docs/Archive/epic-{number}-{name}/`
+2. Create subdirectories: `Specs/` and `working-dir/`
+3. Verify directory structure matches DocumentationStandards.md Section 7
+
+**Step 3: Specs Archiving**
+1. Move complete spec directory: `./Docs/Specs/epic-{number}-{name}/*` → archive `Specs/`
+2. Verify all spec files present in archive
+3. Remove original spec directory (or confirm empty)
+
+**Step 4: Working Directory Archiving**
+1. Move all working directory artifacts: `./working-dir/*` → archive `working-dir/`
+2. Preserve working directory structure in archive
+3. Restore `./working-dir/README.md` to active workspace
+4. Verify working directory cleaned (only README.md remains)
+
+**Step 5: Archive Documentation**
+1. Generate comprehensive archive README.md (per DocumentationStandards.md Section 7)
+2. Include epic summary, iterations, achievements, deliverables
+3. Link to committed documentation in `/Docs/Development/`
+4. Provide navigation guidance for archive exploration
+
+**Step 6: Documentation Index Update**
+1. Update `./Docs/DOCUMENTATION_INDEX.md` with "Completed Epics" section
+2. Add epic entry with archive link, completion date, summary
+3. Link to key performance documentation
+4. Verify all links functional
+
+**Step 7: Branch Cleanup (Optional)**
+1. If epic branch separate from section branches, verify epic branch merged
+2. Optionally delete remote epic branch after successful merge
+3. Keep local branch for reference or delete based on policy
+
+**Step 8: Epic Closure**
+1. Close epic GitHub issue (if using epic tracking issues)
+2. Update project board to move epic to "Completed" column
+3. Communicate epic completion to team/stakeholders
+4. Celebrate achievements and document lessons learned
+
+### Automation Support
+
+**Manual Workflow:**
+Follow the sequence above step-by-step, validating each operation before proceeding to next.
+
+**Automated Workflow (when available):**
+Use `/epic-complete <epic-number>` command to automate Steps 2-6:
+```bash
+# Preview operations
+/epic-complete 291 --dry-run
+
+# Execute archiving
+/epic-complete 291
+
+# Skip validation if already performed
+/epic-complete 291 --skip-validation
+```
+
+Command delegates to `epic-completion` skill for business logic execution.
+
+### Post-Completion Validation
+
+After all epic completion operations, verify:
+
+**Archive Integrity:**
+- [ ] Archive directory structure correct (Specs/ and working-dir/ subdirectories)
+- [ ] All spec files present in archive Specs/
+- [ ] All working directory artifacts present in archive working-dir/
+- [ ] Archive README comprehensive and accurate
+- [ ] No missing files or broken directory structure
+
+**Cleanup Verification:**
+- [ ] Original spec directory removed or empty
+- [ ] Working directory cleaned (only README.md remains)
+- [ ] No orphaned files in unexpected locations
+
+**Documentation Integration:**
+- [ ] DOCUMENTATION_INDEX.md updated with archive reference
+- [ ] Archive README links to committed documentation
+- [ ] No broken links in documentation network
+- [ ] Archive properly integrated into documentation hierarchy
+
+**Quality Gates:**
+- [ ] ComplianceOfficer validation confirms completeness
+- [ ] All completion operations logged in working directory (before archiving)
+- [ ] Epic completion summary preserved in archive
+
+### Error Handling and Recovery
+
+**If archiving fails mid-operation:**
+1. Do NOT proceed with subsequent steps
+2. Document exact failure point
+3. Verify no partial moves corrupted directories
+4. Restore from backup if directory structure compromised
+5. Fix root cause before retrying
+
+**Common Failure Scenarios:**
+- **Missing spec directory:** Verify epic number correct, spec directory exists
+- **Archive already exists:** Decide conflict resolution (backup, rename, abort)
+- **Broken links after move:** Update DOCUMENTATION_INDEX.md and archive README
+- **Validation failures:** Address quality gate issues before archiving
+
+### Related Standards and Documentation
+
+**See Also:**
+- [DocumentationStandards.md Section 7](./DocumentationStandards.md#7-epic-archiving-standards) - Archive structure and README requirements
+- [GitHubLabelStandards.md Section 3](./GitHubLabelStandards.md#3-epic-coordination-labels) - Epic labeling requirements
+- [Epic Completion Skill](../../.claude/skills/coordination/epic-completion/) - Automated archiving skill (when created)
+- [/epic-complete Command](../../.claude/commands/epic-complete.md) - Epic completion command (when created)
 
 ---

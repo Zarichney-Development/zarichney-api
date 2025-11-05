@@ -10,7 +10,7 @@
 * **Relationship to Other Standards:**
     * This document complements **[`./DocumentationStandards.md`](./DocumentationStandards.md)**, which governs the overall structure and maintenance of README files where these diagrams are embedded.
     * Diagram content must accurately reflect the code structure and conventions defined in **[`./CodingStandards.md`](./CodingStandards.md)**.
-    * Diagram creation and maintenance are integrated into the AI Coder workflow described in **[`/Docs/Development/CodingPlannerAssistant.md`](../Development/CodingPlannerAssistant.md)**.
+    * Diagram creation and maintenance are integrated into agent workflows per CLAUDE.md orchestration model.
 
 ## 2. Core Philosophy & Principles
 
